@@ -1,208 +1,389 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Xlyn Dashboard</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Xlyn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
   <style>
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background-color: #f0f4f8;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
+    .fade-in {
+      animation: fadeIn 0.3s ease-in-out;
     }
-    h1 {
-      margin: 20px;
-      font-size: 2rem;
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    #calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      max-width: 700px;
+
+    .slide-in {
+      animation: slideIn 0.3s ease-in-out;
     }
-    .day {
-      background: white;
-      padding: 10px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: center;
-      cursor: pointer;
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
     }
-    .day:hover {
-      background: #dbeafe;
-    }
-    .selected {
-      background-color: #3b82f6;
-      color: white;
-    }
-    #noteBox {
-      margin-top: 20px;
-      max-width: 700px;
-      width: 100%;
-      display: none;
-      flex-direction: column;
-    }
-    textarea {
-      width: 100%;
-      height: 150px;
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      resize: none;
-    }
-    #todoList {
-      margin-top: 10px;
-    }
-    .todo-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 5px;
-    }
-    .todo-item input[type="checkbox"] {
-      margin-right: 10px;
-    }
-    #newTodo {
-      margin-top: 10px;
-      display: flex;
-    }
-    #newTodo input {
-      flex-grow: 1;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    #addTodoBtn {
-      padding: 8px 12px;
-      margin-left: 10px;
-      background-color: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+    
+    body { margin: 0; font-family: 'Source Sans Pro', sans-serif; background: #fff; color: #080101; font-size: 14px; }
+    header { padding: 30px 20px 10px; text-align: center; background: #fff; border-bottom: 1px solid #eee; }
+    .title { font-family: 'Clicker Script', cursive; font-size: 70px; color: #8a73c4; margin: 0; }
+    .layout { display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; padding: 20px; gap: 40px; }
+    .main-content { flex: 1; max-width: 1000px; }
+    .sidebar { width: 260px; }
+    .calendar-container, .todo-container { background: white; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); padding: 12px; margin-bottom: 20px; }
+    .calendar-container h4, .todo-container h4 { margin: 0 0 8px; color: #800080; font-size: 14px; text-align: left; font-weight: 600; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+    .calendar-grid div { padding: 4px 0; border-radius: 4px; cursor: pointer; }
+    .calendar-grid .today { background: #ede7f6; color: #800080; font-weight: bold; }
+    .calendar-grid .has-note { background: #d3b4f4; color: white; }
+    .todo-list { list-style: none; padding: 0; margin: 0; }
+    .todo-list li { display: flex; align-items: top; margin-bottom: 6px; }
+    .todo-list input[type="checkbox"] { margin-right: 8px; }
+    .todo-list button { margin-left: auto; background: transparent; border: none; color: #999; cursor: pointer; }
+    .todo-list button:hover { color: #800080; }
+    .todo-input { width: 80%; margin: 10px auto 0; padding: 6px; font-size: 13px; border: 1px solid #ccc; border-radius: 6px; display: block; }
+    h2 { font-size: 18px; font-weight: 400; color: #030000; margin-bottom: 16px; border-bottom: 2px solid #d5c8f2; display: inline-block; padding-bottom: 4px; }
+    .card-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    .card { padding: 16px; border-radius: 12px; background: #f7f5fc; border: 1px solid #e2dff1; text-align: center; font-size: 13px; font-weight: 400; color: #444; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(138, 115, 196, 0.15); }
+    footer { text-align: center; font-size: 12px; color: #aaa; margin: 40px 0; }
+    @media (max-width: 768px) { .layout { flex-direction: column; } .sidebar { width: 100%; } }
   </style>
+
+<style>
+@keyframes fadeInTask {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.floating-todo-item {
+  animation: fadeInTask 0.3s ease-out;
+}
+</style>
+
 </head>
 <body>
-  <h1>Xlyn Calendar</h1>
-  <div id="calendar"></div>
-
-  <div id="noteBox">
-    <h3 id="noteTitle"></h3>
-    <textarea id="noteInput" placeholder="Write your notes here..."></textarea>
-    <div id="todoList"></div>
-    <div id="newTodo">
-      <input type="text" id="todoInput" placeholder="New task...">
-      <button id="addTodoBtn">Add</button>
+<header><h1 class="title">Xlyn</h1></header>
+<div class="layout">
+  <div class="main-content">
+    <h2>Home</h2>
+    <div class="card-group">
+      <div class="card" onclick="location.href='OHcalc.html'">Drug Calculator</div>
+      <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
+      <div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
+      <div class="card" onclick="location.href='Calculator.html'">Calculator</div>
+    </div>
+    <h2>Notes</h2>
+    <div class="card-group">
+      <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
+      <div class="card" onclick="location.href='info.html'">Infos</div>
+      <div class="card" onclick="location.href='explain.html'">Explanation</div>
+      <div class="card" onclick="location.href='Inteleviewer.html'">Inteleviwer</div>
+      <div class="card" onclick="location.href='INR Calc.html'">INR</div>
+      <div class="card" onclick="location.href='ECG.html'">ECG</div>
+	  <div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
+    </div>
+    <h2>Urgent Care</h2>
+    <div class="card-group">
+      <div class="card" onclick="location.href='VS.html'">Normal Values</div>
+      <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Directions</div>
+	  <div class="card" onclick="location.href='face.html'">Head/Skull</div>
+      <div class="card" onclick="location.href='Hand.html'">Hand/Wrist</div>
+	  <div class="card" onclick="location.href='Sha.html'">Shoulder/Elbow/Upper Arm</div>
+      <div class="card" onclick="location.href='Abdo.html'">Abdomen/Thorax</div>
+	   <div class="card" onclick="location.href='Spine.html'">Lower Body/Back/Spine</div>
+      <div class="card" onclick="location.href='LF.html'">Foot/Leg</div>
+      <div class="card" onclick="location.href='Urgent_Care.html'">Urgent Care</div>
+      <div class="card" onclick="location.href='Notes.html'">Notebook</div>
+     
+    </div>
+    <footer>© 2025 Xlyn Notes Board</footer>
+  </div>
+  <div class="sidebar">
+    <div class="calendar-container">
+    <h4>📅 Calendar</h4>
+    <div id="calendarNav"></div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <div id="noteEditor" style="display:none;">
+      <strong id="selectedDateLabel"></strong>
+      <textarea id="noteText" style="width:100%;box-sizing:border-box;" rows="3" placeholder="Enter note..."></textarea>
     </div>
   </div>
+    
+  </div>
+</div>
+<script>
+const notesByDate = JSON.parse(localStorage.getItem("calendarNotes") || "{}");
+let calendarDate = new Date();
+let activeNoteDate = null;
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+function generateCalendar() {
+  const container = document.getElementById("calendar");
+  const month = calendarDate.toLocaleString("default", { month: "long" });
+  const year = calendarDate.getFullYear();
+  const firstDay = new Date(year, calendarDate.getMonth(), 1).getDay();
+  const daysInMonth = new Date(year, calendarDate.getMonth() + 1, 0).getDate();
+  const today = new Date();
+  let html = `<div style="text-align:center;margin-bottom:10px;">
+    <button onclick="changeMonth(-1)">◀</button> <strong>${month} ${year}</strong> <button onclick="changeMonth(1)">▶</button></div>
+    <div class="calendar-grid">`;
+  const days = ["S","M","T","W","T","F","S"];
+  days.forEach(d => html += `<div><strong>${d}</strong></div>`);
+  for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const fullDate = `${year}-${String(calendarDate.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasNote = notesByDate[fullDate];
+    const isToday = d === today.getDate() && calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear();
+    const classes = `${isToday ? "today" : ""} ${hasNote ? "has-note" : ""}`;
+    html += `<div class="${classes}" onclick="showNoteForm('${fullDate}')">${d}</div>`;
+  }
+  html += `</div>`;
+  if (activeNoteDate !== null) {
+    const value = notesByDate[activeNoteDate] || "";
+    html += `<div style="margin-top:10px;">
+      <strong>${activeNoteDate}</strong><br>
+      <textarea id="noteText" style="width:100%;box-sizing:border-box;" style="width:100%;border-radius:4px;border:1px solid #ccc;padding:6px;" rows="3">${value}</textarea>
+      <button onclick="saveNote('${activeNoteDate}')">Save</button>
+      <button onclick="deleteNote('${activeNoteDate}')">Delete</button>
+      <button onclick="closeNoteForm()">Close</button>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
 
-    const calendar = document.getElementById("calendar");
-    const noteBox = document.getElementById("noteBox");
-    const noteInput = document.getElementById("noteInput");
-    const noteTitle = document.getElementById("noteTitle");
-    const todoList = document.getElementById("todoList");
-    const todoInput = document.getElementById("todoInput");
-    const addTodoBtn = document.getElementById("addTodoBtn");
 
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+function changeMonth(offset) {
+  activeNoteDate = null;
 
-    let selectedDay = null;
-    let dateKey = "";
+  calendarDate.setMonth(calendarDate.getMonth() + offset);
+  activeNoteDate = null;
+  
+const today = new Date();
+const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
+  activeNoteDate = todayKey;
+}
+generateCalendar();
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dayEl = document.createElement("div");
-      dayEl.className = "day";
-      dayEl.textContent = day;
-      dayEl.addEventListener("click", () => selectDate(day));
-      calendar.appendChild(dayEl);
+}
+function showNoteForm(dateKey) { activeNoteDate = dateKey; 
+const today = new Date();
+const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
+  activeNoteDate = todayKey;
+}
+generateCalendar();
+ }
+function saveNote(dateKey) {
+  const text = document.getElementById("noteText").value.trim();
+  if (text) notesByDate[dateKey] = text;
+  else delete notesByDate[dateKey];
+  localStorage.setItem("calendarNotes", JSON.stringify(notesByDate));
+  activeNoteDate = null;
+  
+const today = new Date();
+const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
+  activeNoteDate = todayKey;
+}
+generateCalendar();
+
+}
+function deleteNote(dateKey) {
+  if (confirm("Delete this note?")) {
+    delete notesByDate[dateKey];
+    localStorage.setItem("calendarNotes", JSON.stringify(notesByDate));
+    activeNoteDate = null;
+    
+const today = new Date();
+const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
+  activeNoteDate = todayKey;
+}
+generateCalendar();
+
+  }
+}
+function closeNoteForm() { activeNoteDate = null; 
+const today = new Date();
+const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
+  activeNoteDate = todayKey;
+}
+generateCalendar();
+ }
+
+
+const today = new Date();
+const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
+  activeNoteDate = todayKey;
+}
+generateCalendar();
+
+
+
+}
+renderTodos();
+</script>
+<script>
+    const notes = JSON.parse(localStorage.getItem("calendarNotes") || "{}");
+    let current = new Date();
+    let selectedDate = null;
+
+    function renderCalendar() {
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      const grid = document.getElementById("calendarGrid");
+      const nav = document.getElementById("calendarNav");
+      grid.innerHTML = "";
+      nav.innerHTML = `<div class="slide-in" style="text-align:center;margin-bottom:8px;">
+        <button onclick="changeMonth(-1)">◀</button>
+        <strong>${current.toLocaleString("default", { month: "long" })} ${year}</strong>
+        <button onclick="changeMonth(1)">▶</button>
+      </div>`;
+
+      const days = ["S", "M", "T", "W", "T", "F", "S"];
+      days.forEach(d => grid.innerHTML += `<div><strong>${d}</strong></div>`);
+      for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+        const hasNote = !!notes[dateStr];
+        const classes = (isToday ? "today " : "") + (hasNote ? "has-note" : "");
+        const cell = document.createElement("div");
+        cell.className = classes.trim();
+        cell.textContent = d;
+        cell.onclick = () => showNote(dateStr);
+        grid.appendChild(cell);
+      }
     }
 
-    async function selectDate(day) {
-      if (selectedDay) selectedDay.classList.remove("selected");
-      selectedDay = calendar.children[day - 1];
-      selectedDay.classList.add("selected");
-
-      dateKey = `${year}-${month + 1}-${day}`;
-      noteTitle.textContent = `Notes for ${dateKey}`;
-      noteBox.style.display = "flex";
-
-      const noteDoc = await db.collection("calendarNotes").doc(dateKey).get();
-      noteInput.value = noteDoc.exists ? noteDoc.data().text : "";
-
-      noteInput.oninput = async () => {
-        await db.collection("calendarNotes").doc(dateKey).set({ text: noteInput.value }, { merge: true });
-      };
-
-      loadTodos();
+    function showNote(dateStr) {
+      selectedDate = dateStr;
+      document.getElementById("selectedDateLabel").textContent = `Note for ${dateStr}`;
+      const noteText = document.getElementById("noteText");
+      noteText.value = notes[dateStr] || "";
+      const noteBox = document.getElementById("noteEditor"); noteBox.style.display = "block"; noteBox.classList.add("fade-in");
     }
 
-    async function loadTodos() {
-      todoList.innerHTML = "";
-      const todosSnap = await db.collection("calendarTodos").doc(dateKey).get();
-      const todos = todosSnap.exists ? todosSnap.data().items || [] : [];
-
-      todos.forEach((todo, idx) => {
-        const div = document.createElement("div");
-        div.className = "todo-item";
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = todo.done;
-        checkbox.onchange = () => updateTodo(idx, checkbox.checked);
-
-        const span = document.createElement("span");
-        span.textContent = todo.text;
-
-        div.appendChild(checkbox);
-        div.appendChild(span);
-        todoList.appendChild(div);
-      });
+    function changeMonth(offset) {
+      current.setMonth(current.getMonth() + offset);
+      const noteBox = document.getElementById("noteEditor"); noteBox.style.display = "none"; noteBox.classList.remove("fade-in");
+      renderCalendar();
     }
 
-    addTodoBtn.onclick = async () => {
-      if (!todoInput.value.trim()) return;
+    document.getElementById("noteText").addEventListener("input", () => {
+      if (selectedDate) {
+        const text = document.getElementById("noteText").value.trim();
+        if (text) notes[selectedDate] = text;
+        else delete notes[selectedDate];
+        localStorage.setItem("calendarNotes", JSON.stringify(notes));
+        renderCalendar();
+      }
+    });
 
-      const docRef = db.collection("calendarTodos").doc(dateKey);
-      const doc = await docRef.get();
-      const items = doc.exists ? doc.data().items || [] : [];
-      items.push({ text: todoInput.value.trim(), done: false });
-      await docRef.set({ items }, { merge: true });
-
-      todoInput.value = "";
-      loadTodos();
-    };
-
-    async function updateTodo(index, done) {
-      const docRef = db.collection("calendarTodos").doc(dateKey);
-      const doc = await docRef.get();
-      const items = doc.exists ? doc.data().items || [] : [];
-      items[index].done = done;
-      await docRef.set({ items }, { merge: true });
-    }
+    renderCalendar();
   </script>
+
+<div id="floatingTodo" style="position:fixed; bottom:20px; right:20px; width:250px; background:#fff; border:1px solid #ccc; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); padding:16px; z-index:9999;">
+  <h4 style="margin:0 0 10px 0; font-size:14px; color:#800080;">📝 To-Do</h4>
+  <ul id="floatingTodoList" style="list-style:none; padding-left:0; margin-bottom:10px;"></ul>
+  <input type="text" id="floatingNewTodo" placeholder="Add task..." style="width:100%; padding:6px; border-radius:6px; border:1px solid #aaa; display:block; margin:0 auto;" />
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("Floating To-Do initialized");
+
+  let floatingTodos = JSON.parse(localStorage.getItem("floatingTodoList") || "[]");
+
+  function renderFloatingTodos() {
+    const list = document.getElementById("floatingTodoList");
+    if (!list) return;
+    list.innerHTML = "";
+    floatingTodos.forEach((todo, index) => {
+      const li = document.createElement("li");
+      li.className = "floating-todo-item";
+      li.style.display = "flex";
+      li.style.alignItems = "center";
+      li.style.marginBottom = "6px";
+      li.innerHTML = `
+        <input type="checkbox" ${todo.done ? "checked" : ""} onchange="toggleFloatingTodo(${index})" />
+        <span style="margin-left:8px; ${todo.done ? 'text-decoration:line-through;color:#888;' : ''}">${todo.text}</span>
+        <button onclick="removeFloatingTodo(${index})" style="margin-left:auto;background:none;border:none;color:#800080;cursor:pointer;">✕</button>
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  function addFloatingTodo() {
+    const input = document.getElementById("floatingNewTodo");
+    const text = input.value.trim();
+    if (!text) return;
+    floatingTodos.push({ text: text, done: false });
+    input.value = "";
+    updateFloatingTodos();
+  }
+
+  window.toggleFloatingTodo = function(index) {
+    floatingTodos[index].done = !floatingTodos[index].done;
+    updateFloatingTodos();
+  };
+
+  window.removeFloatingTodo = function(index) {
+    floatingTodos.splice(index, 1);
+    updateFloatingTodos();
+  };
+
+  function updateFloatingTodos() {
+    localStorage.setItem("floatingTodoList", JSON.stringify(floatingTodos));
+    renderFloatingTodos();
+  }
+
+  const input = document.getElementById("floatingNewTodo");
+  if (input) {
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        addFloatingTodo();
+        e.preventDefault();
+      }
+    });
+  }
+
+  renderFloatingTodos();
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const noteText = document.getElementById("noteText");
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const notesByDate = JSON.parse(localStorage.getItem("calendarNotes") || "{}");
+  const header = document.getElementById("staticNoteDate");
+
+  if (header) header.textContent = "Note for " + todayKey;
+  if (noteText) {
+    noteText.value = notesByDate[todayKey] || "";
+    noteText.addEventListener("input", function () {
+      const value = noteText.value.trim();
+      if (value) {
+        notesByDate[todayKey] = value;
+      } else {
+        delete notesByDate[todayKey];
+      }
+      localStorage.setItem("calendarNotes", JSON.stringify(notesByDate));
+    });
+  }
+});
+</script>
+
 </body>
 </html>
