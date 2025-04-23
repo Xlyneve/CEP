@@ -5,35 +5,122 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Abdominis Anatomy Notes</title>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
-
   <style>
-    body { font-family: Arial, sans-serif; font-size: 8pt; background-color: #fff; color: #000; margin: 0; padding: 0; }
-    header { background-color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    header button { background-color: #b0ad74; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 5px; font-size: 8pt; cursor: pointer; }
-    #searchInput { font-size: 8pt; padding: 0.3rem; border-radius: 4px; border: 1px solid #ccc; width: 120px; }
-    .main { display: flex; padding: 1rem; gap: 1rem; }
-    .form-tile, .tile { width: 260px; background: #fff; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 1rem; }
-    .form-tile { width: 300px; display: flex; flex-direction: column; align-items: center; }
-    input[type="text"], textarea, input[type="file"] { font-size: 8pt; width: 100%; margin-bottom: 0.5rem; padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
-    .status-text { font-size: 7pt; color: green; margin-bottom: 0.5rem; }
-    button.save { background-color: #b0ad74; color: white; border: none; border-radius: 4px; padding: 0.5rem 1rem; font-size: 8pt; cursor: pointer; }
-    .notes-container { display: flex; flex-wrap: wrap; gap: 1rem; }
-    .tile img { max-width: 100%; border-radius: 8px; cursor: pointer; }
-    .edit-btn, .delete-btn { font-size: 8pt; margin-top: 0.3rem; margin-right: 0.5rem; padding: 0.3rem 0.5rem; border: none; border-radius: 4px; background-color: #ccc; cursor: pointer; }
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; }
-    .modal img { max-width: 90%; max-height: 90%; }
-    .modal.show { display: flex; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 8pt;
+      background-color: #fff;
+      color: #000;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header button {
+      background-color: #b0ad74;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.8rem;
+      border-radius: 5px;
+      font-size: 8pt;
+      cursor: pointer;
+    }
+    #searchInput {
+      font-size: 8pt;
+      padding: 0.3rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 120px;
+    }
+    .main {
+      display: flex;
+      padding: 1rem;
+      gap: 1rem;
+    }
+    .form-tile, .tile {
+      width: 260px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 1rem;
+    }
+    .form-tile {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    input[type="text"], textarea, input[type="file"] {
+      font-size: 8pt;
+      width: 100%;
+      margin-bottom: 0.5rem;
+      padding: 0.4rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .status-text {
+      font-size: 7pt;
+      color: green;
+      margin-bottom: 0.5rem;
+    }
+    button.save {
+      background-color: #b0ad74;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      font-size: 8pt;
+      cursor: pointer;
+    }
+    .notes-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .tile img {
+      max-width: 100%;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal img {
+      max-width: 90%;
+      max-height: 90%;
+    }
+    .modal.show {
+      display: flex;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js"></script>
 </head>
 <body>
   <header>
-    <a href="index.html"><button>Home</button></a>
+    <button onclick="location.href='CEP.html'">Home</button>
     <h1 style="font-size: 50pt; margin: 0 auto; color: #000; font-family: 'Poppins', sans-serif; font-weight: 300; animation: fadeIn 1s ease-in-out; text-align: center; flex-grow: 1;">Abdominis</h1>
     <input type="text" id="searchInput" oninput="searchNote()" placeholder="Search">
   </header>
@@ -44,7 +131,7 @@
       <div class="status-text" id="imageStatus"></div>
       <input type="text" id="title" placeholder="Title">
       <textarea id="notes" placeholder="Write your notes (use ** for bold, == for highlight)"></textarea>
-      <button class="save" onclick="saveNote()" disabled>Save</button>
+      <button class="save" onclick="saveNote()">Save</button>
     </div>
     <div class="notes-container" id="notesContainer"></div>
   </div>
@@ -55,59 +142,59 @@
 
   <script>
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.appspot.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
-    firebase.initializeApp(firebaseConfig);
-    const storage = firebase.storage();
-    const db = firebase.firestore();
 
-    document.getElementById("imageUpload").addEventListener("change", () => {
-      document.querySelector(".save").disabled = false;
-    });
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
     async function saveNote() {
       const title = document.getElementById("title").value.trim();
       const rawNotes = document.getElementById("notes").value.trim();
       const file = document.getElementById("imageUpload").files[0];
+
+      if (!title && !rawNotes && !file) {
+        alert("Please enter a title, note, or upload an image.");
+        return;
+      }
+
+      document.getElementById("imageStatus").textContent = "Saving note...";
+      document.querySelector(".save").disabled = true;
+
       let imageUrl = "";
-
       if (file) {
-        const ref = storage.ref().child(`abdominis_images/${Date.now()}_${file.name}`);
-        document.getElementById("imageStatus").textContent = "Uploading image...";
-        await ref.put(file);
-        imageUrl = await ref.getDownloadURL();
-        document.getElementById("imageStatus").textContent = "Image uploaded!";
+        const storageRef = storage.ref().child("abdominis/" + Date.now() + "_" + file.name);
+        await storageRef.put(file);
+        imageUrl = await storageRef.getDownloadURL();
       }
 
-      const note = { title, rawNotes, image: imageUrl, timestamp: Date.now() };
-      const editId = sessionStorage.getItem("editDocId");
-
-      if (editId) {
-        await db.collection("abdominisNotes").doc(editId).set(note);
-        sessionStorage.removeItem("editDocId");
-      } else {
-        await db.collection("abdominisNotes").add(note);
-      }
+      await db.collection("abdominisNotes").add({
+        title,
+        rawNotes,
+        image: imageUrl,
+        created: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
       document.getElementById("title").value = "";
       document.getElementById("notes").value = "";
       document.getElementById("imageUpload").value = "";
-      document.getElementById("imageStatus").textContent = "";
-      document.querySelector(".save").disabled = true;
+      document.getElementById("imageStatus").textContent = "Saved!";
+      document.querySelector(".save").disabled = false;
 
       displayNotes();
     }
 
     async function displayNotes() {
-      const snapshot = await db.collection("abdominisNotes").orderBy("timestamp", "desc").get();
       const container = document.getElementById("notesContainer");
       container.innerHTML = "";
 
+      const snapshot = await db.collection("abdominisNotes").orderBy("created", "desc").get();
       snapshot.forEach(doc => {
         const note = doc.data();
         const tile = document.createElement("div");
@@ -121,34 +208,16 @@
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/==(.+?)==/g, '<mark>$1</mark>');
 
-        const editBtn = document.createElement("button");
-        editBtn.className = "edit-btn";
-        editBtn.innerText = "Edit";
-        editBtn.onclick = () => {
-          document.getElementById("title").value = note.title;
-          document.getElementById("notes").value = note.rawNotes;
-          sessionStorage.setItem("editDocId", doc.id);
-          document.querySelector(".save").disabled = false;
-        };
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "delete-btn";
-        deleteBtn.innerText = "Delete";
-        deleteBtn.onclick = async () => {
-          await db.collection("abdominisNotes").doc(doc.id).delete();
-          displayNotes();
-        };
-
         tile.appendChild(titleEl);
         tile.appendChild(noteEl);
+
         if (note.image) {
           const imgEl = document.createElement("img");
           imgEl.src = note.image;
           imgEl.onclick = () => showModal(note.image);
           tile.appendChild(imgEl);
         }
-        tile.appendChild(editBtn);
-        tile.appendChild(deleteBtn);
+
         container.appendChild(tile);
       });
     }
@@ -164,11 +233,12 @@
 
     function searchNote() {
       const keyword = document.getElementById("searchInput").value.toLowerCase();
-      const notes = document.querySelectorAll(".tile");
-      notes.forEach(note => {
-        const title = note.querySelector("h4").innerText.toLowerCase();
-        const content = note.querySelector("p").innerText.toLowerCase();
-        note.style.display = (title.includes(keyword) || content.includes(keyword)) ? "block" : "none";
+      const allTiles = document.querySelectorAll(".tile");
+
+      allTiles.forEach(tile => {
+        const title = tile.querySelector("h4").innerText.toLowerCase();
+        const noteText = tile.querySelector("p").innerText.toLowerCase();
+        tile.style.display = title.includes(keyword) || noteText.includes(keyword) ? "block" : "none";
       });
     }
 
