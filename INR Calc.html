@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>INR Management</title>
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      background-color: #fdfcfe;
+      color: #333;
+      padding: 40px;
+    }
+    h1 {
+      color: #6a1b9a;
+      text-align: center;
+    }
+    .info, .calculator {
+      margin: 30px auto;
+      max-width: 600px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 10px solid #b39ddb;
+      box-shadow: 0 4px 12px rgba(138, 115, 196, 0.1);
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .result {
+      margin-top: 20px;
+      font-weight: bold;
+      background: #ede7f6;
+      padding: 10px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>INR & Warfarin Management</h1>
+
+  <div class="info">
+    <h2>What is INR?</h2>
+    <p>The International Normalized Ratio (INR) is a lab measurement of how long it takes blood to form a clot.
+    It's used to monitor patients on warfarin (Coumadin). The usual target INR range is:</p>
+    <ul>
+      <li><strong>2.0–3.0</strong>: Atrial fibrillation, DVT, PE</li>
+      <li><strong>2.5–3.5</strong>: Mechanical heart valves</li>
+    </ul>
+  </div>
+
+  <div class="calculator">
+    <h2>INR Dose & Next Test Recommendation</h2>
+    <label for="currentDose">Current Warfarin Dose (mg/day):</label>
+    <input type="number" id="currentDose" placeholder="e.g. 5">
+
+    <label for="currentINR">Current INR Result:</label>
+    <input type="number" id="currentINR" step="0.1" placeholder="e.g. 2.5">
+
+    <div class="result" id="inrAdvice"></div>
+  </div>
+
+  <script>
+    const doseInput = document.getElementById('currentDose');
+    const inrInput = document.getElementById('currentINR');
+    const adviceOutput = document.getElementById('inrAdvice');
+
+    function calculateRecommendation() {
+      const dose = parseFloat(doseInput.value);
+      const inr = parseFloat(inrInput.value);
+
+      if (isNaN(dose) || isNaN(inr)) {
+        adviceOutput.textContent = '';
+        return;
+      }
+
+      let advice = '';
+
+      if (inr < 1.5) {
+        advice = "INR too low. Increase dose by 10-20%. Recheck INR in 3-5 days.";
+      } else if (inr >= 1.5 && inr < 2.0) {
+        advice = "INR below target. Slight dose increase may be needed. Recheck in 3-5 days.";
+      } else if (inr >= 2.0 && inr <= 3.0) {
+        advice = "INR is in target range. Maintain current dose. Recheck in 7-14 days.";
+      } else if (inr > 3.0 && inr <= 4.0) {
+        advice = "INR slightly high. Consider reducing dose by 5-10%. Recheck in 3-5 days.";
+      } else if (inr > 4.0 && inr <= 5.0) {
+        advice = "INR high. Hold 1 dose, reduce maintenance dose. Recheck in 2-3 days.";
+      } else {
+        advice = "INR very high! Hold warfarin. Consider vitamin K. Urgent review needed.";
+      }
+
+      adviceOutput.textContent = advice;
+    }
+
+    doseInput.addEventListener('input', calculateRecommendation);
+    inrInput.addEventListener('input', calculateRecommendation);
+  </script>
+
+</body>
+</html>

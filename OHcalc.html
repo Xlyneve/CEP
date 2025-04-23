@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drug Calculators</title>
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      padding: 40px;
+      background-color: #ffffff;
+      color: #000;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
+    .calculator {
+      margin-bottom: 40px;
+      padding: 20px;
+      border: 2px solid #ff6600;
+      border-radius: 10px;
+      background: #fff8f0;
+    }
+    .calculator.orange {
+      background: #ffe6cc;
+    }
+    .calculator.dark-orange {
+      background: #ffd9b3;
+    }
+    label, input {
+      display: block;
+      margin-bottom: 10px;
+    }
+    input[type="date"], input[type="number"] {
+      padding: 6px;
+      width: 200px;
+    }
+    .result {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .nav {
+      margin-bottom: 30px;
+    }
+    .nav a {
+      text-decoration: none;
+      margin-right: 15px;
+      background: #ff6600;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+    }
+    .nav a:hover {
+      background: #cc5200;
+    }
+    .note {
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="nav">
+    <a href="CEP.html">Home</a>
+  </div>
+
+  <h1>Drug Calculators</h1>
+
+  <!-- Paracetamol Dose Calculator (120 mg/5mL) -->
+  <div class="calculator orange">
+    <h2>Paracetamol Dosage Calculator (120 mg/5 mL)</h2>
+    <label for="paraWeight120">Weight (kg):</label>
+    <input type="number" id="paraWeight120">
+    <div class="result" id="paracetamolDose120">Dose: </div>
+  </div>
+
+  <!-- Paracetamol Dose Calculator (250 mg/5mL) -->
+  <div class="calculator dark-orange">
+    <h2>Paracetamol Dosage Calculator (250 mg/5 mL)</h2>
+    <label for="paraWeight250">Weight (kg):</label>
+    <input type="number" id="paraWeight250">
+    <div class="result" id="paracetamolDose250">Dose: </div>
+  </div>
+
+  <!-- Redipred Dose Calculator -->
+  <div class="calculator">
+    <h2>Redipred Dosage Calculator</h2>
+    <label for="weight">Weight (kg):</label>
+    <input type="number" id="weight">
+    <div class="result" id="redipredDose">Dose: </div>
+    <div class="note">* Redipred strength is 25 mg / 5 mL</div>
+  </div>
+
+  <!-- Ibuprofen Dose Calculator (100 mg/5 mL) -->
+  <div class="calculator">
+    <h2>Ibuprofen Dosage Calculator (100 mg/5 mL)</h2>
+    <label for="ibuWeight">Weight (kg):</label>
+    <input type="number" id="ibuWeight">
+    <div class="result" id="ibuprofenDose">Dose: </div>
+    <div class="note">* Typical dose: 10 mg/kg</div>
+  </div>
+
+  <script>
+    // Paracetamol 120 mg / 5 mL
+    const paraWeight120 = document.getElementById('paraWeight120');
+    const paracetamolDose120 = document.getElementById('paracetamolDose120');
+
+    paraWeight120.addEventListener('input', () => {
+      const wt = Number(paraWeight120.value);
+      const doseMg = wt * 15;
+      const strength = 120 / 5;
+      const volume = doseMg / strength;
+      if (wt > 0) {
+        paracetamolDose120.textContent =
+          `Dose: ${doseMg.toFixed(2)} mg = ${volume.toFixed(2)} mL (at 120 mg/5 mL)`;
+      } else {
+        paracetamolDose120.textContent = 'Dose:';
+      }
+    });
+
+    // Paracetamol 250 mg / 5 mL
+    const paraWeight250 = document.getElementById('paraWeight250');
+    const paracetamolDose250 = document.getElementById('paracetamolDose250');
+
+    paraWeight250.addEventListener('input', () => {
+      const wt = Number(paraWeight250.value);
+      const doseMg = wt * 15;
+      const strength = 250 / 5;
+      const volume = doseMg / strength;
+      if (wt > 0) {
+        paracetamolDose250.textContent =
+          `Dose: ${doseMg.toFixed(2)} mg = ${volume.toFixed(2)} mL (at 250 mg/5 mL)`;
+      } else {
+        paracetamolDose250.textContent = 'Dose:';
+      }
+    });
+
+    // Redipred Calculator (25 mg / 5 mL)
+    const weight = document.getElementById('weight');
+    const redipredDose = document.getElementById('redipredDose');
+
+    weight.addEventListener('input', () => {
+      const wt = Number(weight.value);
+      const strength = 25 / 5;
+      if (wt > 0) {
+        const doseMg = wt * 1;
+        const volume = doseMg / strength;
+        redipredDose.textContent =
+          `Dose: ${doseMg.toFixed(2)} mg = ${volume.toFixed(2)} mL (at 25 mg/5 mL)`;
+      } else {
+        redipredDose.textContent = 'Dose:';
+      }
+    });
+
+    // Ibuprofen Calculator (100 mg / 5 mL)
+    const ibuWeight = document.getElementById('ibuWeight');
+    const ibuprofenDose = document.getElementById('ibuprofenDose');
+
+    ibuWeight.addEventListener('input', () => {
+      const wt = Number(ibuWeight.value);
+      const doseMg = wt * 10;
+      const strength = 100 / 5;
+      const volume = doseMg / strength;
+      if (wt > 0) {
+        ibuprofenDose.textContent =
+          `Dose: ${doseMg.toFixed(2)} mg = ${volume.toFixed(2)} mL (at 100 mg/5 mL)`;
+      } else {
+        ibuprofenDose.textContent = 'Dose:';
+      }
+    });
+  </script>
+
+</body>
+</html>

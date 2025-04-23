@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drug & Age Calculators</title>
+  <style>
+    body {
+      font-family: Tahoma, sans-serif; font-size: 14px;
+      padding: 40px;
+      background-color: #ffffff;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
+    .calculator {
+      margin-bottom: 40px;
+      padding: 20px;
+      border: 1px solid #d5c8f2;
+      border-radius: 10px;
+      background: #ffffff;
+    }
+    label, input {
+      display: block;
+      margin-bottom: 10px;
+    }
+    input[type="date"], input[type="number"] {
+      padding: 6px;
+      width: 200px;
+    }
+    .result {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .nav {
+      margin-bottom: 30px;
+    }
+    .nav a {
+      text-decoration: none;
+      margin-right: 15px;
+      background: #c7b5e6;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+    }
+    .nav a:hover {
+      background: #b39ddb;
+    }
+    .note {
+      font-size: 0.9em;
+      color: #555;
+    }
+  
+    .calculator {
+      margin-bottom: 40px;
+      padding: 24px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid #d5c8f2;
+      box-shadow: 0 4px 12px rgba(200, 170, 255, 0.1);
+      transition: transform 0.2s ease;
+    }
+
+    .calculator:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(200, 170, 255, 0.2);
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input[type="date"], input[type="number"] {
+      padding: 10px;
+      width: 240px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #6a1b9a;
+    }
+
+
+    .tile-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px 0;
+    }
+
+    .calculator {
+      padding: 20px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid #d5c8f2;
+      box-shadow: 0 4px 12px rgba(200, 170, 255, 0.1);
+      transition: transform 0.2s ease;
+    }
+
+    .calculator:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(200, 170, 255, 0.2);
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-top: 0;
+      background: linear-gradient(90deg, #c20a56, #b39ddb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+
+    .calculator {
+      animation: fadeInUp 0.6s ease both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+</style>
+</head>
+<body>
+
+  <div class="nav">
+    <a href="CEP.html">Home</a>
+  </div>
+
+  <h1>Drug & Age Calculators</h1>
+<div class="tile-container">
+
+<div class="calculator">
+  <h2>Depo Calculator</h2>
+  <div style="display: flex; align-items: flex-start; flex-direction: column; gap: 10px; font-family: Tahoma, sans-serif;"><label for="lastGiven"><strong>LAST GIVEN</strong></label><input type="date" id="lastGiven" onchange="updateDates()" style="font-family: Tahoma, sans-serif;"><div style="margin-top: 10px;"><strong>RECALL IN (+70 days):</strong> <span id="recallIn">-</span></div><div><strong>DUE (+84 days):</strong> <span id="due">-</span></div></div>
+
+  <script>
+    function formatDate(date) {
+      const options = { day: '2-digit', month: 'long', year: 'numeric' };
+      return date.toLocaleDateString('en-GB', options);
+    }
+
+    function updateDates() {
+      const input = document.getElementById("lastGiven").value;
+      if (!input) return;
+
+      const givenDate = new Date(input);
+      const recallIn = new Date(givenDate);
+      recallIn.setDate(recallIn.getDate() + 70);
+
+      const due = new Date(givenDate);
+      due.setDate(due.getDate() + 84);
+
+      document.getElementById("recallIn").textContent = formatDate(recallIn);
+      document.getElementById("due").textContent = formatDate(due);
+    }
+  </script>
+</div>
+
+
+  <!-- Add Weeks Calculator -->
+  <div class="calculator">
+    <h2>Add Weeks to Date</h2>
+    <label for="baseDate">Start Date:</label>
+    <input type="date" id="baseDate" style="font-family: Tahoma, sans-serif;">
+    <label for="weeks">Weeks to Add:</label>
+    <input type="number" id="weeks" style="font-family: Tahoma, sans-serif;">
+    <div class="result" id="weeksResult">Result: </div>
+  </div>
+
+  
+
+  
+  <!-- Add 25 and 45 years Calculator -->
+  <div class="calculator">
+    <h2>DOB + 25 / 45 Years</h2>
+    <label for="dobPlus">Date of Birth:</label>
+    <input type="date" id="dobPlus" style="font-family: Tahoma, sans-serif;">
+    <div class="result" id="dob25">DOB + 25 Years: </div>
+    <div class="result" id="dob45">DOB + 45 Years: </div>
+  </div>
+
+  
+  <!-- Age in Years and Months Calculator -->
+  <div class="calculator">
+    <h2>Age in Years and Months</h2>
+    <label for="dobYM">Date of Birth:</label>
+    <input type="date" id="dobYM" style="font-family: Tahoma, sans-serif;">
+    <div class="result" id="ageYMResult">Age: </div>
+  </div>
+
+  <!-- Age Calculator -->
+  <div class="calculator">
+    <h2>Age Calculator</h2>
+    <label for="dob">Date of Birth:</label>
+    <input type="date" id="dob" style="font-family: Tahoma, sans-serif;">
+    <div class="result" id="ageResult">Age: </div>
+  </div>
+
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Age in Years and Months
+      const dobYM = document.getElementById('dobYM');
+      const ageYMResult = document.getElementById('ageYMResult');
+
+      if (dobYM) {
+        dobYM.addEventListener('change', () => {
+          const birthDate = new Date(dobYM.value);
+          const today = new Date();
+
+          let years = today.getFullYear() - birthDate.getFullYear();
+          let months = today.getMonth() - birthDate.getMonth();
+
+          if (today.getDate() < birthDate.getDate()) {
+            months--;
+          }
+
+          if (months < 0) {
+            years--;
+            months += 12;
+          }
+
+          ageYMResult.textContent = `Age: ${years} years and ${months} months`;
+        });
+      }
+
+      // Add Weeks Calculator
+      const baseDate = document.getElementById('baseDate');
+      const weeks = document.getElementById('weeks');
+      const weeksResult = document.getElementById('weeksResult');
+
+      function calculateWeeks() {
+        if (baseDate.value && weeks.value) {
+          const start = new Date(baseDate.value);
+          start.setDate(start.getDate() + Number(weeks.value) * 7);
+          const formatted = start.toLocaleDateString('en-GB', {
+            day: '2-digit', month: 'long', year: 'numeric'
+          });
+          weeksResult.textContent = 'Result: ' + formatted;
+        }
+      }
+
+      baseDate.addEventListener('change', calculateWeeks);
+      weeks.addEventListener('input', calculateWeeks);
+
+      // DOB +25 / +45 Years
+      const dobPlus = document.getElementById('dobPlus');
+      const dob25 = document.getElementById('dob25');
+      const dob45 = document.getElementById('dob45');
+
+      if (dobPlus) {
+        dobPlus.addEventListener('change', () => {
+          const date = new Date(dobPlus.value);
+          if (dobPlus.value) {
+            const plus25 = new Date(date);
+            plus25.setFullYear(plus25.getFullYear() + 25);
+            dob25.textContent = 'DOB + 25 Years: ' + plus25.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+            const plus45 = new Date(date);
+            plus45.setFullYear(plus45.getFullYear() + 45);
+            dob45.textContent = 'DOB + 45 Years: ' + plus45.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+          }
+        });
+      }
+
+      // Age Calculator
+      const dob = document.getElementById('dob');
+      const ageResult = document.getElementById('ageResult');
+
+      if (dob) {
+        dob.addEventListener('change', () => {
+          const birthDate = new Date(dob.value);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          ageResult.textContent = 'Age: ' + age + ' years';
+        });
+      }
+    });
+  </script>
+
+
+</div>
+</body>
+</html>

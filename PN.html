@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nurse Notes & Recalls</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Barlow', sans-serif;
+      font-size: 13px;
+      background-color: white;
+      color: #222;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid #ccc;
+      background-color: #f9f9f9;
+    }
+
+    .home-btn {
+      text-decoration: none;
+      color: #4B0082;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid #ccc;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background-color: #f0f0f0;
+      transition: background-color 0.2s;
+    }
+
+    .home-btn:hover {
+      background-color: #e2d6f3;
+    }
+
+    .page-container {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .left-side, .right-side {
+      width: 50%;
+    }
+
+    .nurse-section h2 {
+      color: #c20a56;
+    }
+
+    .nurse-section .add-btn {
+      background-color: #f8bbd0;
+      color: #c20a56;
+    }
+
+    .nurse-section .btn-group button:hover {
+      background-color: #fce4ec;
+    }
+
+    .recall-section h2 {
+      color: #6a1b9a;
+    }
+
+    .recall-section .add-btn {
+      background-color: #e1bee7;
+      color: #6a1b9a;
+    }
+
+    .recall-section .btn-group button:hover {
+      background-color: #f3e5f5;
+    }
+
+    .section {
+      flex: 1 1 400px;
+      max-width: 600px;
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      text-align: center;
+      color: #4B0082;
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input[type="url"], input[type="text"], textarea {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    textarea {
+      resize: vertical;
+      height: 60px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background-color 0.2s;
+    }
+
+    .add-btn {
+      background-color: #ede7f6;
+      color: #4B0082;
+    }
+
+    .note-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
+
+    .note-card {
+      background-color: #fafafa;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .note-card input, .note-card textarea {
+      width: 100%;
+      font-size: 13px;
+      padding: 6px;
+      margin: 5px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .title {
+      font-weight: bold;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .note {
+      color: #444;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: #777;
+      margin-top: auto;
+    }
+
+    .btn-group {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
+    .btn-group button {
+      margin-left: 5px;
+      background-color: #eee;
+    }
+
+    .btn-group button:hover {
+      background-color: #e2d6f3;
+    }
+
+    a {
+      color: #4B0082;
+      text-decoration: none;
+      word-break: break-word;
+      font-size: 13px;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .search-input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .highlight {
+      background-color: #fff9c4;
+    }
+
+    .highlight-word {
+      background-color: #ffff8d;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <a href="CEP.html" class="home-btn">← Home</a>
+  </div>
+
+  <div class="page-container">
+    <div class="left-side">
+      <div class="section nurse-section">
+        <h2>Nurse Notes</h2>
+        <input type="text" class="search-input" id="searchNurse" placeholder="Search Nurse Notes..." oninput="renderNotes('nurse')">
+        <div class="input-group">
+          <input type="text" id="nurseTitle" placeholder="Title" />
+          <input type="url" id="nurseUrl" placeholder="Enter URL (optional)" />
+          <textarea id="nurseNote" placeholder="Note..."></textarea>
+          <button class="add-btn" onclick="addNote('nurse')">Add</button>
+        </div>
+        <div class="note-list" id="nurseNotesList"></div>
+      </div>
+    </div>
+
+    <div class="right-side">
+      <div class="section recall-section">
+        <h2>Recalls</h2>
+        <input type="text" class="search-input" id="searchRecall" placeholder="Search Recalls..." oninput="renderNotes('recall')">
+        <div class="input-group">
+          <input type="text" id="recallTitle" placeholder="Title" />
+          <input type="url" id="recallUrl" placeholder="Enter URL (optional)" />
+          <textarea id="recallNote" placeholder="Note..."></textarea>
+          <button class="add-btn" onclick="addNote('recall')">Add</button>
+        </div>
+        <div class="note-list" id="recallNotesList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function safeParseNotes(key) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        return Array.isArray(data) ? data : [];
+      } catch (e) {
+        console.warn(`Failed to parse ${key}:`, e);
+        return [];
+      }
+    }
+
+    const noteData = {
+      nurse: safeParseNotes('nurseNotes'),
+      recall: safeParseNotes('recallNotes')
+    };
+
+    function save(type) {
+      localStorage.setItem(type + 'Notes', JSON.stringify(noteData[type]));
+    }
+
+    function addNote(type) {
+      const title = document.getElementById(`${type}Title`).value.trim();
+      const url = document.getElementById(`${type}Url`).value.trim();
+      const note = document.getElementById(`${type}Note`).value.trim();
+      if (!title && !note && !url) return;
+
+      noteData[type].unshift({
+        title: title || "Untitled",
+        url: url || "",
+        note,
+        time: new Date().toLocaleString(),
+        editing: false
+      });
+
+      document.getElementById(`${type}Title`).value = '';
+      document.getElementById(`${type}Url`).value = '';
+      document.getElementById(`${type}Note`).value = '';
+      save(type);
+      renderNotes(type);
+    }
+
+    function toggleEdit(type, index) {
+      if (!noteData[type][index].editing) {
+        noteData[type][index].editing = true;
+      } else {
+        const newTitle = document.getElementById(`${type}EditTitle${index}`).value.trim();
+        const newUrl = document.getElementById(`${type}EditUrl${index}`).value.trim();
+        const newNote = document.getElementById(`${type}EditNote${index}`).value.trim();
+        noteData[type][index] = {
+          title: newTitle || "Untitled",
+          url: newUrl || "",
+          note: newNote,
+          time: new Date().toLocaleString(),
+          editing: false
+        };
+      }
+      save(type);
+      renderNotes(type);
+    }
+
+    function deleteNote(type, index) {
+      if (confirm("Delete this note?")) {
+        noteData[type].splice(index, 1);
+        save(type);
+        renderNotes(type);
+      }
+    }
+
+    function renderNotes(type) {
+      const container = document.getElementById(type + "NotesList");
+      const search = document.getElementById("search" + capitalize(type)).value.toLowerCase();
+      container.innerHTML = "";
+
+      noteData[type].forEach((note, index) => {
+        const matchesSearch =
+          (note.title && note.title.toLowerCase().includes(search)) ||
+          (note.note && note.note.toLowerCase().includes(search)) ||
+          (note.url && note.url.toLowerCase().includes(search));
+
+        if (!matchesSearch) return;
+
+        const div = document.createElement("div");
+        div.className = "note-card";
+        div.innerHTML = note.editing ? `
+          <input type="text" id="${type}EditTitle${index}" value="${note.title}">
+          <input type="url" id="${type}EditUrl${index}" value="${note.url}">
+          <textarea id="${type}EditNote${index}" rows="3">${note.note}</textarea>
+          <div class="timestamp">${note.time}</div>
+          <div class="btn-group">
+            <button onclick="toggleEdit('${type}', ${index})">Save</button>
+            <button onclick="deleteNote('${type}', ${index})">Delete</button>
+          </div>
+        ` : `
+          <div class="title">${note.title}</div>
+          ${note.url ? `<a href="${note.url}" target="_blank">${note.url}</a>` : ''}
+          <div class="note">${applyHighlighting(note.note)}</div>
+          <div class="timestamp">Saved on ${note.time}</div>
+          <div class="btn-group">
+            <button onclick="toggleEdit('${type}', ${index})">Edit</button>
+            <button onclick="deleteNote('${type}', ${index})">Delete</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function applyHighlighting(text) {
+      text = text.replace(/\n/g, '<br>');
+      return text.replace(/\*\*(.*?)\*\*/g, '<span class="highlight-word">$1</span>');
+    }
+
+    renderNotes("nurse");
+    renderNotes("recall");
+  </script>
+</body>
+</html>

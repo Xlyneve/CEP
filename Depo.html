@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Depo Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Calligraffitti&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      background: url('white.jpg') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 40px;
+      color: #333;
+    }
+
+    h1 {
+      font-family: 'Calligraffitti', cursive;
+      margin-bottom: 20px;
+      color: #444;
+      font-size: 40px;
+    }
+
+    .back-button {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 10px 20px;
+      background-color: rgba(255, 255, 255, 0.7);
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      box-shadow: 1px 1px 5px rgba(0,0,0,0.05);
+    }
+
+    .back-button:hover {
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: rgba(255, 255, 255, 0.85);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+      border: 1px solid #e0e0e0;
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f5f5f5;
+      color: #555;
+    }
+
+    td {
+      background-color: #ffffff;
+    }
+
+    input[type="date"] {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <a class="back-button" href="cep.html">&larr; Back to Home</a>
+  <h1>Depo Calculator</h1>
+  <table>
+    <tr>
+      <th>LAST GIVEN</th>
+      <th>RECALL IN (+70 days)</th>
+      <th>DUE (+84 days)</th>
+    </tr>
+    <tr>
+      <td><input type="date" id="lastGiven" onchange="updateDates()"></td>
+      <td id="recallIn">-</td>
+      <td id="due">-</td>
+    </tr>
+  </table>
+
+  <script>
+    function formatDate(date) {
+      const options = { day: '2-digit', month: 'long', year: 'numeric' };
+      return date.toLocaleDateString('en-GB', options);
+    }
+
+    function updateDates() {
+      const input = document.getElementById("lastGiven").value;
+      if (!input) return;
+
+      const givenDate = new Date(input);
+      const recallIn = new Date(givenDate);
+      recallIn.setDate(recallIn.getDate() + 70);
+
+      const due = new Date(givenDate);
+      due.setDate(due.getDate() + 84);
+
+      document.getElementById("recallIn").textContent = formatDate(recallIn);
+      document.getElementById("due").textContent = formatDate(due);
+    }
+  </script>
+</body>
+</html>

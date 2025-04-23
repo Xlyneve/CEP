@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Explanation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Barlow', sans-serif;
+      font-size: 13px;
+      background-color: white;
+      color: #222;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 20px;
+      border-bottom: 1px solid #ddd;
+      background-color: #f9f9f9;
+    }
+
+    .home-btn {
+      text-decoration: none;
+      color: #441b4a;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid #ccc;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background-color: #f0f0f0;
+    }
+
+    .home-btn:hover {
+      background-color: #e8dce9;
+    }
+
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      width: auto;
+    }
+
+    .search-input {
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 12px;
+      width: 110px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      color: #441b4a;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"], textarea {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    textarea {
+      resize: vertical;
+      height: 60px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background-color 0.2s;
+    }
+
+    .add-btn {
+      background-color: #e4e0e2;
+      color: #7a6f77;
+    }
+
+    .note-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .note-card {
+      background-color: #fafafa;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .note-card input, .note-card textarea {
+      width: 100%;
+      font-size: 13px;
+      padding: 6px;
+      margin: 5px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .note-title {
+      font-weight: bold;
+      font-size: 14px;
+      color: #7a6f77;
+    }
+
+    .note-text {
+      color: #444;
+      margin-top: 8px;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: #777;
+      margin-top: 10px;
+    }
+
+    .btn-group {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-group button {
+      background-color: #eee;
+      color: #441b4a;
+    }
+
+    .btn-group button:hover {
+      background-color: #e8dce9;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <a href="CEP.html" class="home-btn">← Home</a>
+    <div class="search-wrapper">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search" oninput="renderNotes()" />
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>Explanation</h1>
+    <div class="input-group">
+      <input type="text" id="noteTitle" placeholder="Title" />
+      <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
+      <button class="add-btn" onclick="addNote()">Add Note</button>
+    </div>
+    <div class="note-list" id="notesContainer"></div>
+  </div>
+
+  <script>
+    let notes = JSON.parse(localStorage.getItem('explainNotes')) || [];
+
+    function saveNotes() {
+      localStorage.setItem('explainNotes', JSON.stringify(notes));
+    }
+
+    function addNote() {
+      const title = document.getElementById('noteTitle').value.trim();
+      const text = document.getElementById('noteText').value.trim();
+      if (!title && !text) return;
+
+      notes.unshift({
+        title: title || "Untitled",
+        text,
+        timestamp: new Date().toLocaleString(),
+        editing: false
+      });
+
+      document.getElementById('noteTitle').value = '';
+      document.getElementById('noteText').value = '';
+      saveNotes();
+      renderNotes();
+    }
+
+    function toggleEdit(index) {
+      notes[index].editing = !notes[index].editing;
+      renderNotes();
+    }
+
+    function saveEdit(index) {
+      const newTitle = document.getElementById(`editTitle${index}`).value.trim();
+      const newText = document.getElementById(`editText${index}`).value.trim();
+      if (!newTitle && !newText) return;
+      notes[index] = {
+        title: newTitle || "Untitled",
+        text: newText,
+        timestamp: new Date().toLocaleString(),
+        editing: false
+      };
+      saveNotes();
+      renderNotes();
+    }
+
+    function deleteNote(index) {
+      if (confirm("Delete this note?")) {
+        notes.splice(index, 1);
+        saveNotes();
+        renderNotes();
+      }
+    }
+
+    function copyToClipboard(index) {
+      const note = notes[index];
+      const text = note.editing
+        ? document.getElementById(`editText${index}`).value
+        : note.text;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Note copied to clipboard!");
+      });
+    }
+
+    function renderNotes() {
+      const container = document.getElementById('notesContainer');
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      container.innerHTML = '';
+
+      notes
+        .filter(note =>
+          note.title.toLowerCase().includes(search) ||
+          note.text.toLowerCase().includes(search)
+        )
+        .forEach((note, index) => {
+          const div = document.createElement('div');
+          div.className = 'note-card';
+          if (note.editing) {
+            div.innerHTML = `
+              <input type="text" id="editTitle${index}" value="${note.title}">
+              <textarea id="editText${index}" rows="3">${note.text}</textarea>
+              <div class="timestamp">Last updated: ${note.timestamp}</div>
+              <div class="btn-group">
+                <button onclick="saveEdit(${index})">Save</button>
+                <button onclick="deleteNote(${index})">Delete</button>
+                <button onclick="copyToClipboard(${index})">Copy</button>
+              </div>
+            `;
+          } else {
+            div.innerHTML = `
+              <div class="note-title">${note.title}</div>
+              <div class="note-text">${note.text}</div>
+              <div class="timestamp">Saved on ${note.timestamp}</div>
+              <div class="btn-group">
+                <button onclick="toggleEdit(${index})">Edit</button>
+                <button onclick="deleteNote(${index})">Delete</button>
+                <button onclick="copyToClipboard(${index})">Copy</button>
+              </div>
+            `;
+          }
+          container.appendChild(div);
+        });
+    }
+
+    renderNotes();
+  </script>
+</body>
+</html>
