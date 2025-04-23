@@ -126,7 +126,7 @@
 </head>
 <body>
   <header>
-    <button onclick="goHome()">Home</button>
+    <a href="index.html"><button>Home</button></a>
     <h1 style="font-size: 50pt; margin: 0 auto; color: #000; font-family: 'Poppins', sans-serif; font-weight: 300; animation: fadeIn 1s ease-in-out; text-align: center; flex-grow: 1;">Hand / Wrist</h1>
     <input type="text" id="searchInput" oninput="searchNote()" placeholder="Search">
   </header>
@@ -143,9 +143,6 @@
     <img id="modalImage" src="" alt="Zoomed">
   </div>
   <script>
-    function goHome() {
-      window.location.href = 'index.html';
-    }
     function previewImage(event) {
       const reader = new FileReader();
       reader.onload = function () {
@@ -153,31 +150,37 @@
       };
       reader.readAsDataURL(event.target.files[0]);
     }
+
     function showModal(src) {
       document.getElementById("modalImage").src = src;
       document.getElementById("imageModal").classList.add("show");
     }
+
     function closeModal() {
       document.getElementById("imageModal").classList.remove("show");
     }
+
     function saveNote() {
       const title = document.getElementById("title").value;
       const rawNotes = document.getElementById("notes").value;
       const image = sessionStorage.getItem("handImage") || "";
       let notes = JSON.parse(localStorage.getItem("handNotes") || "[]");
       const editIndex = sessionStorage.getItem("editIndex");
+
       if (editIndex !== null) {
         notes[parseInt(editIndex)] = { title, rawNotes, image };
         sessionStorage.removeItem("editIndex");
       } else {
         notes.push({ title, rawNotes, image });
       }
+
       localStorage.setItem("handNotes", JSON.stringify(notes));
       document.getElementById("title").value = "";
       document.getElementById("notes").value = "";
       sessionStorage.removeItem("handImage");
       displayNotes();
     }
+
     function displayNotes() {
       const container = document.getElementById("notesContainer");
       container.innerHTML = "";
@@ -185,15 +188,19 @@
       notes.forEach((note, index) => {
         const tile = document.createElement("div");
         tile.className = "tile";
+
         const titleEl = document.createElement("h4");
         titleEl.innerText = note.title;
+
         const noteEl = document.createElement("p");
         noteEl.innerHTML = note.rawNotes
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/==(.+?)==/g, '<mark>$1</mark>');
+
         const imgEl = document.createElement("img");
         imgEl.src = note.image;
         imgEl.onclick = () => showModal(note.image);
+
         const editBtn = document.createElement("button");
         editBtn.className = "edit-btn";
         editBtn.innerText = "Edit";
@@ -203,6 +210,7 @@
           sessionStorage.setItem("handImage", note.image);
           sessionStorage.setItem("editIndex", index);
         };
+
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-btn";
         deleteBtn.innerText = "Delete";
@@ -211,6 +219,7 @@
           localStorage.setItem("handNotes", JSON.stringify(updatedNotes));
           displayNotes();
         };
+
         tile.appendChild(titleEl);
         tile.appendChild(noteEl);
         if (note.image) tile.appendChild(imgEl);
@@ -219,6 +228,7 @@
         container.appendChild(tile);
       });
     }
+
     function searchNote() {
       const keyword = document.getElementById("searchInput").value.toLowerCase();
       const notes = JSON.parse(localStorage.getItem("handNotes") || "[]");
@@ -228,18 +238,23 @@
       );
       const container = document.getElementById("notesContainer");
       container.innerHTML = "";
+
       filtered.forEach((note, index) => {
         const tile = document.createElement("div");
         tile.className = "tile";
+
         const titleEl = document.createElement("h4");
         titleEl.innerText = note.title;
+
         const noteEl = document.createElement("p");
         noteEl.innerHTML = note.rawNotes
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/==(.+?)==/g, '<mark>$1</mark>');
+
         const imgEl = document.createElement("img");
         imgEl.src = note.image;
         imgEl.onclick = () => showModal(note.image);
+
         const editBtn = document.createElement("button");
         editBtn.className = "edit-btn";
         editBtn.innerText = "Edit";
@@ -249,6 +264,7 @@
           sessionStorage.setItem("handImage", note.image);
           sessionStorage.setItem("editIndex", index);
         };
+
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-btn";
         deleteBtn.innerText = "Delete";
@@ -257,6 +273,7 @@
           localStorage.setItem("handNotes", JSON.stringify(updatedNotes));
           displayNotes();
         };
+
         tile.appendChild(titleEl);
         tile.appendChild(noteEl);
         if (note.image) tile.appendChild(imgEl);
@@ -265,8 +282,8 @@
         container.appendChild(tile);
       });
     }
+
     window.onload = displayNotes;
   </script>
 </body>
 </html>
-
