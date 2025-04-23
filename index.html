@@ -1,90 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xlyn - Calendar and Notes</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xlyn Dashboard</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-    .calendar-cell { border: 1px solid #ccc; padding: 10px; cursor: pointer; text-align: center; }
-    #calendar-notes { margin-top: 20px; }
-    #notes-editor { border: 1px solid #ccc; padding: 8px; min-height: 100px; }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f4f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      margin: 20px;
+      font-size: 2rem;
+    }
+    #calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      max-width: 700px;
+    }
+    .day {
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      cursor: pointer;
+    }
+    .day:hover {
+      background: #dbeafe;
+    }
+    .selected {
+      background-color: #3b82f6;
+      color: white;
+    }
+    #noteBox {
+      margin-top: 20px;
+      max-width: 700px;
+      width: 100%;
+      display: none;
+      flex-direction: column;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      resize: none;
+    }
+    #todoList {
+      margin-top: 10px;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .todo-item input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    #newTodo {
+      margin-top: 10px;
+      display: flex;
+    }
+    #newTodo input {
+      flex-grow: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    #addTodoBtn {
+      padding: 8px 12px;
+      margin-left: 10px;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>Xlyn - Calendar and Notes</h1>
-
+  <h1>Xlyn Calendar</h1>
   <div id="calendar"></div>
 
-  <div id="calendar-notes">
-    <h3>Notes for <span id="selected-date">[Select a date]</span></h3>
-    <div id="notes-editor" contenteditable="true"></div>
-    <button id="save-note-btn">Save Note</button>
+  <div id="noteBox">
+    <h3 id="noteTitle"></h3>
+    <textarea id="noteInput" placeholder="Write your notes here..."></textarea>
+    <div id="todoList"></div>
+    <div id="newTodo">
+      <input type="text" id="todoInput" placeholder="New task...">
+      <button id="addTodoBtn">Add</button>
+    </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
   <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
       projectId: "YOUR_PROJECT_ID",
       storageBucket: "YOUR_PROJECT_ID.appspot.com",
       messagingSenderId: "YOUR_SENDER_ID",
       appId: "YOUR_APP_ID"
     };
-
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const notesRef = db.ref("calendarNotes");
+    const db = firebase.firestore();
 
-    let currentSelectedDate = null;
+    const calendar = document.getElementById("calendar");
+    const noteBox = document.getElementById("noteBox");
+    const noteInput = document.getElementById("noteInput");
+    const noteTitle = document.getElementById("noteTitle");
+    const todoList = document.getElementById("todoList");
+    const todoInput = document.getElementById("todoInput");
+    const addTodoBtn = document.getElementById("addTodoBtn");
 
-    function loadNoteForDate(date) {
-      currentSelectedDate = date;
-      document.getElementById("selected-date").textContent = date;
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      notesRef.child(date).once("value", (snapshot) => {
-        const noteContent = snapshot.val() || "";
-        document.getElementById("notes-editor").innerHTML = noteContent;
+    let selectedDay = null;
+    let dateKey = "";
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayEl = document.createElement("div");
+      dayEl.className = "day";
+      dayEl.textContent = day;
+      dayEl.addEventListener("click", () => selectDate(day));
+      calendar.appendChild(dayEl);
+    }
+
+    async function selectDate(day) {
+      if (selectedDay) selectedDay.classList.remove("selected");
+      selectedDay = calendar.children[day - 1];
+      selectedDay.classList.add("selected");
+
+      dateKey = `${year}-${month + 1}-${day}`;
+      noteTitle.textContent = `Notes for ${dateKey}`;
+      noteBox.style.display = "flex";
+
+      const noteDoc = await db.collection("calendarNotes").doc(dateKey).get();
+      noteInput.value = noteDoc.exists ? noteDoc.data().text : "";
+
+      noteInput.oninput = async () => {
+        await db.collection("calendarNotes").doc(dateKey).set({ text: noteInput.value }, { merge: true });
+      };
+
+      loadTodos();
+    }
+
+    async function loadTodos() {
+      todoList.innerHTML = "";
+      const todosSnap = await db.collection("calendarTodos").doc(dateKey).get();
+      const todos = todosSnap.exists ? todosSnap.data().items || [] : [];
+
+      todos.forEach((todo, idx) => {
+        const div = document.createElement("div");
+        div.className = "todo-item";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = todo.done;
+        checkbox.onchange = () => updateTodo(idx, checkbox.checked);
+
+        const span = document.createElement("span");
+        span.textContent = todo.text;
+
+        div.appendChild(checkbox);
+        div.appendChild(span);
+        todoList.appendChild(div);
       });
     }
 
-    function saveNoteForDate() {
-      if (!currentSelectedDate) return;
-      const noteContent = document.getElementById("notes-editor").innerHTML;
-      notesRef.child(currentSelectedDate).set(noteContent);
+    addTodoBtn.onclick = async () => {
+      if (!todoInput.value.trim()) return;
+
+      const docRef = db.collection("calendarTodos").doc(dateKey);
+      const doc = await docRef.get();
+      const items = doc.exists ? doc.data().items || [] : [];
+      items.push({ text: todoInput.value.trim(), done: false });
+      await docRef.set({ items }, { merge: true });
+
+      todoInput.value = "";
+      loadTodos();
+    };
+
+    async function updateTodo(index, done) {
+      const docRef = db.collection("calendarTodos").doc(dateKey);
+      const doc = await docRef.get();
+      const items = doc.exists ? doc.data().items || [] : [];
+      items[index].done = done;
+      await docRef.set({ items }, { merge: true });
     }
-
-    document.getElementById("save-note-btn").addEventListener("click", saveNoteForDate);
-
-    // Simple Calendar Generator (April 2025)
-    function generateCalendar() {
-      const calendar = document.getElementById("calendar");
-      calendar.innerHTML = "";
-      const year = 2025;
-      const month = 3; // April (0-indexed)
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const cell = document.createElement("div");
-        cell.className = "calendar-cell";
-        cell.textContent = day;
-
-        cell.addEventListener("click", () => {
-          const selectedDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          loadNoteForDate(selectedDate);
-        });
-
-        calendar.appendChild(cell);
-      }
-    }
-
-    generateCalendar();
   </script>
 </body>
 </html>
