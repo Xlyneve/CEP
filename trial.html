@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Abdominis Anatomy Notes</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -108,6 +108,23 @@
     .modal.show {
       display: flex;
     }
+    .tile button {
+      margin-top: 0.5rem;
+      font-size: 7pt;
+      padding: 0.3rem 0.6rem;
+      margin-right: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+    }
+    .edit-btn {
+      background-color: #b0ad74;
+      color: white;
+    }
+    .delete-btn {
+      background-color: #d9534f;
+      color: white;
+    }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(-20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -115,6 +132,7 @@
   </style>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js"></script>
 </head>
 <body>
   <header>
@@ -125,7 +143,8 @@
 
   <div class="main">
     <div class="form-tile">
-      <input type="text" id="imageUrl" placeholder="Enter image URL">
+      <input type="text" id="imageUrl" placeholder="Image URL">
+      <div class="status-text" id="imageStatus"></div>
       <input type="text" id="title" placeholder="Title">
       <textarea id="notes" placeholder="Write your notes (use ** for bold, == for highlight)"></textarea>
       <button class="save" onclick="saveNote()">Save</button>
@@ -160,6 +179,9 @@
         return;
       }
 
+      document.getElementById("imageStatus").textContent = "Saving note...";
+      document.querySelector(".save").disabled = true;
+
       try {
         await db.collection("abdominisNotes").add({
           title,
@@ -171,12 +193,29 @@
         document.getElementById("title").value = "";
         document.getElementById("notes").value = "";
         document.getElementById("imageUrl").value = "";
+        document.getElementById("imageStatus").textContent = "Saved!";
+        document.querySelector(".save").disabled = false;
 
         displayNotes();
       } catch (error) {
         console.error("Error saving note:", error);
-        alert("Error saving note");
+        document.getElementById("imageStatus").textContent = "Error saving note";
+        document.querySelector(".save").disabled = false;
       }
+    }
+
+    async function deleteNote(id) {
+      if (confirm("Delete this note?")) {
+        await db.collection("abdominisNotes").doc(id).delete();
+        displayNotes();
+      }
+    }
+
+    function editNote(id, title, rawNotes, image) {
+      document.getElementById("title").value = title;
+      document.getElementById("notes").value = rawNotes;
+      document.getElementById("imageUrl").value = image;
+      deleteNote(id);
     }
 
     async function displayNotes() {
@@ -206,6 +245,19 @@
           imgEl.onclick = () => showModal(note.image);
           tile.appendChild(imgEl);
         }
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit-btn";
+        editBtn.innerText = "Edit";
+        editBtn.onclick = () => editNote(doc.id, note.title, note.rawNotes, note.image);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-btn";
+        deleteBtn.innerText = "Delete";
+        deleteBtn.onclick = () => deleteNote(doc.id);
+
+        tile.appendChild(editBtn);
+        tile.appendChild(deleteBtn);
 
         container.appendChild(tile);
       });
