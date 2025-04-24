@@ -7,7 +7,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import {
-      getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc
+      getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -105,14 +105,48 @@
       function renderTodoItem(id, text, done) {
         const item = document.createElement('div');
         item.className = 'todo-item';
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = done;
         checkbox.addEventListener('change', () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked }));
         item.appendChild(checkbox);
-        const span = document.createElement('span');
-        span.textContent = text;
-        item.appendChild(span);
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = text;
+        input.disabled = true;
+        input.style.flex = '1';
+        input.style.border = 'none';
+        input.style.background = 'transparent';
+        input.style.marginRight = '5px';
+        item.appendChild(input);
+
+        const editButton = document.createElement('button');
+        editButton.textContent = '✏️';
+        editButton.style.marginRight = '5px';
+        editButton.addEventListener('click', async () => {
+          if (input.disabled) {
+            input.disabled = false;
+            input.focus();
+            editButton.textContent = '💾';
+          } else {
+            await updateDoc(doc(db, 'todos', id), { text: input.value });
+            input.disabled = true;
+            editButton.textContent = '✏️';
+          }
+        });
+        item.appendChild(editButton);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = '🗑️';
+        deleteButton.addEventListener('click', async () => {
+          if (confirm('Delete this to-do item?')) {
+            await deleteDoc(doc(db, 'todos', id));
+          }
+        });
+        item.appendChild(deleteButton);
+
         todoListEl.appendChild(item);
       }
 
