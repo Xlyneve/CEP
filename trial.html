@@ -89,11 +89,6 @@
       border-radius: 8px;
       cursor: pointer;
     }
-    .tile button {
-      font-size: 7pt;
-      margin-top: 5px;
-      margin-right: 5px;
-    }
     .modal {
       display: none;
       position: fixed;
@@ -121,29 +116,6 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
-</head>
-<body>
-  <header>
-    <button onclick="location.href='index.html'">Home</button>
-    <h1 style="font-size: 50pt; margin: 0 auto; color: #000; font-family: 'Poppins', sans-serif; font-weight: 300; animation: fadeIn 1s ease-in-out; text-align: center; flex-grow: 1;">Abdominis</h1>
-    <input type="text" id="searchInput" oninput="searchNote()" placeholder="Search">
-  </header>
-
-  <div class="main">
-    <div class="form-tile">
-      <input type="text" id="imageURL" placeholder="Paste image URL here">
-      <div class="status-text" id="imageStatus"></div>
-      <input type="text" id="title" placeholder="Title">
-      <textarea id="notes" placeholder="Write your notes (use ** for bold, == for highlight)"></textarea>
-      <button class="save" onclick="saveNote()">Save</button>
-    </div>
-    <div class="notes-container" id="notesContainer"></div>
-  </div>
-
-  <div id="imageModal" class="modal" onclick="closeModal()">
-    <img id="modalImage" src="" alt="Zoomed">
-  </div>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
@@ -160,14 +132,15 @@
     async function saveNote() {
       const title = document.getElementById("title").value.trim();
       const rawNotes = document.getElementById("notes").value.trim();
-      const imageUrl = document.getElementById("imageURL").value.trim();
-
-      alert("Starting save...");
+      const imageUrl = document.getElementById("imageUrl").value.trim();
 
       if (!title && !rawNotes && !imageUrl) {
-        alert("Please enter title, notes or image URL.");
+        alert("Please enter a title, note, or image URL.");
         return;
       }
+
+      document.getElementById("imageStatus").textContent = "Saving note...";
+      document.querySelector(".save").disabled = true;
 
       try {
         await db.collection("abdominisNotes").add({
@@ -177,14 +150,17 @@
           created: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        alert("Note saved!");
         document.getElementById("title").value = "";
         document.getElementById("notes").value = "";
-        document.getElementById("imageURL").value = "";
+        document.getElementById("imageUrl").value = "";
+        document.getElementById("imageStatus").textContent = "Saved!";
+        document.querySelector(".save").disabled = false;
 
         displayNotes();
-      } catch (err) {
-        alert("Error saving note: " + err.message);
+      } catch (error) {
+        console.error("Error saving note:", error);
+        document.getElementById("imageStatus").textContent = "Error saving note";
+        document.querySelector(".save").disabled = false;
       }
     }
 
@@ -195,8 +171,6 @@
       const snapshot = await db.collection("abdominisNotes").orderBy("created", "desc").get();
       snapshot.forEach(doc => {
         const note = doc.data();
-        const id = doc.id;
-
         const tile = document.createElement("div");
         tile.className = "tile";
 
@@ -218,36 +192,6 @@
           tile.appendChild(imgEl);
         }
 
-        const delBtn = document.createElement("button");
-        delBtn.innerText = "Delete";
-        delBtn.onclick = async () => {
-          await db.collection("abdominisNotes").doc(id).delete();
-          displayNotes();
-        };
-
-        const editBtn = document.createElement("button");
-        editBtn.innerText = "Edit";
-        editBtn.onclick = () => {
-          document.getElementById("title").value = note.title;
-          document.getElementById("notes").value = note.rawNotes;
-          document.getElementById("imageURL").value = note.image || "";
-          document.querySelector(".save").onclick = async () => {
-            await db.collection("abdominisNotes").doc(id).set({
-              title: document.getElementById("title").value.trim(),
-              rawNotes: document.getElementById("notes").value.trim(),
-              image: document.getElementById("imageURL").value.trim(),
-              created: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            displayNotes();
-            document.getElementById("title").value = "";
-            document.getElementById("notes").value = "";
-            document.getElementById("imageURL").value = "";
-            document.querySelector(".save").onclick = saveNote;
-          };
-        };
-
-        tile.appendChild(editBtn);
-        tile.appendChild(delBtn);
         container.appendChild(tile);
       });
     }
@@ -264,6 +208,7 @@
     function searchNote() {
       const keyword = document.getElementById("searchInput").value.toLowerCase();
       const allTiles = document.querySelectorAll(".tile");
+
       allTiles.forEach(tile => {
         const title = tile.querySelector("h4").innerText.toLowerCase();
         const noteText = tile.querySelector("p").innerText.toLowerCase();
@@ -273,5 +218,27 @@
 
     window.onload = displayNotes;
   </script>
+</head>
+<body>
+  <header>
+    <button onclick="location.href='index.html'">Home</button>
+    <h1 style="font-size: 50pt; margin: 0 auto; color: #000; font-family: 'Poppins', sans-serif; font-weight: 300; animation: fadeIn 1s ease-in-out; text-align: center; flex-grow: 1;">Abdominis</h1>
+    <input type="text" id="searchInput" oninput="searchNote()" placeholder="Search">
+  </header>
+
+  <div class="main">
+    <div class="form-tile">
+      <input type="text" id="imageUrl" placeholder="Paste image URL">
+      <div class="status-text" id="imageStatus"></div>
+      <input type="text" id="title" placeholder="Title">
+      <textarea id="notes" placeholder="Write your notes (use ** for bold, == for highlight)"></textarea>
+      <button class="save" onclick="saveNote()">Save</button>
+    </div>
+    <div class="notes-container" id="notesContainer"></div>
+  </div>
+
+  <div id="imageModal" class="modal" onclick="closeModal()">
+    <img id="modalImage" src="" alt="Zoomed">
+  </div>
 </body>
 </html>
