@@ -1,211 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Abdominis Anatomy Notes</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 8pt;
-      background-color: #fff;
-      color: #000;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    header button {
-      background-color: #b0ad74;
-      color: white;
-      border: none;
-      padding: 0.3rem 0.8rem;
-      border-radius: 5px;
-      font-size: 8pt;
-      cursor: pointer;
-    }
-    #searchInput {
-      font-size: 8pt;
-      padding: 0.3rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      width: 120px;
-    }
-    .main {
-      display: flex;
-      padding: 1rem;
-      gap: 1rem;
-    }
-    .form-tile, .tile {
-      width: 260px;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 1rem;
-    }
-    .form-tile {
-      width: 300px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    input[type="text"], textarea, input[type="file"] {
-      font-size: 8pt;
-      width: 100%;
-      margin-bottom: 0.5rem;
-      padding: 0.4rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .status-text {
-      font-size: 7pt;
-      color: green;
-      margin-bottom: 0.5rem;
-    }
-    button.save {
-      background-color: #b0ad74;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 0.5rem 1rem;
-      font-size: 8pt;
-      cursor: pointer;
-    }
-    .notes-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .tile img {
-      max-width: 100%;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal img {
-      max-width: 90%;
-      max-height: 90%;
-    }
-    .modal.show {
-      display: flex;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js"></script>
-</head>
-<body>
-  <header>
-    <button onclick="location.href='index.html'">Home</button>
-    <h1 style="font-size: 50pt; margin: 0 auto; color: #000; font-family: 'Poppins', sans-serif; font-weight: 300; animation: fadeIn 1s ease-in-out; text-align: center; flex-grow: 1;">Abdominis</h1>
-    <input type="text" id="searchInput" oninput="searchNote()" placeholder="Search">
-  </header>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
 
-  <div class="main">
-    <div class="form-tile">
-      <input type="file" id="imageUpload" accept="image/*">
-      <div class="status-text" id="imageStatus"></div>
-      <input type="text" id="title" placeholder="Title">
-      <textarea id="notes" placeholder="Write your notes (use ** for bold, == for highlight)"></textarea>
-      <button class="save" onclick="saveNote()">Save</button>
-    </div>
-    <div class="notes-container" id="notesContainer"></div>
-  </div>
-
-  <div id="imageModal" class="modal" onclick="closeModal()">
-    <img id="modalImage" src="" alt="Zoomed">
-  </div>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
-
+  // Initialize Firebase
+  if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+  } else {
+    firebase.app(); // If already initialized, use that one
+  }
+  const db = firebase.firestore();
+  const storage = firebase.storage();
 
-    async function saveNote() {
-      const title = document.getElementById("title").value.trim();
-      const rawNotes = document.getElementById("notes").value.trim();
-      const file = document.getElementById("imageUpload").files[0];
+  async function saveNote() {
+    const title = document.getElementById("title").value.trim();
+    const rawNotes = document.getElementById("notes").value.trim();
+    const file = document.getElementById("imageUpload").files[0];
 
-      console.log("Saving note:", { title, rawNotes, file });
-
-      if (!title && !rawNotes && !file) {
-        alert("Please enter a title, note, or upload an image.");
-        return;
-      }
-
-      document.getElementById("imageStatus").textContent = "Saving note...";
-      document.querySelector(".save").disabled = true;
-
-      let imageUrl = "";
-
-      try {
-        if (file) {
-          const storageRef = storage.ref().child("abdominis/" + Date.now() + "_" + file.name);
-          const snapshot = await storageRef.put(file);
-          imageUrl = await snapshot.ref.getDownloadURL();
-          console.log("Image uploaded:", imageUrl);
-        }
-
-        await db.collection("abdominisNotes").add({
-          title,
-          rawNotes,
-          image: imageUrl,
-          created: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        console.log("Note saved to Firestore");
-
-        document.getElementById("title").value = "";
-        document.getElementById("notes").value = "";
-        document.getElementById("imageUpload").value = "";
-        document.getElementById("imageStatus").textContent = "Saved!";
-        document.querySelector(".save").disabled = false;
-
-        displayNotes();
-      } catch (error) {
-        console.error("Error saving note:", error);
-        document.getElementById("imageStatus").textContent = "Error saving note";
-        document.querySelector(".save").disabled = false;
-      }
+    // Check if all inputs are empty
+    if (!title && !rawNotes && !file) {
+      alert("Please enter a title, note, or upload an image.");
+      return;
     }
 
-    async function displayNotes() {
-      const container = document.getElementById("notesContainer");
-      container.innerHTML = "";
+    // Show saving status
+    const statusElement = document.getElementById("imageStatus");
+    statusElement.textContent = "Saving note...";
+    const saveButton = document.querySelector(".save");
+    saveButton.disabled = true;
 
+    let imageUrl = "";
+
+    try {
+      // If a file is provided, upload it to Firebase Storage
+      if (file) {
+        const storageRef = storage.ref().child(`abdominis/${Date.now()}_${file.name}`);
+        const snapshot = await storageRef.put(file);
+        imageUrl = await snapshot.ref.getDownloadURL();
+        console.log("Image uploaded successfully:", imageUrl);
+      }
+
+      // Save note to Firestore
+      await db.collection("abdominisNotes").add({
+        title: title || "Untitled", // Default title if empty
+        rawNotes: rawNotes || "No content", // Default content if empty
+        image: imageUrl,
+        created: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Reset form inputs
+      document.getElementById("title").value = "";
+      document.getElementById("notes").value = "";
+      document.getElementById("imageUpload").value = "";
+      statusElement.textContent = "Note saved successfully!";
+      saveButton.disabled = false;
+
+      // Refresh notes display
+      displayNotes();
+    } catch (error) {
+      console.error("Error saving note:", error);
+      statusElement.textContent = `Error: ${error.message}`;
+      saveButton.disabled = false;
+    }
+  }
+
+  async function displayNotes() {
+    const container = document.getElementById("notesContainer");
+    container.innerHTML = ""; // Clear previous notes
+
+    try {
       const snapshot = await db.collection("abdominisNotes").orderBy("created", "desc").get();
       snapshot.forEach(doc => {
         const note = doc.data();
@@ -232,29 +100,33 @@
 
         container.appendChild(tile);
       });
+    } catch (error) {
+      console.error("Error displaying notes:", error);
     }
+  }
 
-    function showModal(src) {
-      document.getElementById("modalImage").src = src;
-      document.getElementById("imageModal").classList.add("show");
-    }
+  function showModal(src) {
+    const modalImage = document.getElementById("modalImage");
+    const imageModal = document.getElementById("imageModal");
+    modalImage.src = src;
+    imageModal.classList.add("show");
+  }
 
-    function closeModal() {
-      document.getElementById("imageModal").classList.remove("show");
-    }
+  function closeModal() {
+    const imageModal = document.getElementById("imageModal");
+    imageModal.classList.remove("show");
+  }
 
-    function searchNote() {
-      const keyword = document.getElementById("searchInput").value.toLowerCase();
-      const allTiles = document.querySelectorAll(".tile");
+  function searchNote() {
+    const keyword = document.getElementById("searchInput").value.toLowerCase();
+    const allTiles = document.querySelectorAll(".tile");
 
-      allTiles.forEach(tile => {
-        const title = tile.querySelector("h4").innerText.toLowerCase();
-        const noteText = tile.querySelector("p").innerText.toLowerCase();
-        tile.style.display = title.includes(keyword) || noteText.includes(keyword) ? "block" : "none";
-      });
-    }
+    allTiles.forEach(tile => {
+      const title = tile.querySelector("h4").innerText.toLowerCase();
+      const noteText = tile.querySelector("p").innerText.toLowerCase();
+      tile.style.display = title.includes(keyword) || noteText.includes(keyword) ? "block" : "none";
+    });
+  }
 
-    window.onload = displayNotes;
-  </script>
-</body>
-</html>
+  window.onload = displayNotes;
+</script>
