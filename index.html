@@ -1,409 +1,74 @@
+import React from "react";
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Xlyn</title>
-  <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
-  <style>
-    .fade-in {
-      animation: fadeIn 0.3s ease-in-out;
-    }
+export default function VaccineInfoPage() {
+  return (
+    <div className="p-6 bg-gradient-to-br from-pink-100 via-cyan-100 to-green-100 min-h-screen font-sans">
+      <h1 className="text-3xl font-bold text-center text-purple-800 mb-6">
+        💉 Vaccine Information
+      </h1>
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white shadow-md border border-gray-200">
+          <thead className="bg-purple-200 text-purple-900">
+            <tr>
+              <th className="px-4 py-2 text-left">Code</th>
+              <th className="px-4 py-2 text-left">Name</th>
+              <th className="px-4 py-2 text-left">Cost</th>
+              <th className="px-4 py-2 text-left">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ["INJ12", "Havrix Jr", "$65", "Hep A Jr"],
+              ["INJ37", "Japanese Encephalitis", "$235", "Japanese Encephalitis"],
+              ["INJ18", "Vivaxim", "$200", "Hep A + Typhoid"],
+              ["INJ36", "Rabies", "$205", "Rabies"],
+              ["INJ17", "Typhim Vi", "$95", "Typhoid"],
+              ["INJ32", "Nimenrix/ MenQuadfi Inj30", "$150", "Meningitis C"],
+              ["INJ19", "Polio", "$100", "Polio"],
+              ["INJ14", "Twinrix", "$90", "Hep A + B"],
+              ["INJ15", "Havrix", "$110", ""],
+              ["INJ16", "Engerix B", "$45", ""],
+              ["INJ22", "Prevenar", "$210", ""],
+              ["INJ23", "Pneumovax 23", "$65", ""],
+              ["INJ21", "Boostrix", "$55", ""],
+              ["INJ24", "Gardasil", "$250", ""],
+              ["INJ40", "Shingrix", "$400", ""],
+              ["INJ27", "Dukoral", "$85", ""],
+              ["INJ26", "Adacel Polio", "$110", ""],
+              ["INJ20", "Varilrix", "$100", ""],
+              ["INJ38", "Bexsero", "$155", ""],
+            ].map(([code, name, cost, notes]) => (
+              <tr key={code} className="even:bg-gray-50 hover:bg-green-50">
+                <td className="border px-4 py-2">{code}</td>
+                <td className="border px-4 py-2 text-blue-600 hover:underline cursor-pointer">{name}</td>
+                <td className="border px-4 py-2">{cost}</td>
+                <td className="border px-4 py-2">{notes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .slide-in {
-      animation: slideIn 0.3s ease-in-out;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    
-    body { margin: 0; font-family: 'Source Sans Pro', sans-serif; background: #fff; color: #080101; font-size: 14px; }
-    header { padding: 30px 20px 10px; text-align: center; background: #fff; border-bottom: 1px solid #eee; }
-    .title { font-family: 'Clicker Script', cursive; font-size: 70px; color: #8a73c4; margin: 0; }
-    .layout { display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; padding: 20px; gap: 40px; }
-    .main-content { flex: 1; max-width: 1000px; }
-    .sidebar { width: 260px; }
-    .calendar-container, .todo-container { background: white; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); padding: 12px; margin-bottom: 20px; }
-    .calendar-container h4, .todo-container h4 { margin: 0 0 8px; color: #800080; font-size: 14px; text-align: left; font-weight: 600; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
-    .calendar-grid div { padding: 4px 0; border-radius: 4px; cursor: pointer; }
-    .calendar-grid .today { background: #ede7f6; color: #800080; font-weight: bold; }
-    .calendar-grid .has-note { background: #d3b4f4; color: white; }
-    .todo-list { list-style: none; padding: 0; margin: 0; }
-    .todo-list li { display: flex; align-items: top; margin-bottom: 6px; }
-    .todo-list input[type="checkbox"] { margin-right: 8px; }
-    .todo-list button { margin-left: auto; background: transparent; border: none; color: #999; cursor: pointer; }
-    .todo-list button:hover { color: #800080; }
-    .todo-input { width: 80%; margin: 10px auto 0; padding: 6px; font-size: 13px; border: 1px solid #ccc; border-radius: 6px; display: block; }
-    h2 { font-size: 18px; font-weight: 400; color: #030000; margin-bottom: 16px; border-bottom: 2px solid #d5c8f2; display: inline-block; padding-bottom: 4px; }
-    .card-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
-    .card { padding: 16px; border-radius: 12px; background: #f7f5fc; border: 1px solid #e2dff1; text-align: center; font-size: 13px; font-weight: 400; color: #444; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(138, 115, 196, 0.15); }
-    footer { text-align: center; font-size: 12px; color: #aaa; margin: 40px 0; }
-    @media (max-width: 768px) { .layout { flex-direction: column; } .sidebar { width: 100%; } }
-  </style>
-
-<style>
-@keyframes fadeInTask {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.floating-todo-item {
-  animation: fadeInTask 0.3s ease-out;
-}
-</style>
-<!-- Firebase SDKs -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-    authDomain: "cepx-f9d2a.firebaseapp.com",
-    projectId: "cepx-f9d2a",
-    storageBucket: "cepx-f9d2a.firebasestorage.app",
-    messagingSenderId: "840696526325",
-    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  window.firebaseApp = app;
-  window.db = db;
-</script>
-
-</head>
-<body>
-<header><h1 class="title">Xlyn</h1></header>
-<div class="layout">
-  <div class="main-content">
-    <h2>Home</h2>
-    <div class="card-group">
-      <div class="card" onclick="location.href='OHcalc.html'">Drug Calculator</div>
-      <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
-      <div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
-      <div class="card" onclick="location.href='Calculator.html'">Calculator</div>
+      <div className="mt-8 flex flex-wrap gap-4">
+        {[
+          ["Dosage table", "bg-blue-600"],
+          ["IMAC Website", "bg-orange-600"],
+          ["BCG", "bg-purple-600"],
+          ["Flu 2023", "bg-blue-900"],
+          ["Funded vaccines for special group", "bg-sky-600"],
+          ["Flu more info", "bg-red-600"],
+          ["Immunisation Handbook", "bg-orange-300"],
+          ["Vaccines for Immunusupressed adults", "bg-sky-400"],
+          ["Catch up Imms", "bg-sky-400"],
+          ["Bexsero to be given opportunistically at 3, 5 and 12months", "bg-red-600"],
+          ["Funded Vaccines for special gorups", "bg-purple-300"],
+          ["Paracetamol before Bexsero", "bg-orange-600"],
+        ].map(([label, color], idx) => (
+          <div key={idx} className={`text-white px-4 py-2 rounded-full font-semibold ${color} w-full sm:w-auto text-center`}>
+            {label}
+          </div>
+        ))}
+      </div>
     </div>
-    <h2>Notes</h2>
-    <div class="card-group">
-      <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
-      <div class="card" onclick="location.href='info.html'">Infos</div>
-      <div class="card" onclick="location.href='explain.html'">Explanation</div>
-      <div class="card" onclick="location.href='Inteleviewer.html'">Inteleviwer</div>
-      <div class="card" onclick="location.href='INR Calc.html'">INR</div>
-      <div class="card" onclick="location.href='ECG.html'">ECG</div>
-	  <div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
-    </div>
-    <h2>Urgent Care</h2>
-    <div class="card-group">
-      <div class="card" onclick="location.href='VS.html'">Normal Values</div>
-      <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Directions</div>
-	  <div class="card" onclick="location.href='face.html'">Head/Skull</div>
-      <div class="card" onclick="location.href='Hand.html'">Hand/Wrist</div>
-	  <div class="card" onclick="location.href='Sha.html'">Shoulder/Elbow/Upper Arm</div>
-      <div class="card" onclick="location.href='Abdo.html'">Abdomen/Thorax</div>
-	   <div class="card" onclick="location.href='Spine.html'">Lower Body/Back/Spine</div>
-      <div class="card" onclick="location.href='LF.html'">Foot/Leg</div>
-      <div class="card" onclick="location.href='Urgent_Care.html'">Urgent Care</div>
-      <div class="card" onclick="location.href='Notes.html'">Notebook</div>
-     
-    </div>
-    <footer>© 2025 Xlyn Notes Board</footer>
-  </div>
-  <div class="sidebar">
-    <div class="calendar-container">
-    <h4>📅 Calendar</h4>
-    <div id="calendarNav"></div>
-    <div class="calendar-grid" id="calendarGrid"></div>
-    <div id="noteEditor" style="display:none;">
-      <strong id="selectedDateLabel"></strong>
-      <textarea id="noteText" style="width:100%;box-sizing:border-box;" rows="3" placeholder="Enter note..."></textarea>
-    </div>
-  </div>
-    
-  </div>
-</div>
-
- <script type="module">
-    import { doc, setDoc, getDoc, deleteDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
-    const db = window.db;
-
-    let notesByDate = {};
-    let activeNoteDate = null;
-    let calendarDate = new Date();
-
-    async function loadNotes() {
-      notesByDate = {};
-      const snapshot = await getDocs(collection(db, "calendarNotes"));
-      snapshot.forEach(docSnap => {
-        notesByDate[docSnap.id] = docSnap.data().text;
-      });
-    }
-
-    async function saveNote(dateKey) {
-      const text = document.getElementById("noteText").value.trim();
-      if (!text) return;
-      await setDoc(doc(db, "calendarNotes", dateKey), { text });
-      activeNoteDate = null;
-      generateCalendar();
-    }
-
-    async function deleteNote(dateKey) {
-      if (confirm("Delete this note?")) {
-        await deleteDoc(doc(db, "calendarNotes", dateKey));
-        activeNoteDate = null;
-        generateCalendar();
-      }
-    }
-
-    function closeNoteForm() {
-      activeNoteDate = null;
-      generateCalendar();
-    }
-
-    function showNoteForm(dateKey) {
-      activeNoteDate = dateKey;
-      generateCalendar();
-    }
-
-    async function generateCalendar() {
-      await loadNotes();
-      const container = document.getElementById("calendar");
-      const month = calendarDate.toLocaleString("default", { month: "long" });
-      const year = calendarDate.getFullYear();
-      const firstDay = new Date(year, calendarDate.getMonth(), 1).getDay();
-      const daysInMonth = new Date(year, calendarDate.getMonth() + 1, 0).getDate();
-      const today = new Date();
-      let html = `<div style="text-align:center;margin-bottom:10px;">
-        <button onclick="changeMonth(-1)">◀</button> <strong>${month} ${year}</strong> <button onclick="changeMonth(1)">▶</button></div>
-        <div class="calendar-grid">`;
-      const days = ["S","M","T","W","T","F","S"];
-      days.forEach(d => html += `<div><strong>${d}</strong></div>`);
-      for (let i = 0; i < firstDay; i++) html += `<div></div>`;
-      for (let d = 1; d <= daysInMonth; d++) {
-        const fullDate = `${year}-${String(calendarDate.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const hasNote = notesByDate[fullDate];
-        const isToday = d === today.getDate() && calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear();
-        const classes = `${isToday ? "today" : ""} ${hasNote ? "has-note" : ""}`;
-        html += `<div class="${classes}" onclick="showNoteForm('${fullDate}')">${d}</div>`;
-      }
-      html += `</div>`;
-      if (activeNoteDate !== null) {
-        const value = notesByDate[activeNoteDate] || "";
-        html += `<div style="margin-top:10px;">
-          <strong>${activeNoteDate}</strong><br>
-          <textarea id="noteText" style="width:100%;box-sizing:border-box;" rows="3">${value}</textarea>
-          <button onclick="saveNote('${activeNoteDate}')">Save</button>
-          <button onclick="deleteNote('${activeNoteDate}')">Delete</button>
-          <button onclick="closeNoteForm()">Close</button>
-        </div>`;
-      }
-      container.innerHTML = html;
-    }
-
-    function changeMonth(offset) {
-      calendarDate.setMonth(calendarDate.getMonth() + offset);
-      generateCalendar();
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      generateCalendar();
-    });
-  </script>
-<script>
-    const notes = JSON.parse(localStorage.getItem("calendarNotes") || "{}");
-    let current = new Date();
-    let selectedDate = null;
-
-    async function renderCalendar() {
-      const year = current.getFullYear();
-      const month = current.getMonth();
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const today = new Date();
-      const grid = document.getElementById("calendarGrid");
-      const nav = document.getElementById("calendarNav");
-      grid.innerHTML = "";
-      nav.innerHTML = `<div class="slide-in" style="text-align:center;margin-bottom:8px;">
-        <button onclick="changeMonth(-1)">◀</button>
-        <strong>${current.toLocaleString("default", { month: "long" })} ${year}</strong>
-        <button onclick="changeMonth(1)">▶</button>
-      </div>`;
-
-      const days = ["S", "M", "T", "W", "T", "F", "S"];
-      days.forEach(d => grid.innerHTML += `<div><strong>${d}</strong></div>`);
-      for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-        const hasNote = !!notes[dateStr];
-        const classes = (isToday ? "today " : "") + (hasNote ? "has-note" : "");
-        const cell = document.createElement("div");
-        cell.className = classes.trim();
-        cell.textContent = d;
-        cell.onclick = () => showNote(dateStr);
-        grid.appendChild(cell);
-      }
-    }
-
-    function showNote(dateStr) {
-      selectedDate = dateStr;
-      document.getElementById("selectedDateLabel").textContent = `Note for ${dateStr}`;
-      const noteText = document.getElementById("noteText");
-      noteText.value = notes[dateStr] || "";
-      const noteBox = document.getElementById("noteEditor"); noteBox.style.display = "block"; noteBox.classList.add("fade-in");
-    }
-
-    function changeMonth(offset) {
-      current.setMonth(current.getMonth() + offset);
-      const noteBox = document.getElementById("noteEditor"); noteBox.style.display = "none"; noteBox.classList.remove("fade-in");
-      renderCalendar();
-    }
-
-    document.getElementById("noteText").addEventListener("input", () => {
-      if (selectedDate) {
-        const text = document.getElementById("noteText").value.trim();
-        if (text) notes[selectedDate] = text;
-        else delete notes[selectedDate];
-        localStorage.setItem("calendarNotes", JSON.stringify(notes));
-        renderCalendar();
-      }
-    });
-
-    renderCalendar();
-  </script>
-
-<div id="floatingTodo" style="position:fixed; bottom:20px; right:20px; width:250px; background:#fff; border:1px solid #ccc; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); padding:16px; z-index:9999;">
-  <h4 style="margin:0 0 10px 0; font-size:14px; color:#800080;">📝 To-Do</h4>
-  <ul id="floatingTodoList" style="list-style:none; padding-left:0; margin-bottom:10px;"></ul>
-  <input type="text" id="floatingNewTodo" placeholder="Add task..." style="width:100%; padding:6px; border-radius:6px; border:1px solid #aaa; display:block; margin:0 auto;" />
-</div>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  console.log("Floating To-Do initialized");
-
-  let floatingTodos = [];
-const todoSnap = await getDoc(doc(db, "todoLists", "floating"));
-if (todoSnap.exists()) floatingTodos = todoSnap.data().items || [];
-
- import { setDoc, doc } from "firebase/firestore";
-
-async function renderNote(dateKey) {
-  const text = document.getElementById("noteText").value.trim();
-  if (!text) return;
-
-  try {
-    await setDoc(doc(db, "calendarNotes", dateKey), { text });
-    console.log("Note saved to Firebase!");
-  } catch (error) {
-    console.error("Error saving note:", error);
-  }
+  );
 }
-
-    list.innerHTML = "";
-    floatingTodos.forEach((todo, index) => {
-      const li = document.createElement("li");
-      li.className = "floating-todo-item";
-      li.style.display = "flex";
-      li.style.alignItems = "center";
-      li.style.marginBottom = "6px";
-      li.innerHTML = `
-        <input type="checkbox" ${todo.done ? "checked" : ""} onchange="toggleFloatingTodo(${index})" />
-        <span style="margin-left:8px; ${todo.done ? 'text-decoration:line-through;color:#888;' : ''}">${todo.text}</span>
-        <button onclick="removeFloatingTodo(${index})" style="margin-left:auto;background:none;border:none;color:#800080;cursor:pointer;">✕</button>
-      `;
-      list.appendChild(li);
-    });
-  }
-
- import { setDoc, doc } from "firebase/firestore";
-
-async function addFloatingTodos()(dateKey) {
-  const text = document.getElementById("noteText").value.trim();
-  if (!text) return;
-
-  try {
-    await setDoc(doc(db, "calendarNotes", dateKey), { text });
-    console.log("Note saved to Firebase!");
-  } catch (error) {
-    console.error("Error saving note:", error);
-  }
-}
-
-    floatingTodos.push({ text: text, done: false });
-    input.value = "";
-    updateFloatingTodos();
-  }
-
-  window.toggleFloatingTodo = function(index) {
-    floatingTodos[index].done = !floatingTodos[index].done;
-    updateFloatingTodos();
-  };
-
-  window.removeFloatingTodo = function(index) {
-    floatingTodos.splice(index, 1);
-    updateFloatingTodos();
-  };
-
-  async function updateFloatingTodos() {
-   await setDoc(doc(db, "todoLists", "floating"), { items: floatingTodos });
-    renderFloatingTodos();
-  }
-
-  const input = document.getElementById("floatingNewTodo");
-  if (input) {
-    input.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") {
-        addFloatingTodo();
-        e.preventDefault();
-      }
-    });
-  }
-
-  renderFloatingTodos();
-});
-</script>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const noteText = document.getElementById("noteText");
-  const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const notesByDate = {};
-const snapshot = await getDocs(collection(db, "calendarNotes"));
-snapshot.forEach(doc => {
-  notesByDate[doc.id] = doc.data().text;
-});
-  const header = document.getElementById("staticNoteDate");
-
-  if (header) header.textContent = "Note for " + todayKey;
-  if (noteText) {
-    noteText.value = notesByDate[todayKey] || "";
-    noteText.addEventListener("input", function () {
-      const value = noteText.value.trim();
-      if (value) {
-        notesByDate[todayKey] = value;
-      } else {
-       await deleteDoc(doc(db, "calendarNotes", dateKey));
-      }
-     await setDoc(doc(db, "calendarNotes", dateKey), { text });
-    });
-  }
-});
-</script>
-
-</body>
-</html>
