@@ -1,314 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calendar and To-Do Page</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import {
-      getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abdominis Anatomy Notes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 8pt;
+      background-color: #fff;
+      color: #000;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header button {
+      background-color: #b0ad74;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.8rem;
+      border-radius: 5px;
+      font-size: 8pt;
+      cursor: pointer;
+    }
+    #searchInput {
+      font-size: 8pt;
+      padding: 0.3rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 120px;
+    }
+    .main {
+      display: flex;
+      padding: 1rem;
+      gap: 1rem;
+    }
+    .form-tile, .tile {
+      width: 260px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 1rem;
+    }
+    .form-tile {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    input[type="text"], textarea, input[type="file"] {
+      font-size: 8pt;
+      width: 100%;
+      margin-bottom: 0.5rem;
+      padding: 0.4rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .status-text {
+      font-size: 7pt;
+      color: green;
+      margin-bottom: 0.5rem;
+    }
+    button.save {
+      background-color: #b0ad74;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      font-size: 8pt;
+      cursor: pointer;
+    }
+    .notes-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .tile img {
+      max-width: 100%;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal img {
+      max-width: 90%;
+      max-height: 90%;
+    }
+    .modal.show {
+      display: flex;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js"></script>
+</head>
+<body>
+  <header>
+    <button onclick="location.href='CEP.html'">Home</button>
+    <h1 style="font-size: 50pt; margin: 0 auto; color: #000; font-family: 'Poppins', sans-serif; font-weight: 300; animation: fadeIn 1s ease-in-out; text-align: center; flex-grow: 1;">Abdominis</h1>
+    <input type="text" id="searchInput" oninput="searchNote()" placeholder="Search">
+  </header>
+
+  <div class="main">
+    <div class="form-tile">
+      <input type="file" id="imageUpload" accept="image/*">
+      <div class="status-text" id="imageStatus"></div>
+      <input type="text" id="title" placeholder="Title">
+      <textarea id="notes" placeholder="Write your notes (use ** for bold, == for highlight)"></textarea>
+      <button class="save" onclick="saveNote()">Save</button>
+    </div>
+    <div class="notes-container" id="notesContainer"></div>
+  </div>
+
+  <div id="imageModal" class="modal" onclick="closeModal()">
+    <img id="modalImage" src="" alt="Zoomed">
+  </div>
+
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
       projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.firebasestorage.app",
+      storageBucket: "cepx-f9d2a.appspot.com",
       messagingSenderId: "840696526325",
       appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const calendarEl = document.getElementById('calendar');
-      const todoListEl = document.getElementById('todoList');
-      const todoInput = document.getElementById('newTodo');
-      const monthLabel = document.getElementById('monthLabel');
-      const dayHeaders = document.getElementById('dayHeaders');
+    async function saveNote() {
+      const title = document.getElementById("title").value.trim();
+      const rawNotes = document.getElementById("notes").value.trim();
+      const file = document.getElementById("imageUpload").files[0];
 
-      let currentDate = new Date();
-
-      function getMonthName(monthIndex) {
-        return new Date(2000, monthIndex, 1).toLocaleString('default', { month: 'long' });
+      if (!title && !rawNotes && !file) {
+        alert("Please enter a title, note, or upload an image.");
+        return;
       }
 
-      function getDaysInMonth(month, year) {
-        return new Date(year, month + 1, 0).getDate();
+      document.getElementById("imageStatus").textContent = "Saving note...";
+      document.querySelector(".save").disabled = true;
+
+      let imageUrl = "";
+      if (file) {
+        const storageRef = storage.ref().child("abdominis/" + Date.now() + "_" + file.name);
+        await storageRef.put(file);
+        imageUrl = await storageRef.getDownloadURL();
       }
 
-      function getDayName(year, month, day) {
-        return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
-      }
+      await db.collection("abdominisNotes").add({
+        title,
+        rawNotes,
+        image: imageUrl,
+        created: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
-      async function loadCalendar() {
-        calendarEl.innerHTML = '';
-        const month = currentDate.getMonth();
-        const year = currentDate.getFullYear();
-        const daysInMonth = getDaysInMonth(month, year);
-        monthLabel.textContent = `${getMonthName(month)} ${year}`;
+      document.getElementById("title").value = "";
+      document.getElementById("notes").value = "";
+      document.getElementById("imageUpload").value = "";
+      document.getElementById("imageStatus").textContent = "Saved!";
+      document.querySelector(".save").disabled = false;
 
-        const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
-        let notes = {};
-        try {
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            notes = docSnap.data();
-          }
-        } catch (error) {
-          console.error("Error loading calendar:", error);
+      displayNotes();
+    }
+
+    async function displayNotes() {
+      const container = document.getElementById("notesContainer");
+      container.innerHTML = "";
+
+      const snapshot = await db.collection("abdominisNotes").orderBy("created", "desc").get();
+      snapshot.forEach(doc => {
+        const note = doc.data();
+        const tile = document.createElement("div");
+        tile.className = "tile";
+
+        const titleEl = document.createElement("h4");
+        titleEl.innerText = note.title;
+
+        const noteEl = document.createElement("p");
+        noteEl.innerHTML = note.rawNotes
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/==(.+?)==/g, '<mark>$1</mark>');
+
+        tile.appendChild(titleEl);
+        tile.appendChild(noteEl);
+
+        if (note.image) {
+          const imgEl = document.createElement("img");
+          imgEl.src = note.image;
+          imgEl.onclick = () => showModal(note.image);
+          tile.appendChild(imgEl);
         }
 
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        for (let i = 0; i < firstDayOfMonth; i++) {
-          const empty = document.createElement('div');
-          empty.className = 'day empty';
-          calendarEl.appendChild(empty);
-        }
+        container.appendChild(tile);
+      });
+    }
 
-        for (let i = 1; i <= daysInMonth; i++) {
-          const note = notes[i] || "";
-          const day = document.createElement('div');
-          day.className = 'day';
-          const dayName = getDayName(year, month, i);
-          day.innerHTML = `<div class="date-number">${dayName} ${i}</div><textarea placeholder=" ">${note}</textarea>`;
-          const textarea = day.querySelector('textarea');
-          textarea.addEventListener('input', () => saveCalendar(year, month + 1, i.toString(), textarea.value));
-          calendarEl.appendChild(day);
-        }
-      }
+    function showModal(src) {
+      document.getElementById("modalImage").src = src;
+      document.getElementById("imageModal").classList.add("show");
+    }
 
-      async function saveCalendar(year, month, day, note) {
-        const ref = doc(db, 'calendar', `${year}-${month}`);
-        try {
-          await updateDoc(ref, { [day]: note });
-        } catch {
-          await setDoc(ref, { [day]: note }, { merge: true });
-        }
-      }
+    function closeModal() {
+      document.getElementById("imageModal").classList.remove("show");
+    }
 
-      function changeMonth(offset) {
-        currentDate.setMonth(currentDate.getMonth() + offset);
-        loadCalendar();
-      }
+    function searchNote() {
+      const keyword = document.getElementById("searchInput").value.toLowerCase();
+      const allTiles = document.querySelectorAll(".tile");
 
-      async function addTodo() {
-        const value = todoInput.value.trim();
-        if (value) {
-          await addDoc(collection(db, 'todos'), { text: value, done: false });
-          todoInput.value = '';
-        }
-      }
+      allTiles.forEach(tile => {
+        const title = tile.querySelector("h4").innerText.toLowerCase();
+        const noteText = tile.querySelector("p").innerText.toLowerCase();
+        tile.style.display = title.includes(keyword) || noteText.includes(keyword) ? "block" : "none";
+      });
+    }
 
-      function renderTodoItem(id, text, done) {
-        const item = document.createElement('div');
-        item.className = 'todo-item';
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = done;
-        checkbox.addEventListener('change', () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked }));
-        item.appendChild(checkbox);
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = text;
-        input.disabled = true;
-        input.style.flex = '1';
-        input.style.border = 'none';
-        input.style.background = 'transparent';
-        input.style.marginRight = '5px';
-        item.appendChild(input);
-
-        const editButton = document.createElement('button');
-        editButton.textContent = '✏️';
-        editButton.style.marginRight = '5px';
-        editButton.addEventListener('click', async () => {
-          if (input.disabled) {
-            input.disabled = false;
-            input.focus();
-            editButton.textContent = '💾';
-          } else {
-            await updateDoc(doc(db, 'todos', id), { text: input.value });
-            input.disabled = true;
-            editButton.textContent = '✏️';
-          }
-        });
-        item.appendChild(editButton);
-
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = '🗑️';
-        deleteButton.addEventListener('click', async () => {
-          if (confirm('Delete this to-do item?')) {
-            await deleteDoc(doc(db, 'todos', id));
-          }
-        });
-        item.appendChild(deleteButton);
-
-        todoListEl.appendChild(item);
-      }
-
-      function loadTodos() {
-        const todosRef = collection(db, 'todos');
-        onSnapshot(todosRef, (snapshot) => {
-          todoListEl.innerHTML = '';
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            renderTodoItem(doc.id, data.text, data.done);
-          });
-        });
-      }
-
-      window.addTodo = addTodo;
-      window.changeMonth = changeMonth;
-      loadCalendar();
-      loadTodos();
-    });
+    window.onload = displayNotes;
   </script>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      font-size: 8pt;
-      background-color: #F8EDEB;
-      display: flex;
-      height: 100vh;
-    }
-    .calendar-container {
-      width: 65%;
-      background-color: #D8E2DC;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      position: relative;
-    }
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .calendar-header button {
-      padding: 5px 10px;
-      font-size: 16px;
-      background-color: #FEC5BB;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .home-button {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 5px 10px;
-      background-color: #DED6CE;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 10pt;
-    }
-    .day-headers {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      margin-top: 10px;
-      font-weight: bold;
-      text-align: center;
-    }
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      margin-top: 5px;
-    }
-    .day {
-      background-color: #F5EBED;
-      border-radius: 8px;
-      padding: 10px;
-      min-height: 100px;
-      position: relative;
-    }
-    .day.empty {
-      background-color: transparent;
-      border: none;
-    }
-    .day textarea {
-      width: 100%;
-      height: 60px;
-      resize: none;
-      background-color: #ffffffa0;
-      border: none;
-      padding: 5px;
-      margin-top: 5px;
-      font-family: Arial;
-      font-size: 8pt;
-    }
-    .day .date-number {
-      font-weight: bold;
-    }
-    .todo-container {
-      width: 35%;
-      background-color: #FAE1DD;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-    }
-    .todo-title {
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-    .todo-list {
-      background-color: #DED6CE;
-      padding: 15px;
-      border-radius: 8px;
-    }
-    .todo-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .todo-item input[type="checkbox"] {
-      margin-right: 10px;
-    }
-    .add-todo {
-      display: flex;
-      margin-top: 10px;
-    }
-    .add-todo input {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px 0 0 4px;
-    }
-    .add-todo button {
-      padding: 8px;
-      border: none;
-      background-color: #FEC5BB;
-      cursor: pointer;
-      border-radius: 0 4px 4px 0;
-    }
-  </style>
-</head>
-<body>
-  <div class="calendar-container">
-    <button class="home-button" onclick="location.href='index.html'">Home</button>
-    <div class="calendar-header">
-      <button onclick="changeMonth(-1)">◀</button>
-      <h2 id="monthLabel">Monthly Calendar</h2>
-      <button onclick="changeMonth(1)">▶</button>
-    </div>
-    <div class="day-headers" id="dayHeaders">
-      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-    </div>
-    <div class="calendar" id="calendar"></div>
-  </div>
-  <div class="todo-container">
-    <div class="todo-title">To-Do List</div>
-    <div class="todo-list" id="todoList"></div>
-    <div class="add-todo">
-      <input type="text" id="newTodo" placeholder="Add new task..." />
-      <button onclick="addTodo()">Add</button>
-    </div>
-  </div>
 </body>
 </html>
