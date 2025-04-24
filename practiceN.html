@@ -10,69 +10,57 @@
       margin: 0;
       font-family: 'Barlow', sans-serif;
       font-size: 13px;
-      background-color: white;
-      color: #000;
+      background-color: #ECF2F5;
+      color: #222;
     }
-
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 20px;
-      border-bottom: 1px solid #ddd;
-      background-color: #f4ecfa;
+      padding: 10px 20px;
+      border-bottom: 1px solid #ccc;
+      background-color: #e7d9cc;
     }
-
     .home-btn {
       text-decoration: none;
-      color: black;
+      color: #4B0082;
       font-size: 13px;
       font-weight: bold;
       border: 1px solid #ccc;
       padding: 4px 10px;
       border-radius: 6px;
-      background-color: #e6d1f5;
+      background-color: #c4dade;
     }
-
     .home-btn:hover {
-      background-color: #b692d1;
-      color: black;
+      background-color: #dde8ed;
     }
-
     .search-wrapper {
       display: flex;
       align-items: center;
       justify-content: flex-end;
     }
-
     .search-input {
-      padding: 4px 6px;
-      border-radius: 8px;
+      padding: 6px;
+      border-radius: 6px;
       border: 1px solid #ccc;
-      font-size: 12px;
-      width: 110px;
+      font-size: 13px;
     }
-
     .container {
       max-width: 1000px;
       margin: 30px auto;
       padding: 20px;
     }
-
     h1 {
       text-align: center;
-      font-size: 24px;
-      color: #b692d1;
-      margin-bottom: 20px;
+      font-size: 22px;
+      color: black;
     }
-
     .input-group {
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin-bottom: 20px;
     }
-
     input[type="text"], textarea {
       padding: 8px;
       border-radius: 8px;
@@ -80,39 +68,25 @@
       font-size: 13px;
       width: 100%;
     }
-
     textarea {
       resize: vertical;
       height: 60px;
     }
-
-    button {
-      padding: 8px 12px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      transition: background-color 0.2s;
-    }
-
     .add-btn {
-      background-color: #b692d1;
-      color: black;
+      background-color: #b9d9d5;
+      color: #4B0082;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 8px;
     }
-
-    .add-btn:hover {
-      background-color: #000;
-      color: #fff;
-    }
-
     .note-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 15px;
     }
-
     .note-card {
-      background-color: #fff;
+      background-color: #ecf2f5;
       border: 1px solid #ddd;
       padding: 15px;
       border-radius: 12px;
@@ -120,7 +94,6 @@
       display: flex;
       flex-direction: column;
     }
-
     .note-card input, .note-card textarea {
       width: 100%;
       font-size: 13px;
@@ -129,146 +102,84 @@
       border-radius: 6px;
       border: 1px solid #ccc;
     }
-
     .note-title {
       font-weight: bold;
       font-size: 14px;
-      color: #b692d1;
+      color: black;
     }
-
     .note-text {
-      color: #000;
+      color: #444;
       margin-top: 8px;
       font-size: 13px;
       white-space: pre-wrap;
     }
-
-    .note-url {
-      margin-top: 6px;
-      font-size: 12px;
-      word-break: break-word;
-    }
-
     .note-url a {
-      color: #b692d1;
-      text-decoration: underline;
+      font-size: 12px;
+      color: #e8daf0;
+      word-break: break-all;
     }
-
-    .note-url a:hover {
-      color: black;
-    }
-
     .timestamp {
       font-size: 11px;
       color: #777;
       margin-top: 10px;
     }
-
     .btn-group {
       margin-top: 10px;
       display: flex;
       justify-content: flex-end;
       gap: 8px;
     }
-
     .btn-group button {
       background-color: #eee;
-      color: #b692d1;
+      color: #dde8ed;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
     }
-
     .btn-group button:hover {
-      background-color: #b692d1;
-      color: black;
+      background-color: #e2d6f3;
     }
   </style>
-</head>
-<body>
-  <div class="top-bar">
-    <a href="index.html" class="home-btn">← Home</a>
-    <div class="search-wrapper">
-      <input type="text" id="searchInput" class="search-input" placeholder="Search" oninput="renderNotes()" />
-    </div>
-  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  <div class="container">
-    <h1>Practice Nurse</h1>
-    <div class="input-group">
-      <input type="text" id="noteTitle" placeholder="Title" />
-      <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
-      <input type="text" id="noteUrl" placeholder="Optional URL" />
-      <button class="add-btn" onclick="addNote()">Add Note</button>
-    </div>
-    <div class="note-list" id="notesContainer"></div>
-  </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.appspot.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    };
 
-  <script>
-    let notes = JSON.parse(localStorage.getItem('practiceNNotes')) || [];
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    function saveNotes() {
-      localStorage.setItem('practiceNNotes', JSON.stringify(notes));
-    }
+    let notes = [];
 
-    function addNote() {
+    document.getElementById('searchInput').addEventListener('input', renderNotes);
+
+    document.querySelector('.add-btn').addEventListener('click', async () => {
       const title = document.getElementById('noteTitle').value.trim();
       const text = document.getElementById('noteText').value.trim();
       const url = document.getElementById('noteUrl').value.trim();
       if (!title && !text && !url) return;
 
-      notes.unshift({
+      await addDoc(collection(db, 'practiceNNotes'), {
         title: title || "Untitled",
         text,
-        url: url || "",
-        timestamp: new Date().toLocaleString(),
-        editing: false
+        url,
+        timestamp: new Date().toISOString()
       });
 
       document.getElementById('noteTitle').value = '';
       document.getElementById('noteText').value = '';
       document.getElementById('noteUrl').value = '';
-      saveNotes();
-      renderNotes();
-    }
-
-    function toggleEdit(index) {
-      notes[index].editing = !notes[index].editing;
-      renderNotes();
-    }
-
-    function saveEdit(index) {
-      const newTitle = document.getElementById(`editTitle${index}`).value.trim();
-      const newText = document.getElementById(`editText${index}`).value.trim();
-      const newUrl = document.getElementById(`editUrl${index}`).value.trim();
-
-      notes[index] = {
-        title: newTitle || "Untitled",
-        text: newText,
-        url: newUrl || "",
-        timestamp: new Date().toLocaleString(),
-        editing: false
-      };
-
-      saveNotes();
-      renderNotes();
-    }
-
-    function deleteNote(index) {
-      if (confirm("Delete this note?")) {
-        notes.splice(index, 1);
-        saveNotes();
-        renderNotes();
-      }
-    }
-
-    function copyToClipboard(index) {
-      const note = notes[index];
-      const text = note.editing
-        ? document.getElementById(`editText${index}`).value
-        : note.text;
-
-      navigator.clipboard.writeText(text).then(() => {
-        alert("Note copied to clipboard!");
-      });
-    }
+    });
 
     function renderNotes() {
       const container = document.getElementById('notesContainer');
@@ -279,20 +190,21 @@
         .filter(note =>
           note.title.toLowerCase().includes(search) ||
           note.text.toLowerCase().includes(search) ||
-          (note.url && note.url.toLowerCase().includes(search))
+          note.url.toLowerCase().includes(search)
         )
         .forEach((note, index) => {
           const div = document.createElement('div');
           div.className = 'note-card';
+
           if (note.editing) {
             div.innerHTML = `
               <input type="text" id="editTitle${index}" value="${note.title}">
               <textarea id="editText${index}" rows="3">${note.text}</textarea>
               <input type="text" id="editUrl${index}" value="${note.url}" placeholder="Optional URL" />
-              <div class="timestamp">Last updated: ${note.timestamp}</div>
+              <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
               <div class="btn-group">
                 <button onclick="saveEdit(${index})">Save</button>
-                <button onclick="deleteNote(${index})">Delete</button>
+                <button onclick="deleteNote('${note.id}')">Delete</button>
                 <button onclick="copyToClipboard(${index})">Copy</button>
               </div>
             `;
@@ -301,19 +213,81 @@
               <div class="note-title">${note.title}</div>
               <div class="note-text">${note.text}</div>
               ${note.url ? `<div class="note-url"><a href="${note.url}" target="_blank">${note.url}</a></div>` : ''}
-              <div class="timestamp">Saved on ${note.timestamp}</div>
+              <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
               <div class="btn-group">
                 <button onclick="toggleEdit(${index})">Edit</button>
-                <button onclick="deleteNote(${index})">Delete</button>
+                <button onclick="deleteNote('${note.id}')">Delete</button>
                 <button onclick="copyToClipboard(${index})">Copy</button>
               </div>
             `;
           }
+
           container.appendChild(div);
         });
     }
 
-    renderNotes();
+    window.toggleEdit = (index) => {
+      notes[index].editing = true;
+      renderNotes();
+    };
+
+    window.saveEdit = async (index) => {
+      const note = notes[index];
+      const newTitle = document.getElementById(`editTitle${index}`).value.trim();
+      const newText = document.getElementById(`editText${index}`).value.trim();
+      const newUrl = document.getElementById(`editUrl${index}`).value.trim();
+
+      await updateDoc(doc(db, 'practiceNNotes', note.id), {
+        title: newTitle || 'Untitled',
+        text: newText,
+        url: newUrl,
+        timestamp: new Date().toISOString()
+      });
+    };
+
+    window.deleteNote = async (id) => {
+      if (confirm("Delete this note?")) {
+        await deleteDoc(doc(db, 'practiceNNotes', id));
+      }
+    };
+
+    window.copyToClipboard = (index) => {
+      const note = notes[index];
+      const text = note.editing
+        ? document.getElementById(`editText${index}`).value
+        : note.text;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Note copied to clipboard!");
+      });
+    };
+
+    onSnapshot(collection(db, 'practiceNNotes'), snapshot => {
+      notes = snapshot.docs.map(docSnap => ({
+        ...docSnap.data(),
+        id: docSnap.id,
+        editing: false
+      }));
+      renderNotes();
+    });
   </script>
+</head>
+<body>
+  <div class="top-bar">
+    <a href="CEP.html" class="home-btn">← Home</a>
+    <div class="search-wrapper">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search" />
+    </div>
+  </div>
+  <div class="container">
+    <h1>Practice Nurse</h1>
+    <div class="input-group">
+      <input type="text" id="noteTitle" placeholder="Title" />
+      <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
+      <input type="text" id="noteUrl" placeholder="Optional URL" />
+      <button class="add-btn">Add Note</button>
+    </div>
+    <div class="note-list" id="notesContainer"></div>
+  </div>
 </body>
 </html>
