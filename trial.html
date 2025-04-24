@@ -1,74 +1,314 @@
-import React from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar and To-Do Page</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-export default function VaccineInfoPage() {
-  return (
-    <div className="p-6 bg-gradient-to-br from-pink-100 via-cyan-100 to-green-100 min-h-screen font-sans">
-      <h1 className="text-3xl font-bold text-center text-purple-800 mb-6">
-        💉 Vaccine Information
-      </h1>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow-md border border-gray-200">
-          <thead className="bg-purple-200 text-purple-900">
-            <tr>
-              <th className="px-4 py-2 text-left">Code</th>
-              <th className="px-4 py-2 text-left">Name</th>
-              <th className="px-4 py-2 text-left">Cost</th>
-              <th className="px-4 py-2 text-left">Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              ["INJ12", "Havrix Jr", "$65", "Hep A Jr"],
-              ["INJ37", "Japanese Encephalitis", "$235", "Japanese Encephalitis"],
-              ["INJ18", "Vivaxim", "$200", "Hep A + Typhoid"],
-              ["INJ36", "Rabies", "$205", "Rabies"],
-              ["INJ17", "Typhim Vi", "$95", "Typhoid"],
-              ["INJ32", "Nimenrix/ MenQuadfi Inj30", "$150", "Meningitis C"],
-              ["INJ19", "Polio", "$100", "Polio"],
-              ["INJ14", "Twinrix", "$90", "Hep A + B"],
-              ["INJ15", "Havrix", "$110", ""],
-              ["INJ16", "Engerix B", "$45", ""],
-              ["INJ22", "Prevenar", "$210", ""],
-              ["INJ23", "Pneumovax 23", "$65", ""],
-              ["INJ21", "Boostrix", "$55", ""],
-              ["INJ24", "Gardasil", "$250", ""],
-              ["INJ40", "Shingrix", "$400", ""],
-              ["INJ27", "Dukoral", "$85", ""],
-              ["INJ26", "Adacel Polio", "$110", ""],
-              ["INJ20", "Varilrix", "$100", ""],
-              ["INJ38", "Bexsero", "$155", ""],
-            ].map(([code, name, cost, notes]) => (
-              <tr key={code} className="even:bg-gray-50 hover:bg-green-50">
-                <td className="border px-4 py-2">{code}</td>
-                <td className="border px-4 py-2 text-blue-600 hover:underline cursor-pointer">{name}</td>
-                <td className="border px-4 py-2">{cost}</td>
-                <td className="border px-4 py-2">{notes}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.firebasestorage.app",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    };
 
-      <div className="mt-8 flex flex-wrap gap-4">
-        {[
-          ["Dosage table", "bg-blue-600"],
-          ["IMAC Website", "bg-orange-600"],
-          ["BCG", "bg-purple-600"],
-          ["Flu 2023", "bg-blue-900"],
-          ["Funded vaccines for special group", "bg-sky-600"],
-          ["Flu more info", "bg-red-600"],
-          ["Immunisation Handbook", "bg-orange-300"],
-          ["Vaccines for Immunusupressed adults", "bg-sky-400"],
-          ["Catch up Imms", "bg-sky-400"],
-          ["Bexsero to be given opportunistically at 3, 5 and 12months", "bg-red-600"],
-          ["Funded Vaccines for special gorups", "bg-purple-300"],
-          ["Paracetamol before Bexsero", "bg-orange-600"],
-        ].map(([label, color], idx) => (
-          <div key={idx} className={`text-white px-4 py-2 rounded-full font-semibold ${color} w-full sm:w-auto text-center`}>
-            {label}
-          </div>
-        ))}
-      </div>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const calendarEl = document.getElementById('calendar');
+      const todoListEl = document.getElementById('todoList');
+      const todoInput = document.getElementById('newTodo');
+      const monthLabel = document.getElementById('monthLabel');
+      const dayHeaders = document.getElementById('dayHeaders');
+
+      let currentDate = new Date();
+
+      function getMonthName(monthIndex) {
+        return new Date(2000, monthIndex, 1).toLocaleString('default', { month: 'long' });
+      }
+
+      function getDaysInMonth(month, year) {
+        return new Date(year, month + 1, 0).getDate();
+      }
+
+      function getDayName(year, month, day) {
+        return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
+      }
+
+      async function loadCalendar() {
+        calendarEl.innerHTML = '';
+        const month = currentDate.getMonth();
+        const year = currentDate.getFullYear();
+        const daysInMonth = getDaysInMonth(month, year);
+        monthLabel.textContent = `${getMonthName(month)} ${year}`;
+
+        const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
+        let notes = {};
+        try {
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            notes = docSnap.data();
+          }
+        } catch (error) {
+          console.error("Error loading calendar:", error);
+        }
+
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        for (let i = 0; i < firstDayOfMonth; i++) {
+          const empty = document.createElement('div');
+          empty.className = 'day empty';
+          calendarEl.appendChild(empty);
+        }
+
+        for (let i = 1; i <= daysInMonth; i++) {
+          const note = notes[i] || "";
+          const day = document.createElement('div');
+          day.className = 'day';
+          const dayName = getDayName(year, month, i);
+          day.innerHTML = `<div class="date-number">${dayName} ${i}</div><textarea placeholder=" ">${note}</textarea>`;
+          const textarea = day.querySelector('textarea');
+          textarea.addEventListener('input', () => saveCalendar(year, month + 1, i.toString(), textarea.value));
+          calendarEl.appendChild(day);
+        }
+      }
+
+      async function saveCalendar(year, month, day, note) {
+        const ref = doc(db, 'calendar', `${year}-${month}`);
+        try {
+          await updateDoc(ref, { [day]: note });
+        } catch {
+          await setDoc(ref, { [day]: note }, { merge: true });
+        }
+      }
+
+      function changeMonth(offset) {
+        currentDate.setMonth(currentDate.getMonth() + offset);
+        loadCalendar();
+      }
+
+      async function addTodo() {
+        const value = todoInput.value.trim();
+        if (value) {
+          await addDoc(collection(db, 'todos'), { text: value, done: false });
+          todoInput.value = '';
+        }
+      }
+
+      function renderTodoItem(id, text, done) {
+        const item = document.createElement('div');
+        item.className = 'todo-item';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = done;
+        checkbox.addEventListener('change', () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked }));
+        item.appendChild(checkbox);
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = text;
+        input.disabled = true;
+        input.style.flex = '1';
+        input.style.border = 'none';
+        input.style.background = 'transparent';
+        input.style.marginRight = '5px';
+        item.appendChild(input);
+
+        const editButton = document.createElement('button');
+        editButton.textContent = '✏️';
+        editButton.style.marginRight = '5px';
+        editButton.addEventListener('click', async () => {
+          if (input.disabled) {
+            input.disabled = false;
+            input.focus();
+            editButton.textContent = '💾';
+          } else {
+            await updateDoc(doc(db, 'todos', id), { text: input.value });
+            input.disabled = true;
+            editButton.textContent = '✏️';
+          }
+        });
+        item.appendChild(editButton);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = '🗑️';
+        deleteButton.addEventListener('click', async () => {
+          if (confirm('Delete this to-do item?')) {
+            await deleteDoc(doc(db, 'todos', id));
+          }
+        });
+        item.appendChild(deleteButton);
+
+        todoListEl.appendChild(item);
+      }
+
+      function loadTodos() {
+        const todosRef = collection(db, 'todos');
+        onSnapshot(todosRef, (snapshot) => {
+          todoListEl.innerHTML = '';
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            renderTodoItem(doc.id, data.text, data.done);
+          });
+        });
+      }
+
+      window.addTodo = addTodo;
+      window.changeMonth = changeMonth;
+      loadCalendar();
+      loadTodos();
+    });
+  </script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      font-size: 8pt;
+      background-color: #F8EDEB;
+      display: flex;
+      height: 100vh;
+    }
+    .calendar-container {
+      width: 65%;
+      background-color: #D8E2DC;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      position: relative;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .calendar-header button {
+      padding: 5px 10px;
+      font-size: 16px;
+      background-color: #FEC5BB;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .home-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      background-color: #DED6CE;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 10pt;
+    }
+    .day-headers {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .day {
+      background-color: #F5EBED;
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 100px;
+      position: relative;
+    }
+    .day.empty {
+      background-color: transparent;
+      border: none;
+    }
+    .day textarea {
+      width: 100%;
+      height: 60px;
+      resize: none;
+      background-color: #ffffffa0;
+      border: none;
+      padding: 5px;
+      margin-top: 5px;
+      font-family: Arial;
+      font-size: 8pt;
+    }
+    .day .date-number {
+      font-weight: bold;
+    }
+    .todo-container {
+      width: 35%;
+      background-color: #FAE1DD;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .todo-title {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .todo-list {
+      background-color: #DED6CE;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .todo-item input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    .add-todo {
+      display: flex;
+      margin-top: 10px;
+    }
+    .add-todo input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px 0 0 4px;
+    }
+    .add-todo button {
+      padding: 8px;
+      border: none;
+      background-color: #FEC5BB;
+      cursor: pointer;
+      border-radius: 0 4px 4px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="calendar-container">
+    <button class="home-button" onclick="location.href='index.html'">Home</button>
+    <div class="calendar-header">
+      <button onclick="changeMonth(-1)">◀</button>
+      <h2 id="monthLabel">Monthly Calendar</h2>
+      <button onclick="changeMonth(1)">▶</button>
     </div>
-  );
-}
+    <div class="day-headers" id="dayHeaders">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+    <div class="calendar" id="calendar"></div>
+  </div>
+  <div class="todo-container">
+    <div class="todo-title">To-Do List</div>
+    <div class="todo-list" id="todoList"></div>
+    <div class="add-todo">
+      <input type="text" id="newTodo" placeholder="Add new task..." />
+      <button onclick="addTodo()">Add</button>
+    </div>
+  </div>
+</body>
+</html>
