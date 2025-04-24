@@ -65,8 +65,6 @@
       cursor: pointer;
     }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
 </head>
 <body>
   <header>
@@ -86,7 +84,10 @@
     <div class="notes-container" id="notesContainer"></div>
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
@@ -96,8 +97,8 @@
       appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
     async function uploadToImgur(file) {
       const clientId = '3b2392db775548a';
@@ -117,7 +118,7 @@
       throw new Error("Imgur upload failed");
     }
 
-    async function saveNote() {
+    window.saveNote = async function () {
       const title = document.getElementById("title").value.trim();
       const rawNotes = document.getElementById("notes").value.trim();
       const file = document.getElementById("imageUpload").files[0];
@@ -129,11 +130,11 @@
           imageUrl = await uploadToImgur(file);
         }
 
-        await db.collection("abdominisNotes").add({
+        await addDoc(collection(db, "abdominisNotes"), {
           title,
           rawNotes,
           image: imageUrl,
-          created: firebase.firestore.FieldValue.serverTimestamp()
+          created: serverTimestamp()
         });
 
         document.getElementById("title").value = "";
@@ -143,34 +144,44 @@
         loadNotes();
       } catch (error) {
         document.getElementById("status").textContent = "Error saving note.";
-        console.error(error);
+        console.error("Error saving note:", error.message);
+        console.log(error);
       }
     }
 
-    async function loadNotes() {
+    window.loadNotes = async function () {
       const container = document.getElementById("notesContainer");
       container.innerHTML = "";
-      const snapshot = await db.collection("abdominisNotes").orderBy("created", "desc").get();
+
+      const q = query(collection(db, "abdominisNotes"), orderBy("created", "desc"));
+      const snapshot = await getDocs(q);
       snapshot.forEach(doc => {
         const note = doc.data();
         const tile = document.createElement("div");
         tile.className = "tile";
+
         const titleEl = document.createElement("h4");
         titleEl.textContent = note.title;
+
         const noteEl = document.createElement("p");
-        noteEl.innerHTML = note.rawNotes.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/==(.*?)==/g, '<mark>$1</mark>');
+        noteEl.innerHTML = note.rawNotes
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/==(.*?)==/g, "<mark>$1</mark>");
+
         tile.appendChild(titleEl);
         tile.appendChild(noteEl);
+
         if (note.image) {
           const imgEl = document.createElement("img");
           imgEl.src = note.image;
           tile.appendChild(imgEl);
         }
+
         container.appendChild(tile);
       });
     }
 
-    function searchNotes() {
+    window.searchNotes = function () {
       const query = document.getElementById("searchInput").value.toLowerCase();
       const tiles = document.querySelectorAll(".tile");
       tiles.forEach(tile => {
