@@ -6,12 +6,20 @@
   <title>Abdominis Anatomy Notes</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --light-pink: #F8EDEB;
+      --peach: #FEC89A;
+      --blush: #FCD5CE;
+      --soft-orange: #FFDAB9;
+      --coral: #F49595;
+      --light-beige: #F1CEBE;
+    }
     body {
       font-family: 'Poppins', sans-serif;
       font-size: 10pt;
       margin: 0;
       padding: 0;
-      background: #f9f9f9;
+      background: var(--light-pink);
       color: #000;
     }
     header {
@@ -19,7 +27,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 1rem;
-      background: #fff;
+      background: var(--light-beige);
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .main {
@@ -51,13 +59,14 @@
       border: 1px solid #ccc;
     }
     button {
-      background-color: #b0ad74;
+      background-color: var(--coral);
       color: white;
       border: none;
       padding: 0.5rem 1rem;
       font-size: 10pt;
       border-radius: 5px;
       cursor: pointer;
+      margin-right: 0.3rem;
     }
     img {
       max-width: 100%;
@@ -65,6 +74,8 @@
       cursor: pointer;
     }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
 </head>
 <body>
   <header>
@@ -84,10 +95,7 @@
     <div class="notes-container" id="notesContainer"></div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
@@ -97,8 +105,9 @@
       appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    let editingId = null;
 
     async function uploadToImgur(file) {
       const clientId = '3b2392db775548a';
@@ -118,7 +127,7 @@
       throw new Error("Imgur upload failed");
     }
 
-    window.saveNote = async function () {
+    async function saveNote() {
       const title = document.getElementById("title").value.trim();
       const rawNotes = document.getElementById("notes").value.trim();
       const file = document.getElementById("imageUpload").files[0];
@@ -130,12 +139,19 @@
           imageUrl = await uploadToImgur(file);
         }
 
-        await addDoc(collection(db, "abdominisNotes"), {
+        const noteData = {
           title,
           rawNotes,
-          image: imageUrl,
-          created: serverTimestamp()
-        });
+          ...(imageUrl && { image: imageUrl }),
+          created: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (editingId) {
+          await db.collection("abdominisNotes").doc(editingId).update(noteData);
+          editingId = null;
+        } else {
+          await db.collection("abdominisNotes").add(noteData);
+        }
 
         document.getElementById("title").value = "";
         document.getElementById("notes").value = "";
@@ -144,17 +160,14 @@
         loadNotes();
       } catch (error) {
         document.getElementById("status").textContent = "Error saving note.";
-        console.error("Error saving note:", error.message);
-        console.log(error);
+        console.error(error);
       }
     }
 
-    window.loadNotes = async function () {
+    async function loadNotes() {
       const container = document.getElementById("notesContainer");
       container.innerHTML = "";
-
-      const q = query(collection(db, "abdominisNotes"), orderBy("created", "desc"));
-      const snapshot = await getDocs(q);
+      const snapshot = await db.collection("abdominisNotes").orderBy("created", "desc").get();
       snapshot.forEach(doc => {
         const note = doc.data();
         const tile = document.createElement("div");
@@ -164,9 +177,7 @@
         titleEl.textContent = note.title;
 
         const noteEl = document.createElement("p");
-        noteEl.innerHTML = note.rawNotes
-          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-          .replace(/==(.*?)==/g, "<mark>$1</mark>");
+        noteEl.innerHTML = note.rawNotes.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/==(.*?)==/g, '<mark>$1</mark>');
 
         tile.appendChild(titleEl);
         tile.appendChild(noteEl);
@@ -177,11 +188,21 @@
           tile.appendChild(imgEl);
         }
 
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => {
+          document.getElementById("title").value = note.title;
+          document.getElementById("notes").value = note.rawNotes;
+          editingId = doc.id;
+          window.scrollTo(0, 0);
+        };
+        tile.appendChild(editBtn);
+
         container.appendChild(tile);
       });
     }
 
-    window.searchNotes = function () {
+    function searchNotes() {
       const query = document.getElementById("searchInput").value.toLowerCase();
       const tiles = document.querySelectorAll(".tile");
       tiles.forEach(tile => {
