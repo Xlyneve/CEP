@@ -159,6 +159,8 @@
       const rawNotes = document.getElementById("notes").value.trim();
       const file = document.getElementById("imageUpload").files[0];
 
+      console.log("Saving note:", { title, rawNotes, file });
+
       if (!title && !rawNotes && !file) {
         alert("Please enter a title, note, or upload an image.");
         return;
@@ -168,26 +170,36 @@
       document.querySelector(".save").disabled = true;
 
       let imageUrl = "";
-      if (file) {
-        const storageRef = storage.ref().child("abdominis/" + Date.now() + "_" + file.name);
-        await storageRef.put(file);
-        imageUrl = await storageRef.getDownloadURL();
+
+      try {
+        if (file) {
+          const storageRef = storage.ref().child("abdominis/" + Date.now() + "_" + file.name);
+          const snapshot = await storageRef.put(file);
+          imageUrl = await snapshot.ref.getDownloadURL();
+          console.log("Image uploaded:", imageUrl);
+        }
+
+        await db.collection("abdominisNotes").add({
+          title,
+          rawNotes,
+          image: imageUrl,
+          created: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        console.log("Note saved to Firestore");
+
+        document.getElementById("title").value = "";
+        document.getElementById("notes").value = "";
+        document.getElementById("imageUpload").value = "";
+        document.getElementById("imageStatus").textContent = "Saved!";
+        document.querySelector(".save").disabled = false;
+
+        displayNotes();
+      } catch (error) {
+        console.error("Error saving note:", error);
+        document.getElementById("imageStatus").textContent = "Error saving note";
+        document.querySelector(".save").disabled = false;
       }
-
-      await db.collection("abdominisNotes").add({
-        title,
-        rawNotes,
-        image: imageUrl,
-        created: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      document.getElementById("title").value = "";
-      document.getElementById("notes").value = "";
-      document.getElementById("imageUpload").value = "";
-      document.getElementById("imageStatus").textContent = "Saved!";
-      document.querySelector(".save").disabled = false;
-
-      displayNotes();
     }
 
     async function displayNotes() {
