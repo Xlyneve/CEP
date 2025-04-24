@@ -60,6 +60,26 @@
   animation: fadeInTask 0.3s ease-out;
 }
 </style>
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.firebasestorage.app",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.firebaseApp = app;
+  window.db = db;
+</script>
 
 </head>
 <body>
@@ -112,126 +132,99 @@
     
   </div>
 </div>
-<script>
-const notesByDate = JSON.parse(localStorage.getItem("calendarNotes") || "{}");
-let calendarDate = new Date();
-let activeNoteDate = null;
 
-function generateCalendar() {
-  const container = document.getElementById("calendar");
-  const month = calendarDate.toLocaleString("default", { month: "long" });
-  const year = calendarDate.getFullYear();
-  const firstDay = new Date(year, calendarDate.getMonth(), 1).getDay();
-  const daysInMonth = new Date(year, calendarDate.getMonth() + 1, 0).getDate();
-  const today = new Date();
-  let html = `<div style="text-align:center;margin-bottom:10px;">
-    <button onclick="changeMonth(-1)">◀</button> <strong>${month} ${year}</strong> <button onclick="changeMonth(1)">▶</button></div>
-    <div class="calendar-grid">`;
-  const days = ["S","M","T","W","T","F","S"];
-  days.forEach(d => html += `<div><strong>${d}</strong></div>`);
-  for (let i = 0; i < firstDay; i++) html += `<div></div>`;
-  for (let d = 1; d <= daysInMonth; d++) {
-    const fullDate = `${year}-${String(calendarDate.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const hasNote = notesByDate[fullDate];
-    const isToday = d === today.getDate() && calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear();
-    const classes = `${isToday ? "today" : ""} ${hasNote ? "has-note" : ""}`;
-    html += `<div class="${classes}" onclick="showNoteForm('${fullDate}')">${d}</div>`;
-  }
-  html += `</div>`;
-  if (activeNoteDate !== null) {
-    const value = notesByDate[activeNoteDate] || "";
-    html += `<div style="margin-top:10px;">
-      <strong>${activeNoteDate}</strong><br>
-      <textarea id="noteText" style="width:100%;box-sizing:border-box;" style="width:100%;border-radius:4px;border:1px solid #ccc;padding:6px;" rows="3">${value}</textarea>
-      <button onclick="saveNote('${activeNoteDate}')">Save</button>
-      <button onclick="deleteNote('${activeNoteDate}')">Delete</button>
-      <button onclick="closeNoteForm()">Close</button>
-    </div>`;
-  }
-  container.innerHTML = html;
-}
+ <script type="module">
+    import { doc, setDoc, getDoc, deleteDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+    const db = window.db;
 
+    let notesByDate = {};
+    let activeNoteDate = null;
+    let calendarDate = new Date();
 
-function changeMonth(offset) {
-  activeNoteDate = null;
+    async function loadNotes() {
+      notesByDate = {};
+      const snapshot = await getDocs(collection(db, "calendarNotes"));
+      snapshot.forEach(docSnap => {
+        notesByDate[docSnap.id] = docSnap.data().text;
+      });
+    }
 
-  calendarDate.setMonth(calendarDate.getMonth() + offset);
-  activeNoteDate = null;
-  
-const today = new Date();
-const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
-  activeNoteDate = todayKey;
-}
-generateCalendar();
+    async function saveNote(dateKey) {
+      const text = document.getElementById("noteText").value.trim();
+      if (!text) return;
+      await setDoc(doc(db, "calendarNotes", dateKey), { text });
+      activeNoteDate = null;
+      generateCalendar();
+    }
 
-}
-function showNoteForm(dateKey) { activeNoteDate = dateKey; 
-const today = new Date();
-const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
-  activeNoteDate = todayKey;
-}
-generateCalendar();
- }
-function saveNote(dateKey) {
-  const text = document.getElementById("noteText").value.trim();
-  if (text) notesByDate[dateKey] = text;
-  else delete notesByDate[dateKey];
-  localStorage.setItem("calendarNotes", JSON.stringify(notesByDate));
-  activeNoteDate = null;
-  
-const today = new Date();
-const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
-  activeNoteDate = todayKey;
-}
-generateCalendar();
+    async function deleteNote(dateKey) {
+      if (confirm("Delete this note?")) {
+        await deleteDoc(doc(db, "calendarNotes", dateKey));
+        activeNoteDate = null;
+        generateCalendar();
+      }
+    }
 
-}
-function deleteNote(dateKey) {
-  if (confirm("Delete this note?")) {
-    delete notesByDate[dateKey];
-    localStorage.setItem("calendarNotes", JSON.stringify(notesByDate));
-    activeNoteDate = null;
-    
-const today = new Date();
-const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
-  activeNoteDate = todayKey;
-}
-generateCalendar();
+    function closeNoteForm() {
+      activeNoteDate = null;
+      generateCalendar();
+    }
 
-  }
-}
-function closeNoteForm() { activeNoteDate = null; 
-const today = new Date();
-const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
-  activeNoteDate = todayKey;
-}
-generateCalendar();
- }
+    function showNoteForm(dateKey) {
+      activeNoteDate = dateKey;
+      generateCalendar();
+    }
 
+    async function generateCalendar() {
+      await loadNotes();
+      const container = document.getElementById("calendar");
+      const month = calendarDate.toLocaleString("default", { month: "long" });
+      const year = calendarDate.getFullYear();
+      const firstDay = new Date(year, calendarDate.getMonth(), 1).getDay();
+      const daysInMonth = new Date(year, calendarDate.getMonth() + 1, 0).getDate();
+      const today = new Date();
+      let html = `<div style="text-align:center;margin-bottom:10px;">
+        <button onclick="changeMonth(-1)">◀</button> <strong>${month} ${year}</strong> <button onclick="changeMonth(1)">▶</button></div>
+        <div class="calendar-grid">`;
+      const days = ["S","M","T","W","T","F","S"];
+      days.forEach(d => html += `<div><strong>${d}</strong></div>`);
+      for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const fullDate = `${year}-${String(calendarDate.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const hasNote = notesByDate[fullDate];
+        const isToday = d === today.getDate() && calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear();
+        const classes = `${isToday ? "today" : ""} ${hasNote ? "has-note" : ""}`;
+        html += `<div class="${classes}" onclick="showNoteForm('${fullDate}')">${d}</div>`;
+      }
+      html += `</div>`;
+      if (activeNoteDate !== null) {
+        const value = notesByDate[activeNoteDate] || "";
+        html += `<div style="margin-top:10px;">
+          <strong>${activeNoteDate}</strong><br>
+          <textarea id="noteText" style="width:100%;box-sizing:border-box;" rows="3">${value}</textarea>
+          <button onclick="saveNote('${activeNoteDate}')">Save</button>
+          <button onclick="deleteNote('${activeNoteDate}')">Delete</button>
+          <button onclick="closeNoteForm()">Close</button>
+        </div>`;
+      }
+      container.innerHTML = html;
+    }
 
-const today = new Date();
-const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-if (calendarDate.getMonth() === today.getMonth() && calendarDate.getFullYear() === today.getFullYear() && notesByDate[todayKey]) {
-  activeNoteDate = todayKey;
-}
-generateCalendar();
+    function changeMonth(offset) {
+      calendarDate.setMonth(calendarDate.getMonth() + offset);
+      generateCalendar();
+    }
 
-
-
-}
-renderTodos();
-</script>
+    document.addEventListener("DOMContentLoaded", () => {
+      generateCalendar();
+    });
+  </script>
 <script>
     const notes = JSON.parse(localStorage.getItem("calendarNotes") || "{}");
     let current = new Date();
     let selectedDate = null;
 
-    function renderCalendar() {
+    async function renderCalendar() {
       const year = current.getFullYear();
       const month = current.getMonth();
       const firstDay = new Date(year, month, 1).getDay();
@@ -301,11 +294,24 @@ renderTodos();
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Floating To-Do initialized");
 
-  let floatingTodos = JSON.parse(localStorage.getItem("floatingTodoList") || "[]");
+  let floatingTodos = [];
+const todoSnap = await getDoc(doc(db, "todoLists", "floating"));
+if (todoSnap.exists()) floatingTodos = todoSnap.data().items || [];
 
-  function renderFloatingTodos() {
-    const list = document.getElementById("floatingTodoList");
-    if (!list) return;
+ import { setDoc, doc } from "firebase/firestore";
+
+async function renderNote(dateKey) {
+  const text = document.getElementById("noteText").value.trim();
+  if (!text) return;
+
+  try {
+    await setDoc(doc(db, "calendarNotes", dateKey), { text });
+    console.log("Note saved to Firebase!");
+  } catch (error) {
+    console.error("Error saving note:", error);
+  }
+}
+
     list.innerHTML = "";
     floatingTodos.forEach((todo, index) => {
       const li = document.createElement("li");
@@ -322,10 +328,20 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function addFloatingTodo() {
-    const input = document.getElementById("floatingNewTodo");
-    const text = input.value.trim();
-    if (!text) return;
+ import { setDoc, doc } from "firebase/firestore";
+
+async function addFloatingTodos()(dateKey) {
+  const text = document.getElementById("noteText").value.trim();
+  if (!text) return;
+
+  try {
+    await setDoc(doc(db, "calendarNotes", dateKey), { text });
+    console.log("Note saved to Firebase!");
+  } catch (error) {
+    console.error("Error saving note:", error);
+  }
+}
+
     floatingTodos.push({ text: text, done: false });
     input.value = "";
     updateFloatingTodos();
@@ -341,8 +357,8 @@ document.addEventListener("DOMContentLoaded", function () {
     updateFloatingTodos();
   };
 
-  function updateFloatingTodos() {
-    localStorage.setItem("floatingTodoList", JSON.stringify(floatingTodos));
+  async function updateFloatingTodos() {
+   await setDoc(doc(db, "todoLists", "floating"), { items: floatingTodos });
     renderFloatingTodos();
   }
 
@@ -366,7 +382,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const noteText = document.getElementById("noteText");
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const notesByDate = JSON.parse(localStorage.getItem("calendarNotes") || "{}");
+  const notesByDate = {};
+const snapshot = await getDocs(collection(db, "calendarNotes"));
+snapshot.forEach(doc => {
+  notesByDate[doc.id] = doc.data().text;
+});
   const header = document.getElementById("staticNoteDate");
 
   if (header) header.textContent = "Note for " + todayKey;
@@ -377,9 +397,9 @@ document.addEventListener("DOMContentLoaded", function () {
       if (value) {
         notesByDate[todayKey] = value;
       } else {
-        delete notesByDate[todayKey];
+       await deleteDoc(doc(db, "calendarNotes", dateKey));
       }
-      localStorage.setItem("calendarNotes", JSON.stringify(notesByDate));
+     await setDoc(doc(db, "calendarNotes", dateKey), { text });
     });
   }
 });
