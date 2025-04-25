@@ -2,306 +2,232 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ECG Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ECG</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.appspot.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const ecgNotesCollection = collection(db, "ecgNotes");
+
+    async function saveNote() {
+      const noteText = document.getElementById("note").value;
+      const imageFile = document.getElementById("image").files[0];
+      if (!noteText && !imageFile) return;
+
+      let imageData = "";
+      if (imageFile) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          imageData = reader.result;
+          await addDoc(ecgNotesCollection, { note: noteText, image: imageData });
+          document.getElementById("note").value = "";
+          document.getElementById("image").value = "";
+          loadNotes();
+        };
+        reader.readAsDataURL(imageFile);
+      } else {
+        await addDoc(ecgNotesCollection, { note: noteText, image: "" });
+        document.getElementById("note").value = "";
+        loadNotes();
+      }
+    }
+
+    async function loadNotes(filter = "") {
+      const notesContainer = document.getElementById("notes");
+      notesContainer.innerHTML = "";
+      const querySnapshot = await getDocs(ecgNotesCollection);
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (filter && !data.note?.toLowerCase().trim().includes(filter.toLowerCase().trim())) return;
+
+        const card = document.createElement("div");
+        card.className = "note-card";
+
+        if (data.image) {
+          const img = document.createElement("img");
+          img.src = data.image;
+          img.alt = "Note Image";
+          img.className = "note-image";
+          img.addEventListener("click", () => {
+            img.classList.toggle("zoomed");
+          });
+          card.appendChild(img);
+        }
+
+        const p = document.createElement("p");
+        p.textContent = data.note;
+        card.appendChild(p);
+
+        const btnContainer = document.createElement("div");
+        btnContainer.className = "btn-container";
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Delete";
+        delBtn.onclick = async () => {
+          await deleteDoc(doc(ecgNotesCollection, docSnap.id));
+          loadNotes();
+        };
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => {
+          const newNote = prompt("Edit note:", data.note);
+          if (newNote !== null) {
+            updateDoc(doc(ecgNotesCollection, docSnap.id), { note: newNote });
+            loadNotes();
+          }
+        };
+
+        btnContainer.appendChild(editBtn);
+        btnContainer.appendChild(delBtn);
+        card.appendChild(btnContainer);
+
+        notesContainer.appendChild(card);
+      });
+    }
+
+    window.saveNote = saveNote;
+    window.loadNotes = loadNotes;
+
+    window.onload = () => loadNotes();
+
+    window.searchNotes = () => {
+      const searchVal = document.getElementById("search").value;
+      loadNotes(searchVal);
+    };
+  </script>
   <style>
     body {
-      font-size: 14px;
-      font-family: Tahoma, sans-serif;
+      font-family: 'Courier New', monospace;
+      background-color: #ebebeb;
       margin: 0;
       padding: 0;
-      background-color: #fff;
-      color: #000;
     }
-    header {
-      background-color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    header button {
-      background-color: #a86067;
-      color: white;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-    }
-    #searchInput {
-      padding: 0.3rem 0.5rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 0.8rem;
-      width: 140px;
-    }
-    .main {
-      display: flex;
-      padding: 2rem;
-      gap: 2rem;
-      justify-content: flex-start;
-    }
-    .form-tile {
-      background: #ffffff;
-      border: 1px solid #e8b8bd;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.1);
-      width: 360px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      display: flex;
-      flex-direction: column;
-    }
-    .notes-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .tile {
-      background: #ffffff;
-      border: 1px solid #ffccd2;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.1);
-      width: 300px;
-    }
-    input[type="text"], textarea, input[type="file"] {
+
+    h1 {
       text-align: center;
-      display: block;
-      width: 100%;
-      margin-top: 0.3rem;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      margin-bottom: 1rem;
-    }
-    textarea {
-      height: 100px;
-    }
-    button.save {
-      background-color: #61040d;
-      color: white;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-    }
-    .preview img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 1rem;
-      cursor: pointer;
-    }
-    .preview h2 {
-      color: #61040d;
-    }
-    .edit-btn, .delete-btn {
-      margin-top: 0.5rem;
-      margin-right: 0.5rem;
-      background-color: #ccc;
       color: black;
-      padding: 0.3rem 0.7rem;
-      border-radius: 5px;
+      padding: 10px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    textarea, input[type="file"] {
+      display: block;
+      margin: 0.5rem auto;
+      padding: 0.5rem;
+      width: 90%;
+      max-width: 600px;
+      background-color: #f7eeed;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      background-color: #f7d1d8;
+      color: black;
+      padding: 0.5rem 1rem;
       border: none;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 0.9rem;
+      margin-top: 10px;
     }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
+
+    #notes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .note-card {
+      background-color: #f7eeed;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      text-align: left;
+    }
+
+    .note-image {
+      max-width: 100%;
+      max-height: 200px;
+      cursor: zoom-in;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .note-image.zoomed {
+      max-width: 100%;
+      max-height: none;
       width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.9);
-      justify-content: center;
-      align-items: center;
+      cursor: zoom-out;
     }
-    .modal img {
-      max-width: 90%;
-      max-height: 90%;
-    }
-    .modal.show {
+
+    .btn-container {
       display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    #search-container {
+      text-align: right;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0.5rem 1rem 0;
+    }
+
+    #search {
+      padding: 0.4rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .home-button {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      background-color: #f7d1d8;
+      color: black;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
-  <header>
-    <button onclick="index.html">Home</button>
-    <input type="text" id="searchInput" placeholder="Search notes..." oninput="searchNote()" />
-  </header>
-  <div class="main" style="align-items: flex-start; align-self: flex-start;">
-    <div class="form-tile">
-      <label for="imageUpload">Upload ECG Image:</label>
-      <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(event)" />
-
-      <label for="title">Title:</label>
-      <input type="text" id="title" />
-
-      <label for="notes">Notes (use ** for bold, == for highlight):</label>
-      <textarea id="notes"></textarea>
-
-      <button class="save" onclick="saveNote()">Save Note</button>
-    </div>
-    <div class="notes-container" id="notesContainer"></div>
+  <a href="index.html" class="home-button">Home</a>
+  <h1>ECG</h1>
+  <div id="search-container">
+    <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
   </div>
-
-  <div id="imageModal" class="modal" onclick="closeModal()">
-    <img id="modalImage" src="" alt="Full View">
+  <div class="container">
+    <textarea id="note" placeholder="Write your note here..."></textarea>
+    <input type="file" id="image" accept="image/*">
+    <button onclick="saveNote()">Save Note</button>
+    <div id="notes"></div>
   </div>
-
-  <script>
-    function goHome() {
-  location.href = 'CEP.html';
-}
-
-    function showModal(src) {
-      document.getElementById('modalImage').src = src;
-      document.getElementById('imageModal').classList.add('show');
-    }
-
-    function closeModal() {
-      document.getElementById('imageModal').classList.remove('show');
-    }
-
-    function saveNote() {
-      const title = document.getElementById("title").value;
-      const rawNotes = document.getElementById("notes").value;
-      const image = sessionStorage.getItem("ecgImage") || "";
-      let notes = JSON.parse(localStorage.getItem("notesList") || "[]");
-      const editIndex = sessionStorage.getItem("editIndex");
-      if (editIndex !== null) {
-        notes[parseInt(editIndex)] = { title, rawNotes, image };
-        sessionStorage.removeItem("editIndex");
-      } else {
-        notes.push({ title, rawNotes, image });
-      }
-      localStorage.setItem("notesList", JSON.stringify(notes));
-      document.getElementById("title").value = "";
-      document.getElementById("notes").value = "";
-      sessionStorage.removeItem("ecgImage");
-      displayNotes();
-    }
-
-    function previewImage(event) {
-      const reader = new FileReader();
-      reader.onload = function () {
-        sessionStorage.setItem("ecgImage", reader.result);
-      };
-      reader.readAsDataURL(event.target.files[0]);
-    }
-
-    function displayNotes() {
-      const container = document.getElementById("notesContainer");
-      container.innerHTML = "";
-      const notes = JSON.parse(localStorage.getItem("notesList") || "[]");
-      notes.forEach((note, index) => {
-        const tile = document.createElement("div");
-        tile.className = "tile preview";
-
-        const titleEl = document.createElement("h2");
-        titleEl.innerText = note.title;
-
-        const noteEl = document.createElement("p");
-        noteEl.innerHTML = note.rawNotes
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/==(.+?)==/g, '<mark>$1</mark>');
-
-        const imgEl = document.createElement("img");
-        imgEl.src = note.image;
-        imgEl.onclick = () => showModal(note.image);
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "edit-btn";
-        editBtn.innerText = "Edit";
-        editBtn.onclick = () => {
-  document.getElementById("title").value = note.title;
-  document.getElementById("notes").value = note.rawNotes;
-  sessionStorage.setItem("ecgImage", note.image);
-  sessionStorage.setItem("editIndex", index);
-};
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "delete-btn";
-        deleteBtn.innerText = "Delete";
-        deleteBtn.onclick = () => {
-          const updatedNotes = notes.filter((_, i) => i !== index);
-          localStorage.setItem("notesList", JSON.stringify(updatedNotes));
-          displayNotes();
-        };
-
-        tile.appendChild(titleEl);
-        tile.appendChild(noteEl);
-        if (note.image) tile.appendChild(imgEl);
-        tile.appendChild(editBtn);
-        tile.appendChild(deleteBtn);
-        container.appendChild(tile);
-      });
-    }
-
-    function searchNote() {
-      const keyword = document.getElementById("searchInput").value.toLowerCase();
-      const notes = JSON.parse(localStorage.getItem("notesList") || "[]");
-      const filtered = notes.filter(note =>
-        note.title.toLowerCase().includes(keyword) ||
-        note.rawNotes.toLowerCase().includes(keyword)
-      );
-      const container = document.getElementById("notesContainer");
-      container.innerHTML = "";
-      filtered.forEach((note, index) => {
-        const tile = document.createElement("div");
-        tile.className = "tile preview";
-
-        const titleEl = document.createElement("h2");
-        titleEl.innerText = note.title;
-
-        const noteEl = document.createElement("p");
-        noteEl.innerHTML = note.rawNotes
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/==(.+?)==/g, '<mark>$1</mark>');
-
-        const imgEl = document.createElement("img");
-        imgEl.src = note.image;
-        imgEl.onclick = () => showModal(note.image);
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "edit-btn";
-        editBtn.innerText = "Edit";
-        editBtn.onclick = () => {
-          document.getElementById("title").value = note.title;
-          document.getElementById("notes").value = note.rawNotes;
-          sessionStorage.setItem("ecgImage", note.image);
-          const updatedNotes = notes.filter((_, i) => i !== index);
-          localStorage.setItem("notesList", JSON.stringify(updatedNotes));
-          displayNotes();
-        };
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "delete-btn";
-        deleteBtn.innerText = "Delete";
-        deleteBtn.onclick = () => {
-          const updatedNotes = notes.filter((_, i) => i !== index);
-          localStorage.setItem("notesList", JSON.stringify(updatedNotes));
-          displayNotes();
-        };
-
-        tile.appendChild(titleEl);
-        tile.appendChild(noteEl);
-        if (note.image) tile.appendChild(imgEl);
-        tile.appendChild(editBtn);
-        tile.appendChild(deleteBtn);
-        container.appendChild(tile);
-      });
-    }
-
-    window.onload = displayNotes;
-  </script>
 </body>
 </html>
