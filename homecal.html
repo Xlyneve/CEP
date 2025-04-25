@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Calendar and To-Do Page</title>
   <style>
     body {
@@ -29,36 +29,44 @@
     }
     .calendar-header {
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
-      gap: 40px;
-      position: relative;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
     }
-    .calendar-header button {
-      padding: 5px 10px;
-      font-size: 16px;
+    .calendar-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .calendar-header h2#monthLabel {
+      font-size: 14pt;
+      margin: 0;
+      color: #B3907A;
+    }
+    .calendar-header button,
+    .calendar-header select {
+      padding: 4px 8px;
+      font-size: 8pt;
       background-color: #B3907A;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       color: white;
-      transition: background-color 0.3s;
     }
-    .calendar-header button:hover {
+    .calendar-header button:hover,
+    .calendar-header select:hover {
       background-color: #a37760;
     }
     .home-button {
-      position: absolute;
-      top: 0;
-      left: 10px;
-      padding: 5px 10px;
+      padding: 4px 8px;
       background-color: #C1B6A3;
       border: none;
-      border-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 10pt;
+      font-size: 8pt;
       color: white;
-      transition: background-color 0.3s;
     }
     .home-button:hover {
       background-color: #a89f8b;
@@ -83,10 +91,8 @@
       border-radius: 12px;
       padding: 10px;
       min-height: 100px;
-      position: relative;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
       transition: box-shadow 0.3s;
     }
@@ -165,55 +171,28 @@
       cursor: pointer;
       border-radius: 0 8px 8px 0;
       color: #333;
-      transition: background-color 0.3s;
     }
     .add-todo button:hover {
       background-color: #a89f8b;
-    }
-    @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-        font-size: 10pt;
-      }
-      .calendar-container,
-      .todo-container {
-        width: 100%;
-        border-radius: 0;
-        border: none;
-      }
-      .calendar {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .calendar-header {
-        flex-direction: column;
-        gap: 10px;
-      }
-      .todo-title {
-        font-size: 18px;
-      }
-      .todo-item input[type="text"] {
-        font-size: 10pt;
-      }
-      .day {
-        min-height: 120px;
-      }
-      .day textarea {
-        font-size: 10pt;
-      }
     }
   </style>
 </head>
 <body>
   <div class="calendar-container">
-    <div style="position: relative; height: 40px;">
-      <button class="home-button" onclick="location.href='index.html'">Home</button>
-    </div>
     <div class="calendar-header">
-      <button onclick="changeMonth(-1)">◀</button>
-      <h2 id="monthLabel">Monthly Calendar</h2>
-      <button onclick="changeMonth(1)">▶</button>
+      <div class="calendar-header-left">
+        <button class="home-button" onclick="location.href='index.html'">Home</button>
+        <h2 id="monthLabel">Monthly Calendar</h2>
+      </div>
+      <div>
+        <button onclick="changeMonth(-1)">◀</button>
+        <button onclick="goToToday()">Today</button>
+        <select id="monthSelect"></select>
+        <select id="yearSelect"></select>
+        <button onclick="changeMonth(1)">▶</button>
+      </div>
     </div>
-    <div class="day-headers" id="dayHeaders">
+    <div class="day-headers">
       <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
     </div>
     <div class="calendar" id="calendar"></div>
@@ -238,7 +217,7 @@
       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
       projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.firebasestorage.app",
+      storageBucket: "cepx-f9d2a.appspot.com",
       messagingSenderId: "840696526325",
       appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
@@ -246,149 +225,161 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const calendarEl = document.getElementById('calendar');
-      const todoListEl = document.getElementById('todoList');
-      const todoInput = document.getElementById('newTodo');
-      const monthLabel = document.getElementById('monthLabel');
+    let currentDate = new Date();
+    const calendarEl = document.getElementById('calendar');
+    const monthLabel = document.getElementById('monthLabel');
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const todoInput = document.getElementById('newTodo');
+    const todoListEl = document.getElementById('todoList');
 
-      let currentDate = new Date();
+    const months = [...Array(12).keys()].map(i => new Date(0, i).toLocaleString('default', { month: 'long' }));
 
-      function getMonthName(monthIndex) {
-        return new Date(2000, monthIndex, 1).toLocaleString('default', { month: 'long' });
+    function populateSelectors() {
+      months.forEach((m, i) => {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = m;
+        monthSelect.appendChild(option);
+      });
+
+      const thisYear = new Date().getFullYear();
+      for (let y = thisYear - 5; y <= thisYear + 5; y++) {
+        const option = document.createElement('option');
+        option.value = y;
+        option.textContent = y;
+        yearSelect.appendChild(option);
       }
 
-      function getDaysInMonth(month, year) {
-        return new Date(year, month + 1, 0).getDate();
-      }
-
-      function getDayName(year, month, day) {
-        return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
-      }
-
-      async function loadCalendar() {
-        calendarEl.innerHTML = '';
-        const month = currentDate.getMonth();
-        const year = currentDate.getFullYear();
-        const daysInMonth = getDaysInMonth(month, year);
-        monthLabel.textContent = `${getMonthName(month)} ${year}`;
-
-        const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
-        let notes = {};
-        try {
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            notes = docSnap.data();
-          }
-        } catch (error) {
-          console.error("Error loading calendar:", error);
-        }
-
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        for (let i = 0; i < firstDayOfMonth; i++) {
-          const empty = document.createElement('div');
-          empty.className = 'day empty';
-          calendarEl.appendChild(empty);
-        }
-
-        for (let i = 1; i <= daysInMonth; i++) {
-          const note = notes[i] || "";
-          const day = document.createElement('div');
-          day.className = 'day';
-          const dayName = getDayName(year, month, i);
-          day.innerHTML = `<div class="date-number">${dayName} ${i}</div><textarea placeholder=" ">${note}</textarea>`;
-          const textarea = day.querySelector('textarea');
-          textarea.addEventListener('input', () => saveCalendar(year, month + 1, i.toString(), textarea.value));
-          calendarEl.appendChild(day);
-        }
-      }
-
-      async function saveCalendar(year, month, day, note) {
-        const ref = doc(db, 'calendar', `${year}-${month}`);
-        try {
-          await updateDoc(ref, { [day]: note });
-        } catch {
-          await setDoc(ref, { [day]: note }, { merge: true });
-        }
-      }
-
-      function changeMonth(offset) {
-        currentDate.setMonth(currentDate.getMonth() + offset);
+      monthSelect.addEventListener('change', () => {
+        currentDate.setMonth(parseInt(monthSelect.value));
         loadCalendar();
-      }
+      });
 
-      async function addTodo() {
-        const value = todoInput.value.trim();
-        if (value) {
-          await addDoc(collection(db, 'todos'), { text: value, done: false });
-          todoInput.value = '';
-        }
-      }
+      yearSelect.addEventListener('change', () => {
+        currentDate.setFullYear(parseInt(yearSelect.value));
+        loadCalendar();
+      });
+    }
 
-      function renderTodoItem(id, text, done) {
-        const item = document.createElement('div');
-        item.className = 'todo-item';
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = done;
-        checkbox.addEventListener('change', () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked }));
-        item.appendChild(checkbox);
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = text;
-        input.disabled = true;
-        input.style.flex = '1';
-        input.style.border = 'none';
-        input.style.background = 'transparent';
-        input.style.marginRight = '5px';
-        item.appendChild(input);
-
-        const editButton = document.createElement('button');
-        editButton.textContent = '✏️';
-        editButton.style.marginRight = '5px';
-        editButton.addEventListener('click', async () => {
-          if (input.disabled) {
-            input.disabled = false;
-            input.focus();
-            editButton.textContent = '💾';
-          } else {
-            await updateDoc(doc(db, 'todos', id), { text: input.value });
-            input.disabled = true;
-            editButton.textContent = '✏️';
-          }
-        });
-        item.appendChild(editButton);
-
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = '🗑️';
-        deleteButton.addEventListener('click', async () => {
-          if (confirm('Delete this to-do item?')) {
-            await deleteDoc(doc(db, 'todos', id));
-          }
-        });
-        item.appendChild(deleteButton);
-
-        todoListEl.appendChild(item);
-      }
-
-      function loadTodos() {
-        const todosRef = collection(db, 'todos');
-        onSnapshot(todosRef, (snapshot) => {
-          todoListEl.innerHTML = '';
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            renderTodoItem(doc.id, data.text, data.done);
-          });
-        });
-      }
-
-      window.addTodo = addTodo;
-      window.changeMonth = changeMonth;
+    function goToToday() {
+      currentDate = new Date();
       loadCalendar();
-      loadTodos();
-    });
+    }
+
+    function changeMonth(offset) {
+      currentDate.setMonth(currentDate.getMonth() + offset);
+      loadCalendar();
+    }
+
+    function getDaysInMonth(month, year) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function getDayName(year, month, day) {
+      return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
+    }
+
+    async function loadCalendar() {
+      const month = currentDate.getMonth();
+      const year = currentDate.getFullYear();
+      calendarEl.innerHTML = '';
+      monthLabel.textContent = `${months[month]} ${year}`;
+      monthSelect.value = month;
+      yearSelect.value = year;
+
+      const daysInMonth = getDaysInMonth(month, year);
+      const firstDay = new Date(year, month, 1).getDay();
+
+      const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
+      let notes = {};
+      const snap = await getDoc(docRef);
+      if (snap.exists()) notes = snap.data();
+
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'day empty';
+        calendarEl.appendChild(empty);
+      }
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const note = notes[i] || "";
+        const day = document.createElement('div');
+        day.className = 'day';
+        day.innerHTML = `<div class="date-number">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
+        day.querySelector('textarea').addEventListener('input', e => saveCalendar(year, month + 1, i, e.target.value));
+        calendarEl.appendChild(day);
+      }
+    }
+
+    async function saveCalendar(year, month, day, note) {
+      const ref = doc(db, 'calendar', `${year}-${month}`);
+      try {
+        await updateDoc(ref, { [day]: note });
+      } catch {
+        await setDoc(ref, { [day]: note }, { merge: true });
+      }
+    }
+
+    async function addTodo() {
+      const value = todoInput.value.trim();
+      if (value) {
+        await addDoc(collection(db, 'todos'), { text: value, done: false });
+        todoInput.value = '';
+      }
+    }
+
+    function renderTodoItem(id, text, done) {
+      const item = document.createElement('div');
+      item.className = 'todo-item';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = done;
+      checkbox.onchange = () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = text;
+      input.disabled = true;
+      input.style.flex = '1';
+      input.style.border = 'none';
+      input.style.background = 'transparent';
+      const editBtn = document.createElement('button');
+      editBtn.textContent = '✏️';
+      editBtn.onclick = async () => {
+        if (input.disabled) {
+          input.disabled = false;
+          input.focus();
+          editBtn.textContent = '💾';
+        } else {
+          await updateDoc(doc(db, 'todos', id), { text: input.value });
+          input.disabled = true;
+          editBtn.textContent = '✏️';
+        }
+      };
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = '🗑️';
+      deleteBtn.onclick = async () => {
+        if (confirm("Delete this to-do?")) await deleteDoc(doc(db, 'todos', id));
+      };
+      item.append(checkbox, input, editBtn, deleteBtn);
+      todoListEl.appendChild(item);
+    }
+
+    function loadTodos() {
+      const ref = collection(db, 'todos');
+      onSnapshot(ref, snap => {
+        todoListEl.innerHTML = '';
+        snap.forEach(doc => renderTodoItem(doc.id, doc.data().text, doc.data().done));
+      });
+    }
+
+    populateSelectors();
+    loadCalendar();
+    loadTodos();
+
+    window.changeMonth = changeMonth;
+    window.goToToday = goToToday;
+    window.addTodo = addTodo;
   </script>
 </body>
 </html>
