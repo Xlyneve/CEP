@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inteleviewer Access</title>
-   <style>
+  <style>
     body {
       font-family: 'Courier New', Courier, monospace;
       margin: 0;
@@ -17,11 +17,49 @@
       color: black;
       margin-bottom: 30px;
     }
+
+    /* Floating buttons */
+    .top-left, .top-right {
+      position: fixed;
+      top: 10px;
+      z-index: 1000;
+    }
+    .top-left {
+      left: 10px;
+    }
+    .top-right {
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .icon-btn {
+      background-color: #e4c9b6;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'Courier New', Courier, monospace;
+      transition: background-color 0.3s;
+    }
+    .icon-btn:hover {
+      background-color: #d2b5a3;
+    }
+    .search-box {
+      display: none;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       background-color: white;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-top: 60px;
       margin-bottom: 20px;
     }
     th, td {
@@ -81,6 +119,18 @@
   </style>
 </head>
 <body>
+
+  <!-- Hovering Home Button (Top-Left) -->
+  <div class="top-left">
+    <button class="icon-btn" onclick="location.href='index.html'">Home</button>
+  </div>
+
+  <!-- Hovering Search (Top-Right) -->
+  <div class="top-right">
+    <button class="icon-btn" onclick="toggleSearch()">🔍</button>
+    <input type="text" id="searchInput" class="search-box" placeholder="Search..." oninput="filterTable()">
+  </div>
+
   <h1>Inteleviewer Access</h1>
 
   <table>
@@ -123,24 +173,45 @@
     const tableBody = document.getElementById('tableBody');
     const collectionRef = collection(db, 'inteleviewerData');
 
+    let allDocs = [];
+
     function renderRow(docSnap) {
       const data = docSnap.data();
       const tr = document.createElement('tr');
-
       tr.innerHTML = `
         <td>${data.radiology}</td>
         <td>${data.username}</td>
         <td>${data.password}</td>
         <td><button class="btn delete-btn" onclick="deleteEntry('${docSnap.id}')">Delete</button></td>
       `;
-
-      tableBody.appendChild(tr);
+      return tr;
     }
 
     onSnapshot(collectionRef, (snapshot) => {
-      tableBody.innerHTML = '';
-      snapshot.forEach(renderRow);
+      allDocs = [];
+      snapshot.forEach(doc => allDocs.push(doc));
+      displayTable(allDocs);
     });
+
+    function displayTable(docs) {
+      tableBody.innerHTML = '';
+      docs.forEach(docSnap => {
+        tableBody.appendChild(renderRow(docSnap));
+      });
+    }
+
+    window.filterTable = () => {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const filteredDocs = allDocs.filter(doc => {
+        const data = doc.data();
+        return (
+          data.radiology.toLowerCase().includes(searchTerm) ||
+          data.username.toLowerCase().includes(searchTerm) ||
+          data.password.toLowerCase().includes(searchTerm)
+        );
+      });
+      displayTable(filteredDocs);
+    };
 
     window.addEntry = async () => {
       const radiology = document.getElementById('newRadiology').value.trim();
@@ -160,6 +231,12 @@
       if (confirm("Are you sure you want to delete this entry?")) {
         await deleteDoc(doc(db, 'inteleviewerData', id));
       }
+    };
+
+    window.toggleSearch = () => {
+      const searchBox = document.getElementById('searchInput');
+      searchBox.style.display = searchBox.style.display === 'inline-block' ? 'none' : 'inline-block';
+      if (searchBox.style.display === 'inline-block') searchBox.focus();
     };
   </script>
 </body>
