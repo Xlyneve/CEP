@@ -112,7 +112,7 @@
       border: 1px solid #C1B6A3;
       border-radius: 8px;
       padding: 5px;
-      font-family: Courier new;
+      font-family: Courier New, monospace;
       font-size: 8pt;
     }
     .day .date-number {
@@ -177,6 +177,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="calendar-container">
     <div class="calendar-header">
@@ -193,7 +194,7 @@
       </div>
     </div>
     <div class="day-headers">
-      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
     </div>
     <div class="calendar" id="calendar"></div>
   </div>
@@ -289,14 +290,14 @@
       yearSelect.value = year;
 
       const daysInMonth = getDaysInMonth(month, year);
-      const firstDay = new Date(year, month, 1).getDay();
+      const firstDay = new Date(year, month, 1).getDay() || 7;
 
       const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
       let notes = {};
       const snap = await getDoc(docRef);
       if (snap.exists()) notes = snap.data();
 
-      for (let i = 0; i < firstDay; i++) {
+      for (let i = 1; i < firstDay; i++) {
         const empty = document.createElement('div');
         empty.className = 'day empty';
         calendarEl.appendChild(empty);
