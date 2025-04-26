@@ -130,12 +130,13 @@
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      databaseURL: "https://cepx-f9d2a-default-rtdb.firebaseio.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.appspot.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -149,9 +150,7 @@
 
     function renderNotes(filter = "") {
       const grid = document.getElementById("noteGrid");
-      grid.innerHTML = "";
       const q = query(notesRef, orderBy("date", "desc"));
-
       onSnapshot(q, snapshot => {
         grid.innerHTML = "";
         snapshot.docs
@@ -164,7 +163,6 @@
 
             const textarea = document.createElement("textarea");
             textarea.value = note.text;
-
             requestAnimationFrame(() => autoResize(textarea));
             textarea.addEventListener('input', () => autoResize(textarea));
 
@@ -209,13 +207,17 @@
     }
 
     document.getElementById('addNoteBtn').addEventListener('click', async () => {
+      console.log("Add button clicked");
       const newNote = {
         text: '',
         date: new Date(),
         color: "#fff"
       };
-      await addDoc(notesRef, newNote);
-      renderNotes();
+      try {
+        await addDoc(notesRef, newNote);
+      } catch (err) {
+        console.error("Failed to add note:", err);
+      }
     });
 
     document.getElementById('searchInput').addEventListener('input', e => {
