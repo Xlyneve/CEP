@@ -7,60 +7,90 @@
   <style>
     body {
       margin: 0;
+      padding: 20px;
       font-family: 'Courier New', Courier, monospace;
       font-size: 16px;
       background-color: #F7F5EB;
       color: black;
     }
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
-      border-bottom: 1px solid #ccc;
-      background-color: #EAE0DA;
+
+    h1 {
+      text-align: center;
+      font-size: 30px;
+      margin-top: 20px;
     }
+
     .home-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: #eae0da;
+      color: black;
       text-decoration: none;
-      color: #222;
-      font-size: 13px;
       font-weight: bold;
-      border: px solid #ccc;
-      padding: 4px 10px;
-      border-radius: 6px;
-      background-color: #EAE0DA;
+      padding: 8px 12px;
+      border-radius: 50px;
+      font-size: 14px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      transition: background-color 0.3s ease;
     }
+
     .home-btn:hover {
-      background-color: #A0C3D2;
+      background-color: #a0c3d2;
     }
-    .search-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
+
+    .search-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
     }
+
+    .search-icon {
+      background-color: #eae0da;
+      padding: 8px 12px;
+      border-radius: 50px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s ease;
+    }
+
+    .search-icon:hover {
+      background-color: #a0c3d2;
+    }
+
     .search-input {
-      padding: 6px;
+      display: none;
+      margin-top: 10px;
+      width: 180px;
+      padding: 6px 10px;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 13px;
+      background-color: white;
     }
+
+    .search-container.active .search-input {
+      display: block;
+    }
+
     .container {
-      max-width: 1000px;
-      margin: 30px auto;
-      padding: 20px;
+      max-width: 1200px;
+      margin: 80px auto 30px auto;
+      padding: 0 20px;
     }
-    h1 {
-      text-align: center;
-      font-size: 30x;
-      color: black;
-    }
+
     .input-group {
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin-bottom: 20px;
     }
-    input[type="text"], textarea {
+
+    input[type="text"],
+    textarea {
       padding: 8px;
       border-radius: 8px;
       border: 1px solid #ccc;
@@ -68,79 +98,103 @@
       width: 100%;
       background-color: #ffffff;
     }
+
     textarea {
       resize: vertical;
       height: 60px;
     }
+
     .add-btn {
-      background-color: #EAC7C7;
+      background-color: #eac7c7;
       color: #222;
       border: none;
       cursor: pointer;
       border-radius: 6px;
       padding: 8px;
     }
+
     .note-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 15px;
     }
+
     .note-card {
       background-color: #ece8e1;
       border: 1px solid #ccc;
       padding: 15px;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
       display: flex;
       flex-direction: column;
     }
-    .note-card input, .note-card textarea {
-      width: 100%;
-      font-size: 13px;
-      padding: 6px;
-      margin: 5px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
+
     .note-title {
       font-weight: bold;
       font-size: 14px;
       color: black;
     }
+
     .note-text {
       color: #444;
       margin-top: 8px;
       font-size: 13px;
       white-space: pre-wrap;
     }
+
     .note-url a {
       font-size: 12px;
       color: brown;
-      word-break: break-all;
+      word-break: break-word;
     }
+
     .timestamp {
       font-size: 11px;
       color: #777;
       margin-top: 10px;
     }
+
     .btn-group {
       margin-top: 10px;
       display: flex;
       justify-content: flex-end;
       gap: 8px;
     }
+
     .btn-group button {
-      background-color: #F7F5EB;
+      background-color: #f7f5eb;
       color: #444;
       border: none;
       padding: 6px 10px;
       border-radius: 6px;
       cursor: pointer;
     }
+
     .btn-group button:hover {
-      background-color: #EAC7C7;
+      background-color: #eac7c7;
     }
   </style>
+</head>
+<body>
+  <a href="index.html" class="home-btn">← Home</a>
+
+  <div class="search-container" id="searchBox">
+    <div class="search-icon" onclick="toggleSearch()">🔍</div>
+    <input type="text" id="searchInput" class="search-input" placeholder="Search..." />
+  </div>
+
+  <h1>INFORMATIONS</h1>
+
+  <div class="container">
+    <div class="input-group">
+      <input type="text" id="noteTitle" placeholder="Title" />
+      <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
+      <input type="text" id="noteUrl" placeholder="Optional URL" />
+      <button class="add-btn">Add Note</button>
+    </div>
+    <div class="note-list" id="notesContainer"></div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import {
@@ -158,7 +212,6 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     let notes = [];
 
     document.getElementById('searchInput').addEventListener('input', renderNotes);
@@ -272,24 +325,10 @@
         alert("Note copied to clipboard!");
       });
     };
+
+    window.toggleSearch = () => {
+      document.getElementById('searchBox').classList.toggle('active');
+    };
   </script>
-</head>
-<body>
-  <div class="top-bar">
-    <a href="index.html" class="home-btn">← Home</a>
-    <div class="search-wrapper">
-      <input type="text" id="searchInput" class="search-input" placeholder="Search" />
-    </div>
-  </div>
-  <div class="container">
-    <h1>INFORMATIONS</h1>
-    <div class="input-group">
-      <input type="text" id="noteTitle" placeholder="Title" />
-      <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
-      <input type="text" id="noteUrl" placeholder="Optional URL" />
-      <button class="add-btn">Add Note</button>
-    </div>
-    <div class="note-list" id="notesContainer"></div>
-  </div>
 </body>
 </html>
