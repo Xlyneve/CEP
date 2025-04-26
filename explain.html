@@ -35,7 +35,7 @@
       transform: translateY(-1px);
     }
 
-    .search-icon {
+    .search-toggle {
       position: fixed;
       top: 10px;
       right: 10px;
@@ -49,15 +49,39 @@
       transition: all 0.2s ease;
     }
 
-    .search-icon:hover {
+    .search-toggle:hover {
       background-color: #f7d1d8;
-      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
       transform: translateY(-1px);
+    }
+
+    .search-box {
+      position: fixed;
+      top: 50px;
+      right: 10px;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 5px;
+      border-radius: 6px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .search-box input {
+      padding: 5px;
+      font-size: 13px;
+      width: 200px;
+    }
+
+    .search-box .clear {
+      cursor: pointer;
+      margin-left: 5px;
+      font-size: 14px;
+      color: #888;
     }
 
     .container {
       max-width: 1000px;
-      margin: 60px auto 30px;
+      margin: 100px auto 30px;
       padding: 10px 20px;
     }
 
@@ -116,15 +140,6 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.03);
       display: flex;
       flex-direction: column;
-    }
-
-    .note-card input, .note-card textarea {
-      width: 100%;
-      font-size: 13px;
-      padding: 6px;
-      margin: 5px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
     }
 
     .note-title {
@@ -198,11 +213,11 @@
       document.getElementById('noteText').value = '';
     });
 
-    function renderNotes() {
+    function renderNotes(notesToRender = allNotes) {
       const container = document.getElementById('notesContainer');
       container.innerHTML = '';
 
-      allNotes.forEach((note, index) => {
+      notesToRender.forEach((note, index) => {
         const div = document.createElement('div');
         div.className = 'note-card';
 
@@ -267,6 +282,14 @@
       });
     };
 
+    function filterNotes(keyword) {
+      const lower = keyword.toLowerCase();
+      const filtered = allNotes.filter(n =>
+        n.title.toLowerCase().includes(lower) || n.text.toLowerCase().includes(lower)
+      );
+      renderNotes(filtered);
+    }
+
     onSnapshot(collection(db, 'explainNotes'), snapshot => {
       allNotes = snapshot.docs.map(docSnap => ({
         ...docSnap.data(),
@@ -275,11 +298,32 @@
       }));
       renderNotes();
     });
+
+    document.querySelector('.search-toggle').addEventListener('click', () => {
+      const box = document.querySelector('.search-box');
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+      if (box.style.display === 'block') {
+        document.getElementById('searchInput').focus();
+      }
+    });
+
+    document.getElementById('searchInput').addEventListener('input', e => {
+      filterNotes(e.target.value);
+    });
+
+    document.getElementById('clearSearch').addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      renderNotes();
+    });
   </script>
 </head>
 <body>
   <a href="index.html" class="home-btn">← Home</a>
-  <div class="search-icon">🔍</div>
+  <div class="search-toggle">🔍</div>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search notes...">
+    <span class="clear" id="clearSearch">✖</span>
+  </div>
 
   <div class="container">
     <h1>Explanation</h1>
