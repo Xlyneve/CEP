@@ -4,21 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Nurse Notes & Recalls</title>
-    <style>
+  <style>
     body {
       margin: 0;
-     font-family: 'Courier New', Courier, monospace;
+      font-family: 'Courier New', Courier, monospace;
       font-size: 10px;
       background-color: #F7F5EB;
       color: black;
     }
 
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
-      border-bottom: 1px solid #ccc;
+    .header {
+      text-align: center;
+      padding: 10px;
       background-color: #EAE0DA;
     }
 
@@ -52,10 +49,8 @@
       padding: 20px;
       width: 50%;
       min-height: 500px;
-      box-shadow: 1 5px 10px rgba(0,0,0,0.05);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      box-shadow: 1px 5px 10px rgba(0, 0, 0, 0.05);
+      position: relative;
     }
 
     .recall-section {
@@ -113,7 +108,7 @@
       border: 1px solid #ddd;
       padding: 15px;
       border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
       position: relative;
     }
 
@@ -154,13 +149,37 @@
       background: #EAE0DA;
     }
 
+    .search-toggle {
+      position: absolute;
+      top: 10px;
+      cursor: pointer;
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      text-align: center;
+      line-height: 26px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .nurse-search-icon {
+      right: 10px;
+      background-color: #f2eae0;
+    }
+
+    .recall-search-icon {
+      left: 10px;
+      background-color: #F5e8e1;
+    }
+
     .search-input {
       padding: 6px;
       border-radius: 6px;
       border: 1px solid #ccc;
-      margin-bottom: 20px;
+      margin: 10px 0;
       width: 100%;
       max-width: 400px;
+      display: none;
     }
 
     .highlight-word {
@@ -168,6 +187,42 @@
       font-weight: bold;
     }
   </style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="home-btn">🏠 Home</a>
+  </div>
+
+  <div class="page-container">
+    <div class="section nurse-section">
+      <div class="search-toggle nurse-search-icon" onclick="toggleSearch('nurse')">🔍</div>
+      <input type="text" class="search-input" id="searchNurse" placeholder="Search Nurse Notes..." oninput="searchNotes('nurse')">
+
+      <h2>Nurse Notes</h2>
+      <div class="input-group">
+        <input type="text" id="nurseTitle" placeholder="Title" />
+        <input type="url" id="nurseUrl" placeholder="Enter URL (optional)" />
+        <textarea id="nurseNote" placeholder="Note..."></textarea>
+        <button class="add-btn" onclick="addNote('nurse')">Add</button>
+      </div>
+      <div class="note-list" id="nurseNotesList"></div>
+    </div>
+
+    <div class="section recall-section">
+      <div class="search-toggle recall-search-icon" onclick="toggleSearch('recall')">🔍</div>
+      <input type="text" class="search-input" id="searchRecall" placeholder="Search Recalls..." oninput="searchNotes('recall')">
+
+      <h2>Recalls</h2>
+      <div class="input-group">
+        <input type="text" id="recallTitle" placeholder="Title" />
+        <input type="url" id="recallUrl" placeholder="Enter URL (optional)" />
+        <textarea id="recallNote" placeholder="Note..."></textarea>
+        <button class="add-btn" onclick="addNote('recall')">Add</button>
+      </div>
+      <div class="note-list" id="recallNotesList"></div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import {
@@ -204,9 +259,14 @@
       document.getElementById(`${type}Note`).value = '';
     };
 
-    function renderNotes(type) {
+    function highlightText(text, searchTerm) {
+      if (!searchTerm) return text.replace(/\n/g, '<br>');
+      const regex = new RegExp(`(${searchTerm})`, 'gi');
+      return text.replace(/\n/g, '<br>').replace(regex, '<span class="highlight-word">$1</span>');
+    }
+
+    function renderNotes(type, filter = '') {
       const list = document.getElementById(`${type}NotesList`);
-      const search = document.getElementById(`search${capitalize(type)}`).value.toLowerCase();
       const colRef = collection(db, `${type}Notes`);
       onSnapshot(colRef, snapshot => {
         list.innerHTML = '';
@@ -214,17 +274,17 @@
           const data = docSnap.data();
           const id = docSnap.id;
           const matches =
-            data.title.toLowerCase().includes(search) ||
-            data.note.toLowerCase().includes(search) ||
-            data.url.toLowerCase().includes(search);
-          if (!matches) return;
+            data.title.toLowerCase().includes(filter) ||
+            data.note.toLowerCase().includes(filter) ||
+            data.url.toLowerCase().includes(filter);
+          if (filter && !matches) return;
 
           const div = document.createElement('div');
           div.className = 'note-card';
           div.innerHTML = `
-            <div class="title">${data.title}</div>
+            <div class="title">${highlightText(data.title, filter)}</div>
             ${data.url ? `<a href="${data.url}" target="_blank">${data.url}</a>` : ''}
-            <div class="note">${highlightText(data.note)}</div>
+            <div class="note">${highlightText(data.note, filter)}</div>
             <div class="timestamp">${new Date(data.time).toLocaleString()}</div>
             <div class="btn-group">
               <button onclick="editNote('${type}', '${id}', ${index})">Edit</button>
@@ -265,12 +325,18 @@
       }
     };
 
+    window.toggleSearch = function(type) {
+      const input = document.getElementById(`search${capitalize(type)}`);
+      input.style.display = input.style.display === 'none' ? 'block' : 'none';
+    };
+
+    window.searchNotes = function(type) {
+      const search = document.getElementById(`search${capitalize(type)}`).value.toLowerCase();
+      renderNotes(type, search);
+    };
+
     function capitalize(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    function highlightText(text) {
-      return text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<span class="highlight-word">$1</span>');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -278,35 +344,5 @@
       renderNotes('recall');
     });
   </script>
-</head>
-<body>
-  <div class="top-bar">
-    <a href="index.html" class="home-btn">← Home</a>
-  </div>
-  <div class="page-container">
-    <div class="section nurse-section">
-      <h2>Nurse Notes</h2>
-      <input type="text" class="search-input" id="searchNurse" placeholder="Search Nurse Notes..." oninput="renderNotes('nurse')">
-      <div class="input-group">
-        <input type="text" id="nurseTitle" placeholder="Title" />
-        <input type="url" id="nurseUrl" placeholder="Enter URL (optional)" />
-        <textarea id="nurseNote" placeholder="Note..."></textarea>
-        <button class="add-btn" onclick="addNote('nurse')">Add</button>
-      </div>
-      <div class="note-list" id="nurseNotesList"></div>
-    </div>
-
-    <div class="section recall-section">
-      <h2>Recalls</h2>
-      <input type="text" class="search-input" id="searchRecall" placeholder="Search Recalls..." oninput="renderNotes('recall')">
-      <div class="input-group">
-        <input type="text" id="recallTitle" placeholder="Title" />
-        <input type="url" id="recallUrl" placeholder="Enter URL (optional)" />
-        <textarea id="recallNote" placeholder="Note..."></textarea>
-        <button class="add-btn" onclick="addNote('recall')">Add</button>
-      </div>
-      <div class="note-list" id="recallNotesList"></div>
-    </div>
-  </div>
 </body>
 </html>
