@@ -2,216 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Abdominis Anatomy Notes</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --light-pink: #F8EDEB;
-      --peach: #FEC89A;
-      --blush: #FCD5CE;
-      --soft-orange: #FFDAB9;
-      --coral: #F49595;
-      --light-beige: #F1CEBE;
-    }
-    body {
-      font-family: 'Poppins', sans-serif;
-      font-size: 10pt;
-      margin: 0;
-      padding: 0;
-      background: var(--light-pink);
-      color: #000;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem;
-      background: var(--light-beige);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .main {
-      display: flex;
-      padding: 1rem;
-      gap: 1rem;
-    }
-    .form-tile, .tile {
-      background: white;
-      border-radius: 10px;
-      padding: 1rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .form-tile {
-      width: 300px;
-    }
-    .notes-container {
-      flex: 1;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    input[type="text"], textarea, input[type="file"] {
-      width: 100%;
-      margin-bottom: 0.5rem;
-      padding: 0.5rem;
-      font-size: 10pt;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background-color: var(--coral);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      font-size: 10pt;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-right: 0.3rem;
-    }
-    img {
-      max-width: 100%;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-  </style>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
+  <title>Drug Dose Calculator</title>
 </head>
 <body>
-  <header>
-    <button onclick="location.href='index.html'">Home</button>
-    <h1>Abdominis Anatomy Notes</h1>
-    <input type="text" id="searchInput" placeholder="Search..." oninput="searchNotes()">
-  </header>
+  <h2>Drug Dose Calculator (mg/kg)</h2>
 
-  <div class="main">
-    <div class="form-tile">
-      <input type="text" id="title" placeholder="Title">
-      <textarea id="notes" placeholder="Write your notes (use **bold** or ==highlight==)"></textarea>
-      <input type="file" id="imageUpload" accept="image/*">
-      <div id="status"></div>
-      <button onclick="saveNote()">Save</button>
-    </div>
-    <div class="notes-container" id="notesContainer"></div>
-  </div>
+  <label for="dose">Dose (mg/kg):</label>
+  <input type="number" id="dose" step="any"><br><br>
+
+  <label for="weight">Patient Weight (kg):</label>
+  <input type="number" id="weight" step="any"><br><br>
+
+  <label for="concentration">Drug Concentration (mg/mL):</label>
+  <input type="number" id="concentration" step="any"><br><br>
+
+  <button onclick="calculateVolume()">Calculate Volume (mL)</button>
+
+  <h3 id="result"></h3>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
+    function calculateVolume() {
+      const dose = parseFloat(document.getElementById('dose').value);
+      const weight = parseFloat(document.getElementById('weight').value);
+      const concentration = parseFloat(document.getElementById('concentration').value);
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    let editingId = null;
-
-    async function uploadToImgur(file) {
-      const clientId = '3b2392db775548a';
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const response = await fetch("https://api.imgur.com/3/image", {
-        method: "POST",
-        headers: {
-          Authorization: `Client-ID ${clientId}`
-        },
-        body: formData
-      });
-
-      const data = await response.json();
-      if (data.success) return data.data.link;
-      throw new Error("Imgur upload failed");
-    }
-
-    async function saveNote() {
-      const title = document.getElementById("title").value.trim();
-      const rawNotes = document.getElementById("notes").value.trim();
-      const file = document.getElementById("imageUpload").files[0];
-      document.getElementById("status").textContent = "Saving...";
-
-      try {
-        let imageUrl = "";
-        if (file) {
-          imageUrl = await uploadToImgur(file);
-        }
-
-        const noteData = {
-          title,
-          rawNotes,
-          ...(imageUrl && { image: imageUrl }),
-          created: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        if (editingId) {
-          await db.collection("abdominisNotes").doc(editingId).update(noteData);
-          editingId = null;
-        } else {
-          await db.collection("abdominisNotes").add(noteData);
-        }
-
-        document.getElementById("title").value = "";
-        document.getElementById("notes").value = "";
-        document.getElementById("imageUpload").value = "";
-        document.getElementById("status").textContent = "Saved!";
-        loadNotes();
-      } catch (error) {
-        document.getElementById("status").textContent = "Error saving note.";
-        console.error(error);
+      if (isNaN(dose) || isNaN(weight) || isNaN(concentration) || concentration === 0) {
+        document.getElementById('result').innerText = 'Please enter valid numbers and make sure concentration is not zero.';
+        return;
       }
+
+      const volume = (dose * weight) / concentration;
+      document.getElementById('result').innerText = `Volume to administer: ${volume.toFixed(2)} mL`;
     }
-
-    async function loadNotes() {
-      const container = document.getElementById("notesContainer");
-      container.innerHTML = "";
-      const snapshot = await db.collection("abdominisNotes").orderBy("created", "desc").get();
-      snapshot.forEach(doc => {
-        const note = doc.data();
-        const tile = document.createElement("div");
-        tile.className = "tile";
-
-        const titleEl = document.createElement("h4");
-        titleEl.textContent = note.title;
-
-        const noteEl = document.createElement("p");
-        noteEl.innerHTML = note.rawNotes.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/==(.*?)==/g, '<mark>$1</mark>');
-
-        tile.appendChild(titleEl);
-        tile.appendChild(noteEl);
-
-        if (note.image) {
-          const imgEl = document.createElement("img");
-          imgEl.src = note.image;
-          tile.appendChild(imgEl);
-        }
-
-        const editBtn = document.createElement("button");
-        editBtn.textContent = "Edit";
-        editBtn.onclick = () => {
-          document.getElementById("title").value = note.title;
-          document.getElementById("notes").value = note.rawNotes;
-          editingId = doc.id;
-          window.scrollTo(0, 0);
-        };
-        tile.appendChild(editBtn);
-
-        container.appendChild(tile);
-      });
-    }
-
-    function searchNotes() {
-      const query = document.getElementById("searchInput").value.toLowerCase();
-      const tiles = document.querySelectorAll(".tile");
-      tiles.forEach(tile => {
-        const text = tile.innerText.toLowerCase();
-        tile.style.display = text.includes(query) ? "block" : "none";
-      });
-    }
-
-    window.onload = loadNotes;
   </script>
+
 </body>
 </html>
