@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Forms Upload</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 60px 20px 20px 20px; 
+      background: #f7f5eb; 
+      position: relative;
+    }
+    .form-group { margin-bottom: 10px; }
+    button { margin-right: 5px; }
+
+    /* Top buttons */
+    .top-left, .top-right {
+      position: absolute;
+      top: 10px;
+      padding: 8px 12px;
+      background: #e4c9b6;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      text-decoration: none;
+      color: #333;
+      transition: background 0.3s;
+    }
+    .top-left:hover, .top-right:hover {
+      background: #eae0da;
+    }
+    .top-left {
+      left: 10px;
+    }
+    .top-right {
+      right: 10px;
+    }
+
+    /* Search input */
+    #searchInput {
+      display: none;
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      padding: 5px;
+      width: 180px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    /* Tile layout */
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .file-item {
+      background: #eee;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .file-item strong {
+      font-size: 18px;
+    }
+    .file-item em {
+      font-size: 14px;
+      color: #555;
+    }
+    .file-item small {
+      display: block;
+      margin: 5px 0;
+      color: #888;
+    }
+    .file-buttons {
+      margin-top: 10px;
+    }
+    .file-buttons button {
+      margin: 3px 2px;
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top Buttons -->
+<a href="home.html" class="top-left">Home</a>
+<div class="top-right" id="searchButton">Search</div>
+<input type="text" id="searchInput" placeholder="Search title..." oninput="filterFiles()">
+
+<h1>Upload Forms</h1>
+
+<div class="form-group">
+  <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx">
+</div>
+<div class="form-group">
+  <input type="text" id="fileTitle" placeholder="Enter title" style="width: 300px;">
+</div>
+<div class="form-group">
+  <textarea id="fileNote" rows="3" placeholder="Add a note..." style="width: 300px;"></textarea>
+</div>
+<div class="form-group">
+  <button onclick="addFile()">Upload</button>
+</div>
+
+<div class="file-grid" id="fileList"></div>
+
+<script>
+let filesData = JSON.parse(localStorage.getItem('formsData')) || [];
+
+function saveData() {
+  localStorage.setItem('formsData', JSON.stringify(filesData));
+}
+
+function addFile() {
+  const fileInput = document.getElementById('fileInput');
+  const fileTitle = document.getElementById('fileTitle').value.trim();
+  const fileNote = document.getElementById('fileNote').value.trim();
+
+  if (!fileInput.files[0]) {
+    alert('Please select a file');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const fileUrl = URL.createObjectURL(file);
+
+  filesData.push({
+    title: fileTitle || 'Untitled',
+    note: fileNote,
+    url: fileUrl,
+    name: file.name
+  });
+
+  saveData();
+  renderFiles();
+
+  // Clear inputs
+  fileInput.value = '';
+  document.getElementById('fileTitle').value = '';
+  document.getElementById('fileNote').value = '';
+}
+
+function renderFiles(filter = '') {
+  const fileList = document.getElementById('fileList');
+  fileList.innerHTML = '';
+
+  filesData.forEach((file, index) => {
+    if (file.title.toLowerCase().includes(filter.toLowerCase())) {
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.innerHTML = `
+        <div>
+          <strong>${file.title}</strong><br>
+          <em>${file.note}</em><br>
+          <small>${file.name}</small>
+        </div>
+        <div class="file-buttons">
+          <button onclick="openFile('${file.url}')">Open</button>
+          <button onclick="printFile('${file.url}')">Print</button>
+          <button onclick="editFile(${index})">Edit</button>
+          <button onclick="deleteFile(${index})">Delete</button>
+        </div>
+      `;
+      fileList.appendChild(div);
+    }
+  });
+}
+
+function openFile(url) {
+  window.open(url, '_blank');
+}
+
+function printFile(url) {
+  const win = window.open(url, '_blank');
+  win.onload = () => {
+    win.print();
+  };
+}
+
+function editFile(index) {
+  const newTitle = prompt('Edit Title', filesData[index].title);
+  const newNote = prompt('Edit Note', filesData[index].note);
+  if (newTitle !== null) filesData[index].title = newTitle;
+  if (newNote !== null) filesData[index].note = newNote;
+  saveData();
+  renderFiles();
+}
+
+function deleteFile(index) {
+  if (confirm('Delete this file entry?')) {
+    filesData.splice(index, 1);
+    saveData();
+    renderFiles();
+  }
+}
+
+// Toggle search input on hover
+const searchButton = document.getElementById('searchButton');
+const searchInput = document.getElementById('searchInput');
+
+searchButton.addEventListener('mouseenter', () => {
+  searchInput.style.display = 'block';
+});
+
+searchButton.addEventListener('mouseleave', () => {
+  setTimeout(() => {
+    if (!searchInput.matches(':hover')) {
+      searchInput.style.display = 'none';
+      searchInput.value = '';
+      renderFiles(); // Reset list
+    }
+  }, 500);
+});
+
+searchInput.addEventListener('mouseleave', () => {
+  searchInput.style.display = 'none';
+  searchInput.value = '';
+  renderFiles(); // Reset list
+});
+
+function filterFiles() {
+  const searchTerm = document.getElementById('searchInput').value;
+  renderFiles(searchTerm);
+}
+
+renderFiles();
+</script>
+
+</body>
+</html>
