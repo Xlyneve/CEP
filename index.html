@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Password Page</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+  <!-- Load Firebase compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
@@ -16,20 +18,20 @@
       appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    let realPassword = null; // Start as null, not empty string
+    let realPassword = null;
 
     async function getPasswordFromFirestore() {
       try {
-        const docRef = doc(db, "settings", "password");
-        const docSnap = await getDoc(docRef);
+        const docRef = db.collection("settings").doc("password");
+        const docSnap = await docRef.get();
 
-        if (docSnap.exists()) {
+        if (docSnap.exists) {
           realPassword = docSnap.data().value.trim();
           console.log("Password fetched:", realPassword);
-          document.getElementById("passwordInput").disabled = false; // Enable input after loading
+          document.getElementById("passwordInput").disabled = false;
           document.getElementById("submitBtn").disabled = false;
         } else {
           alert("No password found in database!");
@@ -41,7 +43,7 @@
 
     getPasswordFromFirestore();
 
-    window.checkPassword = function() {
+    function checkPassword() {
       const entered = document.getElementById("passwordInput").value.trim();
       console.log(`Entered: "${entered}", Real: "${realPassword}"`);
 
@@ -52,12 +54,11 @@
 
       if (entered === realPassword) {
         alert("Password correct! ✅ Redirecting...");
-        // IMPORTANT: Use full GitHub Pages URL here
-        window.location.href = "https://xlyneve.github.io/CEP/index.html";
+        window.location.href = "index.html";  // FIXED redirect here ✅
       } else {
         alert("Incorrect password ❌");
       }
-    };
+    }
   </script>
 
   <style>
