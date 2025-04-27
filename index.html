@@ -1,168 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Xlyn</title>
-  <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
-  <style>
-    .fade-in {
-      animation: fadeIn 0.3s ease-in-out;
-    }
+  <meta charset="UTF-8">
+  <title>Password Page</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    @keyframes fadeIn {
-      from { opacity: 1; transform: translateY(10px); }
-      to { opacity: 2; transform: translateY(0); }
-    }
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.appspot.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    };
 
-    .slide-in {
-      animation: slideIn 0.3s ease-in-out;
-    }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
+    let realPassword = null; // Start as null, not empty string
 
-    body {
-      margin: 0;
-      font-family: 'Source Sans Pro', sans-serif;
-      background: #ece8e1;
-      color: #black;
-      font-size: 18px;
-    }
+    async function getPasswordFromFirestore() {
+      try {
+        const docRef = doc(db, "settings", "password");
+        const docSnap = await getDoc(docRef);
 
-    header {
-      padding: 30px 20px 10px;
-      text-align: center;
-      background: #e5d6cd;
-      border-bottom: 1px solid #e5d6cd;
-      position: relative;
-    }
-
-    .title {
-      font-family: 'Clicker Script', cursive;
-      font-size: 80px;
-      color: black;
-      margin: 0;
-    }
-
-    .layout {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 20px;
-    }
-
-    .main-content {
-      flex: 1;
-      max-width: 1000px;
-    }
-
-    h2 {
-      font-size: 18px;
-      font-weight: 400;
-      color: black;
-      margin-bottom: 16px;
-      border-bottom: 2px solid #e5d6cd;
-      display: inline-block;
-      padding-bottom: 4px;
-    }
-
-    .card-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 16px;
-    }
-
-    .card {
-      padding: 16px;
-      border-radius: 12px;
-      background: #f7f2ef;
-      border: 1px solid #e5d6cd;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 400;
-      color: black;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(180, 180, 180, 0.15);
-    }
-
-    footer {
-      text-align: center;
-      font-size: 12px;
-      color: #888;
-      margin: 40px 0;
-    }
-
-    img[alt="Pomeranian Icon"] {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      height: 1in;
-      width: auto;
-    }
-
-    @media (max-width: 768px) {
-      .layout {
-        flex-direction: column;
-        align-items: center;
+        if (docSnap.exists()) {
+          realPassword = docSnap.data().value.trim();
+          console.log("Password fetched:", realPassword);
+          document.getElementById("passwordInput").disabled = false; // Enable input after loading
+          document.getElementById("submitBtn").disabled = false;
+        } else {
+          alert("No password found in database!");
+        }
+      } catch (error) {
+        console.error("Error fetching password:", error);
       }
+    }
+
+    getPasswordFromFirestore();
+
+    window.checkPassword = function() {
+      const entered = document.getElementById("passwordInput").value.trim();
+      console.log(`Entered: "${entered}", Real: "${realPassword}"`);
+
+      if (realPassword === null) {
+        alert("Please wait, loading password...");
+        return;
+      }
+
+      if (entered === realPassword) {
+        alert("Password correct! ✅ Redirecting...");
+        window.location.href = "index.html"; // Proper redirect
+      } else {
+        alert("Incorrect password ❌");
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f5eb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #e4c9b6;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      width: 250px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #eae0da;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #d8ccc5;
     }
   </style>
 </head>
+
 <body>
-  <header>
-    <h1 class="title">Xlyn</h1>
-    <a href="homecal.html">
-      <img src="cale.png" alt="Pomeranian Icon">
-    </a>
-  </header>
-
-  <div class="layout">
-    <div class="main-content">
-      <h2>Home</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='OHcalc.html'">Drug Calculator</div>
-        <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
-        <div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
-        <div class="card" onclick="location.href='Calculator.html'">Calculator</div>
-        <div class="card" onclick="location.href='trial.html'">trial</div>
-      </div>
-
-      <h2>Notes</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
-        <div class="card" onclick="location.href='info.html'">Infos</div>
-        <div class="card" onclick="location.href='explain.html'">Explanation</div>
-        <div class="card" onclick="location.href='inteleviewer.html'">Inteleviwer</div>
-        <div class="card" onclick="location.href='INR Calc.html'">INR</div>
-        <div class="card" onclick="location.href='ECG.html'">ECG</div>
-        <div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
-      </div>
-
-      <h2>Urgent Care</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='VS.html'">Normal Values</div>
-        <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Directions</div>
-        <div class="card" onclick="location.href='face.html'">Head/Skull</div>
-        <div class="card" onclick="location.href='Hand.html'">Hand/Wrist</div>
-        <div class="card" onclick="location.href='Sha.html'">Shoulder/Elbow/Upper Arm</div>
-        <div class="card" onclick="location.href='Abdo.html'">Abdomen/Thorax</div>
-        <div class="card" onclick="location.href='Spine.html'">Lower Body/Back/Spine</div>
-        <div class="card" onclick="location.href='LF.html'">Foot/Leg</div>
-        <div class="card" onclick="location.href='Urgent_Care.html'">Urgent Care</div>
-        <div class="card" onclick="location.href='Notes.html'">Notebook</div>
-      </div>
-
-      <footer>© 2025 Xlyn Notes Board</footer>
-    </div>
+  <div class="container">
+    <h2>Enter Password</h2>
+    <input type="password" id="passwordInput" placeholder="Password" disabled
+           onkeypress="if(event.key === 'Enter') checkPassword()">
+    <br>
+    <button id="submitBtn" onclick="checkPassword()" disabled>Submit</button>
   </div>
 </body>
 </html>
