@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Password Page</title>
+  <title>Enter Password</title>
 
-  <!-- Load Firebase compat SDKs -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 
   <script>
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
@@ -18,6 +19,7 @@
       appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
 
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -30,67 +32,73 @@
 
         if (docSnap.exists) {
           realPassword = docSnap.data().value.trim();
-          console.log("Password fetched:", realPassword);
+          console.log("Password fetched successfully");
           document.getElementById("passwordInput").disabled = false;
           document.getElementById("submitBtn").disabled = false;
         } else {
-          alert("No password found in database!");
+          alert("Password document not found in Firestore!");
         }
       } catch (error) {
         console.error("Error fetching password:", error);
+        alert("Error connecting to database!");
       }
     }
 
-    getPasswordFromFirestore();
-
     function checkPassword() {
-      const entered = document.getElementById("passwordInput").value.trim();
-      console.log(`Entered: "${entered}", Real: "${realPassword}"`);
+      const enteredPassword = document.getElementById("passwordInput").value.trim();
 
       if (realPassword === null) {
-        alert("Please wait, loading password...");
+        alert("Password not loaded yet, please wait...");
         return;
       }
 
-      if (entered === realPassword) {
-        alert("Password correct! ✅ Redirecting...");
-        window.location.href = "index.html";  // FIXED redirect here ✅
+      if (enteredPassword === realPassword) {
+        alert("Password correct! Redirecting...");
+        window.location.href = "homecal.html"; 
+        // 👆 change this if your real page is something else!
       } else {
-        alert("Incorrect password ❌");
+        alert("Incorrect password. Try again!");
       }
     }
+
+    window.onload = getPasswordFromFirestore;
   </script>
 
   <style>
     body {
+      background-color: #f7f5eb;
       font-family: Arial, sans-serif;
-      background: #f7f5eb;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
       height: 100vh;
       margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .container {
-      background: #e4c9b6;
-      padding: 30px;
+      background-color: #e4c9b6;
+      padding: 40px;
       border-radius: 12px;
       box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
     }
     input {
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 10px;
       width: 250px;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
     }
     button {
       padding: 10px 20px;
+      font-size: 16px;
       background-color: #eae0da;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 16px;
     }
     button:hover {
       background-color: #d8ccc5;
