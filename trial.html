@@ -4,10 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Explanation</title>
-  <!-- Font Awesome CDN for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <style>
-    /* Existing styles remain unchanged */
+    body {
+      margin: 0;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      background-color: #F7F5EB;
+      color: #222;
+    }
+
     .home-btn {
       position: fixed;
       top: 20px;
@@ -28,10 +33,14 @@
       background-color: #a0c3d2;
     }
 
-    .search-toggle {
+    .search-container {
       position: fixed;
       top: 20px;
       right: 20px;
+      z-index: 1000;
+    }
+
+    .search-icon {
       background-color: #eae0da;
       padding: 8px 12px;
       border-radius: 50px;
@@ -39,57 +48,268 @@
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       transition: background-color 0.3s ease;
-      z-index: 1000;
     }
 
-    .search-toggle:hover {
+    .search-icon:hover {
       background-color: #a0c3d2;
     }
 
-    .search-box {
+    .search-input {
       display: none;
-      position: fixed;
-      top: 60px;
-      right: 20px;
-      background-color: white;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-    }
-
-    .search-box input[type="text"] {
+      margin-top: 10px;
       width: 180px;
       padding: 6px 10px;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 13px;
+      background-color: white;
     }
 
-    .search-box .clear {
-      margin-left: 10px;
+    .search-container.active .search-input {
+      display: block;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      color: #441b4a;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"], textarea {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    textarea {
+      resize: vertical;
+      height: 60px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
-      color: #999;
+      font-size: 13px;
+      transition: background-color 0.2s;
     }
 
-    .search-box .clear:hover {
-      color: #333;
+    .add-btn {
+      background-color: #a97e78;
+      color: black;
+    }
+
+    .note-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .note-card {
+      background-color: #edede9;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .note-title {
+      font-weight: bold;
+      font-size: 15px;
+      color: black;
+    }
+
+    .note-text {
+      color: #444;
+      margin-top: 8px;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: #777;
+      margin-top: 10px;
+    }
+
+    .btn-group {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-group button {
+      background-color: #eee;
+      color: #000;
+    }
+
+    .btn-group button:hover {
+      background-color: #e8dce9;
     }
   </style>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import {
+      getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.appspot.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let allNotes = [];
+
+    document.querySelector('.add-btn').addEventListener('click', async () => {
+      const title = document.getElementById('noteTitle').value.trim();
+      const text = document.getElementById('noteText').value.trim();
+      if (!title && !text) return;
+
+      await addDoc(collection(db, 'explainNotes'), {
+        title: title || 'Untitled',
+        text,
+        timestamp: new Date().toISOString()
+      });
+
+      document.getElementById('noteTitle').value = '';
+      document.getElementById('noteText').value = '';
+    });
+
+    function renderNotes(notesToRender = allNotes) {
+      const container = document.getElementById('notesContainer');
+      container.innerHTML = '';
+
+      notesToRender.forEach((note, index) => {
+        const div = document.createElement('div');
+        div.className = 'note-card';
+
+        if (note.editing) {
+          div.innerHTML = `
+            <input type="text" id="editTitle${index}" value="${note.title}">
+            <textarea id="editText${index}" rows="3">${note.text}</textarea>
+            <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
+            <div class="btn-group">
+              <button onclick="window.saveEdit(${index})">Save</button>
+              <button onclick="window.deleteNote('${note.id}')">Delete</button>
+              <button onclick="window.copyNote(${index})">Copy</button>
+            </div>
+          `;
+        } else {
+          div.innerHTML = `
+            <div class="note-title">${note.title}</div>
+            <div class="note-text">${note.text}</div>
+            <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
+            <div class="btn-group">
+              <button onclick="window.toggleEdit(${index})">Edit</button>
+              <button onclick="window.deleteNote('${note.id}')">Delete</button>
+              <button onclick="window.copyNote(${index})">Copy</button>
+            </div>
+          `;
+        }
+
+        container.appendChild(div);
+      });
+    }
+
+    window.toggleEdit = (index) => {
+      allNotes[index].editing = true;
+      renderNotes();
+    };
+
+    window.saveEdit = async (index) => {
+      const note = allNotes[index];
+      const newTitle = document.getElementById(`editTitle${index}`).value.trim();
+      const newText = document.getElementById(`editText${index}`).value.trim();
+      await updateDoc(doc(db, 'explainNotes', note.id), {
+        title: newTitle || 'Untitled',
+        text: newText,
+        timestamp: new Date().toISOString()
+      });
+    };
+
+    window.deleteNote = async (id) => {
+      if (confirm("Delete this note?")) {
+        await deleteDoc(doc(db, 'explainNotes', id));
+      }
+    };
+
+    window.copyNote = (index) => {
+      const note = allNotes[index];
+      const text = note.editing
+        ? document.getElementById(`editText${index}`).value
+        : note.text;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Note copied to clipboard!");
+      });
+    };
+
+    function filterNotes(keyword) {
+      const lower = keyword.toLowerCase();
+      const filtered = allNotes.filter(n =>
+        n.title.toLowerCase().includes(lower) || n.text.toLowerCase().includes(lower)
+      );
+      renderNotes(filtered);
+    }
+
+    onSnapshot(collection(db, 'explainNotes'), snapshot => {
+      allNotes = snapshot.docs.map(docSnap => ({
+        ...docSnap.data(),
+        id: docSnap.id,
+        editing: false
+      }));
+      renderNotes();
+    });
+
+    function toggleSearch() {
+      document.querySelector('.search-container').classList.toggle('active');
+      if (document.querySelector('.search-container').classList.contains('active')) {
+        document.getElementById('searchInput').focus();
+      }
+    }
+
+    document.getElementById('searchInput').addEventListener('input', e => {
+      filterNotes(e.target.value);
+    });
+  </script>
 </head>
 <body>
-  <!-- Home Button with Icon -->
-  <a href="home.html" class="home-btn"><i class="fa fa-home"></i></a>
-
-  <!-- Search Toggle with Icon -->
-  <div class="search-toggle"><i class="fa fa-search"></i></div>
-
-  <!-- Search Box -->
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search notes...">
-    <span class="clear" id="clearSearch">✖</span>
+  <a href="home.html" class="home-btn">🏠</a>
+  <div class="search-container">
+    <div class="search-icon" onclick="toggleSearch()">🔍</div>
+    <input type="text" id="searchInput" class="search-input" placeholder="Search notes...">
   </div>
 
-  <!-- Rest of your HTML content remains unchanged -->
+  <div class="container">
+    <h1>Explanation</h1>
+    <div class="input-group">
+      <input type="text" id="noteTitle" placeholder="Title" />
+      <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
+      <button class="add-btn">Add Note</button>
+    </div>
+    <div class="note-list" id="notesContainer"></div>
+  </div>
 </body>
 </html>
