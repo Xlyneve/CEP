@@ -178,7 +178,16 @@
     <div class="result" id="weeksResult">Result: </div>
   </div>
 
-  
+  <!-- Age on Particular Date Calculator -->
+<div class="calculator">
+  <h2>Age on Particular Date</h2>
+  <label for="dobParticular">Date of Birth:</label>
+  <input type="date" id="dobParticular" style="font-family: Tahoma, sans-serif;">
+  <label for="particularDate">Particular Date:</label>
+  <input type="date" id="particularDate" style="font-family: Tahoma, sans-serif;">
+  <div class="result" id="ageOnDateResult">Age: </div>
+</div>
+
 
   
   <!-- Add 25 and 45 years Calculator -->
@@ -273,6 +282,40 @@
           }
         });
       }
+	  
+	  // Age on Particular Date Calculator
+const dobParticular = document.getElementById('dobParticular');
+const particularDate = document.getElementById('particularDate');
+const ageOnDateResult = document.getElementById('ageOnDateResult');
+
+function calculateAgeOnDate() {
+  if (dobParticular.value && particularDate.value) {
+    const birthDate = new Date(dobParticular.value);
+    const targetDate = new Date(particularDate.value);
+
+    let years = targetDate.getFullYear() - birthDate.getFullYear();
+    let months = targetDate.getMonth() - birthDate.getMonth();
+
+    if (targetDate.getDate() < birthDate.getDate()) {
+      months--;
+    }
+
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    if (targetDate < birthDate) {
+      ageOnDateResult.textContent = 'Age: Invalid (future DOB)';
+    } else {
+      ageOnDateResult.textContent = `Age: ${years} years and ${months} months`;
+    }
+  }
+}
+
+dobParticular.addEventListener('change', calculateAgeOnDate);
+particularDate.addEventListener('change', calculateAgeOnDate);
+
 
       // Age Calculator
       const dob = document.getElementById('dob');
