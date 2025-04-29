@@ -79,13 +79,11 @@
       border: 1px solid #ccc;
       font-size: 13px;
       width: 100%;
-
     }
 
     textarea {
       resize: vertical;
       height: 60px;
-	  
     }
 
     .add-btn {
@@ -188,6 +186,19 @@
       background-color: #F2E0B3;
       font-weight: bold;
     }
+
+    /* Copy message styling */
+    .copy-message {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -224,6 +235,8 @@
       <div class="note-list" id="recallNotesList"></div>
     </div>
   </div>
+
+  <div class="copy-message" id="copyMessage">Copied to clipboard!</div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -291,6 +304,7 @@
             <div class="btn-group">
               <button onclick="editNote('${type}', '${id}', ${index})">Edit</button>
               <button onclick="deleteNote('${type}', '${id}')">Delete</button>
+              <button onclick="copyNote('${type}', ${index})">Copy</button>
             </div>
             <div id="${type}Edit${index}" style="display:none; margin-top:10px;">
               <input type="text" id="${type}TitleEdit${index}" value="${data.title}" />
@@ -303,6 +317,24 @@
         });
       });
     }
+
+    window.copyNote = function(type, index) {
+      const title = document.querySelector(`#${type}NotesList .note-card:nth-child(${index + 1}) .title`).innerText;
+      const note = document.querySelector(`#${type}NotesList .note-card:nth-child(${index + 1}) .note`).innerText;
+      const urlElement = document.querySelector(`#${type}NotesList .note-card:nth-child(${index + 1}) a`);
+      const url = urlElement ? urlElement.href : '';
+      
+      const textToCopy = `${title}\n${url}\n${note}`;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const copyMessage = document.getElementById('copyMessage');
+        copyMessage.style.display = 'block';
+        setTimeout(() => {
+          copyMessage.style.display = 'none';
+        }, 2000);
+      }).catch(err => {
+        console.error('Could not copy text: ', err);
+      });
+    };
 
     window.editNote = function(type, id, index) {
       document.getElementById(`${type}Edit${index}`).style.display = 'block';
@@ -332,19 +364,13 @@
       input.style.display = input.style.display === 'none' ? 'block' : 'none';
     };
 
-    window.searchNotes = function(type) {
-      const search = document.getElementById(`search${capitalize(type)}`).value.toLowerCase();
-      renderNotes(type, search);
-    };
-
     function capitalize(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      renderNotes('nurse');
-      renderNotes('recall');
-    });
+    
+    // Initialize nurse and recall sections with an empty search term
+    renderNotes('nurse');
+    renderNotes('recall');
   </script>
 </body>
 </html>
