@@ -167,12 +167,21 @@
   </script>
 </div>
 
-
-  <!-- Add Weeks Calculator -->
+  <!-- Add Months to Date Calculator -->
   <div class="calculator">
-    <h2>Add Weeks to Date</h2>
+    <h2>Add Months to Date</h2>
     <label for="baseDate">Start Date:</label>
     <input type="date" id="baseDate" style="font-family: Tahoma, sans-serif;">
+    <label for="months">Months to Add:</label>
+    <input type="number" id="months" style="font-family: Tahoma, sans-serif;">
+    <div class="result" id="monthsResult">Result: </div>
+  </div>
+
+  <!-- Add Weeks to Date Calculator -->
+  <div class="calculator">
+    <h2>Add Weeks to Date</h2>
+    <label for="baseDateWeeks">Start Date:</label>
+    <input type="date" id="baseDateWeeks" style="font-family: Tahoma, sans-serif;">
     <label for="weeks">Weeks to Add:</label>
     <input type="number" id="weeks" style="font-family: Tahoma, sans-serif;">
     <div class="result" id="weeksResult">Result: </div>
@@ -219,39 +228,33 @@
   
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Age in Years and Months
-      const dobYM = document.getElementById('dobYM');
-      const ageYMResult = document.getElementById('ageYMResult');
+      // Add Months to Date
+      const baseDate = document.getElementById('baseDate');
+      const months = document.getElementById('months');
+      const monthsResult = document.getElementById('monthsResult');
 
-      if (dobYM) {
-        dobYM.addEventListener('change', () => {
-          const birthDate = new Date(dobYM.value);
-          const today = new Date();
-
-          let years = today.getFullYear() - birthDate.getFullYear();
-          let months = today.getMonth() - birthDate.getMonth();
-
-          if (today.getDate() < birthDate.getDate()) {
-            months--;
-          }
-
-          if (months < 0) {
-            years--;
-            months += 12;
-          }
-
-          ageYMResult.textContent = `Age: ${years} years and ${months} months`;
-        });
+      function calculateMonths() {
+        if (baseDate.value && months.value) {
+          const start = new Date(baseDate.value);
+          start.setMonth(start.getMonth() + Number(months.value));
+          const formatted = start.toLocaleDateString('en-GB', {
+            day: '2-digit', month: 'long', year: 'numeric'
+          });
+          monthsResult.textContent = 'Result: ' + formatted;
+        }
       }
 
-      // Add Weeks Calculator
-      const baseDate = document.getElementById('baseDate');
+      baseDate.addEventListener('change', calculateMonths);
+      months.addEventListener('input', calculateMonths);
+
+      // Add Weeks to Date
+      const baseDateWeeks = document.getElementById('baseDateWeeks');
       const weeks = document.getElementById('weeks');
       const weeksResult = document.getElementById('weeksResult');
 
       function calculateWeeks() {
-        if (baseDate.value && weeks.value) {
-          const start = new Date(baseDate.value);
+        if (baseDateWeeks.value && weeks.value) {
+          const start = new Date(baseDateWeeks.value);
           start.setDate(start.getDate() + Number(weeks.value) * 7);
           const formatted = start.toLocaleDateString('en-GB', {
             day: '2-digit', month: 'long', year: 'numeric'
@@ -260,7 +263,7 @@
         }
       }
 
-      baseDate.addEventListener('change', calculateWeeks);
+      baseDateWeeks.addEventListener('change', calculateWeeks);
       weeks.addEventListener('input', calculateWeeks);
 
       // DOB +25 / +45 Years
