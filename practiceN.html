@@ -127,6 +127,7 @@
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
       display: flex;
       flex-direction: column;
+      overflow-wrap: break-word;
     }
 
     .note-title {
@@ -173,6 +174,14 @@
     .btn-group button:hover {
       background-color: #eac7c7;
     }
+
+    strong {
+      font-weight: bold;
+    }
+
+    mark {
+      background-color: yellow;
+    }
   </style>
 </head>
 <body>
@@ -188,7 +197,7 @@
   <div class="container">
     <div class="input-group">
       <input type="text" id="noteTitle" placeholder="Title" />
-      <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
+      <textarea id="noteText" rows="3" placeholder="Write your explanation... Use **bold** and ==highlight== formatting"></textarea>
       <input type="text" id="noteUrl" placeholder="Optional URL" />
       <button class="add-btn">Add Note</button>
     </div>
@@ -219,9 +228,11 @@
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('.add-btn').addEventListener('click', async () => {
         const title = document.getElementById('noteTitle').value.trim();
-        const text = document.getElementById('noteText').value.trim();
+        let text = document.getElementById('noteText').value.trim();
         const url = document.getElementById('noteUrl').value.trim();
         if (!title && !text && !url) return;
+
+        text = formatText(text);
 
         await addDoc(collection(db, 'practiceNNotes'), {
           title: title || "Untitled",
@@ -245,6 +256,12 @@
       });
     });
 
+    function formatText(text) {
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/==(.+?)==/g, '<mark>$1</mark>');
+    }
+
     function renderNotes() {
       const container = document.getElementById('notesContainer');
       const search = document.getElementById('searchInput').value.toLowerCase();
@@ -263,7 +280,7 @@
           if (note.editing) {
             div.innerHTML = `
               <input type="text" id="editTitle${index}" value="${note.title}">
-              <textarea id="editText${index}" rows="3">${note.text}</textarea>
+              <textarea id="editText${index}" rows="3">${note.text.replace(/<[^>]*>/g, '')}</textarea>
               <input type="text" id="editUrl${index}" value="${note.url}" placeholder="Optional URL" />
               <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
               <div class="btn-group">
@@ -298,8 +315,10 @@
     window.saveEdit = async (index) => {
       const note = notes[index];
       const newTitle = document.getElementById(`editTitle${index}`).value.trim();
-      const newText = document.getElementById(`editText${index}`).value.trim();
+      let newText = document.getElementById(`editText${index}`).value.trim();
       const newUrl = document.getElementById(`editUrl${index}`).value.trim();
+
+      newText = formatText(newText);
 
       await updateDoc(doc(db, 'practiceNNotes', note.id), {
         title: newTitle || 'Untitled',
@@ -322,7 +341,7 @@
       const note = notes[index];
       const text = note.editing
         ? document.getElementById(`editText${index}`).value
-        : note.text;
+        : note.text.replace(/<[^>]*>/g, '');
 
       navigator.clipboard.writeText(text).then(() => {
         alert("Note copied to clipboard!");
