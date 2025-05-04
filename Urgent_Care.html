@@ -46,6 +46,17 @@
       }
     }
 
+    function formatNoteText(text) {
+      const escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return escaped
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/==(.+?)==/g, '<mark>$1</mark>')
+        .replace(/\n/g, "<br>");
+    }
+
     async function loadNotes(filter = "") {
       const notesContainer = document.getElementById("notes");
       notesContainer.innerHTML = "";
@@ -68,28 +79,43 @@
           card.appendChild(img);
         }
 
-        const p = document.createElement("p");
-        p.textContent = data.note;
-        card.appendChild(p);
+        const noteDisplay = document.createElement("div");
+        noteDisplay.className = "note-text";
+        noteDisplay.innerHTML = formatNoteText(data.note);
+        card.appendChild(noteDisplay);
+
+        const editArea = document.createElement("textarea");
+        editArea.className = "editable-textarea";
+        editArea.style.display = "none";
+        editArea.value = data.note;
+        card.appendChild(editArea);
 
         const btnContainer = document.createElement("div");
         btnContainer.className = "btn-container";
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => {
+          const isEditing = editArea.style.display === "block";
+          if (!isEditing) {
+            editArea.style.display = "block";
+            noteDisplay.style.display = "none";
+            editBtn.textContent = "Save";
+          } else {
+            const updatedNote = editArea.value;
+            updateDoc(doc(urgentCareCollection, docSnap.id), { note: updatedNote });
+            noteDisplay.innerHTML = formatNoteText(updatedNote);
+            editArea.style.display = "none";
+            noteDisplay.style.display = "block";
+            editBtn.textContent = "Edit";
+          }
+        };
 
         const delBtn = document.createElement("button");
         delBtn.textContent = "Delete";
         delBtn.onclick = async () => {
           await deleteDoc(doc(urgentCareCollection, docSnap.id));
           loadNotes();
-        };
-
-        const editBtn = document.createElement("button");
-        editBtn.textContent = "Edit";
-        editBtn.onclick = async () => {
-          const newNote = prompt("Edit note:", data.note);
-          if (newNote !== null) {
-            await updateDoc(doc(urgentCareCollection, docSnap.id), { note: newNote });
-            loadNotes();
-          }
         };
 
         btnContainer.appendChild(editBtn);
@@ -101,7 +127,6 @@
 
     window.saveNote = saveNote;
     window.loadNotes = loadNotes;
-
     window.onload = () => loadNotes();
 
     window.searchNotes = () => {
@@ -164,6 +189,8 @@
       padding: 1rem;
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
       text-align: left;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
 
     .note-image {
@@ -190,11 +217,30 @@
       cursor: zoom-out;
     }
 
+    .note-text {
+      white-space: pre-wrap;
+    }
+
     .btn-container {
       display: flex;
       justify-content: flex-end;
       gap: 1rem;
       margin-top: 0.5rem;
+    }
+
+    .editable-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 1rem;
+      border-radius: 8px;
+      padding: 0.5rem;
+      resize: vertical;
+      background-color: transparent;
+      border: none;
+      margin-top: 0.5rem;
+      color: black;
+      outline: none;
     }
 
     #search-container {
@@ -220,6 +266,12 @@
       border-radius: 8px;
       cursor: pointer;
       font-family: 'Courier New', monospace;
+    }
+
+    mark {
+      background-color: #f7d1d8;
+      padding: 0 0.2em;
+      border-radius: 4px;
     }
   </style>
 </head>
