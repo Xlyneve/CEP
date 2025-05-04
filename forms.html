@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Forms Upload</title>
+  <title>URL Upload</title>
   <style>
     body { 
       font-family: Arial, sans-serif; 
@@ -13,7 +13,6 @@
     .form-group { margin-bottom: 10px; }
     button { margin-right: 5px; }
 
-    /* Top buttons */
     .top-left, .top-right {
       position: absolute;
       top: 10px;
@@ -29,14 +28,9 @@
     .top-left:hover, .top-right:hover {
       background: #eae0da;
     }
-    .top-left {
-      left: 10px;
-    }
-    .top-right {
-      right: 10px;
-    }
+    .top-left { left: 10px; }
+    .top-right { right: 10px; }
 
-    /* Search input */
     #searchInput {
       display: none;
       position: absolute;
@@ -48,7 +42,6 @@
       border-radius: 6px;
     }
 
-    /* Tile layout */
     .file-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -75,6 +68,7 @@
       display: block;
       margin: 5px 0;
       color: #888;
+      word-break: break-word;
     }
     .file-buttons {
       margin-top: 10px;
@@ -93,143 +87,136 @@
 <div class="top-right" id="searchButton">Search</div>
 <input type="text" id="searchInput" placeholder="Search title..." oninput="filterFiles()">
 
-<h1>Upload Forms</h1>
+<h1>Upload URL</h1>
 
 <div class="form-group">
-  <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx">
+  <input type="text" id="urlInput" placeholder="Enter URL (https://...)" style="width: 300px;">
 </div>
 <div class="form-group">
-  <input type="text" id="fileTitle" placeholder="Enter title" style="width: 300px;">
+  <input type="text" id="urlTitle" placeholder="Enter title" style="width: 300px;">
 </div>
 <div class="form-group">
-  <textarea id="fileNote" rows="3" placeholder="Add a note..." style="width: 300px;"></textarea>
+  <textarea id="urlNote" rows="3" placeholder="Add a note..." style="width: 300px;"></textarea>
 </div>
 <div class="form-group">
-  <button onclick="addFile()">Upload</button>
+  <button onclick="addURL()">Save URL</button>
 </div>
 
 <div class="file-grid" id="fileList"></div>
 
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
 <script>
-let filesData = JSON.parse(localStorage.getItem('formsData')) || [];
-
-function saveData() {
-  localStorage.setItem('formsData', JSON.stringify(filesData));
-}
-
-function addFile() {
-  const fileInput = document.getElementById('fileInput');
-  const fileTitle = document.getElementById('fileTitle').value.trim();
-  const fileNote = document.getElementById('fileNote').value.trim();
-
-  if (!fileInput.files[0]) {
-    alert('Please select a file');
-    return;
-  }
-
-  const file = fileInput.files[0];
-  const fileUrl = URL.createObjectURL(file);
-
-  filesData.push({
-    title: fileTitle || 'Untitled',
-    note: fileNote,
-    url: fileUrl,
-    name: file.name
-  });
-
-  saveData();
-  renderFiles();
-
-  // Clear inputs
-  fileInput.value = '';
-  document.getElementById('fileTitle').value = '';
-  document.getElementById('fileNote').value = '';
-}
-
-function renderFiles(filter = '') {
-  const fileList = document.getElementById('fileList');
-  fileList.innerHTML = '';
-
-  filesData.forEach((file, index) => {
-    if (file.title.toLowerCase().includes(filter.toLowerCase())) {
-      const div = document.createElement('div');
-      div.className = 'file-item';
-      div.innerHTML = `
-        <div>
-          <strong>${file.title}</strong><br>
-          <em>${file.note}</em><br>
-          <small>${file.name}</small>
-        </div>
-        <div class="file-buttons">
-          <button onclick="openFile('${file.url}')">Open</button>
-          <button onclick="printFile('${file.url}')">Print</button>
-          <button onclick="editFile(${index})">Edit</button>
-          <button onclick="deleteFile(${index})">Delete</button>
-        </div>
-      `;
-      fileList.appendChild(div);
-    }
-  });
-}
-
-function openFile(url) {
-  window.open(url, '_blank');
-}
-
-function printFile(url) {
-  const win = window.open(url, '_blank');
-  win.onload = () => {
-    win.print();
+  // TODO: Replace with your Firebase config
+  const firebaseConfig = {
+     apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.firebasestorage.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
   };
-}
 
-function editFile(index) {
-  const newTitle = prompt('Edit Title', filesData[index].title);
-  const newNote = prompt('Edit Note', filesData[index].note);
-  if (newTitle !== null) filesData[index].title = newTitle;
-  if (newNote !== null) filesData[index].note = newNote;
-  saveData();
-  renderFiles();
-}
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-function deleteFile(index) {
-  if (confirm('Delete this file entry?')) {
-    filesData.splice(index, 1);
-    saveData();
-    renderFiles();
-  }
-}
+  async function addURL() {
+    const url = document.getElementById('urlInput').value.trim();
+    const title = document.getElementById('urlTitle').value.trim() || 'Untitled';
+    const note = document.getElementById('urlNote').value.trim();
 
-// Toggle search input on hover
-const searchButton = document.getElementById('searchButton');
-const searchInput = document.getElementById('searchInput');
-
-searchButton.addEventListener('mouseenter', () => {
-  searchInput.style.display = 'block';
-});
-
-searchButton.addEventListener('mouseleave', () => {
-  setTimeout(() => {
-    if (!searchInput.matches(':hover')) {
-      searchInput.style.display = 'none';
-      searchInput.value = '';
-      renderFiles(); // Reset list
+    if (!url.startsWith('http')) {
+      alert('Please enter a valid URL (https://...)');
+      return;
     }
-  }, 500);
-});
 
-searchInput.addEventListener('mouseleave', () => {
-  searchInput.style.display = 'none';
-  searchInput.value = '';
-  renderFiles(); // Reset list
-});
+    await db.collection('urlForms').add({
+      url, title, note,
+      createdAt: new Date()
+    });
 
-function filterFiles() {
-  const searchTerm = document.getElementById('searchInput').value;
-  renderFiles(searchTerm);
-}
+    document.getElementById('urlInput').value = '';
+    document.getElementById('urlTitle').value = '';
+    document.getElementById('urlNote').value = '';
+    fetchURLs();
+  }
 
-renderFiles();
+  async function fetchURLs(filter = '') {
+    const snapshot = await db.collection('urlForms').orderBy('createdAt', 'desc').get();
+    const container = document.getElementById('fileList');
+    container.innerHTML = '';
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.title.toLowerCase().includes(filter.toLowerCase())) {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.innerHTML = `
+          <div>
+            <strong>${data.title}</strong><br>
+            <em>${data.note}</em><br>
+            <small><a href="${data.url}" target="_blank">${data.url}</a></small>
+          </div>
+          <div class="file-buttons">
+            <button onclick="window.open('${data.url}', '_blank')">Open</button>
+            <button onclick="editURL('${doc.id}', '${data.title.replace(/'/g, "\\'")}', '${data.note.replace(/'/g, "\\'")}')">Edit</button>
+            <button onclick="deleteURL('${doc.id}')">Delete</button>
+          </div>
+        `;
+        container.appendChild(div);
+      }
+    });
+  }
+
+  async function editURL(id, oldTitle, oldNote) {
+    const newTitle = prompt('Edit Title', oldTitle);
+    const newNote = prompt('Edit Note', oldNote);
+    if (newTitle !== null || newNote !== null) {
+      await db.collection('urlForms').doc(id).update({
+        title: newTitle || oldTitle,
+        note: newNote || oldNote
+      });
+      fetchURLs();
+    }
+  }
+
+  async function deleteURL(id) {
+    if (confirm('Delete this URL entry?')) {
+      await db.collection('urlForms').doc(id).delete();
+      fetchURLs();
+    }
+  }
+
+  function filterFiles() {
+    const term = document.getElementById('searchInput').value;
+    fetchURLs(term);
+  }
+
+  // Search button hover logic
+  const searchButton = document.getElementById('searchButton');
+  const searchInput = document.getElementById('searchInput');
+
+  searchButton.addEventListener('mouseenter', () => {
+    searchInput.style.display = 'block';
+  });
+  searchButton.addEventListener('mouseleave', () => {
+    setTimeout(() => {
+      if (!searchInput.matches(':hover')) {
+        searchInput.style.display = 'none';
+        searchInput.value = '';
+        fetchURLs();
+      }
+    }, 500);
+  });
+  searchInput.addEventListener('mouseleave', () => {
+    searchInput.style.display = 'none';
+    searchInput.value = '';
+    fetchURLs();
+  });
+
+  fetchURLs(); // Initial load
 </script>
 
 </body>
