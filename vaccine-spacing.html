@@ -3,18 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <title>Vaccine Spacing Calculator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sacramento&family=Amatic+SC&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Arial&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Amatic SC', cursive;
-      background-color: #ffffff;
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
       color: #111;
       padding: 40px;
+      font-size: 16px;
     }
 
     h1 {
-      font-family: 'Amatic SC', cursive;
-      font-size: 60px;
+      font-family: Arial, sans-serif;
+      font-size: 48px;
       text-align: center;
       color: #4a4a4a;
       margin-bottom: 40px;
@@ -24,11 +25,10 @@
       position: fixed;
       top: 20px;
       left: 20px;
-      background-color: #f7f7f7;
+      background-color: #f1f1f1;
       border: 2px solid #ccc;
-      padding: 10px 20px;
-      font-size: 20px;
-      font-family: 'Amatic SC', cursive;
+      padding: 8px 16px;
+      font-size: 18px;
       text-decoration: none;
       color: #333;
       border-radius: 12px;
@@ -50,7 +50,7 @@
     }
 
     .vaccine-section {
-      padding: 20px;
+      padding: 18px;
       border-radius: 16px;
       border: 1px solid #ccc;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -64,39 +64,38 @@
     }
 
     label {
-      font-size: 20px;
+      font-size: 18px;
       margin-bottom: 5px;
+      color: #4a4a4a;
     }
 
     input[type="date"] {
-      padding: 6px;
+      padding: 8px;
       width: 200px;
-      font-size: 16px;
+      font-size: 14px;
       margin-bottom: 15px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background-color: #f3f3f3;
     }
 
     .result {
-      font-size: 20px;
+      font-size: 16px;
       font-weight: bold;
       color: #444;
       font-family: "Courier New", monospace;
+      margin-top: 10px;
     }
 
-    /* Color indicators per vaccine */
-    .vaccine-section:has(h2:contains("Rabies")) {
-      border-left: 10px solid #90caf9;
+    .highlight {
+      background-color: #ffcccb; /* Light red for second doses */
+      padding: 5px;
+      border-radius: 5px;
+      font-weight: bold;
     }
-    .vaccine-section:has(h2:contains("Engerix")) {
-      border-left: 10px solid #ff8a65;
-    }
-    .vaccine-section:has(h2:contains("HPV")) {
-      border-left: 10px solid #4db6ac;
-    }
-    .vaccine-section:has(h2:contains("Shingrix")) {
-      border-left: 10px solid #ffb74d;
-    }
-    .vaccine-section:has(h2:contains("Twinrix")) {
-      border-left: 10px solid #81c784;
+
+    .vaccine-section:has(h2:contains("Bexsero")) {
+      border-left: 10px solid #ff80ab;
     }
   </style>
 </head>
@@ -151,6 +150,19 @@
       <div class="result" id="twinrix3"></div>
       <div class="result" id="twinrix4"></div>
     </div>
+
+    <!-- Bexsero -->
+    <div class="vaccine-section" style="border-left: 10px solid #ff80ab;">
+      <h2>Bexsero Vaccine</h2>
+      <label for="bexsero1">First Dose:</label>
+      <input type="date" id="bexsero1">
+      <div class="result" id="bexsero2"></div>
+      <div class="result highlight" id="bexsero3"></div> <!-- Highlight second dose for Infants -->
+      <div class="result highlight" id="bexsero4"></div> <!-- Highlight second dose for Toddlers -->
+      <div class="result" id="bexsero5"></div>
+      <div class="result highlight" id="bexsero6"></div> <!-- Highlight second dose for 13+ -->
+    </div>
+
   </div>
 
   <script>
@@ -176,34 +188,67 @@
       return result;
     }
 
+    function addWeeks(date, weeks) {
+      const result = new Date(date);
+      result.setDate(result.getDate() + weeks * 7);
+      return result;
+    }
+
+    // Rabies Vaccine Schedule
     document.getElementById('rabies1').addEventListener('change', e => {
       const d1 = new Date(e.target.value);
       document.getElementById('rabies2').innerHTML = boldDose(`Dose 2 (Day 7): ${formatDate(addDays(d1, 7))}`);
       document.getElementById('rabies3').innerHTML = boldDose(`Dose 3 (Day 21 or 28): ${formatDate(addDays(d1, 21))} or ${formatDate(addDays(d1, 28))}`);
     });
 
+    // Engerix-B Vaccine Schedule
     document.getElementById('engerix1').addEventListener('change', e => {
       const d1 = new Date(e.target.value);
       document.getElementById('engerix2').innerHTML = boldDose(`Dose 2 (1 month): ${formatDate(addMonths(d1, 1))}`);
       document.getElementById('engerix3').innerHTML = boldDose(`Dose 3 (6 months): ${formatDate(addMonths(d1, 6))}`);
     });
 
+    // HPV Vaccine Schedule
     document.getElementById('hpv1').addEventListener('change', e => {
       const d1 = new Date(e.target.value);
       document.getElementById('hpv2').innerHTML = boldDose(`Dose 2 (2 months): ${formatDate(addMonths(d1, 2))}`);
       document.getElementById('hpv3').innerHTML = boldDose(`Dose 3 (6 months): ${formatDate(addMonths(d1, 6))}`);
     });
 
+    // Shingrix Vaccine Schedule
     document.getElementById('shingrix1').addEventListener('change', e => {
       const d1 = new Date(e.target.value);
       document.getElementById('shingrix2').innerHTML = boldDose(`Dose 2 (2 to 6 months): Between ${formatDate(addMonths(d1, 2))} and ${formatDate(addMonths(d1, 6))}`);
     });
 
+    // Twinrix Vaccine Schedule
     document.getElementById('twinrix1').addEventListener('change', e => {
       const d1 = new Date(e.target.value);
       document.getElementById('twinrix2').innerHTML = boldDose(`Dose 2 (7 days): ${formatDate(addDays(d1, 7))}`);
       document.getElementById('twinrix3').innerHTML = boldDose(`Dose 3 (21 days): ${formatDate(addDays(d1, 21))}`);
       document.getElementById('twinrix4').innerHTML = boldDose(`Dose 4 (12 months): ${formatDate(addMonths(d1, 12))}`);
+    });
+
+    // Bexsero Vaccine Schedule
+    document.getElementById('bexsero1').addEventListener('change', e => {
+      const d1 = new Date(e.target.value);
+
+      // Bexsero Vaccine schedule for different age groups
+      const infantsDate = addWeeks(d1, 8);
+      const toddlersDate = addWeeks(d1, 8);
+      const boosterDate = addMonths(d1, 6);
+      const olderDate = addMonths(d1, 12);
+
+      // Infants
+      document.getElementById('bexsero2').innerHTML = boldDose(`Dose 2 (Infants 2-11 months, 8 weeks apart): ${formatDate(infantsDate)}`);
+      document.getElementById('bexsero3').innerHTML = boldDose(`Booster (Infants, 6 months or 12 months after primary dose): ${formatDate(boosterDate)} or ${formatDate(olderDate)}`);
+
+      // Toddlers
+      document.getElementById('bexsero4').innerHTML = boldDose(`Dose 2 (Toddlers 12-23 months, 8 weeks apart): ${formatDate(toddlersDate)}`);
+      document.getElementById('bexsero5').innerHTML = boldDose(`Booster (12-23 months, 12-23 months after second dose): ${formatDate(addMonths(d1, 12))}`);
+      
+      // Aged 13 years and over
+      document.getElementById('bexsero6').innerHTML = boldDose(`Dose 2 (Aged 13 years and over, 8 weeks apart): ${formatDate(addWeeks(d1, 8))}`);
     });
   </script>
 </body>
