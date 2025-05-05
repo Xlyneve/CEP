@@ -88,14 +88,10 @@
     }
 
     .highlight {
-      background-color: #ffcccb; /* Light red for second doses */
+      background-color: #ffcccb;
       padding: 5px;
       border-radius: 5px;
       font-weight: bold;
-    }
-
-    .vaccine-section:has(h2:contains("Bexsero")) {
-      border-left: 10px solid #ff80ab;
     }
   </style>
 </head>
@@ -106,6 +102,7 @@
 
   <div class="tile-container">
 
+    <!-- Existing vaccines... -->
     <!-- Rabies -->
     <div class="vaccine-section" style="border-left: 10px solid #90caf9;">
       <h2>Rabies Schedule</h2>
@@ -157,17 +154,27 @@
       <label for="bexsero1">First Dose:</label>
       <input type="date" id="bexsero1">
       <div class="result" id="bexsero2"></div>
-      <div class="result highlight" id="bexsero3"></div> <!-- Highlight second dose for Infants -->
-      <div class="result highlight" id="bexsero4"></div> <!-- Highlight second dose for Toddlers -->
+      <div class="result highlight" id="bexsero3"></div>
+      <div class="result highlight" id="bexsero4"></div>
       <div class="result" id="bexsero5"></div>
-      <div class="result highlight" id="bexsero6"></div> <!-- Highlight second dose for 13+ -->
+      <div class="result highlight" id="bexsero6"></div>
+    </div>
+
+    <!-- Pneumococcal -->
+    <div class="vaccine-section" style="border-left: 10px solid #9575cd;">
+      <h2>Pneumococcal Vaccine</h2>
+      <label for="pneumo1">First Dose:</label>
+      <input type="date" id="pneumo1">
+      <div class="result" id="pneumoOption1"></div>
+      <div class="result" id="pneumoOption2"></div>
+      <div class="result highlight" id="pneumoOver65"></div>
     </div>
 
   </div>
 
   <script>
     function boldDose(text) {
-      return text.replace(/(Dose \d+)/gi, '<strong>$1</strong>');
+      return text.replace(/(Dose \d+|Previnar|Pneumovax)/gi, '<strong>$1</strong>');
     }
 
     function formatDate(date) {
@@ -189,67 +196,61 @@
     }
 
     function addWeeks(date, weeks) {
-      const result = new Date(date);
-      result.setDate(result.getDate() + weeks * 7);
-      return result;
+      return addDays(date, weeks * 7);
     }
 
-    // Rabies Vaccine Schedule
+    // Existing vaccine scripts...
     document.getElementById('rabies1').addEventListener('change', e => {
-      const d1 = new Date(e.target.value);
-      document.getElementById('rabies2').innerHTML = boldDose(`Dose 2 (Day 7): ${formatDate(addDays(d1, 7))}`);
-      document.getElementById('rabies3').innerHTML = boldDose(`Dose 3 (Day 21 or 28): ${formatDate(addDays(d1, 21))} or ${formatDate(addDays(d1, 28))}`);
+      const d = new Date(e.target.value);
+      document.getElementById('rabies2').innerHTML = boldDose(`Dose 2 (Day 7): ${formatDate(addDays(d, 7))}`);
+      document.getElementById('rabies3').innerHTML = boldDose(`Dose 3 (Day 21 or 28): ${formatDate(addDays(d, 21))} or ${formatDate(addDays(d, 28))}`);
     });
 
-    // Engerix-B Vaccine Schedule
     document.getElementById('engerix1').addEventListener('change', e => {
-      const d1 = new Date(e.target.value);
-      document.getElementById('engerix2').innerHTML = boldDose(`Dose 2 (1 month): ${formatDate(addMonths(d1, 1))}`);
-      document.getElementById('engerix3').innerHTML = boldDose(`Dose 3 (6 months): ${formatDate(addMonths(d1, 6))}`);
+      const d = new Date(e.target.value);
+      document.getElementById('engerix2').innerHTML = boldDose(`Dose 2 (1 month): ${formatDate(addMonths(d, 1))}`);
+      document.getElementById('engerix3').innerHTML = boldDose(`Dose 3 (6 months): ${formatDate(addMonths(d, 6))}`);
     });
 
-    // HPV Vaccine Schedule
     document.getElementById('hpv1').addEventListener('change', e => {
-      const d1 = new Date(e.target.value);
-      document.getElementById('hpv2').innerHTML = boldDose(`Dose 2 (2 months): ${formatDate(addMonths(d1, 2))}`);
-      document.getElementById('hpv3').innerHTML = boldDose(`Dose 3 (6 months): ${formatDate(addMonths(d1, 6))}`);
+      const d = new Date(e.target.value);
+      document.getElementById('hpv2').innerHTML = boldDose(`Dose 2 (2 months): ${formatDate(addMonths(d, 2))}`);
+      document.getElementById('hpv3').innerHTML = boldDose(`Dose 3 (6 months): ${formatDate(addMonths(d, 6))}`);
     });
 
-    // Shingrix Vaccine Schedule
     document.getElementById('shingrix1').addEventListener('change', e => {
-      const d1 = new Date(e.target.value);
-      document.getElementById('shingrix2').innerHTML = boldDose(`Dose 2 (2 to 6 months): Between ${formatDate(addMonths(d1, 2))} and ${formatDate(addMonths(d1, 6))}`);
+      const d = new Date(e.target.value);
+      document.getElementById('shingrix2').innerHTML = boldDose(`Dose 2 (2–6 months): Between ${formatDate(addMonths(d, 2))} and ${formatDate(addMonths(d, 6))}`);
     });
 
-    // Twinrix Vaccine Schedule
     document.getElementById('twinrix1').addEventListener('change', e => {
-      const d1 = new Date(e.target.value);
-      document.getElementById('twinrix2').innerHTML = boldDose(`Dose 2 (7 days): ${formatDate(addDays(d1, 7))}`);
-      document.getElementById('twinrix3').innerHTML = boldDose(`Dose 3 (21 days): ${formatDate(addDays(d1, 21))}`);
-      document.getElementById('twinrix4').innerHTML = boldDose(`Dose 4 (12 months): ${formatDate(addMonths(d1, 12))}`);
+      const d = new Date(e.target.value);
+      document.getElementById('twinrix2').innerHTML = boldDose(`Dose 2 (7 days): ${formatDate(addDays(d, 7))}`);
+      document.getElementById('twinrix3').innerHTML = boldDose(`Dose 3 (21 days): ${formatDate(addDays(d, 21))}`);
+      document.getElementById('twinrix4').innerHTML = boldDose(`Dose 4 (12 months): ${formatDate(addMonths(d, 12))}`);
     });
 
-    // Bexsero Vaccine Schedule
     document.getElementById('bexsero1').addEventListener('change', e => {
-      const d1 = new Date(e.target.value);
-
-      // Bexsero Vaccine schedule for different age groups
-      const infantsDate = addWeeks(d1, 8);
-      const toddlersDate = addWeeks(d1, 8);
-      const boosterDate = addMonths(d1, 6);
-      const olderDate = addMonths(d1, 12);
-
-      // Infants
-      document.getElementById('bexsero2').innerHTML = boldDose(`Dose 2 (Infants 2-11 months, 8 weeks apart): ${formatDate(infantsDate)}`);
-      document.getElementById('bexsero3').innerHTML = boldDose(`Booster (Infants, 6 months or 12 months after primary dose): ${formatDate(boosterDate)} or ${formatDate(olderDate)}`);
-
-      // Toddlers
-      document.getElementById('bexsero4').innerHTML = boldDose(`Dose 2 (Toddlers 12-23 months, 8 weeks apart): ${formatDate(toddlersDate)}`);
-      document.getElementById('bexsero5').innerHTML = boldDose(`Booster (12-23 months, 12-23 months after second dose): ${formatDate(addMonths(d1, 12))}`);
-      
-      // Aged 13 years and over
-      document.getElementById('bexsero6').innerHTML = boldDose(`Dose 2 (Aged 13 years and over, 8 weeks apart): ${formatDate(addWeeks(d1, 8))}`);
+      const d = new Date(e.target.value);
+      document.getElementById('bexsero2').innerHTML = boldDose(`Dose 2 (Infants 2–11 months, 8 weeks apart): ${formatDate(addWeeks(d, 8))}`);
+      document.getElementById('bexsero3').innerHTML = boldDose(`Booster (Infants): ${formatDate(addMonths(d, 6))} or ${formatDate(addMonths(d, 12))}`);
+      document.getElementById('bexsero4').innerHTML = boldDose(`Dose 2 (Toddlers 12–23 months, 8 weeks apart): ${formatDate(addWeeks(d, 8))}`);
+      document.getElementById('bexsero5').innerHTML = boldDose(`Booster (12–23 months): ${formatDate(addMonths(d, 12))}`);
+      document.getElementById('bexsero6').innerHTML = boldDose(`Dose 2 (13+ years, 8 weeks apart): ${formatDate(addWeeks(d, 8))}`);
     });
+
+    document.getElementById('pneumo1').addEventListener('change', e => {
+      const d = new Date(e.target.value);
+      document.getElementById('pneumoOption1').innerHTML = boldDose(`Not for Immuno: Pneumovax 23 then repeat in 5 years → ${formatDate(addYears(d, 5))}`);
+      document.getElementById('pneumoOption2').innerHTML = boldDose(`Immunocompromised: Previnar 13 → ${formatDate(d)} → then Pneumovax 23 in 8 weeks → ${formatDate(addWeeks(d, 8))} → then repeat 23 in 5 years → ${formatDate(addYears(addWeeks(d, 8), 5))}`);
+      document.getElementById('pneumoOver65').innerHTML = `For persons ≥ 65 years old, if last dose was ≥5 years ago and given <65, give another dose.`;
+    });
+
+    function addYears(date, years) {
+      const result = new Date(date);
+      result.setFullYear(result.getFullYear() + years);
+      return result;
+    }
   </script>
 </body>
 </html>
