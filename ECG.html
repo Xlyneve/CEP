@@ -23,25 +23,36 @@
     const db = getFirestore(app);
     const ecgNotesCollection = collection(db, "ecgNotes");
 
+    // Helper function to format the text
+    function formatText(text) {
+      // Replace ** with <b> for bold
+      text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+      // Replace == with <span style="background-color: yellow"> for highlight
+      text = text.replace(/==(.*?)==/g, "<span style='background-color: yellow'>$1</span>");
+      return text;
+    }
+
     async function saveNote() {
-      const noteText = document.getElementById("note").value;
+      const noteText = document.getElementById("note").innerHTML;
+      const formattedText = formatText(noteText); // Format the text
+
       const imageFile = document.getElementById("image").files[0];
-      if (!noteText && !imageFile) return;
+      if (!formattedText && !imageFile) return;
 
       let imageData = "";
       if (imageFile) {
         const reader = new FileReader();
         reader.onloadend = async () => {
           imageData = reader.result;
-          await addDoc(ecgNotesCollection, { note: noteText, image: imageData });
-          document.getElementById("note").value = "";
+          await addDoc(ecgNotesCollection, { note: formattedText, image: imageData });
+          document.getElementById("note").innerHTML = "";  // Clear the contenteditable div
           document.getElementById("image").value = "";
           loadNotes();
         };
         reader.readAsDataURL(imageFile);
       } else {
-        await addDoc(ecgNotesCollection, { note: noteText, image: "" });
-        document.getElementById("note").value = "";
+        await addDoc(ecgNotesCollection, { note: formattedText, image: "" });
+        document.getElementById("note").innerHTML = "";  // Clear the contenteditable div
         loadNotes();
       }
     }
@@ -69,7 +80,7 @@
         }
 
         const p = document.createElement("p");
-        p.textContent = data.note;
+        p.innerHTML = data.note;  // Use innerHTML to allow bold and highlight formatting
         card.appendChild(p);
 
         const btnContainer = document.createElement("div");
@@ -85,11 +96,40 @@
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
         editBtn.onclick = () => {
-          const newNote = prompt("Edit note:", data.note);
-          if (newNote !== null) {
-            updateDoc(doc(ecgNotesCollection, docSnap.id), { note: newNote });
+          p.style.display = "none";
+          editBtn.style.display = "none";
+
+          const editableDiv = document.createElement("div");
+          editableDiv.id = "note";
+          editableDiv.contentEditable = true;
+          editableDiv.innerHTML = data.note;
+          editableDiv.style.width = "100%";
+          editableDiv.style.height = "auto";  // Ensure it starts with auto height
+          editableDiv.style.minHeight = "50px";  // Set a minimum height
+          editableDiv.style.marginTop = "0.5rem";
+          card.insertBefore(editableDiv, btnContainer);
+
+          const saveBtn = document.createElement("button");
+          saveBtn.textContent = "Save";
+          saveBtn.onclick = async () => {
+            const updatedNote = editableDiv.innerHTML;
+            const formattedUpdatedNote = formatText(updatedNote);  // Format before saving
+            await updateDoc(doc(ecgNotesCollection, docSnap.id), { note: formattedUpdatedNote });
             loadNotes();
-          }
+          };
+
+          const cancelBtn = document.createElement("button");
+          cancelBtn.textContent = "Cancel";
+          cancelBtn.onclick = () => {
+            editableDiv.remove();
+            saveBtn.remove();
+            cancelBtn.remove();
+            p.style.display = "";
+            editBtn.style.display = "";
+          };
+
+          btnContainer.appendChild(saveBtn);
+          btnContainer.appendChild(cancelBtn);
         };
 
         btnContainer.appendChild(editBtn);
@@ -98,6 +138,13 @@
 
         notesContainer.appendChild(card);
       });
+    }
+
+    // Function to auto-adjust the height of the editable div
+    function autoResizeTextarea() {
+      const textarea = document.getElementById("note");
+      textarea.style.height = "auto"; // Reset the height
+      textarea.style.height = textarea.scrollHeight + "px"; // Set the height based on content
     }
 
     window.saveNote = saveNote;
@@ -109,6 +156,13 @@
       const searchVal = document.getElementById("search").value;
       loadNotes(searchVal);
     };
+
+    // Event listener for auto-resizing while typing
+    document.addEventListener("input", function (event) {
+      if (event.target && event.target.id === "note") {
+        autoResizeTextarea();
+      }
+    });
   </script>
   <style>
     body {
@@ -131,7 +185,7 @@
       padding: 1rem;
     }
 
-    textarea, input[type="file"] {
+    div[contenteditable="true"] {
       display: block;
       margin: 0.5rem auto;
       padding: 0.5rem;
@@ -140,6 +194,10 @@
       background-color: #f7eeed;
       border: 1px solid #ccc;
       border-radius: 8px;
+      min-height: 50px;  /* Minimum height of the editable div */
+      overflow-y: hidden; /* Hide scrollbar */
+      resize: none; /* Prevent manual resizing */
+      text-align: left; /* Align text to the left */
     }
 
     button {
@@ -233,7 +291,7 @@
     <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
   </div>
   <div class="container">
-    <textarea id="note" placeholder="Write your note here..."></textarea>
+    <div id="note" contenteditable="true" placeholder="Write your note here..."></div>
     <input type="file" id="image" accept="image/*">
     <button onclick="saveNote()">Save Note</button>
     <div id="notes"></div>
