@@ -89,6 +89,24 @@
       margin-bottom: 20px;
     }
 
+    .format-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+
+    .format-buttons button {
+      background-color: #f7f5eb;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .format-buttons button:hover {
+      background-color: #eac7c7;
+    }
+
     input[type="text"],
     textarea {
       padding: 8px;
@@ -142,6 +160,14 @@
       white-space: pre-wrap;
     }
 
+    .note-text strong {
+      font-weight: bold;
+    }
+
+    .note-text mark {
+      background-color: yellow;
+    }
+
     .note-url a {
       font-size: 12px;
       color: brown;
@@ -188,6 +214,12 @@
   <div class="container">
     <div class="input-group">
       <input type="text" id="noteTitle" placeholder="Title" />
+      
+      <div class="format-buttons">
+        <button type="button" onclick="wrapSelection('**')"><strong>Bold</strong></button>
+        <button type="button" onclick="wrapSelection('==')"><mark>Highlight</mark></button>
+      </div>
+      
       <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
       <input type="text" id="noteUrl" placeholder="Optional URL" />
       <button class="add-btn">Add Note</button>
@@ -213,6 +245,17 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     let notes = [];
+
+    window.wrapSelection = function (tag) {
+      const textarea = document.getElementById('noteText');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      const newText = textarea.value.substring(0, start) + tag + selected + tag + textarea.value.substring(end);
+      textarea.value = newText;
+      textarea.focus();
+      textarea.setSelectionRange(start + tag.length, end + tag.length);
+    };
 
     document.getElementById('searchInput').addEventListener('input', renderNotes);
 
@@ -245,6 +288,13 @@
       });
     });
 
+    function formatText(text) {
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/==(.+?)==/g, '<mark>$1</mark>')
+        .replace(/\n/g, '<br>');
+    }
+
     function renderNotes() {
       const container = document.getElementById('notesContainer');
       const search = document.getElementById('searchInput').value.toLowerCase();
@@ -275,7 +325,7 @@
           } else {
             div.innerHTML = `
               <div class="note-title">${note.title}</div>
-              <div class="note-text">${note.text}</div>
+              <div class="note-text">${formatText(note.text)}</div>
               ${note.url ? `<div class="note-url"><a href="${note.url}" target="_blank">${note.url}</a></div>` : ''}
               <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
               <div class="btn-group">
@@ -308,9 +358,8 @@
         timestamp: new Date().toISOString()
       });
 
-      // Exit edit mode
       notes[index].editing = false;
-      renderNotes(); // Re-render to show updated date
+      renderNotes();
     };
 
     window.deleteNote = async (id) => {
