@@ -12,6 +12,12 @@
       font-size: 12px;
       color: #333;
     }
+
+    .note-content {
+      font-family: 'Tahoma', sans-serif;
+      font-size: 10px;
+    }
+
     .header {
       background-color: #EAE0DA;
       padding: 10px 20px;
@@ -126,6 +132,27 @@
       border: none;
       cursor: pointer;
     }
+
+    /* New styling for URL link */
+    .note-url {
+      margin-top: 10px;
+    }
+    .note-url a {
+      background-color: #FFF1F5; /* New background color */
+      color: #333;
+      text-decoration: none;
+      padding: 3px 8px; /* Smaller size */
+      border-radius: 5px;
+      font-size: 11px; /* Smaller font */
+      display: inline-block;
+      transition: background-color 0.3s ease;
+    }
+    .note-url a:hover {
+      background-color: #F8D4E0; /* Lighter hover effect */
+    }
+    .note-url a .icon {
+      margin-right: 6px;
+    }
   </style>
 </head>
 <body>
@@ -141,6 +168,7 @@
     <div class="form-section">
       <input id="nurseTitle" placeholder="Title">
       <textarea id="nurseNote" placeholder="Note..."></textarea>
+      <input id="nurseURL" placeholder="Optional URL (if any)">
       <button class="add-btn" onclick="addNote()">Add</button>
     </div>
     <div class="cards-container" id="nurseNotesList"></div>
@@ -168,16 +196,19 @@
     async function addNote() {
       const title = nurseTitle.value.trim();
       const note = nurseNote.value.trim();
-      if (!title && !note) return;
+      const url = nurseURL.value.trim();  // Get the URL input value
+      if (!title && !note && !url) return; // If title, note, and URL are empty, return
 
       await addDoc(notesCol, {
         title: title || "Untitled",
         note,
+        url: url || "", // Store URL (if any)
         time: new Date().toISOString()
       });
 
       nurseTitle.value = '';
       nurseNote.value = '';
+      nurseURL.value = ''; // Clear the URL input after adding
     }
 
     async function deleteNote(id) {
@@ -243,7 +274,7 @@
         console.log('Data fetched from Firestore:', snapshot.docs.map(doc => doc.data())); // Check the data
         list.innerHTML = '';
         snapshot.forEach(docSnap => {
-          const { title, note, time } = docSnap.data();
+          const { title, note, time, url } = docSnap.data();  // Destructure to get URL
           const id = docSnap.id;
 
           // Replace '====' markers with highlight style
@@ -256,6 +287,7 @@
             <div class="note-title">${title}</div>
             <div class="note-content">${displayBoldNote.replace(/\n/g, '<br>')}</div>
             <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
+            ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
             <div class="note-actions">
               <button onclick="deleteNote('${id}')">Delete</button>
               <button onclick="enableEditing(this.closest('.note-card'), '${id}', \`${title.replace(/`/g, "\\`")}\`, \`${note.replace(/`/g, "\\`")}\`)">Edit</button>
