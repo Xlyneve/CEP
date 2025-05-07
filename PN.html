@@ -3,235 +3,153 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nurse Notes & Recalls</title>
+  <title>Nurse Notes</title>
   <style>
     body {
+      font-family: 'Courier New', monospace;
+      background-color: #F7F5EB;
       margin: 0;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 10px;
-      background-color: #F7F5EB;
-      color: black;
+      font-size: 12px;
+      color: #333;
     }
-
     .header {
-      text-align: center;
-      padding: 10px;
       background-color: #EAE0DA;
+      padding: 10px 20px;
+      overflow: hidden;
     }
-
-    .home-btn {
+    .header a {
+      float: left;
       text-decoration: none;
-      color: black;
-      font-size: 13px;
       font-weight: bold;
-      border: 1px solid #ccc;
-      padding: 4px 10px;
-      border-radius: 6px;
+      font-size: 14px;
+      padding: 6px 12px;
       background-color: #F7F5EB;
-      transition: background-color 0.2s;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      color: black;
     }
-
-    .home-btn:hover {
+    .header a:hover {
       background-color: #E8A2A2;
     }
-
-    .page-container {
-      display: flex;
-      flex-direction: row;
-      gap: 20px;
+    .search-box {
+      float: right;
+    }
+    .search-box input {
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 150px;
+    }
+    .container {
+      width: 100%;
       padding: 20px;
-      justify-content: center;
+      box-sizing: border-box;
     }
-
-    .section {
-      background-color: #f2eae0;
-      border-radius: 12px;
-      padding: 20px;
-      width: 50%;
-      min-height: 500px;
-      box-shadow: 1px 5px 10px rgba(0, 0, 0, 0.05);
-      position: relative;
-    }
-
-    .recall-section {
-      background-color: #F5e8e1;
-    }
-
     h2 {
       text-align: center;
-      font-size: 18px;
-      margin-bottom: 20px;
+      font-size: 20px;
     }
-
-    .input-group {
+    .form-section {
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      flex-wrap: wrap;
       gap: 10px;
-      width: 100%;
-      max-width: 600px;
       margin-bottom: 20px;
     }
-
-    input[type="text"], input[type="url"], textarea {
+    .form-section input,
+    .form-section textarea {
+      flex: 1 1 300px;
       padding: 8px;
+      font-size: 13px;
       border-radius: 6px;
       border: 1px solid #ccc;
-      font-size: 13px;
-      width: 100%;
     }
-
-    textarea {
-      resize: vertical;
-      height: 60px;
-    }
-
     .add-btn {
+      padding: 10px;
       background-color: #d9c8bf;
-      color: black;
       border: none;
-      cursor: pointer;
       border-radius: 6px;
-      padding: 8px;
-      width: 100%;
+      cursor: pointer;
+      min-width: 100px;
     }
-
-    .note-list {
-      width: 100%;
+    .cards-container {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
       gap: 15px;
+      justify-content: flex-start;
     }
-
     .note-card {
       background-color: #f0efeb;
-      border: 1px solid #ddd;
+      flex: 1 1 calc(25% - 20px);
+      min-width: 260px;
       padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
       position: relative;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      box-sizing: border-box;
+      word-wrap: break-word;
     }
-
-    .title {
+    .note-title {
       font-weight: bold;
       font-size: 14px;
-      color: black;
+      margin-bottom: 6px;
     }
-
-    .note {
-      margin-top: 8px;
-      font-size: 12px;
-      color: black;
-    }
-
-    .timestamp {
-      font-size: 11px;
-      color: #444;
-      margin-top: 10px;
-    }
-
-    .btn-group {
+    .note-actions {
       position: absolute;
       top: 10px;
       right: 10px;
     }
-
-    .btn-group button {
+    .note-actions button {
       margin-left: 5px;
-      background: #F7F5EB;
       border: none;
-      border-radius: 5px;
+      background-color: #f7f5eb;
       padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
       cursor: pointer;
     }
-
-    .btn-group button:hover {
-      background: #EAE0DA;
+    .note-actions button:hover {
+      background-color: #eae0da;
     }
-
-    .search-toggle {
-      position: absolute;
-      top: 10px;
+    .highlight {
+      background-color: #fbe0D2;
+    }
+    .editor-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .editor-buttons button {
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: none;
       cursor: pointer;
-      border-radius: 50%;
-      width: 26px;
-      height: 26px;
-      text-align: center;
-      line-height: 26px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .nurse-search-icon {
-      right: 10px;
-      background-color: #f2eae0;
-    }
-
-    .recall-search-icon {
-      left: 10px;
-      background-color: #F5e8e1;
-    }
-
-    .search-input {
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      margin: 10px 0;
-      width: 100%;
-      max-width: 400px;
-      display: none;
-    }
-
-    .highlight-word {
-      background-color: #F2E0B3;
-      font-weight: bold;
-    }
-
-    .search-toggle:hover {
-      background-color: #E8A2A2;
-      transform: scale(1.1);
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <a href="home.html" class="home-btn">🏠 Home</a>
+    <a href="home.html">🏠 Home</a>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
+    </div>
   </div>
 
-  <div class="page-container">
-    <div class="section nurse-section">
-      <div class="search-toggle nurse-search-icon" onclick="toggleSearch('nurse')">🔍</div>
-      <input type="text" class="search-input" id="searchNurse" placeholder="Search Nurse Notes..." oninput="searchNotes()">
-
-      <h2>Nurse Notes</h2>
-      <div class="input-group">
-        <input type="text" id="nurseTitle" placeholder="Title" />
-        <input type="url" id="nurseUrl" placeholder="Enter URL (optional)" />
-        <textarea id="nurseNote" placeholder="Note..."></textarea>
-        <button class="add-btn" onclick="addNote('nurse')">Add</button>
-      </div>
-      <div class="note-list" id="nurseNotesList"></div>
+  <div class="container">
+    <h2>Nurse Notes</h2>
+    <div class="form-section">
+      <input id="nurseTitle" placeholder="Title">
+      <textarea id="nurseNote" placeholder="Note..."></textarea>
+      <button class="add-btn" onclick="addNote()">Add</button>
     </div>
-
-    <div class="section recall-section">
-      <div class="search-toggle recall-search-icon" onclick="toggleSearch('recall')">🔍</div>
-      <input type="text" class="search-input" id="searchRecall" placeholder="Search Recalls..." oninput="searchNotes()">
-
-      <h2>Recalls</h2>
-      <div class="input-group">
-        <input type="text" id="recallTitle" placeholder="Title" />
-        <input type="url" id="recallUrl" placeholder="Enter URL (optional)" />
-        <textarea id="recallNote" placeholder="Note..."></textarea>
-        <button class="add-btn" onclick="addNote('recall')">Add</button>
-      </div>
-      <div class="note-list" id="recallNotesList"></div>
-    </div>
+    <div class="cards-container" id="nurseNotesList"></div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, onSnapshot, deleteDoc, updateDoc, doc
+      getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -245,73 +163,102 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const notesCol = collection(db, "nurseNotes");
 
-    window.addNote = async function(type) {
-      const title = document.getElementById(`${type}Title`).value.trim();
-      const url = document.getElementById(`${type}Url`).value.trim();
-      const note = document.getElementById(`${type}Note`).value.trim();
-      if (!title && !note && !url) return;
+    async function addNote() {
+      const title = nurseTitle.value.trim();
+      const note = nurseNote.value.trim();
+      if (!title && !note) return;
 
-      await addDoc(collection(db, `${type}Notes`), {
+      await addDoc(notesCol, {
         title: title || "Untitled",
-        url,
         note,
         time: new Date().toISOString()
       });
 
-      document.getElementById(`${type}Title`).value = '';
-      document.getElementById(`${type}Url`).value = '';
-      document.getElementById(`${type}Note`).value = '';
-    };
-
-    window.copyNote = function(type, id) {
-      const noteText = document.getElementById(`${type}Note-${id}`).textContent;
-      const textArea = document.createElement("textarea");
-      textArea.value = noteText;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
-      alert("Note copied to clipboard!");
-    };
-
-    function highlightText(text, searchTerm) {
-      if (!searchTerm) return text.replace(/\n/g, '<br>');
-      const regex = new RegExp(`(${searchTerm})`, 'gi');
-      return text.replace(/\n/g, '<br>').replace(regex, '<span class="highlight-word">$1</span>');
+      nurseTitle.value = '';
+      nurseNote.value = '';
     }
 
-    function renderNotes(type, filter = '') {
-      const list = document.getElementById(`${type}NotesList`);
-      const colRef = collection(db, `${type}Notes`);
-      onSnapshot(colRef, snapshot => {
+    async function deleteNote(id) {
+      if (confirm("Delete this note?")) {
+        await deleteDoc(doc(db, "nurseNotes", id));
+      }
+    }
+
+    async function saveEdit(id, titleInput, noteTextarea) {
+      const updatedTitle = titleInput.value.trim();
+      const updatedNote = noteTextarea.value.trim();
+
+      // Save to Firebase Firestore
+      await updateDoc(doc(db, "nurseNotes", id), {
+        title: updatedTitle || "Untitled",
+        note: updatedNote
+      });
+
+      renderNotes(); // Refresh notes after saving
+    }
+
+    function enableEditing(card, id, title, note) {
+      // Sanitize note to remove highlight markers (====)
+      const sanitizedNote = note.replace(/====/g, "");
+
+      card.innerHTML = `
+        <input type="text" value="${title}" style="width: 100%; margin-bottom: 6px; padding: 4px;" />
+        <textarea style="width: 100%; height: 100px; padding: 4px;">${sanitizedNote}</textarea>
+        <div class="editor-buttons">
+          <button onclick="saveEdit('${id}', this.parentElement.parentElement.querySelector('input'), this.parentElement.parentElement.querySelector('textarea'))">Save</button>
+          <button onclick="renderNotes()">Cancel</button>
+          <button onclick="applyBold(this)">Bold</button>
+          <button onclick="applyHighlight(this)">Highlight</button>
+        </div>
+      `;
+    }
+
+    function applyBold(btn) {
+      const textarea = btn.parentElement.parentElement.querySelector("textarea");
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      if (!selected) return;
+
+      const newText = textarea.value.substring(0, start) + `**${selected}**` + textarea.value.substring(end);
+      textarea.value = newText;
+    }
+
+    function applyHighlight(btn) {
+      const textarea = btn.parentElement.parentElement.querySelector("textarea");
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      if (!selected) return;
+
+      const newText = textarea.value.substring(0, start) + `====${selected}====` + textarea.value.substring(end);
+      textarea.value = newText;
+    }
+
+    function renderNotes() {
+      const list = document.getElementById('nurseNotesList');
+      onSnapshot(notesCol, snapshot => {
+        console.log('Data fetched from Firestore:', snapshot.docs.map(doc => doc.data())); // Check the data
         list.innerHTML = '';
-        snapshot.forEach((docSnap, index) => {
-          const data = docSnap.data();
+        snapshot.forEach(docSnap => {
+          const { title, note, time } = docSnap.data();
           const id = docSnap.id;
-          const matches =
-            data.title.toLowerCase().includes(filter) ||
-            data.note.toLowerCase().includes(filter) ||
-            data.url.toLowerCase().includes(filter);
-          if (filter && !matches) return;
+
+          // Replace '====' markers with highlight style
+          const displayNote = note.replace(/====(.*?)====/g, '<span class="highlight">$1</span>');
+          const displayBoldNote = displayNote.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
           const div = document.createElement('div');
           div.className = 'note-card';
           div.innerHTML = `
-            <div class="title">${highlightText(data.title, filter)}</div>
-            ${data.url ? `<a href="${data.url}" target="_blank">${data.url}</a>` : ''}
-            <div class="note" id="${type}Note-${id}">${highlightText(data.note, filter)}</div>
-            <div class="timestamp">${new Date(data.time).toLocaleString()}</div>
-            <div class="btn-group">
-              <button onclick="editNote('${type}', '${id}', ${index})">Edit</button>
-              <button onclick="deleteNote('${type}', '${id}')">Delete</button>
-              <button onclick="copyNote('${type}', '${id}')">Copy</button>
-            </div>
-            <div id="${type}Edit${index}" style="display:none; margin-top:10px;">
-              <input type="text" id="${type}TitleEdit${index}" value="${data.title}" />
-              <input type="url" id="${type}UrlEdit${index}" value="${data.url}" />
-              <textarea id="${type}NoteEdit${index}">${data.note}</textarea>
-              <button onclick="saveEdit('${type}', '${id}', ${index})">Save</button>
+            <div class="note-title">${title}</div>
+            <div class="note-content">${displayBoldNote.replace(/\n/g, '<br>')}</div>
+            <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
+            <div class="note-actions">
+              <button onclick="deleteNote('${id}')">Delete</button>
+              <button onclick="enableEditing(this.closest('.note-card'), '${id}', \`${title.replace(/`/g, "\\`")}\`, \`${note.replace(/`/g, "\\`")}\`)">Edit</button>
             </div>
           `;
           list.appendChild(div);
@@ -319,48 +266,30 @@
       });
     }
 
-    window.editNote = function(type, id, index) {
-      document.getElementById(`${type}Edit${index}`).style.display = 'block';
-    };
+    window.addNote = addNote;
+    window.deleteNote = deleteNote;
+    window.saveEdit = saveEdit;
+    window.enableEditing = enableEditing;
+    window.applyBold = applyBold;
+    window.applyHighlight = applyHighlight;
 
-    window.saveEdit = async function(type, id, index) {
-      const title = document.getElementById(`${type}TitleEdit${index}`).value.trim();
-      const url = document.getElementById(`${type}UrlEdit${index}`).value.trim();
-      const note = document.getElementById(`${type}NoteEdit${index}`).value.trim();
+    window.searchNotes = function (event) {
+      const query = event.target.value.toLowerCase();
+      const cards = document.querySelectorAll('.note-card');
 
-      await updateDoc(doc(db, `${type}Notes`, id), {
-        title: title || 'Untitled',
-        url,
-        note,
-        time: new Date().toISOString()
+      cards.forEach(card => {
+        const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
+        const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
+
+        if (title.includes(query) || content.includes(query)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
       });
     };
 
-    window.deleteNote = async function(type, id) {
-      if (confirm("Delete this note?")) {
-        await deleteDoc(doc(db, `${type}Notes`, id));
-      }
-    };
-
-    window.toggleSearch = function(type) {
-      const input = document.getElementById(`search${capitalize(type)}`);
-      input.style.display = input.style.display === 'none' ? 'block' : 'none';
-    };
-
-    window.searchNotes = function() {
-      const nurseSearchQuery = document.getElementById('searchNurse').value.toLowerCase();
-      const recallSearchQuery = document.getElementById('searchRecall').value.toLowerCase();
-      
-      renderNotes('nurse', nurseSearchQuery);
-      renderNotes('recall', recallSearchQuery);
-    };
-
-    function capitalize(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    renderNotes('nurse');
-    renderNotes('recall');
+    renderNotes();
   </script>
 </body>
 </html>
