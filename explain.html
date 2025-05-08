@@ -26,47 +26,25 @@
       font-size: 14px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       z-index: 1000;
-      transition: background-color 0.3s ease;
     }
 
     .home-btn:hover {
       background-color: #a0c3d2;
     }
 
-    .search-container {
+    .search-bar {
       position: fixed;
       top: 20px;
       right: 20px;
       z-index: 1000;
     }
 
-    .search-icon {
-      background-color: #eae0da;
-      padding: 8px 12px;
-      border-radius: 50px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      transition: background-color 0.3s ease;
-    }
-
-    .search-icon:hover {
-      background-color: #a0c3d2;
-    }
-
     .search-input {
-      display: none;
-      margin-top: 10px;
-      width: 180px;
       padding: 6px 10px;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 13px;
-      background-color: white;
-    }
-
-    .search-container.active .search-input {
-      display: block;
+      width: 180px;
     }
 
     h1 {
@@ -107,7 +85,6 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 13px;
-      transition: background-color 0.2s;
     }
 
     .add-btn {
@@ -127,22 +104,18 @@
       padding: 15px;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-      display: flex;
-      flex-direction: column;
     }
 
     .note-title {
       font-weight: bold;
       font-size: 15px;
-      color: black;
     }
 
     .note-text {
       font-family: Tahoma, sans-serif;
-      font-size: 11px:
+      font-size: 12px;
       color: #444;
       margin-top: 8px;
-      font-size: 12px;
       white-space: pre-wrap;
     }
 
@@ -161,11 +134,15 @@
 
     .btn-group button {
       background-color: #eee;
-      color: #000;
     }
 
     .btn-group button:hover {
       background-color: #e8dce9;
+    }
+
+    .formatting-buttons {
+      display: flex;
+      gap: 8px;
     }
   </style>
 
@@ -186,7 +163,6 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     let allNotes = [];
 
     document.querySelector('.add-btn').addEventListener('click', async () => {
@@ -216,6 +192,10 @@
           div.innerHTML = `
             <input type="text" id="editTitle${index}" value="${note.title}">
             <textarea id="editText${index}" rows="3">${note.text}</textarea>
+            <div class="formatting-buttons">
+              <button onclick="window.formatText(${index}, 'bold')">Bold</button>
+              <button onclick="window.formatText(${index}, 'highlight')">Highlight</button>
+            </div>
             <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
             <div class="btn-group">
               <button onclick="window.saveEdit(${index})">Save</button>
@@ -273,6 +253,23 @@
       });
     };
 
+    window.formatText = (index, type) => {
+      const textarea = document.getElementById(`editText${index}`);
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+
+      let formatted;
+      if (type === 'bold') {
+        formatted = `<b>${selectedText}</b>`;
+      } else if (type === 'highlight') {
+        formatted = `<mark>${selectedText}</mark>`;
+      }
+
+      textarea.setRangeText(formatted, start, end, 'end');
+      textarea.focus();
+    };
+
     function filterNotes(keyword) {
       const lower = keyword.toLowerCase();
       const filtered = allNotes.filter(n =>
@@ -280,6 +277,10 @@
       );
       renderNotes(filtered);
     }
+
+    document.getElementById('searchInput').addEventListener('input', e => {
+      filterNotes(e.target.value);
+    });
 
     onSnapshot(collection(db, 'explainNotes'), snapshot => {
       allNotes = snapshot.docs.map(docSnap => ({
@@ -289,23 +290,12 @@
       }));
       renderNotes();
     });
-
-    function toggleSearch() {
-      document.querySelector('.search-container').classList.toggle('active');
-      if (document.querySelector('.search-container').classList.contains('active')) {
-        document.getElementById('searchInput').focus();
-      }
-    }
-
-    document.getElementById('searchInput').addEventListener('input', e => {
-      filterNotes(e.target.value);
-    });
   </script>
 </head>
 <body>
   <a href="home.html" class="home-btn">🏠</a>
-  <div class="search-container">
-    <div class="search-icon" onclick="toggleSearch()">🔍</div>
+
+  <div class="search-bar">
     <input type="text" id="searchInput" class="search-input" placeholder="Search notes...">
   </div>
 
@@ -313,7 +303,7 @@
     <h1>Explanation</h1>
     <div class="input-group">
       <input type="text" id="noteTitle" placeholder="Title" />
-      <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
+      <textarea id="noteText" placeholder="Write your explanation..."></textarea>
       <button class="add-btn">Add Note</button>
     </div>
     <div class="note-list" id="notesContainer"></div>
