@@ -23,6 +23,17 @@
     const db = getFirestore(app);
     const handNotesCollection = collection(db, "handNotes");
 
+    function formatNote(text) {
+      const escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return escaped
+        .replace(/\n/g, "<br>")
+        .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+        .replace(/==(.+?)==/g, '<span style="background-color:#f9e1a8">$1</span>');
+    }
+
     async function saveNote() {
       const noteText = document.getElementById("note").value;
       const imageFile = document.getElementById("image").files[0];
@@ -69,7 +80,7 @@
         }
 
         const p = document.createElement("p");
-        p.textContent = data.note;
+        p.innerHTML = formatNote(data.note);
         card.appendChild(p);
 
         const btnContainer = document.createElement("div");
@@ -85,11 +96,27 @@
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
         editBtn.onclick = () => {
-          const newNote = prompt("Edit note:", data.note);
-          if (newNote !== null) {
-            updateDoc(doc(handNotesCollection, docSnap.id), { note: newNote });
+          p.style.display = "none";
+
+          const editArea = document.createElement("textarea");
+          editArea.value = data.note;
+          editArea.className = "edit-textarea";
+
+          const saveBtn = document.createElement("button");
+          saveBtn.textContent = "Save";
+          saveBtn.onclick = async () => {
+            const updatedNote = editArea.value;
+            await updateDoc(doc(handNotesCollection, docSnap.id), { note: updatedNote });
             loadNotes();
-          }
+          };
+
+          const cancelBtn = document.createElement("button");
+          cancelBtn.textContent = "Cancel";
+          cancelBtn.onclick = () => loadNotes();
+
+          card.insertBefore(editArea, btnContainer);
+          card.insertBefore(saveBtn, btnContainer);
+          btnContainer.appendChild(cancelBtn);
         };
 
         btnContainer.appendChild(editBtn);
@@ -232,6 +259,16 @@
       border-radius: 6px;
       border: 1px solid #ccc;
     }
+
+    .edit-textarea {
+      width: 90%;
+      height: 100px;
+      margin: 0.5rem auto;
+      padding: 0.5rem;
+      background-color: #f4f0f7;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
@@ -245,7 +282,7 @@
   </div>
 
   <div class="container">
-    <textarea id="note" placeholder="Write your note here..."></textarea>
+    <textarea id="note" placeholder="Write your note here... Use **bold** and ==highlight=="></textarea>
     <input type="file" id="image" accept="image/*">
     <button onclick="saveNote()">Save Note</button>
     <div id="notes"></div>
