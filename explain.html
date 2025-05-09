@@ -148,15 +148,7 @@
   background-color: #F3F5A9;
     }
 
-  </style>
-<style>
-  /* existing styles ... */
-
-  mark {
-    background-color: #F3F5A9;
-  }
-</style>
-
+ </style>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import {
@@ -195,23 +187,23 @@
       const container = document.getElementById('notesContainer');
       container.innerHTML = '';
 
-      notesToRender.forEach((note, index) => {
+      notesToRender.forEach((note) => {
         const div = document.createElement('div');
         div.className = 'note-card';
 
         if (note.editing) {
           div.innerHTML = `
-            <input type="text" id="editTitle${index}" value="${note.title}">
-            <textarea id="editText${index}" rows="3">${note.text}</textarea>
+            <input type="text" id="editTitle-${note.id}" value="${note.title}">
+            <textarea id="editText-${note.id}" rows="3">${note.text}</textarea>
             <div class="formatting-buttons">
-              <button onclick="window.formatText(${index}, 'bold')">Bold</button>
-              <button onclick="window.formatText(${index}, 'highlight')">Highlight</button>
+              <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
+              <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
             </div>
             <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
             <div class="btn-group">
-              <button onclick="window.saveEdit(${index})">Save</button>
+              <button onclick="window.saveEdit('${note.id}')">Save</button>
               <button onclick="window.deleteNote('${note.id}')">Delete</button>
-              <button onclick="window.copyNote(${index})">Copy</button>
+              <button onclick="window.copyNote('${note.id}')">Copy</button>
             </div>
           `;
         } else {
@@ -220,9 +212,9 @@
             <div class="note-text">${note.text}</div>
             <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
             <div class="btn-group">
-              <button onclick="window.toggleEdit(${index})">Edit</button>
+              <button onclick="window.toggleEdit('${note.id}')">Edit</button>
               <button onclick="window.deleteNote('${note.id}')">Delete</button>
-              <button onclick="window.copyNote(${index})">Copy</button>
+              <button onclick="window.copyNote('${note.id}')">Copy</button>
             </div>
           `;
         }
@@ -231,15 +223,21 @@
       });
     }
 
-    window.toggleEdit = (index) => {
-      allNotes[index].editing = true;
-      renderNotes();
+    window.toggleEdit = (id) => {
+      const note = allNotes.find(n => n.id === id);
+      if (note) {
+        note.editing = true;
+        renderNotes();
+      }
     };
 
-    window.saveEdit = async (index) => {
-      const note = allNotes[index];
-      const newTitle = document.getElementById(`editTitle${index}`).value.trim();
-      const newText = document.getElementById(`editText${index}`).value.trim();
+    window.saveEdit = async (id) => {
+      const note = allNotes.find(n => n.id === id);
+      if (!note) return;
+
+      const newTitle = document.getElementById(`editTitle-${id}`).value.trim();
+      const newText = document.getElementById(`editText-${id}`).value.trim();
+
       await updateDoc(doc(db, 'explainNotes', note.id), {
         title: newTitle || 'Untitled',
         text: newText,
@@ -253,10 +251,12 @@
       }
     };
 
-    window.copyNote = (index) => {
-      const note = allNotes[index];
+    window.copyNote = (id) => {
+      const note = allNotes.find(n => n.id === id);
+      if (!note) return;
+
       const text = note.editing
-        ? document.getElementById(`editText${index}`).value
+        ? document.getElementById(`editText-${id}`).value
         : note.text;
 
       navigator.clipboard.writeText(text).then(() => {
@@ -264,13 +264,15 @@
       });
     };
 
-    window.formatText = (index, type) => {
-      const textarea = document.getElementById(`editText${index}`);
+    window.formatText = (id, type) => {
+      const textarea = document.getElementById(`editText-${id}`);
+      if (!textarea) return;
+
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const selectedText = textarea.value.substring(start, end);
 
-      let formatted;
+      let formatted = selectedText;
       if (type === 'bold') {
         formatted = `<b>${selectedText}</b>`;
       } else if (type === 'highlight') {
