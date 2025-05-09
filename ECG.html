@@ -23,36 +23,35 @@
     const db = getFirestore(app);
     const ecgNotesCollection = collection(db, "ecgNotes");
 
-    // Helper function to format the text
     function formatText(text) {
-      // Replace ** with <b> for bold
       text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
-      // Replace == with <span style="background-color: yellow"> for highlight
       text = text.replace(/==(.*?)==/g, "<span style='background-color: yellow'>$1</span>");
       return text;
     }
 
     async function saveNote() {
       const noteText = document.getElementById("note").innerHTML;
-      const formattedText = formatText(noteText); // Format the text
-
+      const titleText = document.getElementById("title").value.trim();
+      const formattedText = formatText(noteText);
       const imageFile = document.getElementById("image").files[0];
-      if (!formattedText && !imageFile) return;
+      if (!formattedText && !imageFile && !titleText) return;
 
       let imageData = "";
       if (imageFile) {
         const reader = new FileReader();
         reader.onloadend = async () => {
           imageData = reader.result;
-          await addDoc(ecgNotesCollection, { note: formattedText, image: imageData });
-          document.getElementById("note").innerHTML = "";  // Clear the contenteditable div
+          await addDoc(ecgNotesCollection, { title: titleText, note: formattedText, image: imageData });
+          document.getElementById("note").innerHTML = "";
+          document.getElementById("title").value = "";
           document.getElementById("image").value = "";
           loadNotes();
         };
         reader.readAsDataURL(imageFile);
       } else {
-        await addDoc(ecgNotesCollection, { note: formattedText, image: "" });
-        document.getElementById("note").innerHTML = "";  // Clear the contenteditable div
+        await addDoc(ecgNotesCollection, { title: titleText, note: formattedText, image: "" });
+        document.getElementById("note").innerHTML = "";
+        document.getElementById("title").value = "";
         loadNotes();
       }
     }
@@ -79,8 +78,12 @@
           card.appendChild(img);
         }
 
+        const titleEl = document.createElement("h3");
+        titleEl.textContent = data.title || "Untitled";
+        card.appendChild(titleEl);
+
         const p = document.createElement("p");
-        p.innerHTML = data.note;  // Use innerHTML to allow bold and highlight formatting
+        p.innerHTML = data.note;
         card.appendChild(p);
 
         const btnContainer = document.createElement("div");
@@ -97,6 +100,7 @@
         editBtn.textContent = "Edit";
         editBtn.onclick = () => {
           p.style.display = "none";
+          titleEl.style.display = "none";
           editBtn.style.display = "none";
 
           const editableDiv = document.createElement("div");
@@ -104,17 +108,27 @@
           editableDiv.contentEditable = true;
           editableDiv.innerHTML = data.note;
           editableDiv.style.width = "100%";
-          editableDiv.style.height = "auto";  // Ensure it starts with auto height
-          editableDiv.style.minHeight = "50px";  // Set a minimum height
           editableDiv.style.marginTop = "0.5rem";
+
+          const editableTitle = document.createElement("input");
+          editableTitle.type = "text";
+          editableTitle.value = data.title || "";
+          editableTitle.style.width = "100%";
+          editableTitle.style.marginTop = "0.5rem";
+
+          card.insertBefore(editableTitle, btnContainer);
           card.insertBefore(editableDiv, btnContainer);
 
           const saveBtn = document.createElement("button");
           saveBtn.textContent = "Save";
           saveBtn.onclick = async () => {
             const updatedNote = editableDiv.innerHTML;
-            const formattedUpdatedNote = formatText(updatedNote);  // Format before saving
-            await updateDoc(doc(ecgNotesCollection, docSnap.id), { note: formattedUpdatedNote });
+            const formattedUpdatedNote = formatText(updatedNote);
+            const updatedTitle = editableTitle.value.trim();
+            await updateDoc(doc(ecgNotesCollection, docSnap.id), {
+              note: formattedUpdatedNote,
+              title: updatedTitle
+            });
             loadNotes();
           };
 
@@ -122,9 +136,11 @@
           cancelBtn.textContent = "Cancel";
           cancelBtn.onclick = () => {
             editableDiv.remove();
+            editableTitle.remove();
             saveBtn.remove();
             cancelBtn.remove();
             p.style.display = "";
+            titleEl.style.display = "";
             editBtn.style.display = "";
           };
 
@@ -140,11 +156,10 @@
       });
     }
 
-    // Function to auto-adjust the height of the editable div
     function autoResizeTextarea() {
       const textarea = document.getElementById("note");
-      textarea.style.height = "auto"; // Reset the height
-      textarea.style.height = textarea.scrollHeight + "px"; // Set the height based on content
+      textarea.style.height = "auto";
+      textarea.style.height = textarea.scrollHeight + "px";
     }
 
     window.saveNote = saveNote;
@@ -157,7 +172,6 @@
       loadNotes(searchVal);
     };
 
-    // Event listener for auto-resizing while typing
     document.addEventListener("input", function (event) {
       if (event.target && event.target.id === "note") {
         autoResizeTextarea();
@@ -166,7 +180,8 @@
   </script>
   <style>
     body {
-      font-family: 'Courier New', monospace;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
       background-color: #ebebeb;
       margin: 0;
       padding: 0;
@@ -194,10 +209,20 @@
       background-color: #f7eeed;
       border: 1px solid #ccc;
       border-radius: 8px;
-      min-height: 50px;  /* Minimum height of the editable div */
-      overflow-y: hidden; /* Hide scrollbar */
-      resize: none; /* Prevent manual resizing */
-      text-align: left; /* Align text to the left */
+      min-height: 50px;
+      overflow-y: hidden;
+      resize: none;
+      text-align: left;
+    }
+
+    input[type="text"] {
+      display: block;
+      margin: 0.5rem auto;
+      padding: 0.5rem;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
     }
 
     button {
@@ -257,14 +282,17 @@
     }
 
     #search-container {
-      text-align: right;
-      max-width: 800px;
+	  position: absolute;
+	  top: 10px;
+	  right: 10px;
+      max-width: 250px;
       margin: 0 auto;
-      padding: 0.5rem 1rem 0;
+      padding: 0.5rem;
     }
 
     #search {
-      padding: 0.4rem;
+	  width: 100%;
+      padding: 0.3rem;
       border-radius: 6px;
       border: 1px solid #ccc;
     }
@@ -291,6 +319,7 @@
     <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
   </div>
   <div class="container">
+    <input type="text" id="title" placeholder="Note title...">
     <div id="note" contenteditable="true" placeholder="Write your note here..."></div>
     <input type="file" id="image" accept="image/*">
     <button onclick="saveNote()">Save Note</button>
