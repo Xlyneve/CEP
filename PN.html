@@ -166,11 +166,13 @@
   <div class="container">
     <h2>Nurse Notes</h2>
     <div class="form-section">
-      <input id="nurseTitle" placeholder="Title">
-      <textarea id="nurseNote" placeholder="Note..."></textarea>
-      <input id="nurseURL" placeholder="Optional URL (if any)">
-      <button class="add-btn" onclick="addNote()">Add</button>
-    </div>
+  <input id="nurseTitle" placeholder="Title">
+  <textarea id="nurseNote" placeholder="Note..."></textarea>
+  <input id="nurseURL" placeholder="Optional URL (if any)">
+  <input type="file" id="nurseImage" accept="image/*">
+  <button class="add-btn" onclick="addNote()">Add</button>
+</div>
+
     <div class="cards-container" id="nurseNotesList"></div>
   </div>
 
@@ -193,23 +195,49 @@
     const db = getFirestore(app);
     const notesCol = collection(db, "nurseNotes");
 
-    async function addNote() {
-      const title = nurseTitle.value.trim();
-      const note = nurseNote.value.trim();
-      const url = nurseURL.value.trim();  // Get the URL input value
-      if (!title && !note && !url) return; // If title, note, and URL are empty, return
+  async function addNote() {
+  const title = nurseTitle.value.trim();
+  const note = nurseNote.value.trim();
+  const url = nurseURL.value.trim();
+  const fileInput = document.getElementById('nurseImage');
+  const file = fileInput.files[0];
+
+  let imageBase64 = "";
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      imageBase64 = reader.result;
 
       await addDoc(notesCol, {
         title: title || "Untitled",
         note,
-        url: url || "", // Store URL (if any)
+        url: url || "",
+        image: imageBase64,
         time: new Date().toISOString()
       });
 
       nurseTitle.value = '';
       nurseNote.value = '';
-      nurseURL.value = ''; // Clear the URL input after adding
-    }
+      nurseURL.value = '';
+      nurseImage.value = '';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    await addDoc(notesCol, {
+      title: title || "Untitled",
+      note,
+      url: url || "",
+      image: "",
+      time: new Date().toISOString()
+    });
+
+    nurseTitle.value = '';
+    nurseNote.value = '';
+    nurseURL.value = '';
+    nurseImage.value = '';
+  }
+}
 
     async function deleteNote(id) {
       if (confirm("Delete this note?")) {
@@ -274,7 +302,7 @@
         console.log('Data fetched from Firestore:', snapshot.docs.map(doc => doc.data())); // Check the data
         list.innerHTML = '';
         snapshot.forEach(docSnap => {
-          const { title, note, time, url } = docSnap.data();  // Destructure to get URL
+          const { title, note, time, url, image } = docSnap.data();
           const id = docSnap.id;
 
           // Replace '====' markers with highlight style
@@ -286,7 +314,9 @@
           div.innerHTML = `
             <div class="note-title">${title}</div>
             <div class="note-content">${displayBoldNote.replace(/\n/g, '<br>')}</div>
-            <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
+           ${image ? `<img src="${image}" style="max-width:100%;margin-top:10px;border-radius:6px;" />` : ""}
+
+		   <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
             ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
             <div class="note-actions">
               <button onclick="deleteNote('${id}')">Delete</button>
