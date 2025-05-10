@@ -69,7 +69,7 @@
         }
 
         const p = document.createElement("p");
-        p.textContent = data.note;
+        p.innerHTML = data.note;
         card.appendChild(p);
 
         const btnContainer = document.createElement("div");
@@ -85,11 +85,44 @@
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
         editBtn.onclick = () => {
-          const newNote = prompt("Edit note:", data.note);
-          if (newNote !== null) {
-            updateDoc(doc(notesCollection, docSnap.id), { note: newNote });
+          card.innerHTML = "";
+
+          const editArea = document.createElement("textarea");
+          editArea.value = data.note;
+          editArea.style.width = "100%";
+          editArea.style.minHeight = "100px";
+          editArea.style.marginBottom = "0.5rem";
+
+          const formatBtns = document.createElement("div");
+          formatBtns.style.marginBottom = "0.5rem";
+
+          const boldBtn = document.createElement("button");
+          boldBtn.textContent = "Bold";
+          boldBtn.onclick = () => applyFormatToTextarea(editArea, "bold");
+
+          const highlightBtn = document.createElement("button");
+          highlightBtn.textContent = "Highlight";
+          highlightBtn.onclick = () => applyFormatToTextarea(editArea, "highlight");
+
+          formatBtns.appendChild(boldBtn);
+          formatBtns.appendChild(highlightBtn);
+
+          const saveBtn = document.createElement("button");
+          saveBtn.textContent = "Save";
+          saveBtn.style.marginRight = "10px";
+          saveBtn.onclick = async () => {
+            await updateDoc(doc(notesCollection, docSnap.id), { note: editArea.value });
             loadNotes();
-          }
+          };
+
+          const cancelBtn = document.createElement("button");
+          cancelBtn.textContent = "Cancel";
+          cancelBtn.onclick = loadNotes;
+
+          card.appendChild(formatBtns);
+          card.appendChild(editArea);
+          card.appendChild(saveBtn);
+          card.appendChild(cancelBtn);
         };
 
         btnContainer.appendChild(editBtn);
@@ -98,6 +131,29 @@
 
         notesContainer.appendChild(card);
       });
+    }
+
+    function applyFormatToTextarea(textarea, type) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+
+      let wrapped;
+      if (type === "bold") {
+        wrapped = `<strong>${selected}</strong>`;
+      } else if (type === "highlight") {
+        wrapped = `<mark>${selected}</mark>`;
+      }
+
+      if (selected) {
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end);
+        textarea.value = before + wrapped + after;
+
+        textarea.focus();
+        textarea.selectionStart = start;
+        textarea.selectionEnd = start + wrapped.length;
+      }
     }
 
     window.saveNote = saveNote;
