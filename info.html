@@ -313,95 +313,90 @@
         .replace(/\n/g, '<br>');
     }
 
-    function renderNotes() {
-      const container = document.getElementById('notesContainer');
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      container.innerHTML = '';
+function renderNotes() {
+  const container = document.getElementById('notesContainer');
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  container.innerHTML = '';
 
-      notes
-        .filter(note =>
-          note.title.toLowerCase().includes(search) ||
-          note.text.toLowerCase().includes(search) ||
-          note.url.toLowerCase().includes(search)
-        )
-        .forEach((note, index) => {
-          const div = document.createElement('div');
-          div.className = 'note-card';
+  const filteredNotes = notes.filter(note =>
+    note.title.toLowerCase().includes(search) ||
+    note.text.toLowerCase().includes(search) ||
+    note.url.toLowerCase().includes(search)
+  );
 
-          if (note.editing) {
-            div.innerHTML = `
-              <input type="text" id="editTitle${index}" value="${note.title}">
-              <textarea id="editText${index}" rows="3">${note.text}</textarea>
-              <input type="text" id="editUrl${index}" value="${note.url}" placeholder="Optional URL" />
-              <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
-              <div class="btn-group">
-                <button onclick="saveEdit(${index})">Save</button>
-                <button onclick="deleteNote('${note.id}')">Delete</button>
-                <button onclick="copyToClipboard(${index})">Copy</button>
-              </div>
-            `;
-          } else {
-            div.innerHTML = `
-              <div class="note-title">${note.title}</div>
-              <div class="note-text">${formatText(note.text)}</div>
-            ${note.url ? `
-  <div class="note-url">
-    <a href="${note.url}" target="_blank" class="styled-link">
-      🌐 Visit Link
-    </a>
-  </div>` : ''}
-  
-              <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
-              <div class="btn-group">
-                <button onclick="toggleEdit(${index})">Edit</button>
-                <button onclick="deleteNote('${note.id}')">Delete</button>
-                <button onclick="copyToClipboard(${index})">Copy</button>
-              </div>
-            `;
-          }
+  filteredNotes.forEach((note, index) => {
+    const div = document.createElement('div');
+    div.className = 'note-card';
 
-          container.appendChild(div);
-        });
+    if (note.editing) {
+      div.innerHTML = `
+        <input type="text" id="editTitle${index}" value="${note.title}">
+        <textarea id="editText${index}" rows="3">${note.text}</textarea>
+        <input type="text" id="editUrl${index}" value="${note.url}" placeholder="Optional URL" />
+        <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
+        <div class="btn-group">
+          <button onclick="saveEdit(${index}, '${note.id}')">Save</button>
+          <button onclick="deleteNote('${note.id}')">Delete</button>
+          <button onclick="copyToClipboard(${index}, '${note.id}')">Copy</button>
+        </div>
+      `;
+    } else {
+      div.innerHTML = `
+        <div class="note-title">${note.title}</div>
+        <div class="note-text">${formatText(note.text)}</div>
+        ${note.url ? `
+        <div class="note-url">
+          <a href="${note.url}" target="_blank" class="styled-link">
+            🌐 Visit Link
+          </a>
+        </div>` : ''}
+        <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
+        <div class="btn-group">
+          <button onclick="toggleEdit(${index}, '${note.id}')">Edit</button>
+          <button onclick="deleteNote('${note.id}')">Delete</button>
+          <button onclick="copyToClipboard(${index}, '${note.id}')">Copy</button>
+        </div>
+      `;
     }
 
-    window.toggleEdit = (index) => {
-      notes[index].editing = true;
-      renderNotes();
-    };
+    container.appendChild(div);
+  });
+}
 
-    window.saveEdit = async (index) => {
-      const note = notes[index];
-      const newTitle = document.getElementById(`editTitle${index}`).value.trim();
-      const newText = document.getElementById(`editText${index}`).value.trim();
-      const newUrl = document.getElementById(`editUrl${index}`).value.trim();
+window.toggleEdit = (index, id) => {
+  notes.find(note => note.id === id).editing = true;
+  renderNotes();
+};
 
-      await updateDoc(doc(db, 'informationNotes', note.id), {
-        title: newTitle || 'Untitled',
-        text: newText,
-        url: newUrl,
-        timestamp: new Date().toISOString()
-      });
+window.saveEdit = async (index, id) => {
+  const note = notes.find(note => note.id === id);
+  const newTitle = document.getElementById(`editTitle${index}`).value.trim();
+  const newText = document.getElementById(`editText${index}`).value.trim();
+  const newUrl = document.getElementById(`editUrl${index}`).value.trim();
 
-      notes[index].editing = false;
-      renderNotes();
-    };
+  await updateDoc(doc(db, 'informationNotes', note.id), {
+    title: newTitle || 'Untitled',
+    text: newText,
+    url: newUrl,
+    timestamp: new Date().toISOString()
+  });
 
-    window.deleteNote = async (id) => {
-      if (confirm("Delete this note?")) {
-        await deleteDoc(doc(db, 'informationNotes', id));
-      }
-    };
+  note.editing = false;
+  renderNotes();
+};
 
-    window.copyToClipboard = (index) => {
-      const note = notes[index];
-      const text = note.editing
-        ? document.getElementById(`editText${index}`).value
-        : note.text;
+window.copyToClipboard = (index, id) => {
+  const note = notes.find(note => note.id === id);
+  const text = note.editing
+    ? document.getElementById(`editText${index}`).value
+    : note.text;
 
-      navigator.clipboard.writeText(text).then(() => {
-        alert("Note copied to clipboard!");
-      });
-    };
+  navigator.clipboard.writeText(text).then(() => {
+    alert("Note copied to clipboard!");
+  });
+};
+
+
 
     window.toggleSearch = () => {
       document.getElementById('searchBox').classList.toggle('active');
