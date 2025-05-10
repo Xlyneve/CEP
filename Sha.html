@@ -24,7 +24,7 @@
     const upperArmNotesCollection = collection(db, "upperArmNotes");
 
     async function saveNote() {
-      const noteText = document.getElementById("note").value;
+      const noteText = document.getElementById("note").value.trim();
       const imageFile = document.getElementById("image").files[0];
       if (!noteText && !imageFile) return;
 
@@ -75,21 +75,39 @@
         const btnContainer = document.createElement("div");
         btnContainer.className = "btn-container";
 
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => {
+          const currentNote = data.note;
+
+          // Remove current paragraph and edit button
+          p.remove();
+          editBtn.remove();
+
+          const textarea = document.createElement("textarea");
+          textarea.value = currentNote;
+          textarea.style.width = "100%";
+          textarea.style.marginTop = "0.5rem";
+
+          const saveBtn = document.createElement("button");
+          saveBtn.textContent = "Save";
+          saveBtn.onclick = async () => {
+            const updatedNote = textarea.value.trim();
+            if (updatedNote !== "") {
+              await updateDoc(doc(upperArmNotesCollection, docSnap.id), { note: updatedNote });
+              loadNotes();
+            }
+          };
+
+          card.insertBefore(textarea, btnContainer);
+          btnContainer.insertBefore(saveBtn, delBtn);
+        };
+
         const delBtn = document.createElement("button");
         delBtn.textContent = "Delete";
         delBtn.onclick = async () => {
           await deleteDoc(doc(upperArmNotesCollection, docSnap.id));
           loadNotes();
-        };
-
-        const editBtn = document.createElement("button");
-        editBtn.textContent = "Edit";
-        editBtn.onclick = () => {
-          const newNote = prompt("Edit note:", data.note);
-          if (newNote !== null) {
-            updateDoc(doc(upperArmNotesCollection, docSnap.id), { note: newNote });
-            loadNotes();
-          }
         };
 
         btnContainer.appendChild(editBtn);
