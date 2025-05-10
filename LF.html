@@ -85,11 +85,25 @@
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
         editBtn.onclick = () => {
-          const newNote = prompt("Edit note:", data.note);
-          if (newNote !== null) {
-            updateDoc(doc(footlegNotesCollection, docSnap.id), { note: newNote });
-            loadNotes();
-          }
+          // Create a textbox for editing
+          const editTextBox = document.createElement("textarea");
+          editTextBox.value = data.note;
+          editTextBox.className = "edit-textbox";
+          
+          // Add a save button for updating the note
+          const saveBtn = document.createElement("button");
+          saveBtn.textContent = "Save Changes";
+          saveBtn.onclick = async () => {
+            const updatedNote = editTextBox.value;
+            if (updatedNote !== data.note) {
+              await updateDoc(doc(footlegNotesCollection, docSnap.id), { note: updatedNote });
+              loadNotes();
+            }
+          };
+          
+          // Replace the note's content with the textbox and save button
+          card.replaceChild(editTextBox, p);
+          btnContainer.replaceChild(saveBtn, editBtn);
         };
 
         btnContainer.appendChild(editBtn);
@@ -222,6 +236,15 @@
       text-decoration: none;
       color: black;
       font-weight: bold;
+    }
+
+    .edit-textbox {
+      width: 100%;
+      padding: 0.5rem;
+      background-color: #e5d6cd;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
     }
   </style>
 </head>
