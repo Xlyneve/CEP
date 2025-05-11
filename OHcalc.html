@@ -120,7 +120,9 @@
       <label for="ibuWeight">Weight (kg):</label>
       <input type="number" id="ibuWeight">
       <div class="result" id="ibuprofenDose">Dose: </div>
-      <div class="note">* Typical dose: 10 mg/kg</div>
+     <div class="note">
+  * Dose: 6 mg/kg per dose (maximum 400 mg) every 6–8 hours. Do not give more than 3 doses in 24 hours. This calculator uses 6 mg/kg as per NZ HealthPathways. Your medicine label may differ.
+</div>
     </div>
   </div>
 
@@ -159,15 +161,16 @@
     });
 
     const ibuWeight = document.getElementById('ibuWeight');
-    const ibuprofenDose = document.getElementById('ibuprofenDose');
-    ibuWeight.addEventListener('input', () => {
-      const wt = Number(ibuWeight.value);
-      const doseMg = wt * 10;
-      const strength = 100 / 5;
-      const volume = doseMg / strength;
-      ibuprofenDose.textContent =
-        wt > 0 ? `Dose: ${doseMg.toFixed(2)} mg = ${volume.toFixed(2)} mL` : 'Dose:';
-    });
+const ibuprofenDose = document.getElementById('ibuprofenDose');
+ibuWeight.addEventListener('input', () => {
+  const wt = Number(ibuWeight.value);
+  const doseMg = Math.min(wt * 6, 400); // 6 mg/kg dose capped at 400 mg
+  const strength = 100 / 5; // 20 mg/mL
+  const volume = doseMg / strength;
+  ibuprofenDose.textContent =
+    wt > 0 ? `Dose: ${doseMg.toFixed(2)} mg = ${volume.toFixed(2)} mL TDS` : 'Dose:';
+});
+
   </script>
 
 </body>
