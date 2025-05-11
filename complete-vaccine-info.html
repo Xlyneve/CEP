@@ -7,18 +7,32 @@
   <script type="module" src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script type="module" src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Ensure the notes section auto-resizes based on content */
+    .notes-cell {
+      max-width: 300px; /* Adjust max-width as needed */
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      padding: 8px;
+    }
+
+    /* Hover effect for table rows */
+    tr:hover {
+      background-color: #f1f1f1; /* Light gray background on hover */
+    }
+  </style>
 </head>
 <body class="bg-[#ebebeb] text-sm font-sans px-4 py-6">
   <div class="max-w-6xl mx-auto">
     <h1 class="text-center font-bold mb-4" style="font-family: 'Courier New', sans-serif; font-size: 24px;">
-  💉 Vaccines
-</h1>
+      💉 Vaccines
+    </h1>
     <form id="vaccineForm" class="grid grid-cols-6 gap-2 mb-6">
       <input id="inj" type="text" placeholder="Inj" class="border p-2 col-span-1" required />
       <input id="name" type="text" placeholder="Vaccine Name" class="border p-2 col-span-1" required />
       <input id="price" type="text" placeholder="Price" class="border p-2 col-span-1" />
       <input id="url" type="text" placeholder="Medsafe URL" class="border p-2 col-span-2" />
-      <input id="notes" type="text" placeholder="Notes" class="border p-2 col-span-1" />
+      <textarea id="notes" placeholder="Notes" class="border p-2 col-span-1" rows="3"></textarea>
       <button type="submit" class="bg-[#f9e4e0] text-black px-4 py-2 rounded col-span-6">Add Vaccine</button>
     </form>
 
@@ -47,7 +61,7 @@
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     const firebaseConfig = {
-       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
       projectId: "cepx-f9d2a",
       storageBucket: "cepx-f9d2a.firebasestorage.com",
@@ -86,9 +100,6 @@
     function renderTable() {
       tableBody.innerHTML = "";
 
-      // Sort vaccines alphabetically by name
-      latestData.sort((a, b) => a.data.name.localeCompare(b.data.name));
-
       latestData.forEach(docSnap => {
         const v = docSnap.data;
         const id = docSnap.id;
@@ -102,7 +113,7 @@
             <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-name" value="${v.name}"></td>
             <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-price" value="${v.price}"></td>
             <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-url" value="${v.url}"></td>
-            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-notes" value="${v.notes}"></td>
+            <td class="px-4 py-2"><textarea class="border p-1 w-full" id="edit-notes" rows="3">${v.notes}</textarea></td>
             <td class="px-4 py-2 space-x-2">
               <button class="bg-[#acc791] text-white px-2 py-1 rounded" onclick="saveVaccine()">Save</button>
               <button class="bg-[#bfc1ce] text-black px-2 py-1 rounded" onclick="cancelEdit()">Cancel</button>
@@ -114,7 +125,7 @@
             <td class="px-4 py-2">${v.name}</td>
             <td class="px-4 py-2">${v.price}</td>
             <td class="px-4 py-2">${v.url ? `<a href="${v.url}" target="_blank" class="text-blue-600 underline">Link</a>` : ''}</td>
-            <td class="px-4 py-2">${v.notes}</td>
+            <td class="notes-cell px-4 py-2">${v.notes}</td>
             <td class="px-4 py-2 space-x-2">
               <button class="bg-[#efd1d4] text-black px-2 py-1 rounded" onclick="editVaccine('${id}')">Edit</button>
               <button class="bg-[#c3dcd8] text-white px-2 py-1 rounded" onclick="deleteVaccine('${id}')">Delete</button>
