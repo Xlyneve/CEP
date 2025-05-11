@@ -3,71 +3,166 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vaccine Information</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #f7f5eb;
-      color: #222222;
-    }
-    .accent-bg {
-      background-color: #eae0da;
-    }
-    .accent-bg-hover:hover {
-      background-color: #e4c9b6;
-    }
-    .accent-text {
-      color: #e4c9b6;
-    }
-    .accent-text-hover:hover {
-      color: #b38b77;
-    }
-  </style>
+  <title>Vaccines</title>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="font-sans min-h-screen p-8">
-<a href="home.html" class="fixed top-4 left-4 bg-[#e4c9b6] text-black font-semibold py-2 px-4 rounded-2xl shadow-lg transition duration-300 hover:bg-[#eae0da]">
-  🏠 Home
-</a>
+<body class="bg-[#ebebeb] text-sm font-sans px-4 py-6">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-center font-bold mb-4" style="font-family: 'Courier New', sans-serif; font-size: 24px;">
+  💉 Vaccines
+</h1>
+    <form id="vaccineForm" class="grid grid-cols-6 gap-2 mb-6">
+      <input id="inj" type="text" placeholder="Inj" class="border p-2 col-span-1" required />
+      <input id="name" type="text" placeholder="Vaccine Name" class="border p-2 col-span-1" required />
+      <input id="price" type="text" placeholder="Price" class="border p-2 col-span-1" />
+      <input id="url" type="text" placeholder="Medsafe URL" class="border p-2 col-span-2" />
+      <input id="notes" type="text" placeholder="Notes" class="border p-2 col-span-1" />
+      <button type="submit" class="bg-[#f9e4e0] text-black px-4 py-2 rounded col-span-6">Add Vaccine</button>
+    </form>
 
-  <div class="max-w-6xl mx-auto space-y-8">
-    <div class="bg-white shadow-xl rounded-2xl p-6">
-      <h1 class="text-3xl font-bold text-center accent-text mb-6">💉 Vaccine Information</h1>
-      <div class="overflow-x-auto">
-        <table class="min-w-full bg-white rounded-xl overflow-hidden shadow">
-          <thead class="accent-bg text-black">
-            <tr>
-              <th class="px-4 py-2 text-left">Type</th>
-              <th class="px-4 py-2 text-left">Name</th>
-              <th class="px-4 py-2 text-left">Cost</th>
-              <th class="px-4 py-2 text-left">Notes</th>
-            </tr>
-          </thead>
-          <tbody class="text-black">
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/h/Havrixinj.pdf" target="_blank" class="accent-text-hover">Havrix Jr (Medsafe: May 2022)</a></td><td class="px-4 py-2">$65</td><td class="px-4 py-2">Hep A Jr</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/i/ixiaroinj.pdf" target="_blank" class="accent-text-hover">Japanese Encephalitis (Medsafe: Aug 2023)</a></td><td class="px-4 py-2">$235</td><td class="px-4 py-2">Japanese Encephalitis</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/v/Vivaximinj.pdf" target="_blank" class="accent-text-hover">Vivaxim (Medsafe: Mar 2020)</a></td><td class="px-4 py-2">$200</td><td class="px-4 py-2">Hep A + Typhoid</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/v/verorabinj.pdf" target="_blank" class="accent-text-hover">Rabies (Medsafe: Jun 2022)</a></td><td class="px-4 py-2">$205</td><td class="px-4 py-2">Rabies</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/t/typhimviinj.pdf" target="_blank" class="accent-text-hover">Typhim Vi (Medsafe: Dec 2020)</a></td><td class="px-4 py-2">$95</td><td class="px-4 py-2">Typhoid</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/m/menquadfiinj.pdf" target="_blank" class="accent-text-hover">Nimenrix/ MenQuadfi Inj30 (Medsafe: Nov 2023)</a></td><td class="px-4 py-2">$150</td><td class="px-4 py-2">Meningitis C</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/i/ipatropinj.pdf" target="_blank" class="accent-text-hover">Polio (Medsafe: Apr 2021)</a></td><td class="px-4 py-2">$100</td><td class="px-4 py-2">Polio</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/t/twinrixinj.pdf" target="_blank" class="accent-text-hover">Twinrix (Medsafe: Jun 2022)</a></td><td class="px-4 py-2">$90</td><td class="px-4 py-2">Hep A + B</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Oral</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/d/dukoralpowdliq.pdf" target="_blank" class="accent-text-hover">Dukoral (Medsafe: Oct 2021)</a></td><td class="px-4 py-2">$110</td><td class="px-4 py-2">Cholera</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/b/bexseroinj.pdf" target="_blank" class="accent-text-hover">Bexsero (Medsafe: Jan 2024)</a></td><td class="px-4 py-2">$180</td><td class="px-4 py-2">Meningococcal B</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/h/havrixinj.pdf" target="_blank" class="accent-text-hover">Havrix (Medsafe: May 2022)</a></td><td class="px-4 py-2">$110</td><td class="px-4 py-2">Hepatitis A</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Regular Inj</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/e/engerixinj.pdf" target="_blank" class="accent-text-hover">Engerix B (Medsafe: Oct 2020)</a></td><td class="px-4 py-2">$45</td><td class="px-4 py-2">Hepatitis B</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Pneumococcal</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/p/prevenar13inj.pdf" target="_blank" class="accent-text-hover">Prevenar (Medsafe: Jan 2021)</a></td><td class="px-4 py-2">$210</td><td class="px-4 py-2">Pneumococcal 13</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Pneumococcal</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/p/pneumovax23inj.pdf" target="_blank" class="accent-text-hover">Pneumovax 23 (Medsafe: Apr 2019)</a></td><td class="px-4 py-2">$65</td><td class="px-4 py-2">Pneumococcal 23</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Tdap</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/b/boostrixinj.pdf" target="_blank" class="accent-text-hover">Boostrix (Medsafe: Sep 2022)</a></td><td class="px-4 py-2">$55</td><td class="px-4 py-2">Tetanus/Diphtheria/Pertussis</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">HPV</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/g/gardasilinj.pdf" target="_blank" class="accent-text-hover">Gardasil (Medsafe: Jul 2022)</a></td><td class="px-4 py-2">$250</td><td class="px-4 py-2">HPV</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Zoster</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/s/shingrixinj.pdf" target="_blank" class="accent-text-hover">Shingrix (Medsafe: Mar 2024)</a></td><td class="px-4 py-2">$400</td><td class="px-4 py-2">Shingles</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Oral</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/d/dukoralpowdliq.pdf" target="_blank" class="accent-text-hover">Dukoral (Medsafe: Oct 2021)</a></td><td class="px-4 py-2">$85</td><td class="px-4 py-2">Cholera</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Tdap + Polio</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/a/adacelpolioinj.pdf" target="_blank" class="accent-text-hover">Adacel Polio (Medsafe: May 2022)</a></td><td class="px-4 py-2">$110</td><td class="px-4 py-2">Tdap + Polio</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Varicella</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/v/varilrixinj.pdf" target="_blank" class="accent-text-hover">Varilrix (Medsafe: Feb 2023)</a></td><td class="px-4 py-2">$100</td><td class="px-4 py-2">Chickenpox</td></tr>
-            <tr class="accent-bg-hover transition-colors"><td class="px-4 py-2">Meningococcal B</td><td class="px-4 py-2"><a href="https://www.medsafe.govt.nz/profs/datasheet/b/bexseroinj.pdf" target="_blank" class="accent-text-hover">Bexsero (Medsafe: Jan 2024)</a></td><td class="px-4 py-2">$155</td><td class="px-4 py-2">Meningococcal B</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-gray-300">
+        <thead class="bg-[#eae0da]">
+          <tr>
+            <th class="px-4 py-2 text-left border-r">Type</th>
+            <th class="px-4 py-2 text-left border-r">Name</th>
+            <th class="px-4 py-2 text-left border-r">Price</th>
+            <th class="px-4 py-2 text-left border-r">URL</th>
+            <th class="px-4 py-2 text-left border-r">Notes</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
     </div>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, onSnapshot,
+      updateDoc, deleteDoc, doc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.firebasestorage.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const vaccineRef = collection(db, "vaccines");
+
+    const form = document.getElementById("vaccineForm");
+    const tableBody = document.getElementById("tableBody");
+
+    let editId = null;
+    let latestData = [];
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const inj = document.getElementById("inj").value.trim();
+      const name = document.getElementById("name").value.trim();
+      const price = document.getElementById("price").value.trim();
+      const url = document.getElementById("url").value.trim();
+      const notes = document.getElementById("notes").value.trim();
+
+      if (inj && name) {
+        await addDoc(vaccineRef, {
+          inj, name, price, url, notes,
+          timestamp: serverTimestamp()
+        });
+        form.reset();
+      }
+    });
+
+    function renderTable() {
+      tableBody.innerHTML = "";
+
+      // Sort vaccines alphabetically by name
+      latestData.sort((a, b) => a.data.name.localeCompare(b.data.name));
+
+      latestData.forEach(docSnap => {
+        const v = docSnap.data;
+        const id = docSnap.id;
+
+        const row = document.createElement("tr");
+        row.classList.add("border-t");
+
+        if (editId === id) {
+          row.innerHTML = `
+            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-inj" value="${v.inj}"></td>
+            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-name" value="${v.name}"></td>
+            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-price" value="${v.price}"></td>
+            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-url" value="${v.url}"></td>
+            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-notes" value="${v.notes}"></td>
+            <td class="px-4 py-2 space-x-2">
+              <button class="bg-[#acc791] text-white px-2 py-1 rounded" onclick="saveVaccine()">Save</button>
+              <button class="bg-[#bfc1ce] text-black px-2 py-1 rounded" onclick="cancelEdit()">Cancel</button>
+            </td>
+          `;
+        } else {
+          row.innerHTML = `
+            <td class="px-4 py-2">${v.inj}</td>
+            <td class="px-4 py-2">${v.name}</td>
+            <td class="px-4 py-2">${v.price}</td>
+            <td class="px-4 py-2">${v.url ? `<a href="${v.url}" target="_blank" class="text-blue-600 underline">Link</a>` : ''}</td>
+            <td class="px-4 py-2">${v.notes}</td>
+            <td class="px-4 py-2 space-x-2">
+              <button class="bg-[#efd1d4] text-black px-2 py-1 rounded" onclick="editVaccine('${id}')">Edit</button>
+              <button class="bg-[#c3dcd8] text-white px-2 py-1 rounded" onclick="deleteVaccine('${id}')">Delete</button>
+            </td>
+          `;
+        }
+
+        tableBody.appendChild(row);
+      });
+    }
+
+    onSnapshot(vaccineRef, snapshot => {
+      latestData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      }));
+      renderTable();
+    });
+
+    window.editVaccine = (id) => {
+      editId = id;
+      renderTable();
+    };
+
+    window.cancelEdit = () => {
+      editId = null;
+      renderTable();
+    };
+
+    window.saveVaccine = async () => {
+      if (!editId) return;
+
+      const inj = document.getElementById("edit-inj").value.trim();
+      const name = document.getElementById("edit-name").value.trim();
+      const price = document.getElementById("edit-price").value.trim();
+      const url = document.getElementById("edit-url").value.trim();
+      const notes = document.getElementById("edit-notes").value.trim();
+
+      if (inj && name) {
+        const docRef = doc(db, "vaccines", editId);
+        await updateDoc(docRef, { inj, name, price, url, notes, timestamp: serverTimestamp() });
+        editId = null;
+      }
+    };
+
+    window.deleteVaccine = async (id) => {
+      await deleteDoc(doc(db, "vaccines", id));
+    };
+  </script>
 </body>
 </html>
