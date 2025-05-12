@@ -131,7 +131,7 @@
     }
 
     .note-card:hover {
-	 transform: scale(1.20);
+	 transform: scale(1.05);
 	 }
 
     .note-title {
@@ -284,14 +284,14 @@
 
           if (note.editing) {
             div.innerHTML = `
-              <input type="text" id="editTitle${index}" value="${note.title}">
-              <textarea id="editText${index}" rows="3">${note.text.replace(/<[^>]*>/g, '')}</textarea>
-              <input type="text" id="editUrl${index}" value="${note.url}" placeholder="Optional URL" />
+              <input type="text" id="editTitle${note.id}" value="${note.title}">
+              <textarea id="editText${note.id}" rows="3">${note.text.replace(/<[^>]*>/g, '')}</textarea>
+              <input type="text" id="editUrl${note.id}" value="${note.url}" placeholder="Optional URL" />
               <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
               <div class="btn-group">
-                <button onclick="saveEdit(${index})">Save</button>
+                <button onclick="saveEdit('${note.id}')">Save</button>
                 <button onclick="deleteNote('${note.id}')">Delete</button>
-                <button onclick="copyToClipboard(${index})">Copy</button>
+                <button onclick="copyToClipboard('${note.id}')">Copy</button>
               </div>
             `;
           } else {
@@ -301,9 +301,9 @@
               ${note.url ? `<div class="note-url"><a href="${note.url}" target="_blank">${note.url}</a></div>` : ''}
               <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
               <div class="btn-group">
-                <button onclick="toggleEdit(${index})">Edit</button>
+                <button onclick="toggleEdit('${note.id}')">Edit</button>
                 <button onclick="deleteNote('${note.id}')">Delete</button>
-                <button onclick="copyToClipboard(${index})">Copy</button>
+                <button onclick="copyToClipboard('${note.id}')">Copy</button>
               </div>
             `;
           }
@@ -312,29 +312,34 @@
         });
     }
 
-    window.toggleEdit = (index) => {
-      notes[index].editing = true;
-      renderNotes();
-    };
+    window.toggleEdit = (id) => {
+  notes = notes.map(note =>
+    note.id === id ? { ...note, editing: true } : { ...note, editing: false }
+  );
+  renderNotes();
+};
 
-    window.saveEdit = async (index) => {
-      const note = notes[index];
-      const newTitle = document.getElementById(`editTitle${index}`).value.trim();
-      let newText = document.getElementById(`editText${index}`).value.trim();
-      const newUrl = document.getElementById(`editUrl${index}`).value.trim();
+    window.saveEdit = async (id) => {
+  const index = notes.findIndex(n => n.id === id);
+  const note = notes[index];
 
-      newText = formatText(newText);
+  const newTitle = document.getElementById(`editTitle${id}`).value.trim();
+  let newText = document.getElementById(`editText${id}`).value.trim();
+  const newUrl = document.getElementById(`editUrl${id}`).value.trim();
 
-      await updateDoc(doc(db, 'practiceNNotes', note.id), {
-        title: newTitle || 'Untitled',
-        text: newText,
-        url: newUrl,
-        timestamp: new Date().toISOString()
-      });
+  newText = formatText(newText);
 
-      notes[index].editing = false;
-      renderNotes();
-    };
+  await updateDoc(doc(db, 'practiceNNotes', note.id), {
+    title: newTitle || 'Untitled',
+    text: newText,
+    url: newUrl,
+    timestamp: new Date().toISOString()
+  });
+
+  notes[index].editing = false;
+  renderNotes();
+};
+
 
     window.deleteNote = async (id) => {
       if (confirm("Delete this note?")) {
@@ -342,16 +347,17 @@
       }
     };
 
-    window.copyToClipboard = (index) => {
-      const note = notes[index];
-      const text = note.editing
-        ? document.getElementById(`editText${index}`).value
-        : note.text.replace(/<[^>]*>/g, '');
+   window.copyToClipboard = (id) => {
+  const note = notes.find(n => n.id === id);
+  const text = note.editing
+    ? document.getElementById(`editText${id}`).value
+    : note.text.replace(/<[^>]*>/g, '');
 
-      navigator.clipboard.writeText(text).then(() => {
-        alert("Note copied to clipboard!");
-      });
-    };
+  navigator.clipboard.writeText(text).then(() => {
+    alert("Note copied to clipboard!");
+  });
+};
+
 
     window.toggleSearch = () => {
       document.getElementById('searchBox').classList.toggle('active');
