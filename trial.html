@@ -4,63 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Calendar and To-Do Page</title>
-  <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
-
+  
+   <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
+   
   <style>
     body {
       margin: 0;
       font-family: 'Courier New', Courier, monospace;
       font-size: 8pt;
       background-color: #f8f2ef;
-      height: 100vh;
       display: flex;
-    }
-
-    .split-container {
-      display: flex;
-      width: 100%;
+	  flex-wrap: wrap;
       height: 100vh;
-      overflow: hidden;
     }
-
     .calendar-container {
-      flex: 1;
-      min-width: 200px;
+      width: 65%;
       background-color: #ebebeb;
       padding: 20px;
       box-sizing: border-box;
       overflow-y: auto;
+      position: relative;
       border-right: 2px solid #C1B6A3;
       border-radius: 12px 0 0 12px;
       transition: box-shadow 0.3s ease;
     }
-
     .calendar-container:hover {
       box-shadow: inset 0 0 10px #C1B6A3;
     }
-
-    .resizer {
-      width: 5px;
-      background: #ccc;
-      cursor: ew-resize;
-    }
-
-    .todo-container {
-      width: 35%;
-      background-color: #e7ebee;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      border-left: 2px solid #C1B6A3;
-      border-radius: 0 12px 12px 0;
-      transition: box-shadow 0.3s ease;
-    }
-
-    .todo-container:hover {
-      box-shadow: inset 0 0 10px #C1B6A3;
-    }
-
-    /* (keep all your original styles below this point) */
     .calendar-header {
       display: flex;
       justify-content: space-between;
@@ -69,20 +39,17 @@
       gap: 8px;
       margin-bottom: 10px;
     }
-
     .calendar-header-left {
       display: flex;
       align-items: center;
       gap: 10px;
     }
-
     .calendar-header h2#monthLabel {
       font-size: 44pt;
       margin: 0;
       color: Black;
-      font-family: 'Clicker Script', cursive;
+	  font-family: 'Clicker Script', cursive;
     }
-
     .calendar-header button,
     .calendar-header select {
       padding: 4px 8px;
@@ -93,7 +60,10 @@
       cursor: pointer;
       color: black;
     }
-
+    .calendar-header button:hover,
+    .calendar-header select:hover {
+      background-color: #ddd3d2;
+    }
     .home-button {
       padding: 4px 8px;
       background-color: #ddd3d2;
@@ -103,11 +73,9 @@
       font-size: 8pt;
       color: white;
     }
-
     .home-button:hover {
       background-color: #a89f8b;
     }
-
     .day-headers {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -116,14 +84,12 @@
       text-align: center;
       color: black;
     }
-
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 10px;
       margin-top: 5px;
     }
-
     .day {
       background-color: #efe1e1;
       border: 1px solid #C1B6A3;
@@ -135,20 +101,18 @@
       align-items: center;
       transition: box-shadow 0.3s;
     }
-
     .day:hover {
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
     .day.empty {
       background-color: transparent;
       border: none;
     }
-
     .day textarea {
       width: 90%;
       height: 60px;
       resize: vertical;
+      overflow-y: auto;
       background-color: white;
       border: 1px solid #ddd3d2;
       border-radius: 8px;
@@ -156,28 +120,37 @@
       font-family: Tahoma, monospace;
       font-size: 8pt;
     }
-
     .day .date-number {
       font-weight: bold;
       color: black;
       margin-bottom: 5px;
     }
-
+    .todo-container {
+      width: 35%;
+      background-color: #e7ebee;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      border-left: 2px solid #C1B6A3;
+      border-radius: 0 12px 12px 0;
+      transition: box-shadow 0.3s ease;
+    }
+    .todo-container:hover {
+      box-shadow: inset 0 0 10px #C1B6A3;
+    }
     .todo-title {
       font-size: 36px;
       margin-bottom: 10px;
       color: black;
-      font-family: 'Clicker Script', cursive;
-      font-weight: bold;
+	  font-family: 'Clicker Script', cursive;
+	  font-weight: bold;
     }
-
     .todo-list {
       background-color: white;
       padding: 15px;
       border-radius: 12px;
       border: 1px solid #C1B6A3;
     }
-
     .todo-item {
       display: flex;
       align-items: center;
@@ -185,36 +158,31 @@
       border-bottom: 1px dashed #C1B6A3;
       padding-bottom: 6px;
     }
-
     .todo-item input[type="checkbox"] {
       margin-right: 10px;
     }
-
-    .todo-item input[type="text"] {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-size: 8pt;
-      font-family: 'Arial, sans-serif';
-      padding: 4px;
-      min-height: 30px;
-      overflow-wrap: break-word;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
+	.todo-item input[type="text"] {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 8pt;
+  font-family: 'Arial, sans-serif';
+  padding: 4px;
+  min-height: 30px;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
     .add-todo {
       display: flex;
       margin-top: 10px;
     }
-
     .add-todo input {
       flex: 1;
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 8px 0 0 8px;
     }
-
     .add-todo button {
       padding: 8px;
       border: none;
@@ -223,70 +191,64 @@
       border-radius: 0 8px 8px 0;
       color: #333;
     }
-
     .add-todo button:hover {
       background-color: #a89f8b;
     }
+	.calendar-container, .todo-container {
+  flex: 1 1 100%; /* Allow stacking on small screens */
+  max-width: 100%;
+    
+	}
+	@media (min-width: 768px) {
+  .calendar-container {
+    width: 65%;
+    border-radius: 12px 0 0 12px;
+  }
+
+  .todo-container {
+    width: 35%;
+    border-radius: 0 12px 12px 0;
+  }
+
+  .calendar-container, .todo-container {
+    flex: unset;
+    max-width: unset;
+  }
+}
+
+
   </style>
 </head>
+
 <body>
-  <div class="split-container">
-    <div class="calendar-container" id="calendarPane">
-      <!-- calendar content here -->
-      <div class="calendar-header">
-        <div class="calendar-header-left">
-          <button class="home-button" onclick="location.href='home.html'">Home</button>
-          <h2 id="monthLabel">Monthly Calendar</h2>
-        </div>
-        <div>
-          <button onclick="changeMonth(-1)">◀</button>
-          <button onclick="goToToday()">Today</button>
-          <select id="monthSelect"></select>
-          <select id="yearSelect"></select>
-          <button onclick="changeMonth(1)">▶</button>
-        </div>
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <div class="calendar-header-left">
+        <button class="home-button" onclick="location.href='home.html'">Home</button>
+        <h2 id="monthLabel">Monthly Calendar</h2>
       </div>
-      <div class="day-headers">
-        <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-      </div>
-      <div class="calendar" id="calendar"></div>
-    </div>
-
-    <div class="resizer" id="resizer"></div>
-
-    <div class="todo-container">
-      <div class="todo-title">To-Do List</div>
-      <div class="todo-list" id="todoList"></div>
-      <div class="add-todo">
-        <input type="text" id="newTodo" placeholder="Add new task...">
-        <button onclick="addTodo()">Add</button>
+      <div>
+        <button onclick="changeMonth(-1)">◀</button>
+        <button onclick="goToToday()">Today</button>
+        <select id="monthSelect"></select>
+        <select id="yearSelect"></select>
+        <button onclick="changeMonth(1)">▶</button>
       </div>
     </div>
+    <div class="day-headers">
+      <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+    </div>
+    <div class="calendar" id="calendar"></div>
   </div>
 
-  <script>
-    const resizer = document.getElementById("resizer");
-    const leftPane = document.getElementById("calendarPane");
-
-    let isResizing = false;
-
-    resizer.addEventListener("mousedown", function (e) {
-      isResizing = true;
-    });
-
-    window.addEventListener("mousemove", function (e) {
-      if (!isResizing) return;
-      let newWidth = e.clientX;
-      if (newWidth < 200) newWidth = 200; // min width
-      if (newWidth > window.innerWidth - 200) newWidth = window.innerWidth - 200; // max width
-      leftPane.style.flex = "none";
-      leftPane.style.width = newWidth + "px";
-    });
-
-    window.addEventListener("mouseup", function () {
-      isResizing = false;
-    });
-  </script>
+  <div class="todo-container">
+    <div class="todo-title">To-Do List</div>
+    <div class="todo-list" id="todoList"></div>
+    <div class="add-todo">
+      <input type="text" id="newTodo" placeholder="Add new task...">
+      <button onclick="addTodo()">Add</button>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
