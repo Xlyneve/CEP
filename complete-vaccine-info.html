@@ -8,22 +8,49 @@
   <script type="module" src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Ensure the notes section auto-resizes based on content */
     .notes-cell {
-      max-width: 300px; /* Adjust max-width as needed */
+      max-width: 300px;
       white-space: pre-wrap;
       word-wrap: break-word;
       padding: 8px;
     }
 
-    /* Hover effect for table rows */
     tr:hover {
-      background-color: #f1f1f1; /* Light gray background on hover */
+      background-color: #f1f1f1;
+    }
+
+    #homeButton {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #f9e4e0;
+      color: black;
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    #homeButton:hover {
+      background-color: #f0d0cc;
+    }
+
+    #searchBox {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
+
 <body class="bg-[#ebebeb] text-sm font-sans px-4 py-6">
-  <div class="max-w-6xl mx-auto">
+  <a href="home.html" id="homeButton">Home</a>
+  <input type="text" id="searchBox" placeholder="Search..." />
+
+  <div class="max-w-6xl mx-auto mt-12">
     <h1 class="text-center font-bold mb-4" style="font-family: 'Courier New', sans-serif; font-size: 24px;">
       💉 Vaccines
     </h1>
@@ -64,7 +91,7 @@
       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
       projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.firebasestorage.com",
+      storageBucket: "cepx-f9d2a.appspot.com",
       messagingSenderId: "840696526325",
       appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
@@ -75,9 +102,11 @@
 
     const form = document.getElementById("vaccineForm");
     const tableBody = document.getElementById("tableBody");
+    const searchBox = document.getElementById("searchBox");
 
-    let editId = null;
+    let fullData = [];
     let latestData = [];
+    let editId = null;
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -99,7 +128,6 @@
 
     function renderTable() {
       tableBody.innerHTML = "";
-
       latestData.forEach(docSnap => {
         const v = docSnap.data;
         const id = docSnap.id;
@@ -138,10 +166,11 @@
     }
 
     onSnapshot(vaccineRef, snapshot => {
-      latestData = snapshot.docs.map(doc => ({
+      fullData = snapshot.docs.map(doc => ({
         id: doc.id,
         data: doc.data()
       }));
+      latestData = [...fullData];
       renderTable();
     });
 
@@ -174,6 +203,26 @@
     window.deleteVaccine = async (id) => {
       await deleteDoc(doc(db, "vaccines", id));
     };
+
+    searchBox.addEventListener("input", () => {
+      const query = searchBox.value.toLowerCase();
+
+      if (query === '') {
+        latestData = [...fullData];
+      } else {
+        latestData = fullData.filter(docSnap => {
+          const v = docSnap.data;
+          return (
+            v.inj.toLowerCase().includes(query) ||
+            v.name.toLowerCase().includes(query) ||
+            v.price.toLowerCase().includes(query) ||
+            v.notes.toLowerCase().includes(query)
+          );
+        });
+      }
+
+      renderTable();
+    });
   </script>
 </body>
 </html>
