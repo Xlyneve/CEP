@@ -1,315 +1,474 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Xlyn</title>
-
-  <!-- Fonts -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calendar and To-Do Page</title>
   <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
 
   <style>
     body {
       margin: 0;
-      font-family: 'Source Sans Pro', sans-serif;
-      background: #ece8e1;
-      color: black;
-      font-size: 18px;
-    }
-
-    header {
-      padding: 15px;
-      text-align: center;
-      background: #e5d6cd;
-      border-bottom: 1px solid #e5d6cd;
-      position: relative;
-    }
-
-    .title {
-      font-family: 'Clicker Script', cursive;
-      font-size: 90px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      color: black;
-      margin: 0;
-      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    .top-links {
-      margin-top: 10px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 8pt;
+      background-color: #f8f2ef;
+      height: 100vh;
       display: flex;
-      justify-content: center;
-      gap: 8px;
-      flex-wrap: wrap;
     }
 
-    .top-links a {
-      padding: 4px 8px;
-      background-color: #f7f2ef;
-      color: black;
-      font-size: 10px;
-      border: 1px solid #d8cfc9;
-      border-radius: 5px;
-      text-decoration: none;
-      transition: background-color 0.3s, transform 0.3s;
+    .split-container {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .calendar-container {
+      flex: 1;
+      min-width: 200px;
+      background-color: #ebebeb;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      border-right: 2px solid #C1B6A3;
+      border-radius: 12px 0 0 12px;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .calendar-container:hover {
+      box-shadow: inset 0 0 10px #C1B6A3;
+    }
+
+    .resizer {
+      width: 5px;
+      background: #ccc;
+      cursor: ew-resize;
+    }
+
+    .todo-container {
+      width: 35%;
+      background-color: #e7ebee;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      border-left: 2px solid #C1B6A3;
+      border-radius: 0 12px 12px 0;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .todo-container:hover {
+      box-shadow: inset 0 0 10px #C1B6A3;
+    }
+
+    /* (keep all your original styles below this point) */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .calendar-header-left {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 10px;
     }
 
-    .top-links a:hover {
-      background-color: #e4c9b6;
-      transform: scale(1.05);
+    .calendar-header h2#monthLabel {
+      font-size: 44pt;
+      margin: 0;
+      color: Black;
+      font-family: 'Clicker Script', cursive;
     }
 
-    .icon-stack {
-      position: absolute;
-      right: 10px;
-      top: 10px;
+    .calendar-header button,
+    .calendar-header select {
+      padding: 4px 8px;
+      font-size: 8pt;
+      background-color: #ddd3d2;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: black;
+    }
+
+    .home-button {
+      padding: 4px 8px;
+      background-color: #ddd3d2;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 8pt;
+      color: white;
+    }
+
+    .home-button:hover {
+      background-color: #a89f8b;
+    }
+
+    .day-headers {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+      color: black;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-top: 5px;
+    }
+
+    .day {
+      background-color: #efe1e1;
+      border: 1px solid #C1B6A3;
+      border-radius: 12px;
+      padding: 10px;
+      min-height: 100px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      z-index: 1;
+      transition: box-shadow 0.3s;
     }
 
-    .icon-stack img {
-      width: 50px;
-      height: 50px;
-      transition: transform 0.3s ease;
+    .day:hover {
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
-    .icon-stack a:hover img {
-      transform: scale(1.1);
+    .day.empty {
+      background-color: transparent;
+      border: none;
     }
 
-    .layout {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 20px;
+    .day textarea {
+      width: 90%;
+      height: 60px;
+      resize: vertical;
+      background-color: white;
+      border: 1px solid #ddd3d2;
+      border-radius: 8px;
+      padding: 5px;
+      font-family: Tahoma, monospace;
+      font-size: 8pt;
     }
 
-    .main-content {
-      flex: 1;
-      max-width: 1000px;
-    }
-
-    h2 {
-      font-size: 18px;
-      font-weight: 400;
+    .day .date-number {
+      font-weight: bold;
       color: black;
-      margin-bottom: 16px;
-      border-bottom: 2px solid #e5d6cd;
-      display: inline-block;
-      padding-bottom: 4px;
+      margin-bottom: 5px;
     }
 
-    .card-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 16px;
+    .todo-title {
+      font-size: 36px;
+      margin-bottom: 10px;
+      color: black;
+      font-family: 'Clicker Script', cursive;
+      font-weight: bold;
     }
 
-    .card {
-      padding: 16px;
+    .todo-list {
+      background-color: white;
+      padding: 15px;
       border-radius: 12px;
-      background: #f7f2ef;
-      border: 1px solid #e5d6cd;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 400;
-      color: black;
+      border: 1px solid #C1B6A3;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      border-bottom: 1px dashed #C1B6A3;
+      padding-bottom: 6px;
+    }
+
+    .todo-item input[type="checkbox"] {
+      margin-right: 10px;
+    }
+
+    .todo-item input[type="text"] {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 8pt;
+      font-family: 'Arial, sans-serif';
+      padding: 4px;
+      min-height: 30px;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .add-todo {
+      display: flex;
+      margin-top: 10px;
+    }
+
+    .add-todo input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .add-todo button {
+      padding: 8px;
+      border: none;
+      background-color: #C1B6A3;
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border-radius: 0 8px 8px 0;
+      color: #333;
     }
 
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(180, 180, 180, 0.15);
-    }
-
-    footer {
-      text-align: center;
-      font-size: 12px;
-      color: #888;
-      margin: 40px 0;
-    }
-
-    /* Post-it Note Styles */
-    .sticky-note {
-      position: fixed;
-      top: 100px;
-      right: 20px;
-      width: 200px;
-      height: 200px;
-      background: #fff58f;
-      color: black;
-      padding: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      border: 1px solid #e0d977;
-      border-radius: 6px;
-      font-size: 14px;
-      resize: none;
-      z-index: 1001;
-    }
-
-    @media (max-width: 768px) {
-      .layout {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .icon-stack {
-        right: 5px;
-        top: 5px;
-      }
-
-      .icon-stack img {
-        width: 40px;
-        height: 40px;
-      }
-
-      .sticky-note {
-        width: 150px;
-        height: 150px;
-        font-size: 12px;
-      }
+    .add-todo button:hover {
+      background-color: #a89f8b;
     }
   </style>
 </head>
-
 <body>
-  <header>
-    <h1 class="title">Xlyn</h1>
-    <div class="top-links">
-      <a href="https://www.health.govt.nz/" target="_blank">🏥 Ministry of Health</a>
-      <a href="https://www.health.govt.nz/search?query=cold+chain" target="_blank">❄️ Cold Chain</a>
-      <a href="https://www.medsafe.govt.nz/medicines/infoSearch.asp" target="_blank">💊 Medsafe</a>
-      <a href="https://www.mymedicines.nz/" target="_blank">📋 My Medicines</a>
-      <a href="https://nzf.org.nz/" target="_blank">📚 NZ Formulary</a>
+  <div class="split-container">
+    <div class="calendar-container" id="calendarPane">
+      <!-- calendar content here -->
+      <div class="calendar-header">
+        <div class="calendar-header-left">
+          <button class="home-button" onclick="location.href='home.html'">Home</button>
+          <h2 id="monthLabel">Monthly Calendar</h2>
+        </div>
+        <div>
+          <button onclick="changeMonth(-1)">◀</button>
+          <button onclick="goToToday()">Today</button>
+          <select id="monthSelect"></select>
+          <select id="yearSelect"></select>
+          <button onclick="changeMonth(1)">▶</button>
+        </div>
+      </div>
+      <div class="day-headers">
+        <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+      </div>
+      <div class="calendar" id="calendar"></div>
     </div>
 
-    <div class="icon-stack">
-      <a href="homecal.html"><img src="Cal1.png" alt="Calendar Icon"></a>
-      <a href="forms.html"><img src="Doc.png" alt="Forms Icon"></a>
-      <a href="Notes.html"><img src="NB.png" alt="Notebook Icon"></a>
-      <a href="https://onedrive.live.com/edit.aspx?cid=cd58075507480906&page=view&resid=CD58075507480906!660&parId=CD58075507480906!107&app=Excel" target="_blank">
-        <img src="time-sheet.png" alt="Timesheet Icon">
-      </a>
-    </div>
-  </header>
+    <div class="resizer" id="resizer"></div>
 
-  <div class="layout">
-    <div class="main-content">
-      <h2>Home</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='OHcalc.html'">Drug Calculator</div>
-        <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
-        <div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
-        <div class="card" onclick="location.href='Calculator.html'">Calculator</div>
-        <div class="card" onclick="location.href='trial.html'">Trial</div>
+    <div class="todo-container">
+      <div class="todo-title">To-Do List</div>
+      <div class="todo-list" id="todoList"></div>
+      <div class="add-todo">
+        <input type="text" id="newTodo" placeholder="Add new task...">
+        <button onclick="addTodo()">Add</button>
       </div>
-
-      <h2>Notes</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
-        <div class="card" onclick="location.href='info.html'">Infos</div>
-        <div class="card" onclick="location.href='explain.html'">Explanation</div>
-        <div class="card" onclick="location.href='inteleviewer.html'">Inteleviewer</div>
-        <div class="card" onclick="location.href='INR Calc.html'">INR</div>
-        <div class="card" onclick="location.href='ECG.html'">ECG</div>
-        <div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
-        <div class="card" onclick="location.href='recalls.html'">Recalls</div>
-      </div>
-
-      <h2>Urgent Care</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='VS.html'">Normal Values</div>
-        <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Directions</div>
-        <div class="card" onclick="location.href='face.html'">Head/Skull</div>
-        <div class="card" onclick="location.href='Hand.html'">Hand/Wrist</div>
-        <div class="card" onclick="location.href='Sha.html'">Shoulder/Elbow/Upper Arm</div>
-        <div class="card" onclick="location.href='Abdo.html'">Abdomen/Thorax</div>
-        <div class="card" onclick="location.href='Spine.html'">Lower Body/Back/Spine</div>
-        <div class="card" onclick="location.href='LF.html'">Foot/Leg</div>
-        <div class="card" onclick="location.href='Urgent_Care.html'">Urgent Care</div>
-      </div>
-
-      <!-- Emoji Search Icon -->
-      <img src="search-icon.png" alt="Search" id="emojiSearchIcon" style="position:fixed; bottom:20px; right:20px; width:30px; height:30px; cursor:pointer; z-index:1000;" />
-
-      <!-- Emoji Search Modal -->
-      <div id="emojiModal" style="display:none; position:fixed; bottom:60px; right:20px; background:#fff; padding:12px; border:1px solid #ccc; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000;">
-        <input type="text" id="emojiSearchInput" placeholder="Search emoji..." style="padding:6px; width:160px; font-size:14px;" />
-        <div id="emojiResults" style="margin-top:8px; font-size:18px; max-height:150px; overflow-y:auto;"></div>
-      </div>
-
-      <footer>© 2025 Xlyn Notes Board</footer>
     </div>
   </div>
 
-  <!-- Floating Post-It Note -->
-  <textarea class="sticky-note" placeholder="Write a note..."></textarea>
-
   <script>
-    const emojiData = [
-      { name: 'smile', symbol: '😊' },
-      { name: 'laugh', symbol: '😂' },
-      { name: 'tick', symbol: '✅' },
-      { name: 'heart', symbol: '❤️' },
-      { name: 'star', symbol: '⭐️' },
-      { name: 'fire', symbol: '🔥' },
-      { name: 'ok', symbol: '👌' },
-      { name: 'thumbs up', symbol: '👍' },
-      { name: 'check', symbol: '✔️' },
-      { name: 'woman', symbol: '🙍🏻‍♀️' },
-      { name: 'man', symbol: '🙍' },
-      { name: 'yellow', symbol: '🟡' },
-      { name: 'tree', symbol: '🌴' },
-      { name: 'injection', symbol: '💉' },
-      { name: 'money', symbol: '🤑' },
-      { name: 'nurse', symbol: '👩🏻‍⚕️' },
-      { name: 'one', symbol: '1️⃣' },
-      { name: 'two', symbol: '2️⃣' },
-      { name: 'arrow', symbol: '➡️' },
-      { name: 'leaf', symbol: '🍂' },
-      { name: 'loud', symbol: '📢' },
-      { name: 'red', symbol: '🔴' },
-      { name: 'alert', symbol: '⚠️' },
-      { name: 'red', symbol: '‼️' },  
-      { name: 'plane', symbol: '✈️' },
-      { name: 'vacay', symbol: '🏖️' },
-      { name: 'med', symbol: '💊' }
-    ];
+    const resizer = document.getElementById("resizer");
+    const leftPane = document.getElementById("calendarPane");
 
-    const modal = document.getElementById("emojiModal");
-    const input = document.getElementById("emojiSearchInput");
-    const results = document.getElementById("emojiResults");
+    let isResizing = false;
 
-    document.getElementById("emojiSearchIcon").addEventListener("click", () => {
-      modal.style.display = modal.style.display === "none" ? "block" : "none";
-      input.focus();
+    resizer.addEventListener("mousedown", function (e) {
+      isResizing = true;
     });
 
-    input.addEventListener("input", () => {
-      const term = input.value.toLowerCase();
-      const matches = emojiData.filter(e => e.name.includes(term));
-      results.innerHTML = matches.map(e =>
-        `<span style="cursor:pointer; margin:3px;" onclick="copyToClipboard('${e.symbol}')">${e.symbol}</span>`
-      ).join("");
+    window.addEventListener("mousemove", function (e) {
+      if (!isResizing) return;
+      let newWidth = e.clientX;
+      if (newWidth < 200) newWidth = 200; // min width
+      if (newWidth > window.innerWidth - 200) newWidth = window.innerWidth - 200; // max width
+      leftPane.style.flex = "none";
+      leftPane.style.width = newWidth + "px";
     });
 
-    function copyToClipboard(emoji) {
-      const textarea = document.createElement('textarea');
-      textarea.value = emoji;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      alert(`Copied: ${emoji}`);
+    window.addEventListener("mouseup", function () {
+      isResizing = false;
+    });
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.appspot.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let currentDate = new Date();
+    const calendarEl = document.getElementById('calendar');
+    const monthLabel = document.getElementById('monthLabel');
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const todoInput = document.getElementById('newTodo');
+    const todoListEl = document.getElementById('todoList');
+
+    const months = [...Array(12).keys()].map(i => new Date(0, i).toLocaleString('default', { month: 'long' }));
+
+    function populateSelectors() {
+      months.forEach((m, i) => {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = m;
+        monthSelect.appendChild(option);
+      });
+
+      const thisYear = new Date().getFullYear();
+      for (let y = thisYear - 5; y <= thisYear + 5; y++) {
+        const option = document.createElement('option');
+        option.value = y;
+        option.textContent = y;
+        yearSelect.appendChild(option);
+      }
+
+      monthSelect.addEventListener('change', () => {
+        currentDate.setMonth(parseInt(monthSelect.value));
+        loadCalendar();
+      });
+
+      yearSelect.addEventListener('change', () => {
+        currentDate.setFullYear(parseInt(yearSelect.value));
+        loadCalendar();
+      });
     }
+
+    function goToToday() {
+      currentDate = new Date();
+      loadCalendar();
+    }
+
+    function changeMonth(offset) {
+      currentDate.setMonth(currentDate.getMonth() + offset);
+      loadCalendar();
+    }
+
+    function getDaysInMonth(month, year) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function getDayName(year, month, day) {
+      return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
+    }
+
+    async function loadCalendar() {
+      const month = currentDate.getMonth();
+      const year = currentDate.getFullYear();
+      calendarEl.innerHTML = '';
+      monthLabel.textContent = `${months[month]} ${year}`;
+      monthSelect.value = month;
+      yearSelect.value = year;
+
+      const daysInMonth = getDaysInMonth(month, year);
+      const firstDay = new Date(year, month, 1).getDay() || 7;
+
+      const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
+      let notes = {};
+      const snap = await getDoc(docRef);
+      if (snap.exists()) notes = snap.data();
+
+      for (let i = 1; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'day empty';
+        calendarEl.appendChild(empty);
+      }
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const note = notes[i] || "";
+        const day = document.createElement('div');
+        day.className = 'day';
+        day.innerHTML = `<div class="date-number">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
+        day.querySelector('textarea').addEventListener('input', e => saveCalendar(year, month + 1, i, e.target.value));
+        calendarEl.appendChild(day);
+      }
+    }
+
+    async function saveCalendar(year, month, day, note) {
+      const ref = doc(db, 'calendar', `${year}-${month}`);
+      try {
+        await updateDoc(ref, { [day]: note });
+      } catch {
+        await setDoc(ref, { [day]: note }, { merge: true });
+      }
+    }
+
+    async function addTodo() {
+      const value = todoInput.value.trim();
+      if (value) {
+        await addDoc(collection(db, 'todos'), { text: value, done: false });
+        todoInput.value = '';
+      }
+    }
+
+    function renderTodoItem(id, text, done) {
+      const item = document.createElement('div');
+      item.className = 'todo-item';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = done;
+      checkbox.onchange = () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
+      const input = document.createElement('textarea');
+      input.value = text;
+      input.disabled = true;
+      input.style.flex = '1';
+      input.style.border = 'none';
+      input.style.background = 'transparent';
+      input.style.fontFamily = 'Arial, sans-serif';
+      input.style.fontSize = '8pt';
+      input.style.resize = 'vertical';
+      input.style.minHeight = '30px';
+      input.style.padding = '4px';
+      input.style.overflowWrap = 'break-word';
+      input.style.whiteSpace = 'pre-wrap';
+      input.style.wordBreak = 'break-word';
+      input.style.color = 'black';
+      const editBtn = document.createElement('button');
+      editBtn.textContent = '✏️';
+      editBtn.onclick = async () => {
+        if (input.disabled) {
+          input.disabled = false;
+          input.focus();
+          editBtn.textContent = '💾';
+        } else {
+          await updateDoc(doc(db, 'todos', id), { text: input.value });
+          input.disabled = true;
+          editBtn.textContent = '✏️';
+        }
+      };
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = '🗑️';
+      deleteBtn.onclick = async () => {
+        if (confirm("Delete this to-do?")) await deleteDoc(doc(db, 'todos', id));
+      };
+      item.append(checkbox, input, editBtn, deleteBtn);
+      todoListEl.appendChild(item);
+    }
+
+    function loadTodos() {
+      const ref = collection(db, 'todos');
+      onSnapshot(ref, snap => {
+        todoListEl.innerHTML = '';
+        snap.forEach(doc => renderTodoItem(doc.id, doc.data().text, doc.data().done));
+      });
+    }
+
+    populateSelectors();
+    loadCalendar();
+    loadTodos();
+
+    window.changeMonth = changeMonth;
+    window.goToToday = goToToday;
+    window.addTodo = addTodo;
   </script>
 </body>
 </html>
