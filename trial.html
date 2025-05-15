@@ -2,318 +2,191 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Calendar and To-Do Page</title>
-  
-   <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
-   
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nurse Notes</title>
   <style>
-  @font-face {
-  font-family: 'Hello';
-  src: url('Hello.ttf') format('truetype');
-}
- @font-face {
-  font-family: 'KGPerfectPenmanship';
-  src: url('KGPerfectPenmanship.ttf') format('truetype');
- }
     body {
+      font-family: 'Courier New', monospace;
+      background-color: #F7F5EB;
       margin: 0;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 8pt;
-      background-color: #f8f2ef;
-      display: flex;
-	  flex-wrap: wrap;
-      height: 100vh;
-    }
-    .calendar-container {
-      width: 65%;
-      background-color: #faf7f0;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      position: relative;
-      border-right: 2px solid #C1B6A3;
-      border-radius: 12px 0 0 12px;
-      transition: box-shadow 0.3s ease;
-    }
-    .calendar-container:hover {
-      box-shadow: inset 0 0 10px #C1B6A3;
-    }
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .calendar-header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .calendar-header h2#monthLabel {
-      font-size: 40pt;
-      margin: 0;
-      color: Black;
-	  font-family: 'Hello', cursive; sans-serif;
-    }
-    .calendar-header button,
-    .calendar-header select {
-      padding: 4px 8px;
-      font-size: 8pt;
-      background-color: #ddd3d2;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      color: black;
-    }
-    .calendar-header button:hover,
-    .calendar-header select:hover {
-      background-color: #ddd3d2;
-    }
-    .home-button {
-      padding: 4px 8px;
-      background-color: #ddd3d2;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 8pt;
-      color: white;
-    }
-    .home-button:hover {
-      background-color: #a89f8b;
-    }
-    .day-headers {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      margin-top: 10px;
-      font-weight: bold;
-      text-align: center;
-      color: black;
-    }
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      margin-top: 5px;
-    }
-    .day {
-      background-color: #efe1e1;
-      border: 1px solid #C1B6A3;
-      border-radius: 12px;
-      padding: 6px;
-      min-height: 150px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch
-	  justify-content: flex-start;
-      transition: box-shadow 0.3s;
-    }
-    .day:hover {
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .day.empty {
-      background-color: transparent;
-      border: none;
-    }
-    .day textarea {
-      width: 80%;
-      height: 110px;
-      resize: vertical;
-      overflow-y: auto;
-      background-color: white;
-      border: 1px solid #ddd3d2;
-      border-radius: 8px;
-      padding: 5px;
-      font-family: KGPerfectPenmanship, sans-serif;
-      font-size: 8pt;
-    }
-    .day .date-number {
-      font-weight: bold;
-      color: black;
-      margin-bottom: 5px;
-      font-size: 10pt;
-    }
-    .todo-container {
-      width: 35%;
-      background-color: #f6f6f6;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      border-left: 2px solid #C1B6A3;
-      border-radius: 0 12px 12px 0;
-      transition: box-shadow 0.3s ease;
-    }
-    .todo-container:hover {
-      box-shadow: inset 0 0 10px #C1B6A3;
-      color: black; /* Add this */
-    }
-    .todo-title {
-      font-size: 60px;
-	  text-align: center;
-      margin-bottom: 10px;
-      color: black;
-	  font-family: 'Hello', cursive;
-	  font-weight: bold;
-    }
-    .todo-list {
-      background-color: white;
-      padding: 15px;
-      border-radius: 12px;
-      border: 1px solid #C1B6A3;
-      color: black; /* Add this */
-    }
-    .todo-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-      border-bottom: 1px dashed #C1B6A3;
-      padding-bottom: 6px;
-    }
-      .todo-item span {
-  color: black;
-  font-family: 'KGPerfectPenmanship', sans-serif;
-  font-size: 10pt;
-}
-
-    .todo-item input[type="checkbox"] {
-      margin-right: 10px;
-    }
-	.todo-item input[type="text"] {
-     flex: 1;
-     border: none;
-     background: transparent;
-     font-size: 10pt;
-     font-family: 'KGPerfectPenmanship', sans-serif;
-     padding: 4px;
-     min-height: 30px;
-     overflow-wrap: break-word;
-     white-space: pre-wrap;
-     word-break: break-word;
-     color: black !important;
-     -webkit-text-fill-color: black !important;
-     -webkit-font-smoothing: antialiased; 
-	 appearance: none;
-	 -webkit-appearance: none; 
-    }
-    .todo-item input[type="checkbox"] {
-     margin-right: 10px;
-     width: 20px;
-     height: 20px;
-     accent-color: #ffe700; /* Change this color to what you want */
-   }
-    .add-todo {
-      display: flex;
-      margin-top: 10px;
-    }
-    .add-todo input {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 8px 0 0 8px;
-    }
-    .add-todo button {
-      padding: 8px;
-      border: none;
-      background-color: #C1B6A3;
-      cursor: pointer;
-      border-radius: 0 8px 8px 0;
+      font-size: 12px;
       color: #333;
     }
-    .add-todo button:hover {
-      background-color: #a89f8b;
+
+    .note-content {
+      font-family: 'Tahoma', sans-serif;
+      font-size: 10px;
     }
-	.calendar-container, .todo-container {
-  flex: 1 1 100%; /* Allow stacking on small screens */
-  max-width: 100%;
-    
-   }
-	@media (min-width: 768px) {
-  .calendar-container {
-    width: 65%;
-    border-radius: 12px 0 0 12px;
-	
-  }
 
-  .todo-container {
-    width: 35%;
-    border-radius: 0 12px 12px 0;
-  }
+    .header {
+      background-color: #EAE0DA;
+      padding: 10px 20px;
+      overflow: hidden;
+    }
+    .header a {
+      float: left;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 6px 12px;
+      background-color: #F7F5EB;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      color: black;
+    }
+    .header a:hover {
+      background-color: #E8A2A2;
+    }
+    .search-box {
+      float: right;
+    }
+    .search-box input {
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 150px;
+    }
+    .container {
+      width: 100%;
+      padding: 20px 40px;
+      box-sizing: border-box;
+    }
+    h2 {
+      text-align: center;
+      font-size: 20px;
+    }
+    .form-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .form-section input,
+    .form-section textarea {
+      flex: 1 1 300px;
+      padding: 8px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .add-btn {
+      padding: 10px;
+      background-color: #d9c8bf;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 100px;
+    }
+    .cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: flex-start;
+    }
+    .note-card {
+      background-color: #f0efeb;
+      flex: 1 1 calc(25% - 20px);
+      min-width: 260px;
+      padding: 15px;
+      border-radius: 10px;
+      position: relative;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      box-sizing: border-box;
+      word-wrap: break-word;
+	  z-index 1:
+	  transition: transform 0.3s ease, z-index 0s ease;
+    }
+     .note-card:hover {
+       transform: scale(1.2);
+	   z-index: 999;
+    }
+    .note-title {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .note-actions {
+     margin-top: 12px;
+     display: flex;
+     justify-content: flex-end;
+     gap: 6px;
+    }
+    .note-actions button {
+      margin-left: 5px;
+      border: none;
+      background-color: #f7f5eb;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .note-actions button:hover {
+      background-color: #eae0da;
+    }
+    .highlight {
+      background-color: #fbe0D2;
+    }
+    .editor-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .editor-buttons button {
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+    }
 
-  .calendar-container, .todo-container {
-    flex: unset;
-    max-width: unset;
-  }
-  
-  @media (max-width: 767px) {
-  .calendar {
-    grid-template-columns: repeat(2, 1fr); /* Show 2 days per row */
-    gap: 6px;
-  }
-
-  .day {
-    min-height: 140px;
-    padding: 6px;
-  }
-
-  .day textarea {
-    height: 100px;
-    font-size: 8pt;
-  }
-
-  .calendar-header h2#monthLabel {
-    font-size: 24pt;
-  }
-
-  .calendar-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .day-headers {
-    grid-template-columns: repeat(2, 1fr); /* Match 2-column layout */
-  }
-  
-}
-
-
+    /* New styling for URL link */
+    .note-url {
+      margin-top: 10px;
+    }
+    .note-url a {
+      background-color: #FFF1F5; /* New background color */
+      color: #333;
+      text-decoration: none;
+      padding: 3px 8px; /* Smaller size */
+      border-radius: 5px;
+      font-size: 11px; /* Smaller font */
+      display: inline-block;
+      transition: background-color 0.3s ease;
+    }
+    .note-url a:hover {
+      background-color: #F8D4E0; /* Lighter hover effect */
+    }
+    .note-url a .icon {
+      margin-right: 6px;
+    }
   </style>
 </head>
-
 <body>
-  <div class="calendar-container">
-    <div class="calendar-header">
-      <div class="calendar-header-left">
-        <button class="home-button" onclick="location.href='home.html'">Home</button>
-        <h2 id="monthLabel">Monthly Calendar</h2>
-      </div>
-      <div>
-        <button onclick="changeMonth(-1)">◀</button>
-        <button onclick="goToToday()">Today</button>
-        <select id="monthSelect"></select>
-        <select id="yearSelect"></select>
-        <button onclick="changeMonth(1)">▶</button>
-      </div>
+  <div class="header">
+    <a href="home.html">🏠 Home</a>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
     </div>
-    <div class="day-headers">
-      <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-    </div>
-    <div class="calendar" id="calendar"></div>
   </div>
 
-  <div class="todo-container">
-    <div class="todo-title">To-Do List</div>
-    <div class="todo-list" id="todoList"></div>
-    <div class="add-todo">
-      <input type="text" id="newTodo" placeholder="Add new task...">
-      <button onclick="addTodo()">Add</button>
-    </div>
+  <div class="container">
+    <h2>Nurse Notes</h2>
+    <div class="form-section">
+  <input id="nurseTitle" placeholder="Title">
+  <textarea id="nurseNote" placeholder="Note..."></textarea>
+  <input id="nurseURL" placeholder="Optional URL (if any)">
+  <input type="file" id="nurseImage" accept="image/*">
+  <button class="add-btn" onclick="addNote()">Add</button>
+</div>
+
+    <div class="cards-container" id="nurseNotesList"></div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import {
-      getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc
+      getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -327,180 +200,165 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const notesCol = collection(db, "nurseNotes");
 
-    let currentDate = new Date();
-    const calendarEl = document.getElementById('calendar');
-    const monthLabel = document.getElementById('monthLabel');
-    const monthSelect = document.getElementById('monthSelect');
-    const yearSelect = document.getElementById('yearSelect');
-    const todoInput = document.getElementById('newTodo');
-    const todoListEl = document.getElementById('todoList');
+  async function addNote() {
+  const title = nurseTitle.value.trim();
+  const note = nurseNote.value.trim();
+  const url = nurseURL.value.trim();
+  const fileInput = document.getElementById('nurseImage');
+  const file = fileInput.files[0];
 
-    const months = [...Array(12).keys()].map(i => new Date(0, i).toLocaleString('default', { month: 'long' }));
+  let imageBase64 = "";
 
-    function populateSelectors() {
-      months.forEach((m, i) => {
-        const option = document.createElement('option');
-        option.value = i;
-        option.textContent = m;
-        monthSelect.appendChild(option);
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      imageBase64 = reader.result;
+
+      await addDoc(notesCol, {
+        title: title || "Untitled",
+        note,
+        url: url || "",
+        image: imageBase64,
+        time: new Date().toISOString()
       });
 
-      const thisYear = new Date().getFullYear();
-      for (let y = thisYear - 5; y <= thisYear + 5; y++) {
-        const option = document.createElement('option');
-        option.value = y;
-        option.textContent = y;
-        yearSelect.appendChild(option);
-      }
+      nurseTitle.value = '';
+      nurseNote.value = '';
+      nurseURL.value = '';
+      nurseImage.value = '';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    await addDoc(notesCol, {
+      title: title || "Untitled",
+      note,
+      url: url || "",
+      image: "",
+      time: new Date().toISOString()
+    });
 
-      monthSelect.addEventListener('change', () => {
-        currentDate.setMonth(parseInt(monthSelect.value));
-        loadCalendar();
+    nurseTitle.value = '';
+    nurseNote.value = '';
+    nurseURL.value = '';
+    nurseImage.value = '';
+  }
+}
+
+    async function deleteNote(id) {
+      if (confirm("Delete this note?")) {
+        await deleteDoc(doc(db, "nurseNotes", id));
+      }
+    }
+
+    async function saveEdit(id, titleInput, noteTextarea) {
+      const updatedTitle = titleInput.value.trim();
+      const updatedNote = noteTextarea.value.trim();
+
+      // Save to Firebase Firestore
+      await updateDoc(doc(db, "nurseNotes", id), {
+        title: updatedTitle || "Untitled",
+        note: updatedNote
       });
 
-      yearSelect.addEventListener('change', () => {
-        currentDate.setFullYear(parseInt(yearSelect.value));
-        loadCalendar();
+      renderNotes(); // Refresh notes after saving
+    }
+
+    function enableEditing(card, id, title, note) {
+      // Sanitize note to remove highlight markers (====)
+      const sanitizedNote = note.replace(/====/g, "");
+
+      card.innerHTML = `
+        <input type="text" value="${title}" style="width: 100%; margin-bottom: 6px; padding: 4px;" />
+        <textarea style="width: 100%; height: 100px; padding: 4px;">${sanitizedNote}</textarea>
+        <div class="editor-buttons">
+          <button onclick="saveEdit('${id}', this.parentElement.parentElement.querySelector('input'), this.parentElement.parentElement.querySelector('textarea'))">Save</button>
+          <button onclick="renderNotes()">Cancel</button>
+          <button onclick="applyBold(this)">Bold</button>
+          <button onclick="applyHighlight(this)">Highlight</button>
+        </div>
+      `;
+    }
+
+    function applyBold(btn) {
+      const textarea = btn.parentElement.parentElement.querySelector("textarea");
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      if (!selected) return;
+
+      const newText = textarea.value.substring(0, start) + `**${selected}**` + textarea.value.substring(end);
+      textarea.value = newText;
+    }
+
+    function applyHighlight(btn) {
+      const textarea = btn.parentElement.parentElement.querySelector("textarea");
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      if (!selected) return;
+
+      const newText = textarea.value.substring(0, start) + `====${selected}====` + textarea.value.substring(end);
+      textarea.value = newText;
+    }
+
+    function renderNotes() {
+      const list = document.getElementById('nurseNotesList');
+      onSnapshot(notesCol, snapshot => {
+        console.log('Data fetched from Firestore:', snapshot.docs.map(doc => doc.data())); // Check the data
+        list.innerHTML = '';
+        snapshot.forEach(docSnap => {
+          const { title, note, time, url, image } = docSnap.data();
+          const id = docSnap.id;
+
+          // Replace '====' markers with highlight style
+          const displayNote = note.replace(/====(.*?)====/g, '<span class="highlight">$1</span>');
+          const displayBoldNote = displayNote.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+          const div = document.createElement('div');
+          div.className = 'note-card';
+          div.innerHTML = `
+            <div class="note-title">${title}</div>
+            <div class="note-content">${displayBoldNote.replace(/\n/g, '<br>')}</div>
+           ${image ? `<img src="${image}" style="max-width:100%;margin-top:10px;border-radius:6px;" />` : ""}
+
+		   <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
+            ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
+            <div class="note-actions">
+              <button onclick="deleteNote('${id}')">Delete</button>
+              <button onclick="enableEditing(this.closest('.note-card'), '${id}', \`${title.replace(/`/g, "\\`")}\`, \`${note.replace(/`/g, "\\`")}\`)">Edit</button>
+            </div>
+          `;
+          list.appendChild(div);
+        });
       });
     }
 
-    function goToToday() {
-      currentDate = new Date();
-      loadCalendar();
-    }
+    window.addNote = addNote;
+    window.deleteNote = deleteNote;
+    window.saveEdit = saveEdit;
+    window.enableEditing = enableEditing;
+    window.applyBold = applyBold;
+    window.applyHighlight = applyHighlight;
 
-    function changeMonth(offset) {
-      currentDate.setMonth(currentDate.getMonth() + offset);
-      loadCalendar();
-    }
+    window.searchNotes = function (event) {
+      const query = event.target.value.toLowerCase();
+      const cards = document.querySelectorAll('.note-card');
 
-    function getDaysInMonth(month, year) {
-      return new Date(year, month + 1, 0).getDate();
-    }
+      cards.forEach(card => {
+        const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
+        const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
 
-    function getDayName(year, month, day) {
-      return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
-    }
-
-    async function loadCalendar() {
-      const month = currentDate.getMonth();
-      const year = currentDate.getFullYear();
-      calendarEl.innerHTML = '';
-      monthLabel.textContent = `${months[month]} ${year}`;
-      monthSelect.value = month;
-      yearSelect.value = year;
-
-      const daysInMonth = getDaysInMonth(month, year);
-      const firstDay = new Date(year, month, 1).getDay() || 7;
-
-      const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
-      let notes = {};
-      const snap = await getDoc(docRef);
-      if (snap.exists()) notes = snap.data();
-
-      for (let i = 1; i < firstDay; i++) {
-        const empty = document.createElement('div');
-        empty.className = 'day empty';
-        calendarEl.appendChild(empty);
-      }
-
-      for (let i = 1; i <= daysInMonth; i++) {
-        const note = notes[i] || "";
-        const day = document.createElement('div');
-        day.className = 'day';
-        day.innerHTML = `<div class="date-number">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
-        day.querySelector('textarea').addEventListener('input', e => saveCalendar(year, month + 1, i, e.target.value));
-        calendarEl.appendChild(day);
-      }
-    }
-
-    async function saveCalendar(year, month, day, note) {
-      const ref = doc(db, 'calendar', `${year}-${month}`);
-      try {
-        await updateDoc(ref, { [day]: note });
-      } catch {
-        await setDoc(ref, { [day]: note }, { merge: true });
-      }
-    }
-
-    async function addTodo() {
-      const value = todoInput.value.trim();
-      if (value) {
-        await addDoc(collection(db, 'todos'), { text: value, done: false });
-        todoInput.value = '';
-      }
-    }
-
-    function renderTodoItem(id, text, done) {
-      const item = document.createElement('div');
-      item.className = 'todo-item';
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.checked = done;
-      checkbox.onchange = () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
-      const input = document.createElement('textarea');
-      input.value = text;
-      input.disabled = true;
-      input.style.flex = '1';
-      input.style.border = 'none';
-      input.style.background = 'transparent';
-      input.style.fontFamily = 'KGPerfectPenmanship, sans-serif';
-      input.style.fontSize = '9pt';
-      input.style.resize = 'vertical';
-      input.style.minHeight = '30px';
-      input.style.padding = '4px';
-      input.style.overflowWrap = 'break-word';
-      input.style.whiteSpace = 'pre-wrap';
-      input.style.wordBreak = 'break-word';
-      input.style.color = 'black';    
-      const editBtn = document.createElement('button');
-      editBtn.textContent = '✏️';
-	  editBtn.style.background = 'none'; // Remove the button background
-      editBtn.style.border = 'none'; // Remove the border
-      editBtn.style.cursor = 'pointer'; // Make it clickable
-      editBtn.style.padding = '0'; // Remove padding
-      editBtn.style.marginLeft = '10px'; // Add space between text and button
-      editBtn.onclick = async () => {
-        if (input.disabled) {
-          input.disabled = false;
-          input.focus();
-          editBtn.textContent = '✏️';
+        if (title.includes(query) || content.includes(query)) {
+          card.style.display = 'block';
         } else {
-          await updateDoc(doc(db, 'todos', id), { text: input.value });
-          input.disabled = true;
-          editBtn.textContent = '✏️';
+          card.style.display = 'none';
         }
-      };
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = '🗑️';
-	  deleteBtn.style.background = 'none'; // Remove the button background
-      deleteBtn.style.border = 'none'; // Remove the border
-      deleteBtn.style.cursor = 'pointer'; // Make it clickable
-      deleteBtn.style.padding = '0'; // Remove padding
-      deleteBtn.style.marginLeft = '10px'; // Add space between text and button
-      deleteBtn.onclick = async () => {
-        if (confirm("Delete this to-do?")) await deleteDoc(doc(db, 'todos', id));
-      };
-      item.append(checkbox, input, editBtn, deleteBtn);
-      todoListEl.appendChild(item);
-    }
-
-    function loadTodos() {
-      const ref = collection(db, 'todos');
-      onSnapshot(ref, snap => {
-        todoListEl.innerHTML = '';
-        snap.forEach(doc => renderTodoItem(doc.id, doc.data().text, doc.data().done));
       });
-    }
+    };
 
-    populateSelectors();
-    loadCalendar();
-    loadTodos();
-
-    window.changeMonth = changeMonth;
-    window.goToToday = goToToday;
-    window.addTodo = addTodo;
+    renderNotes();
   </script>
 </body>
 </html>
