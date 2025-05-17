@@ -5,12 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Explanation</title>
   <style>
+  
+  @font-face {
+  font-family: 'fors';
+  src: url('fors.ttf') format('truetype');
+  }
+
     body {
       margin: 0;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 13px;
+      font-family: 'fors', sans-serif;
+      font-size: 16px;
       background-color: #ebebeb;
       color: #222;
+	  overflow-x: hidden;
     }
 
     .home-btn {
@@ -50,13 +57,17 @@
     h1 {
       text-align: center;
       font-size: 24px;
-      color: #441b4a;
-      margin-bottom: 20px;
+      color: black;
+	  margin-top: 0;
+      margin-bottom: 15px;
     }
 
     .container {
-      padding-left: 3cm;
-      padding-right: 3cm;
+	  width: 100%;
+      padding: 20px 40px;
+	  padding-top: 60px;
+	  box-sizing: border-box;
+	  max-width: 100vw;
     }
 
     .input-group {
@@ -75,8 +86,9 @@
     }
 
     textarea {
-      resize: vertical;
-      height: 60px;
+      resize: none;
+	  overflow: hidden;
+      min-height: 60px;
     }
 
     button {
@@ -104,6 +116,8 @@
       padding: 15px;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+	  word-wrap: break-word;
+	  overflow-wrap: break-word;
     }
 	  
      .note-card:hover {
@@ -198,7 +212,7 @@
         if (note.editing) {
           div.innerHTML = `
             <input type="text" id="editTitle-${note.id}" value="${note.title}">
-            <textarea id="editText-${note.id}" rows="3">${note.text}</textarea>
+            <textarea id="editText-${note.id}" oninput="window.autoResize(this)">${note.text}</textarea>
             <div class="formatting-buttons">
               <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
               <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
@@ -224,6 +238,9 @@
         }
 
         container.appendChild(div);
+		const editText = document.getElementById(`editText-${note.id}`);
+if (editText) window.autoResize(editText);
+
       });
     }
 
@@ -236,18 +253,22 @@
     };
 
     window.saveEdit = async (id) => {
-      const note = allNotes.find(n => n.id === id);
-      if (!note) return;
+  const note = allNotes.find(n => n.id === id);
+  if (!note) return;
 
-      const newTitle = document.getElementById(`editTitle-${id}`).value.trim();
-      const newText = document.getElementById(`editText-${id}`).value.trim();
+  const newTitle = document.getElementById(`editTitle-${id}`).value.trim();
+  const newText = document.getElementById(`editText-${id}`).value.trim();
 
-      await updateDoc(doc(db, 'explainNotes', note.id), {
-        title: newTitle || 'Untitled',
-        text: newText,
-        timestamp: new Date().toISOString()
-      });
-    };
+  await updateDoc(doc(db, 'explainNotes', note.id), {
+    title: newTitle || 'Untitled',
+    text: newText,
+    timestamp: new Date().toISOString()
+  });
+
+  note.editing = false; // Exit editing mode
+  renderNotes(); // Re-render notes
+};
+
 
     window.deleteNote = async (id) => {
       if (confirm("Delete this note?")) {
@@ -267,6 +288,10 @@
         alert("Note copied to clipboard!");
       });
     };
+  window.autoResize = function(textarea) {
+  textarea.style.height = 'auto';
+  textarea.style.height = (textarea.scrollHeight) + 'px';
+};
 
     window.formatText = (id, type) => {
       const textarea = document.getElementById(`editText-${id}`);
@@ -305,7 +330,6 @@
         id: docSnap.id,
         editing: false
       }));
-      renderNotes();
     });
   </script>
 </head>
