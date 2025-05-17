@@ -165,6 +165,26 @@
 	mark {
   background-color: #F3F5A9;
     }
+   .edit-box {
+  font-family: 'fors', sans-serif;
+  font-size: 13px;
+  min-height: 60px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  background-color: white;
+}
+.editable-div b,
+.editable-div strong {
+  font-weight: bold;
+}
+
+.editable-div [style*="background-color: #ffff00"] {
+  background-color: #ffff00;
+}
+
 
  </style>
   <script type="module">
@@ -212,7 +232,7 @@
         if (note.editing) {
           div.innerHTML = `
             <input type="text" id="editTitle-${note.id}" value="${note.title}">
-            <textarea id="editText-${note.id}" oninput="window.autoResize(this)">${note.text}</textarea>
+            <div id="editText-${note.id}" class="edit-box" contenteditable="true" oninput="window.autoResizeDiv(this)">${note.text}</div>
             <div class="formatting-buttons">
               <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
               <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
@@ -238,6 +258,7 @@
         }
 
         container.appendChild(div);
+		
 		const editText = document.getElementById(`editText-${note.id}`);
 if (editText) window.autoResize(editText);
 
@@ -257,7 +278,7 @@ if (editText) window.autoResize(editText);
   if (!note) return;
 
   const newTitle = document.getElementById(`editTitle-${id}`).value.trim();
-  const newText = document.getElementById(`editText-${id}`).value.trim();
+  const newText = document.getElementById(`editText-${id}`).innerHTML.trim();  // keep formatting
 
   await updateDoc(doc(db, 'explainNotes', note.id), {
     title: newTitle || 'Untitled',
@@ -265,10 +286,9 @@ if (editText) window.autoResize(editText);
     timestamp: new Date().toISOString()
   });
 
-  note.editing = false; // Exit editing mode
-  renderNotes(); // Re-render notes
+  note.editing = false;
+  renderNotes();
 };
-
 
     window.deleteNote = async (id) => {
       if (confirm("Delete this note?")) {
@@ -277,40 +297,33 @@ if (editText) window.autoResize(editText);
     };
 
     window.copyNote = (id) => {
-      const note = allNotes.find(n => n.id === id);
-      if (!note) return;
+  const note = allNotes.find(n => n.id === id);
+  if (!note) return;
 
-      const text = note.editing
-        ? document.getElementById(`editText-${id}`).value
-        : note.text;
+  const text = note.editing
+    ? document.getElementById(`editText-${id}`).innerText  // or .innerHTML to preserve formatting
+    : note.text;
 
-      navigator.clipboard.writeText(text).then(() => {
-        alert("Note copied to clipboard!");
-      });
-    };
-  window.autoResize = function(textarea) {
-  textarea.style.height = 'auto';
-  textarea.style.height = (textarea.scrollHeight) + 'px';
+  navigator.clipboard.writeText(text).then(() => {
+    alert("Note copied to clipboard!");
+  });
 };
 
-    window.formatText = (id, type) => {
-      const textarea = document.getElementById(`editText-${id}`);
-      if (!textarea) return;
+window.autoResizeDiv = function(div) {
+  div.style.height = 'auto';
+  div.style.height = div.scrollHeight + 'px';
+};
 
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = textarea.value.substring(start, end);
+    window.formatText = function(id, command) {
+  const editableDiv = document.getElementById(`editText-${id}`);
+  editableDiv.focus();
 
-      let formatted = selectedText;
-      if (type === 'bold') {
-        formatted = `<b>${selectedText}</b>`;
-      } else if (type === 'highlight') {
-        formatted = `<mark>${selectedText}</mark>`;
-      }
-
-      textarea.setRangeText(formatted, start, end, 'end');
-      textarea.focus();
-    };
+  if (command === 'bold') {
+    document.execCommand('bold', false, null);
+  } else if (command === 'highlight') {
+    document.execCommand('backColor', false, '#F3F5A9'); // yellow highlight
+  }
+};
 
     function filterNotes(keyword) {
       const lower = keyword.toLowerCase();
@@ -330,6 +343,7 @@ if (editText) window.autoResize(editText);
         id: docSnap.id,
         editing: false
       }));
+      renderNotes();
     });
   </script>
 </head>
