@@ -5,19 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>INFORMATIONS</title>
   <style>
-  
-   @font-face {
-    font-family: 'fors';
-    src: url('fors.ttf') format('truetype'); /* Adjust the path to where the font is stored */
-  }
-  
+    @font-face {
+      font-family: 'fors';
+      src: url('fors.ttf') format('truetype'); /* Adjust the path */
+    }
+
     body {
       margin: 0;
       font-family: 'fors', sans-serif;
       font-size: 16px;
       background-color: #ebebeb;
       color: black;
-	  overflow-x: hidden;
+      overflow-x: hidden;
     }
 
     h1 {
@@ -51,9 +50,9 @@
       top: 20px;
       right: 20px;
       z-index: 1000;
-	  display: flex;
-	  align-items: center;
-	  gap: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .search-input {
@@ -68,9 +67,9 @@
     .container {
       width: 100%;
       padding: 20px 40px;
-	  padding-top: 100px;
-	  box-sizing: border-box;
-	  max-width: 100vw;
+      padding-top: 100px;
+      box-sizing: border-box;
+      max-width: 100vw;
     }
 
     .input-group {
@@ -106,11 +105,14 @@
       font-size: 13px;
       width: 100%;
       background-color: #ffffff;
+      font-family: Tahoma, sans-serif;
     }
 
     textarea {
       resize: vertical;
-      height: 60px;
+      min-height: 60px;
+      overflow: hidden;
+      font-size: 13px;
     }
 
     .add-btn {
@@ -120,6 +122,8 @@
       cursor: pointer;
       border-radius: 6px;
       padding: 8px;
+      font-weight: bold;
+      font-size: 14px;
     }
 
     .note-list {
@@ -136,24 +140,25 @@
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
       display: flex;
       flex-direction: column;
+      transition: transform 0.2s ease;
     }
-	  
+
     .note-card:hover {
-	 transform: scale(1.20);
+      transform: scale(1.05);
     }
 
     .note-title {
       font-weight: bold;
       font-size: 14px;
       color: black;
+      margin-bottom: 6px;
     }
 
     .note-text {
       color: #444;
-      margin-top: 8px;
       font-size: 11px;
-	  font-family: Tahoma, sans-serif;
       white-space: pre-wrap;
+      font-family: Tahoma, sans-serif;
     }
 
     .note-text strong {
@@ -168,6 +173,9 @@
       font-size: 12px;
       color: brown;
       word-break: break-word;
+      margin-top: 8px;
+      display: inline-block;
+      text-decoration: none;
     }
 
     .timestamp {
@@ -190,28 +198,51 @@
       padding: 6px 10px;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
     }
 
     .btn-group button:hover {
       background-color: #eac7c7;
     }
-	.styled-link {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 4px 8px;
-  background-color: #d3d3d3;
-  color: #d0a0a3 !important; /*force purple text */
-  font-size: 11px;
-  font-weight: bold;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
 
-.styled-link:hover {
-  background-color: #bcbcbc;
-}
+    .styled-link {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 8px;
+      background-color: #d3d3d3;
+      color: #d0a0a3 !important;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .styled-link:hover {
+      background-color: #bcbcbc;
+    }
+
+    .editor-buttons {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .editor-buttons button {
+      background-color: #f7f5eb;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .editor-buttons button:hover {
+      background-color: #eac7c7;
+    }
   </style>
 </head>
 <body>
@@ -226,15 +257,13 @@
   <div class="container">
     <div class="input-group">
       <input type="text" id="noteTitle" placeholder="Title" />
-      
       <div class="format-buttons">
         <button type="button" onclick="wrapSelection('**')"><strong>Bold</strong></button>
         <button type="button" onclick="wrapSelection('==')"><mark>Highlight</mark></button>
       </div>
-      
-      <textarea id="noteText" rows="3" placeholder="Write your explanation..."></textarea>
+      <textarea id="noteText" placeholder="Write your explanation..."></textarea>
       <input type="text" id="noteUrl" placeholder="Optional URL" />
-      <button class="add-btn">Add Note</button>
+      <button class="add-btn" id="addBtn">Add Note</button>
     </div>
     <div class="note-list" id="notesContainer"></div>
   </div>
@@ -258,7 +287,8 @@
     const db = getFirestore(app);
     let notes = [];
 
-    window.wrapSelection = function (tag) {
+    // Wrap selected text with tags (for add form)
+    window.wrapSelection = function(tag) {
       const textarea = document.getElementById('noteText');
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
@@ -269,132 +299,271 @@
       textarea.setSelectionRange(start + tag.length, end + tag.length);
     };
 
-    document.getElementById('searchInput').addEventListener('input', renderNotes);
+    // Wrap selected text inside editor textarea (in edit mode)
+    function wrapSelectionEditor(button, tag) {
+      const container = button.closest('.note-card');
+      const textarea = container.querySelector('textarea');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      const newText = textarea.value.substring(0, start) + tag + selected + tag + textarea.value.substring(end);
+      textarea.value = newText;
+      textarea.focus();
+      textarea.setSelectionRange(start + tag.length, end + tag.length);
+      autoResizeTextarea(textarea);
+    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelector('.add-btn').addEventListener('click', async () => {
-        const title = document.getElementById('noteTitle').value.trim();
-        const text = document.getElementById('noteText').value.trim();
-        const url = document.getElementById('noteUrl').value.trim();
-        if (!title && !text && !url) return;
+    // Auto resize textarea
+    function autoResizeTextarea(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
 
-        await addDoc(collection(db, 'informationNotes'), {
-          title: title || "Untitled",
+    // Add new note
+    document.getElementById('addBtn').addEventListener('click', async () => {
+      const title = document.getElementById('noteTitle').value.trim();
+      const text = document.getElementById('noteText').value.trim();
+      const url = document.getElementById('noteUrl').value.trim();
+
+      if (!title || !text) {
+        alert("Please fill in both Title and Explanation.");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "informationNotes"), {
+          title,
           text,
           url,
-          timestamp: new Date().toISOString()
+          timestamp: Date.now()
         });
-
         document.getElementById('noteTitle').value = '';
         document.getElementById('noteText').value = '';
         document.getElementById('noteUrl').value = '';
-      });
-
-      onSnapshot(collection(db, 'informationNotes'), snapshot => {
-        notes = snapshot.docs.map(docSnap => ({
-          ...docSnap.data(),
-          id: docSnap.id,
-          editing: false
-        }));
-        renderNotes();
-      });
+      } catch (error) {
+        alert("Error adding note: " + error.message);
+      }
     });
 
-    function formatText(text) {
-      return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/==(.+?)==/g, '<mark>$1</mark>')
-        .replace(/\n/g, '<br>');
+    // Listen for real-time updates
+    const notesContainer = document.getElementById('notesContainer');
+    onSnapshot(collection(db, "informationNotes"), (snapshot) => {
+      notes = [];
+      snapshot.forEach(docSnap => {
+        notes.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      renderNotes(notes);
+    });
+
+    // Render notes
+    function renderNotes(notesArray) {
+      notesContainer.innerHTML = '';
+
+      if (notesArray.length === 0) {
+        notesContainer.innerHTML = '<p>No notes found.</p>';
+        return;
+      }
+
+      for (const note of notesArray) {
+        const card = document.createElement('div');
+        card.className = 'note-card';
+        card.dataset.id = note.id;
+
+        // Show title & URL
+        const titleEl = document.createElement('div');
+        titleEl.className = 'note-title';
+        titleEl.textContent = note.title;
+
+        const urlEl = document.createElement('div');
+        urlEl.className = 'note-url';
+        if (note.url) {
+          const link = document.createElement('a');
+          link.href = note.url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.textContent = 'URL Link';
+          link.className = 'styled-link';
+          urlEl.appendChild(link);
+        }
+
+        // Explanation display and editor
+        const textDisplay = document.createElement('div');
+        textDisplay.className = 'note-text';
+        textDisplay.innerHTML = parseMarkdown(note.text);
+
+        const textEditor = document.createElement('textarea');
+        textEditor.style.display = 'none';
+        textEditor.value = note.text;
+        textEditor.style.fontFamily = 'Tahoma, sans-serif';
+        textEditor.style.fontSize = '11px';
+        textEditor.style.width = '100%';
+        textEditor.style.borderRadius = '8px';
+        textEditor.style.border = '1px solid #ccc';
+        textEditor.style.padding = '6px';
+        textEditor.rows = 4;
+        textEditor.addEventListener('input', () => autoResizeTextarea(textEditor));
+
+        // Auto resize initially
+        autoResizeTextarea(textEditor);
+
+        // Timestamp
+        const timeEl = document.createElement('div');
+        timeEl.className = 'timestamp';
+        timeEl.textContent = `Added: ${new Date(note.timestamp).toLocaleString()}`;
+
+        // Buttons container
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'btn-group';
+
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.title = 'Edit this note';
+        editBtn.onclick = () => toggleEdit(card, true);
+
+        // Save button
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        saveBtn.title = 'Save changes';
+        saveBtn.style.display = 'none';
+        saveBtn.onclick = () => saveEdit(card);
+
+        // Cancel button
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.title = 'Cancel editing';
+        cancelBtn.style.display = 'none';
+        cancelBtn.onclick = () => toggleEdit(card, false);
+
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.title = 'Delete this note';
+        deleteBtn.onclick = () => deleteNote(note.id);
+
+        // Copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy';
+        copyBtn.title = 'Copy explanation text';
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(note.text).then(() => {
+            alert('Explanation copied to clipboard');
+          });
+        };
+
+        btnGroup.append(editBtn, saveBtn, cancelBtn, deleteBtn, copyBtn);
+
+        // Editor formatting buttons
+        const editorFormatButtons = document.createElement('div');
+        editorFormatButtons.className = 'editor-buttons';
+        editorFormatButtons.style.display = 'none';
+
+        const boldBtn = document.createElement('button');
+        boldBtn.textContent = 'Bold';
+        boldBtn.title = 'Wrap selected text with **bold**';
+        boldBtn.onclick = () => wrapSelectionEditor(boldBtn, '**');
+
+        const highlightBtn = document.createElement('button');
+        highlightBtn.textContent = 'Highlight';
+        highlightBtn.title = 'Wrap selected text with ==highlight==';
+        highlightBtn.onclick = () => wrapSelectionEditor(highlightBtn, '==');
+
+        editorFormatButtons.append(boldBtn, highlightBtn);
+
+        // Append all elements
+        card.append(titleEl, urlEl, textDisplay, textEditor, editorFormatButtons, timeEl, btnGroup);
+        notesContainer.appendChild(card);
+      }
     }
+      
+    // Toggle edit mode
+    function toggleEdit(card, editing) {
+  const textDisplay = card.querySelector('.note-text');
+  const textEditor = card.querySelector('textarea');
+  const editBtn = card.querySelector('button[title="Edit this note"]');
+  const saveBtn = card.querySelector('button[title="Save changes"]');
+  const cancelBtn = card.querySelector('button[title="Cancel editing"]');
+  const editorFormatButtons = card.querySelector('.editor-buttons');
 
-function renderNotes() {
-  const container = document.getElementById('notesContainer');
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  container.innerHTML = '';
-
-  const filteredNotes = notes.filter(note =>
-    note.title.toLowerCase().includes(search) ||
-    note.text.toLowerCase().includes(search) ||
-    note.url.toLowerCase().includes(search)
-  );
-
-  filteredNotes.forEach((note, index) => {
-    const div = document.createElement('div');
-    div.className = 'note-card';
-
-    if (note.editing) {
-      div.innerHTML = `
-        <input type="text" id="editTitle${index}" value="${note.title}">
-        <textarea id="editText${index}" rows="3">${note.text}</textarea>
-        <input type="text" id="editUrl${index}" value="${note.url}" placeholder="Optional URL" />
-        <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
-        <div class="btn-group">
-          <button onclick="saveEdit(${index}, '${note.id}')">Save</button>
-          <button onclick="deleteNote('${note.id}')">Delete</button>
-          <button onclick="copyToClipboard(${index}, '${note.id}')">Copy</button>
-        </div>
-      `;
-    } else {
-      div.innerHTML = `
-        <div class="note-title">${note.title}</div>
-        <div class="note-text">${formatText(note.text)}</div>
-        ${note.url ? `
-        <div class="note-url">
-          <a href="${note.url}" target="_blank" class="styled-link">
-            🌐 Visit Link
-          </a>
-        </div>` : ''}
-        <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
-        <div class="btn-group">
-          <button onclick="toggleEdit(${index}, '${note.id}')">Edit</button>
-          <button onclick="deleteNote('${note.id}')">Delete</button>
-          <button onclick="copyToClipboard(${index}, '${note.id}')">Copy</button>
-        </div>
-      `;
-    }
-
-    container.appendChild(div);
-  });
+  if (editing) {
+    textDisplay.style.display = 'none';
+    textEditor.style.display = 'block';
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-block';
+    cancelBtn.style.display = 'inline-block';
+    editorFormatButtons.style.display = 'flex';
+    autoResizeTextarea(textEditor);
+  } else {
+    textDisplay.style.display = 'block';
+    textEditor.style.display = 'none';
+    editBtn.style.display = 'inline-block';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+    editorFormatButtons.style.display = 'none';
+  }
 }
 
-window.toggleEdit = (index, id) => {
-  notes.find(note => note.id === id).editing = true;
-  renderNotes();
-};
+    // Save edits
+    async function saveEdit(card) {
+      const id = card.dataset.id;
+      const textEditor = card.querySelector('textarea');
+      const newText = textEditor.value.trim();
 
-window.saveEdit = async (index, id) => {
-  const note = notes.find(note => note.id === id);
-  const newTitle = document.getElementById(`editTitle${index}`).value.trim();
-  const newText = document.getElementById(`editText${index}`).value.trim();
-  const newUrl = document.getElementById(`editUrl${index}`).value.trim();
+      if (!newText) {
+        alert("Explanation text cannot be empty.");
+        return;
+      }
 
-  await updateDoc(doc(db, 'informationNotes', note.id), {
-    title: newTitle || 'Untitled',
-    text: newText,
-    url: newUrl,
-    timestamp: new Date().toISOString()
-  });
+      try {
+        const noteRef = doc(db, "informationNotes", id);
+        await updateDoc(noteRef, { text: newText });
+        toggleEdit(card, false);
+      } catch (error) {
+        alert("Failed to save note: " + error.message);
+      }
+    }
 
-  note.editing = false;
-  renderNotes();
-};
+    // Delete note
+    async function deleteNote(id) {
+      if (confirm("Are you sure you want to delete this note?")) {
+        try {
+          await deleteDoc(doc(db, "informationNotes", id));
+        } catch (error) {
+          alert("Failed to delete note: " + error.message);
+        }
+      }
+    }
 
-window.copyToClipboard = (index, id) => {
-  const note = notes.find(note => note.id === id);
-  const text = note.editing
-    ? document.getElementById(`editText${index}`).value
-    : note.text;
+    // Simple markdown parser for **bold** and ==highlight==
+    function parseMarkdown(text) {
+      if (!text) return '';
+      let escapedText = escapeHtml(text);
+      // Replace bold **text**
+      escapedText = escapedText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // Replace highlight ==text==
+      escapedText = escapedText.replace(/==(.+?)==/g, '<mark>$1</mark>');
+      // Replace new lines with <br>
+      escapedText = escapedText.replace(/\n/g, '<br>');
+      return escapedText;
+    }
 
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Note copied to clipboard!");
-  });
-};
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 
-
-
-    window.toggleSearch = () => {
-      document.getElementById('searchBox').classList.toggle('active');
-    };
+    // Filter notes on search
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const val = e.target.value.toLowerCase();
+      const filtered = notes.filter(n => {
+        return n.title.toLowerCase().includes(val) || n.text.toLowerCase().includes(val);
+      });
+      renderNotes(filtered);
+    });
   </script>
 </body>
 </html>
