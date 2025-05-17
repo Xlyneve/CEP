@@ -15,7 +15,7 @@
 
     .note-content {
       font-family: 'Tahoma', sans-serif;
-      font-size: 10px;
+      font-size: 11px;
     }
 
     .header {
@@ -266,20 +266,30 @@
     }
 
     function enableEditing(card, id, title, note) {
-      // Sanitize note to remove highlight markers (====)
-      const sanitizedNote = note.replace(/====/g, "");
+  const sanitizedNote = note; // Do NOT remove <mark> or any other HTML
 
-      card.innerHTML = `
-        <input type="text" value="${title}" style="width: 100%; margin-bottom: 6px; padding: 4px;" />
-        <textarea style="width: 100%; height: 100px; padding: 4px;">${sanitizedNote}</textarea>
-        <div class="editor-buttons">
-          <button onclick="saveEdit('${id}', this.parentElement.parentElement.querySelector('input'), this.parentElement.parentElement.querySelector('textarea'))">Save</button>
-          <button onclick="renderNotes()">Cancel</button>
-          <button onclick="applyBold(this)">Bold</button>
-          <button onclick="applyHighlight(this)">Highlight</button>
-        </div>
-      `;
-    }
+  card.innerHTML = `
+    <input type="text" value="${title}" style="width: 100%; margin-bottom: 6px; padding: 4px; font-family: Tahoma, sans-serif; font-size 10px;" />
+    <textarea style="width: 100%; min-height: 60px; padding: 4px; resize: none; overflow:hidden; font-family: Tahoma, sans-serif; font-size: 10px;">${sanitizedNote}</textarea>
+    <div class="editor-buttons">
+      <button onclick="saveEdit('${id}', this.parentElement.parentElement.querySelector('input'), this.parentElement.parentElement.querySelector('textarea'))">Save</button>
+      <button onclick="renderNotes()">Cancel</button>
+      <button onclick="applyBold(this)">Bold</button>
+      <button onclick="applyHighlight(this)">Highlight</button>
+    </div>
+  `;
+
+  const textarea = card.querySelector('textarea');
+
+  // Function to auto-resize the textarea
+  const autoResize = () => {
+    textarea.style.height = 'auto'; // Reset height
+    textarea.style.height = textarea.scrollHeight + 'px'; // Set to scroll height
+  };
+
+  textarea.addEventListener('input', autoResize);
+  autoResize(); // Initial resize
+}
 
     function applyBold(btn) {
       const textarea = btn.parentElement.parentElement.querySelector("textarea");
