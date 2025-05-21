@@ -23,27 +23,26 @@
     const db = getFirestore(app);
     const footlegNotesCollection = collection(db, "footlegNotes");
 
-    async function saveNote() {
-      const noteText = document.getElementById("note").value;
-      const imageFile = document.getElementById("image").files[0];
-      if (!noteText && !imageFile) return;
+    function applyFormat(type) {
+      const textarea = document.getElementById("note");
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      const before = textarea.value.substring(0, start);
+      const after = textarea.value.substring(end);
+      let wrapper = "";
+      if (type === "bold") wrapper = "**";
+      else if (type === "highlight") wrapper = "==";
+      textarea.value = before + wrapper + selected + wrapper + after;
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + wrapper.length + selected.length + wrapper.length;
+    }
 
-      let imageData = "";
-      if (imageFile) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          imageData = reader.result;
-          await addDoc(footlegNotesCollection, { note: noteText, image: imageData });
-          document.getElementById("note").value = "";
-          document.getElementById("image").value = "";
-          loadNotes();
-        };
-        reader.readAsDataURL(imageFile);
-      } else {
-        await addDoc(footlegNotesCollection, { note: noteText, image: "" });
-        document.getElementById("note").value = "";
-        loadNotes();
-      }
+    function parseFormatting(text) {
+      return text
+        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+        .replace(/==(.*?)==/g, "<mark>$1</mark>")
+		.replace(/\n/g, "<br>");
     }
 
     async function loadNotes(filter = "") {
@@ -52,7 +51,7 @@
       const querySnapshot = await getDocs(footlegNotesCollection);
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        if (filter && !data.note?.toLowerCase().trim().includes(filter.toLowerCase().trim())) return;
+        if (filter && !data.note?.toLowerCase().includes(filter.toLowerCase())) return;
 
         const card = document.createElement("div");
         card.className = "note-card";
@@ -69,8 +68,12 @@
         }
 
         const p = document.createElement("p");
-        p.textContent = data.note;
+        p.innerHTML = parseFormatting(data.note);
         card.appendChild(p);
+
+        const editTextBox = document.createElement("textarea");
+        editTextBox.value = data.note;
+        editTextBox.className = "edit-textbox";
 
         const btnContainer = document.createElement("div");
         btnContainer.className = "btn-container";
@@ -85,25 +88,27 @@
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
         editBtn.onclick = () => {
-          // Create a textbox for editing
-          const editTextBox = document.createElement("textarea");
-          editTextBox.value = data.note;
-          editTextBox.className = "edit-textbox";
-          
-          // Add a save button for updating the note
-          const saveBtn = document.createElement("button");
-          saveBtn.textContent = "Save Changes";
-          saveBtn.onclick = async () => {
-            const updatedNote = editTextBox.value;
-            if (updatedNote !== data.note) {
-              await updateDoc(doc(footlegNotesCollection, docSnap.id), { note: updatedNote });
-              loadNotes();
-            }
-          };
-          
-          // Replace the note's content with the textbox and save button
           card.replaceChild(editTextBox, p);
           btnContainer.replaceChild(saveBtn, editBtn);
+
+          // Auto resize textarea on edit
+          editTextBox.style.height = "auto";
+          editTextBox.style.height = editTextBox.scrollHeight + "px";
+
+          editTextBox.addEventListener("input", () => {
+            editTextBox.style.height = "auto";
+            editTextBox.style.height = editTextBox.scrollHeight + "px";
+          });
+        };
+
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "Save Changes";
+        saveBtn.onclick = async () => {
+          const updatedNote = editTextBox.value;
+          if (updatedNote !== data.note) {
+            await updateDoc(doc(footlegNotesCollection, docSnap.id), { note: updatedNote });
+            loadNotes();
+          }
         };
 
         btnContainer.appendChild(editBtn);
@@ -114,8 +119,43 @@
       });
     }
 
+    async function saveNote() {
+      const noteInput = document.getElementById("note");
+      const imageInput = document.getElementById("image");
+
+      let imageBase64 = null;
+      if (imageInput.files && imageInput.files[0]) {
+        const file = imageInput.files[0];
+        imageBase64 = await toBase64(file);
+      }
+
+      if (noteInput.value.trim() === "") {
+        alert("Please enter a note.");
+        return;
+      }
+
+      await addDoc(footlegNotesCollection, {
+        note: noteInput.value.trim(),
+        image: imageBase64,
+      });
+
+      noteInput.value = "";
+      imageInput.value = "";
+      loadNotes();
+    }
+
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+      });
+    }
+
     window.saveNote = saveNote;
     window.loadNotes = loadNotes;
+    window.applyFormat = applyFormat;
 
     window.onload = () => loadNotes();
 
@@ -131,10 +171,11 @@
       margin: 0;
       padding: 0;
     }
+
     @font-face {
       font-family: 'fors';
-      src: url('fors.ttf') format('truetype'); /* Adjust the path */
-    } 
+      src: url('fors.ttf') format('truetype');
+    }
 
     h1 {
       text-align: center;
@@ -158,16 +199,20 @@
       background-color: #e5d6cd;
       border: 1px solid #ccc;
       border-radius: 8px;
+      font-family: Arial, sans-serif;
+      font-size: 1rem;
     }
 
     button {
       background-color: #e5d6cd;
       color: black;
-      padding: 0.5rem 1rem;
+      padding: 0.4rem 1rem;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       margin-top: 10px;
+      font-weight: bold;
+      font-size: 1rem;
     }
 
     #notes {
@@ -227,11 +272,12 @@
       padding: 0.4rem;
       border-radius: 6px;
       border: 1px solid #ccc;
+      font-size: 1rem;
     }
 
     .home-btn {
       position: absolute;
-      left: 20px;
+      left: 120px;
       top: 20px;
       background-color: #e5d6cd;
       padding: 0.4rem 1rem;
@@ -244,17 +290,45 @@
 
     .edit-textbox {
       width: 100%;
+      min-height: 2rem;
+      resize: none;
+      overflow: hidden;
       padding: 0.5rem;
       background-color: #e5d6cd;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      line-height: 1.4;
     }
+
+    .formatting-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 0.5rem;
+    }
+	.btn-container button {
+  font-size: 12pt;       /* Bigger text */
+  padding: 0.3rem 1rem;  /* More padding */
+  min-width: 80px;         /* Minimum width */
+  border-radius: 10px;     /* Slightly rounder */
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: normal;
+}
+
+.btn-container button:hover {
+  background-color: #d4c0b4; /* Optional hover effect */
+}
+
   </style>
 </head>
 <body>
+ <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1rem;">
   <a href="home.html" class="home-btn">Home</a>
-  <h1>FOOT. LEG</h1>
+  <h1 style="margin: 0;">FOOT. LEG</h1>
+</div>
   <div id="search-container">
     <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
   </div>
