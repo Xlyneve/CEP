@@ -5,8 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inteleviewer Access</title>
   <style>
+  
+   @font-face {
+      font-family: 'fors';
+      src: url('fors.ttf') format('truetype'); /* Adjust the path */
+	  
+	  }
     body {
-      font-family: 'Courier New', Courier, monospace;
+      font-family: 'fors', sans-serif;
       margin: 0;
       padding: 20px;
       background-color: #f7f5eb;
@@ -14,11 +20,9 @@
     }
     h1 {
       text-align: center;
-      color: black;
       margin-bottom: 30px;
+      color: #333;
     }
-
-    /* Floating buttons */
     .top-left, .top-right {
       position: fixed;
       top: 10px;
@@ -38,96 +42,92 @@
       border: none;
       padding: 8px 12px;
       border-radius: 8px;
-      font-size: 14px;
       cursor: pointer;
-      font-family: 'Courier New', Courier, monospace;
-      transition: background-color 0.3s;
-    }
-    .icon-btn:hover {
-      background-color: #d2b5a3;
+      font-size: 14px;
     }
     .search-box {
       display: none;
       padding: 6px;
       border: 1px solid #ccc;
       border-radius: 6px;
-      font-family: 'Courier New', Courier, monospace;
+      font-family: 'ford', sans-serif;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
-      background-color: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       margin-top: 60px;
-      margin-bottom: 20px;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     th, td {
-      border: 1px solid #C3C2D5;
       padding: 10px;
-      text-align: left;
+      border: 1px solid #ddd;
+      vertical-align: middle;
     }
     th {
-      background-color: #D9C8BF;
+      background-color: #eae0da;
       color: #333;
     }
-    tr:nth-child(even) {
-      background-color: #F9F9F9;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 6px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-family: 'Courier New', Courier, monospace;
-    }
+   input[type="text"] {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  font-family: 'fors', sans-serif;
+  font-size: 14px;
+  outline: none;
+}
+input[type="text"]:focus {
+  border-bottom: 1px solid #aaa;
+}
+
+
     .btn {
-      padding: 6px 12px;
+      background-color: #e4c9b6;
       border: none;
+      padding: 6px 10px;
       border-radius: 6px;
-      cursor: pointer;
       font-size: 14px;
-      font-family: 'Courier New', Courier, monospace;
+      cursor: pointer;
+      margin: 2px;
     }
-    .add-btn {
-      background-color: #f7f5eb;
-      color: white;
-    }
-    .delete-btn {
-      background-color: #f7f5eb;
-      color: #333;
+    .btn:hover {
+      background-color: #d8b8a5;
     }
     .add-section {
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #f7f5eb;
+      margin-top: 30px;
+      background-color: white;
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .add-section h3 {
-      text-align: center;
-      color: black;
+      border-radius: 10px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     .add-section input {
-      margin-bottom: 10px;
-    }
-    .add-section .btn {
       display: block;
       width: 100%;
+      margin-bottom: 10px;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
     }
   </style>
 </head>
 <body>
 
-  <!-- Hovering Home Button (Top-Left) -->
   <div class="top-left">
-    <button class="icon-btn" onclick="location.href='home.html'">🏠</button> <!-- Replaced with Home icon -->
+    <button class="icon-btn" onclick="location.href='home.html'">🏠</button>
   </div>
 
-  <!-- Hovering Search (Top-Right) -->
   <div class="top-right">
-    <button class="icon-btn" onclick="toggleSearch()">🔍</button> <!-- Replaced with Search icon -->
+    <button class="icon-btn" onclick="toggleSearch()">🔍</button>
     <input type="text" id="searchInput" class="search-box" placeholder="Search..." oninput="filterTable()">
   </div>
 
@@ -150,13 +150,13 @@
     <input type="text" id="newRadiology" placeholder="Radiology">
     <input type="text" id="newUsername" placeholder="Username">
     <input type="text" id="newPassword" placeholder="Password">
-    <button class="btn add-btn" onclick="addEntry()">Add</button>
+    <button class="btn" onclick="addEntry()">Add</button>
   </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import {
-      getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc
+      getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
     } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -170,19 +170,30 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const tableBody = document.getElementById('tableBody');
     const collectionRef = collection(db, 'inteleviewerData');
-
+    const tableBody = document.getElementById('tableBody');
     let allDocs = [];
 
-    function renderRow(docSnap) {
+    function createRow(docSnap) {
       const data = docSnap.data();
+      const id = docSnap.id;
+
       const tr = document.createElement('tr');
+
       tr.innerHTML = `
-        <td>${data.radiology}</td>
-        <td>${data.username}</td>
-        <td>${data.password}</td>
-        <td><button class="btn delete-btn" onclick="deleteEntry('${docSnap.id}')">Delete</button></td>
+        <td><input type="text" value="${data.radiology}" id="rad-${id}" disabled></td>
+        <td><input type="text" value="${data.username}" id="user-${id}" disabled></td>
+        <td>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" value="${data.password}" id="pass-${id}" disabled>
+            <button class="btn" onclick="copyToClipboard('${data.password}')">📋</button>
+          </div>
+        </td>
+        <td class="action-buttons">
+          <button class="btn" onclick="enableEdit('${id}')">✏️</button>
+          <button class="btn" onclick="saveEntry('${id}')" style="display: none;" id="save-${id}">💾</button>
+          <button class="btn" onclick="deleteEntry('${id}')">🗑️</button>
+        </td>
       `;
       return tr;
     }
@@ -196,21 +207,36 @@
     function displayTable(docs) {
       tableBody.innerHTML = '';
       docs.forEach(docSnap => {
-        tableBody.appendChild(renderRow(docSnap));
+        tableBody.appendChild(createRow(docSnap));
       });
     }
 
-    window.filterTable = () => {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const filteredDocs = allDocs.filter(doc => {
-        const data = doc.data();
-        return (
-          data.radiology.toLowerCase().includes(searchTerm) ||
-          data.username.toLowerCase().includes(searchTerm) ||
-          data.password.toLowerCase().includes(searchTerm)
-        );
+    window.copyToClipboard = (text) => {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Password copied to clipboard!");
       });
-      displayTable(filteredDocs);
+    };
+
+    window.enableEdit = (id) => {
+      document.getElementById(`rad-${id}`).disabled = false;
+      document.getElementById(`user-${id}`).disabled = false;
+      document.getElementById(`pass-${id}`).disabled = false;
+      document.getElementById(`save-${id}`).style.display = 'inline-block';
+    };
+
+    window.saveEntry = async (id) => {
+      const radiology = document.getElementById(`rad-${id}`).value.trim();
+      const username = document.getElementById(`user-${id}`).value.trim();
+      const password = document.getElementById(`pass-${id}`).value.trim();
+
+      if (!radiology || !username || !password) return alert("All fields are required");
+
+      await updateDoc(doc(db, 'inteleviewerData', id), { radiology, username, password });
+
+      document.getElementById(`rad-${id}`).disabled = true;
+      document.getElementById(`user-${id}`).disabled = true;
+      document.getElementById(`pass-${id}`).disabled = true;
+      document.getElementById(`save-${id}`).style.display = 'none';
     };
 
     window.addEntry = async () => {
@@ -228,7 +254,7 @@
     };
 
     window.deleteEntry = async (id) => {
-      if (confirm("Are you sure you want to delete this entry?")) {
+      if (confirm("Delete this entry?")) {
         await deleteDoc(doc(db, 'inteleviewerData', id));
       }
     };
@@ -237,6 +263,19 @@
       const searchBox = document.getElementById('searchInput');
       searchBox.style.display = searchBox.style.display === 'inline-block' ? 'none' : 'inline-block';
       if (searchBox.style.display === 'inline-block') searchBox.focus();
+    };
+
+    window.filterTable = () => {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const filteredDocs = allDocs.filter(doc => {
+        const data = doc.data();
+        return (
+          data.radiology.toLowerCase().includes(searchTerm) ||
+          data.username.toLowerCase().includes(searchTerm) ||
+          data.password.toLowerCase().includes(searchTerm)
+        );
+      });
+      displayTable(filteredDocs);
     };
   </script>
 </body>
