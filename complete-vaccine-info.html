@@ -9,10 +9,15 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .notes-cell {
-      max-width: 300px;
+      max-width: 100%;
       white-space: pre-wrap;
       word-wrap: break-word;
-      padding: 8px;
+      padding: 4px;
+    }
+
+    .actions-cell {
+      width: 100px;
+      white-space: nowrap;
     }
 
     tr:hover {
@@ -20,33 +25,33 @@
     }
 
     .home-button {
-	 cursor: pointer;
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background-color: #f1f1f1;
-  border: 2px solid #ccc;
-  padding: 8px 16px;
-  font-size: 18px;
-  text-decoration: none;
-  color: #333;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  z-index: 999;
-}
+      cursor: pointer;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background-color: #f1f1f1;
+      border: 1px solid #ccc;
+      padding: 6px 12px;
+      font-size: 14px;
+      text-decoration: none;
+      color: #333;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      z-index: 999;
+    }
 
-.home-button:hover {
-  background-color: #ececec;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transform: scale(1.05);
-}
+    .home-button:hover {
+      background-color: #ececec;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transform: scale(1.05);
+    }
 
     #searchBox {
       position: absolute;
       top: 10px;
       right: 10px;
-      padding: 8px;
+      padding: 6px;
       border-radius: 5px;
       border: 1px solid #ccc;
     }
@@ -57,7 +62,7 @@
   <a href="home.html" class="home-button">Home</a>
   <input type="text" id="searchBox" placeholder="Search..." />
 
-  <div class="max-w-6xl mx-auto mt-12">
+  <div class="w-full mt-12">
     <h1 class="text-center font-bold mb-4" style="font-family: 'Courier New', sans-serif; font-size: 24px;">
       💉 Vaccines
     </h1>
@@ -70,8 +75,8 @@
       <button type="submit" class="bg-[#f9e4e0] text-black px-4 py-2 rounded col-span-6">Add Vaccine</button>
     </form>
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full bg-white border border-gray-300">
+    <div class="overflow-x-auto w-full">
+      <table class="w-full bg-white border border-gray-300">
         <thead class="bg-[#eae0da]">
           <tr>
             <th class="px-4 py-2 text-left border-r">Type</th>
@@ -79,7 +84,7 @@
             <th class="px-4 py-2 text-left border-r">Price</th>
             <th class="px-4 py-2 text-left border-r">URL</th>
             <th class="px-4 py-2 text-left border-r">Notes</th>
-            <th class="px-4 py-2 text-left">Actions</th>
+            <th class="px-2 py-2 text-left">Actions</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -144,24 +149,24 @@
 
         if (editId === id) {
           row.innerHTML = `
-            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-inj" value="${v.inj}"></td>
-            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-name" value="${v.name}"></td>
-            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-price" value="${v.price}"></td>
-            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-url" value="${v.url}"></td>
-            <td class="px-4 py-2"><textarea class="border p-1 w-full" id="edit-notes" rows="3">${v.notes}</textarea></td>
-            <td class="px-4 py-2 space-x-2">
+            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-inj" value="${v.inj || ''}"></td>
+            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-name" value="${v.name || ''}"></td>
+            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-price" value="${v.price || ''}"></td>
+            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-url" value="${v.url || ''}"></td>
+            <td class="px-4 py-2"><textarea class="border p-1 w-full" id="edit-notes" rows="3">${v.notes || ''}</textarea></td>
+            <td class="px-2 py-2 actions-cell">
               <button class="bg-[#acc791] text-white px-2 py-1 rounded" onclick="saveVaccine()">Save</button>
               <button class="bg-[#bfc1ce] text-black px-2 py-1 rounded" onclick="cancelEdit()">Cancel</button>
             </td>
           `;
         } else {
           row.innerHTML = `
-            <td class="px-4 py-2">${v.inj}</td>
-            <td class="px-4 py-2">${v.name}</td>
-            <td class="px-4 py-2">${v.price}</td>
+            <td class="px-4 py-2">${v.inj || ''}</td>
+            <td class="px-4 py-2">${v.name || ''}</td>
+            <td class="px-4 py-2">${v.price || ''}</td>
             <td class="px-4 py-2">${v.url ? `<a href="${v.url}" target="_blank" class="text-blue-600 underline">Link</a>` : ''}</td>
-            <td class="notes-cell px-4 py-2">${v.notes}</td>
-            <td class="px-4 py-2 space-x-2">
+            <td class="notes-cell px-4 py-2">${v.notes || ''}</td>
+            <td class="px-2 py-2 actions-cell">
               <button class="bg-[#efd1d4] text-black px-2 py-1 rounded" onclick="editVaccine('${id}')">Edit</button>
               <button class="bg-[#c3dcd8] text-white px-2 py-1 rounded" onclick="deleteVaccine('${id}')">Delete</button>
             </td>
@@ -217,13 +222,13 @@
       if (query === '') {
         latestData = [...fullData];
       } else {
-        latestData = fullData.filter(docSnap => {
-          const v = docSnap.data;
+        latestData = fullData.filter(({ data }) => {
+          const v = data;
           return (
-            v.inj.toLowerCase().includes(query) ||
-            v.name.toLowerCase().includes(query) ||
-            v.price.toLowerCase().includes(query) ||
-            v.notes.toLowerCase().includes(query)
+            (v.inj || '').toLowerCase().includes(query) ||
+            (v.name || '').toLowerCase().includes(query) ||
+            (v.price || '').toLowerCase().includes(query) ||
+            (v.notes || '').toLowerCase().includes(query)
           );
         });
       }
