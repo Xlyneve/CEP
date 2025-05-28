@@ -21,7 +21,18 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const notesCollection = collection(db, "abdominisNotes");
+    const handNotesCollection = collection(db, "abdominisNotes");
+
+    function formatNote(text) {
+      const escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return escaped
+        .replace(/\n/g, "<br>")
+        .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+        .replace(/==(.+?)==/g, '<span style="background-color:#f9e1a8">$1</span>');
+    }
 
     async function saveNote() {
       const noteText = document.getElementById("note").value;
@@ -33,14 +44,14 @@
         const reader = new FileReader();
         reader.onloadend = async () => {
           imageData = reader.result;
-          await addDoc(notesCollection, { note: noteText, image: imageData });
+          await addDoc(handNotesCollection, { note: noteText, image: imageData });
           document.getElementById("note").value = "";
           document.getElementById("image").value = "";
           loadNotes();
         };
         reader.readAsDataURL(imageFile);
       } else {
-        await addDoc(notesCollection, { note: noteText, image: "" });
+        await addDoc(handNotesCollection, { note: noteText, image: "" });
         document.getElementById("note").value = "";
         loadNotes();
       }
@@ -49,10 +60,10 @@
     async function loadNotes(filter = "") {
       const notesContainer = document.getElementById("notes");
       notesContainer.innerHTML = "";
-      const querySnapshot = await getDocs(notesCollection);
+      const querySnapshot = await getDocs(handNotesCollection);
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        if (filter && !data.note?.toLowerCase().includes(filter.toLowerCase())) return;
+        if (filter && !data.note?.toLowerCase().trim().includes(filter.toLowerCase().trim())) return;
 
         const card = document.createElement("div");
         card.className = "note-card";
@@ -69,7 +80,7 @@
         }
 
         const p = document.createElement("p");
-        p.innerHTML = data.note;
+        p.innerHTML = formatNote(data.note);
         card.appendChild(p);
 
         const btnContainer = document.createElement("div");
@@ -78,51 +89,34 @@
         const delBtn = document.createElement("button");
         delBtn.textContent = "Delete";
         delBtn.onclick = async () => {
-          await deleteDoc(doc(notesCollection, docSnap.id));
+          await deleteDoc(doc(handNotesCollection, docSnap.id));
           loadNotes();
         };
 
         const editBtn = document.createElement("button");
         editBtn.textContent = "Edit";
         editBtn.onclick = () => {
-          card.innerHTML = "";
+          p.style.display = "none";
 
           const editArea = document.createElement("textarea");
           editArea.value = data.note;
-          editArea.style.width = "100%";
-          editArea.style.minHeight = "100px";
-          editArea.style.marginBottom = "0.5rem";
-
-          const formatBtns = document.createElement("div");
-          formatBtns.style.marginBottom = "0.5rem";
-
-          const boldBtn = document.createElement("button");
-          boldBtn.textContent = "Bold";
-          boldBtn.onclick = () => applyFormatToTextarea(editArea, "bold");
-
-          const highlightBtn = document.createElement("button");
-          highlightBtn.textContent = "Highlight";
-          highlightBtn.onclick = () => applyFormatToTextarea(editArea, "highlight");
-
-          formatBtns.appendChild(boldBtn);
-          formatBtns.appendChild(highlightBtn);
+          editArea.className = "edit-textarea";
 
           const saveBtn = document.createElement("button");
           saveBtn.textContent = "Save";
-          saveBtn.style.marginRight = "10px";
           saveBtn.onclick = async () => {
-            await updateDoc(doc(notesCollection, docSnap.id), { note: editArea.value });
+            const updatedNote = editArea.value;
+            await updateDoc(doc(handNotesCollection, docSnap.id), { note: updatedNote });
             loadNotes();
           };
 
           const cancelBtn = document.createElement("button");
           cancelBtn.textContent = "Cancel";
-          cancelBtn.onclick = loadNotes;
+          cancelBtn.onclick = () => loadNotes();
 
-          card.appendChild(formatBtns);
-          card.appendChild(editArea);
-          card.appendChild(saveBtn);
-          card.appendChild(cancelBtn);
+          card.insertBefore(editArea, btnContainer);
+          card.insertBefore(saveBtn, btnContainer);
+          btnContainer.appendChild(cancelBtn);
         };
 
         btnContainer.appendChild(editBtn);
@@ -131,29 +125,6 @@
 
         notesContainer.appendChild(card);
       });
-    }
-
-    function applyFormatToTextarea(textarea, type) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = textarea.value.substring(start, end);
-
-      let wrapped;
-      if (type === "bold") {
-        wrapped = `<strong>${selected}</strong>`;
-      } else if (type === "highlight") {
-        wrapped = `<mark>${selected}</mark>`;
-      }
-
-      if (selected) {
-        const before = textarea.value.substring(0, start);
-        const after = textarea.value.substring(end);
-        textarea.value = before + wrapped + after;
-
-        textarea.focus();
-        textarea.selectionStart = start;
-        textarea.selectionEnd = start + wrapped.length;
-      }
     }
 
     window.saveNote = saveNote;
@@ -182,45 +153,50 @@
       src: url('hellohon.otf') format('opentype'); /* Adjust the path */
 	  }
 
-    h1 {
-    text-align: center;
-    color: black;
-    padding: 5px 0 0 0;         /* reduce top padding */
-    margin-top: 10px;           /* lower value = moves title higher */
-    font-family: 'hellohon', sans-serif;
-    font-weight: normal;
-    font-size: 3.5rem;
-	margin-left: 50px;
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
     }
 
-    .home-button {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background-color: #e5d6cd;
-      color: black;
-      padding: 6px 12px;
-      border-radius: 6px;
-      text-decoration: none;
+    .home-btn {
+      background-color: #e4c9b6;
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
       font-weight: bold;
+    }
 
-
+    .page-title {
+      position: absolute;
+      left: 43%;
+	  top: 8px;
+      transform: translateX(-50%);
+      font-size: 4.5rem;
+      font-weight: normal;
+      color: black;
+	  font-family: 'hellohon', sans-serif;
     }
 
     .container {
       max-width: 100%;
-      margin: 0px 10px; 
+      margin: 0 10px;
       text-align: center;
-      padding: 0.5rem 0.5rem 1rem 0.5rem;
+      padding: 1rem 0.5rem;
     }
 
     textarea, input[type="file"] {
       display: block;
-      margin: 0.2rem auto 0.5rem auto;
+      margin: 0.5rem auto;
       padding: 0.5rem;
       width: 90%;
       max-width: 600px;
-      background-color: #f5f5f5;
+      background-color: #f4f0f7;
       border: 1px solid #ccc;
       border-radius: 8px;
     }
@@ -282,10 +258,13 @@
     }
 
     #search-container {
-      text-align: right;
+	 position: relative;
+	 top: -20px;
+	 left: -80px;
+     text-align: right;
       max-width: 100%;
-      margin: 0 10px;
-      padding: 0.5rem 0.5rem 0;
+      margin: -10px 0 0 5px;
+      padding: 0;
     }
 
     #search {
@@ -294,62 +273,31 @@
       padding: 0.4rem;
       border-radius: 6px;
       border: 1px solid #ccc;
-	  margin-top: 0.2rem;
     }
-	.top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
 
-.top-bar h1 {
-  flex: 1;
-  text-align: center;
-  margin: 0;
-  font-size: 5.5rem;
-}
-
-.home-button {
-  position: static;
-  margin-right: 0;
-}
-
-#search-container {
-  margin: 0;
-  padding: 0;
-}
-
-#search {
-  margin: 0;
-}
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 90px; /* space between Home and title */
-  padding-left: 210px;
-}
-
-
-
+    .edit-textarea {
+      width: 90%;
+      height: 100px;
+      margin: 0.5rem auto;
+      padding: 0.5rem;
+      background-color: #f4f0f7;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
   <div class="top-bar">
-  <div class="header">
-    <a href="home.html" class="home-button">Home</a>
-    <h1>Thorax and Abdomen</h1>
+    <a href="home.html"><button class="home-btn">Home</button></a>
+    <div class="page-title">Thorax and Abdomen</div>
   </div>
+
   <div id="search-container">
     <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
   </div>
-</div>
 
   <div class="container">
-    <textarea id="note" placeholder="Write your note here..."></textarea>
+    <textarea id="note" placeholder="Write your note here... Use **bold** and ==highlight=="></textarea>
     <input type="file" id="image" accept="image/*">
     <button onclick="saveNote()">Save Note</button>
     <div id="notes"></div>
