@@ -3,362 +3,752 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nurse Notes</title>
+  <title>Xlyn</title>
+
+
   <style>
+  @font-face {
+  font-family: 'AdeliciaRegular';
+  src: url('AdeliciaRegular.ttf') format('truetype'); /* Adjust the path to where the font is stored */
+  }
+  
+  @font-face {
+  font-family: 'fors';
+  src: url('fors.ttf') format('truetype'); /* Adjust the path to where the font is stored */
+  }
+
+  header h1 {
+  font-size: 20px;  /* Standard size for headers */
+ 
+}
+
+.pageTitle {
+  font-family: 'AdeliciaRegular', cursive, sans-serif;
+  font-size: 120px;  /* Larger size for just the title */
+  letter-spacing: 3px;
+  font-weight: normal;
+  color: black;
+ 
+}
+
     body {
-      font-family: 'Courier New', monospace;
-      background-color: #F7F5EB;
       margin: 0;
-      font-size: 12px;
-      color: #333;
+      font-family: 'fors', sans-serif;
+      background: #ece8e1;
+      color: black;
+      font-size: 22px;
+	  font-family: 'fors', sans-serif;
+	
     }
 
-    .note-content {
-      font-family: 'Tahoma', sans-serif;
-      font-size: 10px;
-    }
-
-    .header {
-      background-color: #EAE0DA;
-      padding: 10px 20px;
+    header {
+      padding: 30px 15px 30px;
+      text-align: center;
+      background: #e5d6cd;
+      border-bottom: 1px solid #e5d6cd;
+      position: relative;
       overflow: hidden;
     }
-    .header a {
-      float: left;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 14px;
-      padding: 6px 12px;
-      background-color: #F7F5EB;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      color: black;
+	  .top-circles {
+      position: fixed;
+      top: 260px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1000;
     }
-    .header a:hover {
-      background-color: #E8A2A2;
-    }
-    .search-box {
-      float: right;
-    }
-    .search-box input {
-      padding: 4px 8px;
-      font-size: 12px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      width: 150px;
-    }
-    .container {
-      width: 100%;
-      padding: 20px 40px;
-      box-sizing: border-box;
-    }
-    h2 {
+
+    .circle {
+      border-radius: 70%;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      font-size: 20px;
-    }
-    .form-section {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .form-section input,
-    .form-section textarea {
-      flex: 1 1 300px;
+      font-size: 12px;
+      font-weight: 400; /* Thin */
+      cursor: pointer;
+      transition: opacity 0.2s;
       padding: 8px;
-      font-size: 13px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    .add-btn {
-      padding: 10px;
-      background-color: #d9c8bf;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      min-width: 100px;
-    }
-    .cards-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      justify-content: flex-start;
-    }
-    .note-card {
-      background-color: #f0efeb;
-      flex: 1 1 calc(25% - 20px);
-      min-width: 260px;
-      padding: 15px;
-      border-radius: 10px;
-      position: relative;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
       box-sizing: border-box;
-      word-wrap: break-word;
-	  z-index 1:
-	  transition: transform 0.3s ease, z-index 0s ease;
-    }
-     .note-card:hover {
-       transform: scale(1.2);
-	   z-index: 999;
-    }
-    .note-title {
-      font-weight: bold;
-      font-size: 14px;
-      margin-bottom: 6px;
-    }
-    .note-actions {
-     margin-top: 12px;
-     display: flex;
-     justify-content: flex-end;
-     gap: 6px;
-    }
-    .note-actions button {
-      margin-left: 5px;
-      border: none;
-      background-color: #f7f5eb;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      cursor: pointer;
-    }
-    .note-actions button:hover {
-      background-color: #eae0da;
-    }
-    .highlight {
-      background-color: #fbe0D2;
-    }
-    .editor-buttons {
-      display: flex;
-      gap: 6px;
-      margin-top: 6px;
-    }
-    .editor-buttons button {
-      font-size: 11px;
-      padding: 4px 6px;
-      border-radius: 4px;
-      border: none;
-      cursor: pointer;
-    }
-
-    /* New styling for URL link */
-    .note-url {
-      margin-top: 10px;
-    }
-    .note-url a {
-      background-color: #FFF1F5; /* New background color */
       color: #333;
-      text-decoration: none;
-      padding: 3px 8px; /* Smaller size */
+	  transition: transfrom 0.3s ease;
+    }
+
+   
+     .circle:hover {
+      animation: pulse 1s infinite;
+   
+    }
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.08);
+      }
+      100% {
+        transform: scale(1);
+      }
+	 }
+
+    .calendar { background-color: #e8ebee; }   
+    .patient  { background-color: #f7f2ef; }    
+    .notes    { background-color: #dcc3b4; }     
+    .timesheet{ background-color: #d2dae3; }    
+     
+	 
+    .content {
+      padding: 120px 20px 20px 20px;
+    }
+	    .vitals-circle {
+      width: 80px;
+	  height: 80px;
+      height: 80px;
+      background-color: #f0ddd6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: normal;
+      color: #333;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .vitals-circle:hover {
+      animation: pulse 1s infinite;
+    }
+
+    .vitals-circle span {
+      text-align: center;
+      color: #333;
+        }
+        /* Table styles */
+        #vital-signs-table {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ececec;
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            overflow-x: auto;
+			font-family: 'fors', sans-serif;
+			font-size: 12px;
+        }
+        #vital-signs-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #vital-signs-table th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        #vital-signs-table th {
+            background-color: #f7f7f7;
+        }
+        /* Close button */
+        #close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #93b0ac;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+     
+    }
+
+    .title {
+      font-family: 'Clicker Script', cursive;
+      font-size: 90px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: black;
+      margin: 0;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .top-links {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .top-links a {
+      padding: 4px 8px;
+      background-color: #f7f2ef;
+      color: black;
+      font-size: 12px;
+	  font-family: fors, sans-serif;
+      border: 1px solid #d8cfc9;
       border-radius: 5px;
-      font-size: 11px; /* Smaller font */
+      text-decoration: none;
+      transition: background-color 0.3s, transform 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .top-links a:hover {
+      background-color: #e4c9b6;
+      transform: scale(1.05);
+    }
+
+    .icon-stack {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .icon-stack img {
+      width: 50px;
+      height: 50px;
+      transition: transform 0.3s ease;
+    }
+
+    .icon-stack a:hover img {
+      transform: scale(1.1);
+    }
+  .top-boxes {
+      position: fixed;
+      top: 10px;
+      right: 10px; /* Changed from right to left */
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .top-box {
+      background-color: #eae0da;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      min-width: 120px;
+    }
+
+    .top-box:hover {
+      background-color: #e4c9b6;
+    }
+
+    .content {
+      padding: 100px 20px 20px 20px;
+    }
+    .layout {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
+
+    .main-content {
+      flex: 1;
+      max-width: 1000px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 400;
+      color: black;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #e5d6cd;
       display: inline-block;
-      transition: background-color 0.3s ease;
+      padding-bottom: 4px;
     }
-    .note-url a:hover {
-      background-color: #F8D4E0; /* Lighter hover effect */
+
+    .card-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
     }
-    .note-url a .icon {
-      margin-right: 6px;
+
+    .card {
+      padding: 16px;
+      border-radius: 12px;
+      background: #f7f2ef;
+      border: 1px solid #e5d6cd;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 400;
+      color: black;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <a href="home.html">🏠 Home</a>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
-    </div>
-  </div>
 
-  <div class="container">
-    <h2>Nurse Notes</h2>
-    <div class="form-section">
-  <input id="nurseTitle" placeholder="Title">
-  <textarea id="nurseNote" placeholder="Note..."></textarea>
-  <input id="nurseURL" placeholder="Optional URL (if any)">
-  <input type="file" id="nurseImage" accept="image/*">
-  <button class="add-btn" onclick="addNote()">Add</button>
-</div>
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(180, 180, 180, 0.15);
+    }
 
-    <div class="cards-container" id="nurseNotesList"></div>
-  </div>
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin: 40px 0;
+    }
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const notesCol = collection(db, "nurseNotes");
-
-  async function addNote() {
-  const title = nurseTitle.value.trim();
-  const note = nurseNote.value.trim();
-  const url = nurseURL.value.trim();
-  const fileInput = document.getElementById('nurseImage');
-  const file = fileInput.files[0];
-
-  let imageBase64 = "";
-
-  if (file) {
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      imageBase64 = reader.result;
-
-      await addDoc(notesCol, {
-        title: title || "Untitled",
-        note,
-        url: url || "",
-        image: imageBase64,
-        time: new Date().toISOString()
-      });
-
-      nurseTitle.value = '';
-      nurseNote.value = '';
-      nurseURL.value = '';
-      nurseImage.value = '';
-    };
-    reader.readAsDataURL(file);
-  } else {
-    await addDoc(notesCol, {
-      title: title || "Untitled",
-      note,
-      url: url || "",
-      image: "",
-      time: new Date().toISOString()
-    });
-
-    nurseTitle.value = '';
-    nurseNote.value = '';
-    nurseURL.value = '';
-    nurseImage.value = '';
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+        align-items: center;
+	      
+      }
+	.pageTitle {
+    font-size: 60px;
   }
 }
 
-    async function deleteNote(id) {
-      if (confirm("Delete this note?")) {
-        await deleteDoc(doc(db, "nurseNotes", id));
       }
-    }
 
-    async function saveEdit(id, titleInput, noteTextarea) {
-      const updatedTitle = titleInput.value.trim();
-      const updatedNote = noteTextarea.value.trim();
+      .icon-stack {
+        right: 5px;
+        top: 5px;
+      }
 
-      // Save to Firebase Firestore
-      await updateDoc(doc(db, "nurseNotes", id), {
-        title: updatedTitle || "Untitled",
-        note: updatedNote
-      });
+      .icon-stack img {
+        width: 40px;
+        height: 40px;
+      }
+	  #quick-note-text {
+  background-color: #f7f5eb;
+  border: 2px solid #e4c9b6;
+  padding: 8px;
+  border-radius: 8px;
+  font-family: fors, sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.3s ease;
+  width: 150%;
+  max-width: 500px;
+  border-color: #c9a87c;
+  background-color: #fff;
+}
 
-      renderNotes(); // Refresh notes after saving
-    }
+	  .moving-text {
+      position: fixed;
+      top: 0;
+      left: 100%; /* Start off-screen */
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: regular;
+      font-family: fors, sans-serif;
+      padding: 8px 16px;
+      border: none;
+      animation: moveText 20s linear infinite;
+      z-index: 1000;
+      color: black;
+      font-family: 'fors', sans-serif;
+   }
 
-    function enableEditing(card, id, title, note) {
-      // Sanitize note to remove highlight markers (====)
-      const sanitizedNote = note.replace(/====/g, "");
+@keyframes moveText {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+ 
+  </style>
+</head>
 
-      card.innerHTML = `
-        <input type="text" value="${title}" style="width: 100%; margin-bottom: 6px; padding: 4px;" />
-        <textarea style="width: 100%; height: 100px; padding: 4px;">${sanitizedNote}</textarea>
-        <div class="editor-buttons">
-          <button onclick="saveEdit('${id}', this.parentElement.parentElement.querySelector('input'), this.parentElement.parentElement.querySelector('textarea'))">Save</button>
-          <button onclick="renderNotes()">Cancel</button>
-          <button onclick="applyBold(this)">Bold</button>
-          <button onclick="applyHighlight(this)">Highlight</button>
-        </div>
-      `;
-    }
+<body>
+	<img id="dog" src="https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif" 
+     style="position:fixed; left:0; top:0; width:100px; z-index:9999; pointer-events:none;" />
 
-    function applyBold(btn) {
-      const textarea = btn.parentElement.parentElement.querySelector("textarea");
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = textarea.value.substring(start, end);
-      if (!selected) return;
 
-      const newText = textarea.value.substring(0, start) + `**${selected}**` + textarea.value.substring(end);
-      textarea.value = newText;
-    }
+<!-- Quick Note Floating Icon & Box -->
+<div id="quick-note-icon" style="
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background-color: #dcc3b4;
+  color: black;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 30px;
+  text-align: center;
+  line-height: 60px;
+  cursor: pointer;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+  z-index: 1000;
+" onclick="toggleQuickNote()">📝</div>
 
-    function applyHighlight(btn) {
-      const textarea = btn.parentElement.parentElement.querySelector("textarea");
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = textarea.value.substring(start, end);
-      if (!selected) return;
+<div id="quick-note-box" style="
+  display: none;
+  position: fixed;
+  bottom: 90px;
+  left: 20px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+  padding: 10px;
+  width: 250px;
+  z-index: 1000;
+">
+    <textarea id="quick-note-text" placeholder="Type a quick note..." 
+  style="width: 90%; font-family: fors, sans-serif; font-size: 14px; overflow: hidden; resize: none;"
+  oninput="autoResize(this)"></textarea>
+  <button onclick="copyQuickNote()" style="margin-top: 8px; background-color: #e4c9b6; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer;">Copy</button>
 
-      const newText = textarea.value.substring(0, start) + `====${selected}====` + textarea.value.substring(end);
-      textarea.value = newText;
-    }
+<div id="copy-msg" style="display:none; color: gray; margin-top: 5px;">Notes copied!</div>
 
-    function renderNotes() {
-      const list = document.getElementById('nurseNotesList');
-      onSnapshot(notesCol, snapshot => {
-        console.log('Data fetched from Firestore:', snapshot.docs.map(doc => doc.data())); // Check the data
-        list.innerHTML = '';
-        snapshot.forEach(docSnap => {
-          const { title, note, time, url, image } = docSnap.data();
-          const id = docSnap.id;
+</div>
 
-          // Replace '====' markers with highlight style
-          const displayNote = note.replace(/====(.*?)====/g, '<span class="highlight">$1</span>');
-          const displayBoldNote = displayNote.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  <header>
+   <h1><span class="pageTitle">XlynEve</span></h1> <!-- Updated the title ID to match the CSS -->
+    <div class="top-links">
+      <a href="https://www.health.govt.nz/" target="_blank">🏥 Ministry of Health</a>
+      <a href="https://www.health.govt.nz/search?query=cold+chain" target="_blank">❄️ Cold Chain</a>
+      <a href="https://www.medsafe.govt.nz/medicines/infoSearch.asp" target="_blank">💊 Medsafe</a>
+      <a href="https://www.mymedicines.nz/" target="_blank">📋 My Medicines</a>
+      <a href="https://nzf.org.nz/" target="_blank">📚 NZ Formulary</a>
+      <a href="https://healthify.nz/" target=" blank">📙 Healthify</a>
+      <a href="https://www.immune.org.nz/" target=" blank">💉 IMAC</a>
+    </div>
 
-          const div = document.createElement('div');
-          div.className = 'note-card';
-          div.innerHTML = `
-            <div class="note-title">${title}</div>
-            <div class="note-content">${displayBoldNote.replace(/\n/g, '<br>')}</div>
-           ${image ? `<img src="${image}" style="max-width:100%;margin-top:10px;border-radius:6px;" />` : ""}
+      <div class="top-circles">
+    <div class="circle calendar" onclick="location.href='homecal.html'">Calendar<br>To Do</div>
+    <div class="circle patient" onclick="location.href='forms.html'">Patient<br>Info</div>
+    <div class="circle notes" onclick="location.href='Notes.html'">Notes</div>
+    <div class="circle timesheet" onclick="window.open('https://onedrive.live.com/edit.aspx?cid=cd58075507480906&page=view&resid=CD58075507480906!660&parId=CD58075507480906!107&app=Excel', '_blank')">Timesheet</div>
+    <div class="vitals-circle" onclick="showTable()"> 
+	<span>Vitals</span>
+  </div>
+  </div>
 
-		   <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
-            ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
-            <div class="note-actions">
-              <button onclick="enableEditing(this.closest('.note-card'), '${id}', \`${title.replace(/`/g, "\\`")}\`, \`${note.replace(/`/g, "\\`")}\`)">Edit</button>
-              <button onclick="deleteNote('${id}')">Delete</button>
-	    </div>
-          `;
-          list.appendChild(div);
-        });
-      });
-    }
+  </header>
 
-    window.addNote = addNote;
-    window.deleteNote = deleteNote;
-    window.saveEdit = saveEdit;
-    window.enableEditing = enableEditing;
-    window.applyBold = applyBold;
-    window.applyHighlight = applyHighlight;
+  <div class="layout">
+    <div class="main-content">
+      <h2>Home</h2>
+      <div class="card-group">
+        <div class="card" onclick="location.href='OHcalc.html'">Drug Calculator</div>
+        <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
+        <div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
+        <div class="card" onclick="location.href='Calculator.html'">Calculator</div>
+        <div class="card" onclick="location.href='trial.html'">Trial</div>
+        
+	  </div>
 
-    window.searchNotes = function (event) {
-      const query = event.target.value.toLowerCase();
-      const cards = document.querySelectorAll('.note-card');
+      <h2>Notes</h2>
+      <div class="card-group">
+        <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
+        <div class="card" onclick="location.href='info.html'">Infos</div>
+        <div class="card" onclick="location.href='explain.html'">Explanation</div>
+        <div class="card" onclick="location.href='inteleviewer.html'">Inteleviewer</div>
+        <div class="card" onclick="location.href='INR Calc.html'">INR</div>
+        <div class="card" onclick="location.href='ECG.html'">ECG</div>
+        <div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
+        <div class="card" onclick="location.href='recalls.html'">Recalls</div>
+      </div>
 
-      cards.forEach(card => {
-        const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
-        const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
+      <h2>Urgent Care</h2>
+      <div class="card-group">
+        <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Directions</div>
+        <div class="card" onclick="location.href='face.html'">Head</div>
+        <div class="card" onclick="location.href='Hand.html'">Hand.Wrist</div>
+        <div class="card" onclick="location.href='Sha.html'">Shoulder.Elbow</div>
+        <div class="card" onclick="location.href='Abdo.html'">Thorax.Abdomen</div>
+        <div class="card" onclick="location.href='Spine.html'">Back.Spine</div>
+        <div class="card" onclick="location.href='LF.html'">Foot.Leg</div>
+        <div class="card" onclick="location.href='Urgent_Care.html'">Urgent Care</div>
+      </div>
 
-        if (title.includes(query) || content.includes(query)) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
+      <!-- Emoji Search Icon -->
+      <img src="search-icon.png" alt="Search" id="emojiSearchIcon" style="position:fixed; bottom:20px; right:20px; width:30px; height:30px; cursor:pointer; z-index:1000;" />
+
+      <!-- Emoji Search Modal -->
+      <div id="emojiModal" style="display:none; position:fixed; bottom:60px; right:20px; background:#fff; padding:12px; border:1px solid #ccc; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000;">
+        <input type="text" id="emojiSearchInput" placeholder="Search emoji..." style="padding:6px; width:160px; font-size:14px;" />
+        <div id="emojiResults" style="margin-top:8px; font-size:18px; max-height:150px; overflow-y:auto;"></div>
+      </div>
+
+  <div class="moving-text">💡 Reminder: Stay organized and check your calendar!</div>
+
+  
+
+    <!-- Vital Signs Table -->
+    <div id="vital-signs-table">
+        <button id="close-btn" onclick="closeTable()">Close</button>
+        <h2>Normal Vital Signs by Age Group</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Age Group</th>
+                    <th>Heart Rate</th>
+                    <th>Respiratory Rate</th>
+                    <th>Blood Pressure</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Newborn (0-1 month)</td>
+                    <td>120-160 bpm</td>
+                    <td>30-60 breaths/min</td>
+                    <td>60-90 / 30-60 mmHg</td>
+                </tr>
+                <tr>
+                    <td>Infant (1-12 months)</td>
+                    <td>100-160 bpm</td>
+                    <td>30-40 breaths/min</td>
+                    <td>70-100 / 50-70 mmHg</td>
+                </tr>
+                <tr>
+                    <td>Child (1-5 years)</td>
+                    <td>70-120 bpm</td>
+                    <td>20-30 breaths/min</td>
+                    <td>80-110 / 50-70 mmHg</td>
+                </tr>
+                <tr>
+                    <td>School-age (6-12 years)</td>
+                    <td>70-110 bpm</td>
+                    <td>18-30 breaths/min</td>
+                    <td>90-120 / 60-80 mmHg</td>
+                </tr>
+                <tr>
+                    <td>Adolescent (13-18 years)</td>
+                    <td>60-100 bpm</td>
+                    <td>12-16 breaths/min</td>
+                    <td>100-120 / 60-80 mmHg</td>
+                </tr>
+                <tr>
+                    <td>Adult (19-60 years)</td>
+                    <td>60-100 bpm</td>
+                    <td>12-20 breaths/min</td>
+                    <td>110-120 / 70-80 mmHg</td>
+                </tr>
+                <tr>
+                    <td>Older Adult (60+ years)</td>
+                    <td>60-100 bpm</td>
+                    <td>12-16 breaths/min</td>
+                    <td>90-120 / 60-80 mmHg</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+  
+      <footer>© 2025 Xlyn Notes Board</footer>
+    </div>
+  </div>
+
+  <script>
+  
+   // Function to show the vital signs table
+        function showTable() {
+            document.getElementById('vital-signs-table').style.display = 'block';
         }
-      });
-    };
 
-    renderNotes();
+        // Function to close the vital signs table
+        function closeTable() {
+            document.getElementById('vital-signs-table').style.display = 'none';
+        }
+		
+    const emojiData = [
+      { name: 'smile', symbol: '😊' },
+      { name: 'laugh', symbol: '😂' },
+      { name: 'tick', symbol: '✅' },
+      { name: 'heart', symbol: '❤️' },
+      { name: 'star', symbol: '⭐️' },
+      { name: 'fire', symbol: '🔥' },
+      { name: 'ok', symbol: '👌' },
+      { name: 'thumbs up', symbol: '👍' },
+      { name: 'check', symbol: '✔️' },
+      { name: 'woman', symbol: '🙍🏻‍♀️' },
+      { name: 'man', symbol: '🙍' },
+      { name: 'yellow', symbol: '🟡' },
+      { name: 'tree', symbol: '🌴' },
+      { name: 'injection', symbol: '💉' },
+      { name: 'money', symbol: '🤑' },
+      { name: 'nurse', symbol: '👩🏻‍⚕️' },
+      { name: 'one', symbol: '1️⃣' },
+      { name: 'two', symbol: '2️⃣' },
+      { name: 'arrow', symbol: '➡️' },
+      { name: 'leaf', symbol: '🍂' },
+      { name: 'loud', symbol: '📢' },
+      { name: 'red', symbol: '🔴' },
+      { name: 'alert', symbol: '⚠️' },
+      { name: 'red', symbol: '‼️' },  
+      { name: 'plane', symbol: '✈️' },
+      { name: 'vacay', symbol: '🏖️' },
+      { name: 'med', symbol: '💊' },
+       { name: 'X', symbol: '❌' },
+       { name: 'nurse', symbol: '🙅🏻‍♀️' },
+       { name: 'mum', symbol: '🤰🏻' },
+       { name: 'flower', symbol: '🌸' },
+       { name: 'flower', symbol: '🌼' },
+       { name: 'flower', symbol: '🌻' },
+       { name: 'earth', symbol: '🌎' },
+       { name: 'sun', symbol: '☀️' },
+       { name: 'moon', symbol: '🌛' },
+       { name: 'food', symbol: '🍔' },
+       { name: 'puzzle', symbol: '🧩' },
+       { name: 'car', symbol: '🚗' },
+       { name: 'hospital', symbol: '🏥' },
+       { name: 'computer', symbol: '🖥️' },
+      { name: 'time', symbol: '⏰' },
+      { name: 'dollar', symbol: '💰' },
+      { name: 'diamond', symbol: '💎' },
+      { name: 'virus', symbol: '🦠' },
+      { name: 'temp', symbol: '🌡️' },
+      { name: 'blood', symbol: '🩸' },
+      { name: 'stet', symbol: '🩺' },
+      { name: 'pencil', symbol: '✏️' },
+      { name: 'pin', symbol: '📌' },
+      { name: 'pen', symbol: '🖋️' },
+      { name: 'lock', symbol: '🔒' },
+      { name: 'book', symbol: '📙' },
+      { name: 'bullet', symbol: '▪️' },
+      { name: 'bullet2', symbol: '🔸' },
+      { name: 'headset', symbol: '🎧' },
+      { name: 'calendar', symbol: '📅' },
+      { name: 'ambulance', symbol: '🚑' },
+      { name: 'hospital', symbol: '🏥' },
+      { name: 'phone', symbol: '☎️' },
+      { name: 'phone1', symbol: '📞' },
+      { name: 'dollar', symbol: '💵' },      
+      { name: 'pin', symbol: '📍' },      
+      { name: 'tickbox', symbol: '☐' },
+      { name: 'okay', symbol: '🆗' },      
+      { name: 'dollarsign', symbol: '💲' },     
+      
+      
+      
+    ];
+
+    const modal = document.getElementById("emojiModal");
+    const input = document.getElementById("emojiSearchInput");
+    const results = document.getElementById("emojiResults");
+
+    document.getElementById("emojiSearchIcon").addEventListener("click", () => {
+      modal.style.display = modal.style.display === "none" ? "block" : "none";
+      input.focus();
+    });
+
+    input.addEventListener("input", () => {
+      const term = input.value.toLowerCase();
+      const matches = emojiData.filter(e => e.name.includes(term));
+      results.innerHTML = matches.map(e =>
+        `<span style="cursor:pointer; margin:3px;" onclick="copyToClipboard('${e.symbol}')">${e.symbol}</span>`
+      ).join("");
+    });
+
+    function copyToClipboard(emoji) {
+      const textarea = document.createElement('textarea');
+      textarea.value = emoji;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert(`Copied: ${emoji}`);
+    }
   </script>
+   <script>
+    // Get the elements for the notification and Done button
+    const alertElement = document.getElementById("todoAlert");
+    const doneButton = document.getElementById("doneButton");
+
+    // Set a timer to show the notification (if you want it to appear after page load or some event)
+    setTimeout(() => {
+      alertElement.style.display = 'block'; // Show the notification
+    }, 1000); // Adjust the time delay if needed
+
+    // Hide the notification when the Done button is clicked
+    doneButton.addEventListener("click", () => {
+      alertElement.style.display = 'none'; // Hide the notification
+    });
+  </script>
+ <style>
+  @font-face {
+    font-family: 'Fors';
+    src: url('fonts/fors.ttf') format('truetype');
+
+  }
+</style>
+
+
+<script>
+  function copyQuickNote() {
+    const note = document.getElementById("quickNote");
+    note.select();
+    note.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+
+    const status = document.getElementById("copyStatus");
+    status.textContent = "Copied!";
+    setTimeout(() => { status.textContent = ""; }, 2000);
+  }
+</script>
+<script>
+function toggleQuickNote() {
+  const box = document.getElementById('quick-note-box');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+function autoResize(textarea) {
+  textarea.style.height = 'auto'; // Reset height
+  textarea.style.height = textarea.scrollHeight + 'px'; // Set new height
+}
+
+   function copyQuickNote() {
+    const noteText = document.getElementById('quick-note-text').value;
+    if (!noteText) return;
+
+    navigator.clipboard.writeText(noteText).then(() => {
+      const msg = document.getElementById('copy-msg');
+      msg.style.display = 'inline';
+      setTimeout(() => {
+        msg.style.display = 'none';
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+    });
+  }
+</script>
+<script>
+  const dog = document.getElementById('dog');
+
+  document.addEventListener('mousemove', (e) => {
+    const dogX = e.clientX - 50; // Center the dog
+    const dogY = e.clientY - 50;
+
+    dog.style.left = `${dogX}px`;
+    dog.style.top = `${dogY}px`;
+
+    // Flip the dog depending on movement direction
+    if (e.movementX < 0) {
+      dog.style.transform = 'scaleX(-1)';
+    } else if (e.movementX > 0) {
+      dog.style.transform = 'scaleX(1)';
+    }
+  });
+</script>
+
 </body>
 </html>
