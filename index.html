@@ -5,38 +5,87 @@
   <title>Enter Password</title>
   <style>
     body {
-      background-color: #f7f5eb;
+      background-color: #eaf5ea; /* soft pastel green */
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
+      position: relative;
+      font-family: 'Segoe UI', sans-serif;
     }
-    .password-container {
-      background-color: #e4c9b6;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+    #datetime {
       text-align: center;
+      font-size: 34px;
+      color: #2f5131;
+      margin-bottom: 30px;
+      z-index: 2;
     }
+
+    .password-container {
+      background-color: #ddb2b5;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      width: 300px;
+    }
+
     input[type="password"] {
       padding: 10px;
       margin: 10px 0;
       width: 100%;
       box-sizing: border-box;
+      border: 1px solid #a8d5ba;
+      border-radius: 6px;
+      background-color: #f6fff5;
     }
+
     button {
       padding: 10px 20px;
-      background-color: #f7d1d8;
+      background-color: #a0d8b3;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #8cc9a1;
+    }
+
+    .monstera-img {
+      position: absolute;
+      right: 0px;
+      bottom: 0px;
+      width: 600px;
+      height: 800px;
+      opacity: 0.9;
+      z-index: 1;
+    }
+
+    @media (max-width: 600px) {
+      .monstera-img {
+        display: none;
+      }
     }
   </style>
 </head>
 <body>
+
+  <!-- Monstera leaf image on the right -->
+  <img src="monstera.png" alt="Monstera Leaf" class="monstera-img">
+
+  <!-- Live date and time above the container -->
+  <div id="datetime"></div>
+
   <div class="password-container">
-    <h2>Enter Password</h2>
+    <h2 style="color: black;">Enter Password</h2>
     <input type="password" id="password" placeholder="Password">
     <br>
     <button onclick="checkPassword()">Submit</button>
@@ -47,7 +96,18 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // Your Firebase configuration
+    // Live date & time display
+    function updateDateTime() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateStr = now.toLocaleDateString(undefined, options);
+      const timeStr = now.toLocaleTimeString();
+      document.getElementById('datetime').textContent = `${dateStr} — ${timeStr}`;
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
@@ -57,7 +117,6 @@
       appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -74,7 +133,7 @@
 
         if (inputPassword === correctPassword) {
           sessionStorage.setItem('authenticated', 'true');
-          window.location.href = "home.html"; // Redirect after success
+          window.location.href = "home.html";
         } else {
           alert("Incorrect password. Try again.");
         }
