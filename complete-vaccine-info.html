@@ -66,14 +66,30 @@
     <h1 class="text-center font-bold mb-4" style="font-family: 'Courier New', sans-serif; font-size: 24px;">
       💉 Vaccines
     </h1>
-    <form id="vaccineForm" class="grid grid-cols-6 gap-2 mb-6">
-      <input id="inj" type="text" placeholder="Inj" class="border p-2 col-span-1" required />
-      <input id="name" type="text" placeholder="Vaccine Name" class="border p-2 col-span-1" required />
-      <input id="price" type="text" placeholder="Price" class="border p-2 col-span-1" />
-      <input id="url" type="text" placeholder="Medsafe URL" class="border p-2 col-span-2" />
-      <textarea id="notes" placeholder="Notes" class="border p-2 col-span-1" rows="3"></textarea>
-      <button type="submit" class="bg-[#f9e4e0] text-black px-4 py-2 rounded col-span-6">Add Vaccine</button>
-    </form>
+   <form id="vaccineForm" class="grid grid-cols-12 gap-x-1 gap-y-2 mb-4 items-start">
+  <!-- Input fields -->
+  <input id="inj" type="text" placeholder="Inj" class="border p-2 col-span-1 w-full h-16" required />
+  <input id="name" type="text" placeholder="Vaccine Name" class="border p-2 text-sm col-span-2 w-full h-16" required />
+  <input id="price" type="text" placeholder="Price" class="border p-2 col-span-1 w-full h-16" />
+  <input id="url" type="text" placeholder="Medsafe URL" class="border p-2 text-sm col-span-2 w-full h-16" />
+
+  <!-- Notes + Buttons -->
+  <div class="col-span-6 flex items-start space-x-2">
+    <!-- Notes field -->
+    <div id="notes" contenteditable="true" class="border p-2 h-16 w-full overflow-auto bg-white text-sm rounded"></div>
+
+    <!-- Buttons & Add -->
+    <div class="flex flex-col space-y-1">
+      <div class="flex space-x-1">
+        <button type="button" onclick="formatText('bold')" class="px-1 py-0.5 bg-gray-200 rounded text-xs font-bold">B</button>
+        <button type="button" onclick="formatText('underline')" class="px-1 py-0.5 bg-gray-200 rounded text-xs underline">U</button>
+        <button type="button" onclick="formatText('hiliteColor', 'yellow')" class="px-1 py-0.5 bg-yellow-200 rounded text-xs">Highlight</button>
+      </div>
+      <button type="submit" class="bg-[#f9e4e0] text-black px-3 py-1 rounded text-xs">Add Vaccine</button>
+    </div>
+  </div>
+</form>
+
 
     <div class="overflow-x-auto w-full">
       <table class="w-full bg-white border border-gray-300">
@@ -127,7 +143,7 @@
       const name = document.getElementById("name").value.trim();
       const price = document.getElementById("price").value.trim();
       const url = document.getElementById("url").value.trim();
-      const notes = document.getElementById("notes").value.trim();
+      const notes = document.getElementById("notes").innerHTML.trim();
 
       if (inj && name) {
         await addDoc(vaccineRef, {
@@ -135,6 +151,7 @@
           timestamp: serverTimestamp()
         });
         form.reset();
+        document.getElementById("notes").innerHTML = '';
       }
     });
 
@@ -153,7 +170,14 @@
             <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-name" value="${v.name || ''}"></td>
             <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-price" value="${v.price || ''}"></td>
             <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-url" value="${v.url || ''}"></td>
-            <td class="px-4 py-2"><textarea class="border p-1 w-full" id="edit-notes" rows="3">${v.notes || ''}</textarea></td>
+            <td class="px-4 py-2">
+              <div class="flex space-x-1 mb-1">
+                <button type="button" onclick="formatText('bold')" class="px-1 py-0.5 bg-gray-200 text-xs rounded">B</button>
+                <button type="button" onclick="formatText('underline')" class="px-1 py-0.5 bg-gray-200 text-xs rounded">U</button>
+                <button type="button" onclick="formatText('hiliteColor', 'yellow')" class="px-1 py-0.5 bg-yellow-200 text-xs rounded">Highlight</button>
+              </div>
+              <div id="edit-notes" contenteditable="true" class="border p-1 w-full h-20 overflow-auto bg-white">${v.notes || ''}</div>
+            </td>
             <td class="px-2 py-2 actions-cell">
               <button class="bg-[#acc791] text-white px-2 py-1 rounded" onclick="saveVaccine()">Save</button>
               <button class="bg-[#bfc1ce] text-black px-2 py-1 rounded" onclick="cancelEdit()">Cancel</button>
@@ -203,7 +227,7 @@
       const name = document.getElementById("edit-name").value.trim();
       const price = document.getElementById("edit-price").value.trim();
       const url = document.getElementById("edit-url").value.trim();
-      const notes = document.getElementById("edit-notes").value.trim();
+      const notes = document.getElementById("edit-notes").innerHTML.trim();
 
       if (inj && name) {
         const docRef = doc(db, "vaccines", editId);
@@ -234,6 +258,34 @@
       }
 
       renderTable();
+    });
+
+    // Text formatting function
+    window.formatText = function (command, value = null) {
+      document.execCommand(command, false, value);
+    };
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", function (e) {
+      if (e.ctrlKey) {
+        const active = document.activeElement;
+        if (active && active.isContentEditable) {
+          switch (e.key.toLowerCase()) {
+            case "b":
+              e.preventDefault();
+              formatText("bold");
+              break;
+            case "u":
+              e.preventDefault();
+              formatText("underline");
+              break;
+            case "h":
+              e.preventDefault();
+              formatText("hiliteColor", "yellow");
+              break;
+          }
+        }
+      }
     });
   </script>
 </body>
