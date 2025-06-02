@@ -18,6 +18,11 @@
       color: black;
       overflow-x: hidden;
     }
+	main {
+  position: relative;
+  z-index: 1000; /* Higher than vine */
+}
+
 
     h1 {
   position: sticky;
@@ -28,6 +33,20 @@
   margin-top: 0px;
   background-color: #ccbab5;
   padding: 20px 10px;
+}
+header h1 {
+  position: relative;
+  z-index: 9999;
+}
+
+
+.plant2-decoration {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 600px; /* Adjust size as needed */
+  z-index: 0; /* Behind search/input/cards, but in front of header */
+  pointer-events: none; /* Makes sure clicks go through the image */
 }
 
 
@@ -87,20 +106,26 @@
 
     .format-buttons {
   display: flex;
-  justify-content: center; /* This centers the buttons */
-  margin-top: -5px;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  margin-bottom: 10px;
 }
 
-.format-buttons button {
+
+.format-buttons button,
+.add-btn {
   background-color: #aca37e;
   border: 1px solid #ccc;
   border-radius: 6px;
-  padding: 4px 8px;
+  padding: 8px 12px;
   cursor: pointer;
-  margin: 5px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: bold;
+  width: 100px;
+  text-align: center;
 }
+
 
 
     .format-buttons button:hover {
@@ -127,6 +152,16 @@
       overflow: hidden;
       font-size: 13px;
     }
+	.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap; /* Allows wrapping on small screens */
+  align-items: center;
+}
+
 
     .add-btn {
       background-color: #aca37e;
@@ -137,6 +172,7 @@
       padding: 8px;
       font-weight: bold;
       font-size: 14px;
+	  z-index: 10;
     }
 
     .note-list {
@@ -154,6 +190,7 @@
       display: flex;
       flex-direction: column;
       transition: transform 0.2s ease;
+	  z-index: 10;
     }
 
     .note-card:hover {
@@ -277,6 +314,9 @@
   </style>
 </head>
 <body>
+
+<img src="plant2.png" alt="Vine" class="plant2-decoration" />
+
   <a href="home.html" class="home-btn">← Home</a>
 
   <div class="search-bar" id="searchBox">
@@ -289,13 +329,15 @@
     <div class="input-group">
       <input type="text" id="noteTitle" placeholder="Title" />
 	   <textarea id="noteText" placeholder="Write your explanation..."></textarea>
-      <div class="format-buttons">
-        <button type="button" onclick="wrapSelection('**')"><strong>Bold</strong></button>
-        <button type="button" onclick="wrapSelection('==')"><mark>Highlight</mark></button>
-      </div>
-      <input type="text" id="noteUrl" placeholder="Optional URL" />
-      <button class="add-btn" id="addBtn">Add Note</button>
-    </div>
+       <input type="text" id="noteUrl" placeholder="Optional URL" />
+	 <div class="action-buttons">
+  <div class="format-buttons">
+    <button type="button" onclick="wrapSelection('**')"><strong>Bold</strong></button>
+    <button type="button" onclick="wrapSelection('==')"><mark>Highlight</mark></button>
+  </div>
+  <button class="add-btn" id="addBtn">Add Note</button>
+</div>
+
     <div class="note-list" id="notesContainer"></div>
   </div>
 
