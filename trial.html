@@ -3,745 +3,646 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Xlyn</title>
+  <title>INFORMATIONS</title>
+  <style>
+    @font-face {
+      font-family: 'fors';
+      src: url('fors.ttf') format('truetype'); /* Adjust the path */
+    }
+
+    body {
+      margin: 0;
+      font-family: 'fors', sans-serif;
+      font-size: 16px;
+      background-color: #f3f2ee;
+      color: black;
+      overflow-x: hidden;
+    }
+	main {
+  position: relative;
+  z-index: 1000; /* Higher than vine */
+}
 
 
-<style>
-  /* Custom Fonts */
-  @font-face {
-    font-family: 'AdeliciaRegular';
-    src: url('AdeliciaRegular.ttf') format('truetype');
-  }
+    h1 {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  text-align: center;
+  font-size: 30px;
+  margin-top: 0px;
+  background-color: #ddb2b5;
+  padding: 20px 10px;
+}
+header h1 {
+  position: relative;
+  z-index: 9999;
+}
 
-  @font-face {
-    font-family: 'fors';
-    src: url('fors.ttf') format('truetype');
-  }
 
-  /* General Styles */
-  body {
-    margin: 0;
-    font-family: 'fors', sans-serif;
-    background: #fafbf4;
-    color: black;
-    font-size: 22px;
-  }
+.plant2-decoration {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 600px; /* Adjust size as needed */
+  z-index: 0; /* Behind search/input/cards, but in front of header */
+  pointer-events: none; /* Makes sure clicks go through the image */
+}
 
-  header {
-    padding: 30px 15px;
-    text-align: center;
-    background: #ddb2b5;
-    border-bottom: 1px solid #e5d6cd;
-    position: relative;
-    overflow: hidden;
-  }
 
-  header h1 {
-    font-size: 20px;
-  }
+    .home-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: #eae0da;
+      color: black;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 50px;
+      font-size: 14px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      transition: background-color 0.3s ease;
+    }
 
-  .pageTitle {
-    font-family: 'AdeliciaRegular', cursive, sans-serif;
-    font-size: 100px;
-    letter-spacing: 3px;
-    font-weight: normal;
-    color: black;
-  }
+    .home-btn:hover {
+      background-color: #aca37e;
+    }
 
-  .title {
-    font-family: 'Clicker Script', cursive;
-    font-size: 90px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    color: black;
-    margin: 0;
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-  }
-
-  .top-circles {
-    position: fixed;
-    top: 260px;
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    z-index: 1000;
-  }
-
-  .circle {
-    border-radius: 70%;
-    width: 80px;
-    height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 400;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-    padding: 8px;
-    box-sizing: border-box;
-    color: #333;
-  }
-
-  .circle:hover {
-    animation: pulse 1s infinite;
-  }
-
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.08); }
-    100% { transform: scale(1); }
-  }
-
-  .calendar { background-color: #e9cbcb; }
-  .patient  { background-color: #aca37e; }
-  .notes    { background-color: #ddc6b2; }
-  .timesheet{ background-color: #737958; }
-
-  .vitals-circle {
-    width: 80px;
-    height: 80px;
-    background-color: #f0ddd6;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: normal;
-    color: #333;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-  }
-
-  .vitals-circle:hover {
-    animation: pulse 1s infinite;
-  }
-
-  .vitals-circle span {
-    text-align: center;
-    color: #333;
-  }
-
-  #vital-signs-table {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #ececec;
-    border: 1px solid #ccc;
-    padding: 20px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    max-width: 90%;
-    overflow-x: auto;
-    font-family: 'fors', sans-serif;
-    font-size: 12px;
-  }
-
-  #vital-signs-table table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  #vital-signs-table th, td {
-    padding: 10px;
-    text-align: left;
-    border: 1px solid #ddd;
-  }
-
-  #vital-signs-table th {
-    background-color: #f7f7f7;
-  }
-
-  #close-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: #93b0ac;
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-  }
-
-  .top-links {
-    margin-top: 10px;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .top-links a {
-    padding: 4px 8px;
-    background-color: #f7f2ef;
-    color: black;
-    font-size: 12px;
-    font-family: 'fors', sans-serif;
-    border: 1px solid #d8cfc9;
-    border-radius: 5px;
-    text-decoration: none;
-    transition: background-color 0.3s, transform 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .top-links a:hover {
-    background-color: #e4c9b6;
-    transform: scale(1.05);
-  }
-
-  .icon-stack {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    z-index: 1;
-  }
-
-  .icon-stack img {
-    width: 50px;
-    height: 50px;
-    transition: transform 0.3s ease;
-  }
-
-  .icon-stack a:hover img {
-    transform: scale(1.1);
-  }
-
-  .top-boxes {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 1000;
-  }
-
-  .top-box {
-    background-color: #eae0da;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: bold;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    min-width: 120px;
-  }
-
-  .top-box:hover {
-    background-color: #e4c9b6;
-  }
-
-  .content {
-    padding: 100px 20px 20px 20px;
-  }
-
-  .layout {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px;
-  }
-
-  .main-content {
-    flex: 1;
-    max-width: 1000px;
-  }
-
-  h2 {
-    font-size: 20px;
-    font-weight: 400;
-    color: black;
-    margin-bottom: 16px;
-    border-bottom: 2px solid #e5d6cd;
-    display: inline-block;
-    padding-bottom: 4px;
-  }
-
-  .card-group {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
-  }
-
-  .card {
-    padding: 16px;
-    border-radius: 12px;
-    background: #f7f2ef;
-    border: 1px solid #e5d6cd;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 400;
-    color: black;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(180, 180, 180, 0.15);
-  }
-
-  footer {
-    text-align: center;
-    font-size: 12px;
-    color: #888;
-    margin: 40px 0;
-  }
-
-  .plant-decoration {
-    position: fixed;
-    z-index: 0;
-    pointer-events: none;
-    animation: gentleSway 6s ease-in-out infinite;
-  }
-
-  .plant-top-left {
-    top: 0;
-    left: 0;
-    width: 200px;
-    height: auto;
-  }
-
-  .plant-bottom-right {
-    bottom: 0;
-    right: 0;
-    width: 200px;
-    height: auto;
-    transform: scaleX(-1);
-  }
-
-  @keyframes gentleSway {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-2px) rotate(-1deg); }
-  }
-
-  .moving-text {
-    position: fixed;
-    top: 0;
-    left: 100%;
-    white-space: nowrap;
-    font-size: 14px;
-    font-weight: normal;
-    font-family: 'fors', sans-serif;
-    padding: 8px 16px;
-    border: none;
-    animation: moveText 20s linear infinite;
-    z-index: 1000;
-    color: black;
-  }
-
-  @keyframes moveText {
-    0% { left: -100%; }
-    100% { left: 100%; }
-  }
-
-  #quick-note-text {
-    background-color: #fff;
-    border: 2px solid #c9a87c;
-    padding: 8px;
-    border-radius: 8px;
-    font-family: 'fors', sans-serif;
-    font-size: 14px;
-    resize: vertical;
-    outline: none;
-    transition: border-color 0.3s ease;
-    width: 150%;
-    max-width: 500px;
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .layout {
-      flex-direction: column;
+    .search-bar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
       align-items: center;
+      gap: 6px;
     }
 
-    .pageTitle {
-      font-size: 60px;
+    .search-input {
+      width: 150px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      background-color: white;
     }
 
-    .icon-stack {
-      right: 5px;
-      top: 5px;
+    .container {
+      width: 100%;
+      padding: 20px 20px;
+      padding-top: 0px;
+      box-sizing: border-box;
+      max-width: 100vw;
     }
 
-    .icon-stack img {
-      width: 40px;
-      height: 40px;
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 20px;
     }
+
+    .format-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+
+}
+
+
+.format-buttons button,
+.add-btn {
+  background-color: #aca37e;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 4px 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: regular;
+  text-align: center;
+}
+
+
+
+    .format-buttons button:hover {
+      background-color: #737958;
+    }
+
+    input[type="text"],
+    textarea {
+	display: block;
+	  margin: 0.2rem auto;
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      width: 90%;
+	  max-width: 600px;
+      background-color: #f3f2ee;
+      font-family: Tahoma, sans-serif;
+      z-index: 1;
+
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+      overflow: hidden;
+      font-size: 13px;
+    }
+	.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap; /* Allows wrapping on small screens */
+  align-items: center;
+}
+
+
+    .add-btn {
+      background-color: #aca37e;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-weight: regular;
+      font-size: 14px;
+	  z-index: 10;
+    }
+
+    .note-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .note-card {
+      background-color: #f2f1ee;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease;
+	  z-index: 10;
+    }
+
+    .note-card:hover {
+      transform: scale(1.05);
+    }
+
+    .note-title {
+      font-weight: bold;
+      font-size: 14px;
+      color: black;
+      margin-bottom: 6px;
+    }
+
+    .note-text {
+      color: black;
+      font-size: 11px;
+      white-space: pre-wrap;
+      font-family: Tahoma, sans-serif;
+    }
+
+    .note-text strong {
+      font-weight: bold;
+    }
+
+    .note-text mark {
+      background-color: #fcf6bd;
+    }
+
+    .note-url a {
+      font-size: 12px;
+      color: brown;
+      word-break: break-word;
+      margin-top: 8px;
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: #777;
+      margin-top: 10px;
+    }
+
+    .btn-group {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-group button {
+      background-color: #aca37e;
+      color: white;
+      border: none;
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: regular;
+    }
+
+    .btn-group button:hover {
+      background-color: #aca37e;
+    }
+
+    .styled-link {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 8px;
+      background-color: #737958;
+      color: #d0a0a3 !important;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .styled-link:hover {
+      background-color: #737958;
+    }
+
+    .editor-buttons {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .editor-buttons button {
+      background-color: #aca37e;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .editor-buttons button:hover {
+      background-color: #eac7c7;
+    }
+	@media (max-width: 600px) {
+  h1 {
+    font-size: 22px;
+    padding-top: 60px; /* add spacing to prevent overlap */
   }
-</style>
 
+  .search-bar {
+    position: static;
+    margin: 10px 20px;
+    justify-content: center;
+  }
 
+  .home-btn {
+    position: static;
+    margin: 10px 20px;
+    display: inline-block;
+  }
+}
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  </style>
 </head>
-
 <body>
 
-<img src="plant-top-left.png" alt="Plant Top Left" class="plant-decoration plant-top-left">
-<img src="plant-bottom-right.png" alt="Plant Bottom Right" class="plant-decoration plant-bottom-right">
+<img src="plant2.png" alt="Vine" class="plant2-decoration" />
 
-<!-- Quick Note Floating Icon & Box -->
-<div id="quick-note-icon" style="
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  background-color: #dcc3b4;
-  color: black;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  font-size: 30px;
-  text-align: center;
-  line-height: 60px;
-  cursor: pointer;
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
-  z-index: 1000;
-" onclick="toggleQuickNote()">📝</div>
+  <a href="home.html" class="home-btn">← Home</a>
 
-<div id="quick-note-box" style="
-  display: none;
-  position: fixed;
-  bottom: 90px;
-  left: 20px;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-  padding: 10px;
-  width: 250px;
-  z-index: 1000;
-">
-    <textarea id="quick-note-text" placeholder="Type a quick note..." 
-  style="width: 90%; font-family: fors, sans-serif; font-size: 14px; overflow: hidden; resize: none;"
-  oninput="autoResize(this)"></textarea>
-  <button onclick="copyQuickNote()" style="margin-top: 8px; background-color: #e4c9b6; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer;">Copy</button>
+  <div class="search-bar" id="searchBox">
+    <input type="text" id="searchInput" class="search-input" placeholder="Search..." />
+  </div>
 
-<div id="copy-msg" style="display:none; color: gray; margin-top: 5px;">Notes copied!</div>
+  <h1>INFORMATIONS</h1>
 
+  <div class="container">
+    <div class="input-group">
+      <input type="text" id="noteTitle" placeholder="Title" />
+	   <textarea id="noteText" placeholder="Write your explanation..."></textarea>
+       <input type="text" id="noteUrl" placeholder="Optional URL" />
+	 <div class="action-buttons">
+  <div class="format-buttons">
+    <button type="button" onclick="wrapSelection('**')"><strong>Bold</strong></button>
+    <button type="button" onclick="wrapSelection('==')"><mark>Highlight</mark></button>
+  </div>
+  <button class="add-btn" id="addBtn">Add Note</button>
 </div>
 
-  <header>
-   <h1><span class="pageTitle">XlynEve</span></h1> <!-- Updated the title ID to match the CSS -->
-    <div class="top-links">
-      <a href="https://www.health.govt.nz/" target="_blank">🏥 Ministry of Health</a>
-      <a href="https://www.health.govt.nz/search?query=cold+chain" target="_blank">❄️ Cold Chain</a>
-      <a href="https://www.medsafe.govt.nz/medicines/infoSearch.asp" target="_blank">💊 Medsafe</a>
-      <a href="https://www.mymedicines.nz/" target="_blank">📋 My Medicines</a>
-      <a href="https://nzf.org.nz/" target="_blank">📚 NZ Formulary</a>
-      <a href="https://healthify.nz/" target=" blank">📙 Healthify</a>
-      <a href="https://www.immune.org.nz/" target=" blank">💉 IMAC</a>
-    </div>
-
-      <div class="top-circles">
-    <div class="circle calendar" onclick="location.href='homecal.html'">Calendar<br>To Do</div>
-    <div class="circle patient" onclick="location.href='forms.html'">Patient<br>Info</div>
-    <div class="circle notes" onclick="location.href='Notes.html'">Notes</div>
-    <div class="circle timesheet" onclick="window.open('https://onedrive.live.com/edit.aspx?cid=cd58075507480906&page=view&resid=CD58075507480906!660&parId=CD58075507480906!107&app=Excel', '_blank')">Timesheet</div>
-    <div class="vitals-circle" onclick="showTable()"> 
-	<span>Vitals</span>
-  </div>
+    <div class="note-list" id="notesContainer"></div>
   </div>
 
-  </header>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  <div class="layout">
-    <div class="main-content">
-      <h2>Home</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='OHcalc.html'">Drug Calculator</div>
-        <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
-        <div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
-        <div class="card" onclick="location.href='Calculator.html'">Calculator</div>
-        <div class="card" onclick="location.href='trial.html'">Trial</div>
-        
-	  </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.appspot.com",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    };
 
-      <h2>Notes</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
-        <div class="card" onclick="location.href='info.html'">Infos</div>
-        <div class="card" onclick="location.href='explain.html'">Explanation</div>
-        <div class="card" onclick="location.href='inteleviewer.html'">Inteleviewer</div>
-        <div class="card" onclick="location.href='INR Calc.html'">INR</div>
-        <div class="card" onclick="location.href='ECG.html'">ECG</div>
-        <div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
-        <div class="card" onclick="location.href='recalls.html'">Recalls</div>
-      </div>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let notes = [];
 
-      <h2>Urgent Care</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Directions</div>
-        <div class="card" onclick="location.href='face.html'">Head</div>
-        <div class="card" onclick="location.href='Hand.html'">Hand.Wrist</div>
-        <div class="card" onclick="location.href='Sha.html'">Shoulder.Elbow</div>
-        <div class="card" onclick="location.href='Abdo.html'">Thorax.Abdomen</div>
-        <div class="card" onclick="location.href='Spine.html'">Back.Spine</div>
-        <div class="card" onclick="location.href='LF.html'">Foot.Leg</div>
-        <div class="card" onclick="location.href='Urgent_Care.html'">Urgent Care</div>
-      </div>
+    // Wrap selected text with tags (for add form)
+    window.wrapSelection = function(tag) {
+      const textarea = document.getElementById('noteText');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      const newText = textarea.value.substring(0, start) + tag + selected + tag + textarea.value.substring(end);
+      textarea.value = newText;
+      textarea.focus();
+      textarea.setSelectionRange(start + tag.length, end + tag.length);
+    };
 
-      <!-- Emoji Search Icon -->
-      <img src="search-icon.png" alt="Search" id="emojiSearchIcon" style="position:fixed; bottom:20px; right:20px; width:30px; height:30px; cursor:pointer; z-index:1000;" />
-
-      <!-- Emoji Search Modal -->
-      <div id="emojiModal" style="display:none; position:fixed; bottom:60px; right:20px; background:#fff; padding:12px; border:1px solid #ccc; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000;">
-        <input type="text" id="emojiSearchInput" placeholder="Search emoji..." style="padding:6px; width:160px; font-size:14px;" />
-        <div id="emojiResults" style="margin-top:8px; font-size:18px; max-height:150px; overflow-y:auto;"></div>
-      </div>
-
-  <div class="moving-text">💡 Reminder: Stay organized and check your calendar!</div>
-
-  
-
-    <!-- Vital Signs Table -->
-    <div id="vital-signs-table">
-        <button id="close-btn" onclick="closeTable()">Close</button>
-        <h2>Normal Vital Signs by Age Group</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Age Group</th>
-                    <th>Heart Rate</th>
-                    <th>Respiratory Rate</th>
-                    <th>Blood Pressure</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Newborn (0-1 month)</td>
-                    <td>120-160 bpm</td>
-                    <td>30-60 breaths/min</td>
-                    <td>60-90 / 30-60 mmHg</td>
-                </tr>
-                <tr>
-                    <td>Infant (1-12 months)</td>
-                    <td>100-160 bpm</td>
-                    <td>30-40 breaths/min</td>
-                    <td>70-100 / 50-70 mmHg</td>
-                </tr>
-                <tr>
-                    <td>Child (1-5 years)</td>
-                    <td>70-120 bpm</td>
-                    <td>20-30 breaths/min</td>
-                    <td>80-110 / 50-70 mmHg</td>
-                </tr>
-                <tr>
-                    <td>School-age (6-12 years)</td>
-                    <td>70-110 bpm</td>
-                    <td>18-30 breaths/min</td>
-                    <td>90-120 / 60-80 mmHg</td>
-                </tr>
-                <tr>
-                    <td>Adolescent (13-18 years)</td>
-                    <td>60-100 bpm</td>
-                    <td>12-16 breaths/min</td>
-                    <td>100-120 / 60-80 mmHg</td>
-                </tr>
-                <tr>
-                    <td>Adult (19-60 years)</td>
-                    <td>60-100 bpm</td>
-                    <td>12-20 breaths/min</td>
-                    <td>110-120 / 70-80 mmHg</td>
-                </tr>
-                <tr>
-                    <td>Older Adult (60+ years)</td>
-                    <td>60-100 bpm</td>
-                    <td>12-16 breaths/min</td>
-                    <td>90-120 / 60-80 mmHg</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-  
-      <footer>© 2025 Xlyn Notes Board</footer>
-    </div>
-  </div>
-
-  <script>
-  
-   // Function to show the vital signs table
-        function showTable() {
-            document.getElementById('vital-signs-table').style.display = 'block';
-        }
-
-        // Function to close the vital signs table
-        function closeTable() {
-            document.getElementById('vital-signs-table').style.display = 'none';
-        }
-		
-    const emojiData = [
-      { name: 'smile', symbol: '😊' },
-      { name: 'laugh', symbol: '😂' },
-      { name: 'tick', symbol: '✅' },
-      { name: 'heart', symbol: '❤️' },
-      { name: 'star', symbol: '⭐️' },
-      { name: 'fire', symbol: '🔥' },
-      { name: 'ok', symbol: '👌' },
-      { name: 'thumbs up', symbol: '👍' },
-      { name: 'check', symbol: '✔️' },
-      { name: 'woman', symbol: '🙍🏻‍♀️' },
-      { name: 'man', symbol: '🙍' },
-      { name: 'yellow', symbol: '🟡' },
-      { name: 'tree', symbol: '🌴' },
-      { name: 'injection', symbol: '💉' },
-      { name: 'money', symbol: '🤑' },
-      { name: 'nurse', symbol: '👩🏻‍⚕️' },
-      { name: 'one', symbol: '1️⃣' },
-      { name: 'two', symbol: '2️⃣' },
-      { name: 'arrow', symbol: '➡️' },
-      { name: 'leaf', symbol: '🍂' },
-      { name: 'loud', symbol: '📢' },
-      { name: 'red', symbol: '🔴' },
-      { name: 'alert', symbol: '⚠️' },
-      { name: 'red', symbol: '‼️' },  
-      { name: 'plane', symbol: '✈️' },
-      { name: 'vacay', symbol: '🏖️' },
-      { name: 'med', symbol: '💊' },
-       { name: 'X', symbol: '❌' },
-       { name: 'nurse', symbol: '🙅🏻‍♀️' },
-       { name: 'mum', symbol: '🤰🏻' },
-       { name: 'flower', symbol: '🌸' },
-       { name: 'flower', symbol: '🌼' },
-       { name: 'flower', symbol: '🌻' },
-       { name: 'earth', symbol: '🌎' },
-       { name: 'sun', symbol: '☀️' },
-       { name: 'moon', symbol: '🌛' },
-       { name: 'food', symbol: '🍔' },
-       { name: 'puzzle', symbol: '🧩' },
-       { name: 'car', symbol: '🚗' },
-       { name: 'hospital', symbol: '🏥' },
-       { name: 'computer', symbol: '🖥️' },
-      { name: 'time', symbol: '⏰' },
-      { name: 'dollar', symbol: '💰' },
-      { name: 'diamond', symbol: '💎' },
-      { name: 'virus', symbol: '🦠' },
-      { name: 'temp', symbol: '🌡️' },
-      { name: 'blood', symbol: '🩸' },
-      { name: 'stet', symbol: '🩺' },
-      { name: 'pencil', symbol: '✏️' },
-      { name: 'pin', symbol: '📌' },
-      { name: 'pen', symbol: '🖋️' },
-      { name: 'lock', symbol: '🔒' },
-      { name: 'book', symbol: '📙' },
-      { name: 'bullet', symbol: '▪️' },
-      { name: 'bullet2', symbol: '🔸' },
-      { name: 'headset', symbol: '🎧' },
-      { name: 'calendar', symbol: '📅' },
-      { name: 'ambulance', symbol: '🚑' },
-      { name: 'hospital', symbol: '🏥' },
-      { name: 'phone', symbol: '☎️' },
-      { name: 'phone1', symbol: '📞' },
-      { name: 'dollar', symbol: '💵' },      
-      { name: 'pin', symbol: '📍' },      
-      { name: 'tickbox', symbol: '☐' },
-      { name: 'okay', symbol: '🆗' },      
-      { name: 'dollarsign', symbol: '💲' },     
-      
-      
-      
-    ];
-
-    const modal = document.getElementById("emojiModal");
-    const input = document.getElementById("emojiSearchInput");
-    const results = document.getElementById("emojiResults");
-
-    document.getElementById("emojiSearchIcon").addEventListener("click", () => {
-      modal.style.display = modal.style.display === "none" ? "block" : "none";
-      input.focus();
-    });
-
-    input.addEventListener("input", () => {
-      const term = input.value.toLowerCase();
-      const matches = emojiData.filter(e => e.name.includes(term));
-      results.innerHTML = matches.map(e =>
-        `<span style="cursor:pointer; margin:3px;" onclick="copyToClipboard('${e.symbol}')">${e.symbol}</span>`
-      ).join("");
-    });
-
-    function copyToClipboard(emoji) {
-      const textarea = document.createElement('textarea');
-      textarea.value = emoji;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      alert(`Copied: ${emoji}`);
+    // Wrap selected text inside editor textarea (in edit mode)
+    function wrapSelectionEditor(button, tag) {
+      const container = button.closest('.note-card');
+      const textarea = container.querySelector('textarea');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.substring(start, end);
+      const newText = textarea.value.substring(0, start) + tag + selected + tag + textarea.value.substring(end);
+      textarea.value = newText;
+      textarea.focus();
+      textarea.setSelectionRange(start + tag.length, end + tag.length);
+      autoResizeTextarea(textarea);
     }
-  </script>
-   <script>
-    // Get the elements for the notification and Done button
-    const alertElement = document.getElementById("todoAlert");
-    const doneButton = document.getElementById("doneButton");
 
-    // Set a timer to show the notification (if you want it to appear after page load or some event)
-    setTimeout(() => {
-      alertElement.style.display = 'block'; // Show the notification
-    }, 1000); // Adjust the time delay if needed
+    // Auto resize textarea
+    function autoResizeTextarea(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
 
-    // Hide the notification when the Done button is clicked
-    doneButton.addEventListener("click", () => {
-      alertElement.style.display = 'none'; // Hide the notification
+    // Add new note
+    document.getElementById('addBtn').addEventListener('click', async () => {
+      const title = document.getElementById('noteTitle').value.trim();
+      const text = document.getElementById('noteText').value.trim();
+      const url = document.getElementById('noteUrl').value.trim();
+
+      if (!title || !text) {
+        alert("Please fill in both Title and Explanation.");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "informationNotes"), {
+          title,
+          text,
+          url,
+          timestamp: Date.now()
+        });
+        document.getElementById('noteTitle').value = '';
+        document.getElementById('noteText').value = '';
+        document.getElementById('noteUrl').value = '';
+      } catch (error) {
+        alert("Error adding note: " + error.message);
+      }
     });
-  </script>
- <style>
-  @font-face {
-    font-family: 'Fors';
-    src: url('fonts/fors.ttf') format('truetype');
 
+    // Listen for real-time updates
+    const notesContainer = document.getElementById('notesContainer');
+    onSnapshot(collection(db, "informationNotes"), (snapshot) => {
+      notes = [];
+      snapshot.forEach(docSnap => {
+        notes.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      renderNotes(notes);
+    });
+
+    // Render notes
+    function renderNotes(notesArray) {
+      notesContainer.innerHTML = '';
+
+      if (notesArray.length === 0) {
+        notesContainer.innerHTML = '<p>No notes found.</p>';
+        return;
+      }
+
+      for (const note of notesArray) {
+        const card = document.createElement('div');
+        card.className = 'note-card';
+        card.dataset.id = note.id;
+
+        // Show title & URL
+        const titleEl = document.createElement('div');
+        titleEl.className = 'note-title';
+        titleEl.textContent = note.title;
+
+        const urlEl = document.createElement('div');
+        urlEl.className = 'note-url';
+        if (note.url) {
+          const link = document.createElement('a');
+          link.href = note.url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.textContent = 'URL Link';
+          link.className = 'styled-link';
+          urlEl.appendChild(link);
+        }
+
+        // Explanation display and editor
+        const textDisplay = document.createElement('div');
+        textDisplay.className = 'note-text';
+        textDisplay.innerHTML = parseMarkdown(note.text);
+
+        const textEditor = document.createElement('textarea');
+        textEditor.style.display = 'none';
+        textEditor.value = note.text;
+        textEditor.style.fontFamily = 'Tahoma, sans-serif';
+        textEditor.style.fontSize = '11px';
+        textEditor.style.width = '100%';
+        textEditor.style.borderRadius = '8px';
+        textEditor.style.border = '1px solid #ccc';
+        textEditor.style.padding = '6px';
+        textEditor.rows = 4;
+        textEditor.addEventListener('input', () => autoResizeTextarea(textEditor));
+
+        // Auto resize initially
+        autoResizeTextarea(textEditor);
+
+        // Timestamp
+        const timeEl = document.createElement('div');
+        timeEl.className = 'timestamp';
+        timeEl.textContent = `Added: ${new Date(note.timestamp).toLocaleString()}`;
+
+        // Buttons container
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'btn-group';
+
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.title = 'Edit this note';
+        editBtn.onclick = () => toggleEdit(card, true);
+
+        // Save button
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        saveBtn.title = 'Save changes';
+        saveBtn.style.display = 'none';
+        saveBtn.onclick = () => saveEdit(card);
+
+        // Cancel button
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.title = 'Cancel editing';
+        cancelBtn.style.display = 'none';
+        cancelBtn.onclick = () => toggleEdit(card, false);
+
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.title = 'Delete this note';
+        deleteBtn.onclick = () => deleteNote(note.id);
+
+        // Copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy';
+        copyBtn.title = 'Copy explanation text';
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(note.text).then(() => {
+            alert('Explanation copied to clipboard');
+          });
+        };
+
+        btnGroup.append(editBtn, saveBtn, cancelBtn, deleteBtn, copyBtn);
+
+        // Editor formatting buttons
+        const editorFormatButtons = document.createElement('div');
+        editorFormatButtons.className = 'editor-buttons';
+        editorFormatButtons.style.display = 'none';
+
+        const boldBtn = document.createElement('button');
+        boldBtn.textContent = 'Bold';
+        boldBtn.title = 'Wrap selected text with **bold**';
+        boldBtn.onclick = () => wrapSelectionEditor(boldBtn, '**');
+
+        const highlightBtn = document.createElement('button');
+        highlightBtn.textContent = 'Highlight';
+        highlightBtn.title = 'Wrap selected text with ==highlight==';
+        highlightBtn.onclick = () => wrapSelectionEditor(highlightBtn, '==');
+
+        editorFormatButtons.append(boldBtn, highlightBtn);
+
+        // Append all elements
+        card.append(titleEl, urlEl, textDisplay, textEditor, editorFormatButtons, timeEl, btnGroup);
+        notesContainer.appendChild(card);
+      }
+    }
+      
+    // Toggle edit mode
+    function toggleEdit(card, editing) {
+  const textDisplay = card.querySelector('.note-text');
+  const textEditor = card.querySelector('textarea');
+  const editBtn = card.querySelector('button[title="Edit this note"]');
+  const saveBtn = card.querySelector('button[title="Save changes"]');
+  const cancelBtn = card.querySelector('button[title="Cancel editing"]');
+  const editorFormatButtons = card.querySelector('.editor-buttons');
+
+  if (editing) {
+    textDisplay.style.display = 'none';
+    textEditor.style.display = 'block';
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-block';
+    cancelBtn.style.display = 'inline-block';
+    editorFormatButtons.style.display = 'flex';
+    autoResizeTextarea(textEditor);
+  } else {
+    textDisplay.style.display = 'block';
+    textEditor.style.display = 'none';
+    editBtn.style.display = 'inline-block';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+    editorFormatButtons.style.display = 'none';
   }
-</style>
-
-
-<script>
-  function copyQuickNote() {
-    const note = document.getElementById("quickNote");
-    note.select();
-    note.setSelectionRange(0, 99999);
-    document.execCommand("copy");
-
-    const status = document.getElementById("copyStatus");
-    status.textContent = "Copied!";
-    setTimeout(() => { status.textContent = ""; }, 2000);
-  }
-</script>
-<script>
-function toggleQuickNote() {
-  const box = document.getElementById('quick-note-box');
-  box.style.display = box.style.display === 'none' ? 'block' : 'none';
 }
 
-function autoResize(textarea) {
-  textarea.style.height = 'auto'; // Reset height
-  textarea.style.height = textarea.scrollHeight + 'px'; // Set new height
-}
+    // Save edits
+    async function saveEdit(card) {
+      const id = card.dataset.id;
+      const textEditor = card.querySelector('textarea');
+      const newText = textEditor.value.trim();
 
-   function copyQuickNote() {
-    const noteText = document.getElementById('quick-note-text').value;
-    if (!noteText) return;
+      if (!newText) {
+        alert("Explanation text cannot be empty.");
+        return;
+      }
 
-    navigator.clipboard.writeText(noteText).then(() => {
-      const msg = document.getElementById('copy-msg');
-      msg.style.display = 'inline';
-      setTimeout(() => {
-        msg.style.display = 'none';
-      }, 2000);
-    }).catch(err => {
-      console.error('Failed to copy text: ', err);
+      try {
+        const noteRef = doc(db, "informationNotes", id);
+        await updateDoc(noteRef, { text: newText });
+        toggleEdit(card, false);
+      } catch (error) {
+        alert("Failed to save note: " + error.message);
+      }
+    }
+
+    // Delete note
+    async function deleteNote(id) {
+      if (confirm("Are you sure you want to delete this note?")) {
+        try {
+          await deleteDoc(doc(db, "informationNotes", id));
+        } catch (error) {
+          alert("Failed to delete note: " + error.message);
+        }
+      }
+    }
+
+    // Simple markdown parser for **bold** and ==highlight==
+    function parseMarkdown(text) {
+      if (!text) return '';
+      let escapedText = escapeHtml(text);
+      // Replace bold **text**
+      escapedText = escapedText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // Replace highlight ==text==
+      escapedText = escapedText.replace(/==(.+?)==/g, '<mark>$1</mark>');
+      // Replace new lines with <br>
+      escapedText = escapedText.replace(/\n/g, '<br>');
+      return escapedText;
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Filter notes on search
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const val = e.target.value.toLowerCase();
+      const filtered = notes.filter(n => {
+        return n.title.toLowerCase().includes(val) || n.text.toLowerCase().includes(val);
+      });
+      renderNotes(filtered);
     });
-  }
-</script>
-
+  </script>
 </body>
 </html>
