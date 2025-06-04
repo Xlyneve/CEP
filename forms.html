@@ -12,12 +12,29 @@
   font-style: normal;
 }
 
-    body { 
-      font-family: fors, sans-serif; 
-      padding: 60px 20px 20px 20px; 
-      background: #f7f5eb; 
-      position: relative;
-    }
+    body {
+  font-family: fors, sans-serif; 
+  padding: 60px 20px 20px 20px; 
+  position: relative;
+  background: white; /* fallback color */
+  z-index: 0;
+}
+
+/* Add a faded background image overlay */
+body::before {
+  content: "";
+  position: fixed;  /* stays fixed behind content */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url('fleaves.png') no-repeat center center fixed;
+  background-size: cover;
+  opacity: 0.6;  /* adjust this value for fade, lower = more faded */
+  z-index: -1;   /* behind everything */
+  pointer-events: none; /* so it doesn't block clicks */
+}
+
     .form-group { margin-bottom: 10px; }
     button { margin-right: 5px; }
 
@@ -25,7 +42,7 @@
       position: absolute;
       top: 10px;
       padding: 8px 12px;
-      background: #e4c9b6;
+      background: #e9cbcb;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
@@ -34,7 +51,7 @@
       transition: background 0.3s;
     }
     .top-left:hover, .top-right:hover {
-      background: #eae0da;
+      background: #aca37e;
     }
     .top-left { left: 10px; }
     .top-right { right: 10px; }
@@ -82,10 +99,23 @@
       margin-top: 10px;
     }
     .file-buttons button {
-      margin: 3px 2px;
-      padding: 5px 10px;
-      font-size: 14px;
-    }
+  background: #e9cbcb;
+  border: none;
+  margin: 3px 2px;
+  padding: 4px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  color: #333;
+  border-radius: 12px; /* more rounded corners */
+  transition: background-color 0.3s ease;
+}
+
+.file-buttons button:hover {
+  background-color: #aca37e;
+  color: white;
+}
+
+
   </style>
 </head>
 <body>
@@ -168,7 +198,6 @@
             <small><button onclick="window.open('${data.url}', '_blank')" style="padding:4px 8px; background:#f8edeb; border:none; border-radius:6px; cursor:pointer;">Visit Link</button></small>
           </div>
           <div class="file-buttons">
-            <button onclick="window.open('${data.url}', '_blank')">Open</button>
             <button onclick="editURL('${doc.id}', '${data.title.replace(/'/g, "\\'")}', '${data.note.replace(/'/g, "\\'")}')">Edit</button>
             <button onclick="deleteURL('${doc.id}')">Delete</button>
           </div>
