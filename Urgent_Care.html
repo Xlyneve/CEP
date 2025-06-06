@@ -68,14 +68,29 @@
         const card = document.createElement("div");
         card.className = "note-card";
 
+card.addEventListener("click", () => {
+  // Toggle zoom
+  document.querySelectorAll('.note-card.clicked').forEach(c => {
+    if (c !== card) c.classList.remove('clicked');
+  });
+  card.classList.toggle("clicked");
+});
+
         if (data.image) {
           const img = document.createElement("img");
           img.src = data.image;
           img.alt = "Note Image";
           img.className = "note-image";
-          img.addEventListener("click", () => {
-            img.classList.toggle("zoomed");
-          });
+          img.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const alreadyZoomed = img.classList.contains("zoomed");
+  document.querySelectorAll(".note-image.zoomed").forEach(el => el.classList.remove("zoomed"));
+  document.getElementById("image-overlay").style.display = alreadyZoomed ? "none" : "block";
+  if (!alreadyZoomed) {
+    img.classList.add("zoomed");
+  }
+});
+
           card.appendChild(img);
         }
 
@@ -134,6 +149,12 @@
       const searchVal = document.getElementById("search").value;
       loadNotes(searchVal);
     };
+	
+	window.unzoomImage = () => {
+  document.querySelectorAll(".note-image.zoomed").forEach(img => img.classList.remove("zoomed"));
+  document.getElementById("image-overlay").style.display = "none";
+};
+
   </script>
   <style>
     body {
@@ -255,9 +276,17 @@
       word-wrap: break-word;
     }
   
-    .note-card:hover {
-      transform: scale(1.20);
-    }
+    ..note-card:hover {
+  /* Disable hover zoom */
+  transform: none;
+}
+
+.note-card.clicked {
+  transform: scale(1.2);
+  transition: transform 0.3s ease;
+  z-index: 10;
+}
+
 
     .note-image {
       max-width: 100%;
@@ -268,20 +297,35 @@
     }
 
     .note-image.zoomed {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      max-width: 90vw;
-      max-height: 90vh;
-      width: auto;
-      height: auto;
-      z-index: 1000;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
-      background: white;
-      border-radius: 12px;
-      cursor: zoom-out;
-    }
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  z-index: 2000;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  background: white;
+  border-radius: 12px;
+  cursor: zoom-out;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+
+}
+#image-overlay {
+  display: none;
+  position: fixed;
+  z-index: 1500;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  transition: opacity 0.3s ease;
+
+}
+
 
     .note-text {
       font-family: 'fors', sans-serif;
@@ -334,5 +378,6 @@
     <button onclick="saveNote()">Save Note</button>
     <div id="notes"></div>
   </div>
+  <div id="image-overlay" onclick="unzoomImage()"></div>
 </body>
 </html>
