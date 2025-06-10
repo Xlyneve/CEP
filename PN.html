@@ -504,6 +504,31 @@ html, body {
     });
   }
 
+  // Search/filter notes live by title or content
+  function searchNotes(event) {
+    const query = event.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.note-card');
+
+    cards.forEach(card => {
+      const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
+      const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
+
+      if (title.includes(query) || content.includes(query)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Add event listener for search input after DOM loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keyup', searchNotes);
+    }
+  });
+
   // Expose to window if needed
   window.addNote = addNote;
   window.deleteNote = deleteNote;
@@ -514,5 +539,6 @@ html, body {
   // Initial load
   renderNotes();
 </script>
+
 </body>
 </html>
