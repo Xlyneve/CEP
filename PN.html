@@ -318,43 +318,58 @@ html, body {
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const notesCol = collection(db, "nurseNotes");
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const notesCol = collection(db, "nurseNotes");
 
   async function addNote() {
-  const title = nurseTitle.value.trim();
-  const note = nurseNote.value.trim();
-  const url = nurseURL.value.trim();
-  const fileInput = document.getElementById('nurseImage');
-  const file = fileInput.files[0];
+    const title = nurseTitle.value.trim();
+    const note = nurseNote.value.trim();
+    const url = nurseURL.value.trim();
+    const fileInput = document.getElementById('nurseImage');
+    const file = fileInput.files[0];
 
-  let imageBase64 = "";
+    let imageBase64 = "";
 
-  if (file) {
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      imageBase64 = reader.result;
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        imageBase64 = reader.result;
 
+        await addDoc(notesCol, {
+          title: title || "Untitled",
+          note,
+          url: url || "",
+          image: imageBase64,
+          time: new Date().toISOString()
+        });
+
+        nurseTitle.value = '';
+        nurseNote.value = '';
+        nurseURL.value = '';
+        nurseImage.value = '';
+      };
+      reader.readAsDataURL(file);
+    } else {
       await addDoc(notesCol, {
         title: title || "Untitled",
         note,
         url: url || "",
-        image: imageBase64,
+        image: "",
         time: new Date().toISOString()
       });
 
@@ -362,147 +377,142 @@ html, body {
       nurseNote.value = '';
       nurseURL.value = '';
       nurseImage.value = '';
+    }
+  }
+
+  async function deleteNote(id) {
+    if (confirm("Delete this note?")) {
+      await deleteDoc(doc(db, "nurseNotes", id));
+    }
+  }
+
+  async function saveEdit(id, updatedTitle, updatedNote) {
+    await updateDoc(doc(db, "nurseNotes", id), {
+      title: updatedTitle || "Untitled",
+      note: updatedNote
+    });
+  }
+
+  // Helper to escape HTML special characters
+  function escapeHtml(text) {
+    return text.replace(/&/g, "&amp;")
+               .replace(/</g, "&lt;")
+               .replace(/>/g, "&gt;")
+               .replace(/"/g, "&quot;")
+               .replace(/'/g, "&#039;");
+  }
+
+  function enableEditing(card, id, title, note) {
+    card.innerHTML = `
+      <input type="text" class="edit-title" value="${escapeHtml(title)}" style="width:100%; margin-bottom:6px; padding:4px; font-family: Tahoma, sans-serif; font-size: 10px;" />
+      <textarea class="edit-note" style="width:100%; min-height:60px; padding:4px; resize:none; font-family: Tahoma, sans-serif; font-size: 10px;">${escapeHtml(note)}</textarea>
+      <div class="editor-buttons" style="margin-top:6px;">
+        <button class="btn-save">Save</button>
+        <button class="btn-cancel">Cancel</button>
+        <button class="btn-bold">Bold</button>
+        <button class="btn-highlight">Highlight</button>
+      </div>
+    `;
+
+    const inputTitle = card.querySelector('.edit-title');
+    const textareaNote = card.querySelector('.edit-note');
+    const btnSave = card.querySelector('.btn-save');
+    const btnCancel = card.querySelector('.btn-cancel');
+    const btnBold = card.querySelector('.btn-bold');
+    const btnHighlight = card.querySelector('.btn-highlight');
+
+    // Auto-resize textarea
+    const autoResize = () => {
+      textareaNote.style.height = 'auto';
+      textareaNote.style.height = textareaNote.scrollHeight + 'px';
     };
-    reader.readAsDataURL(file);
-  } else {
-    await addDoc(notesCol, {
-      title: title || "Untitled",
-      note,
-      url: url || "",
-      image: "",
-      time: new Date().toISOString()
+    textareaNote.addEventListener('input', autoResize);
+    autoResize();
+
+    btnSave.addEventListener('click', async () => {
+      const updatedTitle = inputTitle.value.trim() || "Untitled";
+      const updatedNote = textareaNote.value.trim();
+
+      await saveEdit(id, updatedTitle, updatedNote);
+      renderNotes();
     });
 
-    nurseTitle.value = '';
-    nurseNote.value = '';
-    nurseURL.value = '';
-    nurseImage.value = '';
+    btnCancel.addEventListener('click', () => {
+      renderNotes();
+    });
+
+    btnBold.addEventListener('click', () => {
+      const start = textareaNote.selectionStart;
+      const end = textareaNote.selectionEnd;
+      if (start === end) return;
+      const selected = textareaNote.value.substring(start, end);
+      textareaNote.setRangeText(`**${selected}**`, start, end, 'end');
+      autoResize();
+    });
+
+    btnHighlight.addEventListener('click', () => {
+      const start = textareaNote.selectionStart;
+      const end = textareaNote.selectionEnd;
+      if (start === end) return;
+      const selected = textareaNote.value.substring(start, end);
+      textareaNote.setRangeText(`====${selected}====`, start, end, 'end');
+      autoResize();
+    });
   }
-}
 
-    async function deleteNote(id) {
-      if (confirm("Delete this note?")) {
-        await deleteDoc(doc(db, "nurseNotes", id));
-      }
-    }
+  function renderNotes() {
+    const list = document.getElementById('nurseNotesList');
+    onSnapshot(notesCol, snapshot => {
+      // Clear current notes
+      list.innerHTML = '';
+      snapshot.forEach(docSnap => {
+        const { title, note, time, url, image } = docSnap.data();
+        const id = docSnap.id;
 
-    async function saveEdit(id, titleInput, noteTextarea) {
-      const updatedTitle = titleInput.value.trim();
-      const updatedNote = noteTextarea.value.trim();
+        // Replace highlight and bold markers for display
+        const displayNote = note.replace(/====(.*?)====/g, '<span class="highlight">$1</span>');
+        const displayBoldNote = displayNote.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-      // Save to Firebase Firestore
-      await updateDoc(doc(db, "nurseNotes", id), {
-        title: updatedTitle || "Untitled",
-        note: updatedNote
-      });
+        const div = document.createElement('div');
+        div.className = 'note-card';
+        div.innerHTML = `
+          <div class="note-title">${title}</div>
+          <div class="note-content">${displayBoldNote.replace(/\n/g, '<br>')}</div>
+          ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
+          <div style="font-size:11px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
+          ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
+          <div class="note-actions">
+            <button class="edit-btn">Edit</button>
+            <button class="delete-btn">Delete</button>
+          </div>
+        `;
 
-      renderNotes(); // Refresh notes after saving
-    }
+        // Add event listeners for Edit and Delete buttons
+        const editBtn = div.querySelector('.edit-btn');
+        const deleteBtn = div.querySelector('.delete-btn');
 
-    function enableEditing(card, id, title, note) {
-  const sanitizedNote = note; // Do NOT remove <mark> or any other HTML
-
-  card.innerHTML = `
-    <input type="text" value="${title}" style="width: 100%; margin-bottom: 6px; padding: 4px; font-family: Tahoma, sans-serif; font-size 10px;" />
-    <textarea style="width: 100%; min-height: 60px; padding: 4px; resize: none; overflow:hidden; font-family: Tahoma, sans-serif; font-size: 10px;">${sanitizedNote}</textarea>
-    <div class="editor-buttons">
-      <button onclick="saveEdit('${id}', this.parentElement.parentElement.querySelector('input'), this.parentElement.parentElement.querySelector('textarea'))">Save</button>
-      <button onclick="renderNotes()">Cancel</button>
-      <button onclick="applyBold(this)">Bold</button>
-      <button onclick="applyHighlight(this)">Highlight</button>
-    </div>
-  `;
-
-  const textarea = card.querySelector('textarea');
-
-  // Function to auto-resize the textarea
-  const autoResize = () => {
-    textarea.style.height = 'auto'; // Reset height
-    textarea.style.height = textarea.scrollHeight + 'px'; // Set to scroll height
-  };
-
-  textarea.addEventListener('input', autoResize);
-  autoResize(); // Initial resize
-}
-
-    function applyBold(btn) {
-      const textarea = btn.parentElement.parentElement.querySelector("textarea");
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = textarea.value.substring(start, end);
-      if (!selected) return;
-
-      const newText = textarea.value.substring(0, start) + `**${selected}**` + textarea.value.substring(end);
-      textarea.value = newText;
-    }
-
-    function applyHighlight(btn) {
-      const textarea = btn.parentElement.parentElement.querySelector("textarea");
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = textarea.value.substring(start, end);
-      if (!selected) return;
-
-      const newText = textarea.value.substring(0, start) + `====${selected}====` + textarea.value.substring(end);
-      textarea.value = newText;
-    }
-
-    function renderNotes() {
-      const list = document.getElementById('nurseNotesList');
-      onSnapshot(notesCol, snapshot => {
-        console.log('Data fetched from Firestore:', snapshot.docs.map(doc => doc.data())); // Check the data
-        list.innerHTML = '';
-        snapshot.forEach(docSnap => {
-          const { title, note, time, url, image } = docSnap.data();
-          const id = docSnap.id;
-
-          // Replace '====' markers with highlight style
-          const displayNote = note.replace(/====(.*?)====/g, '<span class="highlight">$1</span>');
-          const displayBoldNote = displayNote.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-          const div = document.createElement('div');
-          div.className = 'note-card';
-          div.innerHTML = `
-            <div class="note-title">${title}</div>
-            <div class="note-content">${displayBoldNote.replace(/\n/g, '<br>')}</div>
-           ${image ? `<img src="${image}" style="max-width:100%;margin-top:10px;border-radius:6px;" />` : ""}
-
-		   <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
-            ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
-            <div class="note-actions">
-              <button onclick="enableEditing(this.closest('.note-card'), '${id}', \`${title.replace(/`/g, "\\`")}\`, \`${note.replace(/`/g, "\\`")}\`)">Edit</button>
-              <button onclick="deleteNote('${id}')">Delete</button>
-	    </div>
-          `;
-          list.appendChild(div);
+        editBtn.addEventListener('click', () => {
+          enableEditing(div, id, title, note);
         });
+
+        deleteBtn.addEventListener('click', () => {
+          deleteNote(id);
+        });
+
+        list.appendChild(div);
       });
-    }
+    });
+  }
 
-    window.addNote = addNote;
-    window.deleteNote = deleteNote;
-    window.saveEdit = saveEdit;
-    window.enableEditing = enableEditing;
-    window.applyBold = applyBold;
-    window.applyHighlight = applyHighlight;
+  // Expose to window if needed
+  window.addNote = addNote;
+  window.deleteNote = deleteNote;
+  window.saveEdit = saveEdit;
+  window.enableEditing = enableEditing;
+  window.renderNotes = renderNotes;
 
-    window.searchNotes = function (event) {
-      const query = event.target.value.toLowerCase();
-      const cards = document.querySelectorAll('.note-card');
-
-      cards.forEach(card => {
-        const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
-        const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
-
-        if (title.includes(query) || content.includes(query)) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    };
-
-    renderNotes();
-  </script>
+  // Initial load
+  renderNotes();
+</script>
 </body>
 </html>
