@@ -8,265 +8,297 @@
    <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
    
   <style>
-  @font-face {
+@font-face {
   font-family: 'hellohon';
   src: url('hellohon.otf') format('opentype');
 }
- @font-face {
+@font-face {
   font-family: 'champb';
   src: url('champb.ttf') format('truetype');
- }
-    body {
-      margin: 0;
-      font-family: 'champb', sans-serif;
-      font-size: 10pt;
-      background-color: #f8f2ef;
-      display: flex;
-	  flex-wrap: wrap;
-      height: 100vh;
-    }
-    .calendar-container {
-      width: 65%;
-      background-color: #ececec;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      position: relative;
-      border-right: 2px solid #C1B6A3;
-      border-radius: 12px 0 0 12px;
-      transition: box-shadow 0.3s ease;
-    }
-    .calendar-container:hover {
-      box-shadow: inset 0 0 10px #C1B6A3;
-    }
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .calendar-header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .calendar-header h2#monthLabel {
-      font-size: 50pt;
-      margin: 0;
-      color: Black;
-	  font-family: 'hellohon', cursive; sans-serif;
-    }
-    .calendar-header button,
-    .calendar-header select {
-      padding: 4px 8px;
-      font-size: 10pt;
-      background-color: #ddd3d2;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      color: black;
-    }
-    .calendar-header button:hover,
-    .calendar-header select:hover {
-      background-color: #ddd3d2;
-    }
-    .home-button {
-      padding: 4px 8px;
-      background-color: #ddd3d2;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 8pt;
-      color: white;
-    }
-    .home-button:hover {
-      background-color: #a89f8b;
-    }
-    .day-headers {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      margin-top: 10px;
-      font-weight: bold;
-      text-align: center;
-      color: black;
-    }
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      margin-top: 5px;
-    }
-    .day {
-      background-color: #efe1e1;
-      border: 1px solid #C1B6A3;
-      border-radius: 12px;
-      padding: 6px;
-      min-height: 150px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch
-	  justify-content: flex-start;
-      transition: box-shadow 0.3s;
-    }
-    .day:hover {
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .day.empty {
-      background-color: transparent;
-      border: none;
-    }
-    .day textarea {
-      width: 87%;
-      height: 110px;
-      resize: vertical;
-      overflow-y: auto;
-      background-color: white;
-      border: 1px solid #ddd3d2;
-      border-radius: 8px;
-      padding: 5px;
-      font-family: champb, sans-serif;
-      font-size: 9.5pt;
-	  font-weight: bold;
-    }
-    .day .date-number {
-      font-weight: bold;
-      color: black;
-      margin-bottom: 5px;
-      font-size: 10pt;
-    }
-    .todo-container {
-      width: 35%;
-      background-color: #f6f6f6;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      border-left: 2px solid #C1B6A3;
-      border-radius: 0 12px 12px 0;
-      transition: box-shadow 0.3s ease;
-    }
-    .todo-container:hover {
-      box-shadow: inset 0 0 10px #C1B6A3;
-      color: black; /* Add this */
-    }
-    .todo-title {
-      font-size: 60px;
-	  text-align: center;
-      margin-bottom: 10px;
-      color: black;
-	  font-family: 'hellohon', cursive;
-	  font-weight: bold;
-    }
-    .todo-list {
-      background-color: white;
-      padding: 15px;
-      border-radius: 12px;
-      border: 1px solid #C1B6A3;
-      color: black; /* Add this */
-    }
-    .todo-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-      border-bottom: 1px dashed #C1B6A3;
-      padding-bottom: 6px;
-    }
-      .todo-item span {
-  color: black;
+}
+
+body {
+  margin: 0;
   font-family: 'champb', sans-serif;
+  font-size: 10pt;
+  background-color: #f8f2ef;
+  display: flex;
+  flex-wrap: nowrap; /* Keep on one line, no wrap */
+  height: 100vh;
+  overflow-x: auto; /* Allow horizontal scroll if needed */
+}
+
+/* Calendar container */
+.calendar-container {
+  flex: 1 1 auto; /* grow and shrink as needed */
+  min-width: 0; /* allow flexbox to shrink */
+  background-color: #ececec;
+  padding: 8px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  position: relative;
+  border-right: 2px solid #C1B6A3;
+  border-radius: 12px 0 0 12px;
+  transition: box-shadow 0.3s ease;
+}
+.calendar-container:hover {
+  box-shadow: inset 0 0 10px #C1B6A3;
+}
+
+/* To-do container */
+.todo-container {
+  flex: 0 1 auto;
+  max-width: 350px;
+  min-width: 150px;
+  background-color: #f6f6f6;
+  padding: 3px;
+  box-sizing: border-box;
+  overflow-y: visible; /* allow container to grow, no scroll */
+  overflow-x: hidden;  /* prevent horizontal scroll */
+  border-left: 2px solid #C1B6A3;
+  border-radius: 0 12px 12px 0;
+  transition: box-shadow 0.3s ease;
+  white-space: normal;
+}
+.todo-container:hover {
+  box-shadow: inset 0 0 10px #C1B6A3;
+  color: black;
+}
+
+/* To-do title */
+.todo-title {
+  font-size: 60px;
+  text-align: center;
+  margin-bottom: 10px;
+  color: black;
+  font-family: 'hellohon', cursive;
+  font-weight: bold;
+}
+
+/* To-do list box */
+.todo-list {
+  background-color: white;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #C1B6A3;
+  color: black;
+  max-height: none;   /* remove max height limit */
+  overflow-y: visible; /* show all items, no scrollbar */
+  overflow-x: hidden;  /* no horizontal scroll */
+  width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+}
+
+/* To-do item */
+.todo-item {
+  display: flex;
+  align-items: flex-start; /* so items align at the top */
+  gap: 10px; /* spacing between checkbox, textarea, and buttons */
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  /* No fixed height */
+  /* overflow: visible or default */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+/* To-do item text input and textarea */
+.todo-item input[type="text"],
+.todo-item textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 10pt;
+  font-family: 'champb', sans-serif;
+  padding: 4px;
+  resize: none;
+  min-height: 30px;
+  max-height: 300px;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  color: black;
+  width: 100%;
+}
+
+
+/* Checkbox */
+.todo-item input[type="checkbox"] {
+  margin-right: 10px;
+  width: 20px;
+  height: 20px;
+  accent-color: #ffe700;
+}
+
+/* Buttons */
+.add-todo {
+  display: flex;
+  margin-top: 10px;
+}
+
+.add-todo input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px 0 0 8px;
+}
+
+.add-todo button {
+  padding: 8px;
+  border: none;
+  background-color: #C1B6A3;
+  cursor: pointer;
+  border-radius: 0 8px 8px 0;
+  color: #333;
+}
+
+.add-todo button:hover {
+  background-color: #a89f8b;
+}
+
+/* Calendar Header */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.calendar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calendar-header h2#monthLabel {
+  font-size: 50pt;
+  margin: 0;
+  color: Black;
+  font-family: 'hellohon', cursive, sans-serif;
+}
+
+.calendar-header button,
+.calendar-header select {
+  padding: 4px 8px;
+  font-size: 10pt;
+  background-color: #ddd3d2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: black;
+}
+
+.calendar-header button:hover,
+.calendar-header select:hover {
+  background-color: #ddd3d2;
+}
+
+.home-button {
+  padding: 4px 8px;
+  background-color: #ddd3d2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 8pt;
+  color: white;
+}
+
+.home-button:hover {
+  background-color: #a89f8b;
+}
+
+/* Day headers */
+.day-headers {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: center;
+  color: black;
+}
+
+/* Calendar days */
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.day {
+  background-color: #efe1e1;
+  border: 1px solid #C1B6A3;
+  border-radius: 12px;
+  padding: 6px;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  transition: box-shadow 0.3s;
+}
+
+.day:hover {
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.day.empty {
+  background-color: transparent;
+  border: none;
+}
+
+.day textarea {
+  width: 87%;
+  height: 110px;
+  resize: vertical;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid #ddd3d2;
+  border-radius: 8px;
+  padding: 5px;
+  font-family: champb, sans-serif;
+  font-size: 9.5pt;
+  font-weight: bold;
+}
+
+.day .date-number {
+  font-weight: bold;
+  color: black;
+  margin-bottom: 5px;
   font-size: 10pt;
 }
 
-    .todo-item input[type="checkbox"] {
-      margin-right: 10px;
-    }
-	.todo-item input[type="text"] {
-     flex: 1;
-     border: none;
-     background: transparent;
-     font-size: 10pt;
-     font-family: 'champb', sans-serif;
-     padding: 4px;
-     min-height: 30px;
-     overflow-wrap: break-word;
-     white-space: pre-wrap;
-     word-break: break-word;
-     color: black !important;
-     -webkit-text-fill-color: black !important;
-     -webkit-font-smoothing: antialiased; 
-	 appearance: none;
-	 -webkit-appearance: none; 
-    }
-    .todo-item input[type="checkbox"] {
-     margin-right: 10px;
-     width: 20px;
-     height: 20px;
-     accent-color: #ffe700; /* Change this color to what you want */
-   }
-    .add-todo {
-      display: flex;
-      margin-top: 10px;
-    }
-    .add-todo input {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 8px 0 0 8px;
-    }
-    .add-todo button {
-      padding: 8px;
-      border: none;
-      background-color: #C1B6A3;
-      cursor: pointer;
-      border-radius: 0 8px 8px 0;
-      color: #333;
-    }
-    .add-todo button:hover {
-      background-color: #a89f8b;
-    }
-	.calendar-container, .todo-container {
-  flex: 1 1 100%; /* Allow stacking on small screens */
-  max-width: 100%;
-    
-   }
-	@media (min-width: 768px) {
-  .calendar-container {
-    width: 65%;
-    border-radius: 12px 0 0 12px;
-	
+/* Responsive */
+@media (max-width: 767px) {
+  body {
+    flex-wrap: wrap;
   }
-
-  .todo-container {
-    width: 35%;
-    border-radius: 0 12px 12px 0;
-  }
-
   .calendar-container, .todo-container {
-    flex: unset;
-    max-width: unset;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 12px !important;
   }
-  
-  @media (max-width: 767px) {
   .calendar {
     grid-template-columns: repeat(2, 1fr); /* Show 2 days per row */
     gap: 6px;
   }
-
   .day {
     min-height: 140px;
     padding: 6px;
   }
-
   .day textarea {
     height: 100px;
     font-size: 8pt;
   }
-
   .calendar-header h2#monthLabel {
     font-size: 24pt;
   }
-
   .calendar-header {
     flex-direction: column;
     align-items: flex-start;
@@ -274,8 +306,8 @@
   .day-headers {
     grid-template-columns: repeat(2, 1fr); /* Match 2-column layout */
   }
-  
 }
+
 
 
   </style>
@@ -434,58 +466,117 @@
     }
 
     function renderTodoItem(id, text, done) {
-      const item = document.createElement('div');
-      item.className = 'todo-item';
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.checked = done;
-      checkbox.onchange = () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
-      const input = document.createElement('textarea');
-      input.value = text;
+  const item = document.createElement('div');
+  item.className = 'todo-item';
+  // Container styles to auto-resize and layout
+  item.style.display = 'flex';
+  item.style.alignItems = 'flex-start';
+  item.style.gap = '10px';
+  item.style.width = '100%';
+  item.style.boxSizing = 'border-box';
+  item.style.padding = '8px 0';
+  item.style.borderBottom = '1px solid #ddd';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = done;
+  checkbox.onchange = () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
+
+  const input = document.createElement('textarea');
+  input.value = text;
+  input.disabled = true;
+  input.addEventListener('input', () => autoResizeTextarea(input));
+  autoResizeTextarea(input); // Initial adjustment
+
+  input.style.flex = '1';
+  input.style.border = 'none';
+  input.style.background = 'transparent';
+  input.style.fontFamily = 'champb, sans-serif';
+  input.style.fontSize = '10pt';
+  input.style.resize = 'vertical';
+  input.style.minHeight = '30px';
+  input.style.padding = '4px';
+  input.style.overflowWrap = 'break-word';
+  input.style.whiteSpace = 'pre-wrap';
+  input.style.wordBreak = 'break-word';
+  input.style.color = 'black';
+
+  const buttonContainer = document.createElement('div');
+  // Container for buttons to keep them close together
+  buttonContainer.style.display = 'flex';
+  buttonContainer.style.flexDirection = 'column';
+  buttonContainer.style.gap = '6px'; // vertical spacing between buttons
+
+  const editBtn = document.createElement('button');
+  editBtn.textContent = '✏️';
+  editBtn.style.background = 'none';
+  editBtn.style.border = 'none';
+  editBtn.style.cursor = 'pointer';
+  editBtn.style.padding = '0';
+  editBtn.style.margin = '0'; // reset margin
+  editBtn.onclick = async () => {
+  if (input.disabled) {
+    // Switch to edit mode
+    input.disabled = false;
+    input.focus();
+    editBtn.textContent = '💾';  // Save icon
+  } else {
+    // Save changes
+    try {
+      await updateDoc(doc(db, 'todos', id), { text: input.value });
       input.disabled = true;
-      input.style.flex = '1';
-      input.style.border = 'none';
-      input.style.background = 'transparent';
-      input.style.fontFamily = 'champb, sans-serif';
-      input.style.fontSize = '10pt';
-      input.style.resize = 'vertical';
-      input.style.minHeight = '30px';
-      input.style.padding = '4px';
-      input.style.overflowWrap = 'break-word';
-      input.style.whiteSpace = 'pre-wrap';
-      input.style.wordBreak = 'break-word';
-      input.style.color = 'black';    
-      const editBtn = document.createElement('button');
-      editBtn.textContent = '✏️';
-	  editBtn.style.background = 'none'; // Remove the button background
-      editBtn.style.border = 'none'; // Remove the border
-      editBtn.style.cursor = 'pointer'; // Make it clickable
-      editBtn.style.padding = '0'; // Remove padding
-      editBtn.style.marginLeft = '10px'; // Add space between text and button
-      editBtn.onclick = async () => {
-        if (input.disabled) {
-          input.disabled = false;
-          input.focus();
-          editBtn.textContent = '✏️';
-        } else {
-          await updateDoc(doc(db, 'todos', id), { text: input.value });
-          input.disabled = true;
-          editBtn.textContent = '✏️';
-        }
-      };
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = '🗑️';
-	  deleteBtn.style.background = 'none'; // Remove the button background
-      deleteBtn.style.border = 'none'; // Remove the border
-      deleteBtn.style.cursor = 'pointer'; // Make it clickable
-      deleteBtn.style.padding = '0'; // Remove padding
-      deleteBtn.style.marginLeft = '10px'; // Add space between text and button
-      deleteBtn.onclick = async () => {
-        if (confirm("Delete this to-do?")) await deleteDoc(doc(db, 'todos', id));
-      };
-      item.append(checkbox, input, editBtn, deleteBtn);
-      todoListEl.appendChild(item);
+      editBtn.textContent = '✏️';  // Back to edit icon
+    } catch (err) {
+      alert('Failed to save changes: ' + err.message);
     }
+  }
+};
+
+// Save on Enter key press (optional)
+input.addEventListener('keydown', async (e) => {
+  if (!input.disabled && e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault(); // Prevent newline on Enter
+    try {
+      await updateDoc(doc(db, 'todos', id), { text: input.value });
+      input.disabled = true;
+      editBtn.textContent = '✏️';
+    } catch (err) {
+      alert('Failed to save changes: ' + err.message);
+    }
+  }
+});
+
+// Auto resize textarea on input
+input.addEventListener('input', () => autoResizeTextarea(input));
+
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = '🗑️';
+  deleteBtn.style.background = 'none';
+  deleteBtn.style.border = 'none';
+  deleteBtn.style.cursor = 'pointer';
+  deleteBtn.style.padding = '0';
+  deleteBtn.style.margin = '0';
+  deleteBtn.onclick = async () => {
+    if (confirm("Delete this to-do?")) await deleteDoc(doc(db, 'todos', id));
+  };
+
+  buttonContainer.append(editBtn, deleteBtn);
+
+  item.append(checkbox, input, buttonContainer);
+todoListEl.appendChild(item);
+autoResizeTextarea(input);  // Call this AFTER appending to DOM
+
+}
+
+function autoResizeTextarea(textarea) {
+  if (!textarea) return;
+  textarea.style.height = 'auto'; // reset height
+  textarea.style.height = textarea.scrollHeight + 'px'; // adjust height
+}
+
+
+
 
     function loadTodos() {
       const ref = collection(db, 'todos');
@@ -502,6 +593,12 @@
     window.changeMonth = changeMonth;
     window.goToToday = goToToday;
     window.addTodo = addTodo;
+	
+	// Resize all textareas when window resizes
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.todo-item textarea').forEach(autoResizeTextarea);
+});
+
   </script>
 </body>
 </html>
