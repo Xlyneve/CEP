@@ -2,647 +2,625 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>INFORMATIONS</title>
-  <style>
-    @font-face {
-      font-family: 'fors';
-      src: url('fors.ttf') format('truetype'); /* Adjust the path */
-    }
-
-    body {
-      margin: 0;
-      font-family: 'fors', sans-serif;
-      font-size: 16px;
-      background-color: #f3f2ee;
-      color: black;
-      overflow-x: hidden;
-    }
-	main {
-  position: relative;
-  z-index: 1000; /* Higher than vine */
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calendar and To-Do Page</title>
+  
+   <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
+   
+<style>
+@font-face {
+  font-family: 'hellohon';
+  src: url('hellohon.otf') format('opentype');
+}
+@font-face {
+  font-family: 'champb';
+  src: url('champb.ttf') format('truetype');
 }
 
-
-    h1 {
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  text-align: center;
-  font-size: 30px;
-  margin-top: 0px;
-  background-color: #ddb2b5;
-  padding: 20px 10px;
-}
-header h1 {
-  position: relative;
-  z-index: 9999;
-}
-
-
-.plant2-decoration {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 600px; /* Adjust size as needed */
-  z-index: 0; /* Behind search/input/cards, but in front of header */
-  pointer-events: none; /* Makes sure clicks go through the image */
-}
-
-
-    .home-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background-color: #eae0da;
-      color: black;
-      text-decoration: none;
-      font-weight: bold;
-      padding: 8px 12px;
-      border-radius: 50px;
-      font-size: 14px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      transition: background-color 0.3s ease;
-    }
-
-    .home-btn:hover {
-      background-color: #aca37e;
-    }
-
-    .search-bar {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .search-input {
-      width: 150px;
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 13px;
-      background-color: white;
-    }
-
-    .container {
-      width: 100%;
-      padding: 20px 20px;
-      padding-top: 0px;
-      box-sizing: border-box;
-      max-width: 100vw;
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      margin-bottom: 20px;
-    }
-
-    .format-buttons {
+body {
+  margin: 0;
+  font-family: 'champb', sans-serif;
+  font-size: 10pt;
+  background-color: #f8f2ef;
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 6px;
-  margin-bottom: 6px;
-
+  flex-wrap: nowrap; /* Keep on one line, no wrap */
+  height: 100vh;
+  overflow-x: auto; /* Allow horizontal scroll if needed */
 }
 
+/* Calendar container */
+.calendar-container {
+  flex: 1 1 auto; /* grow and shrink as needed */
+  min-width: 0; /* allow flexbox to shrink */
+  background-color: #ececec;
+  padding: 8px;
+  box-sizing: border-box;
+  max-height: 100vh;   /* limit container height to viewport height */
+  overflow-y: auto;    /* allow vertical scroll if needed */
+  position: relative;
+  border-right: 2px solid #C1B6A3;
+  border-radius: 12px 0 0 12px;
+  transition: box-shadow 0.3s ease;
+}
 
-.format-buttons button,
-.add-btn {
-  background-color: #aca37e;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 4px 6px;
-  color: white;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: regular;
+.calendar-container:hover {
+  box-shadow: inset 0 0 10px #C1B6A3;
+}
+
+/* To-do container */
+.todo-container {
+  flex: 0 1 auto;
+  max-width: 350px;
+  min-width: 150px;
+  background-color: #f6f6f6;
+  padding: 3px;
+  box-sizing: border-box;
+  overflow-y: visible; /* allow container to grow, no scroll */
+  overflow-x: hidden;  /* prevent horizontal scroll */
+  border-left: 2px solid #C1B6A3;
+  border-radius: 0 12px 12px 0;
+  transition: box-shadow 0.3s ease;
+  white-space: normal;
+}
+.todo-container:hover {
+  box-shadow: inset 0 0 10px #C1B6A3;
+  color: black;
+}
+
+/* To-do title */
+.todo-title {
+  font-size: 60px;
   text-align: center;
-}
-
-
-
-    .format-buttons button:hover {
-      background-color: #737958;
-    }
-
-    input[type="text"],
-    textarea {
-	display: block;
-	  margin: 0.2rem auto;
-      padding: 0.5rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 13px;
-      width: 90%;
-	  max-width: 600px;
-      background-color: #f3f2ee;
-      font-family: Tahoma, sans-serif;
-      z-index: 1;
-
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 60px;
-      overflow: hidden;
-      font-size: 13px;
-    }
-	.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 8px;
   margin-bottom: 10px;
-  flex-wrap: wrap; /* Allows wrapping on small screens */
+  color: black;
+  font-family: 'hellohon', cursive;
+  font-weight: bold;
+}
+
+/* To-do list box */
+.todo-list {
+  background-color: white;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #C1B6A3;
+  color: black;
+  max-height: none;   /* remove max height limit */
+  overflow-y: visible; /* show all items, no scrollbar */
+  overflow-x: hidden;  /* no horizontal scroll */
+  width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+}
+
+/* To-do item */
+.todo-item {
+  display: flex;
+  align-items: flex-start; /* so items align at the top */
+  gap: 10px; /* spacing between checkbox, textarea, and buttons */
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* To-do item text input and textarea */
+.todo-item input[type="text"],
+.todo-item textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 10pt;
+  font-family: 'champb', sans-serif;
+  padding: 4px;
+  resize: none;
+  min-height: 30px;
+  max-height: 300px;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  color: black;
+  width: 100%;
+}
+
+/* Checkbox */
+.todo-item input[type="checkbox"] {
+  margin-right: 10px;
+  width: 20px;
+  height: 20px;
+  accent-color: #ffe700;
+}
+
+/* Buttons */
+.add-todo {
+  display: flex;
+  margin-top: 10px;
+}
+
+.add-todo input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px 0 0 8px;
+}
+
+.add-todo button {
+  padding: 8px;
+  border: none;
+  background-color: #C1B6A3;
+  cursor: pointer;
+  border-radius: 0 8px 8px 0;
+  color: #333;
+}
+
+.add-todo button:hover {
+  background-color: #a89f8b;
+}
+
+/* Calendar Header */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
+.calendar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-    .add-btn {
-      background-color: #aca37e;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 6px;
-      padding: 4px 6px;
-      font-weight: regular;
-      font-size: 14px;
-	  z-index: 10;
-    }
+.calendar-header h2#monthLabel {
+  font-size: 50pt;
+  margin: 0;
+  color: Black;
+  font-family: 'hellohon', cursive, sans-serif;
+}
 
-    .note-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 15px;
-    }
+.calendar-header button,
+.calendar-header select {
+  padding: 4px 8px;
+  font-size: 10pt;
+  background-color: #ddd3d2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: black;
+}
 
-    .note-card {
-      background-color: #f2f1ee;
-      border: 1px solid #ccc;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.2s ease;
-	  z-index: 10;
-    }
+.calendar-header button:hover,
+.calendar-header select:hover {
+  background-color: #ddd3d2;
+}
 
-    .note-card:hover {
-      transform: scale(1.05);
-    }
+.home-button {
+  padding: 4px 8px;
+  background-color: #ddd3d2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 8pt;
+  color: white;
+}
 
-    .note-title {
-      font-weight: bold;
-      font-size: 14px;
-      color: black;
-      margin-bottom: 6px;
-    }
+.home-button:hover {
+  background-color: #a89f8b;
+}
 
-    .note-text {
-      color: black;
-      font-size: 11px;
-      white-space: pre-wrap;
-      font-family: Tahoma, sans-serif;
-    }
+/* Day headers */
+.day-headers {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: center;
+  color: black;
+}
 
-    .note-text strong {
-      font-weight: bold;
-    }
+/* Calendar days */
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-top: 5px;
+}
 
-    .note-text mark {
-      background-color: #fcf6bd;
-    }
+.day {
+  background-color: #efe1e1;
+  border: 1px solid #C1B6A3;
+  border-radius: 12px;
+  padding: 6px;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  transition: box-shadow 0.3s;
+}
 
-    .note-url a {
-      font-size: 12px;
-      color: brown;
-      word-break: break-word;
-      margin-top: 8px;
-      display: inline-block;
-      text-decoration: none;
-    }
+.day:hover {
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
 
-    .timestamp {
-      font-size: 11px;
-      color: #777;
-      margin-top: 10px;
-    }
+.day.empty {
+  background-color: transparent;
+  border: none;
+}
 
-    .btn-group {
-      margin-top: 10px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
+.day textarea {
+  width: 100%;
+  min-height: 110px;    /* base height */
+  max-height: 600px;    /* allow vertical growth */
+  height: auto;
+  resize: none;
+  overflow-y: hidden;   /* hide vertical scrollbar */
+  background-color: white; 
+  border: 1px solid #ddd3d2;
+  border-radius: 8px;
+  padding: 4px;
+  font-family: champb, sans-serif;
+  font-size: 9.5pt;
+  font-weight: bold;
+  box-sizing: border-box;
+  transition: height 0.2s ease;
+}
 
-    .btn-group button {
-      background-color: #aca37e;
-      color: white;
-      border: none;
-      padding: 4px 6px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: regular;
-    }
+/* date number on day */
+.day .date-number {
+  font-weight: bold;
+  color: black;
+  margin-bottom: 5px;
+  font-size: 10pt;
+}
 
-    .btn-group button:hover {
-      background-color: #aca37e;
-    }
-
-    .styled-link {
-      display: inline-block;
-      margin-top: 8px;
-      padding: 4px 8px;
-      background-color: #737958;
-      color: #d0a0a3 !important;
-      font-size: 11px;
-      font-weight: bold;
-      border-radius: 6px;
-      text-decoration: none;
-      transition: background-color 0.3s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .styled-link:hover {
-      background-color: #737958;
-    }
-
-    .editor-buttons {
-      margin-top: 8px;
-      display: flex;
-      gap: 6px;
-    }
-
-    .editor-buttons button {
-      background-color: #aca37e;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 4px 8px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .editor-buttons button:hover {
-      background-color: #eac7c7;
-    }
-	@media (max-width: 600px) {
-  h1 {
-    font-size: 22px;
-    padding-top: 60px; /* add spacing to prevent overlap */
+/* Responsive */
+@media (max-width: 767px) {
+  body {
+    flex-wrap: wrap;
   }
-
-  .search-bar {
-    position: static;
-    margin: 10px 20px;
-    justify-content: center;
+  .calendar-container, .todo-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 12px !important;
   }
+  .calendar {
+    grid-template-columns: repeat(2, 1fr); /* Show 2 days per row */
+    gap: 6px;
+  }
+  .day {
+    min-height: 140px;
+    padding: 6px;
+  }
+  .day textarea {
+  background-color: white;
 
-  .home-btn {
-    position: static;
-    margin: 10px 20px;
-    display: inline-block;
+  }
+  .calendar-header h2#monthLabel {
+    font-size: 24pt;
+  }
+  .calendar-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .day-headers {
+    grid-template-columns: repeat(2, 1fr); /* Match 2-column layout */
   }
 }
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</style>
 
-  </style>
 </head>
+
 <body>
-
-<img src="plant2.png" alt="Vine" class="plant2-decoration" />
-
-  <a href="home.html" class="home-btn">← Home</a>
-
-  <div class="search-bar" id="searchBox">
-    <input type="text" id="searchInput" class="search-input" placeholder="Search..." />
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <div class="calendar-header-left">
+        <button class="home-button" onclick="location.href='home.html'">Home</button>
+        <h2 id="monthLabel">Monthly Calendar</h2>
+      </div>
+      <div>
+        <button onclick="changeMonth(-1)">◀</button>
+        <button onclick="goToToday()">Today</button>
+        <select id="monthSelect"></select>
+        <select id="yearSelect"></select>
+        <button onclick="changeMonth(1)">▶</button>
+      </div>
+    </div>
+    <div class="day-headers">
+      <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+    </div>
+    <div class="calendar" id="calendar"></div>
   </div>
 
-  <h1>INFORMATIONS</h1>
-
-  <div class="container">
-    <div class="input-group">
-      <input type="text" id="noteTitle" placeholder="Title" />
-	   <textarea id="noteText" placeholder="Write your explanation..."></textarea>
-       <input type="text" id="noteUrl" placeholder="Optional URL" />
-	 <div class="action-buttons">
-  <div class="format-buttons">
-    <button type="button" onclick="wrapSelection('**')"><strong>Bold</strong></button>
-    <button type="button" onclick="wrapSelection('==')"><mark>Highlight</mark></button>
-  </div>
-  <button class="add-btn" id="addBtn">Add Note</button>
-</div>
-
-    <div class="note-list" id="notesContainer"></div>
+  <div class="todo-container">
+    <div class="todo-title">To-Do List</div>
+    <div class="todo-list" id="todoList"></div>
+    <div class="add-todo">
+      <input type="text" id="newTodo" placeholder="Add new task...">
+      <button onclick="addTodo()">Add</button>
+    </div>
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import {
+    getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    let notes = [];
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    // Wrap selected text with tags (for add form)
-    window.wrapSelection = function(tag) {
-      const textarea = document.getElementById('noteText');
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = textarea.value.substring(start, end);
-      const newText = textarea.value.substring(0, start) + tag + selected + tag + textarea.value.substring(end);
-      textarea.value = newText;
-      textarea.focus();
-      textarea.setSelectionRange(start + tag.length, end + tag.length);
-    };
+  let currentDate = new Date();
+  const calendarEl = document.getElementById('calendar');
+  const monthLabel = document.getElementById('monthLabel');
+  const monthSelect = document.getElementById('monthSelect');
+  const yearSelect = document.getElementById('yearSelect');
+  const todoInput = document.getElementById('newTodo');
+  const todoListEl = document.getElementById('todoList');
 
-    // Wrap selected text inside editor textarea (in edit mode)
-    function wrapSelectionEditor(button, tag) {
-      const container = button.closest('.note-card');
-      const textarea = container.querySelector('textarea');
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = textarea.value.substring(start, end);
-      const newText = textarea.value.substring(0, start) + tag + selected + tag + textarea.value.substring(end);
-      textarea.value = newText;
-      textarea.focus();
-      textarea.setSelectionRange(start + tag.length, end + tag.length);
+  const months = [...Array(12).keys()].map(i =>
+    new Date(0, i).toLocaleString('default', { month: 'long' })
+  );
+
+  function populateSelectors() {
+    months.forEach((m, i) => {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = m;
+      monthSelect.appendChild(option);
+    });
+
+    const thisYear = new Date().getFullYear();
+    for (let y = thisYear - 5; y <= thisYear + 5; y++) {
+      const option = document.createElement('option');
+      option.value = y;
+      option.textContent = y;
+      yearSelect.appendChild(option);
+    }
+
+    monthSelect.addEventListener('change', () => {
+      currentDate.setMonth(parseInt(monthSelect.value));
+      loadCalendar();
+    });
+
+    yearSelect.addEventListener('change', () => {
+      currentDate.setFullYear(parseInt(yearSelect.value));
+      loadCalendar();
+    });
+  }
+
+  function goToToday() {
+    currentDate = new Date();
+    loadCalendar();
+  }
+
+  function changeMonth(offset) {
+    currentDate.setMonth(currentDate.getMonth() + offset);
+    loadCalendar();
+  }
+
+  function getDaysInMonth(month, year) {
+    return new Date(year, month + 1, 0).getDate();
+  }
+
+  function getDayName(year, month, day) {
+    return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
+  }
+
+  async function loadCalendar() {
+    const month = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+    calendarEl.innerHTML = '';
+    monthLabel.textContent = `${months[month]} ${year}`;
+    monthSelect.value = month;
+    yearSelect.value = year;
+
+    const daysInMonth = getDaysInMonth(month, year);
+    const firstDay = new Date(year, month, 1).getDay() || 7;
+
+    const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
+    let notes = {};
+    const snap = await getDoc(docRef);
+    if (snap.exists()) notes = snap.data();
+
+    // Blank days before first day
+    for (let i = 1; i < firstDay; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'day empty';
+      calendarEl.appendChild(empty);
+    }
+
+    // Days with notes textarea
+    for (let i = 1; i <= daysInMonth; i++) {
+      const note = notes[i] || "";
+      const day = document.createElement('div');
+      day.className = 'day';
+      day.innerHTML = `<div class="date-number">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
+      const textarea = day.querySelector('textarea');
+      textarea.addEventListener('input', e => {
+        autoResizeTextarea(e.target);
+        saveCalendar(year, month + 1, i, e.target.value);
+      });
+      calendarEl.appendChild(day);
       autoResizeTextarea(textarea);
     }
-
-    // Auto resize textarea
-    function autoResizeTextarea(textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = textarea.scrollHeight + 'px';
-    }
-
-    // Add new note
-    document.getElementById('addBtn').addEventListener('click', async () => {
-      const title = document.getElementById('noteTitle').value.trim();
-      const text = document.getElementById('noteText').value.trim();
-      const url = document.getElementById('noteUrl').value.trim();
-
-      if (!title || !text) {
-        alert("Please fill in both Title and Explanation.");
-        return;
-      }
-
-      try {
-        await addDoc(collection(db, "informationNotes"), {
-          title,
-          text,
-          url,
-          timestamp: Date.now()
-        });
-        document.getElementById('noteTitle').value = '';
-        document.getElementById('noteText').value = '';
-        document.getElementById('noteUrl').value = '';
-      } catch (error) {
-        alert("Error adding note: " + error.message);
-      }
-    });
-
-    // Listen for real-time updates
-    const notesContainer = document.getElementById('notesContainer');
-    onSnapshot(collection(db, "informationNotes"), (snapshot) => {
-      notes = [];
-      snapshot.forEach(docSnap => {
-        notes.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      renderNotes(notes);
-    });
-
-    // Render notes
-    function renderNotes(notesArray) {
-      notesContainer.innerHTML = '';
-
-      if (notesArray.length === 0) {
-        notesContainer.innerHTML = '<p>No notes found.</p>';
-        return;
-      }
-
-      for (const note of notesArray) {
-        const card = document.createElement('div');
-        card.className = 'note-card';
-        card.dataset.id = note.id;
-
-        // Show title & URL
-        const titleEl = document.createElement('div');
-        titleEl.className = 'note-title';
-        titleEl.textContent = note.title;
-
-        const urlEl = document.createElement('div');
-        urlEl.className = 'note-url';
-        if (note.url) {
-          const link = document.createElement('a');
-          link.href = note.url;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.textContent = 'URL Link';
-          link.className = 'styled-link';
-          urlEl.appendChild(link);
-        }
-
-        // Explanation display and editor
-        const textDisplay = document.createElement('div');
-        textDisplay.className = 'note-text';
-        textDisplay.innerHTML = parseMarkdown(note.text);
-
-        const textEditor = document.createElement('textarea');
-        textEditor.style.display = 'none';
-        textEditor.value = note.text;
-        textEditor.style.fontFamily = 'Tahoma, sans-serif';
-        textEditor.style.fontSize = '11px';
-        textEditor.style.width = '100%';
-        textEditor.style.borderRadius = '8px';
-        textEditor.style.border = '1px solid #ccc';
-        textEditor.style.padding = '6px';
-        textEditor.rows = 4;
-        textEditor.addEventListener('input', () => autoResizeTextarea(textEditor));
-
-        // Auto resize initially
-        autoResizeTextarea(textEditor);
-
-        // Timestamp
-        const timeEl = document.createElement('div');
-        timeEl.className = 'timestamp';
-        timeEl.textContent = `Added: ${new Date(note.timestamp).toLocaleString()}`;
-
-        // Buttons container
-        const btnGroup = document.createElement('div');
-        btnGroup.className = 'btn-group';
-
-        // Edit button
-        const editBtn = document.createElement('button');
-        editBtn.textContent = 'Edit';
-        editBtn.title = 'Edit this note';
-        editBtn.onclick = () => toggleEdit(card, true);
-
-        // Save button
-        const saveBtn = document.createElement('button');
-        saveBtn.textContent = 'Save';
-        saveBtn.title = 'Save changes';
-        saveBtn.style.display = 'none';
-        saveBtn.onclick = () => saveEdit(card);
-
-        // Cancel button
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.title = 'Cancel editing';
-        cancelBtn.style.display = 'none';
-        cancelBtn.onclick = () => toggleEdit(card, false);
-
-        // Delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.title = 'Delete this note';
-        deleteBtn.onclick = () => deleteNote(note.id);
-
-        // Copy button
-        const copyBtn = document.createElement('button');
-        copyBtn.textContent = 'Copy';
-        copyBtn.title = 'Copy explanation text';
-        copyBtn.onclick = () => {
-          navigator.clipboard.writeText(note.text).then(() => {
-            alert('Explanation copied to clipboard');
-          });
-        };
-
-        btnGroup.append(editBtn, saveBtn, cancelBtn, deleteBtn, copyBtn);
-
-        // Editor formatting buttons
-        const editorFormatButtons = document.createElement('div');
-        editorFormatButtons.className = 'editor-buttons';
-        editorFormatButtons.style.display = 'none';
-
-        const boldBtn = document.createElement('button');
-        boldBtn.textContent = 'Bold';
-        boldBtn.title = 'Wrap selected text with **bold**';
-        boldBtn.onclick = () => wrapSelectionEditor(boldBtn, '**');
-
-        const highlightBtn = document.createElement('button');
-        highlightBtn.textContent = 'Highlight';
-        highlightBtn.title = 'Wrap selected text with ==highlight==';
-        highlightBtn.onclick = () => wrapSelectionEditor(highlightBtn, '==');
-
-        editorFormatButtons.append(boldBtn, highlightBtn);
-
-        // Append all elements
-        card.append(titleEl, urlEl, textDisplay, textEditor, editorFormatButtons, timeEl, btnGroup);
-        notesContainer.appendChild(card);
-      }
-    }
-      
-    // Toggle edit mode
-    function toggleEdit(card, editing) {
-  const textDisplay = card.querySelector('.note-text');
-  const textEditor = card.querySelector('textarea');
-  const editBtn = card.querySelector('button[title="Edit this note"]');
-  const saveBtn = card.querySelector('button[title="Save changes"]');
-  const cancelBtn = card.querySelector('button[title="Cancel editing"]');
-  const editorFormatButtons = card.querySelector('.editor-buttons');
-
-  if (editing) {
-    textDisplay.style.display = 'none';
-    textEditor.style.display = 'block';
-    editBtn.style.display = 'none';
-    saveBtn.style.display = 'inline-block';
-    cancelBtn.style.display = 'inline-block';
-    editorFormatButtons.style.display = 'flex';
-    autoResizeTextarea(textEditor);
-  } else {
-    textDisplay.style.display = 'block';
-    textEditor.style.display = 'none';
-    editBtn.style.display = 'inline-block';
-    saveBtn.style.display = 'none';
-    cancelBtn.style.display = 'none';
-    editorFormatButtons.style.display = 'none';
+    autoResizeAllDayTextareas();
   }
-}
 
-    // Save edits
-    async function saveEdit(card) {
-      const id = card.dataset.id;
-      const textEditor = card.querySelector('textarea');
-      const newText = textEditor.value.trim();
-
-      if (!newText) {
-        alert("Explanation text cannot be empty.");
-        return;
-      }
-
-      try {
-        const noteRef = doc(db, "informationNotes", id);
-        await updateDoc(noteRef, { text: newText });
-        toggleEdit(card, false);
-      } catch (error) {
-        alert("Failed to save note: " + error.message);
-      }
+  async function saveCalendar(year, month, day, note) {
+    const ref = doc(db, 'calendar', `${year}-${month}`);
+    try {
+      await updateDoc(ref, { [day]: note });
+    } catch {
+      await setDoc(ref, { [day]: note }, { merge: true });
     }
+  }
 
-    // Delete note
-    async function deleteNote(id) {
-      if (confirm("Are you sure you want to delete this note?")) {
+  async function addTodo() {
+    const value = todoInput.value.trim();
+    if (value) {
+      await addDoc(collection(db, 'todos'), { text: value, done: false });
+      todoInput.value = '';
+    }
+  }
+
+  function autoResizeTextarea(textarea) {
+    textarea.style.height = 'auto'; // reset height
+    textarea.style.height = textarea.scrollHeight + 'px'; // expand to content
+  }
+
+  function renderTodoItem(id, text, done) {
+    const item = document.createElement('div');
+    item.className = 'todo-item';
+    item.style.display = 'flex';
+    item.style.alignItems = 'flex-start';
+    item.style.gap = '10px';
+    item.style.width = '100%';
+    item.style.boxSizing = 'border-box';
+    item.style.padding = '8px 0';
+    item.style.borderBottom = '1px solid #ddd';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = done;
+    checkbox.onchange = () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
+
+    const input = document.createElement('textarea');
+    input.value = text;
+    input.disabled = true;
+    input.style.flex = '1';
+    input.style.border = 'none';
+    input.style.background = 'transparent';
+    input.style.fontFamily = 'champb, sans-serif';
+    input.style.fontSize = '10pt';
+    input.style.resize = 'vertical';
+    input.style.minHeight = '30px';
+    input.style.padding = '4px';
+    input.style.overflowWrap = 'break-word';
+    input.style.whiteSpace = 'pre-wrap';
+    input.style.wordBreak = 'break-word';
+    input.style.color = 'black';
+    autoResizeTextarea(input);
+
+    // Update size dynamically while editing
+    input.addEventListener('input', () => autoResizeTextarea(input));
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.flexDirection = 'column';
+    buttonContainer.style.gap = '6px';
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    editBtn.style.background = 'none';
+    editBtn.style.border = 'none';
+    editBtn.style.cursor = 'pointer';
+    editBtn.style.padding = '0';
+    editBtn.style.margin = '0';
+
+    editBtn.onclick = async () => {
+      if (input.disabled) {
+        input.disabled = false;
+        input.focus();
+        editBtn.textContent = '💾';
+      } else {
         try {
-          await deleteDoc(doc(db, "informationNotes", id));
-        } catch (error) {
-          alert("Failed to delete note: " + error.message);
+          await updateDoc(doc(db, 'todos', id), { text: input.value });
+          input.disabled = true;
+          editBtn.textContent = '✏️';
+        } catch (err) {
+          alert('Failed to save changes: ' + err.message);
         }
       }
-    }
+    };
 
-    // Simple markdown parser for **bold** and ==highlight==
-    function parseMarkdown(text) {
-      if (!text) return '';
-      let escapedText = escapeHtml(text);
-      // Replace bold **text**
-      escapedText = escapedText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      // Replace highlight ==text==
-      escapedText = escapedText.replace(/==(.+?)==/g, '<mark>$1</mark>');
-      // Replace new lines with <br>
-      escapedText = escapedText.replace(/\n/g, '<br>');
-      return escapedText;
-    }
-
-    function escapeHtml(text) {
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    // Filter notes on search
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      const val = e.target.value.toLowerCase();
-      const filtered = notes.filter(n => {
-        return n.title.toLowerCase().includes(val) || n.text.toLowerCase().includes(val);
-      });
-      renderNotes(filtered);
+    input.addEventListener('keydown', async (e) => {
+      if (!input.disabled && e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        try {
+          await updateDoc(doc(db, 'todos', id), { text: input.value });
+          input.disabled = true;
+          editBtn.textContent = '✏️';
+        } catch (err) {
+          alert('Failed to save changes: ' + err.message);
+        }
+      }
     });
-  </script>
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.style.background = 'none';
+    deleteBtn.style.border = 'none';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.padding = '0';
+    deleteBtn.style.margin = '0';
+    deleteBtn.onclick = async () => {
+      if (confirm("Delete this to-do?")) await deleteDoc(doc(db, 'todos', id));
+    };
+
+    buttonContainer.append(editBtn, deleteBtn);
+
+    item.append(checkbox, input, buttonContainer);
+    todoListEl.appendChild(item);
+    autoResizeTextarea(input);
+  }
+
+  function loadTodos() {
+    const ref = collection(db, 'todos');
+    onSnapshot(ref, snap => {
+      todoListEl.innerHTML = '';
+      snap.forEach(doc => renderTodoItem(doc.id, doc.data().text, doc.data().done));
+    });
+  }
+
+  function autoResizeAllDayTextareas() {
+    const textareas = document.querySelectorAll('.day textarea');
+    let maxHeight = 110; // minimum starting height
+
+    textareas.forEach(textarea => {
+      textarea.style.height = '110px';
+      const scrollHeight = textarea.scrollHeight;
+      if (scrollHeight > maxHeight) maxHeight = scrollHeight;
+    });
+
+    maxHeight = Math.min(maxHeight, 300);
+
+    textareas.forEach(textarea => {
+      textarea.style.height = maxHeight + 'px';
+    });
+  }
+
+  // Run initial setup
+  populateSelectors();
+  loadCalendar();
+  loadTodos();
+
+  // Expose functions for buttons outside module scope
+  window.changeMonth = changeMonth;
+  window.goToToday = goToToday;
+  window.addTodo = addTodo;
+
+  // Resize textareas on window resize
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('.todo-item textarea, .day textarea').forEach(autoResizeTextarea);
+    autoResizeAllDayTextareas();
+  });
+
+</script>
+
+
+
 </body>
 </html>
