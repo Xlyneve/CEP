@@ -39,7 +39,6 @@
   z-index: 10;
 }
 
-    }
     .header a {
   position: relative; /* Required for z-index to take effect */
   text-decoration: none;
@@ -254,158 +253,257 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const notesCol = collection(db, "recallNotes");
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const notesCol = collection(db, "recallNotes");
 
-    async function addNote() {
-      const title = nurseTitle.value.trim();
-      const note = nurseNote.value.trim();
-      if (!title && !note) return;
+  async function addNote() {
+    const title = nurseTitle.value.trim();
+    const note = nurseNote.value.trim();
+    if (!title && !note) return;
 
-      await addDoc(notesCol, {
-        title: title || "Untitled",
-        note,
-        time: new Date().toISOString()
+    await addDoc(notesCol, {
+      title: title || "Untitled",
+      note,
+      time: new Date().toISOString()
+    });
+
+    nurseTitle.value = '';
+    nurseNote.value = '';
+  }
+
+  async function deleteNote(id) {
+    if (confirm("Delete this note?")) {
+      await deleteDoc(doc(db, "recallNotes", id));
+    }
+  }
+
+  async function saveEdit(id, titleInput, noteTextarea) {
+    const updatedTitle = titleInput.value.trim();
+    const updatedNote = noteTextarea.value.trim();
+
+    await updateDoc(doc(db, "recallNotes", id), {
+      title: updatedTitle || "Untitled",
+      note: updatedNote
+    });
+  }
+
+  function enableEditing(card, id, title, note) {
+    card.innerHTML = `
+      <input type="text" class="edit-title" value="${title}" style="width: 100%; margin-bottom: 6px; padding: 4px;" />
+      <div class="edit-note" contenteditable="true" style="width: 100%; min-height: 100px; padding: 6px; border: 1px solid #ccc; border-radius: 6px; background: white; font-size: 12px; font-family: Tahoma, sans-serif;">
+        ${note.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/====(.*?)====/g, '<span class="highlight">$1</span>')}
+      </div>
+      <div class="editor-buttons">
+        <button onclick="saveRichEdit('${id}', this.closest('.note-card').querySelector('.edit-title'), this.closest('.note-card').querySelector('.edit-note'))">Save</button>
+        <button onclick="renderNotes()">Cancel</button>
+        <button onclick="toggleBold()">Bold</button>
+        <button onclick="highlightSelection()">Highlight</button>
+      </div>
+    `;
+  }
+
+  function copyContent(id) {
+    const noteContent = document.querySelector(`#note-${id} .note-content`);
+    const range = document.createRange();
+    range.selectNode(noteContent);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    alert("Content copied to clipboard!");
+  }
+
+  function renderNotes() {
+    onSnapshot(notesCol, snapshot => {
+      const list = document.getElementById('nurseNotesList');
+      list.innerHTML = '';
+
+      snapshot.forEach(docSnap => {
+        const { title, note, time } = docSnap.data();
+        const id = docSnap.id;
+
+        const div = document.createElement('div');
+        div.className = 'note-card';
+        div.id = `note-${id}`;
+        div.innerHTML = `
+          <div class="note-title">${title}</div>
+          <div class="note-content">${note.replace(/\n/g, '<br>')}</div>
+          <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
+          <div class="note-actions">
+            <button 
+              class="edit-btn" 
+              data-id="${id}" 
+              data-title="${encodeURIComponent(title)}" 
+              data-note="${encodeURIComponent(note)}"
+            >Edit</button>
+            <button onclick="copyContent('${id}')">Copy</button>
+            <button onclick="deleteNote('${id}')">Delete</button>
+          </div>
+        `;
+        list.appendChild(div);
       });
 
-      nurseTitle.value = '';
-      nurseNote.value = '';
-    }
+      document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const card = button.closest('.note-card');
+          const id = button.dataset.id;
+          const title = decodeURIComponent(button.dataset.title);
+          const note = decodeURIComponent(button.dataset.note);
+          enableEditing(card, id, title, note);
+        });
+      });
+    });
+  }
 
-    async function deleteNote(id) {
-      if (confirm("Delete this note?")) {
-        await deleteDoc(doc(db, "recallNotes", id));
+  async function saveRichEdit(id, titleInput, editableDiv) {
+    const updatedTitle = titleInput.value.trim();
+    const updatedNote = editableDiv.innerHTML.trim(); // Keeps <strong> and <span class="highlight">
+
+    await updateDoc(doc(db, "recallNotes", id), {
+      title: updatedTitle || "Untitled",
+      note: updatedNote
+    });
+
+    renderNotes();
+  }
+
+  // Helper to unwrap highlight spans in selection
+  function unwrapHighlight(range) {
+    const ancestor = range.commonAncestorContainer;
+    let textNodes = [];
+
+    if (ancestor.nodeType === 3) {
+      textNodes = [ancestor];
+    } else {
+      // Get all text nodes within selection range
+      const treeWalker = document.createTreeWalker(
+        ancestor,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: node => {
+            const nodeRange = document.createRange();
+            nodeRange.selectNodeContents(node);
+            return (range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
+                    range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0)
+              ? NodeFilter.FILTER_ACCEPT
+              : NodeFilter.FILTER_REJECT;
+          }
+        }
+      );
+      while(treeWalker.nextNode()) {
+        textNodes.push(treeWalker.currentNode);
       }
     }
 
-    async function saveEdit(id, titleInput, noteTextarea) {
-      const updatedTitle = titleInput.value.trim();
-      const updatedNote = noteTextarea.value.trim();
+    textNodes.forEach(node => {
+      const parent = node.parentNode;
+      if (parent.classList && parent.classList.contains('highlight')) {
+        // Replace the highlight span with its text content (unwrap)
+        parent.replaceWith(document.createTextNode(parent.textContent));
+      }
+    });
+  }
 
-      await updateDoc(doc(db, "recallNotes", id), {
-        title: updatedTitle || "Untitled",
-        note: updatedNote
-      });
+  // Toggle highlight on selection
+  function highlightSelection() {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
 
-      renderNotes(); // Refresh notes after saving
-    }
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) return;
 
-    function enableEditing(card, id, title, note) {
-      const sanitizedNote = note.replace(/====/g, "");
+    let commonAncestor = range.commonAncestorContainer;
+    if (commonAncestor.nodeType === 3) commonAncestor = commonAncestor.parentNode;
 
-      card.innerHTML = `
-        <input type="text" value="${title}" style="width: 100%; margin-bottom: 6px; padding: 4px;" />
-        <textarea style="width: 100%; height: 100px; padding: 4px;">${sanitizedNote}</textarea>
-        <div class="editor-buttons">
-          <button onclick="saveEdit('${id}', this.parentElement.parentElement.querySelector('input'), this.parentElement.parentElement.querySelector('textarea'))">Save</button>
-          <button onclick="renderNotes()">Cancel</button>
-          <button onclick="applyBold(this)">Bold</button>
-          <button onclick="applyHighlight(this)">Highlight</button>
-        </div>
-      `;
-    }
-
-    function applyBold(btn) {
-      const textarea = btn.parentElement.parentElement.querySelector("textarea");
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = textarea.value.substring(start, end);
-      if (!selected) return;
-
-      const newText = textarea.value.substring(0, start) + `**${selected}**` + textarea.value.substring(end);
-      textarea.value = newText;
-    }
-
-    function applyHighlight(btn) {
-      const textarea = btn.parentElement.parentElement.querySelector("textarea");
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = textarea.value.substring(start, end);
-      if (!selected) return;
-
-      const newText = textarea.value.substring(0, start) + `====${selected}====` + textarea.value.substring(end);
-      textarea.value = newText;
-    }
-
-    function copyContent(id) {
-      const noteContent = document.querySelector(`#note-${id} .note-content`);
-      const range = document.createRange();
-      range.selectNode(noteContent);
-      window.getSelection().removeAllRanges();
-      window.getSelection().addRange(range);
-      document.execCommand('copy');
-      alert("Content copied to clipboard!");
-    }
-
-    function renderNotes() {
-      const list = document.getElementById('nurseNotesList');
-      onSnapshot(notesCol, snapshot => {
-        console.log('Data fetched from Firestore:', snapshot.docs.map(doc => doc.data()));
-        list.innerHTML = '';
-        snapshot.forEach(docSnap => {
-          const { title, note, time } = docSnap.data();
-          const id = docSnap.id;
-
-          const displayNote = note.replace(/====(.*?)====/g, '<span class="highlight">$1</span>');
-          const displayBoldNote = displayNote.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-          const div = document.createElement('div');
-          div.className = 'note-card';
-          div.id = `note-${id}`;
-          div.innerHTML = `
-            <div class="note-title">${title}</div>
-            <div class="note-content">${displayBoldNote.replace(/\n/g, '<br>')}</div>
-            <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
-            <div class="note-actions">
-              <button onclick="enableEditing(this.closest('.note-card'), '${id}', \`${title.replace(/`/g, "\\`")}\`, \`${note.replace(/`/g, "\\`")}\`)">Edit</button>
-              <button onclick="copyContent('${id}')">Copy</button> <!-- Copy button here -->
-			   <button onclick="deleteNote('${id}')">Delete</button>
-            </div>
-          `;
-          list.appendChild(div);
-        });
-      });
-    }
-
-    window.addNote = addNote;
-    window.deleteNote = deleteNote;
-    window.saveEdit = saveEdit;
-    window.enableEditing = enableEditing;
-    window.applyBold = applyBold;
-    window.applyHighlight = applyHighlight;
-    window.copyContent = copyContent; // Make the function accessible in global scope
-    window.searchNotes = function (event) {
-      const query = event.target.value.toLowerCase();
-      const cards = document.querySelectorAll('.note-card');
-
-      cards.forEach(card => {
-        const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
-        const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
-
-        if (title.includes(query) || content.includes(query)) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
+    // Check if the entire selection is inside a highlight span
+    // We'll detect if all text nodes inside the range are inside .highlight
+    let fullyHighlighted = true;
+    const treeWalker = document.createTreeWalker(
+      commonAncestor,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: node => {
+          const nodeRange = document.createRange();
+          nodeRange.selectNodeContents(node);
+          return (range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
+                  range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0)
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_REJECT;
         }
-      });
-    };
+      }
+    );
 
-    renderNotes();
-  </script>
+    while (treeWalker.nextNode()) {
+      const parent = treeWalker.currentNode.parentNode;
+      if (!parent.classList || !parent.classList.contains('highlight')) {
+        fullyHighlighted = false;
+        break;
+      }
+    }
+
+    if (fullyHighlighted) {
+      unwrapHighlight(range);
+      selection.removeAllRanges();
+    } else {
+      // Wrap selection in highlight span
+      const span = document.createElement('span');
+      span.className = 'highlight';
+      span.style.backgroundColor = '#fbe0D2';
+
+      try {
+        range.surroundContents(span);
+      } catch (e) {
+        // For complex selections crossing multiple nodes, fallback
+        document.execCommand('hiliteColor', false, '#fbe0D2');
+      }
+      selection.removeAllRanges();
+    }
+  }
+
+  // Toggle bold using execCommand (simpler and reliable)
+  function toggleBold() {
+    document.execCommand('bold');
+  }
+
+  window.toggleBold = toggleBold;
+  window.highlightSelection = highlightSelection;
+  window.saveRichEdit = saveRichEdit;
+  window.addNote = addNote;
+  window.deleteNote = deleteNote;
+  window.enableEditing = enableEditing;
+  window.copyContent = copyContent;
+  window.searchNotes = function (event) {
+    const query = event.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.note-card');
+
+    cards.forEach(card => {
+      const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
+      const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
+
+      if (title.includes(query) || content.includes(query)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  };
+
+  renderNotes();
+</script>
+
 </body>
 </html>
