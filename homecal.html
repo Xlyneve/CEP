@@ -209,6 +209,35 @@ body {
 .home-button:hover {
   background-color: #a89f8b;
 }
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.calendar-header h2#monthLabel {
+  flex: 1;
+  text-align: center;
+  font-size: 50pt;
+  margin: 0;
+  color: black;
+  font-family: 'hellohon', cursive, sans-serif;
+}
+.emoji-button {
+  font-size: 14pt;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.emoji-button:hover {
+  background-color: #ddd3d2;
+}
 
 /* Day headers */
 .day-headers {
@@ -331,24 +360,29 @@ body {
 
 <body>
   <div class="calendar-container">
-    <div class="calendar-header">
-      <div class="calendar-header-left">
-        <button class="home-button" onclick="location.href='home.html'">Home</button>
-        <h2 id="monthLabel">Monthly Calendar</h2>
-      </div>
-      <div>
-        <button onclick="changeMonth(-1)">◀</button>
-        <button onclick="goToToday()">Today</button>
-        <select id="monthSelect"></select>
-        <select id="yearSelect"></select>
-        <button onclick="changeMonth(1)">▶</button>
-      </div>
+  <div class="calendar-header">
+    <div class="calendar-header-left">
+      <button class="home-button" onclick="location.href='home.html'">Home</button>
+      <button class="emoji-button" onclick="copyEmoji('☐')">☐</button>
+	  <button class="emoji-button" onclick="copyEmoji('✅')">✅</button>
     </div>
-    <div class="day-headers">
-      <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+    <h2 id="monthLabel">Monthly Calendar</h2>
+    <div>
+      <button onclick="changeMonth(-1)">◀</button>
+      <button onclick="goToToday()">Today</button>
+      <select id="monthSelect"></select>
+      <select id="yearSelect"></select>
+      <button onclick="changeMonth(1)">▶</button>
     </div>
-    <div class="calendar" id="calendar"></div>
   </div>
+
+  <div class="day-headers">
+    <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+  </div>
+
+  <div class="calendar" id="calendar"></div>
+</div> <!-- End of .calendar-container -->
+
 
   <div class="todo-container">
     <div class="todo-title">To-Do List</div>
@@ -632,6 +666,11 @@ body {
     document.querySelectorAll('.todo-item textarea, .day textarea').forEach(autoResizeTextarea);
     autoResizeAllDayTextareas();
   });
+window.copyEmoji = function(emoji) {
+  navigator.clipboard.writeText(emoji).then(() => {
+    alert(`Copied ${emoji} to clipboard`);
+  });
+};
 
 </script>
 
