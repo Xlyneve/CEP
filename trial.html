@@ -2,367 +2,305 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Calendar and To-Do Page</title>
-  
-   <link href="https://fonts.googleapis.com/css2?family=Clicker+Script&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
-   
-<style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nurse Notes</title>
+  <style>
 @font-face {
-  font-family: 'hellohon';
-  src: url('hellohon.otf') format('opentype');
-}
-@font-face {
-  font-family: 'champb';
-  src: url('champb.ttf') format('truetype');
+  font-family: 'fors';
+  src: url('fors.ttf') format('truetype');
 }
 
 body {
+  font-family: 'fors', sans-serif;
+  background-color: #f3f2ee;
+  background-image: url('b2.png'); /* replace with your file */
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-attachment: fixed;
+  background-size: cover;
   margin: 0;
-  font-family: 'champb', sans-serif;
-  font-size: 10pt;
-  background-color: #f8f2ef;
-  display: flex;
-  flex-wrap: nowrap; /* Keep on one line, no wrap */
-  height: 100vh;
-  overflow-x: auto; /* Allow horizontal scroll if needed */
-}
-
-/* Calendar container */
-.calendar-container {
-  flex: 1 1 auto; /* grow and shrink as needed */
-  min-width: 0; /* allow flexbox to shrink */
-  background-color: #ececec;
-  padding: 8px;
-  box-sizing: border-box;
-  max-height: 100vh;   /* limit container height to viewport height */
-  overflow-y: auto;    /* allow vertical scroll if needed */
-  position: relative;
-  border-right: 2px solid #C1B6A3;
-  border-radius: 12px 0 0 12px;
-  transition: box-shadow 0.3s ease;
-}
-
-.calendar-container:hover {
-  box-shadow: inset 0 0 10px #C1B6A3;
-}
-
-/* To-do container */
-.todo-container {
-  flex: 0 1 auto;
-  max-width: 350px;
-  min-width: 150px;
-  background-color: #f6f6f6;
-  padding: 3px;
-  box-sizing: border-box;
-  overflow-y: visible; /* allow container to grow, no scroll */
-  overflow-x: hidden;  /* prevent horizontal scroll */
-  border-left: 2px solid #C1B6A3;
-  border-radius: 0 12px 12px 0;
-  transition: box-shadow 0.3s ease;
-  white-space: normal;
-}
-.todo-container:hover {
-  box-shadow: inset 0 0 10px #C1B6A3;
-  color: black;
-}
-
-/* To-do title */
-.todo-title {
-  font-size: 60px;
-  text-align: center;
-  margin-bottom: 10px;
-  color: black;
-  font-family: 'hellohon', cursive;
-  font-weight: bold;
-}
-
-/* To-do list box */
-.todo-list {
-  background-color: white;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid #C1B6A3;
-  color: black;
-  max-height: none;   /* remove max height limit */
-  overflow-y: visible; /* show all items, no scrollbar */
-  overflow-x: hidden;  /* no horizontal scroll */
-  width: 100%;
-  box-sizing: border-box;
-  white-space: normal;
-}
-
-/* To-do item */
-.todo-item {
-  display: flex;
-  align-items: flex-start; /* so items align at the top */
-  gap: 10px; /* spacing between checkbox, textarea, and buttons */
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* To-do item text input and textarea */
-.todo-item input[type="text"],
-.todo-item textarea {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 10pt;
-  font-family: 'champb', sans-serif;
-  padding: 4px;
-  resize: none;
-  min-height: 30px;
-  max-height: 300px;
-  overflow-y: hidden;
-  box-sizing: border-box;
-  overflow-wrap: break-word;
-  white-space: pre-wrap;
-  color: black;
-  width: 100%;
-}
-
-/* Checkbox */
-.todo-item input[type="checkbox"] {
-  margin-right: 10px;
-  width: 20px;
-  height: 20px;
-  accent-color: #ffe700;
-}
-
-/* Buttons */
-.add-todo {
-  display: flex;
-  margin-top: 10px;
-}
-
-.add-todo input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 8px 0 0 8px;
-}
-
-.add-todo button {
-  padding: 8px;
-  border: none;
-  background-color: #C1B6A3;
-  cursor: pointer;
-  border-radius: 0 8px 8px 0;
+  font-size: 12px;
   color: #333;
 }
 
-.add-todo button:hover {
-  background-color: #a89f8b;
+.note-content {
+  font-family: 'Tahoma', sans-serif;
+  font-size: 11px;
 }
 
-/* Calendar Header */
-.calendar-header {
+/* HEADER & LAYERING */
+.header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 70px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
+  z-index: 50;
+  pointer-events: auto;
 }
 
-.calendar-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(204, 186, 181, 0.4);
+  z-index: 50;
+  pointer-events: none;
 }
 
-.calendar-header h2#monthLabel {
-  font-size: 50pt;
-  margin: 0;
-  color: Black;
-  font-family: 'hellohon', cursive, sans-serif;
-}
-
-.calendar-header button,
-.calendar-header select {
-  padding: 4px 8px;
-  font-size: 10pt;
-  background-color: #ddd3d2;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: black;
-}
-
-.calendar-header button:hover,
-.calendar-header select:hover {
-  background-color: #ddd3d2;
-}
-
-.home-button {
-  padding: 4px 8px;
-  background-color: #ddd3d2;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 8pt;
-  color: white;
-}
-
-.home-button:hover {
-  background-color: #a89f8b;
-}
-
-/* Day headers */
-.day-headers {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  margin-top: 10px;
+.header-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 25px;
+  margin: 10px 0;
   font-weight: bold;
   text-align: center;
+  flex: 1 1 100%;
+  order: 2;
+  z-index: 60;
+  pointer-events: auto;
+}
+a.header-link {
+  position: relative;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.header a {
+  float: left;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 14px;
+  left: 10px;
+  padding: 6px 12px;
+  background-color: #bdbfda;
+  border-radius: 6px;
+  border: 1px solid #ccc;
   color: black;
+  z-index: 70;
+  pointer-events: auto;
 }
 
-/* Calendar days */
-.calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  margin-top: 5px;
+.header a:hover {
+  background-color: #b88eaa;
 }
 
-.day {
-  background-color: #efe1e1;
-  border: 1px solid #C1B6A3;
-  border-radius: 12px;
-  padding: 6px;
-  min-height: 150px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  transition: box-shadow 0.3s;
+.search-box {
+  float: right;
+  z-index: 50;
+  pointer-events: auto;
+  
 }
 
-.day:hover {
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+.search-box input {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 150px;
 }
 
-.day.empty {
-  background-color: transparent;
-  border: none;
-}
-
-.day textarea {
+/* MAIN CONTENT */
+.container {
   width: 100%;
-  min-height: 110px;    /* base height */
-  max-height: 600px;    /* allow vertical growth */
-  height: auto;
-  resize: none;
-  overflow-y: hidden;   /* hide vertical scrollbar */
-  background-color: white; 
-  border: 1px solid #ddd3d2;
-  border-radius: 8px;
-  padding: 4px;
-  font-family: champb, sans-serif;
-  font-size: 9.5pt;
-  font-weight: bold;
+  padding: 100px 40px 20px 40px; /* top space for fixed header */
   box-sizing: border-box;
-  transition: height 0.2s ease;
+  position: relative;
+  z-index: 40;
 }
 
-/* date number on day */
-.day .date-number {
+h2 {
+  text-align: center;
+  font-size: 20px;
+}
+
+.form-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 40;
+}
+
+.form-section input,
+.form-section textarea {
+  flex: 1 1 300px;
+  padding: 8px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.add-btn {
+  padding: 10px;
+  background-color: #bdbfda;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: flex-start;
+  position: relative;
+  z-index: 40;
+}
+
+.note-card {
+  background-color: rgba(243, 242, 238, 0.6);
+  flex: 1 1 calc(25% - 20px);
+  min-width: 260px;
+  padding: 15px;
+  border-radius: 10px;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-sizing: border-box;
+  word-wrap: break-word;
+  z-index: 10;
+  transition: transform 0.3s ease, z-index 0s ease;
+}
+
+.note-card:hover {
+  transform: scale(1.1);
+  z-index: 999;
+}
+
+.note-title {
   font-weight: bold;
-  color: black;
-  margin-bottom: 5px;
-  font-size: 10pt;
+  font-size: 14px;
+  margin-bottom: 6px;
 }
 
-/* Responsive */
+.note-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.note-actions button {
+  margin-left: 5px;
+  border: none;
+  background-color: #bdbfda;
+  padding: 3px 4px;
+  color: white;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.note-actions button:hover {
+  background-color: #eae0da;
+}
+
+.highlight {
+  background-color: #f67a66;
+}
+
+.editor-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.editor-buttons button {
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+/* URL link in notes */
+.note-url {
+  margin-top: 10px;
+}
+
+.note-url a {
+  background-color: #FFF1F5;
+  color: #333;
+  text-decoration: none;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  display: inline-block;
+  transition: background-color 0.3s ease;
+}
+
+.note-url a:hover {
+  background-color: #ddc6b2;
+}
+
+.note-url a .icon {
+  margin-right: 6px;
+}
+
+/* MOBILE */
 @media (max-width: 600px) {
-  body {
-    flex-wrap: wrap;
+  h1 {
+    font-size: 22px;
+    padding-top: 60px;
   }
 
-  .calendar-container,
-  .todo-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    border-radius: 12px !important;
+  .search-bar {
+    position: static;
+    margin: 10px 20px;
+    justify-content: center;
   }
 
-  .calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 🛠 Keep 7 days per week */
-    gap: 4px;
-  }
-
-  .day {
-    min-height: 120px;
-    padding: 6px;
-    font-size: 9pt;
-  }
-
-  .day textarea {
-    background-color: white;
-    font-size: 9pt;
-    min-height: 40px;
-  }
-
-  .calendar-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .calendar-header h2#monthLabel {
-    font-size: 20pt;
-  }
-
-  .day-headers {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr); /* match 7-day layout */
-    font-size: 9pt;
-    gap: 4px;
+  .home-btn {
+    position: static;
+    margin: 10px 20px;
+    display: inline-block;
   }
 }
 
-
+/* General HTML reset */
+html, body {
+  margin: 0;
+  padding: 0;
+  position: relative;
+  z-index: 0;
+}
 </style>
-
 </head>
-
 <body>
-  <div class="calendar-container">
-    <div class="calendar-header">
-      <div class="calendar-header-left">
-        <button class="home-button" onclick="location.href='home.html'">Home</button>
-        <h2 id="monthLabel">Monthly Calendar</h2>
-      </div>
-      <div>
-        <button onclick="changeMonth(-1)">◀</button>
-        <button onclick="goToToday()">Today</button>
-        <select id="monthSelect"></select>
-        <select id="yearSelect"></select>
-        <button onclick="changeMonth(1)">▶</button>
-      </div>
-    </div>
-    <div class="day-headers">
-      <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-    </div>
-    <div class="calendar" id="calendar"></div>
-  </div>
 
-  <div class="todo-container">
-    <div class="todo-title">To-Do List</div>
-    <div class="todo-list" id="todoList"></div>
-    <div class="add-todo">
-      <input type="text" id="newTodo" placeholder="Add new task...">
-      <button onclick="addTodo()">Add</button>
-    </div>
+<div class="header">
+  <div class="header-bg"></div>  <!-- new background layer -->
+  
+  <a href="home.html" class="header-link">Home</a>
+  <h1 class="header-title">Nurse Notes</h1>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
+  </div>
+</div>
+
+<div class="container">
+    <div class="form-section">
+  <input id="nurseTitle" placeholder="Title">
+  <textarea id="nurseNote" placeholder="Note..."></textarea>
+  <input id="nurseURL" placeholder="Optional URL (if any)">
+  <input type="file" id="nurseImage" accept="image/*">
+  <button class="add-btn" onclick="addNote()">Add</button>
+</div>
+
+    <div class="cards-container" id="nurseNotesList"></div>
   </div>
 
   <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import {
-    getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc
+    getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -376,266 +314,226 @@ body {
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const notesCol = collection(db, "nurseNotes");
 
-  let currentDate = new Date();
-  const calendarEl = document.getElementById('calendar');
-  const monthLabel = document.getElementById('monthLabel');
-  const monthSelect = document.getElementById('monthSelect');
-  const yearSelect = document.getElementById('yearSelect');
-  const todoInput = document.getElementById('newTodo');
-  const todoListEl = document.getElementById('todoList');
+  async function addNote() {
+    const title = nurseTitle.value.trim();
+    const note = nurseNote.value.trim();
+    const url = nurseURL.value.trim();
+    const fileInput = document.getElementById('nurseImage');
+    const file = fileInput.files[0];
 
-  const months = [...Array(12).keys()].map(i =>
-    new Date(0, i).toLocaleString('default', { month: 'long' })
-  );
+    let imageBase64 = "";
 
-  function populateSelectors() {
-    months.forEach((m, i) => {
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = m;
-      monthSelect.appendChild(option);
-    });
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        imageBase64 = reader.result;
 
-    const thisYear = new Date().getFullYear();
-    for (let y = thisYear - 5; y <= thisYear + 5; y++) {
-      const option = document.createElement('option');
-      option.value = y;
-      option.textContent = y;
-      yearSelect.appendChild(option);
-    }
+        await addDoc(notesCol, {
+          title: title || "Untitled",
+          note,
+          url: url || "",
+          image: imageBase64,
+          time: new Date().toISOString()
+        });
 
-    monthSelect.addEventListener('change', () => {
-      currentDate.setMonth(parseInt(monthSelect.value));
-      loadCalendar();
-    });
-
-    yearSelect.addEventListener('change', () => {
-      currentDate.setFullYear(parseInt(yearSelect.value));
-      loadCalendar();
-    });
-  }
-
-  function goToToday() {
-    currentDate = new Date();
-    loadCalendar();
-  }
-
-  function changeMonth(offset) {
-    currentDate.setMonth(currentDate.getMonth() + offset);
-    loadCalendar();
-  }
-
-  function getDaysInMonth(month, year) {
-    return new Date(year, month + 1, 0).getDate();
-  }
-
-  function getDayName(year, month, day) {
-    return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
-  }
-
-  async function loadCalendar() {
-    const month = currentDate.getMonth();
-    const year = currentDate.getFullYear();
-    calendarEl.innerHTML = '';
-    monthLabel.textContent = `${months[month]} ${year}`;
-    monthSelect.value = month;
-    yearSelect.value = year;
-
-    const daysInMonth = getDaysInMonth(month, year);
-    const firstDay = new Date(year, month, 1).getDay() || 7;
-
-    const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
-    let notes = {};
-    const snap = await getDoc(docRef);
-    if (snap.exists()) notes = snap.data();
-
-    // Blank days before first day
-    for (let i = 1; i < firstDay; i++) {
-      const empty = document.createElement('div');
-      empty.className = 'day empty';
-      calendarEl.appendChild(empty);
-    }
-
-    // Days with notes textarea
-    for (let i = 1; i <= daysInMonth; i++) {
-      const note = notes[i] || "";
-      const day = document.createElement('div');
-      day.className = 'day';
-      day.innerHTML = `<div class="date-number">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
-      const textarea = day.querySelector('textarea');
-      textarea.addEventListener('input', e => {
-        autoResizeTextarea(e.target);
-        saveCalendar(year, month + 1, i, e.target.value);
+        nurseTitle.value = '';
+        nurseNote.value = '';
+        nurseURL.value = '';
+        nurseImage.value = '';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      await addDoc(notesCol, {
+        title: title || "Untitled",
+        note,
+        url: url || "",
+        image: "",
+        time: new Date().toISOString()
       });
-      calendarEl.appendChild(day);
-      autoResizeTextarea(textarea);
-    }
-    autoResizeAllDayTextareas();
-  }
 
-  async function saveCalendar(year, month, day, note) {
-    const ref = doc(db, 'calendar', `${year}-${month}`);
-    try {
-      await updateDoc(ref, { [day]: note });
-    } catch {
-      await setDoc(ref, { [day]: note }, { merge: true });
+      nurseTitle.value = '';
+      nurseNote.value = '';
+      nurseURL.value = '';
+      nurseImage.value = '';
     }
   }
 
-  async function addTodo() {
-    const value = todoInput.value.trim();
-    if (value) {
-      await addDoc(collection(db, 'todos'), { text: value, done: false });
-      todoInput.value = '';
+  async function deleteNote(id) {
+    if (confirm("Delete this note?")) {
+      await deleteDoc(doc(db, "nurseNotes", id));
     }
   }
 
-  function autoResizeTextarea(textarea) {
-    textarea.style.height = 'auto'; // reset height
-    textarea.style.height = textarea.scrollHeight + 'px'; // expand to content
-  }
-
-  function renderTodoItem(id, text, done) {
-    const item = document.createElement('div');
-    item.className = 'todo-item';
-    item.style.display = 'flex';
-    item.style.alignItems = 'flex-start';
-    item.style.gap = '10px';
-    item.style.width = '100%';
-    item.style.boxSizing = 'border-box';
-    item.style.padding = '8px 0';
-    item.style.borderBottom = '1px solid #ddd';
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.checked = done;
-    checkbox.onchange = () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
-
-    const input = document.createElement('textarea');
-    input.value = text;
-    input.disabled = true;
-    input.style.flex = '1';
-    input.style.border = 'none';
-    input.style.background = 'transparent';
-    input.style.fontFamily = 'champb, sans-serif';
-    input.style.fontSize = '10pt';
-    input.style.resize = 'vertical';
-    input.style.minHeight = '30px';
-    input.style.padding = '4px';
-    input.style.overflowWrap = 'break-word';
-    input.style.whiteSpace = 'pre-wrap';
-    input.style.wordBreak = 'break-word';
-    input.style.color = 'black';
-    autoResizeTextarea(input);
-
-    // Update size dynamically while editing
-    input.addEventListener('input', () => autoResizeTextarea(input));
-
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.flexDirection = 'column';
-    buttonContainer.style.gap = '6px';
-
-    const editBtn = document.createElement('button');
-    editBtn.textContent = '✏️';
-    editBtn.style.background = 'none';
-    editBtn.style.border = 'none';
-    editBtn.style.cursor = 'pointer';
-    editBtn.style.padding = '0';
-    editBtn.style.margin = '0';
-
-    editBtn.onclick = async () => {
-      if (input.disabled) {
-        input.disabled = false;
-        input.focus();
-        editBtn.textContent = '💾';
-      } else {
-        try {
-          await updateDoc(doc(db, 'todos', id), { text: input.value });
-          input.disabled = true;
-          editBtn.textContent = '✏️';
-        } catch (err) {
-          alert('Failed to save changes: ' + err.message);
-        }
-      }
-    };
-
-    input.addEventListener('keydown', async (e) => {
-      if (!input.disabled && e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        try {
-          await updateDoc(doc(db, 'todos', id), { text: input.value });
-          input.disabled = true;
-          editBtn.textContent = '✏️';
-        } catch (err) {
-          alert('Failed to save changes: ' + err.message);
-        }
-      }
-    });
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = '🗑️';
-    deleteBtn.style.background = 'none';
-    deleteBtn.style.border = 'none';
-    deleteBtn.style.cursor = 'pointer';
-    deleteBtn.style.padding = '0';
-    deleteBtn.style.margin = '0';
-    deleteBtn.onclick = async () => {
-      if (confirm("Delete this to-do?")) await deleteDoc(doc(db, 'todos', id));
-    };
-
-    buttonContainer.append(editBtn, deleteBtn);
-
-    item.append(checkbox, input, buttonContainer);
-    todoListEl.appendChild(item);
-    autoResizeTextarea(input);
-  }
-
-  function loadTodos() {
-    const ref = collection(db, 'todos');
-    onSnapshot(ref, snap => {
-      todoListEl.innerHTML = '';
-      snap.forEach(doc => renderTodoItem(doc.id, doc.data().text, doc.data().done));
+  async function saveEdit(id, updatedTitle, updatedNote) {
+    await updateDoc(doc(db, "nurseNotes", id), {
+      title: updatedTitle || "Untitled",
+      note: updatedNote
     });
   }
 
-  function autoResizeAllDayTextareas() {
-    const textareas = document.querySelectorAll('.day textarea');
-    let maxHeight = 110; // minimum starting height
-
-    textareas.forEach(textarea => {
-      textarea.style.height = '110px';
-      const scrollHeight = textarea.scrollHeight;
-      if (scrollHeight > maxHeight) maxHeight = scrollHeight;
-    });
-
-    maxHeight = Math.min(maxHeight, 300);
-
-    textareas.forEach(textarea => {
-      textarea.style.height = maxHeight + 'px';
-    });
+  // Helper to escape HTML special characters
+  function escapeHtml(text) {
+    return text.replace(/&/g, "&amp;")
+               .replace(/</g, "&lt;")
+               .replace(/>/g, "&gt;")
+               .replace(/"/g, "&quot;")
+               .replace(/'/g, "&#039;");
   }
 
-  // Run initial setup
-  populateSelectors();
-  loadCalendar();
-  loadTodos();
+  function enableEditing(card, id, title, note) {
+  card.innerHTML = `
+    <input type="text" class="edit-title" value="${escapeHtml(title)}"
+      style="width:100%; margin-bottom:6px; padding:4px; font-family: Tahoma, sans-serif; font-size: 10px;" />
+    
+    <div class="edit-note" contenteditable="true"
+      style="width:100%; min-height:60px; padding:6px; border:1px solid #ccc; border-radius:6px;
+             font-family: Tahoma, sans-serif; font-size: 11px; background:white;">
+      ${note.replace(/\n/g, "<br>")}
+    </div>
+    
+    <div class="editor-buttons" style="margin-top:6px;">
+      <button class="btn-save">Save</button>
+      <button class="btn-cancel">Cancel</button>
+      <button class="btn-bold">Bold</button>
+      <button class="btn-highlight">Highlight</button>
+    </div>
+  `;
 
-  // Expose functions for buttons outside module scope
-  window.changeMonth = changeMonth;
-  window.goToToday = goToToday;
-  window.addTodo = addTodo;
+  const inputTitle = card.querySelector('.edit-title');
+  const editableDiv = card.querySelector('.edit-note');
+  const btnSave = card.querySelector('.btn-save');
+  const btnCancel = card.querySelector('.btn-cancel');
+  const btnBold = card.querySelector('.btn-bold');
+  const btnHighlight = card.querySelector('.btn-highlight');
 
-  // Resize textareas on window resize
-  window.addEventListener('resize', () => {
-    document.querySelectorAll('.todo-item textarea, .day textarea').forEach(autoResizeTextarea);
-    autoResizeAllDayTextareas();
+  btnSave.addEventListener('click', async () => {
+    const updatedTitle = inputTitle.value.trim() || "Untitled";
+    const updatedNote = editableDiv.innerHTML.trim();
+    await saveEdit(id, updatedTitle, updatedNote);
+    renderNotes();
   });
 
+  btnCancel.addEventListener('click', () => {
+    renderNotes();
+  });
+
+  btnBold.addEventListener('click', () => {
+    document.execCommand('bold');
+  });
+
+  btnHighlight.addEventListener('click', () => {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = selection.toString();
+
+      if (!selectedText) return;
+
+      // Check if already highlighted
+      const container = range.commonAncestorContainer;
+      const parent = container.nodeType === 3 ? container.parentNode : container;
+
+      if (parent.tagName === 'SPAN' && parent.style.backgroundColor === 'rgb(251, 224, 210)') {
+        // Remove highlight
+        const textNode = document.createTextNode(parent.textContent);
+        parent.replaceWith(textNode);
+      } else {
+        // Apply highlight
+        const span = document.createElement('span');
+        span.style.backgroundColor = '#fbe0D2';
+        span.textContent = selectedText;
+
+        range.deleteContents();
+        range.insertNode(span);
+      }
+
+      selection.removeAllRanges();
+    }
+  });
+}
+
+
+
+  function renderNotes() {
+    const list = document.getElementById('nurseNotesList');
+    onSnapshot(notesCol, snapshot => {
+      // Clear current notes
+      list.innerHTML = '';
+      snapshot.forEach(docSnap => {
+        const { title, note, time, url, image } = docSnap.data();
+        const id = docSnap.id;
+
+        // Replace highlight and bold markers for display
+        const displayNote = note;
+
+        const div = document.createElement('div');
+        div.className = 'note-card';
+        div.innerHTML = `
+          <div class="note-title">${title}</div>
+          <div class="note-content">${displayNote.replace(/\n/g, '<br>')}</div>
+          ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
+          <div style="font-size:11px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
+          ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
+          <div class="note-actions">
+            <button class="edit-btn">Edit</button>
+            <button class="delete-btn">Delete</button>
+          </div>
+        `;
+
+        // Add event listeners for Edit and Delete buttons
+        const editBtn = div.querySelector('.edit-btn');
+        const deleteBtn = div.querySelector('.delete-btn');
+
+        editBtn.addEventListener('click', () => {
+          enableEditing(div, id, title, note);
+        });
+
+        deleteBtn.addEventListener('click', () => {
+          deleteNote(id);
+        });
+
+        list.appendChild(div);
+      });
+    });
+  }
+
+  // Search/filter notes live by title or content
+  function searchNotes(event) {
+    const query = event.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.note-card');
+
+    cards.forEach(card => {
+      const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
+      const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
+
+      if (title.includes(query) || content.includes(query)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Add event listener for search input after DOM loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keyup', searchNotes);
+    }
+  });
+
+  // Expose to window if needed
+  window.addNote = addNote;
+  window.deleteNote = deleteNote;
+  window.saveEdit = saveEdit;
+  window.enableEditing = enableEditing;
+  window.renderNotes = renderNotes;
+
+  // Initial load
+  renderNotes();
 </script>
-
-
 
 </body>
 </html>
