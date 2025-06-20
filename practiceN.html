@@ -182,6 +182,12 @@
       margin-top: 8px;
       white-space: pre-wrap;
     }
+.note-text[contenteditable="true"] {
+  border: 1px solid #ccc;
+  padding: 6px;
+  min-height: 60px;
+  background-color: #fff;
+}
 
     .note-url a {
       font-size: 12px;
@@ -342,7 +348,12 @@
           if (note.editing) {
             div.innerHTML = `
               <input type="text" id="editTitle${note.id}" value="${note.title}">
-              <textarea id="editText${note.id}" rows="3">${note.text.replace(/<[^>]*>/g, '')}</textarea>
+             <div id="editText${note.id}" contenteditable="true" class="note-text">${note.text}</div>
+   <div class="btn-group">
+  <button onclick="formatEditText('${note.id}', 'bold')"><b>B</b></button>
+  <button onclick="formatEditText('${note.id}', 'highlight')"><mark>H</mark></button>
+  </div>
+
               <input type="text" id="editUrl${note.id}" value="${note.url}" placeholder="Optional URL" />
               <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
               <div class="btn-group">
@@ -381,7 +392,7 @@
   const note = notes[index];
 
   const newTitle = document.getElementById(`editTitle${id}`).value.trim();
-  let newText = document.getElementById(`editText${id}`).value.trim();
+  let newText = document.getElementById(`editText${id}`).innerHTML.trim();
   const newUrl = document.getElementById(`editUrl${id}`).value.trim();
 
   newText = formatText(newText);
@@ -395,6 +406,31 @@
 
   notes[index].editing = false;
   renderNotes();
+};
+window.formatEditText = (id, type) => {
+  const el = document.getElementById(`editText${id}`);
+  el.focus();
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+
+  const range = selection.getRangeAt(0);
+  if (!el.contains(range.commonAncestorContainer)) return;
+
+  const selectedText = range.toString();
+  if (!selectedText) return;
+
+  const span = document.createElement(type === 'bold' ? 'strong' : 'mark');
+  span.textContent = selectedText;
+
+  range.deleteContents();
+  range.insertNode(span);
+
+  // Move cursor after inserted span
+  const newRange = document.createRange();
+  newRange.setStartAfter(span);
+  newRange.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(newRange);
 };
 
 
