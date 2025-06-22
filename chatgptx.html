@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat with Input at Bottom</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #bdaab8;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Chat container fills page with padding bottom for input */
+  #chat {
+    flex-grow: 1;
+    max-width: 600px;
+    width: 90vw;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    margin-bottom: 100px; /* leave space for input box */
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 transparent;
+  }
+  #chat::-webkit-scrollbar {
+    width: 8px;
+  }
+  #chat::-webkit-scrollbar-thumb {
+    background-color: #c7c5bb;
+    border-radius: 4px;
+  }
+
+  .message {
+    max-width: 75%;
+    margin-bottom: 16px;
+    padding: 14px 20px;
+    border-radius: 20px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .user {
+    background: #d4bdbd;
+    color: black;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .bot {
+    background: #f1dbc6;
+    color: black;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+  }
+
+  /* Input fixed bottom center */
+  #inputArea {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    width: 90vw;
+    max-width: 600px;
+    gap: 10px;
+    background: #bdaab8;
+    padding: 12px 20px;
+    border-radius: 9999px;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.9);
+    z-index: 100;
+  }
+  #userInput {
+    flex-grow: 1;
+    font-size: 16px;
+    padding: 12px 16px;
+    border-radius: 9999px;
+    border: 1px solid #ccc;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  #userInput:focus {
+    border-color: #005eff;
+    box-shadow: 0 0 6px rgba(0,94,255,0.7);
+  }
+  #sendBtn {
+    display: none; /* enter submits */
+  }
+
+  /* Add Note toggle button fixed top-right */
+  #addNoteToggle {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: #dcb5a2;
+    border: none;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.9);
+    z-index: 101;
+  }
+  #addNoteToggle:hover {
+    background: #debaa4;
+  }
+
+/* Note panel popup */
+#notePanel {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  width: 320px;
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 102;
+  transition: all 0.3s ease;
+
+  }
+  #noteInput {
+  width: 100%;
+  min-height: 120px;
+  font-size: 15px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+  #notePanel {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+#notePanel.show {
+  display: flex;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+  #addNoteBtn {
+    background: #c7c5bb;
+    border: none;
+    color: black;
+    font-size: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+  }
+  #addNoteBtn:hover {
+    background: #d4bdbd;
+  }
+</style>
+</head>
+<body>
+
+  <button id="addNoteToggle" title="Add Note">＋</button>
+
+  <div id="notePanel">
+    <textarea id="noteInput" placeholder="Type or paste your note here..."></textarea>
+    <button id="addNoteBtn">Add Note</button>
+  </div>
+
+  <div id="chat"></div>
+
+  <form id="inputArea">
+    <input type="text" id="userInput" placeholder="Ask a question..." autocomplete="off" required />
+    <button type="submit" id="sendBtn">Send</button>
+  </form>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+  // Replace with your Firebase config:
+  const firebaseConfig = {
+  apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
+  authDomain: "notes-chat-c5ff3.firebaseapp.com",
+  projectId: "notes-chat-c5ff3",
+  storageBucket: "notes-chat-c5ff3.firebasestorage.app",
+  messagingSenderId: "597780727252",
+  appId: "1:597780727252:web:8407eb4096dbe301d74241",
+  measurementId: "G-YQD63H7L5T"
+};
+
+  // Init Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const chat = document.getElementById('chat');
+  const userInput = document.getElementById('userInput');
+  const addNoteToggle = document.getElementById('addNoteToggle');
+  const notePanel = document.getElementById('notePanel');
+  const noteInput = document.getElementById('noteInput');
+  const addNoteBtn = document.getElementById('addNoteBtn');
+  const inputArea = document.getElementById('inputArea');
+
+  // Add message bubble and scroll to bottom
+  function addMessage(sender, text) {
+    const div = document.createElement('div');
+    div.className = 'message ' + sender;
+    div.textContent = text;
+    chat.appendChild(div);
+    // Scroll chat to bottom smoothly
+    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  }
+
+  // Toggle note input panel
+  addNoteToggle.onclick = () => {
+    if (notePanel.style.display === 'flex') {
+      notePanel.style.display = 'none';
+    } else {
+      notePanel.style.display = 'flex';
+      noteInput.focus();
+    }
+  };
+
+  // Add note to Firestore
+  addNoteBtn.onclick = async () => {
+    const noteText = noteInput.value.trim();
+    if (!noteText) {
+      alert('Please enter a note to add.');
+      return;
+    }
+    await db.collection('notes').add({
+      content: noteText,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    addMessage('bot', '✅ Note added!');
+    noteInput.value = '';
+    notePanel.style.display = 'none';
+  };
+
+  // Query notes
+  async function queryNotes(question) {
+    const lowerQuestion = question.toLowerCase();
+    const snapshot = await db.collection('notes')
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (data.content.toLowerCase().includes(lowerQuestion)) {
+        const idx = data.content.toLowerCase().indexOf(lowerQuestion);
+        const start = Math.max(0, idx - 50);
+        const end = Math.min(data.content.length, idx + question.length + 50);
+        return 'Found in note: ...' + data.content.substring(start, end) + '...';
+      }
+    }
+    return '❌ Sorry, no matching information found.';
+  }
+
+  // Handle form submit (send question)
+  inputArea.onsubmit = async (e) => {
+    e.preventDefault();
+    const question = userInput.value.trim();
+    if (!question) return;
+    addMessage('user', question);
+    userInput.value = '';
+    addMessage('bot', '⏳ Searching...');
+    const answer = await queryNotes(question);
+    // Replace last bot "Searching..." message with answer
+    const lastBotMsg = [...chat.querySelectorAll('.bot')].pop();
+    if (lastBotMsg && lastBotMsg.textContent === '⏳ Searching...') {
+      lastBotMsg.textContent = answer;
+    } else {
+      addMessage('bot', answer);
+    }
+  };
+addNoteToggle.onclick = () => {
+  notePanel.classList.toggle('show');
+  if (notePanel.classList.contains('show')) {
+    noteInput.focus();
+  }
+};
+
+  // Welcome message
+  addMessage('bot', '👋 Welcome X! How can I help you today?');
+</script>
+
+</body>
+</html>
