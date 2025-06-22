@@ -248,22 +248,20 @@
 
   // Query notes
   async function queryNotes(question) {
-    const lowerQuestion = question.toLowerCase();
-    const snapshot = await db.collection('notes')
-      .orderBy('createdAt', 'desc')
-      .get();
+  const lowerQuestion = question.toLowerCase();
+  const snapshot = await db.collection('notes')
+    .orderBy('createdAt', 'desc')
+    .get();
 
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      if (data.content.toLowerCase().includes(lowerQuestion)) {
-        const idx = data.content.toLowerCase().indexOf(lowerQuestion);
-        const start = Math.max(0, idx - 50);
-        const end = Math.min(data.content.length, idx + question.length + 50);
-        return 'Found in note: ...' + data.content.substring(start, end) + '...';
-      }
+  for (const doc of snapshot.docs) {
+    const data = doc.data();
+    if (data.content.toLowerCase().includes(lowerQuestion)) {
+      return 'Found in note: ' + data.content;
     }
-    return '❌ Sorry, no matching information found.';
   }
+  return '❌ Sorry, no matching information found.';
+}
+
 
   // Handle form submit (send question)
   inputArea.onsubmit = async (e) => {
