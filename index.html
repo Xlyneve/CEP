@@ -4,17 +4,28 @@
   <meta charset="UTF-8">
   <title>Enter Password</title>
   <style>
-    body {
-      background-color: #eaf5ea; /* soft pastel green */
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      position: relative;
-      font-family: 'Segoe UI', sans-serif;
-    }
+    html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #eaf5ea;
+  background-image: url('your-background.jpg'); /* optional */
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  overflow-x: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
 
     #datetime {
       text-align: center;
@@ -22,7 +33,18 @@
       color: #2f5131;
       margin-bottom: 30px;
       z-index: 2;
+	   line-height: 1.4;
     }
+	
+#date-part {
+  font-weight: bold;
+  font-size: 30px;
+}
+
+#time-part {
+  font-size: 26px;
+  margin-top: 5px;
+}
 
     .password-container {
       background-color: #ddb2b5;
@@ -61,9 +83,9 @@
 
     .monstera-img {
       position: absolute;
-      right: 0px;
+      right: -22px;
       bottom: 0px;
-      width: 600px;
+      max-width: 100%;
       height: 800px;
       opacity: 0.9;
       z-index: 1;
@@ -82,7 +104,10 @@
   <img src="monstera.png" alt="Monstera Leaf" class="monstera-img">
 
   <!-- Live date and time above the container -->
-  <div id="datetime"></div>
+  <div id="datetime">
+  <div id="date-part"></div>
+  <div id="time-part"></div>
+</div>
 
   <div class="password-container">
     <h2 style="color: black;">Enter Password</h2>
@@ -98,14 +123,18 @@
   <script>
     // Live date & time display
     function updateDateTime() {
-      const now = new Date();
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const dateStr = now.toLocaleDateString(undefined, options);
-      const timeStr = now.toLocaleTimeString();
-      document.getElementById('datetime').textContent = `${dateStr} — ${timeStr}`;
-    }
-    setInterval(updateDateTime, 1000);
-    updateDateTime();
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(undefined, {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  const timeStr = now.toLocaleTimeString();
+
+  document.getElementById('date-part').textContent = dateStr;
+  document.getElementById('time-part').textContent = timeStr;
+}
+setInterval(updateDateTime, 1000);
+updateDateTime();
+
 
     // Firebase config
     const firebaseConfig = {
