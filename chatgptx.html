@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat with Themed Style</title>
+<title>Chat with Themed Style and Image Upload</title>
 <style>
   @font-face {
     font-family: 'fors';
@@ -29,7 +29,7 @@
     flex-grow: 1;
     max-width: 900px;
     width: 95vw;
-    margin: 10px auto 140px auto; /* space top for any header, bottom for input */
+    margin: 10px auto 140px auto;
     padding: 20px;
     box-sizing: border-box;
     overflow-y: auto;
@@ -37,8 +37,8 @@
     background: rgba(242, 241, 242, 0.3);
     border-radius: 12px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.010);
-	min-height: 600px;  /* sets a minimum height */
-    max-height: 85vh;   /* prevents it from growing too tall */
+    min-height: 600px;
+    max-height: 85vh;
   }
 
   .message {
@@ -152,6 +152,12 @@
     font-family: 'Tahoma', sans-serif;
   }
 
+  #imageInput {
+    width: 100%;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
   #addNoteBtn {
     background: #dab5d9;
     border: none;
@@ -167,6 +173,14 @@
   #addNoteBtn:hover {
     background: #ccbab5;
   }
+
+  /* Image in messages */
+  .message img {
+    max-width: 100%;
+    border-radius: 12px;
+    margin-top: 10px;
+    display: block;
+  }
 </style>
 </head>
 <body>
@@ -175,6 +189,7 @@
 
 <div id="notePanel">
   <textarea id="noteInput" placeholder="Type or paste your note here..."></textarea>
+  <input type="file" id="imageInput" accept="image/*" />
   <button id="addNoteBtn">Add Note</button>
 </div>
 
@@ -187,13 +202,14 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 <script>
   // Your Firebase config here (replace with your own)
   const firebaseConfig = {
     apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
     authDomain: "notes-chat-c5ff3.firebaseapp.com",
     projectId: "notes-chat-c5ff3",
-    storageBucket: "notes-chat-c5ff3.firebasestorage.app",
+    storageBucket: "notes-chat-c5ff3.appspot.com",
     messagingSenderId: "597780727252",
     appId: "1:597780727252:web:8407eb4096dbe301d74241",
     measurementId: "G-YQD63H7L5T"
@@ -201,6 +217,7 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
+  const storage = firebase.storage();
 
   const chat = document.getElementById('chat');
   const userInput = document.getElementById('userInput');
@@ -209,12 +226,25 @@
   const noteInput = document.getElementById('noteInput');
   const addNoteBtn = document.getElementById('addNoteBtn');
   const inputArea = document.getElementById('inputArea');
+  const imageInput = document.getElementById('imageInput');
 
   // Add message bubble and scroll to bottom
-  function addMessage(sender, text) {
+  function addMessage(sender, text, imageUrl=null) {
     const div = document.createElement('div');
     div.className = 'message ' + sender;
+
+    // Add text
     div.textContent = text;
+
+    // If image URL, append image element
+    if (imageUrl) {
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      img.alt = 'Attached Image';
+      div.appendChild(document.createElement('br'));
+      div.appendChild(img);
+    }
+
     chat.appendChild(div);
     chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
   }
@@ -229,23 +259,73 @@
     }
   };
 
-  // Add note to Firestore
+  // Upload photo to Firebase Storage and get URL
+  async function uploadPhoto(file) {
+    if (!file) return null;
+
+    const storageRef = storage.ref();
+    const fileRef = storageRef.child('noteImages/' + Date.now() + '_' + file.name);
+
+    return new Promise((resolve, reject) => {
+      const uploadTask = fileRef.put(file);
+
+      uploadTask.on('state_changed', 
+        snapshot => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('Upload is ' + progress.toFixed(2) + '% done');
+        }, 
+        error => {
+          console.error('Upload failed:', error);
+          reject(error);
+        }, 
+        () => {
+          uploadTask.snapshot.ref.getDownloadURL()
+            .then(downloadURL => resolve(downloadURL))
+            .catch(err => reject(err));
+        }
+      );
+    });
+  }
+
+  // Add note to Firestore with optional image
   addNoteBtn.onclick = async () => {
     const noteText = noteInput.value.trim();
     if (!noteText) {
       alert('Please enter a note to add.');
       return;
     }
-    await db.collection('notes').add({
-      content: noteText,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    addMessage('bot', '✅ Note added!');
-    noteInput.value = '';
-    notePanel.style.display = 'none';
+
+    const file = imageInput.files[0] || null;
+
+    addNoteBtn.disabled = true;
+    addNoteBtn.textContent = 'Uploading...';
+
+    try {
+      let imageUrl = null;
+      if (file) {
+        imageUrl = await uploadPhoto(file);
+      }
+
+      await db.collection('notes').add({
+        content: noteText,
+        imageUrl: imageUrl || null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      addMessage('bot', '✅ Note added!');
+      noteInput.value = '';
+      imageInput.value = '';
+      notePanel.style.display = 'none';
+
+    } catch (err) {
+      alert('Error uploading note: ' + err.message);
+    } finally {
+      addNoteBtn.disabled = false;
+      addNoteBtn.textContent = 'Add Note';
+    }
   };
 
-  // Query notes
+  // Query notes matching question text
   async function queryNotes(question) {
     const lowerQuestion = question.toLowerCase();
     const snapshot = await db.collection('notes')
@@ -257,14 +337,21 @@
     for (const doc of snapshot.docs) {
       const data = doc.data();
       if (data.content.toLowerCase().includes(lowerQuestion)) {
-        results.push(data.content);
+        results.push(data);
       }
     }
     if (results.length === 0) {
-      return '❌ Sorry, no matching information found.';
+      return [{content: '❌ Sorry, no matching information found.', imageUrl: null}];
     }
-    // Return all matching notes concatenated with separator and numbering
-    return results.map((r, i) => `Note ${i + 1}: ${r}`).join('\n\n---\n\n');
+    return results;
+  }
+
+  // Display notes (text + images) nicely
+  function displayNotes(notes) {
+    notes.forEach((note, i) => {
+      const prefix = `Note ${i + 1}: `;
+      addMessage('bot', prefix + note.content, note.imageUrl);
+    });
   }
 
   // Handle form submit (send question)
@@ -275,13 +362,16 @@
     addMessage('user', question);
     userInput.value = '';
     addMessage('bot', '⏳ Searching...');
-    const answer = await queryNotes(question);
-    const lastBotMsg = [...chat.querySelectorAll('.bot')].pop();
+    const results = await queryNotes(question);
+
+    // Remove last "Searching" message
+    const botMessages = [...chat.querySelectorAll('.bot')];
+    const lastBotMsg = botMessages[botMessages.length - 1];
     if (lastBotMsg && lastBotMsg.textContent === '⏳ Searching...') {
-      lastBotMsg.textContent = answer;
-    } else {
-      addMessage('bot', answer);
+      chat.removeChild(lastBotMsg);
     }
+
+    displayNotes(results);
   };
 
   // Welcome message
