@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat with Themed Style and Image Upload</title>
+<title>Minimal Chat with Full Features</title>
 <style>
   @font-face {
     font-family: 'fors';
@@ -14,58 +14,44 @@
     height: 100%;
     margin: 0; padding: 0;
     font-family: 'fors', sans-serif, Arial, sans-serif;
-    background-color: #f3f2ee;
-    background-image: url('b7.png');
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: 90%;
-    background-attachment: fixed;
-    color: #333;
+    background-color: #121212;
+    color: white;
     display: flex;
     flex-direction: column;
   }
 
   #chat {
     flex-grow: 1;
-    max-width: 900px;
     width: 95vw;
     margin: 10px auto 140px auto;
     padding: 20px;
-    box-sizing: border-box;
+	padding-left: 100px;
     overflow-y: auto;
     font-size: 14px;
-    background: rgba(242, 241, 242, 0.3);
-    border-radius: 12px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.010);
-    min-height: 600px;
-    max-height: 85vh;
   }
 
   .message {
-    max-width: 75%;
-    margin-bottom: 16px;
-    padding: 14px 20px;
-    border-radius: 14px;
-    line-height: 1.4;
+    margin-bottom: 8px;
+    line-height: 1.6;
+    font-size: 14px;
     white-space: pre-wrap;
     word-wrap: break-word;
+  }
+
+  .user, .bot {
+    background: none;
+    color: white;
+  }
+
+  .editableNote {
+    white-space: pre-wrap;
+    background: none;
+    color: white;
+    padding: 4px;
+    border: none;
     font-family: 'fors', sans-serif;
-    font-size: 12px;
-    position: relative;
-  }
-
-  .user {
-    background-color: #dab5d9;
-    color: black;
-    margin-left: auto;
-    border-bottom-right-radius: 6px;
-  }
-
-  .bot {
-    background-color: white;
-    color: black;
-    margin-right: auto;
-    border-bottom-left-radius: 6px;
+    font-size: 14px;
+    outline: none;
   }
 
   #inputArea {
@@ -77,7 +63,7 @@
     width: 90vw;
     max-width: 600px;
     gap: 10px;
-    background: #f3f2ee;
+    background: #1e1e1e;
     padding: 12px 20px;
     border-radius: 12px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
@@ -89,19 +75,78 @@
     font-size: 13px;
     padding: 10px 16px;
     border-radius: 12px;
-    border: 1px solid #ccc;
+    border: 1px solid #444;
+    background: #222;
+    color: white;
     outline: none;
-    transition: border-color 0.2s ease;
-    font-family: 'fors', sans-serif;
   }
 
   #userInput:focus {
-    border-color: #a98eaa;
+    border-color: #888;
     box-shadow: 0 0 6px rgba(169, 142, 170, 0.7);
   }
 
   #sendBtn {
-    display: none; /* Enter key submits */
+    display: none;
+  }
+
+  #emojiColumn {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 101;
+  }
+
+  .emoji, .format-btn {
+    background: none;
+    color: white;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 16px;
+    transition: all 0.2s ease;
+  }
+
+  .emoji:hover, .format-btn:hover {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+
+  #notePanel {
+    position: fixed;
+    top: 60px;
+    right: 16px;
+    width: 300px;
+    background: #1e1e1e;
+    color: white;
+    border-radius: 12px;
+    padding: 16px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 102;
+  }
+
+  #noteInput, #imageInput {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: #222;
+    color: white;
+  }
+
+  #addNoteBtn {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
   }
 
   #addNoteToggle {
@@ -109,147 +154,41 @@
     top: 12px;
     right: 12px;
     background: #dab5d9;
-    border: none;
     color: black;
     font-size: 24px;
     font-weight: bold;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    z-index: 101;
-  }
-
-  #addNoteToggle:hover {
-    background: #ccbab5;
-  }
-
-  #emojiColumn {
-    position: fixed;
-    top: 60px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 105;
-  }
-
-  .emoji,
-  .format-btn {
-    font-size: 14px;
-    background: transparent;
     border: none;
     cursor: pointer;
-    opacity: 0.7;
-    padding: 2px;
-    border-radius: 4px;
-    transition: transform 0.2s ease, opacity 0.2s;
-    user-select: none;
-    text-align: center;
+    z-index: 103;
   }
 
-  .emoji:hover,
-  .format-btn:hover {
-    transform: scale(1.2);
-    opacity: 1;
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-
-  #notePanel {
-    position: fixed;
-    top: 60px;
-    right: 16px;
-    width: 320px;
-    background: rgba(242, 241, 242, 0.95);
-    border-radius: 16px;
-    padding: 20px 24px;
-    display: none;
-    flex-direction: column;
-    gap: 16px;
-    z-index: 102;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  }
-
-  #noteInput {
-    width: 100%;
-    min-height: 120px;
-    font-size: 13px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    resize: vertical;
-    outline: none;
-    box-sizing: border-box;
-    font-family: 'Tahoma', sans-serif;
-  }
-
-  #imageInput {
-    width: 100%;
-    font-size: 13px;
-    border-radius: 8px;
-  }
-
-  #addNoteBtn {
-    background: #dab5d9;
-    border: none;
-    color: black;
-    font-size: 13px;
-    padding: 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.2s ease;
-  }
-
-  #addNoteBtn:hover {
-    background: #ccbab5;
-  }
-
-  /* Image in messages */
-  .message img {
-    max-width: 100%;
-    border-radius: 12px;
-    margin-top: 10px;
-    display: block;
-  }
-
-  /* Editable note styling */
-  .editableNote {
-    padding: 6px 8px;
-    border-radius: 10px;
-    background-color: white;
-    margin-bottom: 6px;
-    outline: none;
-    white-space: pre-wrap;
-    transition: border 0.2s ease;
-    min-height: 40px;
-    font-family: 'fors', sans-serif;
-    font-size: 12px;
-  }
-
-  /* Edit/Save/Delete buttons styling */
   .note-btn {
-    background: transparent;
+    background: none;
     border: none;
     cursor: pointer;
     font-size: 16px;
-    margin-right: 6px;
+    color: white;
+    margin-right: 8px;
   }
 
+  .message img {
+    max-width: 100%;
+    margin-top: 6px;
+    border-radius: 8px;
+  }
 </style>
 </head>
 <body>
 
 <div id="emojiColumn">
-  <button class="format-btn" id="boldBtn" title="Bold">🅱️</button>
-  <button class="format-btn" id="highlightBtn" title="Highlight">💡</button>
-  <div class="emoji" data-emoji="🟡">🟡</div>
+  <button class="format-btn" id="boldBtn">🅱️</button>
+  <button class="format-btn" id="highlightBtn">💡</button>
   <div class="emoji" data-emoji="📌">📌</div>
-  <div class="emoji" data-emoji="▪️">▪️</div>
-  <div class="emoji" data-emoji="🔸">🔸</div>
+  <div class="emoji" data-emoji="🟡">🟡</div>
   <div class="emoji" data-emoji="🔴">🔴</div>
-  <div class="emoji" data-emoji="📙">📙</div>
 </div>
 
 <button id="addNoteToggle" title="Add Note">＋</button>
@@ -263,7 +202,7 @@
 <div id="chat"></div>
 
 <form id="inputArea">
-  <input type="text" id="userInput" placeholder="Ask a question..." autocomplete="off" required />
+  <input type="text" id="userInput" placeholder="Type here..." autocomplete="off" required />
   <button type="submit" id="sendBtn">Send</button>
 </form>
 
@@ -271,7 +210,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 <script>
-  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
     authDomain: "notes-chat-c5ff3.firebaseapp.com",
@@ -288,230 +226,127 @@
 
   const chat = document.getElementById('chat');
   const userInput = document.getElementById('userInput');
+  const inputArea = document.getElementById('inputArea');
+  const noteInput = document.getElementById('noteInput');
+  const imageInput = document.getElementById('imageInput');
+  const addNoteBtn = document.getElementById('addNoteBtn');
   const addNoteToggle = document.getElementById('addNoteToggle');
   const notePanel = document.getElementById('notePanel');
-  const noteInput = document.getElementById('noteInput');
-  const addNoteBtn = document.getElementById('addNoteBtn');
-  const inputArea = document.getElementById('inputArea');
-  const imageInput = document.getElementById('imageInput');
 
-  // Add message bubble and scroll to bottom
-  function addMessage(sender, text, imageUrl=null) {
+  function addMessage(sender, text, imageUrl = null) {
     const div = document.createElement('div');
     div.className = 'message ' + sender;
-
-    // Add text
-    div.textContent = text;
-
-    // If image URL, append image element
+    div.textContent = (sender === 'user' ? '🧑 ' : '🤖 ') + text;
     if (imageUrl) {
       const img = document.createElement('img');
       img.src = imageUrl;
-      img.alt = 'Attached Image';
-      div.appendChild(document.createElement('br'));
       div.appendChild(img);
     }
-
     chat.appendChild(div);
     chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
   }
 
-  // Toggle note input panel
   addNoteToggle.onclick = () => {
-    if (notePanel.style.display === 'flex') {
-      notePanel.style.display = 'none';
-    } else {
-      notePanel.style.display = 'flex';
-      noteInput.focus();
-    }
+    notePanel.style.display = notePanel.style.display === 'flex' ? 'none' : 'flex';
+    if (notePanel.style.display === 'flex') noteInput.focus();
   };
 
-  // Upload photo to Firebase Storage and get URL
   async function uploadPhoto(file) {
-    if (!file) return null;
-
-    const storageRef = storage.ref();
-    const fileRef = storageRef.child('noteImages/' + Date.now() + '_' + file.name);
-
-    return new Promise((resolve, reject) => {
-      const uploadTask = fileRef.put(file);
-
-      uploadTask.on('state_changed', 
-        snapshot => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log('Upload is ' + progress.toFixed(2) + '% done');
-        }, 
-        error => {
-          console.error('Upload failed:', error);
-          reject(error);
-        }, 
-        () => {
-          uploadTask.snapshot.ref.getDownloadURL()
-            .then(downloadURL => resolve(downloadURL))
-            .catch(err => reject(err));
-        }
-      );
-    });
+    const fileRef = storage.ref().child('noteImages/' + Date.now() + '_' + file.name);
+    await fileRef.put(file);
+    return fileRef.getDownloadURL();
   }
 
-  // Add note to Firestore with optional image
   addNoteBtn.onclick = async () => {
     const noteText = noteInput.value.trim();
-    if (!noteText) {
-      alert('Please enter a note to add.');
-      return;
-    }
-
+    if (!noteText) return alert("Please enter a note.");
     const file = imageInput.files[0] || null;
-
     addNoteBtn.disabled = true;
-    addNoteBtn.textContent = 'Uploading...';
+    addNoteBtn.textContent = "Uploading...";
 
     try {
       let imageUrl = null;
-      if (file) {
-        imageUrl = await uploadPhoto(file);
-      }
-
+      if (file) imageUrl = await uploadPhoto(file);
       await db.collection('notes').add({
         content: noteText,
         imageUrl: imageUrl || null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-
-      addMessage('bot', '✅ Note added!');
+      addMessage('bot', '✅ Note added!', imageUrl);
       noteInput.value = '';
       imageInput.value = '';
       notePanel.style.display = 'none';
-
-    } catch (err) {
-      alert('Error uploading note: ' + err.message);
+    } catch (e) {
+      alert('Error: ' + e.message);
     } finally {
       addNoteBtn.disabled = false;
-      addNoteBtn.textContent = 'Add Note';
+      addNoteBtn.textContent = "Add Note";
     }
   };
 
-  // Query notes matching question text
   async function queryNotes(question) {
-    const lowerQuestion = question.toLowerCase();
-    const snapshot = await db.collection('notes')
-      .orderBy('createdAt', 'desc')
-      .get();
-
-    const results = [];
-
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      if (data.content.toLowerCase().includes(lowerQuestion)) {
-        results.push({
-          ...data,
-          id: doc.id  // Add Firestore document ID
-        });
-      }
-    }
-
-    return results;
+    const snapshot = await db.collection('notes').orderBy('createdAt', 'desc').get();
+    return snapshot.docs
+      .filter(doc => doc.data().content.toLowerCase().includes(question.toLowerCase()))
+      .map(doc => ({ ...doc.data(), id: doc.id }));
   }
 
-  // Display notes with inline editing, bold/highlight, and image
-  function displayNotes(notesWithId) {
-    chat.innerHTML = ''; // Clear previous
-
-    notesWithId.forEach(noteObj => {
-      const { content, imageUrl, id } = noteObj;
-
+  function displayNotes(notes) {
+    chat.innerHTML = '';
+    notes.forEach(({ content, imageUrl, id }) => {
       const div = document.createElement('div');
       div.className = 'message bot';
 
-      // Editable content block (starts not editable)
-      const textBlock = document.createElement('div');
-      textBlock.className = 'editableNote';
-      textBlock.contentEditable = false;
-      textBlock.innerHTML = content; // preserve formatting
-      div.appendChild(textBlock);
+      const noteText = document.createElement('div');
+      noteText.className = 'editableNote';
+      noteText.contentEditable = false;
+      noteText.innerHTML = content;
+      div.appendChild(noteText);
 
-      // Show image if available
       if (imageUrl) {
         const img = document.createElement('img');
         img.src = imageUrl;
-        img.alt = 'Image';
         div.appendChild(img);
       }
 
-      // Buttons container
-      const btnContainer = document.createElement('div');
-      btnContainer.style.marginTop = '6px';
-
-      // Edit/Save button
+      const btns = document.createElement('div');
       const editBtn = document.createElement('button');
       editBtn.className = 'note-btn';
       editBtn.textContent = '✏️';
-      editBtn.title = 'Edit';
-
-      // Delete button
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'note-btn';
       deleteBtn.textContent = '🗑️';
-      deleteBtn.title = 'Delete';
-
-      btnContainer.appendChild(editBtn);
-      btnContainer.appendChild(deleteBtn);
-      div.appendChild(btnContainer);
+      btns.append(editBtn, deleteBtn);
+      div.appendChild(btns);
 
       let editing = false;
-
       editBtn.onclick = () => {
         if (!editing) {
-          // Start editing
           editing = true;
-          textBlock.contentEditable = true;
-          textBlock.focus();
+          noteText.contentEditable = true;
+          noteText.focus();
           editBtn.textContent = '✅';
-          // Show border to indicate editing
-          textBlock.style.border = '1px dashed #aaa';
-          // Disable formatting buttons if you want or leave enabled
         } else {
-          // Save changes
-          const updatedContent = textBlock.innerHTML.trim();
-          if (!updatedContent) {
-            alert('Note content cannot be empty.');
-            return;
-          }
-          db.collection('notes').doc(id).update({ content: updatedContent })
-            .then(() => {
-              editing = false;
-              textBlock.contentEditable = false;
-              editBtn.textContent = '✏️';
-              textBlock.style.border = 'none';
-              alert('Note saved!');
-            })
-            .catch(err => {
-              alert('Error saving note: ' + err.message);
-            });
+          const updated = noteText.innerHTML.trim();
+          if (!updated) return alert("Cannot be empty");
+          db.collection('notes').doc(id).update({ content: updated });
+          noteText.contentEditable = false;
+          editBtn.textContent = '✏️';
+          editing = false;
         }
       };
 
       deleteBtn.onclick = () => {
-        if (confirm('Delete this note?')) {
-          db.collection('notes').doc(id).delete()
-            .then(() => {
-              alert('Note deleted.');
-              chat.removeChild(div);
-            })
-            .catch(err => {
-              alert('Delete failed: ' + err.message);
-            });
+        if (confirm("Delete this note?")) {
+          db.collection('notes').doc(id).delete();
+          chat.removeChild(div);
         }
       };
 
       chat.appendChild(div);
     });
-
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
   }
 
-  // Handle form submit (send question)
   inputArea.onsubmit = async (e) => {
     e.preventDefault();
     const question = userInput.value.trim();
@@ -520,43 +355,29 @@
     userInput.value = '';
     addMessage('bot', '⏳ Searching...');
     const results = await queryNotes(question);
-
-    // Remove last "Searching" message
-    const botMessages = [...chat.querySelectorAll('.bot')];
-    const lastBotMsg = botMessages[botMessages.length - 1];
-    if (lastBotMsg && lastBotMsg.textContent === '⏳ Searching...') {
-      chat.removeChild(lastBotMsg);
-    }
-
+    const lastBot = [...chat.querySelectorAll('.bot')].pop();
+    if (lastBot && lastBot.textContent.includes('Searching')) chat.removeChild(lastBot);
     displayNotes(results);
   };
 
-  // Welcome message
-  addMessage('bot', '👋 Welcome X! How can I help you today?');
-
-  // Copy emoji to clipboard when clicked
-  document.querySelectorAll('.emoji').forEach(el => {
-    el.addEventListener('click', () => {
-      const emoji = el.dataset.emoji;
-      navigator.clipboard.writeText(emoji).then(() => {
-        el.style.transform = 'scale(1.4)';
-        setTimeout(() => {
-          el.style.transform = 'scale(1)';
-        }, 200);
-      });
-    });
+  // Emojis and formatting
+  document.querySelectorAll('.emoji').forEach(btn => {
+    btn.onclick = () => {
+      navigator.clipboard.writeText(btn.dataset.emoji);
+      btn.style.transform = 'scale(1.3)';
+      setTimeout(() => (btn.style.transform = 'scale(1)'), 200);
+    };
   });
 
-  // Bold button
   document.getElementById('boldBtn').onclick = () => {
     document.execCommand('bold');
   };
 
-  // Highlight button
   document.getElementById('highlightBtn').onclick = () => {
-    document.execCommand('backColor', false, 'yellow');
+    document.execCommand('backColor', false, '#ffd54f');
   };
-</script>
 
+  addMessage('bot', '👋 Welcome X! How can I help you today?');
+</script>
 </body>
 </html>
