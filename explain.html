@@ -360,19 +360,32 @@ if (editText) window.autoResize(editText);
   const note = allNotes.find(n => n.id === id);
   if (!note) return;
 
-  const text = note.editing
-    ? document.getElementById(`editText-${id}`).innerText  // or .innerHTML to preserve formatting
-    : note.text;
+  let textToCopy = '';
 
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Note copied to clipboard!");
-  });
+  if (note.editing) {
+    // Copy plain text from the contenteditable div
+    const editDiv = document.getElementById(`editText-${id}`);
+    textToCopy = editDiv ? editDiv.innerText : '';
+  } else {
+    // Copy the visible text from the rendered note-text div (strip HTML)
+    const noteElements = document.querySelectorAll('.note-card');
+    for (const card of noteElements) {
+      const titleEl = card.querySelector('.note-title');
+      const textEl = card.querySelector('.note-text');
+      if (titleEl && textEl && titleEl.textContent === note.title) {
+        textToCopy = textEl.innerText;
+        break;
+      }
+    }
+  }
+
+  if (textToCopy) {
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      alert("Note copied to clipboard!");
+    });
+  }
 };
 
-window.autoResizeDiv = function(div) {
-  div.style.height = 'auto';
-  div.style.height = div.scrollHeight + 'px';
-};
 
     window.formatText = function(id, command) {
   const editableDiv = document.getElementById(`editText-${id}`);
