@@ -332,69 +332,75 @@
       .map(doc => ({ ...doc.data(), id: doc.id }));
   }
 
-  function displayNotes(notes) {
-    chat.innerHTML = '';
-	
-	if (notes.length === 0) {
+  function displayNotes(notes, query = '') {
+  chat.innerHTML = '';
+
+  if (notes.length === 0) {
     addMessage('bot', '❌ No matching notes found.');
     return;
   }
-  
-    notes.forEach(({ content, imageUrl, id }, index) => {
-      const div = document.createElement('div');
-      div.className = 'message bot';
-	  if (index > 0) div.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
 
+  const highlightText = (text, keyword) => {
+    if (!keyword) return text;
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    return text.replace(regex, `<mark style="background-color: #f8bbd0; color: black;">$1</mark>`);
+  };
 
-      const noteText = document.createElement('div');
-      noteText.className = 'editableNote';
-      noteText.contentEditable = false;
-      noteText.innerHTML = content;
-      div.appendChild(noteText);
+  notes.forEach(({ content, imageUrl, id }, index) => {
+    const div = document.createElement('div');
+    div.className = 'message bot';
+    if (index > 0) div.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
 
-      if (imageUrl) {
-        const img = document.createElement('img');
-        img.src = imageUrl;
-        div.appendChild(img);
+    const noteText = document.createElement('div');
+    noteText.className = 'editableNote';
+    noteText.contentEditable = false;
+    noteText.innerHTML = highlightText(content, query); // highlight here
+    div.appendChild(noteText);
+
+    if (imageUrl) {
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      div.appendChild(img);
+    }
+
+    const btns = document.createElement('div');
+    const editBtn = document.createElement('button');
+    editBtn.className = 'note-btn';
+    editBtn.textContent = '✏️';
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'note-btn';
+    deleteBtn.textContent = '🗑️';
+    btns.append(editBtn, deleteBtn);
+    div.appendChild(btns);
+
+    let editing = false;
+    editBtn.onclick = () => {
+      if (!editing) {
+        editing = true;
+        noteText.contentEditable = true;
+        noteText.focus();
+        editBtn.textContent = '✅';
+      } else {
+        const updated = noteText.innerHTML.trim();
+        if (!updated) return alert("Cannot be empty");
+        db.collection('notes').doc(id).update({ content: updated });
+        noteText.contentEditable = false;
+        editBtn.textContent = '✏️';
+        editing = false;
       }
+    };
 
-      const btns = document.createElement('div');
-      const editBtn = document.createElement('button');
-      editBtn.className = 'note-btn';
-      editBtn.textContent = '✏️';
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'note-btn';
-      deleteBtn.textContent = '🗑️';
-      btns.append(editBtn, deleteBtn);
-      div.appendChild(btns);
+    deleteBtn.onclick = () => {
+      if (confirm("Delete this note?")) {
+        db.collection('notes').doc(id).delete();
+        chat.removeChild(div);
+      }
+    };
 
-      let editing = false;
-      editBtn.onclick = () => {
-        if (!editing) {
-          editing = true;
-          noteText.contentEditable = true;
-          noteText.focus();
-          editBtn.textContent = '✅';
-        } else {
-          const updated = noteText.innerHTML.trim();
-          if (!updated) return alert("Cannot be empty");
-          db.collection('notes').doc(id).update({ content: updated });
-          noteText.contentEditable = false;
-          editBtn.textContent = '✏️';
-          editing = false;
-        }
-      };
+    chat.appendChild(div);
+  });
+}
 
-      deleteBtn.onclick = () => {
-        if (confirm("Delete this note?")) {
-          db.collection('notes').doc(id).delete();
-          chat.removeChild(div);
-        }
-      };
-
-      chat.appendChild(div);
-    });
-  }
 
   inputArea.onsubmit = async (e) => {
     e.preventDefault();
@@ -406,7 +412,7 @@
     const results = await queryNotes(question);
     const lastBot = [...chat.querySelectorAll('.bot')].pop();
     if (lastBot && lastBot.textContent.includes('Searching')) chat.removeChild(lastBot);
-    displayNotes(results);
+    displayNotes(results, question);
   };
 
   // Emojis and formatting
