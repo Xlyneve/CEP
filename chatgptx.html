@@ -123,6 +123,32 @@
   #addNoteToggle:hover {
     background: #ccbab5;
   }
+  #emojiBar {
+  position: fixed;
+  top: 80px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 105;
+}
+
+.emoji {
+  font-size: 14px;           /* smaller size */
+  cursor: pointer;
+  opacity: 0.7;
+  transition: transform 0.2s ease, opacity 0.2s;
+  user-select: none;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.emoji:hover {
+  transform: scale(1.2);
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05); /* subtle hover background */
+}
+
 
   #notePanel {
     position: fixed;
@@ -184,6 +210,16 @@
 </style>
 </head>
 <body>
+
+<div id="emojiBar">
+  <div class="emoji" data-emoji="🟡">🟡</div>
+  <div class="emoji" data-emoji="📌">📌</div>
+  <div class="emoji" data-emoji="▪️">▪️</div>
+  <div class="emoji" data-emoji="🔸">🔸</div>
+  <div class="emoji" data-emoji="🔴">🔴</div>
+  <div class="emoji" data-emoji="📙">📙</div>
+</div>
+
 
 <button id="addNoteToggle" title="Add Note">＋</button>
 
@@ -326,33 +362,112 @@
   };
 
   // Query notes matching question text
-  async function queryNotes(question) {
-    const lowerQuestion = question.toLowerCase();
-    const snapshot = await db.collection('notes')
-      .orderBy('createdAt', 'desc')
-      .get();
+  // Query notes matching question text
+async function queryNotes(question) {
+  const lowerQuestion = question.toLowerCase();
+  const snapshot = await db.collection('notes')
+    .orderBy('createdAt', 'desc')
+    .get();
 
-    const results = [];
+  const results = [];
 
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      if (data.content.toLowerCase().includes(lowerQuestion)) {
-        results.push(data);
+  for (const doc of snapshot.docs) {
+    const data = doc.data();
+    if (data.content.toLowerCase().includes(lowerQuestion)) {
+      results.push({
+        ...data,
+        id: doc.id  // Add Firestore document ID
+      });
+    }
+  }
+
+  return results; // <- make sure you return the results
+}
+
+// Display notes (text + images + edit/delete)
+function displayNotes(notesWithId) {
+  notesWithId.forEach((noteObj, i) => {
+    const { content, imageUrl, id } = noteObj;
+
+    const div = document.createElement('div');
+    div.className = 'message bot';
+
+    // Editable content block
+    const textBlock = document.createElement('div');
+    textBlock.innerText = content;
+    textBlock.contentEditable = false;
+    textBlock.style.padding = '6px 8px';
+    textBlock.style.borderRadius = '10px';
+    textBlock.style.backgroundColor = 'white';
+    textBlock.style.marginBottom = '6px';
+    textBlock.style.outline = 'none';
+    textBlock.style.whiteSpace = 'pre-wrap';
+    textBlock.style.transition = 'border 0.2s ease';
+
+    div.appendChild(textBlock);
+
+    // Show image if available
+    if (imageUrl) {
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      img.alt = 'Image';
+      div.appendChild(img);
+    }
+
+    // Edit/Save emoji button
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    editBtn.title = 'Edit';
+    editBtn.style.background = 'transparent';
+    editBtn.style.border = 'none';
+    editBtn.style.cursor = 'pointer';
+    editBtn.style.fontSize = '16px';
+    editBtn.style.marginRight = '6px';
+
+    editBtn.onclick = () => {
+      const editing = editBtn.textContent === '✏️';
+      textBlock.contentEditable = editing;
+      if (editing) {
+        textBlock.focus();
+        editBtn.textContent = '✅';
+        textBlock.style.border = '1px dashed #aaa';
+      } else {
+        const updated = textBlock.innerText.trim();
+        db.collection('notes').doc(id).update({ content: updated })
+          .then(() => {
+            textBlock.contentEditable = false;
+            editBtn.textContent = '✏️';
+            textBlock.style.border = 'none';
+          });
       }
-    }
-    if (results.length === 0) {
-      return [{content: '❌ Sorry, no matching information found.', imageUrl: null}];
-    }
-    return results;
-  }
+    };
 
-  // Display notes (text + images) nicely
-  function displayNotes(notes) {
-    notes.forEach((note, i) => {
-      const prefix = `Note ${i + 1}: `;
-      addMessage('bot', prefix + note.content, note.imageUrl);
-    });
-  }
+    // Delete emoji button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.title = 'Delete';
+    deleteBtn.style.background = 'transparent';
+    deleteBtn.style.border = 'none';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.fontSize = '16px';
+
+    deleteBtn.onclick = () => {
+      if (confirm('Delete this note?')) {
+        db.collection('notes').doc(id).delete()
+          .then(() => alert('Note deleted.'));
+      }
+    };
+
+    div.appendChild(editBtn);
+    div.appendChild(deleteBtn);
+    chat.appendChild(div);
+    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  });
+}
+
+
+
+
 
   // Handle form submit (send question)
   inputArea.onsubmit = async (e) => {
@@ -376,6 +491,20 @@
 
   // Welcome message
   addMessage('bot', '👋 Welcome X! How can I help you today?');
+  
+  // Copy emoji to clipboard when clicked
+document.querySelectorAll('.emoji').forEach(el => {
+  el.addEventListener('click', () => {
+    const emoji = el.dataset.emoji;
+    navigator.clipboard.writeText(emoji).then(() => {
+      el.style.transform = 'scale(1.4)';
+      setTimeout(() => {
+        el.style.transform = 'scale(1)';
+      }, 200);
+    });
+  });
+});
+
 </script>
 
 </body>
