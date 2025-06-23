@@ -27,16 +27,23 @@
     padding: 20px;
 	padding-left: 100px;
     overflow-y: auto;
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .message {
     margin-bottom: 8px;
     line-height: 1.6;
-    font-size: 14px;
+    font-size: 15px;
     white-space: pre-wrap;
     word-wrap: break-word;
+	word-break: break-word;
+
   }
+  .message.bot {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+  margin-top: 12px;
+}
 
   .user, .bot {
     background: none;
@@ -50,7 +57,7 @@
     padding: 4px;
     border: none;
     font-family: 'fors', sans-serif;
-    font-size: 14px;
+    font-size: 15px;
     outline: none;
   }
 
@@ -66,9 +73,32 @@
     background: #1e1e1e;
     padding: 12px 20px;
     border-radius: 12px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+     box-shadow:
+    0 0 8px rgba(218, 181, 217, 0.6),
+    0 0 16px rgba(218, 181, 217, 0.3);
     z-index: 100;
   }
+  #noteInput {
+  min-height: 60px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-size: 13px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #222;
+  color: white;
+  outline: none;
+  white-space: pre-wrap;
+}
+
+#noteInput:empty:before {
+  content: attr(data-placeholder);
+  color: #777;
+  pointer-events: none;
+  display: block;
+}
+
 
   #userInput {
     flex-grow: 1;
@@ -120,7 +150,7 @@
     top: 60px;
     right: 16px;
     width: 300px;
-    background: #1e1e1e;
+    background: transparent;
     color: white;
     border-radius: 12px;
     padding: 16px;
@@ -179,6 +209,10 @@
     margin-top: 6px;
     border-radius: 8px;
   }
+  .divider {
+  height: 12px;
+}
+
 </style>
 </head>
 <body>
@@ -186,15 +220,21 @@
 <div id="emojiColumn">
   <button class="format-btn" id="boldBtn">🅱️</button>
   <button class="format-btn" id="highlightBtn">💡</button>
+  <button class="format-btn" id="resetColorBtn">🔄</button>
+  
+    <div class="divider"></div>
+	
   <div class="emoji" data-emoji="📌">📌</div>
   <div class="emoji" data-emoji="🟡">🟡</div>
   <div class="emoji" data-emoji="🔴">🔴</div>
+  <div class="emoji" data-emoji="🔸">🔸</div>
+  <div class="emoji" data-emoji="▶">▶</div>
 </div>
 
 <button id="addNoteToggle" title="Add Note">＋</button>
 
 <div id="notePanel">
-  <textarea id="noteInput" placeholder="Type or paste your note here..."></textarea>
+  <div id="noteInput" contenteditable="true" data-placeholder="Type or paste your note here..."></div>
   <input type="file" id="imageInput" accept="image/*" />
   <button id="addNoteBtn">Add Note</button>
 </div>
@@ -258,31 +298,32 @@
   }
 
   addNoteBtn.onclick = async () => {
-    const noteText = noteInput.value.trim();
-    if (!noteText) return alert("Please enter a note.");
-    const file = imageInput.files[0] || null;
-    addNoteBtn.disabled = true;
-    addNoteBtn.textContent = "Uploading...";
+  const noteText = noteInput.innerHTML.trim();
+  if (!noteText) return alert("Please enter a note.");
+  const file = imageInput.files[0] || null;
+  addNoteBtn.disabled = true;
+  addNoteBtn.textContent = "Uploading...";
 
-    try {
-      let imageUrl = null;
-      if (file) imageUrl = await uploadPhoto(file);
-      await db.collection('notes').add({
-        content: noteText,
-        imageUrl: imageUrl || null,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      addMessage('bot', '✅ Note added!', imageUrl);
-      noteInput.value = '';
-      imageInput.value = '';
-      notePanel.style.display = 'none';
-    } catch (e) {
-      alert('Error: ' + e.message);
-    } finally {
-      addNoteBtn.disabled = false;
-      addNoteBtn.textContent = "Add Note";
-    }
-  };
+  try {
+    let imageUrl = null;
+    if (file) imageUrl = await uploadPhoto(file);
+    await db.collection('notes').add({
+      content: noteText,
+      imageUrl: imageUrl || null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    addMessage('bot', '✅ Note added!', imageUrl);
+    noteInput.innerHTML = ''; // 🧼 clear the rich text input
+    imageInput.value = '';
+    notePanel.style.display = 'none';
+  } catch (e) {
+    alert('Error: ' + e.message);
+  } finally {
+    addNoteBtn.disabled = false;
+    addNoteBtn.textContent = "Add Note";
+  }
+};
+
 
   async function queryNotes(question) {
     const snapshot = await db.collection('notes').orderBy('createdAt', 'desc').get();
@@ -293,9 +334,17 @@
 
   function displayNotes(notes) {
     chat.innerHTML = '';
-    notes.forEach(({ content, imageUrl, id }) => {
+	
+	if (notes.length === 0) {
+    addMessage('bot', '❌ No matching notes found.');
+    return;
+  }
+  
+    notes.forEach(({ content, imageUrl, id }, index) => {
       const div = document.createElement('div');
       div.className = 'message bot';
+	  if (index > 0) div.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
+
 
       const noteText = document.createElement('div');
       noteText.className = 'editableNote';
@@ -374,8 +423,12 @@
   };
 
   document.getElementById('highlightBtn').onclick = () => {
-    document.execCommand('backColor', false, '#ffd54f');
-  };
+  document.execCommand('foreColor', false, '#ffd54f'); // Yellow font color
+};
+document.getElementById('resetColorBtn').onclick = () => {
+  document.execCommand('foreColor', false, 'white');
+};
+
 
   addMessage('bot', '👋 Welcome X! How can I help you today?');
 </script>
