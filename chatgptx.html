@@ -51,6 +51,7 @@
     word-wrap: break-word;
     font-family: 'fors', sans-serif;
     font-size: 12px;
+    position: relative;
   }
 
   .user {
@@ -123,32 +124,37 @@
   #addNoteToggle:hover {
     background: #ccbab5;
   }
-  #emojiBar {
-  position: fixed;
-  top: 80px;
-  left: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 105;
-}
 
-.emoji {
-  font-size: 14px;           /* smaller size */
-  cursor: pointer;
-  opacity: 0.7;
-  transition: transform 0.2s ease, opacity 0.2s;
-  user-select: none;
-  padding: 2px;
-  border-radius: 4px;
-}
+  #emojiColumn {
+    position: fixed;
+    top: 60px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 105;
+  }
 
-.emoji:hover {
-  transform: scale(1.2);
-  opacity: 1;
-  background-color: rgba(0, 0, 0, 0.05); /* subtle hover background */
-}
+  .emoji,
+  .format-btn {
+    font-size: 14px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7;
+    padding: 2px;
+    border-radius: 4px;
+    transition: transform 0.2s ease, opacity 0.2s;
+    user-select: none;
+    text-align: center;
+  }
 
+  .emoji:hover,
+  .format-btn:hover {
+    transform: scale(1.2);
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 
   #notePanel {
     position: fixed;
@@ -207,11 +213,37 @@
     margin-top: 10px;
     display: block;
   }
+
+  /* Editable note styling */
+  .editableNote {
+    padding: 6px 8px;
+    border-radius: 10px;
+    background-color: white;
+    margin-bottom: 6px;
+    outline: none;
+    white-space: pre-wrap;
+    transition: border 0.2s ease;
+    min-height: 40px;
+    font-family: 'fors', sans-serif;
+    font-size: 12px;
+  }
+
+  /* Edit/Save/Delete buttons styling */
+  .note-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 6px;
+  }
+
 </style>
 </head>
 <body>
 
-<div id="emojiBar">
+<div id="emojiColumn">
+  <button class="format-btn" id="boldBtn" title="Bold">🅱️</button>
+  <button class="format-btn" id="highlightBtn" title="Highlight">💡</button>
   <div class="emoji" data-emoji="🟡">🟡</div>
   <div class="emoji" data-emoji="📌">📌</div>
   <div class="emoji" data-emoji="▪️">▪️</div>
@@ -219,7 +251,6 @@
   <div class="emoji" data-emoji="🔴">🔴</div>
   <div class="emoji" data-emoji="📙">📙</div>
 </div>
-
 
 <button id="addNoteToggle" title="Add Note">＋</button>
 
@@ -240,7 +271,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 <script>
-  // Your Firebase config here (replace with your own)
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
     authDomain: "notes-chat-c5ff3.firebaseapp.com",
@@ -362,112 +393,123 @@
   };
 
   // Query notes matching question text
-  // Query notes matching question text
-async function queryNotes(question) {
-  const lowerQuestion = question.toLowerCase();
-  const snapshot = await db.collection('notes')
-    .orderBy('createdAt', 'desc')
-    .get();
+  async function queryNotes(question) {
+    const lowerQuestion = question.toLowerCase();
+    const snapshot = await db.collection('notes')
+      .orderBy('createdAt', 'desc')
+      .get();
 
-  const results = [];
+    const results = [];
 
-  for (const doc of snapshot.docs) {
-    const data = doc.data();
-    if (data.content.toLowerCase().includes(lowerQuestion)) {
-      results.push({
-        ...data,
-        id: doc.id  // Add Firestore document ID
-      });
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (data.content.toLowerCase().includes(lowerQuestion)) {
+        results.push({
+          ...data,
+          id: doc.id  // Add Firestore document ID
+        });
+      }
     }
+
+    return results;
   }
 
-  return results; // <- make sure you return the results
-}
+  // Display notes with inline editing, bold/highlight, and image
+  function displayNotes(notesWithId) {
+    chat.innerHTML = ''; // Clear previous
 
-// Display notes (text + images + edit/delete)
-function displayNotes(notesWithId) {
-  notesWithId.forEach((noteObj, i) => {
-    const { content, imageUrl, id } = noteObj;
+    notesWithId.forEach(noteObj => {
+      const { content, imageUrl, id } = noteObj;
 
-    const div = document.createElement('div');
-    div.className = 'message bot';
+      const div = document.createElement('div');
+      div.className = 'message bot';
 
-    // Editable content block
-    const textBlock = document.createElement('div');
-    textBlock.innerText = content;
-    textBlock.contentEditable = false;
-    textBlock.style.padding = '6px 8px';
-    textBlock.style.borderRadius = '10px';
-    textBlock.style.backgroundColor = 'white';
-    textBlock.style.marginBottom = '6px';
-    textBlock.style.outline = 'none';
-    textBlock.style.whiteSpace = 'pre-wrap';
-    textBlock.style.transition = 'border 0.2s ease';
+      // Editable content block (starts not editable)
+      const textBlock = document.createElement('div');
+      textBlock.className = 'editableNote';
+      textBlock.contentEditable = false;
+      textBlock.innerHTML = content; // preserve formatting
+      div.appendChild(textBlock);
 
-    div.appendChild(textBlock);
-
-    // Show image if available
-    if (imageUrl) {
-      const img = document.createElement('img');
-      img.src = imageUrl;
-      img.alt = 'Image';
-      div.appendChild(img);
-    }
-
-    // Edit/Save emoji button
-    const editBtn = document.createElement('button');
-    editBtn.textContent = '✏️';
-    editBtn.title = 'Edit';
-    editBtn.style.background = 'transparent';
-    editBtn.style.border = 'none';
-    editBtn.style.cursor = 'pointer';
-    editBtn.style.fontSize = '16px';
-    editBtn.style.marginRight = '6px';
-
-    editBtn.onclick = () => {
-      const editing = editBtn.textContent === '✏️';
-      textBlock.contentEditable = editing;
-      if (editing) {
-        textBlock.focus();
-        editBtn.textContent = '✅';
-        textBlock.style.border = '1px dashed #aaa';
-      } else {
-        const updated = textBlock.innerText.trim();
-        db.collection('notes').doc(id).update({ content: updated })
-          .then(() => {
-            textBlock.contentEditable = false;
-            editBtn.textContent = '✏️';
-            textBlock.style.border = 'none';
-          });
+      // Show image if available
+      if (imageUrl) {
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = 'Image';
+        div.appendChild(img);
       }
-    };
 
-    // Delete emoji button
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = '🗑️';
-    deleteBtn.title = 'Delete';
-    deleteBtn.style.background = 'transparent';
-    deleteBtn.style.border = 'none';
-    deleteBtn.style.cursor = 'pointer';
-    deleteBtn.style.fontSize = '16px';
+      // Buttons container
+      const btnContainer = document.createElement('div');
+      btnContainer.style.marginTop = '6px';
 
-    deleteBtn.onclick = () => {
-      if (confirm('Delete this note?')) {
-        db.collection('notes').doc(id).delete()
-          .then(() => alert('Note deleted.'));
-      }
-    };
+      // Edit/Save button
+      const editBtn = document.createElement('button');
+      editBtn.className = 'note-btn';
+      editBtn.textContent = '✏️';
+      editBtn.title = 'Edit';
 
-    div.appendChild(editBtn);
-    div.appendChild(deleteBtn);
-    chat.appendChild(div);
+      // Delete button
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'note-btn';
+      deleteBtn.textContent = '🗑️';
+      deleteBtn.title = 'Delete';
+
+      btnContainer.appendChild(editBtn);
+      btnContainer.appendChild(deleteBtn);
+      div.appendChild(btnContainer);
+
+      let editing = false;
+
+      editBtn.onclick = () => {
+        if (!editing) {
+          // Start editing
+          editing = true;
+          textBlock.contentEditable = true;
+          textBlock.focus();
+          editBtn.textContent = '✅';
+          // Show border to indicate editing
+          textBlock.style.border = '1px dashed #aaa';
+          // Disable formatting buttons if you want or leave enabled
+        } else {
+          // Save changes
+          const updatedContent = textBlock.innerHTML.trim();
+          if (!updatedContent) {
+            alert('Note content cannot be empty.');
+            return;
+          }
+          db.collection('notes').doc(id).update({ content: updatedContent })
+            .then(() => {
+              editing = false;
+              textBlock.contentEditable = false;
+              editBtn.textContent = '✏️';
+              textBlock.style.border = 'none';
+              alert('Note saved!');
+            })
+            .catch(err => {
+              alert('Error saving note: ' + err.message);
+            });
+        }
+      };
+
+      deleteBtn.onclick = () => {
+        if (confirm('Delete this note?')) {
+          db.collection('notes').doc(id).delete()
+            .then(() => {
+              alert('Note deleted.');
+              chat.removeChild(div);
+            })
+            .catch(err => {
+              alert('Delete failed: ' + err.message);
+            });
+        }
+      };
+
+      chat.appendChild(div);
+    });
+
     chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-  });
-}
-
-
-
-
+  }
 
   // Handle form submit (send question)
   inputArea.onsubmit = async (e) => {
@@ -491,20 +533,29 @@ function displayNotes(notesWithId) {
 
   // Welcome message
   addMessage('bot', '👋 Welcome X! How can I help you today?');
-  
+
   // Copy emoji to clipboard when clicked
-document.querySelectorAll('.emoji').forEach(el => {
-  el.addEventListener('click', () => {
-    const emoji = el.dataset.emoji;
-    navigator.clipboard.writeText(emoji).then(() => {
-      el.style.transform = 'scale(1.4)';
-      setTimeout(() => {
-        el.style.transform = 'scale(1)';
-      }, 200);
+  document.querySelectorAll('.emoji').forEach(el => {
+    el.addEventListener('click', () => {
+      const emoji = el.dataset.emoji;
+      navigator.clipboard.writeText(emoji).then(() => {
+        el.style.transform = 'scale(1.4)';
+        setTimeout(() => {
+          el.style.transform = 'scale(1)';
+        }, 200);
+      });
     });
   });
-});
 
+  // Bold button
+  document.getElementById('boldBtn').onclick = () => {
+    document.execCommand('bold');
+  };
+
+  // Highlight button
+  document.getElementById('highlightBtn').onclick = () => {
+    document.execCommand('backColor', false, 'yellow');
+  };
 </script>
 
 </body>
