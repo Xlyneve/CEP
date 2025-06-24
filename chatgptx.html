@@ -4,285 +4,292 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Minimal Chat with Full Features</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Minimal Chat with Full Features</title>
 <style>
-  @font-face {
-    font-family: 'fors';
-    src: url('fors.ttf') format('truetype');
-  }
+@font-face {
+  font-family: 'fors';
+  src: url('fors.ttf') format('truetype');
+}
 
-  html, body {
-    height: 100%;
-    margin: 0; padding: 0;
-    font-family: 'fors', sans-serif, Arial, sans-serif;
-    background-color: #121212;
-    color: white;
-    display: flex;
-    flex-direction: column;
-  }
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'fors', sans-serif, Arial, sans-serif;
+  background-color: #fefefe;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  #chat {
-    flex-grow: 1;
-    width: 95vw;
-    margin: 10px auto 140px auto;
-    padding: 20px;
-    padding-left: 100px;
-    overflow-y: auto;
-    font-size: 15px;
-  }
+#chat {
+  flex-grow: 1;
+  width: 100%;
+  padding: 20px 5vw 160px 5vw;
+  overflow-y: auto;
+  font-size: 15px;
+  background-color: #fefefe;
+  box-sizing: border-box;
+}
 
-  .message {
-    margin-bottom: 8px;
-    line-height: 1.6;
-    font-size: 15px;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    word-break: break-word;
-  }
+.message {
+  margin-bottom: 8px;
+  line-height: 1.6;
+  font-size: 15px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
 
-  .message.bot {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 12px;
-    margin-top: 12px;
-  }
+.message.user {
+  align-items: flex-end;
+}
 
-  .user, .bot {
-    background: none;
-    color: white;
-  }
+.message.bot {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 12px;
+  margin-top: 12px;
+}
 
-  .editableNote {
-    white-space: pre-wrap;
-    background: none;
-    color: white;
-    padding: 4px;
-    border: none;
-    font-family: 'fors', sans-serif;
-    font-size: 15px;
-    outline: none;
-  }
+.user, .bot {
+  background: none;
+  color: #222;
+}
 
-  #inputArea {
-    position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    width: 90vw;
-    max-width: 600px;
-    gap: 10px;
-    background: #1e1e1e;
-    padding: 12px 20px;
-    border-radius: 12px;
-    box-shadow:
-      0 0 8px rgba(218, 181, 217, 0.6),
-      0 0 16px rgba(218, 181, 217, 0.3);
-    z-index: 100;
-  }
+.editableNote {
+  white-space: pre-wrap;
+  background: none;
+  color: #222;
+  padding: 4px;
+  border: none;
+  font-family: 'fors', sans-serif;
+  font-size: 15px;
+  outline: none;
+}
 
-  #noteInput {
-    min-height: 60px;
-    max-height: 400px;
-    overflow-y: auto;
-    font-size: 13px;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #444;
-    background: #222;
-    color: white;
-    outline: none;
-    white-space: pre-wrap;
-  }
+#inputArea {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  width: 90vw;
+  max-width: 600px;
+  gap: 10px;
+  background: #f0f0f0;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(100, 100, 100, 0.1);
+  z-index: 100;
+  box-sizing: border-box;
+}
 
-  #noteInput:empty:before {
-    content: attr(data-placeholder);
-    color: #777;
-    pointer-events: none;
-    display: block;
-  }
+#noteInput {
+  min-height: 60px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-size: 13px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  color: #222;
+  outline: none;
+  white-space: pre-wrap;
+}
 
-  #userInput {
-    flex-grow: 1;
-    font-size: 13px;
-    padding: 10px 16px;
-    border-radius: 12px;
-    border: 1px solid #444;
-    background: #222;
-    color: white;
-    outline: none;
-  }
+#noteInput:empty:before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  pointer-events: none;
+  display: block;
+}
 
-  #userInput:focus {
-    border-color: #888;
-    box-shadow: 0 0 6px rgba(169, 142, 170, 0.7);
-  }
+#userInput {
+  flex-grow: 1;
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  color: #3a3a3a;
+  outline: none;
+}
 
-  #sendBtn {
-    display: none;
-  }
+#userInput:focus {
+  border-color: #999;
+  box-shadow: 0 0 6px rgba(100, 100, 100, 0.4);
+}
 
-  #emojiColumn {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    z-index: 101;
-  }
+#sendBtn {
+  display: none;
+}
 
-  .emoji, .format-btn {
-    background: none;
-    color: white;
-    border: none;
-    cursor: pointer;
-    opacity: 0.7;
-    font-size: 16px;
-    transition: all 0.2s ease;
-  }
+#emojiColumn {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 101;
+}
 
-  .emoji:hover, .format-btn:hover {
-    transform: scale(1.2);
-    opacity: 1;
-  }
+.emoji, .format-btn {
+  background: none;
+  color: #444;
+  border: none;
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
 
-  #noteContainer {
-    position: fixed;
-    bottom: 40px;
-    right: 20px;
-    transform: 
-    width: 50px;
-    height: 50px;
-    z-index: 103;
-  }
+.emoji:hover, .format-btn:hover {
+  transform: scale(1.2);
+  opacity: 1;
+}
 
-  #addNoteToggle {
-    width: 50px;
-    height: 50px;
-    font-size: 28px;
-    border-radius: 50%;
-    background: #dab5d9;
-    color: black;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  }
+#noteContainer {
+  position: fixed;
+  bottom: 40px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  z-index: 103;
+}
 
-  #notePanel {
-    position: absolute;
-    bottom: 60px; /* appear just above the button */
-    right: 0;
-    width: 300px;
-    background: #222;
-    color: white;
-    border-radius: 12px;
-    padding: 16px;
-    display: none;
-    flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    z-index: 104;
-  }
+#addNoteToggle {
+  width: 50px;
+  height: 50px;
+  font-size: 28px;
+  border-radius: 50%;
+  background: #fddde6;
+  color: #333;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
 
-  #addNoteBtn {
-    background: #333;
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-  }
+#notePanel {
+  position: absolute;
+  bottom: 60px;
+  right: 0;
+  width: 300px;
+  background: #fefefe;
+  color: #222;
+  border-radius: 12px;
+  padding: 16px;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 104;
+}
 
-  .note-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    color: white;
-    margin-right: 8px;
-  }
+#addNoteBtn {
+  background: #fbd4d4;
+  color: #3a3a3a;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
 
-  .message img {
-    max-width: 100%;
-    margin-top: 6px;
-    border-radius: 8px;
-  }
+.note-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #555;
+  margin-right: 8px;
+}
 
-  .divider {
-    height: 12px;
-  }
+.message img {
+  max-width: 100%;
+  margin-top: 6px;
+  border-radius: 8px;
+}
 
-  /* Auth section styling */
-  #authSection {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    background: transparent;
-    padding: 16px;
-    border-radius: 12px;
-    z-index: 104;
-    width: 280px;
-  }
+.divider {
+  height: 12px;
+}
 
-  #authSection input {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    border: none;
-    outline: none;
-    background: #333;
-    color: white;
-  }
+#authToggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  background: #fddde6;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  text-align: center;
+  line-height: 40px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 200;
+}
 
-  #authSection button {
-    width: 100%;
-    padding: 8px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    background: #dab5d9;
-    color: black;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
+/* Auth section (login, logout, user info) */
+#authSection {
+  position: fixed;
+  top: 60px;
+  right: 12px;
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  gap: 8px;
+  z-index: 199;
+}
 
-  #userInfo {
-    position: fixed;
-    top: 12px;
-    right: 16px;
-    font-size: 12px;
-    color: #ccc;
-    background: transparent;
-    padding: 2px 8px;
-    font-weight: 500;
-    z-index: 105;
-  }
+#authSection input {
+  background: #f2f2f2;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+}
 
-  #logoutBtn {
-    position: fixed;
-    top: 32px;
-    right: 16px;
-    background: none !important;
-    color: #ccc !important;
-    border: none !important;
-    font-size: 16px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: auto !important;
-    height: auto !important;
-    line-height: 1 !important;
-    cursor: pointer;
-    z-index: 105;
-  }
+#authSection button {
+  background: #fddde6;
+  color: black;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 10px;
+}
 
-  #logoutBtn:hover {
-    transform: scale(1.2);
-    color: white;
-  }
-  .highlighted {
+#logoutBtn:hover,
+#loginBtn:hover {
+  background: #fbb6c2;
+}
+
+#userInfo {
+  color: #555;
+  font-weight: 500;
+}
+
+/* Highlight underline animation */
+.highlighted {
   position: relative;
   font-weight: 500;
-  color: inherit;
+  color: #222;
 }
 
 .highlighted::after {
@@ -291,16 +298,105 @@
   left: 0;
   bottom: 0;
   width: 100%;
-  border-bottom: 1px dotted #aaa;
+  border-bottom: 1px dotted #888;
   animation: underlineFade 1.2s ease-in-out infinite alternate;
 }
 
 @keyframes underlineFade {
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
+
+/* Note cards - moved outside media query for visibility on all screen sizes */
+.noteCard {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin: 10px 0;
+  box-shadow: 0 1.5px 5px rgba(0, 0, 0, 0.08);
+  animation: slideFade 0.35s ease-out;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 15px;
+  color: #222;
+}
+
+.noteCard:hover {
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+}
+
+.noteCard::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 100%;
+  background: #fbd4d4; /* pastel pink accent */
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 12px 0 0 12px;
+}
+
+@keyframes slideFade {
   from {
-    opacity: 0.2;
+    opacity: 0;
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.note-btn {
+  font-size: 14px;
+  opacity: 0.6;
+  background: none;
+  border: none;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  color: #555;
+  padding: 0 6px;
+}
+
+.note-btn:hover {
+  opacity: 1;
+  color: #333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  #chat {
+    padding: 12px 4vw 160px 4vw;
+  }
+
+  #inputArea {
+    width: 95vw;
+    bottom: 30px;
+  }
+
+  #notePanel {
+    width: 90vw;
+    right: 5vw;
+  }
+
+  #authSection {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .chatBubble {
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 
@@ -309,6 +405,8 @@
 </head>
 <body>
 
+<div id="authToggle">👩‍💻</div>
+
 <div id="authSection">
   <input type="email" id="email" placeholder="Email" autocomplete="username" />
   <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
@@ -316,6 +414,7 @@
   <button id="logoutBtn" style="display:none;" title="Log Out">🚪</button>
   <div id="userInfo">Not logged in</div>
 </div>
+
 
 <div id="emojiColumn">
   <button class="format-btn" id="boldBtn">🅱️</button>
@@ -423,12 +522,47 @@
   };
 
   function addMessage(sender, text) {
-    const div = document.createElement('div');
-    div.className = 'message ' + sender;
-    div.textContent = (sender === 'user' ? '🧑 ' : '🤖 ') + text;
-    chat.appendChild(div);
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  const div = document.createElement('div');
+  div.className = 'message ' + sender;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'chatBubble';
+
+  bubble.style.padding = '10px 14px';
+  bubble.style.borderRadius = '16px';
+  bubble.style.margin = '4px 0';
+  bubble.style.maxWidth = '80%';
+  bubble.style.whiteSpace = 'pre-wrap';
+  bubble.style.wordWrap = 'break-word';
+  bubble.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+  bubble.style.transition = 'transform 0.15s ease, box-shadow 0.2s ease';
+
+  bubble.onmouseover = () => {
+    bubble.style.transform = 'scale(1.02)';
+    bubble.style.boxShadow = '0 4px 8px rgba(0,0,0,0.08)';
+  };
+  bubble.onmouseout = () => {
+    bubble.style.transform = 'scale(1)';
+    bubble.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+  };
+
+  if (sender === 'user') {
+    bubble.innerHTML = '🧠 ' + text;
+    bubble.style.background = '#eae6f8'; // pastel lavender
+    bubble.style.color = '#3e3a5e';
+    bubble.style.alignSelf = 'flex-end';
+  } else {
+    bubble.innerHTML = '🤖 ' + text;
+    bubble.style.background = '#f3f3f3'; // pastel gray
+    bubble.style.color = '#333333';
+    bubble.style.alignSelf = 'flex-start';
   }
+
+  div.appendChild(bubble);
+  chat.appendChild(div);
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+}
+
 
   addNoteBtn.onclick = async () => {
     const user = auth.currentUser;
@@ -467,7 +601,7 @@
   }
 
   function displayNotes(notes, query = '') {
-    chat.innerHTML = '';
+    // Do NOT clear chat.innerHTML here to keep conversation
 
     if (notes.length === 0) {
       addMessage('bot', '❌ No matching notes found.');
@@ -475,106 +609,128 @@
     }
 
     const highlightText = (html, keyword) => {
-  if (!keyword) return html;
+      if (!keyword) return html;
 
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
 
-  const walk = node => {
-    if (node.nodeType === 3) {
-      const text = node.nodeValue;
-      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`(${escaped})`, 'gi');
-      const parts = text.split(regex);
+      const walk = node => {
+        if (node.nodeType === 3) {
+          const text = node.nodeValue;
+          const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(${escaped})`, 'gi');
+          const parts = text.split(regex);
 
-      if (parts.length > 1) {
-        const frag = document.createDocumentFragment();
-        parts.forEach(part => {
-          if (part.toLowerCase() === keyword.toLowerCase()) {
-            const span = document.createElement('span');
-            span.className = 'highlighted';
-            span.textContent = part;
-            frag.appendChild(span);
-          } else {
-            frag.appendChild(document.createTextNode(part));
+          if (parts.length > 1) {
+            const frag = document.createDocumentFragment();
+            parts.forEach(part => {
+              if (part.toLowerCase() === keyword.toLowerCase()) {
+                const span = document.createElement('span');
+                span.className = 'highlighted';
+                span.textContent = part;
+                frag.appendChild(span);
+              } else {
+                frag.appendChild(document.createTextNode(part));
+              }
+            });
+            node.replaceWith(frag);
           }
-        });
-        node.replaceWith(frag);
-      }
-    } else if (node.nodeType === 1 && node.childNodes) {
-      [...node.childNodes].forEach(walk);
+        } else if (node.nodeType === 1 && node.childNodes) {
+          [...node.childNodes].forEach(walk);
+        }
+      };
+
+      [...tempDiv.childNodes].forEach(walk);
+      return tempDiv.innerHTML;
+    };
+
+    // Optional separator between results and old messages
+    const separator = document.createElement('hr');
+    separator.style.border = 'none';
+    separator.style.borderTop = '1px solid #ccc';
+    separator.style.margin = '12px 0';
+    chat.appendChild(separator);
+
+    notes.forEach(({ content, id }, index) => {
+  const div = document.createElement('div');
+  div.className = 'message bot noteCard'; // noteCard for styling & animation
+  if (index > 0) div.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
+
+  const noteText = document.createElement('div');
+  noteText.className = 'editableNote';
+  noteText.contentEditable = false;
+  noteText.innerHTML = highlightText(content, query);  // no emoji prefix
+  div.appendChild(noteText);
+
+  const btns = document.createElement('div');
+  const editBtn = document.createElement('button');
+  editBtn.className = 'note-btn';
+  editBtn.textContent = '✏️';
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'note-btn';
+  deleteBtn.textContent = '🗑️';
+  btns.append(editBtn, deleteBtn);
+  div.appendChild(btns);
+
+  let editing = false;
+  editBtn.onclick = () => {
+    if (!editing) {
+      editing = true;
+      noteText.contentEditable = true;
+      noteText.focus();
+      editBtn.textContent = '✅';
+    } else {
+      const updated = noteText.innerHTML.trim();
+      if (!updated) return alert("Cannot be empty");
+      db.collection('notes').doc(id).update({ content: updated });
+      noteText.contentEditable = false;
+      editBtn.textContent = '✏️';
+      editing = false;
     }
   };
 
-  [...tempDiv.childNodes].forEach(walk);
-  return tempDiv.innerHTML;
-};
+  deleteBtn.onclick = () => {
+    if (confirm("Delete this note?")) {
+      db.collection('notes').doc(id).delete();
+      chat.removeChild(div);
+    }
+  };
+
+  chat.appendChild(div);
+});
 
 
-
-    notes.forEach(({ content, id }, index) => {
-      const div = document.createElement('div');
-      div.className = 'message bot';
-      if (index > 0) div.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
-
-      const noteText = document.createElement('div');
-      noteText.className = 'editableNote';
-      noteText.contentEditable = false;
-      noteText.innerHTML = highlightText(content, query);
-      div.appendChild(noteText);
-
-      const btns = document.createElement('div');
-      const editBtn = document.createElement('button');
-      editBtn.className = 'note-btn';
-      editBtn.textContent = '✏️';
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'note-btn';
-      deleteBtn.textContent = '🗑️';
-      btns.append(editBtn, deleteBtn);
-      div.appendChild(btns);
-
-      let editing = false;
-      editBtn.onclick = () => {
-        if (!editing) {
-          editing = true;
-          noteText.contentEditable = true;
-          noteText.focus();
-          editBtn.textContent = '✅';
-        } else {
-          const updated = noteText.innerHTML.trim();
-          if (!updated) return alert("Cannot be empty");
-          db.collection('notes').doc(id).update({ content: updated });
-          noteText.contentEditable = false;
-          editBtn.textContent = '✏️';
-          editing = false;
-        }
-      };
-
-      deleteBtn.onclick = () => {
-        if (confirm("Delete this note?")) {
-          db.collection('notes').doc(id).delete();
-          chat.removeChild(div);
-        }
-      };
-
-      chat.appendChild(div);
-    });
+    // Scroll to bottom so latest notes are visible
+    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
   }
 
   inputArea.onsubmit = async (e) => {
     e.preventDefault();
     const question = userInput.value.trim();
     if (!question) return;
+
+    // Show user message in chat
     addMessage('user', question);
+
     userInput.value = '';
-    addMessage('bot', '⏳ Searching...');
+
+    // Show temporary loading bot message
+    const loadingBubble = document.createElement('div');
+    loadingBubble.className = 'message bot';
+    loadingBubble.textContent = '🤖 ⏳ Searching...';
+    chat.appendChild(loadingBubble);
+    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+
     const results = await queryNotes(question);
-    const lastBot = [...chat.querySelectorAll('.bot')].pop();
-    if (lastBot && lastBot.textContent.includes('Searching')) chat.removeChild(lastBot);
+
+    // Remove loading message
+    chat.removeChild(loadingBubble);
+
+    // Show results
     displayNotes(results, question);
   };
 
-  // Emojis and formatting
+  // Emojis and formatting buttons
   document.querySelectorAll('.emoji').forEach(btn => {
     btn.onclick = () => {
       navigator.clipboard.writeText(btn.dataset.emoji);
@@ -582,21 +738,29 @@
       setTimeout(() => (btn.style.transform = 'scale(1)'), 200);
     };
   });
+  
+  document.getElementById('authToggle').onclick = () => {
+  const section = document.getElementById('authSection');
+  section.style.display = section.style.display === 'flex' ? 'none' : 'flex';
+};
+
 
   document.getElementById('boldBtn').onclick = () => {
     document.execCommand('bold');
   };
 
   document.getElementById('highlightBtn').onclick = () => {
-    document.execCommand('foreColor', false, '#FAFABE'); // Yellow font color
+    document.execCommand('foreColor', false, '#5c6ac4'); 
   };
 
   document.getElementById('resetColorBtn').onclick = () => {
-    document.execCommand('foreColor', false, 'white');
+    document.execCommand('foreColor', false, 'black');
   };
 
   addMessage('bot', '👋 Welcome X! Please log in to add or manage notes.');
+  
 </script>
+
 
 </body>
 </html>
