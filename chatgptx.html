@@ -4,22 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Minimal Chat with Full Features</title>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Minimal Chat with Full Features</title>
 <style>
-@font-face {
-  font-family: 'fors';
-  src: url('fors.ttf') format('truetype');
-}
-
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: 'fors', sans-serif, Arial, sans-serif;
+  font-family: 'Tahoma', sans-serif;
   background-color: #fefefe;
   color: #222;
   display: flex;
@@ -30,17 +20,18 @@ html, body {
 #chat {
   flex-grow: 1;
   width: 100%;
-  padding: 20px 5vw 160px 5vw;
+  padding: 20px 5vw 160px 80px;
   overflow-y: auto;
-  font-size: 15px;
-  background-color: #fefefe;
+  font-size: 12px;
+  background: #fefefe;
   box-sizing: border-box;
 }
 
 .message {
+  margin-left: 7px; /* ← shift message bubbles */
   margin-bottom: 8px;
   line-height: 1.6;
-  font-size: 15px;
+  font-size: 12px;
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-word;
@@ -57,24 +48,41 @@ html, body {
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   padding-top: 12px;
   margin-top: 12px;
+  margin-left: 7px;
 }
 
-.user, .bot {
-  background: none;
-  color: #222;
+.message img {
+  max-width: 100%;
+  margin-top: 6px;
+  border-radius: 8px;
 }
 
-.editableNote {
-  white-space: pre-wrap;
-  background: none;
-  color: #222;
-  padding: 4px;
-  border: none;
-  font-family: 'fors', sans-serif;
-  font-size: 15px;
-  outline: none;
+.chatBubble {
+  background-color: #e0e0e0;
+  border-radius: 12px;
+  padding: 8px 12px;
+  max-width: 70%;
+  animation: fadeIn 0.3s ease;
+  word-wrap: break-word;
 }
 
+.message.user .chatBubble {
+  background-color: #e0c1c6;
+  align-self: flex-end;
+}
+
+.message.bot .chatBubble {
+  background-color: #f1f1f1;
+  align-self: flex-start;
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Input Area */
 #inputArea {
   position: fixed;
   bottom: 40px;
@@ -92,6 +100,27 @@ html, body {
   box-sizing: border-box;
 }
 
+#userInput {
+  flex-grow: 1;
+  font-size: 12px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  color: #3a3a3a;
+  outline: none;
+}
+
+#userInput:focus {
+  border-color: #999;
+  box-shadow: 0 0 6px rgba(100, 100, 100, 0.4);
+}
+
+#sendBtn {
+  display: none;
+}
+
+/* Note Input */
 #noteInput {
   min-height: 60px;
   max-height: 400px;
@@ -113,26 +142,75 @@ html, body {
   display: block;
 }
 
-#userInput {
-  flex-grow: 1;
-  font-size: 13px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  background: #f9f9f9;
-  color: #3a3a3a;
+/* Editable Notes */
+.editableNote {
+  background: none;
+  color: #222;
+  padding: 4px;
+  border: none;
+  font-size: 12px;
+  font-family: 'Tahoma', sans-serif;
+  white-space: pre-wrap;
   outline: none;
 }
 
-#userInput:focus {
-  border-color: #999;
-  box-shadow: 0 0 6px rgba(100, 100, 100, 0.4);
+/* Toolbar + Toggle */
+#formatToggle {
+  position: fixed;
+  bottom: 40px;  /* same vertical level as add button */
+  left: 20px;    /* nicely spaced from left edge */
+  font-size: 20px;
+  background: #ebebeb;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  text-align: center;
+  line-height: 44px;
+  cursor: pointer;
+  z-index: 105;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-#sendBtn {
-  display: none;
+#formatToolbar {
+  position: fixed;
+  bottom: 90px;   /* 50px above toggle icon (44px height + some margin) */
+  left: 20px;     /* align with toggle icon */
+  display: none;  /* hidden by default */
+  flex-direction: column;  /* vertical buttons */
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  background: #ffffffee;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 8px 10px;
+  z-index: 104;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+#formatToolbar.visible {
+  display: flex;
 }
 
+.format-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #444;
+  padding: 6px;
+  border-radius: 6px;
+  opacity: 0.7;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.format-btn:hover {
+  transform: scale(1.2);
+  opacity: 1;
+  color: #222;
+}
+
+/* Emoji */
 #emojiColumn {
   position: fixed;
   top: 10px;
@@ -143,7 +221,7 @@ html, body {
   z-index: 101;
 }
 
-.emoji, .format-btn {
+.emoji {
   background: none;
   color: #444;
   border: none;
@@ -153,11 +231,12 @@ html, body {
   transition: all 0.2s ease;
 }
 
-.emoji:hover, .format-btn:hover {
+.emoji:hover {
   transform: scale(1.2);
   opacity: 1;
 }
 
+/* Note Panel */
 #noteContainer {
   position: fixed;
   bottom: 40px;
@@ -172,7 +251,7 @@ html, body {
   height: 50px;
   font-size: 28px;
   border-radius: 50%;
-  background: #fddde6;
+  background: #d0a0a3;
   color: #333;
   border: none;
   cursor: pointer;
@@ -196,7 +275,7 @@ html, body {
 }
 
 #addNoteBtn {
-  background: #fbd4d4;
+  background: #ecebe8;
   color: #3a3a3a;
   border: none;
   padding: 10px;
@@ -204,110 +283,7 @@ html, body {
   cursor: pointer;
 }
 
-.note-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: #555;
-  margin-right: 8px;
-}
-
-.message img {
-  max-width: 100%;
-  margin-top: 6px;
-  border-radius: 8px;
-}
-
-.divider {
-  height: 12px;
-}
-
-#authToggle {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  background: #fddde6;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 20px;
-  text-align: center;
-  line-height: 40px;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  z-index: 200;
-}
-
-/* Auth section (login, logout, user info) */
-#authSection {
-  position: fixed;
-  top: 60px;
-  right: 12px;
-  display: none;
-  flex-direction: column;
-  align-items: flex-end;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 10px 12px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  gap: 8px;
-  z-index: 199;
-}
-
-#authSection input {
-  background: #f2f2f2;
-  color: #333;
-  border: 1px solid #ccc;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 10px;
-}
-
-#authSection button {
-  background: #fddde6;
-  color: black;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 10px;
-}
-
-#logoutBtn:hover,
-#loginBtn:hover {
-  background: #fbb6c2;
-}
-
-#userInfo {
-  color: #555;
-  font-weight: 500;
-}
-
-/* Highlight underline animation */
-.highlighted {
-  position: relative;
-  font-weight: 500;
-  color: #222;
-}
-
-.highlighted::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  border-bottom: 1px dotted #888;
-  animation: underlineFade 1.2s ease-in-out infinite alternate;
-}
-
-@keyframes underlineFade {
-  from { opacity: 0.2; }
-  to { opacity: 1; }
-}
-
-/* Note cards - moved outside media query for visibility on all screen sizes */
+/* Note Card */
 .noteCard {
   position: relative;
   background: #fff;
@@ -331,7 +307,7 @@ html, body {
   display: block;
   width: 6px;
   height: 100%;
-  background: #fbd4d4; /* pastel pink accent */
+  background: #fbd4d4;
   position: absolute;
   left: 0;
   top: 0;
@@ -349,6 +325,7 @@ html, body {
   }
 }
 
+/* Note Card Buttons */
 .note-btn {
   font-size: 14px;
   opacity: 0.6;
@@ -366,7 +343,91 @@ html, body {
   color: #333;
 }
 
-/* Responsive adjustments */
+/* Highlight Effect */
+.highlighted {
+  position: relative;
+  font-weight: 500;
+  color: #222;
+}
+
+.highlighted::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  border-bottom: 1px dotted #888;
+  animation: underlineFade 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes underlineFade {
+  from { opacity: 0.2; }
+  to   { opacity: 1; }
+}
+
+/* Auth UI */
+#authToggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  background: #ecebe8;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 15px;
+  text-align: center;
+  line-height: 40px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 200;
+}
+
+#authSection {
+  position: fixed;
+  top: 60px;
+  right: 12px;
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  gap: 8px;
+  z-index: 199;
+}
+
+#authSection input {
+  background: #ecebe8;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+#authSection button {
+  background: #d0a0a3;
+  color: black;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 10px;
+}
+
+#logoutBtn:hover,
+#loginBtn:hover {
+  background: #ecebe8;
+}
+
+#userInfo {
+  color: #555;
+  font-weight: 100;
+}
+
+/* Responsive */
 @media (max-width: 600px) {
   #chat {
     padding: 12px 4vw 160px 4vw;
@@ -383,23 +444,11 @@ html, body {
   }
 
   #authSection {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
     top: 10px;
     right: 10px;
-  }
-
-  .chatBubble {
-    animation: fadeIn 0.3s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    gap: 6px;
   }
 }
-
 
 </style>
 </head>
@@ -415,17 +464,30 @@ html, body {
   <div id="userInfo">Not logged in</div>
 </div>
 
+<div id="formatToggle">📋</div>
 
-<div id="emojiColumn">
-  <button class="format-btn" id="boldBtn">🅱️</button>
-  <button class="format-btn" id="highlightBtn">💡</button>
-  <button class="format-btn" id="resetColorBtn">🔄</button>
+<div id="formatToolbar">
+  <button class="format-btn" id="boldBtn"><b>B</b></button>
+  <button class="format-btn" id="italicBtn"><i>I</i></button>
+  <button class="format-btn" id="underlineBtn"><u>U</u></button>
+  <button class="format-btn" id="highlightBtn">🖍</button>
+  <button class="format-btn" id="resetColorBtn">↺</button>
+
+
   <div class="divider"></div>
   <div class="emoji" data-emoji="📌">📌</div>
   <div class="emoji" data-emoji="🟡">🟡</div>
   <div class="emoji" data-emoji="🔴">🔴</div>
   <div class="emoji" data-emoji="🔸">🔸</div>
   <div class="emoji" data-emoji="▶">▶</div>
+  <div class="emoji" data-emoji="👉🏻">👉🏻</div>
+  <div class="emoji" data-emoji="⚠️">⚠️</div>
+  <div class="emoji" data-emoji="🧠">🧠</div>
+  <div class="emoji" data-emoji="➀">➀</div>
+  <div class="emoji" data-emoji="➁">➁</div>
+  <div class="emoji" data-emoji="➂">➂</div>
+  <div class="emoji" data-emoji="➃">➃</div>
+  <div class="emoji" data-emoji="💊">💊</div>
 </div>
 
 <!-- Container for add button and note panel -->
@@ -449,316 +511,282 @@ html, body {
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
-    authDomain: "notes-chat-c5ff3.firebaseapp.com",
-    projectId: "notes-chat-c5ff3",
-    storageBucket: "notes-chat-c5ff3.appspot.com",
-    messagingSenderId: "597780727252",
-    appId: "1:597780727252:web:8407eb4096dbe301d74241",
-    measurementId: "G-YQD63H7L5T"
-  };
+  // Firebase initialization and element selection...
+// Firebase initialization and element selection...
+const firebaseConfig = {
+  apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
+  authDomain: "notes-chat-c5ff3.firebaseapp.com",
+  projectId: "notes-chat-c5ff3",
+  storageBucket: "notes-chat-c5ff3.appspot.com",
+  messagingSenderId: "597780727252",
+  appId: "1:597780727252:web:8407eb4096dbe301d74241",
+  measurementId: "G-YQD63H7L5T"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  const chat = document.getElementById('chat');
-  const userInput = document.getElementById('userInput');
-  const inputArea = document.getElementById('inputArea');
-  const noteInput = document.getElementById('noteInput');
-  const addNoteBtn = document.getElementById('addNoteBtn');
-  const addNoteToggle = document.getElementById('addNoteToggle');
-  const notePanel = document.getElementById('notePanel');
+const chat = document.getElementById('chat');
+const userInput = document.getElementById('userInput');
+const inputArea = document.getElementById('inputArea');
+const noteInput = document.getElementById('noteInput');
+const addNoteBtn = document.getElementById('addNoteBtn');
+const addNoteToggle = document.getElementById('addNoteToggle');
+const notePanel = document.getElementById('notePanel');
 
-  const emailInput = document.getElementById('email');
-  const passwordInput = document.getElementById('password');
-  const loginBtn = document.getElementById('loginBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const userInfo = document.getElementById('userInfo');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const userInfo = document.getElementById('userInfo');
 
-  // Show/hide note panel & addNoteToggle only when logged in
-  function updateUIForUser(user) {
-    if (user) {
-      userInfo.textContent = 'Logged in as ' + user.email;
-      loginBtn.style.display = 'none';
-      logoutBtn.style.display = 'block';
-      emailInput.style.display = 'none';
-      passwordInput.style.display = 'none';
-      addNoteToggle.style.display = 'inline-block';
-      notePanel.style.display = 'none'; // Hidden until toggle clicked
-    } else {
-      userInfo.textContent = 'Not logged in';
-      loginBtn.style.display = 'inline-block';
-      logoutBtn.style.display = 'none';
-      emailInput.style.display = 'inline-block';
-      passwordInput.style.display = 'inline-block';
-      addNoteToggle.style.display = 'none';
-      notePanel.style.display = 'none';
-    }
+function updateUIForUser(user) {
+  if (user) {
+    userInfo.textContent = 'Logged in as ' + user.email;
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'block';
+    emailInput.style.display = 'none';
+    passwordInput.style.display = 'none';
+    addNoteToggle.style.display = 'inline-block';
+    notePanel.style.display = 'none';
+  } else {
+    userInfo.textContent = 'Not logged in';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    emailInput.style.display = 'inline-block';
+    passwordInput.style.display = 'inline-block';
+    addNoteToggle.style.display = 'none';
+    notePanel.style.display = 'none';
   }
+}
 
-  auth.onAuthStateChanged(user => {
-    updateUIForUser(user);
-  });
+auth.onAuthStateChanged(user => updateUIForUser(user));
 
-  loginBtn.onclick = async () => {
-    try {
-      await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
-    } catch (err) {
-      alert('Login failed: ' + err.message);
-    }
-  };
+loginBtn.onclick = async () => {
+  try {
+    await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
+  } catch (err) {
+    alert('Login failed: ' + err.message);
+  }
+};
+logoutBtn.onclick = () => auth.signOut();
 
-  logoutBtn.onclick = () => auth.signOut();
+addNoteBtn.onclick = async () => {
+  const user = auth.currentUser;
+  if (!user) return alert('Please log in.');
+  const noteText = noteInput.innerHTML.trim();
+  if (!noteText) return alert('Enter a note.');
 
-  addNoteToggle.onclick = () => {
-    if (notePanel.style.display === 'flex') {
-      notePanel.style.display = 'none';
-    } else {
-      notePanel.style.display = 'flex';
-      noteInput.focus();
-    }
-  };
+  addNoteBtn.disabled = true;
+  addNoteBtn.textContent = 'Adding...';
 
-  function addMessage(sender, text) {
+  try {
+    await db.collection('notes').add({
+      content: noteText,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      uid: user.uid
+    });
+    addMessage('bot', '✅ Note added!');
+    noteInput.innerHTML = '';
+    notePanel.style.display = 'none';
+  } catch (e) {
+    alert('Error: ' + e.message);
+  } finally {
+    addNoteBtn.disabled = false;
+    addNoteBtn.textContent = 'Add Note';
+  }
+};
+
+function addMessage(sender, text) {
   const div = document.createElement('div');
   div.className = 'message ' + sender;
-
   const bubble = document.createElement('div');
   bubble.className = 'chatBubble';
-
-  bubble.style.padding = '10px 14px';
-  bubble.style.borderRadius = '16px';
-  bubble.style.margin = '4px 0';
-  bubble.style.maxWidth = '80%';
-  bubble.style.whiteSpace = 'pre-wrap';
-  bubble.style.wordWrap = 'break-word';
-  bubble.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-  bubble.style.transition = 'transform 0.15s ease, box-shadow 0.2s ease';
-
-  bubble.onmouseover = () => {
-    bubble.style.transform = 'scale(1.02)';
-    bubble.style.boxShadow = '0 4px 8px rgba(0,0,0,0.08)';
-  };
-  bubble.onmouseout = () => {
-    bubble.style.transform = 'scale(1)';
-    bubble.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-  };
-
-  if (sender === 'user') {
-    bubble.innerHTML = '🧠 ' + text;
-    bubble.style.background = '#eae6f8'; // pastel lavender
-    bubble.style.color = '#3e3a5e';
-    bubble.style.alignSelf = 'flex-end';
-  } else {
-    bubble.innerHTML = '🤖 ' + text;
-    bubble.style.background = '#f3f3f3'; // pastel gray
-    bubble.style.color = '#333333';
-    bubble.style.alignSelf = 'flex-start';
-  }
-
+  bubble.innerHTML = (sender === 'user' ? '🧠 ' : '🤖 ') + text;
   div.appendChild(bubble);
   chat.appendChild(div);
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
-
-  addNoteBtn.onclick = async () => {
-    const user = auth.currentUser;
-    if (!user) {
-      alert('Please log in to add notes.');
-      return;
-    }
-    const noteText = noteInput.innerHTML.trim();
-    if (!noteText) return alert("Please enter a note.");
-
-    addNoteBtn.disabled = true;
-    addNoteBtn.textContent = "Adding...";
-
-    try {
-      await db.collection('notes').add({
-        content: noteText,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        uid: user.uid
-      });
-      addMessage('bot', '✅ Note added!');
-      noteInput.innerHTML = '';
-      notePanel.style.display = 'none';
-    } catch (e) {
-      alert('Error: ' + e.message);
-    } finally {
-      addNoteBtn.disabled = false;
-      addNoteBtn.textContent = "Add Note";
-    }
-  };
-
-  async function queryNotes(question) {
-    const snapshot = await db.collection('notes').orderBy('createdAt', 'desc').get();
-    return snapshot.docs
-      .filter(doc => doc.data().content.toLowerCase().includes(question.toLowerCase()))
-      .map(doc => ({ ...doc.data(), id: doc.id }));
-  }
-
-  function displayNotes(notes, query = '') {
-    // Do NOT clear chat.innerHTML here to keep conversation
-
-    if (notes.length === 0) {
-      addMessage('bot', '❌ No matching notes found.');
-      return;
-    }
-
-    const highlightText = (html, keyword) => {
-      if (!keyword) return html;
-
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = html;
-
-      const walk = node => {
-        if (node.nodeType === 3) {
-          const text = node.nodeValue;
-          const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const regex = new RegExp(`(${escaped})`, 'gi');
-          const parts = text.split(regex);
-
-          if (parts.length > 1) {
-            const frag = document.createDocumentFragment();
-            parts.forEach(part => {
-              if (part.toLowerCase() === keyword.toLowerCase()) {
-                const span = document.createElement('span');
-                span.className = 'highlighted';
-                span.textContent = part;
-                frag.appendChild(span);
-              } else {
-                frag.appendChild(document.createTextNode(part));
-              }
-            });
-            node.replaceWith(frag);
-          }
-        } else if (node.nodeType === 1 && node.childNodes) {
-          [...node.childNodes].forEach(walk);
-        }
-      };
-
-      [...tempDiv.childNodes].forEach(walk);
-      return tempDiv.innerHTML;
-    };
-
-    // Optional separator between results and old messages
-    const separator = document.createElement('hr');
-    separator.style.border = 'none';
-    separator.style.borderTop = '1px solid #ccc';
-    separator.style.margin = '12px 0';
-    chat.appendChild(separator);
-
-    notes.forEach(({ content, id }, index) => {
-  const div = document.createElement('div');
-  div.className = 'message bot noteCard'; // noteCard for styling & animation
-  if (index > 0) div.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
-
-  const noteText = document.createElement('div');
-  noteText.className = 'editableNote';
-  noteText.contentEditable = false;
-  noteText.innerHTML = highlightText(content, query);  // no emoji prefix
-  div.appendChild(noteText);
-
-  const btns = document.createElement('div');
-  const editBtn = document.createElement('button');
-  editBtn.className = 'note-btn';
-  editBtn.textContent = '✏️';
-  const deleteBtn = document.createElement('button');
-  deleteBtn.className = 'note-btn';
-  deleteBtn.textContent = '🗑️';
-  btns.append(editBtn, deleteBtn);
-  div.appendChild(btns);
-
-  let editing = false;
-  editBtn.onclick = () => {
-    if (!editing) {
-      editing = true;
-      noteText.contentEditable = true;
-      noteText.focus();
-      editBtn.textContent = '✅';
-    } else {
-      const updated = noteText.innerHTML.trim();
-      if (!updated) return alert("Cannot be empty");
-      db.collection('notes').doc(id).update({ content: updated });
-      noteText.contentEditable = false;
-      editBtn.textContent = '✏️';
-      editing = false;
-    }
-  };
-
-  deleteBtn.onclick = () => {
-    if (confirm("Delete this note?")) {
-      db.collection('notes').doc(id).delete();
-      chat.removeChild(div);
-    }
-  };
-
-  chat.appendChild(div);
-});
-
-
-    // Scroll to bottom so latest notes are visible
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-  }
-
-  inputArea.onsubmit = async (e) => {
-    e.preventDefault();
-    const question = userInput.value.trim();
-    if (!question) return;
-
-    // Show user message in chat
-    addMessage('user', question);
-
-    userInput.value = '';
-
-    // Show temporary loading bot message
-    const loadingBubble = document.createElement('div');
-    loadingBubble.className = 'message bot';
-    loadingBubble.textContent = '🤖 ⏳ Searching...';
-    chat.appendChild(loadingBubble);
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-
-    const results = await queryNotes(question);
-
-    // Remove loading message
-    chat.removeChild(loadingBubble);
-
-    // Show results
-    displayNotes(results, question);
-  };
-
-  // Emojis and formatting buttons
-  document.querySelectorAll('.emoji').forEach(btn => {
-    btn.onclick = () => {
-      navigator.clipboard.writeText(btn.dataset.emoji);
-      btn.style.transform = 'scale(1.3)';
-      setTimeout(() => (btn.style.transform = 'scale(1)'), 200);
-    };
-  });
-  
-  document.getElementById('authToggle').onclick = () => {
-  const section = document.getElementById('authSection');
-  section.style.display = section.style.display === 'flex' ? 'none' : 'flex';
+inputArea.onsubmit = async (e) => {
+  e.preventDefault();
+  const question = userInput.value.trim();
+  if (!question) return;
+  addMessage('user', question);
+  userInput.value = '';
+  const loading = document.createElement('div');
+  loading.className = 'message bot';
+  loading.textContent = '🤖 ⏳ Searching...';
+  chat.appendChild(loading);
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  const results = await queryNotes(question);
+  chat.removeChild(loading);
+  displayNotes(results, question);
 };
 
+async function queryNotes(question) {
+  const snapshot = await db.collection('notes').orderBy('createdAt', 'desc').get();
+  return snapshot.docs.filter(doc => doc.data().content.toLowerCase().includes(question.toLowerCase())).map(doc => ({ ...doc.data(), id: doc.id }));
+}
 
-  document.getElementById('boldBtn').onclick = () => {
-    document.execCommand('bold');
+  function displayNotes(notes, query = '') {
+  if (notes.length === 0) {
+    return addMessage('bot', '❌ No matching notes found.');
+  }
+
+  notes.forEach(({ content, id }) => {
+    const div = document.createElement('div');
+    div.className = 'message bot';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'chatBubble';
+
+    const noteText = document.createElement('div');
+    noteText.className = 'editableNote';
+    noteText.contentEditable = false;
+    noteText.innerHTML = content;
+
+    const btns = document.createElement('div');
+    btns.style.display = 'flex';
+    btns.style.gap = '6px';
+    btns.style.marginTop = '6px';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'note-btn';
+    editBtn.textContent = '✏️';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'note-btn';
+    deleteBtn.textContent = '🗑️';
+
+    editBtn.onclick = () => {
+      const editing = noteText.isContentEditable;
+      if (!editing) {
+        noteText.contentEditable = true;
+        noteText.focus();
+        editBtn.textContent = '✅';
+      } else {
+        const updated = noteText.innerHTML.trim();
+        if (!updated) return alert("Cannot be empty");
+        db.collection('notes').doc(id).update({ content: updated });
+        noteText.contentEditable = false;
+        editBtn.textContent = '✏️';
+      }
+    };
+
+    deleteBtn.onclick = () => {
+      if (confirm("Delete this note?")) {
+        db.collection('notes').doc(id).delete();
+        chat.removeChild(div);
+      }
+    };
+
+    btns.append(editBtn, deleteBtn);
+
+    bubble.appendChild(noteText);
+    bubble.appendChild(btns);
+    div.appendChild(bubble);
+    chat.appendChild(div);
+  });
+
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+}
+
+
+
+let savedRange = null;
+function saveCaret() {
+  const sel = window.getSelection();
+  if (sel.rangeCount > 0 && noteInput.contains(sel.anchorNode)) {
+    savedRange = sel.getRangeAt(0).cloneRange();
+  }
+}
+function restoreCaret() {
+  if (!savedRange) return false;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(savedRange);
+  return true;
+}
+function placeCaretAtEnd(el) {
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  savedRange = range.cloneRange();
+}
+noteInput.addEventListener('keyup', saveCaret);
+noteInput.addEventListener('mouseup', saveCaret);
+noteInput.addEventListener('focus', saveCaret);
+noteInput.addEventListener('input', saveCaret);
+
+document.querySelectorAll('.emoji').forEach(btn => {
+  btn.onclick = async () => {
+    const emoji = btn.dataset.emoji;
+    noteInput.focus();
+    if (!restoreCaret()) {
+      noteInput.innerHTML += emoji;
+      placeCaretAtEnd(noteInput);
+    } else {
+      const sel = window.getSelection();
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const textNode = document.createTextNode(emoji);
+      range.insertNode(textNode);
+      range.setStartAfter(textNode);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    saveCaret();
+    try {
+      await navigator.clipboard.writeText(emoji);
+    } catch (err) {
+      console.warn("Copy failed", err);
+    }
+    btn.style.transform = 'scale(1.3)';
+    setTimeout(() => (btn.style.transform = 'scale(1)'), 200);
   };
+});
 
-  document.getElementById('highlightBtn').onclick = () => {
-    document.execCommand('foreColor', false, '#5c6ac4'); 
-  };
+// Format buttons
+addNoteToggle.onclick = () => {
+  // Check computed style safely
+  const style = window.getComputedStyle(notePanel);
+  if (style.display === 'none' || style.display === '') {
+    notePanel.style.display = 'flex';  // show panel with flex layout
+    noteInput.focus();
+  } else {
+    notePanel.style.display = 'none';  // hide panel
+  }
+};
 
-  document.getElementById('resetColorBtn').onclick = () => {
-    document.execCommand('foreColor', false, 'black');
-  };
+document.getElementById('boldBtn').onclick = () => document.execCommand('bold');
+document.getElementById('italicBtn').onclick = () => document.execCommand('italic');
+document.getElementById('underlineBtn').onclick = () => document.execCommand('underline');
+document.getElementById('highlightBtn').onclick = () => document.execCommand('foreColor', false, '#5c6ac4');
+document.getElementById('resetColorBtn').onclick = () => document.execCommand('foreColor', false, 'black');
 
-  addMessage('bot', '👋 Welcome X! Please log in to add or manage notes.');
-  
+document.getElementById('authToggle').onclick = () => {
+  const section = document.getElementById('authSection');
+  section.style.display = (section.style.display === 'flex') ? 'none' : 'flex';
+};
+
+const formatToggle = document.getElementById('formatToggle');
+const formatToolbar = document.getElementById('formatToolbar');
+
+formatToggle.onclick = () => {
+  formatToolbar.classList.toggle('visible');
+};
+
+addMessage('bot', '👋 Welcome X! Please log in to add or manage notes.');
+
+
+
 </script>
 
 
