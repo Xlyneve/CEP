@@ -359,6 +359,10 @@ html, body {
   border-bottom: 1px dotted #888;
   animation: underlineFade 1.2s ease-in-out infinite alternate;
 }
+.underlineMatch {
+  border-bottom: 1px dotted #999;
+  padding-bottom: 1px;
+}
 
 @keyframes underlineFade {
   from { opacity: 0.2; }
@@ -635,6 +639,8 @@ async function queryNotes(question) {
     return addMessage('bot', '❌ No matching notes found.');
   }
 
+  const lowerQuery = query.trim().toLowerCase();
+
   notes.forEach(({ content, id }) => {
     const div = document.createElement('div');
     div.className = 'message bot';
@@ -645,7 +651,19 @@ async function queryNotes(question) {
     const noteText = document.createElement('div');
     noteText.className = 'editableNote';
     noteText.contentEditable = false;
-    noteText.innerHTML = content;
+
+    // Highlight matches with dotted underline
+    let highlighted = content;
+    if (lowerQuery.length > 0) {
+      const escapedQuery = lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escapedQuery})`, 'gi');
+      highlighted = content.replace(
+        regex,
+        `<span class="underlineMatch">$1</span>`
+      );
+    }
+
+    noteText.innerHTML = highlighted;
 
     const btns = document.createElement('div');
     btns.style.display = 'flex';
@@ -683,7 +701,6 @@ async function queryNotes(question) {
     };
 
     btns.append(editBtn, deleteBtn);
-
     bubble.appendChild(noteText);
     bubble.appendChild(btns);
     div.appendChild(bubble);
@@ -692,6 +709,7 @@ async function queryNotes(question) {
 
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
+
 
 
 
