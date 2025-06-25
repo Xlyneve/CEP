@@ -40,6 +40,20 @@ html, body {
   align-items: flex-start;
 }
 
+.editableNote a {
+  word-break: break-word;       /* Allow breaking inside long URLs */
+  overflow-wrap: anywhere;      /* Another option for wrapping */
+  color: #1a0dab;               /* Typical link blue color */
+  text-decoration: underline;   /* Show underline for clarity */
+}
+
+.chatBubble a {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  color: #1a0dab;
+  text-decoration: underline;
+}
+
 .message.user {
   align-items: flex-end;
 }
@@ -64,6 +78,7 @@ html, body {
   max-width: 70%;
   animation: fadeIn 0.3s ease;
   word-wrap: break-word;
+  white-space: normal;
 }
 
 .message.user .chatBubble {
@@ -75,7 +90,6 @@ html, body {
   background-color: #f1f1f1;
   align-self: flex-start;
 }
-
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
@@ -455,6 +469,7 @@ html, body {
 }
 
 </style>
+
 </head>
 <body>
 
@@ -634,12 +649,38 @@ async function queryNotes(question) {
   return snapshot.docs.filter(doc => doc.data().content.toLowerCase().includes(question.toLowerCase())).map(doc => ({ ...doc.data(), id: doc.id }));
 }
 
-  function displayNotes(notes, query = '') {
+   function displayNotes(notes, query = '') {
   if (notes.length === 0) {
     return addMessage('bot', '❌ No matching notes found.');
   }
 
   const lowerQuery = query.trim().toLowerCase();
+
+  // Linkify function defined once outside the loop
+  function linkify(element) {
+    const urlRegex = /((https?:\/\/|www\.)[^\s<]+)/gi;
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+    const nodesToProcess = [];
+
+    let node;
+    while ((node = walker.nextNode())) {
+      if (urlRegex.test(node.textContent)) {
+        nodesToProcess.push(node);
+      }
+    }
+
+    nodesToProcess.forEach(textNode => {
+      const tempSpan = document.createElement('span');
+      tempSpan.innerHTML = textNode.textContent.replace(urlRegex, (url) => {
+        let href = url;
+        if (!href.startsWith('http')) {
+          href = 'http://' + href;
+        }
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+      });
+      textNode.replaceWith(...tempSpan.childNodes);
+    });
+  }
 
   notes.forEach(({ content, id }) => {
     const div = document.createElement('div');
@@ -652,19 +693,37 @@ async function queryNotes(question) {
     noteText.className = 'editableNote';
     noteText.contentEditable = false;
 
-    // Highlight matches with dotted underline
-    let highlighted = content;
+    // Convert HTML safely into a div so we can manipulate it
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+
+    // Highlight matches without breaking formatting
     if (lowerQuery.length > 0) {
+      const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null);
       const escapedQuery = lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(`(${escapedQuery})`, 'gi');
-      highlighted = content.replace(
-        regex,
-        `<span class="underlineMatch">$1</span>`
-      );
+
+      const textNodes = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        if (regex.test(node.textContent)) {
+          textNodes.push(node);
+        }
+      }
+
+      textNodes.forEach(textNode => {
+        const spanWrapper = document.createElement('span');
+        spanWrapper.innerHTML = textNode.textContent.replace(regex, '<span class="underlineMatch">$1</span>');
+        textNode.replaceWith(...spanWrapper.childNodes);
+      });
     }
 
-    noteText.innerHTML = highlighted;
+    // Apply linkify AFTER highlighting
+    linkify(tempDiv);
 
+    noteText.innerHTML = tempDiv.innerHTML;
+
+    // Buttons
     const btns = document.createElement('div');
     btns.style.display = 'flex';
     btns.style.gap = '6px';
@@ -709,6 +768,8 @@ async function queryNotes(question) {
 
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
+
+
 
 
 
