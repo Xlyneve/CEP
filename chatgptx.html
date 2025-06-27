@@ -658,29 +658,33 @@ async function queryNotes(question) {
 
   // Linkify function defined once outside the loop
   function linkify(element) {
-    const urlRegex = /((https?:\/\/|www\.)[^\s<]+)/gi;
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
-    const nodesToProcess = [];
+  const urlRegex = /((https?:\/\/|www\.)[^\s<]+)/gi;
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+  const nodesToProcess = [];
 
-    let node;
-    while ((node = walker.nextNode())) {
-      if (urlRegex.test(node.textContent)) {
-        nodesToProcess.push(node);
-      }
+  let node;
+  while ((node = walker.nextNode())) {
+    if (urlRegex.test(node.textContent)) {
+      nodesToProcess.push(node);
     }
-
-    nodesToProcess.forEach(textNode => {
-      const tempSpan = document.createElement('span');
-      tempSpan.innerHTML = textNode.textContent.replace(urlRegex, (url) => {
-        let href = url;
-        if (!href.startsWith('http')) {
-          href = 'http://' + href;
-        }
-        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-      });
-      textNode.replaceWith(...tempSpan.childNodes);
-    });
   }
+
+  nodesToProcess.forEach(textNode => {
+    const span = document.createElement('span');
+    span.innerHTML = textNode.textContent.replace(urlRegex, (url) => {
+      let href = url;
+      if (!href.startsWith('http')) href = 'http://' + href;
+      try {
+        new URL(href); // check if valid
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+      } catch {
+        return url; // fallback: just text
+      }
+    });
+    textNode.replaceWith(...span.childNodes);
+  });
+}
+
 
   notes.forEach(({ content, id }) => {
     const div = document.createElement('div');
@@ -747,8 +751,15 @@ async function queryNotes(question) {
         const updated = noteText.innerHTML.trim();
         if (!updated) return alert("Cannot be empty");
         db.collection('notes').doc(id).update({ content: updated });
-        noteText.contentEditable = false;
-        editBtn.textContent = '✏️';
+         noteText.contentEditable = false;
+editBtn.textContent = '✏️';
+
+// Re-run linkify after edit
+const tempDiv = document.createElement('div');
+tempDiv.innerHTML = updated;
+linkify(tempDiv);
+noteText.innerHTML = tempDiv.innerHTML;
+
       }
     };
 
