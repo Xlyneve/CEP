@@ -529,8 +529,9 @@ html, body {
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
-<script>
-// Firebase initialization
+
+<script type="module">
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
   authDomain: "notes-chat-c5ff3.firebaseapp.com",
@@ -545,10 +546,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// Elements
 const chat = document.getElementById('chat');
-const userInput = document.getElementById('userInput');
-const inputArea = document.getElementById('inputArea');
 const noteInput = document.getElementById('noteInput');
 const addNoteBtn = document.getElementById('addNoteBtn');
 const addNoteToggle = document.getElementById('addNoteToggle');
@@ -567,14 +565,6 @@ imageUpload.id = 'imageUpload';
 imageUpload.style.marginTop = '10px';
 notePanel.insertBefore(imageUpload, addNoteBtn);
 
-// Upload image to Firebase Storage
-async function uploadImage(file, userId) {
-  const imageRef = storage.ref().child(`images/${userId}/${Date.now()}_${file.name}`);
-  await imageRef.put(file);
-  return await imageRef.getDownloadURL();
-}
-
-// Update UI depending on auth state
 function updateUIForUser(user) {
   if (user) {
     userInfo.textContent = 'Logged in as ' + user.email;
@@ -596,17 +586,9 @@ function updateUIForUser(user) {
 }
 auth.onAuthStateChanged(updateUIForUser);
 
-// Login/Logout buttons
-loginBtn.onclick = async () => {
-  try {
-    await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
-  } catch (err) {
-    alert('Login failed: ' + err.message);
-  }
-};
+loginBtn.onclick = () => auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value).catch(e => alert(e.message));
 logoutBtn.onclick = () => auth.signOut();
 
-// Save caret position helpers
 let savedRange = null;
 function saveCaret() {
   const sel = window.getSelection();
@@ -631,13 +613,11 @@ function placeCaretAtEnd(el) {
   sel.addRange(range);
   savedRange = range.cloneRange();
 }
-// Attach caret save events
 noteInput.addEventListener('keyup', saveCaret);
 noteInput.addEventListener('mouseup', saveCaret);
 noteInput.addEventListener('focus', saveCaret);
 noteInput.addEventListener('input', saveCaret);
 
-// Emoji insertion and clipboard copy
 document.querySelectorAll('.emoji').forEach(btn => {
   btn.onclick = async () => {
     const emoji = btn.dataset.emoji;
@@ -659,20 +639,19 @@ document.querySelectorAll('.emoji').forEach(btn => {
     saveCaret();
     try {
       await navigator.clipboard.writeText(emoji);
-    } catch (err) {
-      console.warn("Copy failed", err);
-    }
+    } catch {}
     btn.style.transform = 'scale(1.3)';
     setTimeout(() => (btn.style.transform = 'scale(1)'), 200);
   };
 });
 
-// Image preview on upload inside noteInput
+// IMAGE UPLOAD: Only insert image ONCE into noteInput when selected
 imageUpload.addEventListener('change', function () {
   const file = this.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = e => {
+      // Insert image directly into noteInput once (no extra image adding on save)
       noteInput.innerHTML += `<br><img src="${e.target.result}" style="max-width:100%; border-radius:8px;" /><br>`;
       placeCaretAtEnd(noteInput);
       saveCaret();
@@ -681,41 +660,28 @@ imageUpload.addEventListener('change', function () {
   }
 });
 
-// Toggle note panel visibility
 addNoteToggle.onclick = () => {
-  if (notePanel.style.display === 'flex') {
-    notePanel.style.display = 'none';
-  } else {
-    notePanel.style.display = 'flex';
-    noteInput.focus();
-  }
+  notePanel.style.display = notePanel.style.display === 'flex' ? 'none' : 'flex';
+  noteInput.focus();
 };
 
-// Add note button: upload image if any, save note with image and text
+// Add note button clicked — SAVE noteInput.innerHTML directly with images embedded
 addNoteBtn.onclick = async () => {
   const user = auth.currentUser;
   if (!user) return alert('Please log in.');
 
-  const noteText = noteInput.innerHTML.trim();
-  const imageFile = imageUpload.files[0];
-
-  if (!noteText && !imageFile) return alert('Note or image is required.');
+  const noteContent = noteInput.innerHTML.trim();
+  if (!noteContent) return alert('Note is required.');
 
   addNoteBtn.disabled = true;
   addNoteBtn.textContent = 'Adding...';
 
   try {
-    let imageUrl = null;
-    if (imageFile) {
-      imageUrl = await uploadImage(imageFile, user.uid);
-    }
-    const noteContent = noteText + (imageUrl ? `<br><img src="${imageUrl}" style="max-width:100%; border-radius:8px;" />` : '');
-
-    const docRef = await db.collection('notes').add({
+    // Save the entire note content (with images inside noteInput.innerHTML)
+    await db.collection('notes').add({
       content: noteContent,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid: user.uid,
-      image: imageUrl || null
+      uid: user.uid
     });
 
     addMessage('bot', '✅ Note added!');
@@ -731,162 +697,112 @@ addNoteBtn.onclick = async () => {
   }
 };
 
-// Add chat message bubble helper with icons for user and bot
 function addMessage(sender, content, isHTML = false) {
   const div = document.createElement('div');
   div.className = 'message ' + sender;
   const bubble = document.createElement('div');
   bubble.className = 'chatBubble';
-
-  // Add icon prefix
-  const icon = sender === 'user' ? '🧠 ' : '🤖 ';
-
-  if (isHTML) {
-    bubble.innerHTML = icon + content;
-  } else {
-    bubble.textContent = icon + content;
-  }
+  bubble[isHTML ? 'innerHTML' : 'textContent'] = (sender === 'user' ? '🧠 ' : '🤖 ') + content;
   div.appendChild(bubble);
   chat.appendChild(div);
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
-// Display matched notes with edit and delete buttons
-// Display matched notes with edit and delete buttons minimal style inside bubble
 function displayNotes(notes) {
-  if (notes.length === 0) {
-    addMessage('bot', '❌ No matching notes found.');
-    return;
-  }
-  notes.forEach(note => {
+  if (!notes.length) return addMessage('bot', '❌ No matching notes found.');
+  for (const note of notes) {
     const div = document.createElement('div');
     div.className = 'message bot';
 
     const bubble = document.createElement('div');
     bubble.className = 'chatBubble';
-
-    // Note content with image if any
-    let contentHTML = note.content;
-    if (note.image && !contentHTML.includes('<img')) {
-      contentHTML += `<br><img src="${note.image}" style="max-width:100%; border-radius:8px;" />`;
-    }
-    
-    bubble.innerHTML = '🤖 ' + contentHTML;
-
+    bubble.innerHTML = '🤖 ' + note.content;
     div.appendChild(bubble);
-    chat.appendChild(div);
 
-    // Create minimal edit and delete buttons container below bubble content
-    const btnsDiv = document.createElement('div');
-    btnsDiv.style.textAlign = 'center';
-    btnsDiv.style.marginTop = '6px';
+    const btns = document.createElement('div');
+    btns.style.textAlign = 'center';
+    btns.style.marginTop = '6px';
 
     const editBtn = document.createElement('button');
-    editBtn.setAttribute('aria-label', 'Edit');
-    editBtn.title = 'Edit';
-    editBtn.style.background = 'none';
-    editBtn.style.border = 'none';
-    editBtn.style.color = '#666';
-    editBtn.style.fontSize = '16px';
-    editBtn.style.cursor = 'pointer';
-    editBtn.style.marginRight = '12px';
     editBtn.textContent = '✏️';
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.setAttribute('aria-label', 'Delete');
-    deleteBtn.title = 'Delete';
-    deleteBtn.style.background = 'none';
-    deleteBtn.style.border = 'none';
-    deleteBtn.style.color = '#666';
-    deleteBtn.style.fontSize = '16px';
-    deleteBtn.style.cursor = 'pointer';
-    deleteBtn.textContent = '🗑️';
+    [editBtn, delBtn].forEach(btn => Object.assign(btn.style, {
+      background: 'none', border: 'none', color: '#666', fontSize: '16px', cursor: 'pointer', marginRight: '12px'
+    }));
 
-    btnsDiv.appendChild(editBtn);
-    btnsDiv.appendChild(deleteBtn);
-    div.appendChild(btnsDiv);
+    btns.append(editBtn, delBtn);
+    div.appendChild(btns);
+    chat.appendChild(div);
 
-    // Edit button click
     editBtn.onclick = () => {
-  bubble.style.display = 'none';
-  btnsDiv.style.display = 'none';
+      bubble.style.display = btns.style.display = 'none';
 
-  const editableDiv = document.createElement('div');
-  editableDiv.contentEditable = true;
-  editableDiv.style.minHeight = '60px';
-  editableDiv.style.border = '1px solid #ccc';
-  editableDiv.style.padding = '5px';
-  editableDiv.style.marginTop = '5px';
-  editableDiv.style.borderRadius = '6px';
+      const editable = document.createElement('div');
+      editable.contentEditable = true;
+      editable.innerHTML = note.content; // load saved content exactly once
 
-  // Set only the text part for editing (exclude the <img> if possible)
-  // To keep it simple, just set innerHTML as is:
-  editableDiv.innerHTML = note.content;
+      Object.assign(editable.style, {
+        border: '1px solid #ccc',
+        padding: '5px',
+        marginTop: '5px',
+        borderRadius: '6px',
+        minHeight: '60px',
+        maxWidth: '90%',
+        whiteSpace: 'normal',
+        overflowWrap: 'break-word'
+      });
 
-  div.appendChild(editableDiv);
+      const saveBtn = document.createElement('button');
+      const cancelBtn = document.createElement('button');
+      saveBtn.textContent = '💾';
+      cancelBtn.textContent = '❌';
 
-  const saveBtn = document.createElement('button');
-  saveBtn.textContent = '💾';
-  saveBtn.title = 'Save';
-  saveBtn.style.background = 'none';
-  saveBtn.style.border = 'none';
-  saveBtn.style.color = '#666';
-  saveBtn.style.fontSize = '16px';
-  saveBtn.style.cursor = 'pointer';
-  saveBtn.style.marginRight = '12px';
+      [saveBtn, cancelBtn].forEach(btn => Object.assign(btn.style, {
+        background: 'none',
+        border: 'none',
+        color: '#666',
+        fontSize: '16px',
+        cursor: 'pointer',
+        marginRight: '12px'
+      }));
 
-  const cancelBtn = document.createElement('button');
-  cancelBtn.textContent = '❌';
-  cancelBtn.title = 'Cancel';
-  cancelBtn.style.background = 'none';
-  cancelBtn.style.border = 'none';
-  cancelBtn.style.color = '#666';
-  cancelBtn.style.fontSize = '16px';
-  cancelBtn.style.cursor = 'pointer';
+      const actions = document.createElement('div');
+      actions.style.textAlign = 'center';
+      actions.style.marginTop = '6px';
+      actions.append(saveBtn, cancelBtn);
 
-  const btnsEditDiv = document.createElement('div');
-  btnsEditDiv.style.textAlign = 'center';
-  btnsEditDiv.style.marginTop = '6px';
+      div.append(editable, actions);
 
-  btnsEditDiv.appendChild(saveBtn);
-  btnsEditDiv.appendChild(cancelBtn);
-  div.appendChild(btnsEditDiv);
+      cancelBtn.onclick = () => {
+        bubble.style.display = btns.style.display = '';
+        editable.remove();
+        actions.remove();
+      };
 
-  saveBtn.onclick = async () => {
-    const updatedContent = editableDiv.innerHTML.trim();
-    if (!updatedContent) return alert('Note content cannot be empty');
-    try {
-      // Update Firestore with new content but preserve the existing image URL
-      await db.collection('notes').doc(note.id).update({ content: updatedContent });
+      saveBtn.onclick = async () => {
+  const updated = editable.innerHTML.trim();
+  if (!updated) return alert('Cannot save empty note');
+  try {
+    // Update Firestore with exactly what's in editable
+    await db.collection('notes').doc(note.id).update({ content: updated });
 
-      // Update the bubble content with text + image
-      bubble.innerHTML = '🤖 ' + updatedContent;
+    // Update the local note object with new content
+    note.content = updated;
 
-      // Append the image if it exists
-      if (note.image) {
-        bubble.innerHTML += `<br><img src="${note.image}" style="max-width:100%; border-radius:8px;" />`;
-      }
-
-      bubble.style.display = '';
-      btnsDiv.style.display = '';
-      editableDiv.remove();
-      btnsEditDiv.remove();
-    } catch (e) {
-      alert('Failed to save: ' + e.message);
-    }
-  };
-
-  cancelBtn.onclick = () => {
-    editableDiv.remove();
-    btnsEditDiv.remove();
-    bubble.style.display = '';
-    btnsDiv.style.display = '';
-  };
+    bubble.innerHTML = '🤖 ' + updated;
+    bubble.style.display = btns.style.display = '';
+    editable.remove();
+    actions.remove();
+  } catch (e) {
+    alert('Error saving note: ' + e.message);
+  }
 };
 
+    };
 
-    // Delete button click
-    deleteBtn.onclick = async () => {
+    delBtn.onclick = async () => {
       if (confirm('Delete this note?')) {
         try {
           await db.collection('notes').doc(note.id).delete();
@@ -896,67 +812,53 @@ function displayNotes(notes) {
         }
       }
     };
-  });
-
+  }
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
 
-
-// Handle chat input submit: search notes
-inputArea.onsubmit = async (e) => {
+document.getElementById('inputArea').onsubmit = async e => {
   e.preventDefault();
-  const question = userInput.value.trim();
-  if (!question) return;
-  addMessage('user', question);
-  userInput.value = '';
-
+  const q = document.getElementById('userInput').value.trim();
+  if (!q) return;
+  addMessage('user', q);
+  document.getElementById('userInput').value = '';
   const loading = document.createElement('div');
   loading.className = 'message bot';
   loading.textContent = '🤖 ⏳ Searching...';
   chat.appendChild(loading);
-  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-
   try {
-    const results = await queryNotes(question);
+    const notes = await queryNotes(q);
     chat.removeChild(loading);
-    displayNotes(results);
-  } catch (err) {
+    displayNotes(notes);
+  } catch (e) {
     chat.removeChild(loading);
-    addMessage('bot', '❌ Search error: ' + err.message);
+    addMessage('bot', '❌ Search error: ' + e.message);
   }
 };
 
-// Query Firestore notes by simple text match
-async function queryNotes(question) {
-  const snapshot = await db.collection('notes').orderBy('createdAt', 'desc').get();
-  return snapshot.docs
-    .filter(doc => doc.data().content.toLowerCase().includes(question.toLowerCase()))
-    .map(doc => ({ ...doc.data(), id: doc.id }));
+async function queryNotes(q) {
+  const snap = await db.collection('notes').orderBy('createdAt', 'desc').get();
+  return snap.docs.filter(d => d.data().content?.toLowerCase().includes(q.toLowerCase()))
+    .map(d => ({ ...d.data(), id: d.id }));
 }
 
-// Format buttons (execCommand)
 document.getElementById('boldBtn').onclick = () => document.execCommand('bold');
 document.getElementById('italicBtn').onclick = () => document.execCommand('italic');
 document.getElementById('underlineBtn').onclick = () => document.execCommand('underline');
 document.getElementById('highlightBtn').onclick = () => document.execCommand('foreColor', false, '#5c6ac4');
 document.getElementById('resetColorBtn').onclick = () => document.execCommand('foreColor', false, 'black');
 
-// Auth toggle UI
 document.getElementById('authToggle').onclick = () => {
-  const section = document.getElementById('authSection');
-  section.style.display = (section.style.display === 'flex') ? 'none' : 'flex';
+  const s = document.getElementById('authSection');
+  s.style.display = s.style.display === 'flex' ? 'none' : 'flex';
 };
 
-// Format toolbar toggle
-const formatToggle = document.getElementById('formatToggle');
-const formatToolbar = document.getElementById('formatToolbar');
-formatToggle.onclick = () => formatToolbar.classList.toggle('visible');
+document.getElementById('formatToggle').onclick = () =>
+  document.getElementById('formatToolbar').classList.toggle('visible');
 
-// Welcome message
 addMessage('bot', '👋 Welcome! Please log in to add or manage notes.');
-
-
 </script>
+
 </body>
 </html>
