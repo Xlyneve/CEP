@@ -1,797 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Xlyn</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Equipment Expiry Tracker</title>
 <style>
-  /* Custom Fonts */
-@font-face {
-  font-family: 'AdeliciaRegular';
-  src: url('AdeliciaRegular.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'fors';
-  src: url('fors.ttf') format('truetype');
-}
-
-/* General Styles */
-body {
-  margin: 0;
-  font-family: 'fors', sans-serif;
-  background: #fafbf4;
-  color: black;
-  font-size: 22px;
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* Palm background image fixed behind all content */
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: url('b1.png') no-repeat center center;
-  background-size: cover;
-  opacity: 0.8;
-  z-index: -1;
-}
-
-header {
-  padding: 30px 10px 20px;
-  text-align: center;
-  background: transparent;
-  border-bottom: 1px solid transparent;
-  position: relative;
-  overflow: visible !important;
-  z-index: 0;
-}
-header h1 {
-  font-size: 20px;
-}
-
-.pageTitle {
-  font-family: 'AdeliciaRegular', cursive, sans-serif;
-  font-size: 100px;
-  letter-spacing: 6px;
-  font-weight: 900; /* try heavier */
-  color: black;
-  position: relative;
-  z-index: 2;
-  -webkit-text-stroke: 0.8px black;
-  text-shadow:
-    0 0 1px black,
-    1px 1px 0 rgba(255, 255, 255, 0.9),
-    2px 2px 0 rgba(245, 245, 245, 0.8),
-    3px 3px 0 rgba(230, 230, 230, 0.7);
-  transform: scaleX(1.05);
-}
-
-
-.title {
-  font-family: 'Clicker Script', cursive;
-  font-size: 90px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  color: black;
-  margin: 0;
-  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.top-circles {
-  position: fixed;
-  top: 20px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 1000;
-}
-
-.circle {
-  border-radius: 70%;
-  width: 70px;
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-  padding: 8px;
-  box-sizing: border-box;
-  color: #333;
-}
-
-.circle:hover {
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
-}
-
-.calendar { background-color: #e9cbcb; }
-.patient  { background-color: #aca37e; }
-.notes    { background-color: #ddc6b2; }
-.timesheet{ background-color: #737958; }
-.calculator { background-color: #e9cbcb; }
-.trial { background-color: #aca37e; }
-.inr { background-color: #ddc6b2; }
-
-.vitals-circle {
-  width: 70px;
-  height: 70px;
-  background-color: #f0ddd6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: normal;
-  color: #333;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-}
-.vitals-circle:hover {
-  animation: pulse 1s infinite;
-}
-.vitals-circle span {
-  text-align: center;
-  color: #333;
-}
-
-#vital-signs-table {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #ffffff;
-  border: 1px solid #aca37e;
-  padding: 20px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  max-width: 90vw;
-  max-height: 80vh;
-  overflow-x: auto;
-  font-family: 'fors', sans-serif;
-  font-size: 14px;
-  z-index: 5000;
-}
-
-#vital-signs-table table {
-  width: auto;
-  min-width: 100%;
-  border-collapse: collapse;
-}
-#vital-signs-table th, td {
-  padding: 10px;
-  text-align: left;
-  white-space: nowrap;
-  border: 1px solid #ddd;
-}
-#vital-signs-table th {
-  background-color: #f7f7f7;
-}
-
-#close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: #93b0ac;
-  color: white;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
-}
-
-.top-links {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  position: relative;
-  z-index: 2;
-  top: 20px;
-}
-
-.top-links a {
-  padding: 4px 8px;
-  background-color: #f7f2ef;
-  color: black;
-  font-size: 12px;
-  font-family: 'fors', sans-serif;
-  border: 1px solid #d8cfc9;
-  border-radius: 5px;
-  text-decoration: none;
-  transition: background-color 0.3s, transform 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.top-links a:hover {
-  background-color: #ddc6b2;
-  transform: scale(1.05);
-}
-
-.icon-stack {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  z-index: 1;
-}
-.icon-stack img {
-  width: 50px;
-  height: 50px;
-  transition: transform 0.3s ease;
-}
-.icon-stack a:hover img {
-  transform: scale(1.1);
-  background-color: #aca37e;
-}
-
-.top-boxes {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 1000;
-}
-.top-box {
-  background-color: #eae0da;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: bold;
-  text-align: center;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  min-width: 120px;
-}
-.top-box:hover {
-  background-color: #aca37e;
-}
-
-.content {
-  padding: 100px 20px 20px 20px;
-}
-
-.layout {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 20px;
-}
-.main-content {
-  flex: 1;
-  max-width: 1000px;
-}
-
-h2 {
-  font-size: 20px;
-  font-weight: 400;
-  color: black;
-  margin-bottom: 16px;
-  border-bottom: 2px solid #e5d6cd;
-  display: inline-block;
-  padding-bottom: 4px;
-}
-
-.card-group {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
-  margin-top: 40px;     /* Base spacing to avoid overlapping top-circles */
-  margin-right: 80px;   /* Adjust spacing to avoid right-aligned vitals */
-}
-
-.card {
-  padding: 16px;
-  border-radius: 12px;
-  background: #f7f2ef;
-  border: 1px solid #e5d6cd;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 400;
-  color: black;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(180, 180, 180, 0.15);
-  background-color: #aca37e;
-}
-
-footer {
-  text-align: center;
-  font-size: 12px;
-  color: #888;
-  margin: 40px 0;
-}
-
-.moving-text {
-  position: fixed;
-  top: 0;
-  left: 100%;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: normal;
-  font-family: 'fors', sans-serif;
-  padding: 8px 16px;
-  border: none;
-  animation: moveText 20s linear infinite;
-  z-index: 1000;
-  color: black;
-}
-@keyframes moveText {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-#quick-note-text {
-  background-color: #fff;
-  border: 2px solid #c9a87c;
-  padding: 8px;
-  border-radius: 8px;
-  font-family: 'fors', sans-serif;
-  font-size: 14px;
-  resize: vertical;
-  outline: none;
-  transition: border-color 0.3s ease;
-  width: 150%;
-  max-width: 500px;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 992px) {
-  .card-group {
-    margin-top: 60px;
-    margin-right: 100px;
-  }
-}
-
-@media (max-width: 768px) {
   body {
-    font-size: 18px;
+    font-family: 'Segoe UI', sans-serif;
+    background: #f7f7f7;
+    margin: 0;
+    padding: 20px;
   }
-
-  .layout {
-    flex-direction: column;
+  button {
+    padding: 10px 16px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #6a8eae;
+    color: white;
+    margin: 10px 0;
+  }
+  button:hover {
+    background: #54768a;
+  }
+  #barcodeModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    justify-content: center;
     align-items: center;
-    padding: 10px;
+    flex-direction: column;
+    z-index: 9999;
   }
-
-  .pageTitle {
-    font-size: 50px;
-    text-align: center;
+  #barcodeVideo {
+    width: 80vw;
+    max-width: 400px;
+    border-radius: 12px;
+    background: black;
   }
-
-  .title {
-    font-size: 48px;
-    text-align: center;
+  #closeModalBtn {
+    margin-top: 12px;
+    padding: 8px 16px;
+    font-size: 16px;
+    background: #b94e4e;
+    border-radius: 8px;
+    color: white;
   }
-
-  .icon-stack {
-    right: 5px;
-    top: 5px;
+  #closeModalBtn:hover {
+    background: #922f2f;
   }
-
-  .icon-stack img {
-    width: 36px;
-    height: 36px;
-  }
-
-  .top-circles {
-    top: 10px;
-    right: 5px;
-  }
-
-  .circle, .vitals-circle {
-    width: 50px;
-    height: 50px;
-    font-size: 10px;
-  }
-
-  .top-box {
-    min-width: 100px;
-    font-size: 11px;
-  }
-
-  #quick-note-text {
-    width: 100%;
-  }
-
-  .card-group {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    margin-top: 100px;
-    margin-right: 110px;
-  }
-}
-
 </style>
-
 </head>
-
 <body>
 
-<!-- Removed plant-top-left and plant-bottom-right images -->
+<h1>Clinical Equipment Expiry Tracker</h1>
 
-<!-- Quick Note Floating Icon & Box -->
-<div id="quick-note-icon" style="
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  background-color: #dcc3b4;
-  color: black;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  font-size: 30px;
-  text-align: center;
-  line-height: 60px;
-  cursor: pointer;
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
-  z-index: 1000;
-" onclick="toggleQuickNote()">📝</div>
+<!-- Scan Barcode Button -->
+<button id="scanBtn">Scan Barcode</button>
 
-<div id="quick-note-box" style="
-  display: none;
-  position: fixed;
-  bottom: 90px;
-  left: 20px;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-  padding: 10px;
-  width: 250px;
-  z-index: 1000;
-">
-    <textarea id="quick-note-text" placeholder="Type a quick note..." 
-  style="width: 90%; font-family: fors, sans-serif; font-size: 14px; overflow: hidden; resize: none;"
-  oninput="autoResize(this)"></textarea>
-  <button onclick="copyQuickNote()" style="margin-top: 8px; background-color: #e4c9b6; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer;">Copy</button>
-
-<div id="copy-msg" style="display:none; color: gray; margin-top: 5px;">Notes copied!</div>
-
+<!-- Barcode Scanner Modal -->
+<div id="barcodeModal">
+  <video id="barcodeVideo" autoplay muted playsinline></video>
+  <button id="closeModalBtn">Close</button>
 </div>
 
-<header>
-  <h1><span class="pageTitle">XlynEve</span></h1> <!-- Updated the title ID to match the CSS -->
-  <div class="top-links">
-    <a href="https://www.health.govt.nz/" target="_blank">🏥 Ministry of Health</a>
-    <a href="https://www.health.govt.nz/search?query=cold+chain" target="_blank">❄️ Cold Chain</a>
-    <a href="https://www.medsafe.govt.nz/medicines/infoSearch.asp" target="_blank">💊 Medsafe</a>
-    <a href="https://www.mymedicines.nz/" target="_blank">📋 My Medicines</a>
-    <a href="https://nzf.org.nz/" target="_blank">📚 NZ Formulary</a>
-    <a href="https://healthify.nz/" target=" blank">📙 Healthify</a>
-    <a href="https://www.immune.org.nz/" target=" blank">💉 IMAC</a>
-  </div>
+<!-- Example form to show scanned barcode -->
+<div style="margin-top: 20px;">
+  <label for="barcodeInput">Scanned Barcode:</label><br />
+  <input type="text" id="barcodeInput" placeholder="Scanned code will appear here" style="width: 300px; padding: 8px; font-size: 16px;" readonly />
+</div>
 
-  <div class="top-circles">
-    <div class="circle calendar" onclick="location.href='homecal.html'">Calendar<br>To Do</div>
-    <div class="circle patient" onclick="location.href='forms.html'">Patient<br>Info</div>
-    <div class="circle notes" onclick="location.href='Notes.html'">Notes</div>
-	<div class="circle calculator" onclick="location.href='Calculator.html'">Calculator</div>
-	<div class="circle trial" onclick="location.href='trial.html'">Trial</div>
-	<div class="circle inr" onclick="location.href='INR Calc.html'">INR</div>
-    <div class="circle timesheet" onclick="window.open('https://onedrive.live.com/edit.aspx?cid=cd58075507480906&page=view&resid=CD58075507480906!660&parId=CD58075507480906!107&app=Excel', '_blank')">Timesheet</div>
-    <div class="vitals-circle" onclick="showTable()"> 
-	
-      <span>Vitals</span>
-    </div>
-  </div>
-</header>
+<script>
+  const scanBtn = document.getElementById('scanBtn');
+  const modal = document.getElementById('barcodeModal');
+  const video = document.getElementById('barcodeVideo');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const barcodeInput = document.getElementById('barcodeInput');
 
-  <div class="layout">
-    <div class="main-content">
-      <h2>Home</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='OHcalc.html'">Drug Calculator</div>
-        <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
-        <div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
-		<div class="card" onclick="location.href='inteleviewer.html'">Inteleviewer</div>
-        
-	  </div>
+  let stream;
+  let scanning = false;
 
-      <h2>Notes</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
-        <div class="card" onclick="location.href='info.html'">Infos</div>
-        <div class="card" onclick="location.href='explain.html'">Explanation</div>
-        <div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
-        <div class="card" onclick="location.href='recalls.html'">Recalls</div>
-	<div class="card" onclick="location.href='ECG.html'">ECG</div>
-      </div>
-
-      <h2>Urgent Care</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Directions</div>
-        <div class="card" onclick="location.href='face.html'">Head</div>
-        <div class="card" onclick="location.href='Hand.html'">Hand.Wrist</div>
-        <div class="card" onclick="location.href='Sha.html'">Shoulder.Elbow</div>
-        <div class="card" onclick="location.href='Abdo.html'">Thorax.Abdomen</div>
-        <div class="card" onclick="location.href='Spine.html'">Back.Spine</div>
-        <div class="card" onclick="location.href='LF.html'">Foot.Leg</div>
-        <div class="card" onclick="location.href='Urgent_Care.html'">Urgent Care</div>
-      </div>
-
-      <!-- Emoji Search Icon -->
-      <img src="search-icon.png" alt="Search" id="emojiSearchIcon" style="position:fixed; bottom:20px; right:20px; width:30px; height:30px; cursor:pointer; z-index:1000;" />
-
-      <!-- Emoji Search Modal -->
-      <div id="emojiModal" style="display:none; position:fixed; bottom:60px; right:20px; background:#fff; padding:12px; border:1px solid #ccc; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000;">
-        <input type="text" id="emojiSearchInput" placeholder="Search emoji..." style="padding:6px; width:160px; font-size:14px;" />
-        <div id="emojiResults" style="margin-top:8px; font-size:18px; max-height:150px; overflow-y:auto;"></div>
-      </div>
-
-  <div class="moving-text">💡 Reminder: Stay organized and check your calendar!</div>
-
-  
-
-    <!-- Vital Signs Table -->
-    <div id="vital-signs-table">
-        <button id="close-btn" onclick="closeTable()">Close</button>
-        <h2>Normal Vital Signs by Age Group</h2>
-        <table>
-  <thead>
-    <tr>
-      <th>Age Group</th>
-      <th>Heart Rate</th>
-      <th>Respiratory Rate</th>
-      <th>Systolic BP</th>
-      <th>Capillary Refill</th>
-      <th>Temperature</th>
-      <th>SpO₂</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>&lt; 3 months</td>
-      <td>110–150 bpm</td>
-      <td>30–60 breaths/min</td>
-      <td>60–80 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
-    </tr>
-    <tr>
-      <td>3–12 months</td>
-      <td>100–150 bpm</td>
-      <td>25–50 breaths/min</td>
-      <td>80–100 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
-    </tr>
-    <tr>
-      <td>1–5 years</td>
-      <td>90–120 bpm</td>
-      <td>20–40 breaths/min</td>
-      <td>90–110 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
-    </tr>
-    <tr>
-      <td>5–12 years</td>
-      <td>70–110 bpm</td>
-      <td>20–30 breaths/min</td>
-      <td>90–120 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
-    </tr>
-    <tr>
-      <td>&gt; 12 years</td>
-      <td>60–100 bpm</td>
-      <td>12–17 breaths/min</td>
-      <td>100–130 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
-    </tr>
-  </tbody>
-</table>
-
-    </div>
-  
-      <footer>© 2025 Xlyn Notes Board</footer>
-    </div>
-  </div>
-
-  <script>
-  
-   // Function to show the vital signs table
-        function showTable() {
-            document.getElementById('vital-signs-table').style.display = 'block';
-        }
-
-        // Function to close the vital signs table
-        function closeTable() {
-            document.getElementById('vital-signs-table').style.display = 'none';
-        }
-		
-    const emojiData = [
-      { name: 'smile', symbol: '😊' },
-      { name: 'laugh', symbol: '😂' },
-      { name: 'tick', symbol: '✅' },
-      { name: 'heart', symbol: '❤️' },
-      { name: 'star', symbol: '⭐️' },
-      { name: 'fire', symbol: '🔥' },
-      { name: 'ok', symbol: '👌' },
-      { name: 'thumbs up', symbol: '👍' },
-      { name: 'check', symbol: '✔️' },
-      { name: 'woman', symbol: '🙍🏻‍♀️' },
-      { name: 'man', symbol: '🙍' },
-      { name: 'yellow', symbol: '🟡' },
-      { name: 'tree', symbol: '🌴' },
-      { name: 'injection', symbol: '💉' },
-      { name: 'money', symbol: '🤑' },
-      { name: 'nurse', symbol: '👩🏻‍⚕️' },
-      { name: 'one', symbol: '1️⃣' },
-      { name: 'two', symbol: '2️⃣' },
-      { name: 'arrow', symbol: '➡️' },
-      { name: 'leaf', symbol: '🍂' },
-      { name: 'loud', symbol: '📢' },
-      { name: 'red', symbol: '🔴' },
-      { name: 'alert', symbol: '⚠️' },
-      { name: 'red', symbol: '‼️' },  
-      { name: 'plane', symbol: '✈️' },
-      { name: 'vacay', symbol: '🏖️' },
-      { name: 'med', symbol: '💊' },
-       { name: 'X', symbol: '❌' },
-       { name: 'nurse', symbol: '🙅🏻‍♀️' },
-       { name: 'mum', symbol: '🤰🏻' },
-       { name: 'flower', symbol: '🌸' },
-       { name: 'flower', symbol: '🌼' },
-       { name: 'flower', symbol: '🌻' },
-       { name: 'earth', symbol: '🌎' },
-       { name: 'sun', symbol: '☀️' },
-       { name: 'moon', symbol: '🌛' },
-       { name: 'food', symbol: '🍔' },
-       { name: 'puzzle', symbol: '🧩' },
-       { name: 'car', symbol: '🚗' },
-       { name: 'hospital', symbol: '🏥' },
-       { name: 'computer', symbol: '🖥️' },
-      { name: 'time', symbol: '⏰' },
-      { name: 'dollar', symbol: '💰' },
-      { name: 'diamond', symbol: '💎' },
-      { name: 'virus', symbol: '🦠' },
-      { name: 'temp', symbol: '🌡️' },
-      { name: 'blood', symbol: '🩸' },
-      { name: 'stet', symbol: '🩺' },
-      { name: 'pencil', symbol: '✏️' },
-      { name: 'pin', symbol: '📌' },
-      { name: 'pen', symbol: '🖋️' },
-      { name: 'lock', symbol: '🔒' },
-      { name: 'book', symbol: '📙' },
-      { name: 'bullet', symbol: '▪️' },
-      { name: 'bullet2', symbol: '🔸' },
-      { name: 'headset', symbol: '🎧' },
-      { name: 'calendar', symbol: '📅' },
-      { name: 'ambulance', symbol: '🚑' },
-      { name: 'hospital', symbol: '🏥' },
-      { name: 'phone', symbol: '☎️' },
-      { name: 'phone1', symbol: '📞' },
-      { name: 'dollar', symbol: '💵' },      
-      { name: 'pin', symbol: '📍' },      
-      { name: 'tickbox', symbol: '☐' },
-      { name: 'okay', symbol: '🆗' },      
-      { name: 'dollarsign', symbol: '💲' },     
-      
-      
-      
-    ];
-
-    const modal = document.getElementById("emojiModal");
-    const input = document.getElementById("emojiSearchInput");
-    const results = document.getElementById("emojiResults");
-
-    document.getElementById("emojiSearchIcon").addEventListener("click", () => {
-      modal.style.display = modal.style.display === "none" ? "block" : "none";
-      input.focus();
-    });
-
-    input.addEventListener("input", () => {
-      const term = input.value.toLowerCase();
-      const matches = emojiData.filter(e => e.name.includes(term));
-      results.innerHTML = matches.map(e =>
-        `<span style="cursor:pointer; margin:3px;" onclick="copyToClipboard('${e.symbol}')">${e.symbol}</span>`
-      ).join("");
-    });
-
-    function copyToClipboard(emoji) {
-      const textarea = document.createElement('textarea');
-      textarea.value = emoji;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      alert(`Copied: ${emoji}`);
+  async function startScanner() {
+    if (!('BarcodeDetector' in window)) {
+      alert('Barcode Detector API is not supported by your browser.');
+      return;
     }
-  </script>
-   <script>
-    // Get the elements for the notification and Done button
-    const alertElement = document.getElementById("todoAlert");
-    const doneButton = document.getElementById("doneButton");
+    modal.style.display = 'flex';
+    barcodeInput.value = '';
+    scanning = true;
 
-    // Set a timer to show the notification (if you want it to appear after page load or some event)
-    setTimeout(() => {
-      alertElement.style.display = 'block'; // Show the notification
-    }, 1000); // Adjust the time delay if needed
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = stream;
 
-    // Hide the notification when the Done button is clicked
-    doneButton.addEventListener("click", () => {
-      alertElement.style.display = 'none'; // Hide the notification
-    });
-  </script>
- <style>
-  @font-face {
-    font-family: 'Fors';
-    src: url('fonts/fors.ttf') format('truetype');
+      const barcodeDetector = new BarcodeDetector({ formats: ['code_128', 'ean_13', 'qr_code', 'upc_e', 'upc_a'] });
 
+      await video.play();
+
+      async function scan() {
+        if (!scanning) return;
+
+        try {
+          const barcodes = await barcodeDetector.detect(video);
+          if (barcodes.length > 0) {
+            const code = barcodes[0].rawValue;
+            barcodeInput.value = code;
+            alert('Barcode detected: ' + code);
+            stopScanner();
+            return;
+          }
+          requestAnimationFrame(scan);
+        } catch (err) {
+          console.error('Barcode detection error:', err);
+          requestAnimationFrame(scan);
+        }
+      }
+
+      scan();
+
+    } catch (err) {
+      alert('Could not access the camera. Please allow camera permissions.');
+      stopScanner();
+    }
   }
-</style>
 
-
-<script>
-  function copyQuickNote() {
-    const note = document.getElementById("quickNote");
-    note.select();
-    note.setSelectionRange(0, 99999);
-    document.execCommand("copy");
-
-    const status = document.getElementById("copyStatus");
-    status.textContent = "Copied!";
-    setTimeout(() => { status.textContent = ""; }, 2000);
+  function stopScanner() {
+    scanning = false;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    video.srcObject = null;
+    modal.style.display = 'none';
   }
-</script>
-<script>
-function toggleQuickNote() {
-  const box = document.getElementById('quick-note-box');
-  box.style.display = box.style.display === 'none' ? 'block' : 'none';
-}
 
-function autoResize(textarea) {
-  textarea.style.height = 'auto'; // Reset height
-  textarea.style.height = textarea.scrollHeight + 'px'; // Set new height
-}
-
-   function copyQuickNote() {
-    const noteText = document.getElementById('quick-note-text').value;
-    if (!noteText) return;
-
-    navigator.clipboard.writeText(noteText).then(() => {
-      const msg = document.getElementById('copy-msg');
-      msg.style.display = 'inline';
-      setTimeout(() => {
-        msg.style.display = 'none';
-      }, 2000);
-    }).catch(err => {
-      console.error('Failed to copy text: ', err);
-    });
-  }
+  scanBtn.addEventListener('click', startScanner);
+  closeModalBtn.addEventListener('click', stopScanner);
 </script>
 
 </body>
