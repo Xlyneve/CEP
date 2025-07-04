@@ -371,6 +371,9 @@ table.editable-table td,
 table.editable-table th {
   font-weight: normal !important;
   text-align: left;
+  white-space: pre-wrap; /* allow new lines */
+  padding: 6px;
+  vertical-align: top;
 }
 
 
@@ -1338,6 +1341,21 @@ window.removeCol = function(btn) {
     }
   }
 };
+
+document.addEventListener('keydown', (e) => {
+  const isCell = e.target.closest('td, th');
+  if (isCell && e.key === 'Enter') {
+    if (e.shiftKey) {
+      // Allow new line
+      document.execCommand('insertHTML', false, '<br><br>');
+      e.preventDefault(); // prevent double insertion
+    } else {
+      // Prevent Enter from breaking out of the cell
+      e.preventDefault();
+    }
+  }
+});
+
 
 
 </script>
