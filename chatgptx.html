@@ -171,8 +171,8 @@ html, body {
 /* Toolbar + Toggle */
 #formatToggle {
   position: fixed;
-  bottom: 40px;  /* same vertical level as add button */
-  left: 20px;    /* nicely spaced from left edge */
+  bottom: 40px;
+  left: 20px;
   font-size: 20px;
   background: #ebebeb;
   border-radius: 50%;
@@ -187,28 +187,39 @@ html, body {
 
 #formatToolbar {
   position: fixed;
-  bottom: 90px;   /* 50px above toggle icon (44px height + some margin) */
-  left: 20px;     /* align with toggle icon */
-  display: none;  /* hidden by default */
-  flex-direction: column;  /* vertical buttons */
+  bottom: 90px;
+  left: 20px;
+  display: none; /* hidden by default */
+  flex-direction: column; /* changed to row for horizontal scroll */
+  flex-wrap: nowrap;
   gap: 8px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   background: #ffffffee;
   border: 1px solid #ccc;
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 6px 10px;
   z-index: 104;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  max-height: 600px;
+  max-width: 90vw;
+  overflow-x: auto;  /* horizontal scroll */
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
+
+
+
 #formatToolbar.visible {
   display: flex;
 }
 
+/* Format Buttons */
 .format-btn {
+  flex: 0 0 auto;
   background: none;
   border: none;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   color: #444;
@@ -287,6 +298,76 @@ html, body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   z-index: 104;
 }
+.editable-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  margin-top: 8px;
+  border: 1px solid #888;
+  position: relative; /* for positioning control panel */
+}
+
+.editable-table th,
+.editable-table td {
+  border: 1px solid #888;
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+/* Remove any hover highlight */
+.editable-table tr:hover,
+.editable-table td:hover,
+.editable-table th:hover {
+  background-color: transparent !important;
+}
+
+/* Minimalist toggle button positioned upper right of table */
+.table-control-toggle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Control panel container (hidden by default) */
+.table-control-panel {
+  position: absolute;
+  top: 28px;
+  right: 4px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 4px 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  display: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+/* Buttons inside the control panel */
+.table-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 0 4px;
+  user-select: none;
+  color: #555;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.table-btn:hover {
+  background-color: #eee;
+}
+
+
+
 
 #addNoteBtn {
   background: #ecebe8;
@@ -490,8 +571,12 @@ html, body {
   <button class="format-btn" id="italicBtn"><i>I</i></button>
   <button class="format-btn" id="underlineBtn"><u>U</u></button>
   <button class="format-btn" id="highlightBtn">🖍</button>
+  <button class="format-btn" id="insertTableBtn">📊</button>
+  <button class="format-btn" id="addRowBtn" title="Add Table Row">+R</button>
+<button class="format-btn" id="deleteRowBtn" title="Delete Table Row">-R</button>
+<button class="format-btn" id="addColBtn" title="Add Table Column">+C</button>
+<button class="format-btn" id="deleteColBtn" title="Delete Table Column">-C</button>
   <button class="format-btn" id="resetColorBtn">↺</button>
-
 
   <div class="divider"></div>
   <div class="emoji" data-emoji="📌">📌</div>
@@ -512,13 +597,15 @@ html, body {
 <!-- Container for add button and note panel -->
 <div id="noteContainer">
   <button id="addNoteToggle" title="Add Note">＋</button>
-  <div id="notePanel">
+  <div id="notePanel" style="display:none; flex-direction: column;">
     <div id="noteInput" contenteditable="true" data-placeholder="Type or paste your note here..."></div>
+    
     <button id="addNoteBtn">Add Note</button>
   </div>
 </div>
 
 <div id="chat"></div>
+
 
 <form id="inputArea">
   <input type="text" id="userInput" placeholder="Type here..." autocomplete="off" required />
@@ -556,6 +643,11 @@ const passwordInput = document.getElementById('password');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const userInfo = document.getElementById('userInfo');
+const toggleBtn = document.getElementById('formatToggle');
+const toolbar = document.getElementById('formatToolbar');
+
+let activeEditable = noteInput;
+noteInput.addEventListener('focus', () => activeEditable = noteInput);
 
 // Create image upload input inside notePanel
 const imageUpload = document.createElement('input');
@@ -592,7 +684,7 @@ logoutBtn.onclick = () => auth.signOut();
 let savedRange = null;
 function saveCaret() {
   const sel = window.getSelection();
-  if (sel.rangeCount > 0 && noteInput.contains(sel.anchorNode)) {
+  if (sel.rangeCount > 0 && activeEditable.contains(sel.anchorNode)) {
     savedRange = sel.getRangeAt(0).cloneRange();
   }
 }
@@ -613,18 +705,18 @@ function placeCaretAtEnd(el) {
   sel.addRange(range);
   savedRange = range.cloneRange();
 }
-noteInput.addEventListener('keyup', saveCaret);
-noteInput.addEventListener('mouseup', saveCaret);
-noteInput.addEventListener('focus', saveCaret);
-noteInput.addEventListener('input', saveCaret);
+
+['keyup', 'mouseup', 'focus', 'input'].forEach(evt => {
+  noteInput.addEventListener(evt, saveCaret);
+});
 
 document.querySelectorAll('.emoji').forEach(btn => {
   btn.onclick = async () => {
     const emoji = btn.dataset.emoji;
-    noteInput.focus();
+    activeEditable.focus();
     if (!restoreCaret()) {
-      noteInput.innerHTML += emoji;
-      placeCaretAtEnd(noteInput);
+      activeEditable.innerHTML += emoji;
+      placeCaretAtEnd(activeEditable);
     } else {
       const sel = window.getSelection();
       const range = sel.getRangeAt(0);
@@ -645,27 +737,227 @@ document.querySelectorAll('.emoji').forEach(btn => {
   };
 });
 
-// IMAGE UPLOAD: Only insert image ONCE into noteInput when selected
 imageUpload.addEventListener('change', function () {
   const file = this.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = e => {
-      // Insert image directly into noteInput once (no extra image adding on save)
-      noteInput.innerHTML += `<br><img src="${e.target.result}" style="max-width:100%; border-radius:8px;" /><br>`;
-      placeCaretAtEnd(noteInput);
+      activeEditable.innerHTML += `<br><img src="${e.target.result}" style="max-width:100%; border-radius:8px;" /><br>`;
+      placeCaretAtEnd(activeEditable);
       saveCaret();
     };
     reader.readAsDataURL(file);
   }
 });
 
-addNoteToggle.onclick = () => {
-  notePanel.style.display = notePanel.style.display === 'flex' ? 'none' : 'flex';
-  noteInput.focus();
+document.getElementById('insertTableBtn').onclick = () => {
+const html = `
+<div style="position: relative; width: 100%;">
+  
+  <div class="table-control-panel" aria-hidden="true">
+    <button class="table-btn" data-action="add-row" title="Add Row">➕ Row</button>
+    <button class="table-btn" data-action="delete-row" title="Delete Row">➖ Row</button>
+    <button class="table-btn" data-action="add-col" title="Add Column">➕ Col</button>
+    <button class="table-btn" data-action="delete-col" title="Delete Column">➖ Col</button>
+  </div>
+  <table contenteditable="false" border="1" class="editable-table">
+    <thead>
+      <tr>
+        <th contenteditable="true">Header 1</th>
+        <th contenteditable="true">Header 2</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td contenteditable="true">Row 1 Col 1</td>
+        <td contenteditable="true">Row 1 Col 2</td>
+      </tr>
+    </tbody>
+  </table>
+</div><br>`;
+
+function setupTableControlPanel(container) {
+  const toggleBtn = container.querySelector('.table-control-toggle');
+  const controlPanel = container.querySelector('.table-control-panel');
+  const table = container.querySelector('table');
+
+  toggleBtn.onclick = () => {
+    if (controlPanel.style.display === 'block') {
+      controlPanel.style.display = 'none';
+      controlPanel.setAttribute('aria-hidden', 'true');
+    } else {
+      controlPanel.style.display = 'block';
+      controlPanel.setAttribute('aria-hidden', 'false');
+    }
+  };
+
+  controlPanel.querySelectorAll('.table-btn').forEach(btn => {
+    btn.onclick = () => {
+      const action = btn.getAttribute('data-action');
+      const colCount = table.rows[0].cells.length;
+
+      if (action === 'add-row') {
+        const newRow = table.insertRow(-1);
+        for (let i = 0; i < colCount; i++) {
+          const cell = newRow.insertCell();
+          cell.contentEditable = 'true';
+          cell.textContent = 'New Row';
+        }
+      } else if (action === 'delete-row') {
+        if (table.rows.length > 2) {
+          table.deleteRow(table.rows.length - 1);
+        } else {
+          alert('Cannot delete all rows');
+        }
+      } else if (action === 'add-col') {
+        for (const row of table.rows) {
+          const cell = row.insertCell(-1);
+          cell.contentEditable = 'true';
+          if (row.sectionRowIndex === 0) {
+            cell.textContent = 'New Header';
+          } else {
+            cell.textContent = 'New Col';
+          }
+        }
+      } else if (action === 'delete-col') {
+        if (colCount > 1) {
+          for (const row of table.rows) {
+            row.deleteCell(colCount - 1);
+          }
+        } else {
+          alert('Cannot delete all columns');
+        }
+      }
+    };
+  });
+
+  // Optional: close panel if click outside
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target)) {
+      controlPanel.style.display = 'none';
+      controlPanel.setAttribute('aria-hidden', 'true');
+    }
+  });
+}
+
+const containers = activeEditable.querySelectorAll('div[style*="position: relative"]');
+if (containers.length) {
+  setupTableControlPanel(containers[containers.length - 1]); // last inserted table container
+}
+
+
+// After inserting the table HTML, call this function:
+function setupTableControls(table) {
+  table.querySelectorAll('.table-control-toggle').forEach(btn => {
+    btn.onclick = () => {
+      const controls = btn.nextElementSibling;
+      if (!controls) return;
+      controls.style.display = controls.style.display === 'none' ? 'block' : 'none';
+    };
+  });
+
+  // Add event listeners for add/delete row/col buttons:
+  table.querySelectorAll('.add-row').forEach(btn => {
+    btn.onclick = () => {
+      const row = btn.closest('tr');
+      const table = row.closest('table');
+      const newRow = table.insertRow(row.rowIndex + 1);
+      // Add same number of cells with contenteditable=true except last cell
+      const colCount = table.rows[0].cells.length;
+      for (let i = 0; i < colCount - 1; i++) {
+        const cell = newRow.insertCell();
+        cell.contentEditable = 'true';
+        cell.textContent = 'New Row';
+      }
+      // Last cell with toggle button + hidden controls (clone from current row)
+      const controlCell = newRow.insertCell();
+      controlCell.innerHTML = row.cells[colCount -1].innerHTML;
+      setupTableControls(table); // re-setup event listeners for new controls
+    };
+  });
+
+  table.querySelectorAll('.delete-row').forEach(btn => {
+    btn.onclick = () => {
+      const row = btn.closest('tr');
+      const table = row.closest('table');
+      if (table.rows.length > 2) { // keep header + at least one row
+        row.remove();
+      } else {
+        alert('Cannot delete all rows');
+      }
+    };
+  });
+
+  table.querySelectorAll('.add-col').forEach(btn => {
+    btn.onclick = () => {
+      const table = btn.closest('table');
+      const colCount = table.rows[0].cells.length;
+      for (const row of table.rows) {
+        const cell = row.insertCell(colCount - 1);
+        if (row.sectionRowIndex === 0) {
+          cell.contentEditable = 'true';
+          cell.textContent = 'New Header';
+        } else {
+          cell.contentEditable = 'true';
+          cell.textContent = 'New Col';
+        }
+        // For last col, add toggle button + controls for last cell
+        if (row === table.rows[0]) {
+          // Add toggle button cell in last column
+          // Already handled by inserting before last column, so no extra here
+        }
+      }
+    };
+  });
+
+  table.querySelectorAll('.delete-col').forEach(btn => {
+    btn.onclick = () => {
+      const table = btn.closest('table');
+      const colCount = table.rows[0].cells.length;
+      if (colCount <= 2) { // 1 header + toggle col minimum
+        alert('Cannot delete all columns');
+        return;
+      }
+      for (const row of table.rows) {
+        row.deleteCell(colCount - 2); // delete second last col (before toggle button col)
+      }
+    };
+  });
+}
+
+
+
+  
+  activeEditable.focus();
+  if (!restoreCaret()) {
+    activeEditable.innerHTML += html;
+    placeCaretAtEnd(activeEditable);
+  } else {
+    const sel = window.getSelection();
+    const range = sel.getRangeAt(0);
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    const frag = document.createDocumentFragment();
+    while (temp.firstChild) frag.appendChild(temp.firstChild);
+    range.deleteContents();
+    range.insertNode(frag);
+    sel.removeAllRanges();
+    range.collapse(false);
+    sel.addRange(range);
+  }
+  saveCaret();
+
+  // Setup toggle and control button event listeners on the new table
+  const tables = activeEditable.querySelectorAll('table.editable-table');
+  if (tables.length) setupTableControls(tables[tables.length - 1]); // last inserted table
 };
 
-// Add note button clicked — SAVE noteInput.innerHTML directly with images embedded
+addNoteToggle.onclick = () => {
+  notePanel.style.display = notePanel.style.display === 'flex' ? 'none' : 'flex';
+  activeEditable = noteInput;
+  noteInput.focus();
+};
+// Add note button clicked — SAVE noteInput.innerHTML directly
 addNoteBtn.onclick = async () => {
   const user = auth.currentUser;
   if (!user) return alert('Please log in.');
@@ -677,7 +969,6 @@ addNoteBtn.onclick = async () => {
   addNoteBtn.textContent = 'Adding...';
 
   try {
-    // Save the entire note content (with images inside noteInput.innerHTML)
     await db.collection('notes').add({
       content: noteContent,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -707,6 +998,130 @@ function addMessage(sender, content, isHTML = false) {
   chat.appendChild(div);
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
+
+function addRow(btn) {
+  const table = btn.closest('table');
+  const row = table.insertRow(table.tBodies[0].rows.length);
+  const cols = table.rows[0].cells.length - 1;
+  for (let i = 0; i < cols; i++) {
+    const cell = row.insertCell();
+    cell.contentEditable = true;
+    cell.textContent = 'New';
+  }
+  const controlCell = row.insertCell();
+  controlCell.innerHTML = `<button onclick="this.closest('tr').remove()">➖</button>`;
+}
+
+function addCol(btn) {
+  const table = btn.closest('table');
+  for (let row of table.rows) {
+    const isFooter = row.parentNode.tagName === 'TFOOT';
+    const cell = row.insertCell(row.cells.length - (isFooter ? 0 : 1));
+    cell.contentEditable = true;
+    cell.textContent = isFooter ? '' : 'New';
+    if (row.parentNode.tagName === 'THEAD') {
+      cell.outerHTML = `<th contenteditable="true">New Header</th>`;
+    }
+    if (row.parentNode.tagName === 'TBODY' && !isFooter) {
+      cell.outerHTML = `<td contenteditable="true">New</td>`;
+    }
+  }
+}
+
+function removeCol(btn) {
+  const table = btn.closest('table');
+  const rowCount = table.rows.length;
+  const colCount = table.rows[0].cells.length;
+  if (colCount <= 2) return alert('Minimum 1 data column required');
+  for (let row of table.rows) {
+    row.deleteCell(colCount - 2); // remove last data column (before control)
+  }
+}
+// Utility function: find closest ancestor table from current selection/caret
+function getClosestTable() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
+  let node = sel.anchorNode;
+  while (node && node !== noteInput) {
+    if (node.nodeName === 'TABLE') return node;
+    node = node.parentNode;
+  }
+  return null;
+}
+
+function addTableRow() {
+  const table = getClosestTable();
+  if (!table) {
+    alert('Place the cursor inside a table to add a row.');
+    return;
+  }
+  const colCount = table.rows[0].cells.length;
+  const newRow = table.insertRow(-1);
+  for (let i = 0; i < colCount; i++) {
+    const cell = newRow.insertCell();
+    cell.contentEditable = 'true';
+    if (table.tHead && i < table.tHead.rows[0].cells.length) {
+      // Check if header exists - make cells normal td for body rows
+      cell.textContent = 'New Row';
+    } else {
+      cell.textContent = 'New Row';
+    }
+  }
+}
+
+function deleteTableRow() {
+  const table = getClosestTable();
+  if (!table) {
+    alert('Place the cursor inside a table to delete a row.');
+    return;
+  }
+  if (table.rows.length <= 2) { // keep header + 1 row minimum
+    alert('Cannot delete all rows.');
+    return;
+  }
+  table.deleteRow(table.rows.length - 1);
+}
+
+function addTableColumn() {
+  const table = getClosestTable();
+  if (!table) {
+    alert('Place the cursor inside a table to add a column.');
+    return;
+  }
+  const colCount = table.rows[0].cells.length;
+  for (let row of table.rows) {
+    const cell = row.insertCell(-1);
+    cell.contentEditable = 'true';
+    if (row.sectionRowIndex === 0) {
+      cell.outerHTML = `<th contenteditable="true">New Header</th>`;
+    } else {
+      cell.textContent = 'New Col';
+    }
+  }
+}
+
+function deleteTableColumn() {
+  const table = getClosestTable();
+  if (!table) {
+    alert('Place the cursor inside a table to delete a column.');
+    return;
+  }
+  const colCount = table.rows[0].cells.length;
+  if (colCount <= 1) {
+    alert('Cannot delete all columns.');
+    return;
+  }
+  for (let row of table.rows) {
+    row.deleteCell(colCount - 1);
+  }
+}
+
+// Attach listeners
+document.getElementById('addRowBtn').onclick = addTableRow;
+document.getElementById('deleteRowBtn').onclick = deleteTableRow;
+document.getElementById('addColBtn').onclick = addTableColumn;
+document.getElementById('deleteColBtn').onclick = deleteTableColumn;
+
 
 function displayNotes(notes) {
   if (!notes.length) return addMessage('bot', '❌ No matching notes found.');
@@ -741,18 +1156,14 @@ function displayNotes(notes) {
 
       const editable = document.createElement('div');
       editable.contentEditable = true;
-      editable.innerHTML = note.content; // load saved content exactly once
+      editable.innerHTML = note.content;
+      editable.className = 'editableNote';
+      activeEditable = editable;
 
-      Object.assign(editable.style, {
-        border: '1px solid #ccc',
-        padding: '5px',
-        marginTop: '5px',
-        borderRadius: '6px',
-        minHeight: '60px',
-        maxWidth: '90%',
-        whiteSpace: 'normal',
-        overflowWrap: 'break-word'
-      });
+      editable.addEventListener('focus', () => activeEditable = editable);
+      editable.addEventListener('input', saveCaret);
+      editable.addEventListener('mouseup', saveCaret);
+      editable.addEventListener('keyup', saveCaret);
 
       const saveBtn = document.createElement('button');
       const cancelBtn = document.createElement('button');
@@ -782,24 +1193,19 @@ function displayNotes(notes) {
       };
 
       saveBtn.onclick = async () => {
-  const updated = editable.innerHTML.trim();
-  if (!updated) return alert('Cannot save empty note');
-  try {
-    // Update Firestore with exactly what's in editable
-    await db.collection('notes').doc(note.id).update({ content: updated });
-
-    // Update the local note object with new content
-    note.content = updated;
-
-    bubble.innerHTML = '🤖 ' + updated;
-    bubble.style.display = btns.style.display = '';
-    editable.remove();
-    actions.remove();
-  } catch (e) {
-    alert('Error saving note: ' + e.message);
-  }
-};
-
+        const updated = editable.innerHTML.trim();
+        if (!updated) return alert('Cannot save empty note');
+        try {
+          await db.collection('notes').doc(note.id).update({ content: updated });
+          note.content = updated;
+          bubble.innerHTML = '🤖 ' + updated;
+          bubble.style.display = btns.style.display = '';
+          editable.remove();
+          actions.remove();
+        } catch (e) {
+          alert('Error saving note: ' + e.message);
+        }
+      };
     };
 
     delBtn.onclick = async () => {
@@ -815,7 +1221,6 @@ function displayNotes(notes) {
   }
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
-
 
 document.getElementById('inputArea').onsubmit = async e => {
   e.preventDefault();
@@ -858,7 +1263,61 @@ document.getElementById('formatToggle').onclick = () =>
   document.getElementById('formatToolbar').classList.toggle('visible');
 
 addMessage('bot', '👋 Welcome! Please log in to add or manage notes.');
+
+// --- Table edit helpers ---
+window.addRow = function(btn) {
+  const table = btn.closest('table');
+  const row = table.tBodies[0].insertRow();
+  const colCount = table.rows[0].cells.length - 1;
+
+  for (let i = 0; i < colCount; i++) {
+    const cell = row.insertCell();
+    cell.contentEditable = true;
+    cell.textContent = 'New';
+  }
+
+  const delCell = row.insertCell();
+  delCell.innerHTML = `<button class="table-btn" onclick="this.closest('tr').remove()">➖</button>`;
+};
+
+window.addCol = function(btn) {
+  const table = btn.closest('table');
+  const rows = table.rows;
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const isFooter = row.parentNode.tagName === 'TFOOT';
+    const insertBeforeLast = row.cells.length - (isFooter ? 0 : 1);
+
+    const cell = row.insertCell(insertBeforeLast);
+    if (row.parentNode.tagName === 'THEAD') {
+      cell.outerHTML = `<th contenteditable="true">New Header</th>`;
+    } else if (row.parentNode.tagName === 'TBODY') {
+      cell.outerHTML = `<td contenteditable="true">New</td>`;
+    } else if (isFooter) {
+      cell.outerHTML = `<td></td>`;
+    }
+  }
+};
+
+window.removeCol = function(btn) {
+  const table = btn.closest('table');
+  const rows = table.rows;
+  const lastDataColIndex = rows[0].cells.length - 2;
+
+  if (lastDataColIndex < 1) return alert('At least one column required.');
+
+  for (let row of rows) {
+    if (row.cells.length > 1) {
+      row.deleteCell(lastDataColIndex);
+    }
+  }
+};
+
+
 </script>
+
+
 
 </body>
 </html>
