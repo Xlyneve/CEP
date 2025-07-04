@@ -797,44 +797,42 @@ function setupTableControlPanel(container) {
 
   controlPanel.querySelectorAll('.table-btn').forEach(btn => {
     btn.onclick = () => {
-      const action = btn.getAttribute('data-action');
-      const colCount = table.rows[0].cells.length;
+  const action = btn.getAttribute('data-action');
+  const colCount = table.rows[0].cells.length;
 
-      if (action === 'add-row') {
-        const newRow = table.insertRow(-1);
-        for (let i = 0; i < colCount; i++) {
-          const cell = newRow.insertCell();
-          cell.contentEditable = 'true';
-          cell.innerHTML = '<span style="all:unset">New Row</span>';
-
-        }
-      } else if (action === 'delete-row') {
-        if (table.rows.length > 2) {
-          table.deleteRow(table.rows.length - 1);
-        } else {
-          alert('Cannot delete all rows');
-        }
-      } else if (action === 'add-col') {
-        for (const row of table.rows) {
-          const cell = row.insertCell(-1);
-          cell.contentEditable = 'true';
-          if (row.sectionRowIndex === 0) {
-            cell.textContent = 'New Header';
-          } else {
-            cell.innerHTML = '<span style="all:unset">New Col</span>';
-          }
-        }
-      } else if (action === 'delete-col') {
-        if (colCount > 1) {
-          for (const row of table.rows) {
-            row.deleteCell(colCount - 1);
-          }
-        } else {
-          alert('Cannot delete all columns');
-        }
+  if (action === 'add-row') {
+    const newRow = table.insertRow(-1);
+    for (let i = 0; i < colCount; i++) {
+      const cell = newRow.insertCell();
+      cell.contentEditable = 'true';
+      cell.innerHTML = '<span style="all:unset"></span>';
+    }
+  } else if (action === 'delete-row') {
+    if (table.rows.length > 2) {
+      table.deleteRow(table.rows.length - 1);
+    } else {
+      alert('Cannot delete all rows');
+    }
+  } else if (action === 'add-col') {
+    for (const row of table.rows) {
+      const cell = row.insertCell(-1);
+      if (row.sectionRowIndex === 0) {
+        cell.outerHTML = `<th contenteditable="true"><span style="all:unset"></span></th>`;
+      } else {
+        cell.outerHTML = `<td contenteditable="true"><span style="all:unset"></span></td>`;
       }
-    };
-  });
+    }
+  } else if (action === 'delete-col') {
+    if (colCount > 1) {
+      for (const row of table.rows) {
+        row.deleteCell(colCount - 1);
+      }
+    } else {
+      alert('Cannot delete all columns');
+    }
+  }
+};
+
 
   // Optional: close panel if click outside
   document.addEventListener('click', (e) => {
