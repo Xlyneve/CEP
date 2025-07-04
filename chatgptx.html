@@ -147,6 +147,8 @@ html, body {
   color: #222;
   outline: none;
   white-space: pre-wrap;
+  margin-top: 0 !important;
+  padding-top: 0 !important
 }
 
 #noteInput:empty:before {
@@ -757,7 +759,7 @@ imageUpload.addEventListener('change', function () {
 
 document.getElementById('insertTableBtn').onclick = () => {
 const html = `
-<div style="position: relative; width: 100%; margin-bottom: 8px;">
+<div style="position: relative; width: 100%; margin-top: 0; margin-bottom: 8px; padding: 0;">
   
   <div class="table-control-panel" aria-hidden="true">
     <button class="table-btn" data-action="add-row" title="Add Row">➕ Row</button>
@@ -942,6 +944,18 @@ function setupTableControls(table) {
     activeEditable.innerHTML += html;
     placeCaretAtEnd(activeEditable);
   } else {
+  // Remove trailing <br> or empty text nodes at the end of activeEditable
+while (
+  activeEditable.lastChild &&
+  (
+    (activeEditable.lastChild.nodeName === 'BR') ||
+    (activeEditable.lastChild.nodeType === 3 && activeEditable.lastChild.textContent.trim() === '') ||
+    (activeEditable.lastChild.nodeType === 1 && activeEditable.lastChild.textContent.trim() === '')
+  )
+) {
+  activeEditable.removeChild(activeEditable.lastChild);
+}
+
     const sel = window.getSelection();
     const range = sel.getRangeAt(0);
     const temp = document.createElement('div');
