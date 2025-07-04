@@ -752,34 +752,30 @@ imageUpload.addEventListener('change', function () {
 
 document.getElementById('insertTableBtn').onclick = () => {
 const html = `
-  <div style="position: relative; width: 100%;">
-    <button class="table-control-toggle" title="Show Table Controls" style="position:absolute; top:4px; right:4px;">⚙️</button>
-    <div class="table-control-panel" aria-hidden="true">
-      <button class="table-btn" data-action="add-row" title="Add Row">➕ Row</button>
-      <button class="table-btn" data-action="delete-row" title="Delete Row">➖ Row</button>
-      <button class="table-btn" data-action="add-col" title="Add Column">➕ Col</button>
-      <button class="table-btn" data-action="delete-col" title="Delete Column">➖ Col</button>
-    </div>
-    <table contenteditable="false" border="1" class="editable-table">
-      <thead>
-        <tr>
-          <th contenteditable="true"><span style="all:unset"></span></th>
-          <th contenteditable="true"><span style="all:unset"></span></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td contenteditable="true"><span style="all:unset"></span></td>
-          <td contenteditable="true"><span style="all:unset"></span></td>
-        </tr>
-      </tbody>
-    </table>
-  </div><br>`;
-
-
-  document.execCommand('removeFormat');
-
+<div style="position: relative; width: 100%;">
   
+  <div class="table-control-panel" aria-hidden="true">
+    <button class="table-btn" data-action="add-row" title="Add Row">➕ Row</button>
+    <button class="table-btn" data-action="delete-row" title="Delete Row">➖ Row</button>
+    <button class="table-btn" data-action="add-col" title="Add Column">➕ Col</button>
+    <button class="table-btn" data-action="delete-col" title="Delete Column">➖ Col</button>
+  </div>
+  <table contenteditable="false" border="1" class="editable-table">
+    <thead>
+      <tr>
+        <th contenteditable="true">Header 1</th>
+        <th contenteditable="true">Header 2</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td contenteditable="true">Row 1 Col 1</td>
+        <td contenteditable="true">Row 1 Col 2</td>
+      </tr>
+    </tbody>
+  </table>
+</div><br>`;
+
 function setupTableControlPanel(container) {
   const toggleBtn = container.querySelector('.table-control-toggle');
   const controlPanel = container.querySelector('.table-control-panel');
@@ -797,43 +793,43 @@ function setupTableControlPanel(container) {
 
   controlPanel.querySelectorAll('.table-btn').forEach(btn => {
     btn.onclick = () => {
-  const action = btn.getAttribute('data-action');
-  const colCount = table.rows[0].cells.length;
+      const action = btn.getAttribute('data-action');
+      const colCount = table.rows[0].cells.length;
 
-  if (action === 'add-row') {
-    const newRow = table.insertRow(-1);
-    for (let i = 0; i < colCount; i++) {
-      const cell = newRow.insertCell();
-      cell.contentEditable = 'true';
-      cell.innerHTML = '<span style="all:unset"></span>';
-    }
-  } else if (action === 'delete-row') {
-    if (table.rows.length > 2) {
-      table.deleteRow(table.rows.length - 1);
-    } else {
-      alert('Cannot delete all rows');
-    }
-  } else if (action === 'add-col') {
-    for (const row of table.rows) {
-      const cell = row.insertCell(-1);
-      if (row.sectionRowIndex === 0) {
-        cell.outerHTML = `<th contenteditable="true"><span style="all:unset"></span></th>`;
-      } else {
-        cell.outerHTML = `<td contenteditable="true"><span style="all:unset"></span></td>`;
+      if (action === 'add-row') {
+        const newRow = table.insertRow(-1);
+        for (let i = 0; i < colCount; i++) {
+          const cell = newRow.insertCell();
+          cell.contentEditable = 'true';
+          cell.textContent = 'New Row';
+        }
+      } else if (action === 'delete-row') {
+        if (table.rows.length > 2) {
+          table.deleteRow(table.rows.length - 1);
+        } else {
+          alert('Cannot delete all rows');
+        }
+      } else if (action === 'add-col') {
+        for (const row of table.rows) {
+          const cell = row.insertCell(-1);
+          cell.contentEditable = 'true';
+          if (row.sectionRowIndex === 0) {
+            cell.textContent = 'New Header';
+          } else {
+            cell.textContent = 'New Col';
+          }
+        }
+      } else if (action === 'delete-col') {
+        if (colCount > 1) {
+          for (const row of table.rows) {
+            row.deleteCell(colCount - 1);
+          }
+        } else {
+          alert('Cannot delete all columns');
+        }
       }
-    }
-  } else if (action === 'delete-col') {
-    if (colCount > 1) {
-      for (const row of table.rows) {
-        row.deleteCell(colCount - 1);
-      }
-    } else {
-      alert('Cannot delete all columns');
-    }
-  }
- };
-});      
-
+    };
+  });
 
   // Optional: close panel if click outside
   document.addEventListener('click', (e) => {
@@ -842,6 +838,7 @@ function setupTableControlPanel(container) {
       controlPanel.setAttribute('aria-hidden', 'true');
     }
   });
+}
 
 const containers = activeEditable.querySelectorAll('div[style*="position: relative"]');
 if (containers.length) {
@@ -870,8 +867,7 @@ function setupTableControls(table) {
       for (let i = 0; i < colCount - 1; i++) {
         const cell = newRow.insertCell();
         cell.contentEditable = 'true';
-        cell.innerHTML = '<span style="all:unset"></span>';
-
+        cell.textContent = 'New Row';
       }
       // Last cell with toggle button + hidden controls (clone from current row)
       const controlCell = newRow.insertCell();
@@ -899,11 +895,11 @@ function setupTableControls(table) {
       for (const row of table.rows) {
         const cell = row.insertCell(colCount - 1);
         if (row.sectionRowIndex === 0) {
-  cell.outerHTML = `<th contenteditable="true"><span style="all:unset"></span></th>`;
-} else {
-  cell.outerHTML = `<td contenteditable="true"><span style="all:unset"></span></td>`;
-}
-
+          cell.contentEditable = 'true';
+          cell.textContent = 'New Header';
+        } else {
+          cell.contentEditable = 'true';
+          cell.textContent = 'New Col';
         }
         // For last col, add toggle button + controls for last cell
         if (row === table.rows[0]) {
@@ -1097,7 +1093,7 @@ function addTableColumn() {
     const cell = row.insertCell(-1);
     cell.contentEditable = 'true';
     if (row.sectionRowIndex === 0) {
-      cell.outerHTML = `<th contenteditable="true"><span style="all:unset">New Header</span></th>`;
+      cell.outerHTML = `<th contenteditable="true">New Header</th>`;
     } else {
       cell.textContent = 'New Col';
     }
