@@ -870,9 +870,9 @@ function setupTableControls(table) {
       // Add same number of cells with contenteditable=true except last cell
       const colCount = table.rows[0].cells.length;
       for (let i = 0; i < colCount - 1; i++) {
-        const cell = newRow.insertCell();
         cell.contentEditable = 'true';
-        cell.textContent = 'New Row';
+        cell.innerHTML = '<span style="all:unset"></span>';
+
       }
       // Last cell with toggle button + hidden controls (clone from current row)
       const controlCell = newRow.insertCell();
@@ -900,11 +900,11 @@ function setupTableControls(table) {
       for (const row of table.rows) {
         const cell = row.insertCell(colCount - 1);
         if (row.sectionRowIndex === 0) {
-          cell.contentEditable = 'true';
-          cell.textContent = 'New Header';
-        } else {
-          cell.contentEditable = 'true';
-          cell.textContent = 'New Col';
+  cell.outerHTML = `<th contenteditable="true"><span style="all:unset"></span></th>`;
+} else {
+  cell.outerHTML = `<td contenteditable="true"><span style="all:unset"></span></td>`;
+}
+
         }
         // For last col, add toggle button + controls for last cell
         if (row === table.rows[0]) {
