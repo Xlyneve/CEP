@@ -365,6 +365,11 @@ html, body {
 .table-btn:hover {
   background-color: #eee;
 }
+table.editable-table td,
+table.editable-table th {
+  font-weight: normal !important;
+  text-align: left;
+}
 
 
 
@@ -752,7 +757,7 @@ imageUpload.addEventListener('change', function () {
 
 document.getElementById('insertTableBtn').onclick = () => {
 const html = `
-<div style="position: relative; width: 100%;">
+<div style="position: relative; width: 100%; margin-bottom: 8px;">
   
   <div class="table-control-panel" aria-hidden="true">
     <button class="table-btn" data-action="add-row" title="Add Row">➕ Row</button>
@@ -760,21 +765,21 @@ const html = `
     <button class="table-btn" data-action="add-col" title="Add Column">➕ Col</button>
     <button class="table-btn" data-action="delete-col" title="Delete Column">➖ Col</button>
   </div>
-  <table contenteditable="false" border="1" class="editable-table">
-    <thead>
-      <tr>
-        <th contenteditable="true">Header 1</th>
-        <th contenteditable="true">Header 2</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td contenteditable="true">Row 1 Col 1</td>
-        <td contenteditable="true">Row 1 Col 2</td>
-      </tr>
-    </tbody>
-  </table>
-</div><br>`;
+<table contenteditable="false" border="1" class="editable-table">
+  <thead>
+    <tr>
+      <th contenteditable="true"></th>
+      <th contenteditable="true"></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td contenteditable="true"></td>
+      <td contenteditable="true"></td>
+    </tr>
+  </tbody>
+</table>
+</div>`;
 
 function setupTableControlPanel(container) {
   const toggleBtn = container.querySelector('.table-control-toggle');
@@ -801,7 +806,11 @@ function setupTableControlPanel(container) {
         for (let i = 0; i < colCount; i++) {
           const cell = newRow.insertCell();
           cell.contentEditable = 'true';
-          cell.textContent = 'New Row';
+          cell.innerHTML = ''; // ✅ blank and no formatting
+		  cell.style.textAlign = 'left'; // ✅ force left alignment
+          cell.removeAttribute('style');
+          cell.removeAttribute('class');
+		  cell.style.fontWeight = 'normal';  // ✅ Remove bold
         }
       } else if (action === 'delete-row') {
         if (table.rows.length > 2) {
@@ -813,12 +822,12 @@ function setupTableControlPanel(container) {
         for (const row of table.rows) {
           const cell = row.insertCell(-1);
           cell.contentEditable = 'true';
-          if (row.sectionRowIndex === 0) {
-            cell.textContent = 'New Header';
-          } else {
-            cell.textContent = 'New Col';
+           cell.innerHTML = ''; // ✅ no text, no formatting
+		   cell.style.textAlign = 'left'; // ✅ force left alignment
+           cell.removeAttribute('style');
+          cell.removeAttribute('class');
+		  cell.style.fontWeight = 'normal';  // ✅ Remove bold
           }
-        }
       } else if (action === 'delete-col') {
         if (colCount > 1) {
           for (const row of table.rows) {
@@ -867,7 +876,7 @@ function setupTableControls(table) {
       for (let i = 0; i < colCount - 1; i++) {
         const cell = newRow.insertCell();
         cell.contentEditable = 'true';
-        cell.textContent = 'New Row';
+        cell.textContent = '';
       }
       // Last cell with toggle button + hidden controls (clone from current row)
       const controlCell = newRow.insertCell();
@@ -896,10 +905,10 @@ function setupTableControls(table) {
         const cell = row.insertCell(colCount - 1);
         if (row.sectionRowIndex === 0) {
           cell.contentEditable = 'true';
-          cell.textContent = 'New Header';
+          cell.textContent = '';
         } else {
           cell.contentEditable = 'true';
-          cell.textContent = 'New Col';
+          cell.textContent = '';
         }
         // For last col, add toggle button + controls for last cell
         if (row === table.rows[0]) {
@@ -1006,7 +1015,7 @@ function addRow(btn) {
   for (let i = 0; i < cols; i++) {
     const cell = row.insertCell();
     cell.contentEditable = true;
-    cell.textContent = 'New';
+    cell.textContent = '';
   }
   const controlCell = row.insertCell();
   controlCell.innerHTML = `<button onclick="this.closest('tr').remove()">➖</button>`;
@@ -1018,9 +1027,9 @@ function addCol(btn) {
     const isFooter = row.parentNode.tagName === 'TFOOT';
     const cell = row.insertCell(row.cells.length - (isFooter ? 0 : 1));
     cell.contentEditable = true;
-    cell.textContent = isFooter ? '' : 'New';
+    cell.textContent = isFooter ? '' : '';
     if (row.parentNode.tagName === 'THEAD') {
-      cell.outerHTML = `<th contenteditable="true">New Header</th>`;
+      cell.outerHTML = `<th contenteditable="true"></th>`;
     }
     if (row.parentNode.tagName === 'TBODY' && !isFooter) {
       cell.outerHTML = `<td contenteditable="true">New</td>`;
@@ -1062,9 +1071,9 @@ function addTableRow() {
     cell.contentEditable = 'true';
     if (table.tHead && i < table.tHead.rows[0].cells.length) {
       // Check if header exists - make cells normal td for body rows
-      cell.textContent = 'New Row';
+      cell.textContent = '';
     } else {
-      cell.textContent = 'New Row';
+      cell.textContent = '';
     }
   }
 }
@@ -1093,9 +1102,9 @@ function addTableColumn() {
     const cell = row.insertCell(-1);
     cell.contentEditable = 'true';
     if (row.sectionRowIndex === 0) {
-      cell.outerHTML = `<th contenteditable="true">New Header</th>`;
+      cell.outerHTML = `<th contenteditable="true"></th>`;
     } else {
-      cell.textContent = 'New Col';
+      cell.textContent = '';
     }
   }
 }
@@ -1273,7 +1282,9 @@ window.addRow = function(btn) {
   for (let i = 0; i < colCount; i++) {
     const cell = row.insertCell();
     cell.contentEditable = true;
-    cell.textContent = 'New';
+    cell.innerHTML = '';
+    cell.removeAttribute('style');
+    cell.removeAttribute('class');
   }
 
   const delCell = row.insertCell();
@@ -1291,9 +1302,9 @@ window.addCol = function(btn) {
 
     const cell = row.insertCell(insertBeforeLast);
     if (row.parentNode.tagName === 'THEAD') {
-      cell.outerHTML = `<th contenteditable="true">New Header</th>`;
+    cell.outerHTML = `<td contenteditable="true" style="text-align: left; font-weight: normal;"></td>`;
     } else if (row.parentNode.tagName === 'TBODY') {
-      cell.outerHTML = `<td contenteditable="true">New</td>`;
+    cell.outerHTML = `<th contenteditable="true" style="text-align: left; font-weight: normal;"></th>`;
     } else if (isFooter) {
       cell.outerHTML = `<td></td>`;
     }
