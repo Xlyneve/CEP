@@ -3,141 +3,1481 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Equipment Expiry Tracker</title>
+<title>Minimal Chat with Full Features</title>
 <style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #f7f7f7;
-    margin: 0;
-    padding: 20px;
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Tahoma', sans-serif;
+  background-color: #fefefe;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#chat {
+  flex-grow: 1;
+  width: 100%;
+  padding: 20px 5vw 160px 80px;
+  overflow-y: auto;
+  font-size: 12px;
+  background: #fefefe;
+  box-sizing: border-box;
+}
+
+.message {
+  margin-left: 7px; /* ← shift message bubbles */
+  margin-bottom: 8px;
+  line-height: 1.6;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.editableNote a {
+  word-break: break-word;       /* Allow breaking inside long URLs */
+  overflow-wrap: anywhere;      /* Another option for wrapping */
+  color: #1a0dab;               /* Typical link blue color */
+  text-decoration: underline;   /* Show underline for clarity */
+}
+
+.chatBubble a {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  color: #1a0dab;
+  text-decoration: underline;
+}
+
+.message.user {
+  align-items: flex-end;
+}
+
+.message.bot {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 12px;
+  margin-top: 12px;
+  margin-left: 7px;
+}
+
+.message img {
+  max-width: 100%;
+  margin-top: 6px;
+  border-radius: 8px;
+}
+
+.chatBubble {
+  background-color: #e0e0e0;
+  border-radius: 12px;
+  padding: 8px 12px;
+  max-width: 70%;
+  animation: fadeIn 0.3s ease;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+.message.user .chatBubble {
+  background-color: #e0c1c6;
+  align-self: flex-end;
+}
+
+.message.bot .chatBubble {
+  background-color: #f1f1f1;
+  align-self: flex-start;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Input Area */
+#inputArea {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  width: 90vw;
+  max-width: 600px;
+  gap: 10px;
+  background: #f0f0f0;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(100, 100, 100, 0.1);
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+#userInput {
+  flex-grow: 1;
+  font-size: 12px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  color: #3a3a3a;
+  outline: none;
+}
+
+#userInput:focus {
+  border-color: #999;
+  box-shadow: 0 0 6px rgba(100, 100, 100, 0.4);
+}
+
+#sendBtn {
+  display: none;
+}
+
+/* Note Input */
+#noteInput {
+  min-height: 60px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-size: 13px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  color: #222;
+  outline: none;
+  white-space: pre-wrap;
+  margin-top: 0 !important;
+  padding-top: 0 !important
+}
+
+#noteInput:empty:before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  pointer-events: none;
+  display: block;
+}
+
+/* Editable Notes */
+.editableNote {
+  background: none;
+  color: #222;
+  padding: 4px;
+  border: none;
+  font-size: 12px;
+  font-family: 'Tahoma', sans-serif;
+  white-space: pre-wrap;
+  outline: none;
+}
+
+/* Toolbar + Toggle */
+#formatToggle {
+  position: fixed;
+  bottom: 40px;
+  left: 20px;
+  font-size: 20px;
+  background: #ebebeb;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  text-align: center;
+  line-height: 44px;
+  cursor: pointer;
+  z-index: 105;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+#formatToolbar {
+  position: fixed;
+  bottom: 80px;
+  left: 20px;
+  display: none; /* hidden by default */
+  flex-direction: column; /* changed to row for horizontal scroll */
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  background: #ffffffee;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 5px 6px;
+  z-index: 104;
+  max-height: 500px;
+  max-width: 90vw;
+  overflow-x: auto;  /* horizontal scroll */
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  scrollbar-width: none;    
+  -ms-overflow-style: none;  
+}
+
+
+
+#formatToolbar.visible {
+  display: flex;
+}
+
+/* Format Buttons */
+.format-btn {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #444;
+  padding: 6px;
+  border-radius: 6px;
+  opacity: 0.7;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.format-btn:hover {
+  transform: scale(1.2);
+  opacity: 1;
+  color: #222;
+}
+	
+
+/* Emoji */
+#emojiColumn {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 101;
+}
+
+.emoji {
+  background: none;
+  color: #444;
+  border: none;
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.emoji:hover {
+  transform: scale(1.2);
+  opacity: 1;
+}
+
+/* Note Panel */
+#noteContainer {
+  position: fixed;
+  bottom: 40px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  z-index: 103;
+}
+
+#addNoteToggle {
+  width: 50px;
+  height: 50px;
+  font-size: 28px;
+  border-radius: 50%;
+  background: #d0a0a3;
+  color: #333;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+#notePanel {
+  position: absolute;
+  bottom: 60px;
+  right: 0;
+  width: 300px;
+  background: #fefefe;
+  color: #222;
+  border-radius: 12px;
+  padding: 16px;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 104;
+}
+.editable-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  margin-top: 8px;
+  border: 1px solid #888;
+  position: relative; /* for positioning control panel */
+}
+
+.editable-table th,
+.editable-table td {
+  border: 1px solid #888;
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+/* Remove any hover highlight */
+.editable-table tr:hover,
+.editable-table td:hover,
+.editable-table th:hover {
+  background-color: transparent !important;
+}
+
+/* Minimalist toggle button positioned upper right of table */
+.table-control-toggle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Control panel container (hidden by default) */
+.table-control-panel {
+  position: absolute;
+  top: 28px;
+  right: 4px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 4px 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  display: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+/* Buttons inside the control panel */
+.table-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 0 4px;
+  user-select: none;
+  color: #555;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.table-btn:hover {
+  background-color: #eee;
+}
+table.editable-table td,
+table.editable-table th {
+  font-weight: normal !important;
+  text-align: left;
+  white-space: pre-wrap; /* allow new lines */
+  padding: 6px;
+  vertical-align: top;
+}
+
+
+
+
+#addNoteBtn {
+  background: #ecebe8;
+  color: #3a3a3a;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Note Card */
+.noteCard {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin: 10px 0;
+  box-shadow: 0 1.5px 5px rgba(0, 0, 0, 0.08);
+  animation: slideFade 0.35s ease-out;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 15px;
+  color: #222;
+}
+
+.noteCard:hover {
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+}
+
+.noteCard::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 100%;
+  background: #fbd4d4;
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 12px 0 0 12px;
+}
+
+@keyframes slideFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  button {
-    padding: 10px 16px;
-    font-size: 16px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    background: #6a8eae;
-    color: white;
-    margin: 10px 0;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  button:hover {
-    background: #54768a;
+}
+
+/* Note Card Buttons */
+.note-btn {
+  font-size: 14px;
+  opacity: 0.6;
+  background: none;
+  border: none;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  color: #555;
+  padding: 0 6px;
+}
+
+.note-btn:hover {
+  opacity: 1;
+  color: #333;
+}
+
+/* Highlight Effect */
+.highlighted {
+  position: relative;
+  font-weight: 500;
+  color: #222;
+}
+
+.highlighted::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  border-bottom: 1px dotted #888;
+  animation: underlineFade 1.2s ease-in-out infinite alternate;
+}
+.underlineMatch {
+  border-bottom: 1px dotted #999;
+  padding-bottom: 1px;
+}
+.editableNote img {
+  resize: both;
+  overflow: auto;
+  max-width: 100%;
+  display: block;
+  margin: 10px 0;
+}
+
+
+@keyframes underlineFade {
+  from { opacity: 0.2; }
+  to   { opacity: 1; }
+}
+
+/* Auth UI */
+#authToggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  background: #ecebe8;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 15px;
+  text-align: center;
+  line-height: 40px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 200;
+}
+
+#authSection {
+  position: fixed;
+  top: 60px;
+  right: 12px;
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  gap: 8px;
+  z-index: 199;
+}
+
+#authSection input {
+  background: #ecebe8;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+#authSection button {
+  background: #d0a0a3;
+  color: black;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 10px;
+}
+
+#logoutBtn:hover,
+#loginBtn:hover {
+  background: #ecebe8;
+}
+
+#userInfo {
+  color: #555;
+  font-weight: 100;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  #chat {
+    padding: 12px 4vw 160px 4vw;
   }
-  #barcodeModal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    z-index: 9999;
+
+  #inputArea {
+    width: 90vw;
+    bottom: 30px;
   }
-  #barcodeVideo {
-    width: 80vw;
-    max-width: 400px;
-    border-radius: 12px;
-    background: black;
+
+  #notePanel {
+    width: 90vw;
+    right: 5vw;
   }
-  #closeModalBtn {
-    margin-top: 12px;
-    padding: 8px 16px;
-    font-size: 16px;
-    background: #b94e4e;
-    border-radius: 8px;
-    color: white;
+
+  #authSection {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
   }
-  #closeModalBtn:hover {
-    background: #922f2f;
-  }
+}
+
 </style>
+
 </head>
 <body>
 
-<h1>Clinical Equipment Expiry Tracker</h1>
+<div id="authToggle">👩‍💻</div>
 
-<!-- Scan Barcode Button -->
-<button id="scanBtn">Scan Barcode</button>
-
-<!-- Barcode Scanner Modal -->
-<div id="barcodeModal">
-  <video id="barcodeVideo" autoplay muted playsinline></video>
-  <button id="closeModalBtn">Close</button>
+<div id="authSection">
+  <input type="email" id="email" placeholder="Email" autocomplete="username" />
+  <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+  <button id="loginBtn">Log In</button>
+  <button id="logoutBtn" style="display:none;" title="Log Out">🚪</button>
+  <div id="userInfo">Not logged in</div>
 </div>
 
-<!-- Example form to show scanned barcode -->
-<div style="margin-top: 20px;">
-  <label for="barcodeInput">Scanned Barcode:</label><br />
-  <input type="text" id="barcodeInput" placeholder="Scanned code will appear here" style="width: 300px; padding: 8px; font-size: 16px;" readonly />
+<div id="formatToggle">📋</div>
+
+<div id="formatToolbar">
+  <button class="format-btn" id="boldBtn"><b>B</b></button>
+  <button class="format-btn" id="italicBtn"><i>I</i></button>
+  <button class="format-btn" id="underlineBtn"><u>U</u></button>
+  <button class="format-btn" id="highlightBtn">🖍</button>
+  <button class="format-btn" id="insertTableBtn">📊</button>
+  <button class="format-btn" id="addRowBtn" title="Add Table Row">+R</button>
+<button class="format-btn" id="deleteRowBtn" title="Delete Table Row">-R</button>
+<button class="format-btn" id="addColBtn" title="Add Table Column">+C</button>
+<button class="format-btn" id="deleteColBtn" title="Delete Table Column">-C</button>
+  <button class="format-btn" id="resetColorBtn">↺</button>
+
+  <div class="divider"></div>
+  <div class="emoji" data-emoji="📌">📌</div>
+  <div class="emoji" data-emoji="🟡">🟡</div>
+  <div class="emoji" data-emoji="🔴">🔴</div>
+  <div class="emoji" data-emoji="🔸">🔸</div>
+  <div class="emoji" data-emoji="▶">▶</div>
+  <div class="emoji" data-emoji="👉🏻">👉🏻</div>
+  <div class="emoji" data-emoji="⚠️">⚠️</div>
+  <div class="emoji" data-emoji="🧠">🧠</div>
+  <div class="emoji" data-emoji="💊">💊</div>
+  <div class="emoji" data-emoji="⬇">⬇</div>
+  <div class="emoji" data-emoji="⬆">⬆</div>
+  <div class="emoji" data-emoji="⬅">⬅</div>
+  <div class="emoji" data-emoji="➡">➡</div>
+  <div class="emoji" data-emoji="➀">➀</div>
+  <div class="emoji" data-emoji="➁">➁</div>
+  <div class="emoji" data-emoji="➂">➂</div>
+  <div class="emoji" data-emoji="➃">➃</div>
+  
 </div>
 
-<script>
-  const scanBtn = document.getElementById('scanBtn');
-  const modal = document.getElementById('barcodeModal');
-  const video = document.getElementById('barcodeVideo');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  const barcodeInput = document.getElementById('barcodeInput');
+<!-- Container for add button and note panel -->
+<div id="noteContainer">
+  <button id="addNoteToggle" title="Add Note">＋</button>
+  <div id="notePanel" style="display:none; flex-direction: column;">
+    <div id="noteInput" contenteditable="true" data-placeholder="Type or paste your note here..."></div>
+    
+    <button id="addNoteBtn">Add Note</button>
+  </div>
+</div>
 
-  let stream;
-  let scanning = false;
+<div id="chat"></div>
 
-  async function startScanner() {
-    if (!('BarcodeDetector' in window)) {
-      alert('Barcode Detector API is not supported by your browser.');
-      return;
+
+<form id="inputArea">
+  <input type="text" id="userInput" placeholder="Type here..." autocomplete="off" required />
+  <button type="submit" id="sendBtn">Send</button>
+</form>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+<script type="module">
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
+  authDomain: "notes-chat-c5ff3.firebaseapp.com",
+  projectId: "notes-chat-c5ff3",
+  storageBucket: "notes-chat-c5ff3.appspot.com",
+  messagingSenderId: "597780727252",
+  appId: "1:597780727252:web:8407eb4096dbe301d74241",
+  measurementId: "G-YQD63H7L5T"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+const chat = document.getElementById('chat');
+const noteInput = document.getElementById('noteInput');
+const addNoteBtn = document.getElementById('addNoteBtn');
+const addNoteToggle = document.getElementById('addNoteToggle');
+const notePanel = document.getElementById('notePanel');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const userInfo = document.getElementById('userInfo');
+const toggleBtn = document.getElementById('formatToggle');
+const toolbar = document.getElementById('formatToolbar');
+
+let activeEditable = noteInput;
+noteInput.addEventListener('focus', () => activeEditable = noteInput);
+
+// Create image upload input inside notePanel
+const imageUpload = document.createElement('input');
+imageUpload.type = 'file';
+imageUpload.accept = 'image/*';
+imageUpload.id = 'imageUpload';
+imageUpload.style.marginTop = '10px';
+notePanel.insertBefore(imageUpload, addNoteBtn);
+
+function updateUIForUser(user) {
+  if (user) {
+    userInfo.textContent = 'Logged in as ' + user.email;
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'block';
+    emailInput.style.display = 'none';
+    passwordInput.style.display = 'none';
+    addNoteToggle.style.display = 'inline-block';
+    notePanel.style.display = 'none';
+  } else {
+    userInfo.textContent = 'Not logged in';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    emailInput.style.display = 'inline-block';
+    passwordInput.style.display = 'inline-block';
+    addNoteToggle.style.display = 'none';
+    notePanel.style.display = 'none';
+  }
+}
+auth.onAuthStateChanged(updateUIForUser);
+
+loginBtn.onclick = () => auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value).catch(e => alert(e.message));
+logoutBtn.onclick = () => auth.signOut();
+
+let savedRange = null;
+function saveCaret() {
+  const sel = window.getSelection();
+  if (sel.rangeCount > 0 && activeEditable.contains(sel.anchorNode)) {
+    savedRange = sel.getRangeAt(0).cloneRange();
+  }
+}
+function restoreCaret() {
+  if (!savedRange) return false;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(savedRange);
+  return true;
+}
+function placeCaretAtEnd(el) {
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  savedRange = range.cloneRange();
+}
+
+['keyup', 'mouseup', 'focus', 'input'].forEach(evt => {
+  noteInput.addEventListener(evt, saveCaret);
+});
+
+document.querySelectorAll('.emoji').forEach(btn => {
+  btn.onclick = async () => {
+    const emoji = btn.dataset.emoji;
+    activeEditable.focus();
+    if (!restoreCaret()) {
+      activeEditable.innerHTML += emoji;
+      placeCaretAtEnd(activeEditable);
+    } else {
+      const sel = window.getSelection();
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const textNode = document.createTextNode(emoji);
+      range.insertNode(textNode);
+      range.setStartAfter(textNode);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
-    modal.style.display = 'flex';
-    barcodeInput.value = '';
-    scanning = true;
-
+    saveCaret();
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      video.srcObject = stream;
+      await navigator.clipboard.writeText(emoji);
+    } catch {}
+    btn.style.transform = 'scale(1.3)';
+    setTimeout(() => (btn.style.transform = 'scale(1)'), 200);
+  };
+});
 
-      const barcodeDetector = new BarcodeDetector({ formats: ['code_128', 'ean_13', 'qr_code', 'upc_e', 'upc_a'] });
+imageUpload.addEventListener('change', function () {
+  const file = this.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      activeEditable.innerHTML += `<br><img src="${e.target.result}" style="max-width:100%; border-radius:8px;" /><br>`;
+      placeCaretAtEnd(activeEditable);
+      saveCaret();
+    };
+    reader.readAsDataURL(file);
+  }
+});
 
-      await video.play();
+document.getElementById('insertTableBtn').onclick = () => {
+const html = `
+<div style="position: relative; width: 100%; margin-top: 0; margin-bottom: 8px; padding: 0;">
+  
+  <div class="table-control-panel" aria-hidden="true">
+    <button class="table-btn" data-action="add-row" title="Add Row">➕ Row</button>
+    <button class="table-btn" data-action="delete-row" title="Delete Row">➖ Row</button>
+    <button class="table-btn" data-action="add-col" title="Add Column">➕ Col</button>
+    <button class="table-btn" data-action="delete-col" title="Delete Column">➖ Col</button>
+  </div>
+<table contenteditable="false" border="1" class="editable-table">
+  <thead>
+    <tr>
+      <th contenteditable="true"></th>
+      <th contenteditable="true"></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td contenteditable="true"></td>
+      <td contenteditable="true"></td>
+    </tr>
+  </tbody>
+</table>
+</div>`;
 
-      async function scan() {
-        if (!scanning) return;
+function setupTableControlPanel(container) {
+  const toggleBtn = container.querySelector('.table-control-toggle');
+  const controlPanel = container.querySelector('.table-control-panel');
+  const table = container.querySelector('table');
 
-        try {
-          const barcodes = await barcodeDetector.detect(video);
-          if (barcodes.length > 0) {
-            const code = barcodes[0].rawValue;
-            barcodeInput.value = code;
-            alert('Barcode detected: ' + code);
-            stopScanner();
-            return;
+  toggleBtn.onclick = () => {
+    if (controlPanel.style.display === 'block') {
+      controlPanel.style.display = 'none';
+      controlPanel.setAttribute('aria-hidden', 'true');
+    } else {
+      controlPanel.style.display = 'block';
+      controlPanel.setAttribute('aria-hidden', 'false');
+    }
+  };
+
+  controlPanel.querySelectorAll('.table-btn').forEach(btn => {
+    btn.onclick = () => {
+      const action = btn.getAttribute('data-action');
+      const colCount = table.rows[0].cells.length;
+
+      if (action === 'add-row') {
+        const newRow = table.insertRow(-1);
+        for (let i = 0; i < colCount; i++) {
+          const cell = newRow.insertCell();
+          cell.contentEditable = 'true';
+          cell.innerHTML = ''; // ✅ blank and no formatting
+		  cell.style.textAlign = 'left'; // ✅ force left alignment
+          cell.removeAttribute('style');
+          cell.removeAttribute('class');
+		  cell.style.fontWeight = 'normal';  // ✅ Remove bold
+        }
+      } else if (action === 'delete-row') {
+        if (table.rows.length > 2) {
+          table.deleteRow(table.rows.length - 1);
+        } else {
+          alert('Cannot delete all rows');
+        }
+      } else if (action === 'add-col') {
+        for (const row of table.rows) {
+          const cell = row.insertCell(-1);
+          cell.contentEditable = 'true';
+           cell.innerHTML = ''; // ✅ no text, no formatting
+		   cell.style.textAlign = 'left'; // ✅ force left alignment
+           cell.removeAttribute('style');
+          cell.removeAttribute('class');
+		  cell.style.fontWeight = 'normal';  // ✅ Remove bold
           }
-          requestAnimationFrame(scan);
-        } catch (err) {
-          console.error('Barcode detection error:', err);
-          requestAnimationFrame(scan);
+      } else if (action === 'delete-col') {
+        if (colCount > 1) {
+          for (const row of table.rows) {
+            row.deleteCell(colCount - 1);
+          }
+        } else {
+          alert('Cannot delete all columns');
         }
       }
+    };
+  });
 
-      scan();
+  // Optional: close panel if click outside
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target)) {
+      controlPanel.style.display = 'none';
+      controlPanel.setAttribute('aria-hidden', 'true');
+    }
+  });
+}
 
-    } catch (err) {
-      alert('Could not access the camera. Please allow camera permissions.');
-      stopScanner();
+const containers = activeEditable.querySelectorAll('div[style*="position: relative"]');
+if (containers.length) {
+  setupTableControlPanel(containers[containers.length - 1]); // last inserted table container
+}
+
+
+// After inserting the table HTML, call this function:
+function setupTableControls(table) {
+  table.querySelectorAll('.table-control-toggle').forEach(btn => {
+    btn.onclick = () => {
+      const controls = btn.nextElementSibling;
+      if (!controls) return;
+      controls.style.display = controls.style.display === 'none' ? 'block' : 'none';
+    };
+  });
+
+  // Add event listeners for add/delete row/col buttons:
+  table.querySelectorAll('.add-row').forEach(btn => {
+    btn.onclick = () => {
+      const row = btn.closest('tr');
+      const table = row.closest('table');
+      const newRow = table.insertRow(row.rowIndex + 1);
+      // Add same number of cells with contenteditable=true except last cell
+      const colCount = table.rows[0].cells.length;
+      for (let i = 0; i < colCount - 1; i++) {
+        const cell = newRow.insertCell();
+        cell.contentEditable = 'true';
+        cell.textContent = '';
+      }
+      // Last cell with toggle button + hidden controls (clone from current row)
+      const controlCell = newRow.insertCell();
+      controlCell.innerHTML = row.cells[colCount -1].innerHTML;
+      setupTableControls(table); // re-setup event listeners for new controls
+    };
+  });
+
+  table.querySelectorAll('.delete-row').forEach(btn => {
+    btn.onclick = () => {
+      const row = btn.closest('tr');
+      const table = row.closest('table');
+      if (table.rows.length > 2) { // keep header + at least one row
+        row.remove();
+      } else {
+        alert('Cannot delete all rows');
+      }
+    };
+  });
+
+  table.querySelectorAll('.add-col').forEach(btn => {
+    btn.onclick = () => {
+      const table = btn.closest('table');
+      const colCount = table.rows[0].cells.length;
+      for (const row of table.rows) {
+        const cell = row.insertCell(colCount - 1);
+        if (row.sectionRowIndex === 0) {
+          cell.contentEditable = 'true';
+          cell.textContent = '';
+        } else {
+          cell.contentEditable = 'true';
+          cell.textContent = '';
+        }
+        // For last col, add toggle button + controls for last cell
+        if (row === table.rows[0]) {
+          // Add toggle button cell in last column
+          // Already handled by inserting before last column, so no extra here
+        }
+      }
+    };
+  });
+
+  table.querySelectorAll('.delete-col').forEach(btn => {
+    btn.onclick = () => {
+      const table = btn.closest('table');
+      const colCount = table.rows[0].cells.length;
+      if (colCount <= 2) { // 1 header + toggle col minimum
+        alert('Cannot delete all columns');
+        return;
+      }
+      for (const row of table.rows) {
+        row.deleteCell(colCount - 2); // delete second last col (before toggle button col)
+      }
+    };
+  });
+}
+
+
+
+  
+  activeEditable.focus();
+  if (!restoreCaret()) {
+    activeEditable.innerHTML += html;
+    placeCaretAtEnd(activeEditable);
+  } else {
+  // Remove trailing <br> or empty text nodes at the end of activeEditable
+while (
+  activeEditable.lastChild &&
+  (
+    (activeEditable.lastChild.nodeName === 'BR') ||
+    (activeEditable.lastChild.nodeType === 3 && activeEditable.lastChild.textContent.trim() === '') ||
+    (activeEditable.lastChild.nodeType === 1 && activeEditable.lastChild.textContent.trim() === '')
+  )
+) {
+  activeEditable.removeChild(activeEditable.lastChild);
+}
+
+    const sel = window.getSelection();
+    const range = sel.getRangeAt(0);
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    const frag = document.createDocumentFragment();
+    while (temp.firstChild) frag.appendChild(temp.firstChild);
+    range.deleteContents();
+    range.insertNode(frag);
+    sel.removeAllRanges();
+    range.collapse(false);
+    sel.addRange(range);
+  }
+  saveCaret();
+
+  // Setup toggle and control button event listeners on the new table
+  const tables = activeEditable.querySelectorAll('table.editable-table');
+  if (tables.length) setupTableControls(tables[tables.length - 1]); // last inserted table
+};
+
+addNoteToggle.onclick = () => {
+  notePanel.style.display = notePanel.style.display === 'flex' ? 'none' : 'flex';
+  activeEditable = noteInput;
+  noteInput.focus();
+};
+// Add note button clicked — SAVE noteInput.innerHTML directly
+addNoteBtn.onclick = async () => {
+  const user = auth.currentUser;
+  if (!user) return alert('Please log in.');
+
+  const noteContent = noteInput.innerHTML.trim();
+  if (!noteContent) return alert('Note is required.');
+
+  addNoteBtn.disabled = true;
+  addNoteBtn.textContent = 'Adding...';
+
+  try {
+    await db.collection('notes').add({
+      content: noteContent,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      uid: user.uid
+    });
+
+    addMessage('bot', '✅ Note added!');
+    noteInput.innerHTML = '';
+    imageUpload.value = '';
+    notePanel.style.display = 'none';
+
+  } catch (e) {
+    alert('Error: ' + e.message);
+  } finally {
+    addNoteBtn.disabled = false;
+    addNoteBtn.textContent = 'Add Note';
+  }
+};
+
+function addMessage(sender, content, isHTML = false) {
+  const div = document.createElement('div');
+  div.className = 'message ' + sender;
+  const bubble = document.createElement('div');
+  bubble.className = 'chatBubble';
+  bubble[isHTML ? 'innerHTML' : 'textContent'] = (sender === 'user' ? '🧠 ' : '🤖 ') + content;
+  div.appendChild(bubble);
+  chat.appendChild(div);
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+}
+
+function addRow(btn) {
+  const table = btn.closest('table');
+  const row = table.insertRow(table.tBodies[0].rows.length);
+  const cols = table.rows[0].cells.length - 1;
+  for (let i = 0; i < cols; i++) {
+    const cell = row.insertCell();
+    cell.contentEditable = true;
+    cell.textContent = '';
+  }
+  const controlCell = row.insertCell();
+  controlCell.innerHTML = `<button onclick="this.closest('tr').remove()">➖</button>`;
+}
+
+function addCol(btn) {
+  const table = btn.closest('table');
+  for (let row of table.rows) {
+    const isFooter = row.parentNode.tagName === 'TFOOT';
+    const cell = row.insertCell(row.cells.length - (isFooter ? 0 : 1));
+    cell.contentEditable = true;
+    cell.textContent = isFooter ? '' : '';
+    if (row.parentNode.tagName === 'THEAD') {
+      cell.outerHTML = `<th contenteditable="true"></th>`;
+    }
+    if (row.parentNode.tagName === 'TBODY' && !isFooter) {
+      cell.outerHTML = `<td contenteditable="true">New</td>`;
     }
   }
+}
 
-  function stopScanner() {
-    scanning = false;
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+function removeCol(btn) {
+  const table = btn.closest('table');
+  const rowCount = table.rows.length;
+  const colCount = table.rows[0].cells.length;
+  if (colCount <= 2) return alert('Minimum 1 data column required');
+  for (let row of table.rows) {
+    row.deleteCell(colCount - 2); // remove last data column (before control)
+  }
+}
+// Utility function: find closest ancestor table from current selection/caret
+function getClosestTable() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
+  let node = sel.anchorNode;
+  while (node && node !== noteInput) {
+    if (node.nodeName === 'TABLE') return node;
+    node = node.parentNode;
+  }
+  return null;
+}
+
+function addTableRow() {
+  const table = getClosestTable();
+  if (!table) {
+    alert('Place the cursor inside a table to add a row.');
+    return;
+  }
+  const colCount = table.rows[0].cells.length;
+  const newRow = table.insertRow(-1);
+  for (let i = 0; i < colCount; i++) {
+    const cell = newRow.insertCell();
+    cell.contentEditable = 'true';
+    if (table.tHead && i < table.tHead.rows[0].cells.length) {
+      // Check if header exists - make cells normal td for body rows
+      cell.textContent = '';
+    } else {
+      cell.textContent = '';
     }
-    video.srcObject = null;
-    modal.style.display = 'none';
+  }
+}
+
+function deleteTableRow() {
+  const table = getClosestTable();
+  if (!table) {
+    alert('Place the cursor inside a table to delete a row.');
+    return;
+  }
+  if (table.rows.length <= 2) { // keep header + 1 row minimum
+    alert('Cannot delete all rows.');
+    return;
+  }
+  table.deleteRow(table.rows.length - 1);
+}
+
+function addTableColumn() {
+  const table = getClosestTable();
+  if (!table) {
+    alert('Place the cursor inside a table to add a column.');
+    return;
+  }
+  const colCount = table.rows[0].cells.length;
+  for (let row of table.rows) {
+    const cell = row.insertCell(-1);
+    cell.contentEditable = 'true';
+    if (row.sectionRowIndex === 0) {
+      cell.outerHTML = `<th contenteditable="true"></th>`;
+    } else {
+      cell.textContent = '';
+    }
+  }
+}
+
+function deleteTableColumn() {
+  const table = getClosestTable();
+  if (!table) {
+    alert('Place the cursor inside a table to delete a column.');
+    return;
+  }
+  const colCount = table.rows[0].cells.length;
+  if (colCount <= 1) {
+    alert('Cannot delete all columns.');
+    return;
+  }
+  for (let row of table.rows) {
+    row.deleteCell(colCount - 1);
+  }
+}
+
+// Attach listeners
+document.getElementById('addRowBtn').onclick = addTableRow;
+document.getElementById('deleteRowBtn').onclick = deleteTableRow;
+document.getElementById('addColBtn').onclick = addTableColumn;
+document.getElementById('deleteColBtn').onclick = deleteTableColumn;
+
+
+function displayNotes(notes) {
+  if (!notes.length) return addMessage('bot', '❌ No matching notes found.');
+  for (const note of notes) {
+    const div = document.createElement('div');
+    div.className = 'message bot';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'chatBubble';
+    bubble.innerHTML = '🤖 ' + note.content;
+    div.appendChild(bubble);
+
+    const btns = document.createElement('div');
+    btns.style.textAlign = 'center';
+    btns.style.marginTop = '6px';
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
+
+    [editBtn, delBtn].forEach(btn => Object.assign(btn.style, {
+      background: 'none', border: 'none', color: '#666', fontSize: '16px', cursor: 'pointer', marginRight: '12px'
+    }));
+
+    btns.append(editBtn, delBtn);
+    div.appendChild(btns);
+    chat.appendChild(div);
+
+    editBtn.onclick = () => {
+      bubble.style.display = btns.style.display = 'none';
+
+      const editable = document.createElement('div');
+      editable.contentEditable = true;
+      editable.innerHTML = note.content;
+      editable.className = 'editableNote';
+      activeEditable = editable;
+
+  // 📸 Multi-image upload with caret positioning and resizable images
+  const editImageUpload = document.createElement('input');
+  editImageUpload.type = 'file';
+  editImageUpload.accept = 'image/*';
+  editImageUpload.multiple = true;
+  editImageUpload.style.display = 'block';
+  editImageUpload.style.margin = '10px auto';
+
+  editImageUpload.addEventListener('change', function () {
+    const files = Array.from(this.files);
+    if (!files.length) return;
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.maxWidth = '100%';
+        img.style.borderRadius = '8px';
+        img.style.resize = 'both';
+        img.style.overflow = 'auto';
+        img.style.display = 'block';
+        img.style.margin = '10px 0';
+
+        const sel = window.getSelection();
+        if (!sel.rangeCount) {
+          editable.appendChild(img);
+          return;
+        }
+
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const brBefore = document.createElement('br');
+        const brAfter = document.createElement('br');
+        const frag = document.createDocumentFragment();
+        frag.appendChild(brBefore);
+        frag.appendChild(img);
+        frag.appendChild(brAfter);
+        range.insertNode(frag);
+
+        range.setStartAfter(brAfter);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        saveCaret();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    this.value = ''; // Clear selection for next upload
+  });
+
+
+      editable.addEventListener('focus', () => activeEditable = editable);
+      editable.addEventListener('input', saveCaret);
+      editable.addEventListener('mouseup', saveCaret);
+      editable.addEventListener('keyup', saveCaret);
+
+      const saveBtn = document.createElement('button');
+      const cancelBtn = document.createElement('button');
+      saveBtn.textContent = '💾';
+      cancelBtn.textContent = '❌';
+
+      [saveBtn, cancelBtn].forEach(btn => Object.assign(btn.style, {
+        background: 'none',
+        border: 'none',
+        color: '#666',
+        fontSize: '16px',
+        cursor: 'pointer',
+        marginRight: '12px'
+      }));
+
+      const actions = document.createElement('div');
+      actions.style.textAlign = 'center';
+      actions.style.marginTop = '6px';
+      actions.append(saveBtn, cancelBtn);
+
+        div.append(editable, editImageUpload, actions);
+
+      cancelBtn.onclick = () => {
+        bubble.style.display = btns.style.display = '';
+        editable.remove();
+        actions.remove();
+      };
+
+      saveBtn.onclick = async () => {
+        const updated = editable.innerHTML.trim();
+        if (!updated) return alert('Cannot save empty note');
+        try {
+          await db.collection('notes').doc(note.id).update({ content: updated });
+          note.content = updated;
+          bubble.innerHTML = '🤖 ' + updated;
+          bubble.style.display = btns.style.display = '';
+          editable.remove();
+          actions.remove();
+        } catch (e) {
+          alert('Error saving note: ' + e.message);
+        }
+      };
+    };
+
+    delBtn.onclick = async () => {
+      if (confirm('Delete this note?')) {
+        try {
+          await db.collection('notes').doc(note.id).delete();
+          div.remove();
+        } catch (e) {
+          alert('Failed to delete: ' + e.message);
+        }
+      }
+    };
+  }
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+}
+
+document.getElementById('inputArea').onsubmit = async e => {
+  e.preventDefault();
+  const q = document.getElementById('userInput').value.trim();
+  if (!q) return;
+  addMessage('user', q);
+  document.getElementById('userInput').value = '';
+  const loading = document.createElement('div');
+  loading.className = 'message bot';
+  loading.textContent = '🤖 ⏳ Searching...';
+  chat.appendChild(loading);
+  try {
+    const notes = await queryNotes(q);
+    chat.removeChild(loading);
+    displayNotes(notes);
+  } catch (e) {
+    chat.removeChild(loading);
+    addMessage('bot', '❌ Search error: ' + e.message);
+  }
+};
+
+async function queryNotes(q) {
+  const snap = await db.collection('notes').orderBy('createdAt', 'desc').get();
+  return snap.docs.filter(d => d.data().content?.toLowerCase().includes(q.toLowerCase()))
+    .map(d => ({ ...d.data(), id: d.id }));
+}
+
+document.getElementById('boldBtn').onclick = () => document.execCommand('bold');
+document.getElementById('italicBtn').onclick = () => document.execCommand('italic');
+document.getElementById('underlineBtn').onclick = () => document.execCommand('underline');
+document.getElementById('highlightBtn').onclick = () => document.execCommand('foreColor', false, '#5c6ac4');
+document.getElementById('resetColorBtn').onclick = () => document.execCommand('foreColor', false, 'black');
+
+document.getElementById('authToggle').onclick = () => {
+  const s = document.getElementById('authSection');
+  s.style.display = s.style.display === 'flex' ? 'none' : 'flex';
+};
+
+document.getElementById('formatToggle').onclick = () =>
+  document.getElementById('formatToolbar').classList.toggle('visible');
+
+addMessage('bot', '👋 Welcome! Please log in to add or manage notes.');
+
+// 📐 Double-click on image to open resize popup
+document.addEventListener('dblclick', (e) => {
+  if (e.target.tagName === 'IMG' && e.target.closest('.editableNote')) {
+    const img = e.target;
+    const popup = document.createElement('div');
+    popup.style.position = 'fixed';
+    popup.style.left = `${e.clientX}px`;
+    popup.style.top = `${e.clientY}px`;
+    popup.style.background = '#fff';
+    popup.style.border = '1px solid #ccc';
+    popup.style.padding = '10px';
+    popup.style.zIndex = '10000';
+    popup.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+    popup.style.borderRadius = '6px';
+
+    const widthInput = document.createElement('input');
+    widthInput.type = 'number';
+    widthInput.placeholder = 'Width (px)';
+    widthInput.value = img.width;
+    widthInput.style.marginRight = '8px';
+
+    const heightInput = document.createElement('input');
+    heightInput.type = 'number';
+    heightInput.placeholder = 'Height (px)';
+    heightInput.value = img.height;
+
+    const applyBtn = document.createElement('button');
+    applyBtn.textContent = '✔️';
+    applyBtn.style.marginLeft = '8px';
+
+    applyBtn.onclick = () => {
+      img.style.width = widthInput.value + 'px';
+      img.style.height = heightInput.value + 'px';
+      document.body.removeChild(popup);
+    };
+
+    document.addEventListener('click', function outsideClick(ev) {
+      if (!popup.contains(ev.target) && ev.target !== img) {
+        popup.remove();
+        document.removeEventListener('click', outsideClick);
+      }
+    });
+
+    popup.append(widthInput, heightInput, applyBtn);
+    document.body.appendChild(popup);
+  }
+});
+
+// --- Table edit helpers ---
+window.addRow = function(btn) {
+  const table = btn.closest('table');
+  const row = table.tBodies[0].insertRow();
+  const colCount = table.rows[0].cells.length - 1;
+
+  for (let i = 0; i < colCount; i++) {
+    const cell = row.insertCell();
+    cell.contentEditable = true;
+    cell.innerHTML = '';
+    cell.removeAttribute('style');
+    cell.removeAttribute('class');
   }
 
-  scanBtn.addEventListener('click', startScanner);
-  closeModalBtn.addEventListener('click', stopScanner);
+  const delCell = row.insertCell();
+  delCell.innerHTML = `<button class="table-btn" onclick="this.closest('tr').remove()">➖</button>`;
+};
+
+window.addCol = function(btn) {
+  const table = btn.closest('table');
+  const rows = table.rows;
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const isFooter = row.parentNode.tagName === 'TFOOT';
+    const insertBeforeLast = row.cells.length - (isFooter ? 0 : 1);
+
+    const cell = row.insertCell(insertBeforeLast);
+    if (row.parentNode.tagName === 'THEAD') {
+    cell.outerHTML = `<td contenteditable="true" style="text-align: left; font-weight: normal;"></td>`;
+    } else if (row.parentNode.tagName === 'TBODY') {
+    cell.outerHTML = `<th contenteditable="true" style="text-align: left; font-weight: normal;"></th>`;
+    } else if (isFooter) {
+      cell.outerHTML = `<td></td>`;
+    }
+  }
+};
+
+window.removeCol = function(btn) {
+  const table = btn.closest('table');
+  const rows = table.rows;
+  const lastDataColIndex = rows[0].cells.length - 2;
+
+  if (lastDataColIndex < 1) return alert('At least one column required.');
+
+  for (let row of rows) {
+    if (row.cells.length > 1) {
+      row.deleteCell(lastDataColIndex);
+    }
+  }
+};
+
+document.addEventListener('keydown', (e) => {
+  const isCell = e.target.closest('td, th');
+  if (isCell && e.key === 'Enter') {
+    if (e.shiftKey) {
+      // Allow new line
+      document.execCommand('insertHTML', false, '<br><br>');
+      e.preventDefault(); // prevent double insertion
+    } else {
+      // Prevent Enter from breaking out of the cell
+      e.preventDefault();
+    }
+  }
+});
+
+
+
 </script>
+
+
 
 </body>
 </html>
