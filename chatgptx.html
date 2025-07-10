@@ -277,6 +277,7 @@ html, body {
 }
 
 #addNoteToggle {
+  position: fixed;
   width: 50px;
   height: 50px;
   font-size: 28px;
@@ -471,6 +472,14 @@ table.editable-table th {
   border-bottom: 1px dotted #999;
   padding-bottom: 1px;
 }
+.editableNote img {
+  resize: both;
+  overflow: auto;
+  max-width: 100%;
+  display: block;
+  margin: 10px 0;
+}
+
 
 @keyframes underlineFade {
   from { opacity: 0.2; }
@@ -546,7 +555,7 @@ table.editable-table th {
   }
 
   #inputArea {
-    width: 95vw;
+    width: 70vw;
     bottom: 30px;
   }
 
@@ -1194,6 +1203,59 @@ function displayNotes(notes) {
       editable.className = 'editableNote';
       activeEditable = editable;
 
+  // 📸 Multi-image upload with caret positioning and resizable images
+  const editImageUpload = document.createElement('input');
+  editImageUpload.type = 'file';
+  editImageUpload.accept = 'image/*';
+  editImageUpload.multiple = true;
+  editImageUpload.style.display = 'block';
+  editImageUpload.style.margin = '10px auto';
+
+  editImageUpload.addEventListener('change', function () {
+    const files = Array.from(this.files);
+    if (!files.length) return;
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.maxWidth = '100%';
+        img.style.borderRadius = '8px';
+        img.style.resize = 'both';
+        img.style.overflow = 'auto';
+        img.style.display = 'block';
+        img.style.margin = '10px 0';
+
+        const sel = window.getSelection();
+        if (!sel.rangeCount) {
+          editable.appendChild(img);
+          return;
+        }
+
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const brBefore = document.createElement('br');
+        const brAfter = document.createElement('br');
+        const frag = document.createDocumentFragment();
+        frag.appendChild(brBefore);
+        frag.appendChild(img);
+        frag.appendChild(brAfter);
+        range.insertNode(frag);
+
+        range.setStartAfter(brAfter);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        saveCaret();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    this.value = ''; // Clear selection for next upload
+  });
+
+
       editable.addEventListener('focus', () => activeEditable = editable);
       editable.addEventListener('input', saveCaret);
       editable.addEventListener('mouseup', saveCaret);
@@ -1218,7 +1280,7 @@ function displayNotes(notes) {
       actions.style.marginTop = '6px';
       actions.append(saveBtn, cancelBtn);
 
-      div.append(editable, actions);
+        div.append(editable, editImageUpload, actions);
 
       cancelBtn.onclick = () => {
         bubble.style.display = btns.style.display = '';
@@ -1227,19 +1289,20 @@ function displayNotes(notes) {
       };
 
       saveBtn.onclick = async () => {
-        const updated = editable.innerHTML.trim();
-        if (!updated) return alert('Cannot save empty note');
-        try {
-          await db.collection('notes').doc(note.id).update({ content: updated });
-          note.content = updated;
-          bubble.innerHTML = '🤖 ' + updated;
-          bubble.style.display = btns.style.display = '';
-          editable.remove();
-          actions.remove();
-        } catch (e) {
-          alert('Error saving note: ' + e.message);
-        }
-      };
+  const updated = editable.innerHTML.trim();
+  if (!updated) return alert('Cannot save empty note');
+  try {
+    await db.collection('notes').doc(note.id).update({ content: updated });
+    note.content = updated;
+    bubble.innerHTML = '🤖 ' + updated;
+    bubble.style.display = btns.style.display = '';
+    editable.remove();
+    actions.remove();
+    editImageUpload.style.display = 'none';  // <-- Hide the file input here
+  } catch (e) {
+    alert('Error saving note: ' + e.message);
+  }
+};
     };
 
     delBtn.onclick = async () => {
@@ -1297,6 +1360,54 @@ document.getElementById('formatToggle').onclick = () =>
   document.getElementById('formatToolbar').classList.toggle('visible');
 
 addMessage('bot', '👋 Welcome! Please log in to add or manage notes.');
+
+// 📐 Double-click on image to open resize popup
+document.addEventListener('dblclick', (e) => {
+  if (e.target.tagName === 'IMG' && e.target.closest('.editableNote')) {
+    const img = e.target;
+    const popup = document.createElement('div');
+    popup.style.position = 'fixed';
+    popup.style.left = `${e.clientX}px`;
+    popup.style.top = `${e.clientY}px`;
+    popup.style.background = '#fff';
+    popup.style.border = '1px solid #ccc';
+    popup.style.padding = '10px';
+    popup.style.zIndex = '10000';
+    popup.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+    popup.style.borderRadius = '6px';
+
+    const widthInput = document.createElement('input');
+    widthInput.type = 'number';
+    widthInput.placeholder = 'Width (px)';
+    widthInput.value = img.width;
+    widthInput.style.marginRight = '8px';
+
+    const heightInput = document.createElement('input');
+    heightInput.type = 'number';
+    heightInput.placeholder = 'Height (px)';
+    heightInput.value = img.height;
+
+    const applyBtn = document.createElement('button');
+    applyBtn.textContent = '✔️';
+    applyBtn.style.marginLeft = '8px';
+
+    applyBtn.onclick = () => {
+      img.style.width = widthInput.value + 'px';
+      img.style.height = heightInput.value + 'px';
+      document.body.removeChild(popup);
+    };
+
+    document.addEventListener('click', function outsideClick(ev) {
+      if (!popup.contains(ev.target) && ev.target !== img) {
+        popup.remove();
+        document.removeEventListener('click', outsideClick);
+      }
+    });
+
+    popup.append(widthInput, heightInput, applyBtn);
+    document.body.appendChild(popup);
+  }
+});
 
 // --- Table edit helpers ---
 window.addRow = function(btn) {
