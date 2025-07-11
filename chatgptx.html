@@ -1388,9 +1388,18 @@ document.getElementById('inputArea').onsubmit = async e => {
 
 async function queryNotes(q) {
   const snap = await db.collection('notes').orderBy('createdAt', 'desc').get();
-  return snap.docs.filter(d => d.data().content?.toLowerCase().includes(q.toLowerCase()))
+  const isHashtagSearch = q.startsWith('#');
+
+  return snap.docs
+    .filter(d => {
+      const content = d.data().content?.toLowerCase() || '';
+      return isHashtagSearch
+        ? content.includes(q.toLowerCase()) // exact hashtag search
+        : content.includes(q.toLowerCase());
+    })
     .map(d => ({ ...d.data(), id: d.id }));
 }
+
 
 document.getElementById('boldBtn').onclick = () => document.execCommand('bold');
 document.getElementById('italicBtn').onclick = () => document.execCommand('italic');
