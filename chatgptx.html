@@ -593,12 +593,19 @@ table.editable-table th {
   <button class="format-btn" id="italicBtn"><i>I</i></button>
   <button class="format-btn" id="underlineBtn"><u>U</u></button>
   <button class="format-btn" id="highlightBtn">🖍</button>
+
+  <!-- 🔤 Font Size Controls -->
+  <button class="format-btn" id="increaseFontBtn" title="Increase Font Size">🔺A</button>
+  <button class="format-btn" id="decreaseFontBtn" title="Decrease Font Size">🔻A</button>
+
   <button class="format-btn" id="insertTableBtn">📊</button>
   <button class="format-btn" id="addRowBtn" title="Add Table Row">+R</button>
-<button class="format-btn" id="deleteRowBtn" title="Delete Table Row">-R</button>
-<button class="format-btn" id="addColBtn" title="Add Table Column">+C</button>
-<button class="format-btn" id="deleteColBtn" title="Delete Table Column">-C</button>
+  <button class="format-btn" id="deleteRowBtn" title="Delete Table Row">-R</button>
+  <button class="format-btn" id="addColBtn" title="Add Table Column">+C</button>
+  <button class="format-btn" id="deleteColBtn" title="Delete Table Column">-C</button>
+
   <button class="format-btn" id="resetColorBtn">↺</button>
+
 
   <div class="divider"></div>
   <div class="emoji" data-emoji="📌">📌</div>
@@ -1165,6 +1172,32 @@ document.getElementById('deleteRowBtn').onclick = deleteTableRow;
 document.getElementById('addColBtn').onclick = addTableColumn;
 document.getElementById('deleteColBtn').onclick = deleteTableColumn;
 
+function changeFontSize(delta) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !activeEditable.contains(sel.anchorNode)) return;
+
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) {
+    // Apply to caret position: insert a span for future typing
+    const span = document.createElement('span');
+    span.style.fontSize = `${delta > 0 ? 'larger' : 'smaller'}`;
+    span.appendChild(document.createTextNode('\u200B')); // zero-width space
+    range.insertNode(span);
+    range.setStart(span, 1);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else {
+    // Apply to selected text
+    const span = document.createElement('span');
+    span.style.fontSize = `${delta > 0 ? 'larger' : 'smaller'}`;
+    span.appendChild(range.extractContents());
+    range.insertNode(span);
+  }
+
+  saveCaret();
+}
+
 
 function displayNotes(notes) {
   if (!notes.length) return addMessage('bot', '❌ No matching notes found.');
@@ -1350,6 +1383,8 @@ document.getElementById('italicBtn').onclick = () => document.execCommand('itali
 document.getElementById('underlineBtn').onclick = () => document.execCommand('underline');
 document.getElementById('highlightBtn').onclick = () => document.execCommand('foreColor', false, '#5c6ac4');
 document.getElementById('resetColorBtn').onclick = () => document.execCommand('foreColor', false, 'black');
+document.getElementById('increaseFontBtn').onclick = () => changeFontSize(1);
+document.getElementById('decreaseFontBtn').onclick = () => changeFontSize(-1);
 
 document.getElementById('authToggle').onclick = () => {
   const s = document.getElementById('authSection');
