@@ -749,15 +749,28 @@ document.querySelectorAll('.emoji').forEach(btn => {
     const emoji = btn.dataset.emoji;
     activeEditable.focus();
     if (!restoreCaret()) {
-      activeEditable.innerHTML += emoji;
+      if (["⬇", "⬆", "⬅", "➡", "➀", "➁", "➂", "➃"].includes(emoji)) {
+        activeEditable.innerHTML += `<span style="font-size:26px; font-weight:bold;">${emoji}</span>`;
+      } else {
+        activeEditable.innerHTML += emoji;
+      }
       placeCaretAtEnd(activeEditable);
     } else {
       const sel = window.getSelection();
       const range = sel.getRangeAt(0);
       range.deleteContents();
-      const textNode = document.createTextNode(emoji);
-      range.insertNode(textNode);
-      range.setStartAfter(textNode);
+      if (["⬇", "⬆", "⬅", "➡", "➀", "➁", "➂", "➃"].includes(emoji)) {
+        const span = document.createElement('span');
+        span.style.fontSize = "26px";
+        span.style.fontWeight = "bold";
+        span.textContent = emoji;
+        range.insertNode(span);
+        range.setStartAfter(span);
+      } else {
+        const textNode = document.createTextNode(emoji);
+        range.insertNode(textNode);
+        range.setStartAfter(textNode);
+      }
       range.collapse(true);
       sel.removeAllRanges();
       sel.addRange(range);
@@ -770,6 +783,7 @@ document.querySelectorAll('.emoji').forEach(btn => {
     setTimeout(() => (btn.style.transform = 'scale(1)'), 200);
   };
 });
+
 
 imageUpload.addEventListener('change', function () {
   const file = this.files[0];
