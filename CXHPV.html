@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cervical Screening Funding</title>
+<style>
+@font-face {
+  font-family: 'Adelicia';
+  src: url('AdeliciaRegular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Simplicity';
+  src: url('Simplicity.ttf') format('truetype');
+}
+
+  body {
+    font-family: 'Simplicity', sans-serif;
+    margin: 20px;
+    background: linear-gradient(to bottom, #ebebeb, #f5ecf0);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+	padding-top: 20px;
+  }
+  main {
+    max-width: 500px;
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+	 margin-top: 10px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  #backBtn {
+  font-family: 'Simplicity', sans-serif;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-right: 1rem;
+    display: none;
+    background: none;
+    border: none;
+    color: black;
+    font-weight: bold;
+  }
+  h1 {
+  font-family: 'Adelicia', cursive;
+  text-align: center;
+  display: block;
+  font-weight: 900;
+  font-size: 2.5rem;
+  color: black;
+  margin: 0 0 10px;
+  user-select: none;
+  margin-bottom: 2rem;
+
+  text-shadow:
+    -1.5px -1.5px 0 #f8c8dc,  /* pastel pink top-left */
+     1.5px -1.5px 0 #d3c7ce,  /* subtle gray top-right */
+    -1.5px  1.5px 0 #f7d9e1,  /* lighter pastel pink bottom-left */
+     1.5px  1.5px 0 #b8b5b9,  /* muted gray bottom-right */
+     0 0 12px rgba(255, 255, 255, 0.9); /* strong whitish glow */
+}
+
+}
+
+
+}
+  .question {
+    margin: 1.5rem 0;
+    font-size: 1.3rem;
+    user-select: none;
+    text-align: left;
+  }
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+.btn-group button,
+button.glass {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  color: #000000;
+  font-weight: regular;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transition: all 0.3s ease;
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+}
+
+.btn-group button:hover,
+button.glass:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-group button.glass {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border: 2px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  color: #c64ca6 !important;
+}
+button.underscreened-btn {
+  background: rgba(255, 223, 211, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 1rem;
+  font-family: 'Simplicity', sans-serif;
+  color: #000000;
+  font-weight: regular;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transition: all 0.3s ease;
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 0.5rem;
+
+}
+
+
+  .funded {
+    font-size: 1.5rem;
+    color: #28a745;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+  }
+  .funded svg {
+    width: 24px;
+    height: 24px;
+  }
+  label {
+    display: block;
+    margin: 0.5rem 0 0.3rem;
+    font-weight: 600;
+  }
+  input[type="date"] {
+    padding: 5px;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .date-input-group {
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <button id="backBtn" aria-label="Go back">&larr; Back</button>
+    <h1>Cervical Screening Funding</h1>
+  </header>
+
+  <div id="unscreenedUnderscreened">
+<button id="btnUnderscreened" class="glass underscreened-btn">Calculate if patient is underscreened</button>
+
+  </div>
+
+  <main>
+    <div id="content"></div>
+  </main>
+
+
+<script>
+(() => {
+  // Elements
+  const content = document.getElementById('content');
+  const backBtn = document.getElementById('backBtn');
+  const unscreenedUnderscreened = document.getElementById('unscreenedUnderscreened');
+  const btnUnderscreened = document.getElementById('btnUnderscreened');
+
+  const greenTickSVG = `
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" >
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+    </svg>`;
+
+  // History stack stores previous states and steps
+  const historyStack = [];
+
+  // Current state and step
+  let currentState = {};
+  let step = 'start';
+
+  // Utility: render question + buttons + extraHTML
+  function renderStep({ questionText, buttons = [], extraHTML = '' }) {
+    content.innerHTML = '';
+
+    if(questionText) {
+      const qElem = document.createElement('div');
+      qElem.className = 'question';
+      qElem.textContent = questionText;
+      content.appendChild(qElem);
+    }
+
+    if(extraHTML) {
+      const div = document.createElement('div');
+      div.innerHTML = extraHTML;
+      content.appendChild(div);
+    }
+
+    if(buttons.length > 0) {
+      const btnGroup = document.createElement('div');
+      btnGroup.className = 'btn-group';
+
+      buttons.forEach(({ text, className = '', onClick }) => {
+        const btn = document.createElement('button');
+        btn.textContent = text;
+        if(className) btn.classList.add(className);
+        btn.addEventListener('click', () => {
+          historyStack.push({ step, currentState: JSON.parse(JSON.stringify(currentState)) });
+          onClick();
+          updateBackButton();
+        });
+        btnGroup.appendChild(btn);
+      });
+
+      content.appendChild(btnGroup);
+    }
+  }
+
+function showFunded(reasonText = '') {
+  unscreenedUnderscreened.style.display = 'none';
+  content.innerHTML = `
+    <div class="funded">${greenTickSVG} <span>Patient is FUNDED</span></div>
+    ${reasonText ? `<div style="margin-top:0.5rem; font-size:1.1rem; color:#555;">${reasonText}</div>` : ''}
+  `;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateBackButton();
+}
+
+
+  function showNotFunded() {
+    unscreenedUnderscreened.style.display = 'none';
+    content.innerHTML = `
+      <div style="font-size:1.5rem; color:#d9534f;">Patient is NOT FUNDED</div>
+    `;
+  }
+
+  function updateBackButton() {
+    backBtn.style.display = historyStack.length > 0 ? 'inline-block' : 'none';
+  }
+
+  backBtn.addEventListener('click', () => {
+    if(historyStack.length === 0) return;
+    const last = historyStack.pop();
+    step = last.step;
+    currentState = last.currentState;
+    updateBackButton();
+    renderCurrentStep();
+  });
+
+  // Utility date diff in years
+  function yearsBetween(dateString) {
+    if(!dateString) return 0;
+    const past = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - past;
+    return diffMs / (1000 * 60 * 60 * 24 * 365.25);
+  }
+
+  // Main render logic
+  function renderCurrentStep() {
+    switch(step) {
+      case 'start':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+          questionText: 'Is this a follow-up test?',
+          buttons: [
+            { text: 'Yes', onClick: () => { step = 'funded'; renderCurrentStep(); } },
+            { text: 'No', onClick: () => { step = 'cscHolder'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+      case 'funded':
+        showFunded();
+        break;
+
+      case 'cscHolder':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+          questionText: 'CSC holder?',
+          buttons: [
+            { text: 'Yes', onClick: () => { step = 'funded'; renderCurrentStep(); } },
+            { text: 'No', onClick: () => { step = 'ethnicity'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+      case 'ethnicity':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+          questionText: 'Ethnicity?',
+          buttons: [
+            { text: 'Maori / Pacific', onClick: () => { step = 'funded'; renderCurrentStep(); } },
+            { text: 'Others', onClick: () => { step = 'unscreenedQuestion'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+      // When navigating from ethnicity -> Others, goes here
+      case 'unscreenedQuestion':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+          questionText: 'Is this patient unscreened?',
+          buttons: [
+            { text: 'Yes', onClick: () => { step = 'funded'; renderCurrentStep(); } },
+            { text: 'No', onClick: () => { step = 'underscreenedQuestion'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+      // ** New branch triggered by bottom Unscreened button **
+      case 'unscreenedBtnQuestion':
+        unscreenedUnderscreened.style.display = 'none';
+        renderStep({
+          questionText: 'Is this patient unscreened?',
+          buttons: [
+            { text: 'Yes', onClick: () => { step = 'funded'; renderCurrentStep(); } },
+            { text: 'No', onClick: () => { step = 'underscreenedConfirm'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+      case 'underscreenedQuestion':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+          questionText: 'Is this patient underscreened?',
+          buttons: [
+            { text: 'Yes', onClick: () => { step = 'underscreenedConfirm'; renderCurrentStep(); } },
+            { text: 'No', onClick: () => { step = 'ageGroup'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+      case 'underscreenedConfirm':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+  questionText: 'Please confirm underscreened status:',
+  extraHTML: `
+    <div class="date-input-group">
+      <label for="nonImmuneDateConfirm">Non-immune deficient: last screening date</label>
+      <input type="date" id="nonImmuneDateConfirm" value="${currentState.nonImmuneDateConfirm || ''}" />
+    </div>
+    <div class="date-input-group">
+      <label for="immuneDateConfirm">Immune deficient: last screening date</label>
+      <input type="date" id="immuneDateConfirm" value="${currentState.immuneDateConfirm || ''}" />
+    </div>
+    <div id="yearsOutput" style="margin-top: 1rem; font-weight: bold; color: #444;"></div>
+    <div class="btn-group">
+      <button id="confirmUnderscreenedYes">Yes</button>
+      <button id="confirmUnderscreenedNo">No</button>
+    </div>
+  `,
+});
+
+
+        const outputYears = () => {
+  const y1 = yearsBetween(currentState.nonImmuneDateConfirm);
+  const y2 = yearsBetween(currentState.immuneDateConfirm);
+
+  let msg = "";
+  if (currentState.nonImmuneDateConfirm)
+    msg += `Non-immune: ${y1.toFixed(2)} years since last test. ` + (y1 >= 5 ? "⚠️ Underscreened" : "✅ Up to date") + "<br>";
+  if (currentState.immuneDateConfirm)
+    msg += `Immune: ${y2.toFixed(2)} years since last test. ` + (y2 >= 3 ? "⚠️ Underscreened" : "✅ Up to date");
+
+  document.getElementById('yearsOutput').innerHTML = msg;
+};
+
+document.getElementById('nonImmuneDateConfirm').onchange = e => {
+  currentState.nonImmuneDateConfirm = e.target.value;
+  outputYears();
+};
+document.getElementById('immuneDateConfirm').onchange = e => {
+  currentState.immuneDateConfirm = e.target.value;
+  outputYears();
+};
+
+
+       document.getElementById('confirmUnderscreenedYes').onclick = () => {
+  // User confirmed that patient is underscreened — auto-fund
+  step = 'funded';
+  renderCurrentStep();
+};
+
+
+        document.getElementById('confirmUnderscreenedNo').onclick = () => {
+          step = 'ageGroup';
+          renderCurrentStep();
+        };
+        break;
+
+      case 'ageGroup':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+          questionText: 'Select age group:',
+          buttons: [
+            { text: '25-29', onClick: () => { step = 'screeningStartAt20'; renderCurrentStep(); } },
+            { text: '>30', onClick: () => { step = 'unscreenedUnderscreenedFollowup'; renderCurrentStep(); } },
+            { text: '70-74', onClick: () => { step = 'age7074Question'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+      case 'screeningStartAt20':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+          questionText: 'Was screening started at age 20?',
+          buttons: [
+            { text: 'Yes', onClick: () => { step = 'funded'; renderCurrentStep(); } },
+            { text: 'No', onClick: () => { step = 'notFunded'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+      case 'unscreenedUnderscreenedFollowup':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+          questionText: 'Unscreened / Underscreened?',
+          buttons: [
+            { text: 'Yes', onClick: () => { step = 'funded'; renderCurrentStep(); } },
+            { text: 'No', onClick: () => { step = 'notFunded'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+case 'age7074Question':
+  unscreenedUnderscreened.style.display = 'block';
+  renderStep({
+    questionText: 'Are there 2x consecutive normal cytology results between age 62 - 69?',
+    extraHTML: `
+      <div class="date-input-group">
+        <label for="dobInput">Date of Birth</label>
+        <input type="date" id="dobInput" value="${currentState.dobInput || ''}" />
+      </div>
+      <div class="date-input-group">
+        <label for="lastTest1">Date of 1st Normal Cytology Test</label>
+        <input type="date" id="lastTest1" value="${currentState.lastTest1 || ''}" />
+      </div>
+      <div class="date-input-group">
+        <label for="lastTest2">Date of 2nd Normal Cytology Test</label>
+        <input type="date" id="lastTest2" value="${currentState.lastTest2 || ''}" />
+      </div>
+      <div id="cytologyAgeInfo" style="margin-top: 1rem; font-weight: bold; color: #444;"></div>
+      <div class="btn-group">
+        <button id="cytologyYes">Yes</button>
+        <button id="cytologyNo">No</button>
+      </div>
+    `,
+  });
+
+  // Save date inputs to currentState and update age info
+  const dobInput = document.getElementById('dobInput');
+  const lastTest1 = document.getElementById('lastTest1');
+  const lastTest2 = document.getElementById('lastTest2');
+  const ageInfo = document.getElementById('cytologyAgeInfo');
+
+  function updateAgeInfo() {
+    if (!currentState.dobInput || !currentState.lastTest1 || !currentState.lastTest2) {
+      ageInfo.innerHTML = "";
+      return;
+    }
+    const dob = new Date(currentState.dobInput);
+    const t1 = new Date(currentState.lastTest1);
+    const t2 = new Date(currentState.lastTest2);
+
+    const ageAt = (date) => (date - dob) / (1000 * 60 * 60 * 24 * 365.25);
+    const age1 = ageAt(t1);
+    const age2 = ageAt(t2);
+
+    const inRange = (age) => age >= 62 && age <= 69;
+    const r1 = inRange(age1) ? "✅" : "❌";
+    const r2 = inRange(age2) ? "✅" : "❌";
+
+    ageInfo.innerHTML = `
+      Age at 1st test: ${age1.toFixed(1)} years ${r1}<br>
+      Age at 2nd test: ${age2.toFixed(1)} years ${r2}<br>
+      ${inRange(age1) && inRange(age2) ? "✔️ Both within 62–69 age range" : "⚠️ One or both tests outside 62–69 age range"}
+    `;
+  }
+
+  dobInput.onchange = e => { currentState.dobInput = e.target.value; updateAgeInfo(); };
+  lastTest1.onchange = e => { currentState.lastTest1 = e.target.value; updateAgeInfo(); };
+  lastTest2.onchange = e => { currentState.lastTest2 = e.target.value; updateAgeInfo(); };
+
+  document.getElementById('cytologyYes').onclick = () => {
+    step = 'hpvLast5Years';
+    renderCurrentStep();
+  };
+
+  document.getElementById('cytologyNo').onclick = () => {
+    historyStack.push({ step, currentState: JSON.parse(JSON.stringify(currentState)) });
+    showFunded("Because there are NOT 2 consecutive normal cytology results between age 62–69.");
+    updateBackButton();
+  };
+  break;
+
+      case 'hpvLast5Years':
+        unscreenedUnderscreened.style.display = 'block';
+        renderStep({
+          questionText: 'Had HPV not detected in the last 5 years prior to age 70?',
+          buttons: [
+            { text: 'Yes', onClick: () => { step = 'notFunded'; renderCurrentStep(); } },
+            { text: 'No', onClick: () => { step = 'funded'; renderCurrentStep(); } },
+          ],
+        });
+        break;
+
+      case 'notFunded':
+        showNotFunded();
+        break;
+
+      default:
+        step = 'start';
+        renderCurrentStep();
+    }
+  }
+
+  // Add handler for bottom Unscreened button to trigger new flow
+
+
+btnUnderscreened.onclick = () => {
+  historyStack.push({ step, currentState: JSON.parse(JSON.stringify(currentState)) });
+  step = 'underscreenedConfirm';
+  renderCurrentStep();
+  updateBackButton();
+};
+
+
+
+  // Initialize UI
+  updateBackButton();
+  renderCurrentStep();
+
+})();
+
+
+function yearsSince(dateString) {
+  if (!dateString) return null;
+  const screeningDate = new Date(dateString);
+  const today = new Date();
+  const diffMs = today - screeningDate;
+  const years = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+  return years;
+}
+
+const screeningDateInput = document.getElementById('screeningDate');
+const output = document.getElementById('yearsPassedText');
+
+screeningDateInput.addEventListener('change', () => {
+  const yearsPassed = yearsSince(screeningDateInput.value);
+  if (yearsPassed === null) {
+    output.textContent = '';
+    return;
+  }
+  
+  output.textContent = `Years since last screening: ${yearsPassed.toFixed(2)}`;
+  
+  // Example underscreened logic for non-immune patient
+  if (yearsPassed >= 5) {
+    output.textContent += " — Underscreened (non-immune)";
+  } else if (yearsPassed >= 3) {
+    output.textContent += " — Check if immunocompromised";
+  } else {
+    output.textContent += " — Screening up to date";
+  }
+});
+
+
+</script>
+</body>
+</html>
