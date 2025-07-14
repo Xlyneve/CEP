@@ -502,6 +502,13 @@ table.editable-table th {
   display: block;
   margin: 10px 0;
 }
+.resizableEmoji {
+  font-size: 1.4em;
+  font-weight: bold;
+  display: inline-block;
+}
+
+
 
 
 @keyframes underlineFade {
@@ -773,7 +780,7 @@ document.querySelectorAll('.emoji').forEach(btn => {
     activeEditable.focus();
     if (!restoreCaret()) {
       if (["⬇", "⬆", "⬅", "➡", "➀", "➁", "➂", "➃"].includes(emoji)) {
-        activeEditable.innerHTML += `<span style="font-size:18px; font-weight:bold;">${emoji}</span>`;
+       activeEditable.innerHTML += `<span class="resizableEmoji">${emoji}</span>`;
       } else {
         activeEditable.innerHTML += emoji;
       }
@@ -783,12 +790,12 @@ document.querySelectorAll('.emoji').forEach(btn => {
       const range = sel.getRangeAt(0);
       range.deleteContents();
       if (["⬇", "⬆", "⬅", "➡", "➀", "➁", "➂", "➃"].includes(emoji)) {
-        const span = document.createElement('span');
-        span.style.fontSize = "26px";
-        span.style.fontWeight = "bold";
-        span.textContent = emoji;
-        range.insertNode(span);
-        range.setStartAfter(span);
+  const span = document.createElement('span');
+  span.className = 'resizableEmoji';
+  span.textContent = emoji;
+  range.insertNode(span);
+  range.setStartAfter(span);
+
       } else {
         const textNode = document.createTextNode(emoji);
         range.insertNode(textNode);
@@ -1214,23 +1221,83 @@ function changeFontSize(delta) {
   if (!sel.rangeCount || !activeEditable.contains(sel.anchorNode)) return;
 
   const range = sel.getRangeAt(0);
-  if (range.collapsed) {
-    // Apply to caret position: insert a span for future typing
+
+  if (!range.collapsed) {
+    // Check for emoji spans inside selection
+    const selectedNodes = range.cloneContents().querySelectorAll('span.resizableEmoji');
+
+    if (selectedNodes.length) {
+      selectedNodes.forEach(span => {
+        const currentSize = parseFloat(window.getComputedStyle(span).fontSize);
+        const newSize = Math.max(8, currentSize + delta * 2); // Min size safeguard
+        span.style.fontSize = newSize + 'px';
+      });
+
+      return; // Stop here so it doesn't insert new span
+    }
+
+    // Otherwise wrap selection in new span
     const span = document.createElement('span');
-    span.style.fontSize = `${delta > 0 ? 'larger' : 'smaller'}`;
-    span.appendChild(document.createTextNode('\u200B')); // zero-width space
+    span.style.fontSize = delta > 0 ? 'larger' : 'smaller';
+    span.appendChild(range.extractContents());
+    range.insertNode(span);
+  } else {
+    // No selection — insert styled span at caret
+    const span = document.createElement('span');
+    span.style.fontSize = delta > 0 ? 'larger' : 'smaller';
+    span.appendChild(document.createTextNode('\u200B')); // cursor marker
     range.insertNode(span);
     range.setStart(span, 1);
     range.collapse(true);
     sel.removeAllRanges();
     sel.addRange(range);
-  } else {
-    // Apply to selected text
-    const span = document.createElement('span');
-    span.style.fontSize = `${delta > 0 ? 'larger' : 'smaller'}`;
-    span.appendChild(range.extractContents());
-    range.insertNode(span);
   }
+
+  saveCaret();
+}
+
+function resetFormatting() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !activeEditable.contains(sel.anchorNode)) return;
+
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) return;
+
+  // Extract the selected content
+  const extracted = range.extractContents();
+
+  // Create a helper function to recursively unwrap nodes
+  function unwrapNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return document.createTextNode(node.textContent);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      // Create a document fragment to hold unwrapped children
+      const frag = document.createDocumentFragment();
+      node.childNodes.forEach(child => {
+        frag.appendChild(unwrapNode(child));
+      });
+      return frag;
+    } else {
+      // For other node types, ignore
+      return document.createTextNode('');
+    }
+  }
+
+  // Unwrap the extracted content completely
+  const cleanFragment = document.createDocumentFragment();
+  extracted.childNodes.forEach(node => {
+    cleanFragment.appendChild(unwrapNode(node));
+  });
+
+  // Insert the clean fragment back into the range
+  range.insertNode(cleanFragment);
+
+  // Collapse caret after inserted content
+  range.collapse(false);
+
+  // Clear selection and set caret to new position
+  sel.removeAllRanges();
+  sel.addRange(range);
 
   saveCaret();
 }
@@ -1428,7 +1495,7 @@ document.getElementById('boldBtn').onclick = () => document.execCommand('bold');
 document.getElementById('italicBtn').onclick = () => document.execCommand('italic');
 document.getElementById('underlineBtn').onclick = () => document.execCommand('underline');
 document.getElementById('highlightBtn').onclick = () => document.execCommand('foreColor', false, '#5c6ac4');
-document.getElementById('resetColorBtn').onclick = () => document.execCommand('foreColor', false, 'black');
+document.getElementById('resetColorBtn').onclick = resetFormatting;
 document.getElementById('increaseFontBtn').onclick = () => changeFontSize(1);
 document.getElementById('decreaseFontBtn').onclick = () => changeFontSize(-1);
 
