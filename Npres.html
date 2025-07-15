@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prescribable Medications</title>
+  <style>
+  @font-face {
+  font-family: 'Adelicia';
+  src: url('AdeliciaRegular.ttf');
+}
+
+@font-face {
+  font-family: 'Simplicity';
+  src: url('Simplicity.ttf');
+}
+
+body {
+  font-family: 'Tahoma', sans-serif;
+  font-size: 12px;
+  background: linear-gradient(to bottom right, #fefefe, #f8f8f8);
+  color: #333;
+  padding: 30px;
+}
+
+h1 {
+  font-family: 'Adelicia', serif;
+  text-align: center;
+  font-size: 2.6em;
+  margin-bottom: 20px;
+  font-weight: 600;
+
+  color: #d94f71; /* deeper rose */
+  background-image: linear-gradient(90deg, #d94f71, #f8718f, #fbc1cc);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  animation: roseGlow 4s ease-in-out infinite;
+
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+
+  /* Remove background & border for container */
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.controls input,
+.controls button {
+  font-size: 1em;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255 255 255 / 0.3);
+  margin: 5px;
+  background: rgba(255 255 255 / 0.15);
+  color: #333;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.controls input::placeholder {
+  color: rgba(51, 51, 51, 0.5);
+}
+
+.controls button {
+  cursor: pointer;
+}
+
+.controls button:hover {
+  background-color: rgba(255 255 255 / 0.25);
+  border-color: rgba(255 255 255 / 0.5);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255 255 255 / 0.1);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.07);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255 255 255 / 0.3);
+}
+
+th {
+  background: rgba(236 230 233 / 0.25);  /* subtle white glass */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255 255 255 / 0.3);
+  cursor: pointer;
+  color: #333;
+  user-select: none;
+  transition: background 0.3s ease;
+}
+
+th:hover {
+  background: rgba(255 255 255 / 0.35);
+}
+
+td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255 255 255 / 0.15);
+  color: #333;
+  user-select: none;
+}
+
+td[contenteditable="true"] {
+  background-color: rgba(255 255 255 / 0.12);
+  outline: none;
+  transition: background-color 0.3s ease;
+  user-select: text;
+}
+
+td[contenteditable="true"]:focus {
+  background-color: rgba(255 255 255 / 0.25);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+
+.hidden {
+  display: none;
+}
+
+.icon-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 15px;
+
+  background: rgba(255 255 255 / 0.15);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 16px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255 255 255 / 0.3);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.05);
+}
+
+.icon-buttons button {
+  font-size: 12px;
+  background: rgba(255 255 255 / 0.12);
+  border: none;
+  padding: 6px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  line-height: 1;
+  color: #333;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.icon-buttons button:hover {
+  background: rgba(255 255 255 / 0.25);
+}
+
+@keyframes roseGlow {
+  0% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+  100% {
+    background-position: 0% center;
+  }
+}
+
+
+
+  </style>
+</head>
+<body>
+
+  <h1>Medications Lists</h1>
+
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="Search medications..." onkeyup="filterTable()" />
+   <div class="icon-buttons">
+  <button onclick="toggleEditMode()" title="Toggle Edit/View">✏️</button>
+  <button onclick="addRow()" title="Add Row">➕</button>
+  <button onclick="deleteSelectedRow()" title="Delete Row">❌</button>
+  <button onclick="saveTableToFirebase()" title="Save Table">💾</button>
+
+</div>
+
+
+  </div>
+<div id="modeStatus" style="text-align:center; margin-bottom: 12px; font-weight: bold; color: #5a5a5a;">
+  Currently: <span id="modeText">Edit Mode</span>
+</div>
+
+  <table id="medicationTable">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0)">Medication</th>
+        <th onclick="sortTable(1)">Dosage</th>
+        <th onclick="sortTable(2)">Indication</th>
+        <th onclick="sortTable(3)">Side Effects</th>
+        <th onclick="sortTable(4)">Type / Category</th>
+        <th onclick="sortTable(5)">Restrictions</th>
+        <th onclick="sortTable(6)">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td contenteditable="true">Paracetamol</td>
+        <td contenteditable="true">500mg QID</td>
+        <td contenteditable="true">Pain relief</td>
+        <td contenteditable="true">Nausea, rash</td>
+        <td contenteditable="true">Analgesic</td>
+        <td contenteditable="true">Max 4g/day</td>
+        <td contenteditable="true">Safe in pregnancy</td>
+      </tr>
+    </tbody>
+  </table>
+  
+ <script type="module">
+  // Firebase core + Firestore
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // Your config
+  const firebaseConfig = {
+    apiKey: "AIzaSyC1a4YDhJ3LAlqxIs9u5LrZ64Dp--jbIYM",
+    authDomain: "nurse-prescribing-notes.firebaseapp.com",
+    projectId: "nurse-prescribing-notes",
+    storageBucket: "nurse-prescribing-notes.firebasestorage.app",
+    messagingSenderId: "12133511320",
+    appId: "1:12133511320:web:114f6eb1c28ea2813b20ed",
+    measurementId: "G-540TZ8HK1G"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.firebaseDB = db;
+  window.firebaseCollection = collection(db, "medications"); // collection name
+  window.firebaseDoc = doc;
+  window.firebaseSetDoc = setDoc;
+  window.firebaseGetDocs = getDocs;
+
+  let isEditMode = true;
+  let selectedRow = null;  // Declare selectedRow here to avoid globals
+
+  function addRow() {
+    console.log("Add row clicked");
+    const table = document.getElementById("medicationTable").getElementsByTagName("tbody")[0];
+    const row = table.insertRow();
+    for (let i = 0; i < 7; i++) {
+      const cell = row.insertCell();
+      cell.contentEditable = isEditMode;
+      cell.innerText = "";
+    }
+  }
+
+  function toggleEditMode() {
+    isEditMode = !isEditMode;
+    const cells = document.querySelectorAll("#medicationTable td");
+    cells.forEach(cell => {
+      cell.contentEditable = isEditMode;
+      cell.style.backgroundColor = isEditMode ? "#fcfcfc" : "#fdfdfd";
+    });
+
+    // Update the mode status text
+    document.getElementById("modeText").textContent = isEditMode ? "Edit Mode" : "View Mode";
+  }
+const columns = ["medication", "dosage", "indication", "sideEffects", "typeCategory", "restrictions", "notes"];
+
+async function saveTableToFirebase() {
+  const rows = document.querySelectorAll("#medicationTable tbody tr");
+  const tableData = [];
+
+  rows.forEach(row => {
+    const rowData = {};
+    row.querySelectorAll("td").forEach((cell, i) => {
+      rowData[columns[i]] = cell.innerText.trim();
+    });
+    tableData.push(rowData);
+  });
+
+  try {
+    await setDoc(doc(db, "medications", "medTable"), { rows: tableData });
+    alert("Saved to Firebase!");
+  } catch (error) {
+    console.error("Save failed:", error);
+    alert("Save failed! See console.");
+  }
+}
+
+async function loadTableFromFirebase() {
+  try {
+    const snapshot = await getDocs(firebaseCollection);
+    const table = document.querySelector("#medicationTable tbody");
+    table.innerHTML = "";
+    
+    let found = false;
+    snapshot.forEach(doc => {
+      if (doc.id === "medTable") {
+        found = true;
+        const data = doc.data();
+        if (data.rows && Array.isArray(data.rows)) {
+          data.rows.forEach(rowData => {
+            const row = table.insertRow();
+            columns.forEach(colName => {
+              const cell = row.insertCell();
+              cell.textContent = rowData[colName] || "";
+              cell.contentEditable = isEditMode;
+            });
+          });
+        }
+      }
+    });
+    if (!found) {
+      console.log("No saved data found");
+    }
+  } catch (error) {
+    console.error("Load failed:", error);
+  }
+}
+
+
+
+  function filterTable() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const rows = document.querySelectorAll("#medicationTable tbody tr");
+    rows.forEach(row => {
+      const rowText = row.innerText.toLowerCase();
+      row.style.display = rowText.includes(input) ? "" : "none";
+    });
+  }
+
+  function sortTable(colIndex) {
+    const table = document.getElementById("medicationTable");
+    const rows = Array.from(table.rows).slice(1);
+    const tbody = table.tBodies[0];
+    const sorted = rows.sort((a, b) =>
+      a.cells[colIndex].innerText.localeCompare(b.cells[colIndex].innerText)
+    );
+    sorted.forEach(row => tbody.appendChild(row));
+  }
+
+  // Delete selected row
+  function deleteSelectedRow() {
+    console.log("Deleting row:", selectedRow);
+    if (selectedRow) {
+      selectedRow.remove();
+      selectedRow = null;
+    } else {
+      alert("Click a row cell first to select it.");
+    }
+  }
+
+  // Row selection with highlighting
+  document.addEventListener("click", function (e) {
+    const rows = document.querySelectorAll("#medicationTable tbody tr");
+    rows.forEach(row => row.style.backgroundColor = ""); // clear highlights
+
+    if (e.target.tagName === "TD") {
+      selectedRow = e.target.parentElement;
+      selectedRow.style.backgroundColor = "#ffe5e5";
+    } else {
+      selectedRow = null; // clear selection if click outside table cells
+    }
+  });
+
+  // Load table data on page load
+  window.onload = function () {
+    loadTableFromFirebase();
+  };
+
+  // Expose functions globally for HTML button onclicks
+  window.toggleEditMode = toggleEditMode;
+  window.addRow = addRow;
+  window.deleteSelectedRow = deleteSelectedRow;
+  window.saveTableToFirebase = saveTableToFirebase;
+  window.filterTable = filterTable;
+  window.sortTable = sortTable;
+
+</script>
+
+
+</body>
+</html>
