@@ -129,6 +129,12 @@ td[contenteditable="true"] {
 td[contenteditable="true"]:focus {
   background-color: rgba(255 255 255 / 0.25);
 }
+td[contenteditable="true"] {
+  white-space: pre-wrap;   /* preserves spaces and line breaks */
+  word-break: break-word;  /* wrap long words nicely */
+  min-height: 20px;        /* optional: gives some vertical space */
+}
+
 
 tr:last-child td {
   border-bottom: none;
@@ -359,7 +365,7 @@ async function saveTableToFirebase() {
   rows.forEach(row => {
     const rowData = {};
     row.querySelectorAll("td").forEach((cell, i) => {
-      rowData[columns[i]] = cell.innerText.trim();
+      rowData[columns[i]] = cell.innerHTML.trim();
     });
     tableData.push(rowData);
   });
@@ -389,7 +395,7 @@ async function loadTableFromFirebase() {
             const row = table.insertRow();
             columns.forEach(colName => {
               const cell = row.insertCell();
-              cell.textContent = rowData[colName] || "";
+              cell.innerHTML = rowData[colName] || "";
               cell.contentEditable = isEditMode;
             });
           });
@@ -475,6 +481,14 @@ window.copyEmoji = function(button, emoji) {
     console.error("Failed to copy emoji:", err);
   });
 };
+
+document.querySelector("#medicationTable").addEventListener("keydown", function (e) {
+  if (e.target.matches("td[contenteditable='true']") && e.key === "Enter") {
+    e.preventDefault();
+    // Insert line breaks instead of new paragraph/div
+    document.execCommand('insertHTML', false, '<br><br>');
+  }
+});
 
 
 </script>
