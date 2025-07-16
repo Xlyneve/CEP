@@ -172,6 +172,65 @@ tr:last-child td {
   background: rgba(255 255 255 / 0.25);
 }
 
+#emojiCopyMenu {
+  position: fixed;
+  top: 6px;
+  right: -4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  z-index: 999;
+  font-size: 10px;
+  font-family: 'Tahoma', sans-serif;
+  line-height: 1;
+}
+
+.emojiLine {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 1px;
+  padding: 1px;
+}
+
+#emojiCopyMenu button {
+  font-size: 12px;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  line-height: 1;
+}
+
+#emojiCopyMenu button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+#emojiCopyMenu span {
+  font-size: 10px;
+  color: #555;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+}
+
+.copiedMsg {
+  font-size: 10px;
+  color: green;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.copiedMsg.show {
+  opacity: 1;
+}
+
+
+
+
 @keyframes roseGlow {
   0% {
     background-position: 0% center;
@@ -201,6 +260,14 @@ tr:last-child td {
   <button onclick="saveTableToFirebase()" title="Save Table">💾</button>
 
 </div>
+ 
+<div id="emojiCopyMenu">
+  <div class="emojiLine"><button onclick="copyEmoji(this, '🔴')">🔴</button><span>1st</span><span class="copiedMsg">✅</span></div>
+  <div class="emojiLine"><button onclick="copyEmoji(this, '🟡')">🟡</button><span>2nd</span><span class="copiedMsg">✅</span></div>
+  <div class="emojiLine"><button onclick="copyEmoji(this, '🔵')">🔵</button><span>1st (if allergic) </span><span class="copiedMsg">✅</span></div>
+  <div class="emojiLine"><button onclick="copyEmoji(this, '🟢')">🟢</button><span>2nd (if allergic) </span><span class="copiedMsg">✅</span></div>
+</div>
+
 
 
   </div>
@@ -394,6 +461,21 @@ async function loadTableFromFirebase() {
   window.saveTableToFirebase = saveTableToFirebase;
   window.filterTable = filterTable;
   window.sortTable = sortTable;
+  
+window.copyEmoji = function(button, emoji) {
+  navigator.clipboard.writeText(emoji).then(() => {
+    const copiedSpan = button.parentElement.querySelector('.copiedMsg');
+    if (copiedSpan) {
+      copiedSpan.classList.add('show');
+      setTimeout(() => {
+        copiedSpan.classList.remove('show');
+      }, 1000); // show for 1 second
+    }
+  }).catch(err => {
+    console.error("Failed to copy emoji:", err);
+  });
+};
+
 
 </script>
 
