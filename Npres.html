@@ -268,10 +268,30 @@ tr:last-child td {
 </div>
  
 <div id="emojiCopyMenu">
-  <div class="emojiLine"><button onclick="copyEmoji(this, '🔴')">🔴</button><span>1st</span><span class="copiedMsg">✅</span></div>
-  <div class="emojiLine"><button onclick="copyEmoji(this, '🟡')">🟡</button><span>2nd</span><span class="copiedMsg">✅</span></div>
-  <div class="emojiLine"><button onclick="copyEmoji(this, '🔵')">🔵</button><span>1st (if allergic) </span><span class="copiedMsg">✅</span></div>
-  <div class="emojiLine"><button onclick="copyEmoji(this, '🟢')">🟢</button><span>2nd (if allergic) </span><span class="copiedMsg">✅</span></div>
+ <div class="emojiLine">
+  <button title="First-line treatment" onclick="copyEmoji(this, '🔴')">🔴</button>
+  <span>1st</span>
+  <span class="copiedMsg">✅</span>
+</div>
+
+<div class="emojiLine">
+  <button title="Second-line treatment" onclick="copyEmoji(this, '🟡')">🟡</button>
+  <span>2nd</span>
+  <span class="copiedMsg">✅</span>
+</div>
+
+<div class="emojiLine">
+  <button title="1st line if allergic to first-line group" onclick="copyEmoji(this, '🔵')">🔵</button>
+  <span>1stX</span>
+  <span class="copiedMsg">✅</span>
+</div>
+
+<div class="emojiLine">
+  <button title="2nd in line/ or no improvement to first line group " onclick="copyEmoji(this, '🟢')">🟢</button>
+  <span>2ndX</span>
+  <span class="copiedMsg">✅</span>
+</div>
+
 </div>
 
 
@@ -293,17 +313,7 @@ tr:last-child td {
         <th onclick="sortTable(6)">Notes</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td contenteditable="true">Paracetamol</td>
-        <td contenteditable="true">500mg QID</td>
-        <td contenteditable="true">Pain relief</td>
-        <td contenteditable="true">Nausea, rash</td>
-        <td contenteditable="true">Analgesic</td>
-        <td contenteditable="true">Max 4g/day</td>
-        <td contenteditable="true">Safe in pregnancy</td>
-      </tr>
-    </tbody>
+    <tbody></tbody>
   </table>
   
  <script type="module">
@@ -331,7 +341,7 @@ import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gsta
   window.firebaseSetDoc = setDoc;
   window.firebaseGetDocs = getDocs;
 
-  let isEditMode = true;
+  let isEditMode = false;
   let selectedRow = null;  // Declare selectedRow here to avoid globals
 
   function addRow() {
@@ -456,9 +466,11 @@ async function loadTableFromFirebase() {
   });
 
   // Load table data on page load
-  window.onload = function () {
-    loadTableFromFirebase();
-  };
+ window.onload = function () {
+  loadTableFromFirebase();
+  document.getElementById("modeText").textContent = "View Mode";
+};
+
 
   // Expose functions globally for HTML button onclicks
   window.toggleEditMode = toggleEditMode;
