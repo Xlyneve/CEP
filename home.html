@@ -56,9 +56,9 @@ header h1 {
 
 .pageTitle {
   font-family: 'AdeliciaRegular', cursive, sans-serif;
-  font-size: 100px;
+  font-size: 120px;
   letter-spacing: 6px;
-  font-weight: 900; /* try heavier */
+  font-weight: 900;
   color: black;
   position: relative;
   z-index: 2;
@@ -69,6 +69,13 @@ header h1 {
     2px 2px 0 rgba(245, 245, 245, 0.8),
     3px 3px 0 rgba(230, 230, 230, 0.7);
   transform: scaleX(1.05);
+
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 12px 24px;
+  border-radius: 12px;
+  display: inline-block;
 }
 
 
@@ -100,54 +107,63 @@ header h1 {
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 12px;
-  font-weight: 400;
+  font-size: 11px; /* from .vitals-circle */
+  font-weight: normal; /* from .vitals-circle */
   cursor: pointer;
-  transition: transform 0.3s ease;
   padding: 8px;
   box-sizing: border-box;
   color: #333;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background-color: transparent;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 0 8px rgba(255, 255, 255, 0.2);
+  transition:
+    transform 0.3s ease,
+    backdrop-filter 0.4s ease,
+    -webkit-backdrop-filter 0.4s ease,
+    box-shadow 0.4s ease;
+  animation: pulse 1.8s infinite; /* add pulse effect */
+  position: relative;
 }
 
 .circle:hover {
-  animation: pulse 1s infinite;
+  transform: scale(1.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.2),
+    inset 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.circle span {
+  text-align: center;
+  color: #333;
+}
+
+.circle::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 70%;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.circle:hover::after {
+  opacity: 1;
 }
 
 @keyframes pulse {
   0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 
-.calendar { background-color: #e9cbcb; }
-.patient  { background-color: #aca37e; }
-.notes    { background-color: #ddc6b2; }
-.timesheet{ background-color: #737958; }
-.calculator { background-color: #e9cbcb; }
-.trial { background-color: #aca37e; }
-.inr { background-color: #ddc6b2; }
-
-.vitals-circle {
-  width: 70px;
-  height: 70px;
-  background-color: #f0ddd6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: normal;
-  color: #333;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-}
-.vitals-circle:hover {
-  animation: pulse 1s infinite;
-}
-.vitals-circle span {
-  text-align: center;
-  color: #333;
-}
 
 #vital-signs-table {
   display: none;
@@ -155,16 +171,20 @@ header h1 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #ffffff;
-  border: 1px solid #aca37e;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
   padding: 20px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.2);
   max-width: 90vw;
   max-height: 80vh;
   overflow-x: auto;
   font-family: 'fors', sans-serif;
   font-size: 14px;
   z-index: 5000;
+  transition: backdrop-filter 0.6s ease, background 0.6s ease;
 }
 
 #vital-signs-table table {
@@ -172,56 +192,70 @@ header h1 {
   min-width: 100%;
   border-collapse: collapse;
 }
+
 #vital-signs-table th, td {
   padding: 10px;
   text-align: left;
   white-space: nowrap;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #111;
+  backdrop-filter: blur(6px);
 }
+
 #vital-signs-table th {
-  background-color: #f7f7f7;
+  background-color: rgba(250, 250, 250, 0.4);
+  font-weight: bold;
 }
 
 #close-btn {
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: #93b0ac;
+  background-color: rgba(147, 176, 172, 0.8);
   color: white;
   border: none;
   padding: 10px;
   cursor: pointer;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
 }
+
 
 .top-links {
   margin-top: 10px;
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
   position: relative;
   z-index: 2;
-  top: 20px;
+  top: 8px;
 }
 
+
 .top-links a {
-  padding: 4px 8px;
-  background-color: #f7f2ef;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.15);
   color: black;
   font-size: 12px;
   font-family: 'fors', sans-serif;
-  border: 1px solid #d8cfc9;
-  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
   text-decoration: none;
   transition: background-color 0.3s, transform 0.3s;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 .top-links a:hover {
-  background-color: #ddc6b2;
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.15);
 }
+
 
 .icon-stack {
   position: absolute;
@@ -304,9 +338,11 @@ h2 {
 
 .card {
   padding: 16px;
-  border-radius: 12px;
-  background: #f7f2ef;
-  border: 1px solid #e5d6cd;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   text-align: center;
   font-size: 14px;
   font-weight: 400;
@@ -315,12 +351,14 @@ h2 {
   position: relative;
   z-index: 2;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(180, 180, 180, 0.15);
-  background-color: #ebebeb;
+  transform: translateY(-10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.25);
 }
+
 
 footer {
   text-align: center;
@@ -498,8 +536,8 @@ footer {
 	<div class="circle inr" onclick="location.href='INR Calc.html'">INR</div>
     <div class="circle timesheet" onclick="window.open('https://onedrive.live.com/edit.aspx?cid=cd58075507480906&page=view&resid=CD58075507480906!660&parId=CD58075507480906!107&app=Excel', '_blank')">Timesheet</div>
     <div class="vitals-circle" onclick="showTable()"> 
-	
-      <span>Vitals</span>
+	<div class="circle vitals">Vitals</div>
+
     </div>
   </div>
 </header>
