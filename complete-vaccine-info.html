@@ -8,6 +8,15 @@
   <script type="module" src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+  
+  body {
+  background: #f5f6f8; /* subtle off-white gray */
+  color: #222;
+  font-family: 'sans-serif';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
     .notes-cell {
       max-width: 100%;
       white-space: pre-wrap;
@@ -29,32 +38,229 @@
       position: fixed;
       top: 10px;
       left: 10px;
-      background-color: #f1f1f1;
-      border: 1px solid #ccc;
       padding: 6px 12px;
       font-size: 14px;
       text-decoration: none;
       color: #333;
       border-radius: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;    
       z-index: 999;
+	  background: rgba(255 255 255 / 0.7);
+  border: 1px solid rgba(200 200 200 / 0.6);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #222;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
     }
 
     .home-button:hover {
-      background-color: #ececec;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transform: scale(1.05);
-    }
+  background: rgba(255 255 255 / 0.85);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+  transform: scale(1.05);
+}
 
-    #searchBox {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 6px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
+  #searchBox {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: 180px;
+  z-index: 1000;
+  background: rgba(255 255 255 / 0.8);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid rgba(200 200 200 / 0.6);
+  transition: width 0.3s ease;
+}
+
+
+#searchBox:focus {
+  background: rgba(255 255 255 / 0.85);
+  border-color: rgba(160,160,160,0.8);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+  outline: none;
+}
+
+#vaccineForm {
+  background: rgba(255 255 255 / 0.6);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+  user-select: none;
+}
+
+#vaccineForm input[type="text"] {
+  background: rgba(255 255 255 / 0.75);
+  border-radius: 14px;
+  border: 1px solid rgba(180,180,180,0.5);
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #222;
+  box-shadow: inset 0 0 8px rgba(255 255 255 / 0.6);
+  backdrop-filter: blur(8px);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+#vaccineForm input[type="text"]:focus {
+  background: rgba(255 255 255 / 0.9);
+  box-shadow: inset 0 0 12px rgba(220 220 220 / 0.8);
+  outline: none;
+}
+
+#notes {
+  background: rgba(255 255 255 / 0.75);
+  border-radius: 14px;
+  padding: 12px;
+  height: 64px;
+  overflow-y: auto;
+  box-shadow: inset 0 0 10px rgba(255 255 255 / 0.8);
+  color: #222;
+  border: 1px solid rgba(180,180,180,0.5);
+  user-select: text;
+  resize: none;
+}
+
+#vaccineForm > div:last-child button[type="button"] {
+  background: rgba(255 255 255 / 0.75);
+  border-radius: 10px;
+  border: 1px solid rgba(180,180,180,0.5);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #222;
+  box-shadow: 0 0 8px rgba(255 255 255 / 0.7);
+  transition: background 0.25s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+#vaccineForm > div:last-child button[type="button"]:hover {
+  background: rgba(255 255 255 / 0.9);
+  transform: scale(1.1);
+}
+
+#vaccineForm button[type="submit"] {
+  background: rgba(230, 230, 230, 0.7);
+  color: #222;
+  font-weight: 600;
+  border-radius: 14px;
+  border: 1px solid rgba(190, 190, 190, 0.8);
+  padding: 10px 18px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(200, 200, 200, 0.5);
+  transition: background 0.3s ease;
+  user-select: none;
+}
+
+#vaccineForm button[type="submit"]:hover {
+  background: rgba(230, 230, 230, 0.9);
+  box-shadow: 0 12px 28px rgba(180, 180, 180, 0.7);
+}
+
+.overflow-x-auto {
+  border-radius: 20px;
+  background: rgba(255 255 255 / 0.6);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: inset 0 0 12px rgba(255 255 255 / 0.35);
+  user-select: none;
+}
+
+thead tr {
+  background: rgba(240 240 240 / 0.8);
+  color: #222;
+  text-shadow: none;
+}
+
+th, td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(180 180 180 / 0.5);
+  color: #222;
+  vertical-align: middle;
+  font-size: 14px;
+  user-select: text;
+}
+
+tbody tr:hover {
+  background: rgba(200 200 200 / 0.15);
+  transition: background 0.3s ease;
+}
+
+.notes-cell {
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding: 4px;
+  color: #222;
+}
+
+.actions-cell {
+  width: 110px;
+  white-space: nowrap;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-start;
+  user-select: none;
+}
+
+.actions-cell button {
+  border-radius: 8px;
+  border: none;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: box-shadow 0.25s ease;
+  box-shadow: 0 0 6px rgba(255 255 255 / 0.7);
+}
+
+.actions-cell button:nth-child(1) {
+  background: #e1d9d9;
+  color: #222;
+}
+
+.actions-cell button:nth-child(1):hover {
+  background: #d3c6c6;
+  box-shadow: 0 0 10px rgba(211 198 198 / 0.9);
+}
+
+.actions-cell button:nth-child(2) {
+  background: #c9d3d0;
+  color: #222;
+}
+
+.actions-cell button:nth-child(2):hover {
+  background: #abb8b4;
+  box-shadow: 0 0 10px rgba(171 184 180 / 0.9);
+}
+
+/* Scrollbar for notes */
+#notes::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+#notes::-webkit-scrollbar-thumb {
+  background: rgba(150 150 150 / 0.6);
+  border-radius: 10px;
+}
+}
+
   </style>
 </head>
 
