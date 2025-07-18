@@ -5,82 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Recalls</title>
   <style>
-  
-  @font-face {
-  font-family: 'fors';
-  src: url('fors.ttf') format('truetype');
+    @font-face {
+      font-family: 'fors';
+      src: url('fors.ttf') format('truetype');
+    }
 
-  }
-body {
-  font-family: 'fors', sans-serif;
-  background-color: #f3f2ee;
-  background-image: url('b7.png'); /* Replace with your actual image file */
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: 90%; /* Make it smaller (adjust percentage as needed) */
-  background-attachment: fixed;
-  margin: 0;
-  font-size: 12px;
-  color: #333;
-}
+    body {
+      font-family: 'fors', sans-serif;
+        background: linear-gradient(135deg, rgba(230, 230, 250, 0.7), rgba(255, 255, 255, 0.9));
+      margin: 0;
+      font-size: 12px;
+      color: #333;
+    }
 
+    /* Glassmorphism style */
+    .glass {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
 
-.note-content {
-  font-family: 'Tahoma', sans-serif;
-  font-size: 11px;
-}
+    .note-content {
+      font-family: 'Tahoma', sans-serif;
+      font-size: 11px;
+    }
 
     .header {
-  position: fixed; /* Ensure header stays fixed on scroll */
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  background-color: rgba(204, 186, 181, 0.4);
-  padding: 15px 15px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 10;
-}
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      padding: 15px 15px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+    .header.glass { border-radius: 0 0 12px 12px; }
 
     .header a {
-  position: relative; /* Required for z-index to take effect */
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 14px;
-  padding: 6px 12px;
-  background-color: #a98eaa;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  color: black;
-  z-index: 11; /* Ensure it sits above plant image */
-}
-
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: black;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(5px);
+    }
     .header a:hover {
-      background-color: #dabdd3;
+      background: rgba(255, 255, 255, 0.6);
     }
-    .search-box {
-      float: right;
-    }
+
     .search-box input {
       padding: 4px 8px;
       font-size: 12px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      width: 150px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.4);
+      color: #333;
+      backdrop-filter: blur(5px);
     }
-    .container {
-  width: 100%;
-  padding: 80px 20px 20px; /* Top padding accounts for fixed header height */
-  box-sizing: border-box;
 
+    .container {
+      width: 100%;
+      padding: 80px 20px 20px;
+      box-sizing: border-box;
     }
+
     h2 {
       text-align: center;
       font-size: 20px;
     }
+
     .form-section {
       display: flex;
       flex-wrap: wrap;
@@ -94,149 +96,129 @@ body {
       padding: 8px;
       font-size: 13px;
       border-radius: 6px;
-      border: 1px solid #ccc;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(5px);
     }
+
     .add-btn {
-  padding: 8px;
-  font-size: 13px;        /* same as inputs */
-  height: calc(2 * 10px + 1em); /* match input height = padding top + bottom + font-size */
-  line-height: 1.2;
-  background-color: #dab5d9;
-  border: 1px solid #ccc;  /* match input border */
-  border-radius: 6px;
-  cursor: pointer;
-  min-width: 100px;
-  margin-top: 20px;       /* same top margin as inputs */
-}
+      padding: 8px;
+      font-size: 13px;
+      height: calc(2 * 10px + 1em);
+      line-height: 1.2;
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 100px;
+      margin-top: 20px;
+      backdrop-filter: blur(5px);
+    }
+
     .cards-container {
       display: flex;
       flex-wrap: wrap;
       gap: 15px;
       justify-content: flex-start;
     }
-    .note-card {
-      background-color: rgba(242, 241, 242, 0.6);
-      flex: 1 1 calc(25% - 20px);
-      min-width: 260px;
-      padding: 15px;
-      border-radius: 10px;
-      position: relative;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      box-sizing: border-box;
-      word-wrap: break-word;
-	  display: flex;
-	  flex-direction: column; 
-    }
+
+   .note-card {
+  flex: 1 1 calc(25% - 20px);
+  min-width: 260px;
+  padding: 15px;
+  border-radius: 12px;
+  position: relative;
+  word-wrap: break-word;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15), /* bluish subtle glow */
+              0 0 10px rgba(255, 255, 255, 0.2);    /* white highlight */
+}
+
+
     .note-card:hover {
-	 transform: scale(1.05);
+      transform: scale(1.05);
     }
+
     .note-title {
       font-weight: bold;
       font-size: 14px;
       margin-bottom: 6px;
-	  padding-top: 10px; Add dome top padding to create space for the buttons */
+      padding-top: 10px;
     }
+
     .note-actions {
-	  margin-top: auto;
-	  display: flex;
-	  justify-content: space-between
-	  gap: 10px;
-      
-    }
-	
+  margin-top: auto;             /* Push buttons to bottom */
+  display: flex;
+  gap: 6px;                    /* Small gap between buttons */
+  justify-content: flex-end;   /* Align buttons to right */
+  padding-top: 10px;           /* Optional spacing above buttons */
+}
+
     .note-actions button {
-      margin-left: 0px; /* Remove left margin */
-      background-color: #9f8cae;
+      background: rgba(100, 100, 100, 0.5);
       padding: 4px 8px;
       border: none;
       font-size: 11px;
       cursor: pointer;
       color: white;
+      border-radius: 4px;
     }
     .note-actions button:hover {
-      background-color: #737958;
+      background: rgba(60, 60, 60, 0.7);
     }
+
     .highlight {
       background-color: #fbe0D2;
     }
+
     .editor-buttons {
       display: flex;
       gap: 6px;
       margin-top: 6px;
     }
+
     .editor-buttons button {
       font-size: 11px;
       padding: 4px 6px;
       border-radius: 4px;
       border: none;
       cursor: pointer;
-    
-}
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(5px);
+    }
 
-
-.container {
-  position: relative;
-  z-index: 3; /* ensure it's above background elements */
-}
-
-.header a {
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 14px;
-  padding: 6px 12px;
-  background-color: #ccbab5;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  color: black;
-  z-index: 2;
-}
-
-.search-box {
-  z-index: 2;
-}
-
-.header-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 303px;
-  font-weight: bold;
-  color: black;
-  pointer-events: none; /* so clicks pass through */
-}
-	  @media (max-width: 600px) {
-  h1 {
-    font-size: 22px;
-    padding-top: 60px; /* add spacing to prevent overlap */
-  }
-
-  .search-bar {
-    position: static;
-    margin: 10px 20px;
-    justify-content: center;
-  }
-
-  .home-btn {
-    position: static;
-    margin: 10px 20px;
-    display: inline-block;
-  
-  }
-}
-
-
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 22px;
+        padding-top: 60px;
+      }
+      .search-bar {
+        position: static;
+        margin: 10px 20px;
+        justify-content: center;
+      }
+      .home-btn {
+        position: static;
+        margin: 10px 20px;
+        display: inline-block;
+      }
+    }
   </style>
 </head>
 <body>
-
-  <div class="header">
-  <a href="home.html">Home</a>
-  <span style="font-size: 30px; font-weight: bold; margin-left: 20px;">Recalls</span>
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
+  <div class="header glass">
+    <a href="home.html">Home</a>
+    <span style="font-size: 30px; font-weight: bold; margin-left: 20px;">Recalls</span>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
+    </div>
   </div>
-</div>
-
 
   <div class="container">
     <div class="form-section">
