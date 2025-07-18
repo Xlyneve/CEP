@@ -32,15 +32,18 @@ body {
 .calendar-container {
   flex: 1 1 auto; /* grow and shrink as needed */
   min-width: 0; /* allow flexbox to shrink */
-  background-color: #ececec;
   padding: 8px;
   box-sizing: border-box;
   max-height: 100vh;   /* limit container height to viewport height */
   overflow-y: auto;    /* allow vertical scroll if needed */
   position: relative;
-  border-right: 2px solid #C1B6A3;
   border-radius: 12px 0 0 12px;
   transition: box-shadow 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.25); /* lighter glass */
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(193, 182, 163, 0.2);
+
 }
 
 .calendar-container:hover {
@@ -52,37 +55,42 @@ body {
   flex: 0 1 auto;
   max-width: 350px;
   min-width: 150px;
-  background-color: #f6f6f6;
   padding: 3px;
   box-sizing: border-box;
   overflow-y: visible; /* allow container to grow, no scroll */
   overflow-x: hidden;  /* prevent horizontal scroll */
-  border-left: 2px solid #C1B6A3;
   border-radius: 0 12px 12px 0;
   transition: box-shadow 0.3s ease;
   white-space: normal;
+  background-color: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(193, 182, 163, 0.2);
 }
 .todo-container:hover {
   box-shadow: inset 0 0 10px #C1B6A3;
   color: black;
 }
 
-/* To-do title */
 .todo-title {
   font-size: 60px;
   text-align: center;
   margin-bottom: 10px;
-  color: black;
   font-family: 'hellohon', cursive;
   font-weight: bold;
+  color: black;
+  text-shadow:
+    0 1px 0 #fff,       /* subtle white highlight top */
+    0 2px 5px rgba(255, 255, 255, 0.6), /* soft glow */
+    0 0 8px rgba(193, 182, 163, 0.7),  /* warm glow */
+    0 4px 10px rgba(0, 0, 0, 0.4);     /* subtle shadow */
 }
+
 
 /* To-do list box */
 .todo-list {
-  background-color: white;
   padding: 10px;
   border-radius: 12px;
-  border: 1px solid #C1B6A3;
   color: black;
   max-height: none;   /* remove max height limit */
   overflow-y: visible; /* show all items, no scrollbar */
@@ -90,9 +98,12 @@ body {
   width: 100%;
   box-sizing: border-box;
   white-space: normal;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(193, 182, 163, 0.2);
 }
-
-/* To-do item */
+/* To-do item - add glassy background */
 .todo-item {
   display: flex;
   align-items: flex-start; /* so items align at the top */
@@ -101,14 +112,27 @@ body {
   border-bottom: 1px solid #ddd;
   width: 100%;
   box-sizing: border-box;
+
+  background: rgba(255, 255, 255, 0.25);  /* Glassy white */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;  /* Rounded corners for subtle softness */
+  border: 1px solid rgba(193, 182, 163, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+/* Optional: subtle shadow on hover */
+.todo-item:hover {
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
 
 /* To-do item text input and textarea */
+/* Keep background transparent so glassy effect is from parent container */
 .todo-item input[type="text"],
 .todo-item textarea {
   flex: 1;
   border: none;
-  background: transparent;
+  background: transparent;  /* keep transparent for glass effect */
   font-size: 10pt;
   font-family: 'champb', sans-serif;
   padding: 4px;
@@ -130,6 +154,7 @@ body {
   height: 20px;
   accent-color: #ffe700;
 }
+
 
 /* Buttons */
 .add-todo {
@@ -179,23 +204,42 @@ body {
   color: Black;
   font-family: 'hellohon', cursive, sans-serif;
 }
-
-.calendar-header button,
+#monthLabel {
+  font-family: 'hellohon', cursive, sans-serif;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.85); /* semi-transparent white */
+  text-shadow:
+    0 0 5px rgba(255, 255, 255, 0.7),
+    0 0 10px rgba(255, 255, 255, 0.5),
+    0 0 15px rgba(193, 182, 163, 0.8),
+    0 0 20px rgba(193, 182, 163, 0.6);
+}
 .calendar-header select {
-  padding: 4px 8px;
+  padding: 6px 12px;
   font-size: 10pt;
-  background-color: #ddd3d2;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(193, 182, 163, 0.3);
+  border-radius: 8px;
   color: black;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  -webkit-appearance: none;  /* Remove default arrow for better styling */
+  appearance: none;
 }
 
-.calendar-header button:hover,
+/* Optional: Hover effect */
 .calendar-header select:hover {
-  background-color: #ddd3d2;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
 }
 
+/* Optional: Add custom arrow using background image or Unicode character */
+/* If you want the native arrow to remain, skip this */
+
+
+}
 .home-button {
   padding: 4px 8px;
   background-color: #ddd3d2;
@@ -206,9 +250,33 @@ body {
   color: white;
 }
 
-.home-button:hover {
-  background-color: #a89f8b;
+
+ /* Glassy style for home and emoji buttons */
+.home-button,
+.emoji-button,
+.calendar-header > div > button, /* the month control buttons */
+.add-todo button {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(193, 182, 163, 0.3);
+  border-radius: 8px;
+  color: black;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 6px 12px;
+  font-size: 10pt;
 }
+
+/* Hover effect to enhance glassy look */
+.home-button:hover,
+.emoji-button:hover,
+.calendar-header > div > button:hover,
+.add-todo button:hover {
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
 .calendar-header {
   display: flex;
   justify-content: space-between;
@@ -258,8 +326,10 @@ body {
 }
 
 .day {
-  background-color: #efe1e1;
-  border: 1px solid #C1B6A3;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(193, 182, 163, 0.3);
   border-radius: 12px;
   padding: 6px;
   min-height: 150px;
@@ -268,16 +338,50 @@ body {
   align-items: stretch;
   justify-content: flex-start;
   transition: box-shadow 0.3s;
+  box-shadow:
+    inset 0 0 10px rgba(255, 255, 255, 0.6),
+    0 4px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.day::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: -30%;
+  width: 160%;
+  height: 160%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.05) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  pointer-events: none;
+  transform: rotate(-25deg);
+  filter: blur(12px);
+  z-index: 1;
 }
 
 .day:hover {
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow:
+    inset 0 0 15px rgba(255, 255, 255, 0.7),
+    0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
+
 .day.empty {
-  background-color: transparent;
-  border: none;
+  background: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  pointer-events: none; /* optional: so they don’t interfere */
 }
+
 
 .day textarea {
   width: 100%;
@@ -286,15 +390,17 @@ body {
   height: auto;
   resize: none;
   overflow-y: hidden;   /* hide vertical scrollbar */
-  background-color: white; 
-  border: 1px solid #ddd3d2;
   border-radius: 8px;
   padding: 4px;
   font-family: champb, sans-serif;
   font-size: 9.5pt;
-  font-weight: bold;
+  font-weight: regular;
   box-sizing: border-box;
   transition: height 0.2s ease;
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(221, 221, 210, 0.3);
 }
 
 /* date number on day */
@@ -354,6 +460,7 @@ body {
 }
 
 
+
 </style>
 
 </head>
@@ -368,6 +475,8 @@ body {
 	   <button class="emoji-button" onclick="copyEmoji('🟡')">🟡</button>
 	   <button class="emoji-button" onclick="copyEmoji('📌')">📌</button>
 	    <button class="emoji-button" onclick="copyEmoji('▪️')">▪️</button>
+		
+		
     </div>
     <h2 id="monthLabel">Monthly Calendar</h2>
     <div>
