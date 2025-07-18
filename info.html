@@ -17,6 +17,7 @@ body {
   color: #222;
   /* Full page glassy effect */
    background: url('2b.png') no-repeat center center fixed;
+    #d7e0f2; /* soft pastel blue-gray */
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(5px);
 }
@@ -243,6 +244,45 @@ textarea:focus {
   color: #777;
   margin-top: 10px;
 }
+.edit-title {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+  color: #222;
+  transition: background-color 0.3s ease;
+}
+
+.edit-note {
+  width: 90%;
+  min-height: 60px;
+  padding: 6px 8px;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+  color: #222;
+  resize: vertical;
+  transition: background-color 0.3s ease;
+}
+
+.edit-title:focus,
+.edit-note:focus {
+  background: rgba(255, 255, 255, 0.4);
+  outline: none;
+}
+
 
 .btn-group {
   margin-top: 10px;
@@ -406,128 +446,130 @@ textarea:focus {
     });
 
     // Render notes
-    function renderNotes(notesArray) {
-      notesContainer.innerHTML = '';
+       function renderNotes(notesArray) {
+  notesContainer.innerHTML = '';
 
-      if (notesArray.length === 0) {
-        notesContainer.innerHTML = '<p>No notes found.</p>';
-        return;
-      }
+  if (notesArray.length === 0) {
+    notesContainer.innerHTML = '<p>No notes found.</p>';
+    return;
+  }
 
-      for (const note of notesArray) {
-        const card = document.createElement('div');
-        card.className = 'note-card';
-        card.dataset.id = note.id;
+  for (const note of notesArray) {
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    card.dataset.id = note.id;
 
-        // Show title & URL
-        const titleEl = document.createElement('div');
-        titleEl.className = 'note-title';
-        titleEl.textContent = note.title;
+    // Title
+    const titleEl = document.createElement('div');
+    titleEl.className = 'note-title';
+    titleEl.textContent = note.title;
 
-        const urlEl = document.createElement('div');
-        urlEl.className = 'note-url';
-        if (note.url) {
-          const link = document.createElement('a');
-          link.href = note.url;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.textContent = 'URL Link';
-          link.className = 'styled-link';
-          urlEl.appendChild(link);
-        }
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.className = 'edit-title';
+    titleInput.value = note.title;
+    titleInput.style.display = 'none';
 
-        // Explanation display and editor
-        const textDisplay = document.createElement('div');
-        textDisplay.className = 'note-text';
-        textDisplay.innerHTML = parseMarkdown(note.text);
-
-        const textEditor = document.createElement('textarea');
-        textEditor.style.display = 'none';
-        textEditor.value = note.text;
-        textEditor.style.fontFamily = 'Tahoma, sans-serif';
-        textEditor.style.fontSize = '11px';
-        textEditor.style.width = '100%';
-        textEditor.style.borderRadius = '8px';
-        textEditor.style.border = '1px solid #ccc';
-        textEditor.style.padding = '6px';
-        textEditor.rows = 4;
-        textEditor.addEventListener('input', () => autoResizeTextarea(textEditor));
-
-        // Auto resize initially
-        autoResizeTextarea(textEditor);
-
-        // Timestamp
-        const timeEl = document.createElement('div');
-        timeEl.className = 'timestamp';
-        timeEl.textContent = `Added: ${new Date(note.timestamp).toLocaleString()}`;
-
-        // Buttons container
-        const btnGroup = document.createElement('div');
-        btnGroup.className = 'btn-group';
-
-        // Edit button
-        const editBtn = document.createElement('button');
-        editBtn.textContent = 'Edit';
-        editBtn.title = 'Edit this note';
-        editBtn.onclick = () => toggleEdit(card, true);
-
-        // Save button
-        const saveBtn = document.createElement('button');
-        saveBtn.textContent = 'Save';
-        saveBtn.title = 'Save changes';
-        saveBtn.style.display = 'none';
-        saveBtn.onclick = () => saveEdit(card);
-
-        // Cancel button
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.title = 'Cancel editing';
-        cancelBtn.style.display = 'none';
-        cancelBtn.onclick = () => toggleEdit(card, false);
-
-        // Delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.title = 'Delete this note';
-        deleteBtn.onclick = () => deleteNote(note.id);
-
-        // Copy button
-        const copyBtn = document.createElement('button');
-        copyBtn.textContent = 'Copy';
-        copyBtn.title = 'Copy explanation text';
-        copyBtn.onclick = () => {
-          navigator.clipboard.writeText(note.text).then(() => {
-            alert('Explanation copied to clipboard');
-          });
-        };
-
-        btnGroup.append(editBtn, saveBtn, cancelBtn, deleteBtn, copyBtn);
-
-        // Editor formatting buttons
-        const editorFormatButtons = document.createElement('div');
-        editorFormatButtons.className = 'editor-buttons';
-        editorFormatButtons.style.display = 'none';
-
-        const boldBtn = document.createElement('button');
-        boldBtn.textContent = 'Bold';
-        boldBtn.title = 'Wrap selected text with **bold**';
-        boldBtn.onclick = () => wrapSelectionEditor(boldBtn, '**');
-
-        const highlightBtn = document.createElement('button');
-        highlightBtn.textContent = 'Highlight';
-        highlightBtn.title = 'Wrap selected text with ==highlight==';
-        highlightBtn.onclick = () => wrapSelectionEditor(highlightBtn, '==');
-
-        editorFormatButtons.append(boldBtn, highlightBtn);
-
-        // Append all elements
-        card.append(titleEl, urlEl, textDisplay, textEditor, editorFormatButtons, timeEl, btnGroup);
-        notesContainer.appendChild(card);
-      }
+    // URL
+    const urlEl = document.createElement('div');
+    urlEl.className = 'note-url';
+    if (note.url) {
+      const link = document.createElement('a');
+      link.href = note.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'URL Link';
+      link.className = 'styled-link';
+      urlEl.appendChild(link);
     }
+
+    // Explanation display and editor
+    const textDisplay = document.createElement('div');
+    textDisplay.className = 'note-text';
+    textDisplay.innerHTML = parseMarkdown(note.text);
+
+    const textEditor = document.createElement('textarea');
+    textEditor.className = 'edit-note';
+    textEditor.style.display = 'none';
+    textEditor.value = note.text;
+    textEditor.rows = 4;
+    textEditor.addEventListener('input', () => autoResizeTextarea(textEditor));
+    autoResizeTextarea(textEditor);
+
+    // Timestamp
+    const timeEl = document.createElement('div');
+    timeEl.className = 'timestamp';
+    timeEl.textContent = `Added: ${new Date(note.timestamp).toLocaleString()}`;
+
+    // Buttons
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'btn-group';
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+    editBtn.title = 'Edit this note';
+    editBtn.onclick = () => toggleEdit(card, true);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    saveBtn.title = 'Save changes';
+    saveBtn.style.display = 'none';
+    saveBtn.onclick = () => saveEdit(card);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.title = 'Cancel editing';
+    cancelBtn.style.display = 'none';
+    cancelBtn.onclick = () => toggleEdit(card, false);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.title = 'Delete this note';
+    deleteBtn.onclick = () => deleteNote(note.id);
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy';
+    copyBtn.title = 'Copy explanation text';
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(note.text).then(() => {
+        alert('Explanation copied to clipboard');
+      });
+    };
+
+    btnGroup.append(editBtn, saveBtn, cancelBtn, deleteBtn, copyBtn);
+
+    // Formatting buttons (edit mode)
+    const editorFormatButtons = document.createElement('div');
+    editorFormatButtons.className = 'editor-buttons';
+    editorFormatButtons.style.display = 'none';
+
+    const boldBtn = document.createElement('button');
+    boldBtn.textContent = 'Bold';
+    boldBtn.title = 'Wrap selected text with **bold**';
+    boldBtn.onclick = () => wrapSelectionEditor(boldBtn, '**');
+
+    const highlightBtn = document.createElement('button');
+    highlightBtn.textContent = 'Highlight';
+    highlightBtn.title = 'Wrap selected text with ==highlight==';
+    highlightBtn.onclick = () => wrapSelectionEditor(highlightBtn, '==');
+
+    editorFormatButtons.append(boldBtn, highlightBtn);
+
+    // Append elements to card
+    card.append(titleEl, titleInput, urlEl, textDisplay, textEditor, editorFormatButtons, timeEl, btnGroup);
+    notesContainer.appendChild(card);
+  }
+}
+
+
+   
       
+        
+		
     // Toggle edit mode
     function toggleEdit(card, editing) {
+  const titleEl = card.querySelector('.note-title');
+  const titleInput = card.querySelector('.edit-title');
   const textDisplay = card.querySelector('.note-text');
   const textEditor = card.querySelector('textarea');
   const editBtn = card.querySelector('button[title="Edit this note"]');
@@ -536,6 +578,8 @@ textarea:focus {
   const editorFormatButtons = card.querySelector('.editor-buttons');
 
   if (editing) {
+    titleEl.style.display = 'none';
+    titleInput.style.display = 'block';
     textDisplay.style.display = 'none';
     textEditor.style.display = 'block';
     editBtn.style.display = 'none';
@@ -544,6 +588,8 @@ textarea:focus {
     editorFormatButtons.style.display = 'flex';
     autoResizeTextarea(textEditor);
   } else {
+    titleEl.style.display = 'block';
+    titleInput.style.display = 'none';
     textDisplay.style.display = 'block';
     textEditor.style.display = 'none';
     editBtn.style.display = 'inline-block';
@@ -553,25 +599,29 @@ textarea:focus {
   }
 }
 
+
     // Save edits
     async function saveEdit(card) {
-      const id = card.dataset.id;
-      const textEditor = card.querySelector('textarea');
-      const newText = textEditor.value.trim();
+  const id = card.dataset.id;
+  const textEditor = card.querySelector('textarea');
+  const titleInput = card.querySelector('.edit-title');
+  const newText = textEditor.value.trim();
+  const newTitle = titleInput.value.trim();
 
-      if (!newText) {
-        alert("Explanation text cannot be empty.");
-        return;
-      }
+  if (!newTitle || !newText) {
+    alert("Title and explanation cannot be empty.");
+    return;
+  }
 
-      try {
-        const noteRef = doc(db, "informationNotes", id);
-        await updateDoc(noteRef, { text: newText });
-        toggleEdit(card, false);
-      } catch (error) {
-        alert("Failed to save note: " + error.message);
-      }
-    }
+  try {
+    const noteRef = doc(db, "informationNotes", id);
+    await updateDoc(noteRef, { title: newTitle, text: newText });
+    toggleEdit(card, false);
+  } catch (error) {
+    alert("Failed to save note: " + error.message);
+  }
+}
+
 
     // Delete note
     async function deleteNote(id) {
