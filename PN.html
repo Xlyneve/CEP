@@ -12,12 +12,9 @@
 
 body {
   font-family: 'fors', sans-serif;
-  background-color: #f3f2ee;
-  background-image: url('b2.png'); /* replace with your file */
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-attachment: fixed;
-  background-size: 70%; /* keep actual size */
+  background: rgba(255, 255, 255, 0.15); /* light translucent white */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   margin: 0;
   font-size: 12px;
   color: #333;
@@ -28,7 +25,6 @@ body {
   font-size: 11px;
 }
 
-/* HEADER & LAYERING */
 .header {
   position: fixed;
   top: 0;
@@ -36,20 +32,52 @@ body {
   height: 70px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between; /* keeps Home left, search right */
+  padding: 0 20px;
+  box-sizing: border-box;
+
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
   z-index: 50;
   pointer-events: auto;
+
+}
+.header-left {
+  position: absolute;
+  top: 18px;
+  left: 10px;
+  z-index: 1001;
 }
 
-.header-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(204, 186, 181, 0.4);
-  z-index: 50;
-  pointer-events: none;
+.header-left a.header-link {
+  padding: 4px 10px;
+  font-size: 13px;
+  line-height: 1.3;
+  background-color: rgba(189, 191, 218, 0.7);
+  border-radius: 6px;
+  border: 1px solid rgba(204, 186, 181, 0.6);
+  color: black;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+
+.header a.header-link {
+  position: relative;
+  z-index: 1000;
+  pointer-events: auto;
+  font-weight: bold;
+  font-size: 14px;
+  background-color: rgba(189, 191, 218, 0.6);
+  border-radius: 6px;
+  border: 1px solid rgba(204, 186, 181, 0.6);
+  color: black;
+  padding: 6px 12px;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .header-title {
@@ -60,8 +88,6 @@ body {
   margin: 10px 0;
   font-weight: bold;
   text-align: center;
-  flex: 1 1 100%;
-  order: 2;
   z-index: 60;
   pointer-events: auto;
 }
@@ -71,47 +97,37 @@ a.header-link {
   pointer-events: auto;
 }
 
-.header a {
-  float: left;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 14px;
-  left: 10px;
-  padding: 6px 12px;
-  background-color: #bdbfda;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  color: black;
-  z-index: 70;
-  pointer-events: auto;
-}
+
 
 .header a:hover {
   background-color: #b88eaa;
 }
 
 .search-box {
-  float: right;
   z-index: 50;
   pointer-events: auto;
-  
 }
+
 
 .search-box input {
   padding: 4px 8px;
   font-size: 12px;
   border-radius: 4px;
   border: 1px solid #ccc;
-  width: 150px;
+  width: 150px; /* keep fixed width */
 }
 
 /* MAIN CONTENT */
 .container {
-  width: 100%;
-  padding: 100px 40px 20px 40px; /* top space for fixed header */
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 100px 40px 20px 40px;
   box-sizing: border-box;
   position: relative;
   z-index: 40;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 h2 {
@@ -119,31 +135,117 @@ h2 {
   font-size: 20px;
 }
 
-.form-section {
+ .form-section {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 20px;
   position: relative;
   z-index: 40;
+  align-items: flex-start; /* Align items to top */
+  background: rgba(255, 255, 255, 0.12); /* translucent background */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
-.form-section input,
+/* Glassy input fields (general) */
+.form-section input[type="file"],
 .form-section textarea {
-  flex: 1 1 300px;
-  padding: 8px;
-  font-size: 13px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #222;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: 'fors', sans-serif;
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
 }
 
-.add-btn {
-  padding: 10px;
-  background-color: #bdbfda;
-  border: none;
-  border-radius: 6px;
+/* Title and URL input boxes (no border) */
+#nurseTitle,
+#nurseURL {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: none; /* removed border */
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.15);
+  color: #222;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: 'fors', sans-serif;
+  transition: all 0.3s ease;
+}
+
+#nurseTitle:focus,
+#nurseURL:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* Sizing */
+#nurseTitle {
+  flex: 1 1 180px;
+  height: 34px;
+  min-width: 150px;
+}
+
+#nurseNote {
+  flex: 2 1 280px;
+  min-height: 60px;
+  resize: vertical;
+}
+
+#nurseURL {
+  flex: 1 1 180px;
+  height: 34px;
+  min-width: 150px;
+}
+
+#nurseImage {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 4px 10px;
   cursor: pointer;
+}
+
+/* Glassy button */
+.add-btn {
+  height: 34px;
   min-width: 100px;
+  align-self: flex-start;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #111;
+  box-shadow: 0 4px 15px rgba(255,255,255,0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+  background: rgba(255, 255, 255, 0.45);
+  color: #000;
+  box-shadow: 0 6px 20px rgba(255,255,255,0.5);
+}
+
+
+
+
+.add-btn:hover, .note-actions button:hover {
+  background: rgba(255, 255, 255, 0.45);
+  color: #000;
+  box-shadow: 0 6px 20px rgba(255,255,255,0.5);
 }
 
 .cards-container {
@@ -156,23 +258,26 @@ h2 {
 }
 
 .note-card {
-  background-color: rgba(243, 242, 238, 0.6);
+  background: rgba(255, 255, 255, 0.08); /* much lighter, almost transparent */
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
   flex: 1 1 calc(25% - 20px);
   min-width: 260px;
-  padding: 15px;
-  border-radius: 10px;
+  padding: 18px;
   position: relative;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   box-sizing: border-box;
   word-wrap: break-word;
-  z-index: 10;
-  transition: transform 0.3s ease, z-index 0s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .note-card:hover {
-  transform: scale(1.1);
-  z-index: 999;
+  transform: scale(1.06);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3), 0 0 12px rgba(255, 255, 255, 0.15);
 }
+
 
 .note-title {
   font-weight: bold;
@@ -276,14 +381,21 @@ html, body {
 <body>
 
 <div class="header">
-  <div class="header-bg"></div>  <!-- new background layer -->
-  
-  <a href="home.html" class="header-link">Home</a>
+  <div class="header-bg"></div>
+
+  <div class="header-left">
+    <a href="home.html" class="header-link">Home</a>
+  </div>
+
   <h1 class="header-title">Nurse Notes</h1>
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
+
+  <div class="header-right">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
+    </div>
   </div>
 </div>
+
 
 <div class="container">
     <div class="form-section">
