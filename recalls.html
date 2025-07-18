@@ -16,6 +16,9 @@
       margin: 0;
       font-size: 12px;
       color: #333;
+	    backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+
     }
 
     /* Glassmorphism style */
@@ -31,6 +34,17 @@
       font-family: 'Tahoma', sans-serif;
       font-size: 11px;
     }
+	.glassy-input {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  color: #333;
+  transition: all 0.3s ease-in-out;
+}
+
+
 
     .header {
       position: fixed;
@@ -160,18 +174,46 @@
   padding-top: 10px;           /* Optional spacing above buttons */
 }
 
-    .note-actions button {
-      background: rgba(100, 100, 100, 0.5);
-      padding: 4px 8px;
-      border: none;
-      font-size: 11px;
-      cursor: pointer;
-      color: white;
-      border-radius: 4px;
-    }
-    .note-actions button:hover {
-      background: rgba(60, 60, 60, 0.7);
-    }
+    /* Glassy Edit, Copy, Delete Buttons */
+.note-actions button {
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #333;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease-in-out;
+}
+
+.note-actions button:hover {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 8px rgba(200, 200, 255, 0.4);
+}
+.edit-title {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #333;
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.edit-note {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 6px;
+  padding: 8px;
+  color: #333;
+  min-height: 100px;
+}
+
 
     .highlight {
       background-color: #fbe0D2;
@@ -184,14 +226,27 @@
     }
 
     .editor-buttons button {
-      font-size: 11px;
-      padding: 4px 6px;
-      border-radius: 4px;
-      border: none;
-      cursor: pointer;
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(5px);
-    }
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #333;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease-in-out;
+}
+
+.editor-buttons button:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+.editor-buttons button:hover {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 8px rgba(200, 200, 255, 0.4);
+}
+
 
     @media (max-width: 600px) {
       h1 {
@@ -280,19 +335,29 @@
   }
 
   function enableEditing(card, id, title, note) {
-    card.innerHTML = `
-      <input type="text" class="edit-title" value="${title}" style="width: 100%; margin-bottom: 6px; padding: 4px;" />
-      <div class="edit-note" contenteditable="true" style="width: 100%; min-height: 100px; padding: 6px; border: 1px solid #ccc; border-radius: 6px; background: white; font-size: 12px; font-family: Tahoma, sans-serif;">
-        ${note.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/====(.*?)====/g, '<span class="highlight">$1</span>')}
-      </div>
-      <div class="editor-buttons">
-        <button onclick="saveRichEdit('${id}', this.closest('.note-card').querySelector('.edit-title'), this.closest('.note-card').querySelector('.edit-note'))">Save</button>
-        <button onclick="renderNotes()">Cancel</button>
-        <button onclick="toggleBold()">Bold</button>
-        <button onclick="highlightSelection()">Highlight</button>
-      </div>
-    `;
-  }
+  card.innerHTML = `
+    <input type="text" class="edit-title glassy-input" 
+           value="${title}" 
+           style="width: 96.5%; margin-bottom: 6px; padding: 6px;" />
+    <div class="edit-note glassy-input" contenteditable="true" 
+         style="width: 96%; min-height: 100px; padding: 8px; 
+         font-size: 12px; font-family: Tahoma, sans-serif; 
+         border-radius: 6px;">
+      ${note.replace(/\n/g, '<br>')}
+    </div>
+    <div class="editor-buttons">
+      <button onclick="saveRichEdit('${id}', 
+        this.closest('.note-card').querySelector('.edit-title'), 
+        this.closest('.note-card').querySelector('.edit-note'))">
+        Save
+      </button>
+      <button onclick="cancelEdit()">Cancel</button>
+      <button onclick="toggleBold()">Bold</button>
+      <button onclick="highlightSelection()">Highlight</button>
+    </div>
+  `;
+}
+
 
   function copyContent(id) {
     const noteContent = document.querySelector(`#note-${id} .note-content`);
@@ -450,6 +515,13 @@
       selection.removeAllRanges();
     }
   }
+  
+  function cancelEdit() {
+  // Just call renderNotes to reload cards
+  renderNotes();
+}
+window.cancelEdit = cancelEdit;
+
 
   // Toggle bold using execCommand (simpler and reliable)
   function toggleBold() {
