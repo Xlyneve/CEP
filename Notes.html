@@ -4,48 +4,79 @@
   <meta charset="UTF-8" />
   <title>Notes</title>
   <style>
+    @font-face {
+      font-family: 'hellohon';
+      src: url('hellohon.otf') format('opentype');
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background: #ebebeb;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
       margin: 0;
       padding: 20px;
       font-size: 8pt;
       color: #000;
-    }
-    h1 {
-      font-family: 'Courier New', monospace;
-      font-weight: bold;
       text-align: center;
-      color: #000;
-      margin-bottom: 10px;
     }
+
+    h1 {
+      font-family: 'hellohon', cursive;
+      font-size: 90px;
+      font-weight: regular;
+      color: black;
+      text-shadow:
+        0 0 4px rgba(255, 255, 255, 0.6),
+        0 0 8px rgba(193, 182, 163, 0.4),
+        0 0 12px rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(8px);
+      padding: 8px 12px;
+      border-radius: 10px;
+      display: inline-block;
+      margin: 18px auto;
+    }
+
     .header-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
     }
+
     #searchInput {
       padding: 6px;
       font-size: 8pt;
       width: 180px;
-      border: 1px solid #e4c9b6;
-      border-radius: 4px;
-      background: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(6px);
+      color: black;
+      outline: none;
+      transition: box-shadow 0.3s ease;
     }
+
+    #searchInput:focus {
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+    }
+
     #addNoteBtn {
       padding: 6px 12px;
-      background-color: #e4c9b6;
-      color: black;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 6px;
-      font-size: 8pt;
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(6px);
+      color: black;
       cursor: pointer;
-      margin-left: 10px;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
+
     #addNoteBtn:hover {
-      background-color: #d6b2cb;
+      background: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
     }
+
     .note-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -53,27 +84,24 @@
       margin-top: 20px;
       padding: 10px;
     }
+
     .note-tile {
-      border: 1px solid black;
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 10px;
       padding: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       display: flex;
       flex-direction: column;
-      transition: transform 0.3s ease-in-out;
+      transition: box-shadow 0.3s ease-in-out;
+      cursor: pointer;
       overflow: visible;
       position: relative;
     }
-	
-	.note-tile:hover {
-  transform: scale(1.3);
-  z-index: 10;
-  transition: transform 0.3s ease-in-out;
 
-    }
     .note-tile textarea {
       min-height: 80px;
-      overflow-y: hidden;
       width: 100%;
       box-sizing: border-box;
       border: none;
@@ -81,34 +109,44 @@
       font-size: 8pt;
       padding: 8px;
       font-family: Arial, sans-serif;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(6px);
+      border-radius: 6px;
       color: black;
       transition: height 0.2s ease;
+      pointer-events: none; /* disable editing in tiles */
     }
-    .note-tile textarea:focus {
-      outline: none;
-      box-shadow: 0 0 6px 2px #ebebeb;
-      border: 1px solid #e4c9b6;
-    }
+	.note-tile.zoomed {
+    transform: scale(1.3);
+    z-index: 10;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+    position: relative;
+   }  
+
     .note-footer {
       display: flex;
       justify-content: space-between;
       margin-top: 8px;
       align-items: center;
     }
+
     .note-footer button {
       background: none;
       border: none;
       color: black;
       cursor: pointer;
       font-size: 12px;
+      pointer-events: auto; /* enable clicking buttons */
     }
+
     .edit-bar {
       margin-top: 6px;
       display: flex;
       justify-content: flex-end;
       gap: 6px;
+      pointer-events: auto;
     }
+
     .color-btn {
       width: 16px;
       height: 16px;
@@ -116,10 +154,15 @@
       border-radius: 50%;
       cursor: pointer;
     }
+
     .color1 { background: #fce4ec; }
     .color2 { background: #e0e0e0; }
     .color3 { background: #e4c9b6; }
     .color4 { background: #eae0da; }
+
+    }
+
+} 
   </style>
 </head>
 <body>
@@ -131,7 +174,9 @@
       <button id="addNoteBtn">+ Add</button>
     </div>
   </div>
+
   <div class="note-grid" id="noteGrid"></div>
+
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
@@ -170,12 +215,11 @@
           .forEach(note => {
             const tile = document.createElement("div");
             tile.className = "note-tile";
-            tile.style.background = note.color || "#fff";
+            tile.style.background = note.color || "rgba(255,255,255,0.2)";
 
             const textarea = document.createElement("textarea");
             textarea.value = note.text;
             requestAnimationFrame(() => autoResize(textarea));
-            textarea.addEventListener('input', () => autoResize(textarea));
 
             const editBar = document.createElement("div");
             editBar.className = "edit-bar";
@@ -214,15 +258,15 @@
             tile.appendChild(footer);
             grid.appendChild(tile);
           });
+        enableTileClickZoom();
       });
     }
 
     document.getElementById('addNoteBtn').addEventListener('click', async () => {
-      console.log("Add button clicked");
       const newNote = {
         text: '',
         date: new Date(),
-        color: "#fff"
+        color: "rgba(255,255,255,0.2)"
       };
       try {
         await addDoc(notesRef, newNote);
@@ -234,6 +278,23 @@
     document.getElementById('searchInput').addEventListener('input', e => {
       renderNotes(e.target.value);
     });
+
+    function enableTileClickZoom() {
+  document.querySelectorAll('.note-tile').forEach(tile => {
+    tile.onclick = () => {
+      // Toggle zoomed class on the clicked tile
+      const isZoomed = tile.classList.contains('zoomed');
+      // Remove zoomed class from all tiles
+      document.querySelectorAll('.note-tile.zoomed').forEach(t => t.classList.remove('zoomed'));
+
+      // If it was not zoomed before, zoom it now
+      if (!isZoomed) {
+        tile.classList.add('zoomed');
+      }
+    };
+  });
+}
+
 
     renderNotes();
   </script>
