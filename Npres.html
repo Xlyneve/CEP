@@ -234,6 +234,62 @@ tr:last-child td {
   opacity: 1;
 }
 
+#calcToggleBtn {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  font-size: 22px;
+  padding: 10px;
+  border-radius: 50%;
+  border: none;
+  background: #fcd6dc;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  cursor: pointer;
+  z-index: 1000;
+}
+
+#doseCalculator {
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  background: rgba(255,255,255,0.95);
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 14px;
+  width: 220px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-family: 'Tahoma', sans-serif;
+  font-size: 12px;
+  z-index: 999;
+}
+
+#doseCalculator label {
+  display: block;
+  margin: 6px 0;
+}
+
+#doseCalculator input {
+  width: 100%;
+  padding: 4px;
+  margin-top: 2px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+#doseCalculator button {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #d94f71;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#doseCalculator.hidden {
+  display: none;
+}
 
 
 
@@ -315,7 +371,38 @@ tr:last-child td {
     </thead>
     <tbody></tbody>
   </table>
-  
+
+<!-- Calculator Toggle Button -->
+<button id="calcToggleBtn" onclick="toggleCalculator()">🧮</button>
+
+<!-- Calculator Panel -->
+<div id="doseCalculator" class="hidden">
+ <h3>Dose Calculator</h3>
+
+<label>Medication:
+  <select id="medicationSelect" onchange="handleMedicationChange()">
+    <option value="">-- Select Medication --</option>
+    <option value="paracetamol">Paracetamol</option>
+    <option value="flucloxacillin">Flucloxacillin</option>
+    <option value="amoxicillin">Amoxicillin</option>
+    <option value="cefalexin">Cefalexin</option>
+    <option value="cefaclor">Cefaclor</option>
+    <option value="erythromycin">Erythromycin</option>
+    <option value="amoxClav">Amoxicillin + Clavulanic Acid</option>
+  </select>
+</label>
+<div id="medicationNote" style="margin-top: 10px; font-size: 0.9em; color: #555;"></div>
+
+<div id="extraOptions" class="hidden"></div>
+
+<label>Weight (kg): <input type="number" id="weight" step="any" /></label>
+
+  <button onclick="calculateDose()">Calculate</button>
+
+  <div id="result" style="margin-top: 8px;"></div>
+</div>
+
+
  <script type="module">
   // Firebase core + Firestore
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -501,6 +588,330 @@ document.querySelector("#medicationTable").addEventListener("keydown", function 
     document.execCommand('insertHTML', false, '<br><br>');
   }
 });
+
+function toggleCalculator() {
+  const calc = document.getElementById("doseCalculator");
+  calc.classList.toggle("hidden");
+}
+
+
+window.toggleCalculator = toggleCalculator;
+window.calculateDose = calculateDose;
+
+function handleMedicationChange() {
+  const med = document.getElementById("medicationSelect").value;
+  const extraDiv = document.getElementById("extraOptions");
+  const noteDiv = document.getElementById("doseNote") || document.createElement("div");
+
+  extraDiv.innerHTML = "";
+  extraDiv.classList.add("hidden");
+
+  noteDiv.id = "doseNote";
+  noteDiv.innerHTML = "";
+  noteDiv.style.marginTop = "0.5em";
+  noteDiv.style.fontSize = "0.9em";
+  noteDiv.style.color = "#555";
+
+  if (!med) {
+    if (noteDiv.parentElement) noteDiv.remove();
+    return;
+  }
+
+  let html = "";
+
+  switch (med) {
+    case "paracetamol":
+      html += `
+        <label>Strength:
+          <select id="strengthSelect">
+            <option value="120">120 mg / 5 ml</option>
+            <option value="250">250 mg / 5 ml</option>
+          </select>
+        </label>
+      `;
+      break;
+
+    case "flucloxacillin":
+      html += `
+        <label>Strength:
+          <select id="strengthSelect">
+            <option value="125">125 mg / 5 ml</option>
+            <option value="250">250 mg / 5 ml</option>
+          </select>
+        </label>
+        <label>Dosing Level:
+          <select id="doseLevelSelect">
+            <option value="low">Low Dose (12.5 mg/kg)</option>
+            <option value="high">High Dose (25 mg/kg)</option>
+          </select>
+        </label>
+      `;
+      noteDiv.innerHTML = `
+        <strong>Note:</strong> 12.5–25 mg/kg four times daily. Use 25 mg/kg for severe infections. Max dose: 1 g per dose.
+      `;
+      break;
+
+    case "amoxicillin":
+  html += `
+    <label>Strength:
+      <select id="strengthSelect">
+        <option value="125">125 mg / 5 ml</option>
+        <option value="250">250 mg / 5 ml</option>
+      </select>
+    </label>
+    <label>Dosing Type:
+      <select id="dosingType" onchange="updateAmoxicillinNote()">
+        <option value="general">General</option>
+        <option value="strepA">Strep A</option>
+      </select>
+    </label>
+  `;
+
+  // Initial note (default is general)
+  noteDiv.innerHTML = `
+    <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+    <strong>General Dosing:</strong><br>
+    1 month - 18 years: 15–30 mg/kg (maximum 1,000 mg) three times daily.
+  `;
+
+  // Add this function somewhere in your JS:
+  window.updateAmoxicillinNote = function () {
+    const dosingType = document.getElementById("dosingType").value;
+    if (dosingType === "strepA") {
+      noteDiv.innerHTML = `
+        <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+        <strong>Strep A Dosing:</strong><br>
+        Under 15 kg: 50 mg/kg once daily for 10 days<br>
+        15–29.9 kg: 750 mg once daily for 10 days<br>
+        30 kg or over: 1,000 mg once daily for 10 days
+      `;
+    } else {
+      noteDiv.innerHTML = `
+        <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+        <strong>General Dosing:</strong><br>
+        1 month - 18 years: 15–30 mg/kg (maximum 1,000 mg) three times daily.
+      `;
+    }
+  };
+
+  break;
+
+
+   case "cefalexin":
+  html += `
+    <label>Strength:
+      <select id="strengthSelect">
+        <option value="125">125 mg / 5 ml</option>
+        <option value="250">250 mg / 5 ml</option>
+      </select>
+    </label>
+    <label>Dosing Type:
+      <select id="dosingType">
+        <option value="impetigo">Impetigo</option>
+        <option value="generalInfection">General Infection</option>
+      </select>
+    </label>
+  `;
+
+  noteDiv.innerHTML = `
+    <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+    This calculator uses <strong>12.5 mg/kg/dose</strong>.<br><br>
+    <strong>Dosing Options:</strong><br>
+    • <strong>Impetigo:</strong> 12.5–25 mg/kg (usual max 500 mg) <strong>twice daily</strong><br>
+    • <strong>General Infection:</strong> 12.5–25 mg/kg (usual max 500 mg; up to 1 g may be used) <strong>four times daily</strong><br><br>
+    <em>High doses (25 mg/kg) are used in secondary care settings (e.g., step-down from IV therapy for bone/joint infections).</em>
+  `;
+
+  break;
+
+
+    case "cefaclor":
+      html += `
+        <label>Strength:
+          <select id="strengthSelect">
+            <option value="125">125 mg / 5 ml</option>
+          </select>
+        </label>
+      `;
+	   noteDiv.innerHTML = `
+  <strong>Note:</strong> For ages 1 month to 18 years only.<br>
+  <strong>General Dosing:</strong><br>
+  1 month - 18 years 10 mg/kg (maximum 500 mg) three times daily
+`;
+
+	  break;
+
+    case "erythromycin":
+  html += `
+    <label>Strength:
+      <select id="strengthSelect">
+        <option value="200">200 mg / 5 ml</option>
+        <option value="400">400 mg / 5 ml</option>
+      </select>
+    </label>
+    <label>Dosing Type:
+      <select id="dosingType">
+        <option value="general">General</option>
+        <option value="strepA">Strep A</option>
+      </select>
+    </label>
+  `;
+  noteDiv.innerHTML = `
+    <strong>Note:</strong> For ages 1 month to 18 years only.<br>
+    This calculator is for erythromycin ethylsuccinate.<br><br>
+    <strong>General Dosing:</strong><br>
+    1 month - 18 years: 10-12.5 mg/kg every 6 hours (usual max 1.6 g daily; max 4 g daily in severe infection)<br><br>
+    <strong>Strep A Dosing:</strong><br>
+    Child 20 mg/kg twice daily; max 800 mg twice daily for 10 days
+  `;
+  break;
+
+
+    case "amoxClav":
+  html += `
+    <label>Strength:
+      <select id="strengthSelect">
+        <option value="156.25">125 mg / 5 ml + 31.25 mg</option>
+        <option value="312.5">250 mg / 5 ml + 62.5 mg</option>
+      </select>
+    </label>
+  `;
+
+  noteDiv.innerHTML = `
+    <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+    <strong>General Dosing:</strong><br>
+    1 month – 18 years: 15–30 mg/kg (maximum 625 mg) three times daily.<br><br>
+    <em>Note:</em> Oral doses are expressed as the total dose of amoxicillin + clavulanic acid (ratio 4:1);<br>
+    15–30 mg of the total (amoxicillin + clavulanic acid) contains 12–24 mg of amoxicillin.
+  `;
+
+  break;
+
+
+    default:
+      break;
+  }
+
+  if (html) {
+    extraDiv.innerHTML = html;
+    extraDiv.classList.remove("hidden");
+  }
+
+  // Always insert noteDiv after extraOptions
+  if (extraDiv.parentElement && !document.getElementById("doseNote")) {
+    extraDiv.parentElement.insertBefore(noteDiv, extraDiv.nextSibling);
+  }
+}
+
+
+function calculateDose() {
+
+  const med = document.getElementById("medicationSelect").value;
+  const weight = parseFloat(document.getElementById("weight").value);
+  const resultBox = document.getElementById("result");
+
+  if (!med || isNaN(weight)) {
+    resultBox.innerHTML = `<span style="color:red;">Please select medication and enter weight.</span>`;
+    return;
+  }
+
+  // Get selected strength from strengthSelect dropdown if available, else fallback
+  const strengthSelect = document.getElementById("strengthSelect");
+  const concMg = strengthSelect ? parseFloat(strengthSelect.value) : NaN;
+  const concMl = 5; // Fixed 5 ml for all strengths as per your data
+
+  if (isNaN(concMg) || concMg === 0) {
+    resultBox.innerHTML = `<span style="color:red;">Please select a valid strength.</span>`;
+    return;
+  }
+
+  let doseMg = 0;
+  let frequency = "";
+
+  switch (med) {
+    case "paracetamol":
+      doseMg = Math.min(weight * 15, 1000);
+      frequency = "Every 4 hours as needed, max 4 doses in 24 hours";
+      break;
+
+    case "flucloxacillin":
+  const doseLevel = document.getElementById("doseLevelSelect")?.value || "low";
+  if (doseLevel === "high") {
+    doseMg = Math.min(weight * 25, 1000);
+  } else {
+    doseMg = Math.min(weight * 12.5, 1000);
+  }
+  frequency = "4 times daily";
+  break;
+
+
+    case "amoxicillin":
+      const dosingType = document.getElementById("dosingType")?.value || "general";
+
+      if (dosingType === "strepA") {
+        if (weight < 15) doseMg = weight * 50;
+        else if (weight < 30) doseMg = 750;
+        else doseMg = 1000;
+        frequency = "Once daily for 10 days";
+      } else {
+        doseMg = Math.min(weight * 30, 1000);
+        frequency = "Three times daily (every 8 hours)";
+      }
+      break;
+
+    case "cefalexin":
+      doseMg = Math.min(weight * 12.5, 500); // using 12.5mg/kg/dose
+      frequency = "Twice or four times daily depending on indication";
+      break;
+
+    case "cefaclor":
+      doseMg = Math.min(weight * 10, 500);
+      frequency = "Three times daily";
+      break;
+
+    case "erythromycin":
+      const erythroType = document.getElementById("dosingType")?.value || "general";
+
+      if (erythroType === "strepA") {
+        doseMg = Math.min(weight * 20, 800);
+        frequency = "Twice daily for 10 days";
+      } else {
+        doseMg = Math.min(weight * 12.5, 1600);
+        frequency = "Every 6 hours";
+      }
+      break;
+
+    case "amoxClav":
+      doseMg = Math.min(weight * 30, 625);
+      frequency = "Three times daily";
+      break;
+
+    default:
+      resultBox.innerHTML = `<span style="color:red;">Medication not supported.</span>`;
+      return;
+  }
+
+  // Calculate volume in ml based on strength
+  const mgPerMl = concMg / concMl;
+  const doseMl = doseMg / mgPerMl;
+
+  console.log("Medication:", med);
+console.log("Weight (kg):", weight);
+console.log("Dose (mg):", doseMg);
+console.log("Strength (mg per 5 mL):", concMg);
+console.log("Concentration (mg per 1 mL):", mgPerMl);
+console.log("Calculated volume (mL):", doseMl);
+
+  
+  resultBox.innerHTML = `
+    Dose: <strong>${doseMg.toFixed(1)} mg</strong><br/>
+    Volume: <strong>${doseMl.toFixed(2)} mL</strong><br/>
+    Frequency: <strong>${frequency}</strong>
+  `;
+}
+
+
+window.handleMedicationChange = handleMedicationChange;
 
 
 </script>
