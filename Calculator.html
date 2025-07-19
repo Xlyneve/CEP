@@ -4,69 +4,111 @@
   <meta charset="UTF-8">
   <title>Drug & Age Calculators</title>
   <style>
-body {
-  font-family: fors, sans-serif;
-  font-size: 14px;
-  padding: 40px;
-  background-color: #ebebeb;
-}
+ body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: url('2b.png') no-repeat center center fixed;
+      background-size: cover;
+      filter: blur(6px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    body {
+      font-family: fors, sans-serif;
+      font-size: 14px;
+      padding: 40px;
+      margin: 0;
+      background: transparent; /* transparent to show bg image */
+      color: #111;
+      min-height: 100vh;
+      position: relative;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
 @font-face {
   font-family: 'fors';
   src: url('fors.ttf') format('truetype');
 }
-
 h1 {
-  margin-bottom: 30px;
-  text-align: center;
+      margin-bottom: 30px;
+      text-align: center;
+      color: #222;
+      text-shadow: 0 1px 3px rgba(255 255 255 / 0.7);
+    }
+
+    .nav {
+      margin-bottom: 30px;
+    }
+
+    .nav a {
+      text-decoration: none;
+      margin-right: 15px;
+      background: rgba(255 255 255 / 0.25);
+      color: #222;
+      padding: 8px 12px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255 255 255 / 0.3);
+      box-shadow: 0 4px 12px rgba(255 255 255 / 0.15) inset;
+      transition: background 0.3s ease;
+    }
+
+    .nav a:hover {
+      background: rgba(255 255 255 / 0.4);
+    }
+
+    .tile-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px 0;
+    }
+
+    .calculator {
+	padding: 20px;
+      border-radius: 16px;
+      background: rgba(255 255 255 / 0.1);
+      border: 1px solid rgba(255 255 255 / 0.3);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255 255 255 / 0.3);
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.05),
+    0 0 0 1px rgba(255 255 255 / 0.1);
 }
 
-.nav {
-  margin-bottom: 30px;
-}
 
-.nav a {
-  text-decoration: none;
-  margin-right: 15px;
-  background: #ddd5d5;
-  color: black;
-  padding: 8px 12px;
-  border-radius: 5px;
-}
+    .calculator:hover {
+      transform: translateY(-4px);
+      box-shadow:
+        0 12px 48px rgba(31, 38, 135, 0.12),
+        0 0 15px rgba(255 255 255 / 0.3);
+    }
 
-.nav a:hover {
-  background: #e8e1d5;
-}
+    /* Remove hardcoded background colors on calculators */
+    /* We'll use the glass effect for all */
 
-.tile-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  padding: 20px 0;
-}
+    label {
+      font-weight: bold;
+      margin-bottom: 6px;
+      display: block;
+      color: #222;
+      text-shadow: 0 1px 2px rgba(255 255 255 / 0.5);
+    }
+/* Glassy transparent background colors for calculator tiles */
+.calculator:nth-child(1) { background-color: rgba(236, 231, 225, 0.15); }   
+.calculator:nth-child(2) { background-color: rgba(219, 212, 206, 0.15); }   
+.calculator:nth-child(3) { background-color: rgba(187, 174, 165, 0.15); }   
+.calculator:nth-child(4) { background-color: rgba(221, 211, 210, 0.15); }   
+.calculator:nth-child(5) { background-color: rgba(179, 179, 179, 0.15); }   
+.calculator:nth-child(6) { background-color: rgba(236, 231, 225, 0.15); }  
+.calculator:nth-child(7) { background-color: rgba(219, 212, 206, 0.15); }  
 
-.calculator {
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid #d5c8f2;
-  box-shadow: 0 4px 12px rgba(200, 170, 255, 0.1);
-  transition: transform 0.2s ease;
-  animation: fadeInUp 0.6s ease both;
-}
-
-.calculator:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(200, 170, 255, 0.2);
-}
-
-/* Background colors for calculator tiles */
-.calculator:nth-child(1) { background-color: #ece7e1; }   
-.calculator:nth-child(2) { background-color: #dbd4ce; }   
-.calculator:nth-child(3) { background-color: #bbaea5; }   
-.calculator:nth-child(4) { background-color: #ddd3d2; }   
-.calculator:nth-child(5) { background-color: #b3b3b3; }   
-.calculator:nth-child(6) { background-color: #ece7e1; }  
-.calculator:nth-child(7) { background-color: #dbd4ce; }   
 
 label {
   font-weight: bold;
@@ -89,14 +131,44 @@ input[type="date"], input[type="number"] {
 }
 
 h2 {
-  font-size: 18px;
-  font-family: fors, sans-serif;
-  text-decoration: underline;
-  margin-top: 0;
-  background: linear-gradient(90deg, #000, #555);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+      font-size: 18px;
+      font-family: fors, sans-serif;
+      text-decoration: underline;
+      margin-top: 0;
+      color: #2a2a2a;
+      text-shadow: 0 1px 3px rgba(255 255 255 / 0.6);
+    }
+	header {
+      margin-bottom: 30px;
+      position: relative;
+      z-index: 10;
+    }
+	
+    .home-button {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(255 255 255 / 0.25);
+      border: 1px solid rgba(255 255 255 / 0.4);
+      padding: 8px 16px;
+      font-size: 18px;
+      color: #222;
+      border-radius: 16px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(255 255 255 / 0.15) inset;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      z-index: 999;
+    }
+
+    .home-button:hover {
+      background-color: rgba(255 255 255 / 0.45);
+      box-shadow: 0 6px 20px rgba(255 255 255 / 0.4) inset;
+      transform: scale(1.05);
+      color: #000;
+   }
 
 @keyframes fadeInUp {
   from {
@@ -109,34 +181,6 @@ h2 {
   }
 }
 
-header {
-  margin-bottom: 30px;
-}
-
-.home-button {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background-color: #f1f1f1;
-  border: 2px solid #ccc;
-  padding: 8px 16px;
-  font-size: 18px;
-  text-decoration: none;
-  color: #333;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  z-index: 999;
-  cursor: pointer;
-}
-
-.home-button:hover {
-  background-color: #ececec;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transform: scale(1.05);
-}
-
-     }
   </style>
 </head>
 <body>
