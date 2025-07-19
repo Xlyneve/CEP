@@ -72,9 +72,10 @@
         img.src = data.image;
         img.alt = "Note Image";
         img.className = "note-image";
-        img.addEventListener("click", () => {
-          img.classList.toggle("zoomed");
-        });
+
+        // Open fullscreen on click
+        img.addEventListener("click", () => openImageFullscreen(img.src));
+
         card.appendChild(img);
       }
 
@@ -158,6 +159,20 @@
     });
   }
 
+  function openImageFullscreen(src) {
+    const overlay = document.createElement("div");
+    overlay.id = "img-overlay";
+
+    const fullImg = document.createElement("img");
+    fullImg.src = src;
+    fullImg.className = "fullscreen-img";
+
+    overlay.appendChild(fullImg);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("click", () => overlay.remove());
+  }
+
   function autoResizeTextarea() {
     const textarea = document.getElementById("note");
     textarea.style.height = "auto";
@@ -181,61 +196,158 @@
   });
 </script>
 
+
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 11px;
-      background-color: #ebebeb;
+     body {
+      font-family: 'fors', sans-serif;
+      background: url('2b.png') no-repeat center center fixed;
+      background-size: cover;
       margin: 0;
       padding: 0;
+      color: #222;
     }
+	
+	 body::before,
+     body::after {
+     content: "";
+     position: fixed;
+     top: 0; left: 0; right: 0; bottom: 0;
+     background: url('2b.png') no-repeat center center fixed;
+     background-size: cover;
+     z-index: -1;
+     }
 
-    h1 {
-      text-align: center;
-      color: black;
-      padding: 10px;
+     body::before {
+     filter: blur(20px);
+     opacity: 0.7;
+     }
+
+     body::after {
+     filter: blur(20px);
+     opacity: 0.7;
+     }
+
+	 @font-face {
+      font-family: 'fors';
+      src: url('fors.ttf') format('truetype'); /* Adjust the path */
+     } 
+      @font-face {
+      font-family: 'hellohon';
+      src: url('hellohon.otf') format('opentype'); /* Adjust the path */
+	  }
+       
+	 h1 {
+     position: relative;
+     top: -20px;        /* adjust vertical position */
+     text-align: center;
+     color: black;
+     font-family: 'hellohon', sans-serif;
+     font-weight: normal;
+     font-size: 6.5rem;
+     margin: 0;
+     padding: 0;
+     letter-spacing: 0.1em;  /* Adjust spacing here */
     }
 
     .container {
-      max-width: 100%;
-      margin: 0 10px;
-      text-align: center;
-      padding: 1rem 0.5rem;
-    }
+     max-width: 100%;
+     margin: 0 auto;     /* Remove vertical margin */
+     text-align: center;
+     padding: 0.5rem;
+     position: relative;
+     top: -30px;         /* Move it up by 20px (adjust as needed) */
+     }
 
-    div[contenteditable="true"] {
+    
+     textarea, input[type="file"], input[type="text"] {
       display: block;
       margin: 0.5rem auto;
       padding: 0.5rem;
+      background: rgba(234, 224, 218, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
       width: 90%;
       max-width: 600px;
-      background-color: #f7eeed;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      min-height: 50px;
-      overflow-y: hidden;
-      resize: none;
-      text-align: left;
+      color: #fff;
+      font-family: 'fors', sans-serif;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.1);
     }
 
-    input[type="text"] {
-      display: block;
-      margin: 0.5rem auto;
-      padding: 0.5rem;
-      width: 90%;
-      max-width: 600px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+     textarea:focus, input[type="file"]:focus, #search:focus {
+     background: rgba(255, 255, 255, 0.3);
+     border-color: rgba(255, 255, 255, 0.7);
+     box-shadow: inset 0 4px 16px rgba(255, 255, 255, 0.3);
+     color: #000;
+    }
+	
+	
+	 #title {
+     margin-bottom: 0.1rem; /* Reduce gap below the Note Title */
+     }
+
+     #note {
+     margin-top: 0.1rem;
+     margin-bottom: 0.1rem;
+     }
+
+     #image {
+     margin-top: 0.2rem; /* Reduce gap above the Choose File box */
+     }
+
+
+      /* Make choose file button glassy */
+    input[type="file"] {
+    color: white; /* file name text color */
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 0.5rem;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     }
 
-    button {
-      background-color: #f7d1d8;
-      color: black;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
+    /* Style the actual 'Choose File' button */
+    input[type="file"]::file-selector-button {
+    background: rgba(228, 201, 182, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #333;
+    font-family: 'fors', sans-serif;
+    box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+     }
+
+     input[type="file"]::file-selector-button:hover {
+     background-color: rgba(172, 163, 126, 0.7);
+     border-color: rgba(172, 163, 126, 0.8);
+     color: white;
+     }
+
+     button {
       margin-top: 10px;
+      background: rgba(228, 201, 182, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      color: gray;
+      font-family: 'fors', sans-serif;
+      box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+     button:hover {
+      background-color: rgba(172, 163, 126, 0.7);
+      border-color: rgba(172, 163, 126, 0.8);
+      color: black;
     }
 
     #notes {
@@ -245,12 +357,25 @@
       margin-top: 2rem;
     }
 
-    .note-card {
-      background-color: #f7eeed;
+     .note-card {
+      background: rgba(234, 224, 218, 0.15);
       border-radius: 12px;
       padding: 1rem;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      box-shadow:
+        0 8px 32px rgba(31, 38, 135, 0.05),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
       text-align: left;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+      color: black;
+    }
+
+    .note-card:hover {
+     box-shadow:
+        0 12px 48px rgba(31, 38, 135, 0.1),
+        0 0 15px rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
     }
 
     .note-image {
@@ -261,23 +386,43 @@
       margin-bottom: 0.5rem;
     }
 
-    .note-image.zoomed {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      max-width: 90vw;
-      max-height: 90vh;
-      width: auto;
-      height: auto;
-      z-index: 1000;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
-      background: white;
-      border-radius: 12px;
-      cursor: zoom-out;
-    }
+    #img-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+   cursor: zoom-out;
+   }
 
-    .btn-container {
+   .fullscreen-img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+   }
+
+	 
+    #notes {
+    overflow: visible !important;
+    position: relative; /* or static */
+    z-index: 1;
+    }
+	
+     #zoomed-image-overlay {
+     max-width: 90vw;
+     max-height: 90vh;
+     border-radius: 12px;
+     box-shadow: 0 0 10px rgba(0,0,0,0.4);
+     background: white;
+     }
+
+     .btn-container {
       display: flex;
       justify-content: flex-end;
       gap: 1rem;
@@ -285,39 +430,113 @@
     }
 
     #search-container {
-	  position: absolute;
-	  top: 10px;
-	  right: 10px;
-      max-width: 250px;
-      margin: 0 auto;
-      padding: 0.5rem;
-    }
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    margin: 0;
+    padding: 0;
+   }
 
-    #search {
-	  width: 100%;
-      padding: 0.3rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    .home-button {
-      position: absolute;
-      left: 10px;
-      top: 10px;
-      background-color: #f7d1d8;
+      #search {
+      width: 200px;
+      padding: 0.4rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       color: black;
-      padding: 0.4rem 0.8rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      text-decoration: none;
+      outline: none;
     }
+
+      #search::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+	.top-bar {
+     max-width: 100%;
+     margin: 0 10px;
+     padding: 10px 0;
+     height: 40px;       /* give it some height */
+    }
+
+     .home-btn {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.4rem 0.8rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      text-decoration: none;
+      color: black;
+      transition: background-color 0.2s ease;
+      font-weight: bold;
+    }
+
+     .home-btn:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+
+     .top-bar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .top-bar h1 {
+     margin: 0;
+     text-align: center;
+     line-height: 30px; 
+     color: black;
+     font-family: 'hellohon', sans-serif;
+     font-weight: normal;
+     font-size: 6.5rem;
+     z-index: 1;
+     position: relative;
+	 
+     }
+    .page-title {
+    text-align: center;
+    margin: 40px 0 20px 0; /* Adds extra spacing on top and bottom */
+    color: black;
+    font-family: 'hellohon', sans-serif;
+    font-weight: normal;
+    font-size: 5rem;
+    letter-spacing: 0.1em; /* Optional: Slightly adjust spacing between letters */
+   }
+
+
+   .home-btn {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.4rem 0.8rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+   }
+
+   .home-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+   }
+  }
+
   </style>
 </head>
 <body>
-  <a href="home.html" class="home-button">Home</a>
-  <h1>ECG</h1>
+  <a href="home.html"><button class="home-btn">Home</button></a>
+  <h1 class="page-title">Electrocardiogram</h1>
+  
   <div id="search-container">
     <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
   </div>
