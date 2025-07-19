@@ -13,75 +13,138 @@
 }
 
     body {
-  font-family: fors, sans-serif; 
-  padding: 60px 20px 20px 20px; 
+  font-family: fors, sans-serif;
+  padding: 60px 20px 20px 20px;
   position: relative;
-  background: white; /* fallback color */
+  margin: 0;
+  background: none; /* Remove plain white background */
+  color: #111;
   z-index: 0;
+  overflow-x: hidden;
 }
 
-/* Add a faded background image overlay */
 body::before {
   content: "";
-  position: fixed;  /* stays fixed behind content */
-  top: 0;
-  left: 0;
+  position: fixed;  
+  top: 0; left: 0;
   width: 100vw;
   height: 100vh;
-  background: url('fleaves.png') no-repeat center center fixed;
+  background: url('2b.png') no-repeat center center fixed;
   background-size: cover;
-  opacity: 0.6;  /* adjust this value for fade, lower = more faded */
-  z-index: -1;   /* behind everything */
-  pointer-events: none; /* so it doesn't block clicks */
+  filter: blur(8px);
+  z-index: -1;
+  pointer-events: none;
+  /* REMOVE opacity to prevent white sheet */
 }
 
     .form-group { margin-bottom: 10px; }
     button { margin-right: 5px; }
 
     .top-left, .top-right {
-      position: absolute;
-      top: 10px;
-      padding: 8px 12px;
-      background: #e9cbcb;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      text-decoration: none;
-      color: #333;
-      transition: background 0.3s;
-    }
-    .top-left:hover, .top-right:hover {
-      background: #aca37e;
-    }
+  position: absolute;
+  top: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+  color: #333;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 4px 12px rgba(255,255,255,0.15) inset;
+}
+
+.top-left:hover, .top-right:hover {
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 18px rgba(255,255,255,0.25) inset;
+  color: #000;
+}
     .top-left { left: 10px; }
     .top-right { right: 10px; }
 
-    #searchInput {
-      display: none;
-      position: absolute;
-      top: 50px;
-      right: 10px;
-      padding: 5px;
-      width: 180px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
+    /* Search input: also frosted glass */
+#searchInput {
+  display: none;
+  position: absolute;
+  top: 50px;
+  right: 10px;
+  padding: 6px 10px;
+  width: 180px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.25);
+  color: #111;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 10px rgba(255,255,255,0.15) inset;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
 
-    .file-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 15px;
-      margin-top: 20px;
-    }
-    .file-item {
-      background: #eee;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
+/* File grid container */
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+/* Increase transparency of file-item cards for more glass effect */
+.file-item {
+  background: rgba(255, 255, 255, 0.05); /* more transparent */
+  padding: 15px;
+  border-radius: 16px;
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.05), /* lighter shadows */
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #111;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+
+.file-item:hover {
+  box-shadow:
+    0 12px 48px rgba(31, 38, 135, 0.12),
+    0 0 12px rgba(255, 255, 255, 0.25);
+  transform: translateY(-4px);
+}
+/* Glassy style for text inputs and textarea */
+input[type="text"],
+textarea,
+#searchInput,
+input[type="date"] {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #111;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1) inset;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  outline: none;
+  width: 300px; /* consistent width for text inputs and textarea */
+  max-width: 100%;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+#searchInput:focus,
+input[type="date"]:focus {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3) inset;
+  color: #000;
+}
     .file-item strong {
       font-size: 18px;
     }
@@ -99,19 +162,43 @@ body::before {
       margin-top: 10px;
     }
     .file-buttons button {
-  background: #e9cbcb;
+  background: rgba(233, 203, 203, 0.3);
   border: none;
   margin: 3px 2px;
-  padding: 4px 6px;
-  font-size: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
   cursor: pointer;
   color: #333;
-  border-radius: 12px; /* more rounded corners */
-  transition: background-color 0.3s ease;
+  border-radius: 12px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 8px rgba(255,255,255,0.1) inset;
 }
 
 .file-buttons button:hover {
-  background-color: #aca37e;
+  background-color: rgba(172, 163, 126, 0.7);
+  color: white;
+}
+
+/* Glassy style for buttons */
+button {
+  background: rgba(233, 203, 203, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #333;
+  border-radius: 16px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.15) inset;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+button:hover {
+  background-color: rgba(172, 163, 126, 0.7);
+  border-color: rgba(172, 163, 126, 0.8);
   color: white;
 }
 
