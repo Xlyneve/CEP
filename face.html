@@ -5,145 +5,174 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cephalon</title>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const faceNotesCollection = collection(db, "faceNotes");
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const faceNotesCollection = collection(db, "faceNotes");
 
-    async function saveNote() {
-      const noteText = document.getElementById("note").value;
-      const imageFile = document.getElementById("image").files[0];
-      if (!noteText && !imageFile) return;
+  async function saveNote() {
+    const noteText = document.getElementById("note").value;
+    const imageFile = document.getElementById("image").files[0];
+    if (!noteText && !imageFile) return;
 
-      let imageData = "";
-      if (imageFile) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          imageData = reader.result;
-          await addDoc(faceNotesCollection, { note: noteText, image: imageData });
-          document.getElementById("note").value = "";
-          document.getElementById("image").value = "";
-          loadNotes();
-        };
-        reader.readAsDataURL(imageFile);
-      } else {
-        await addDoc(faceNotesCollection, { note: noteText, image: "" });
+    let imageData = "";
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        imageData = reader.result;
+        await addDoc(faceNotesCollection, { note: noteText, image: imageData });
         document.getElementById("note").value = "";
+        document.getElementById("image").value = "";
         loadNotes();
-      }
+      };
+      reader.readAsDataURL(imageFile);
+    } else {
+      await addDoc(faceNotesCollection, { note: noteText, image: "" });
+      document.getElementById("note").value = "";
+      loadNotes();
     }
+  }
 
-    async function loadNotes(filter = "") {
-      const notesContainer = document.getElementById("notes");
-      notesContainer.innerHTML = "";
-      const querySnapshot = await getDocs(faceNotesCollection);
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (filter && !data.note?.toLowerCase().trim().includes(filter.toLowerCase().trim())) return;
+  let isLoadingNotes = false;
 
-        const card = document.createElement("div");
-        card.className = "note-card";
+  async function loadNotes(filter = "") {
+    if (isLoadingNotes) return; // Prevent overlapping calls
+    isLoadingNotes = true;
 
-        if (data.image) {
-          const img = document.createElement("img");
-          img.src = data.image;
-          img.alt = "Note Image";
-          img.className = "note-image";
-          img.addEventListener("click", () => {
-  if (!img.classList.contains("zoomed")) {
-    // Clone the image for zoom
-    const zoomedImg = img.cloneNode(true);
-    zoomedImg.classList.add("zoomed");
-    zoomedImg.style.position = 'fixed';
-    zoomedImg.style.top = '50%';
-    zoomedImg.style.left = '50%';
-    zoomedImg.style.transform = 'translate(-50%, -50%)';
-    zoomedImg.style.zIndex = '9999';
-    zoomedImg.style.cursor = 'zoom-out';
-    zoomedImg.id = 'zoomed-image-overlay';
+    const notesContainer = document.getElementById("notes");
+    notesContainer.innerHTML = "";
 
-    // Click to close zoom
-    zoomedImg.addEventListener('click', () => {
-      zoomedImg.remove();
+    // Split the filter into words, ignore empty strings, convert to lowercase
+    const searchWords = filter
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const querySnapshot = await getDocs(faceNotesCollection);
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const noteText = data.note?.toLowerCase() || "";
+
+      // If there is a search, check all words exist in the note
+      if (
+        searchWords.length > 0 &&
+        !searchWords.every((word) => noteText.includes(word))
+      ) {
+        return; // skip notes that don't contain all search words
+      }
+
+      const card = document.createElement("div");
+      card.className = "note-card";
+
+      if (data.image) {
+        const img = document.createElement("img");
+        img.src = data.image;
+        img.alt = "Note Image";
+        img.className = "note-image";
+        img.addEventListener("click", () => {
+          if (!img.classList.contains("zoomed")) {
+            const zoomedImg = img.cloneNode(true);
+            zoomedImg.classList.add("zoomed");
+            zoomedImg.style.position = "fixed";
+            zoomedImg.style.top = "50%";
+            zoomedImg.style.left = "50%";
+            zoomedImg.style.transform = "translate(-50%, -50%)";
+            zoomedImg.style.zIndex = "9999";
+            zoomedImg.style.cursor = "zoom-out";
+            zoomedImg.id = "zoomed-image-overlay";
+
+            zoomedImg.addEventListener("click", () => {
+              zoomedImg.remove();
+            });
+
+            document.body.appendChild(zoomedImg);
+          }
+        });
+
+        card.appendChild(img);
+      }
+
+      const p = document.createElement("p");
+      p.innerHTML = data.note; // Render HTML content
+      card.appendChild(p);
+
+      const btnContainer = document.createElement("div");
+      btnContainer.className = "btn-container";
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Delete";
+      delBtn.onclick = async () => {
+        await deleteDoc(doc(faceNotesCollection, docSnap.id));
+        loadNotes(filter); // pass current filter so search stays intact
+      };
+
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "Edit";
+      editBtn.onclick = () => {
+        const card = editBtn.closest(".note-card");
+        const noteText = card.querySelector("p").innerHTML;
+        const editDiv = document.createElement("div");
+        editDiv.setAttribute("contenteditable", "true");
+        editDiv.innerHTML = noteText;
+
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "Save Changes";
+        saveBtn.onclick = async () => {
+          const newNote = editDiv.innerHTML;
+          if (newNote !== noteText) {
+            await updateDoc(doc(faceNotesCollection, docSnap.id), { note: newNote });
+            loadNotes(filter);
+          }
+        };
+
+        card.querySelector("p").replaceWith(editDiv);
+        btnContainer.replaceChild(saveBtn, editBtn);
+      };
+
+      btnContainer.appendChild(editBtn);
+      btnContainer.appendChild(delBtn);
+      card.appendChild(btnContainer);
+
+      notesContainer.appendChild(card);
     });
 
-    // Append to body (top level)
-    document.body.appendChild(zoomedImg);
+    isLoadingNotes = false;
   }
-});
 
-          card.appendChild(img);
-        }
-
-        const p = document.createElement("p");
-        p.innerHTML = data.note; // Render HTML content
-        card.appendChild(p);
-
-        const btnContainer = document.createElement("div");
-        btnContainer.className = "btn-container";
-
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Delete";
-        delBtn.onclick = async () => {
-          await deleteDoc(doc(faceNotesCollection, docSnap.id));
-          loadNotes();
-        };
-
-        const editBtn = document.createElement("button");
-        editBtn.textContent = "Edit";
-        editBtn.onclick = () => {
-          const card = editBtn.closest('.note-card');
-          const noteText = card.querySelector('p').innerHTML; // Get current formatted note
-          const editDiv = document.createElement('div');
-          editDiv.setAttribute('contenteditable', 'true'); // Make the div editable
-          editDiv.innerHTML = noteText; // Populate with current note
-
-          const saveBtn = document.createElement('button');
-          saveBtn.textContent = 'Save Changes';
-          saveBtn.onclick = async () => {
-            const newNote = editDiv.innerHTML; // Get the edited text with formatting
-            if (newNote !== noteText) {
-              await updateDoc(doc(faceNotesCollection, docSnap.id), { note: newNote });
-              loadNotes(); // Reload notes to reflect changes
-            }
-          };
-
-          // Replace the note paragraph with the editable div and save button
-          card.querySelector('p').replaceWith(editDiv);
-          btnContainer.replaceChild(saveBtn, editBtn);
-        };
-
-        btnContainer.appendChild(editBtn);
-        btnContainer.appendChild(delBtn);
-        card.appendChild(btnContainer);
-
-        notesContainer.appendChild(card);
-      });
-    }
-
-    window.saveNote = saveNote;
-    window.loadNotes = loadNotes;
-
-    window.onload = () => loadNotes();
-
-    window.searchNotes = () => {
-      const searchVal = document.getElementById("search").value;
-      loadNotes(searchVal);
+  // Debounce helper function
+  function debounce(fn, delay) {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), delay);
     };
-  </script>
+  }
+
+  window.searchNotes = debounce(() => {
+    const searchVal = document.getElementById("search").value;
+    loadNotes(searchVal);
+  }, 300); // 300ms debounce delay
+
+  window.saveNote = saveNote;
+  window.loadNotes = loadNotes;
+
+  window.onload = () => loadNotes();
+</script>
+
   <style>
     body {
       font-family: 'fors', sans-serif;
