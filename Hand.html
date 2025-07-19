@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hand</title>
-  <script type="module">
+   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import {
       getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
@@ -57,13 +57,32 @@
       }
     }
 
+    let isLoadingNotes = false;
+
     async function loadNotes(filter = "") {
+      if (isLoadingNotes) return;
+      isLoadingNotes = true;
+
       const notesContainer = document.getElementById("notes");
       notesContainer.innerHTML = "";
+
+      const searchWords = filter
+        .toLowerCase()
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
       const querySnapshot = await getDocs(handNotesCollection);
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        if (filter && !data.note?.toLowerCase().trim().includes(filter.toLowerCase().trim())) return;
+        const noteText = data.note?.toLowerCase() || "";
+
+        if (
+          searchWords.length > 0 &&
+          !searchWords.every((word) => noteText.includes(word))
+        ) {
+          return;
+        }
 
         const card = document.createElement("div");
         card.className = "note-card";
@@ -90,7 +109,7 @@
         delBtn.textContent = "Delete";
         delBtn.onclick = async () => {
           await deleteDoc(doc(handNotesCollection, docSnap.id));
-          loadNotes();
+          loadNotes(filter);
         };
 
         const editBtn = document.createElement("button");
@@ -107,12 +126,12 @@
           saveBtn.onclick = async () => {
             const updatedNote = editArea.value;
             await updateDoc(doc(handNotesCollection, docSnap.id), { note: updatedNote });
-            loadNotes();
+            loadNotes(filter);
           };
 
           const cancelBtn = document.createElement("button");
           cancelBtn.textContent = "Cancel";
-          cancelBtn.onclick = () => loadNotes();
+          cancelBtn.onclick = () => loadNotes(filter);
 
           card.insertBefore(editArea, btnContainer);
           card.insertBefore(saveBtn, btnContainer);
@@ -125,93 +144,167 @@
 
         notesContainer.appendChild(card);
       });
+
+      isLoadingNotes = false;
     }
+
+    function debounce(fn, delay) {
+      let timeoutId;
+      return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn(...args), delay);
+      };
+    }
+
+    window.searchNotes = debounce(() => {
+      const searchVal = document.getElementById("search").value;
+      loadNotes(searchVal);
+    }, 300);
 
     window.saveNote = saveNote;
     window.loadNotes = loadNotes;
 
     window.onload = () => loadNotes();
-
-    window.searchNotes = () => {
-      const searchVal = document.getElementById("search").value;
-      loadNotes(searchVal);
-    };
   </script>
   <style>
     body {
       font-family: 'fors', sans-serif;
-      background-color: #ebebeb;
+      background: url('2b.png') no-repeat center center fixed;
+      background-size: cover;
       margin: 0;
       padding: 0;
+      color: #222;
     }
-    @font-face {
+	
+	body::before,
+body::after {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('2b.png') no-repeat center center fixed;
+  background-size: cover;
+  z-index: -1;
+}
+
+body::before {
+  filter: blur(20px);
+  opacity: 0.7;
+}
+
+body::after {
+  filter: blur(20px);
+  opacity: 0.7;
+}
+
+
+	@font-face {
       font-family: 'fors';
       src: url('fors.ttf') format('truetype'); /* Adjust the path */
     } 
-	@font-face {
+@font-face {
       font-family: 'hellohon';
       src: url('hellohon.otf') format('opentype'); /* Adjust the path */
 	  }
+       
+	   h1 {
+  position: relative;
+  top: -20px;        /* adjust vertical position */
+  text-align: center;
+  color: black;
+  font-family: 'hellohon', sans-serif;
+  font-weight: normal;
+  font-size: 6.5rem;
+  margin: 0;
+  padding: 0;
+  letter-spacing: 0.15em;  /* Adjust spacing here */
+}
 
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      max-width: 800px;
-      margin: 0 auto;
-      position: relative;
-    }
 
-    .home-btn {
-      background-color: #e4c9b6;
-      border: none;
-      border-radius: 8px;
-      padding: 0.4rem 0.8rem;
-      cursor: pointer;
-      font-weight: bold;
-    }
- .home-btn:hover {
-  background-color: #f8f2ef;
-  }
-
-    .page-title {
-      position: absolute;
-      left: 50%;
-	  top: 8px;
-      transform: translateX(-50%);
-      font-size: 6.5rem;
-      font-weight: normal;
-      color: black;
-	  font-family: 'hellohon', sans-serif;
-    }
 
     .container {
-      max-width: 100%;
-      margin: 0 10px;
-      text-align: center;
-      padding: 1rem 0.5rem;
-    }
+     max-width: 100%;
+     margin: 0 auto;     /* Remove vertical margin */
+     text-align: center;
+     padding: 0.5rem;
+     position: relative;
+     top: -30px;         /* Move it up by 20px (adjust as needed) */
+     }
 
-    textarea, input[type="file"] {
+    
+     textarea, input[type="file"] {
       display: block;
       margin: 0.5rem auto;
       padding: 0.5rem;
+      background: rgba(234, 224, 218, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
       width: 90%;
       max-width: 600px;
-      background-color: #f4f0f7;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      color: #fff;
+      font-family: 'fors', sans-serif;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.1);
     }
 
-    button {
-      background-color: #e4c9b6;
-      color: black;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
+textarea:focus, input[type="file"]:focus, #search:focus {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 4px 16px rgba(255, 255, 255, 0.3);
+  color: #000;
+}
+      /* Make choose file button glassy */
+input[type="file"] {
+  color: white; /* file name text color */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 0.5rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Style the actual 'Choose File' button */
+input[type="file"]::file-selector-button {
+  background: rgba(228, 201, 182, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #333;
+  font-family: 'fors', sans-serif;
+  box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: rgba(172, 163, 126, 0.7);
+  border-color: rgba(172, 163, 126, 0.8);
+  color: white;
+}
+
+
+
+     button {
       margin-top: 10px;
+      background: rgba(228, 201, 182, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      color: gray;
+      font-family: 'fors', sans-serif;
+      box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: rgba(172, 163, 126, 0.7);
+      border-color: rgba(172, 163, 126, 0.8);
+      color: black;
     }
 
     #notes {
@@ -221,12 +314,25 @@
       margin-top: 2rem;
     }
 
-    .note-card {
-      background-color: #f4f0f7;
+     .note-card {
+      background: rgba(234, 224, 218, 0.15);
       border-radius: 12px;
       padding: 1rem;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      box-shadow:
+        0 8px 32px rgba(31, 38, 135, 0.05),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
       text-align: left;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+      color: black;
+    }
+
+    .note-card:hover {
+      box-shadow:
+        0 12px 48px rgba(31, 38, 135, 0.1),
+        0 0 15px rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
     }
 
     .note-image {
@@ -246,12 +352,27 @@
       max-height: 90vh;
       width: auto;
       height: auto;
-      z-index: 1000;
+      z-index: 9999 !important;
       box-shadow: 0 0 10px rgba(0,0,0,0.4);
       background: white;
       border-radius: 12px;
       cursor: zoom-out;
     }
+	 
+	 #notes {
+  overflow: visible !important;
+  position: relative; /* or static */
+  z-index: 1;
+}
+    #zoomed-image-overlay {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  background: white;
+}
+
+
 
     .btn-container {
       display: flex;
@@ -261,35 +382,112 @@
     }
 
     #search-container {
-      text-align: right;
-      max-width: 100%;
-      margin: 0 10px;
-      padding: 0.5rem 0.5rem 0;
-    }
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    margin: 0;
+    padding: 0;
+   }
+
 
     #search {
-      width: 200px;  /* or increase if needed */
-      max-width: 100%;
+      width: 200px;
       padding: 0.4rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: black;
+      outline: none;
     }
 
-    .edit-textarea {
-      width: 90%;
-      height: 100px;
-      margin: 0.5rem auto;
-      padding: 0.5rem;
-      background-color: #f4f0f7;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+    #search::placeholder {
+      color: rgba(255, 255, 255, 0.7);
     }
+	.top-bar {
+     max-width: 100%;
+     margin: 0 10px;
+     padding: 10px 0;
+     height: 40px;       /* give it some height */
+    }
+
+    .home-btn {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.4rem 0.8rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      text-decoration: none;
+      color: black;
+      transition: background-color 0.2s ease;
+      font-weight: bold;
+    }
+
+    .home-btn:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+
+    .top-bar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .top-bar h1 {
+     margin: 0;
+     text-align: center;
+     line-height: 30px; 
+     color: black;
+     font-family: 'hellohon', sans-serif;
+     font-weight: normal;
+     font-size: 6.5rem;
+     z-index: 1;
+     position: relative;
+	 
+     }
+    .page-title {
+     text-align: center;
+     margin-top: 20px;
+     color: black;
+     font-family: 'hellohon', sans-serif;
+     font-weight: normal;
+     font-size: 6.5rem;
+    }
+
+   .home-btn {
+  position: absolute;
+  top: 15px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  color: black;
+  font-weight: bold;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+}
+
+.home-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+  }
+
   </style>
 </head>
 <body>
-  <div class="top-bar">
     <a href="home.html"><button class="home-btn">Home</button></a>
-    <div class="page-title">Hand.Wrist.Arm</div>
+    <h1 class="page-title">Upper Limb</h1>
   </div>
 
   <div id="search-container">
