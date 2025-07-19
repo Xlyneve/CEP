@@ -5,258 +5,322 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>URGENT CARE</title>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const urgentCareCollection = collection(db, "urgentCareNotes");
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const urgentCareCollection = collection(db, "urgentCareNotes");
 
-    async function saveNote() {
-      const noteText = document.getElementById("note").value;
-      const imageFile = document.getElementById("image").files[0];
-      if (!noteText && !imageFile) return;
+  async function saveNote() {
+    const noteText = document.getElementById("note").value;
+    const imageFile = document.getElementById("image").files[0];
+    if (!noteText && !imageFile) return;
 
-      let imageData = "";
-      if (imageFile) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          imageData = reader.result;
-          await addDoc(urgentCareCollection, { note: noteText, image: imageData });
-          document.getElementById("note").value = "";
-          document.getElementById("image").value = "";
-          loadNotes();
-        };
-        reader.readAsDataURL(imageFile);
-      } else {
-        await addDoc(urgentCareCollection, { note: noteText, image: "" });
+    let imageData = "";
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        imageData = reader.result;
+        await addDoc(urgentCareCollection, { note: noteText, image: imageData });
         document.getElementById("note").value = "";
+        document.getElementById("image").value = "";
         loadNotes();
-      }
+      };
+      reader.readAsDataURL(imageFile);
+    } else {
+      await addDoc(urgentCareCollection, { note: noteText, image: "" });
+      document.getElementById("note").value = "";
+      loadNotes();
     }
-
-    function formatNoteText(text) {
-      const escaped = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-      return escaped
-        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-        .replace(/==(.+?)==/g, '<mark>$1</mark>')
-        .replace(/\n/g, "<br>");
-    }
-
-    async function loadNotes(filter = "") {
-      const notesContainer = document.getElementById("notes");
-      notesContainer.innerHTML = "";
-      const querySnapshot = await getDocs(urgentCareCollection);
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (filter && !data.note?.toLowerCase().includes(filter.toLowerCase())) return;
-
-        const card = document.createElement("div");
-        card.className = "note-card";
-
-card.addEventListener("click", () => {
-  // Toggle zoom
-  document.querySelectorAll('.note-card.clicked').forEach(c => {
-    if (c !== card) c.classList.remove('clicked');
-  });
-  card.classList.toggle("clicked");
-});
-
-        if (data.image) {
-          const img = document.createElement("img");
-          img.src = data.image;
-          img.alt = "Note Image";
-          img.className = "note-image";
-          img.addEventListener("click", (e) => {
-  e.stopPropagation();
-  const alreadyZoomed = img.classList.contains("zoomed");
-  document.querySelectorAll(".note-image.zoomed").forEach(el => el.classList.remove("zoomed"));
-  document.getElementById("image-overlay").style.display = alreadyZoomed ? "none" : "block";
-  if (!alreadyZoomed) {
-    img.classList.add("zoomed");
   }
-});
 
-          card.appendChild(img);
+  function formatNoteText(text) {
+    const escaped = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    return escaped
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/==(.+?)==/g, "<mark>$1</mark>")
+      .replace(/\n/g, "<br>");
+  }
+
+  function highlightSearch(text, searchWords) {
+    let result = text;
+    searchWords.forEach((word) => {
+      const regex = new RegExp(`(${word})`, "gi");
+      result = result.replace(regex, "<mark>$1</mark>");
+    });
+    return result;
+  }
+
+  async function loadNotes(filter = "") {
+    const notesContainer = document.getElementById("notes");
+    notesContainer.innerHTML = "";
+    const querySnapshot = await getDocs(urgentCareCollection);
+
+    const searchWords = filter
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const noteText = data.note || "";
+
+      if (
+        searchWords.length > 0 &&
+        !searchWords.every((w) => noteText.toLowerCase().includes(w))
+      ) {
+        return;
+      }
+
+      const card = document.createElement("div");
+      card.className = "note-card";
+
+      if (data.image) {
+        const img = document.createElement("img");
+        img.src = data.image;
+        img.alt = "Note Image";
+        img.className = "note-image";
+        img.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const zoomedImg = img.cloneNode(true);
+          zoomedImg.classList.add("zoomed");
+          zoomedImg.style.position = "fixed";
+          zoomedImg.style.top = "50%";
+          zoomedImg.style.left = "50%";
+          zoomedImg.style.transform = "translate(-50%, -50%)";
+          zoomedImg.style.zIndex = "9999";
+          zoomedImg.style.cursor = "zoom-out";
+          zoomedImg.addEventListener("click", () => zoomedImg.remove());
+          document.body.appendChild(zoomedImg);
+        });
+        card.appendChild(img);
+      }
+
+      const noteDisplay = document.createElement("div");
+      noteDisplay.className = "note-text";
+      const parsed = formatNoteText(noteText);
+      noteDisplay.innerHTML =
+        searchWords.length > 0 ? highlightSearch(parsed, searchWords) : parsed;
+      card.appendChild(noteDisplay);
+
+      const editArea = document.createElement("textarea");
+      editArea.className = "editable-textarea";
+      editArea.style.display = "none";
+      editArea.value = data.note;
+      card.appendChild(editArea);
+
+      const btnContainer = document.createElement("div");
+      btnContainer.className = "btn-container";
+
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "Edit";
+      editBtn.onclick = () => {
+        const isEditing = editArea.style.display === "block";
+        if (!isEditing) {
+          editArea.style.display = "block";
+          noteDisplay.style.display = "none";
+          editArea.focus();
+          editBtn.textContent = "Save";
+        } else {
+          const updatedNote = editArea.value;
+          updateDoc(doc(urgentCareCollection, docSnap.id), { note: updatedNote });
+          noteDisplay.innerHTML = formatNoteText(updatedNote);
+          editArea.style.display = "none";
+          noteDisplay.style.display = "block";
+          editBtn.textContent = "Edit";
         }
+      };
 
-        const noteDisplay = document.createElement("div");
-        noteDisplay.className = "note-text";
-        noteDisplay.innerHTML = formatNoteText(data.note);
-        card.appendChild(noteDisplay);
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Delete";
+      delBtn.onclick = async () => {
+        await deleteDoc(doc(urgentCareCollection, docSnap.id));
+        loadNotes(filter);
+      };
 
-        const editArea = document.createElement("textarea");
-        editArea.className = "editable-textarea";
-        editArea.style.display = "none";
-        editArea.value = data.note;
-        card.appendChild(editArea);
+      btnContainer.appendChild(editBtn);
+      btnContainer.appendChild(delBtn);
+      card.appendChild(btnContainer);
+      notesContainer.appendChild(card);
+    });
+  }
 
-        const btnContainer = document.createElement("div");
-        btnContainer.className = "btn-container";
-
-        const editBtn = document.createElement("button");
-        editBtn.textContent = "Edit";
-        editBtn.onclick = () => {
-          const isEditing = editArea.style.display === "block";
-          if (!isEditing) {
-            editArea.style.display = "block";
-            noteDisplay.style.display = "none";
-            editArea.focus();
-            editBtn.textContent = "Save";
-          } else {
-            const updatedNote = editArea.value;
-            updateDoc(doc(urgentCareCollection, docSnap.id), { note: updatedNote });
-            noteDisplay.innerHTML = formatNoteText(updatedNote);
-            editArea.style.display = "none";
-            noteDisplay.style.display = "block";
-            editBtn.textContent = "Edit";
-          }
-        };
-
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Delete";
-        delBtn.onclick = async () => {
-          await deleteDoc(doc(urgentCareCollection, docSnap.id));
-          loadNotes();
-        };
-
-        btnContainer.appendChild(editBtn);
-        btnContainer.appendChild(delBtn);
-        card.appendChild(btnContainer);
-        notesContainer.appendChild(card);
-      });
-    }
-
-    window.saveNote = saveNote;
-    window.loadNotes = loadNotes;
-    window.onload = () => loadNotes();
-
-    window.searchNotes = () => {
-      const searchVal = document.getElementById("search").value;
-      loadNotes(searchVal);
+  function debounce(fn, delay) {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => fn(...args), delay);
     };
-	
-	window.unzoomImage = () => {
-  document.querySelectorAll(".note-image.zoomed").forEach(img => img.classList.remove("zoomed"));
-  document.getElementById("image-overlay").style.display = "none";
-};
+  }
 
-  </script>
-  <style>
+  window.searchNotes = debounce(() => {
+    const searchVal = document.getElementById("search").value;
+    loadNotes(searchVal);
+  }, 300);
+
+  window.saveNote = saveNote;
+  window.loadNotes = loadNotes;
+  window.unzoomImage = () => {
+    document.querySelectorAll(".note-image.zoomed").forEach(img => img.remove());
+  };
+
+  window.onload = () => loadNotes();
+</script>
+<style>
     body {
       font-family: 'fors', sans-serif;
-      background-color: #ebebeb;
+      background: url('2b.png') no-repeat center center fixed;
+      background-size: cover;
       margin: 0;
       padding: 0;
+      color: #222;
     }
-    @font-face {
+	
+	body::before,
+body::after {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('2b.png') no-repeat center center fixed;
+  background-size: cover;
+  z-index: -1;
+}
+
+body::before {
+  filter: blur(20px);
+  opacity: 0.7;
+}
+
+body::after {
+  filter: blur(20px);
+  opacity: 0.7;
+}
+
+
+	@font-face {
       font-family: 'fors';
       src: url('fors.ttf') format('truetype'); /* Adjust the path */
     } 
-    @font-face {
+@font-face {
       font-family: 'hellohon';
       src: url('hellohon.otf') format('opentype'); /* Adjust the path */
-    }
-
-    /* Header container flexbox for layout */
-   .header {
-    display: flex;
-    align-items: center;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0.5rem 1rem 0;
-    position: relative;
-    justify-content: space-between;
-    gap: 1rem;
-    }
-
-    /* Home button */
-    home-button {
-  background-color: #DDD7E5;
-  padding: 0.4rem 1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'fors', sans-serif;
-  margin-right: 1rem;
-  order: 0;
-  flex-shrink: 0;
-}
-  .home-button:hover {
-  background-color: #f8f2ef;
-}
-
-    /* Title */
-    h1 {
+	  }
+       
+	   h1 {
+  position: relative;
+  top: -20px;        /* adjust vertical position */
+  text-align: center;
+  color: black;
   font-family: 'hellohon', sans-serif;
   font-weight: normal;
-  color: black;
+  font-size: 6.5rem;
   margin: 0;
-  order: 1;
-  flex-grow: 1;
-  text-align: center;
-  font-size: 5rem;
-  margin-left: 4rem; /* adjust this for better centering */
+  padding: 0;
+  letter-spacing: 0.15em;  /* Adjust spacing here */
 }
 
-    /* Search container aligned right */
-    #search-container {
-  order: 2;
-  margin-left: auto;
-  text-align: right;
-  padding-right: 0;
-}
 
-    /* Search input */
-    #search {
-      padding: 0.4rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      width: 200px;
-      max-width: 100%;
-    }
 
-    /* Container for note input etc, moved closer to header */
     .container {
-      max-width: 100%;
-      margin: 0 auto;
-      padding: 0.5rem 0.5rem 1rem;
-      text-align: center;
-    }
+     max-width: 100%;
+     margin: 0 auto;     /* Remove vertical margin */
+     text-align: center;
+     padding: 0.5rem;
+     position: relative;
+     top: -30px;         /* Move it up by 20px (adjust as needed) */
+     }
 
-    textarea, input[type="file"] {
+    
+     textarea, input[type="file"] {
       display: block;
       margin: 0.5rem auto;
       padding: 0.5rem;
+      background: rgba(234, 224, 218, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
       width: 90%;
       max-width: 600px;
-      background-color: #DDD7E5;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      color: #fff;
+      font-family: 'fors', sans-serif;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.1);
     }
 
-    button {
-      background-color: #DDD7E5;
-      color: black;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
+textarea:focus, input[type="file"]:focus, #search:focus {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 4px 16px rgba(255, 255, 255, 0.3);
+  color: #000;
+}
+      /* Make choose file button glassy */
+input[type="file"] {
+  color: white; /* file name text color */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 0.5rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Style the actual 'Choose File' button */
+input[type="file"]::file-selector-button {
+  background: rgba(228, 201, 182, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #333;
+  font-family: 'fors', sans-serif;
+  box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: rgba(172, 163, 126, 0.7);
+  border-color: rgba(172, 163, 126, 0.8);
+  color: white;
+}
+
+
+
+     button {
       margin-top: 10px;
+      background: rgba(228, 201, 182, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      color: gray;
+      font-family: 'fors', sans-serif;
+      box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: rgba(172, 163, 126, 0.7);
+      border-color: rgba(172, 163, 126, 0.8);
+      color: black;
     }
 
     #notes {
@@ -266,27 +330,26 @@ card.addEventListener("click", () => {
       margin-top: 2rem;
     }
 
-    .note-card {
-      background-color: #DDD7E5;
+     .note-card {
+      background: rgba(234, 224, 218, 0.15);
       border-radius: 12px;
       padding: 1rem;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      box-shadow:
+        0 8px 32px rgba(31, 38, 135, 0.05),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
       text-align: left;
-      overflow-wrap: break-word;
-      word-wrap: break-word;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+      color: black;
     }
-  
-    ..note-card:hover {
-  /* Disable hover zoom */
-  transform: none;
-}
 
-.note-card.clicked {
-  transform: scale(1.2);
-  transition: transform 0.3s ease;
-  z-index: 10;
-}
-
+    .note-card:hover {
+      box-shadow:
+        0 12px 48px rgba(31, 38, 135, 0.1),
+        0 0 15px rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
+    }
 
     .note-image {
       max-width: 100%;
@@ -297,41 +360,35 @@ card.addEventListener("click", () => {
     }
 
     .note-image.zoomed {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 90vw;
+      max-height: 90vh;
+      width: auto;
+      height: auto;
+      z-index: 9999 !important;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      background: white;
+      border-radius: 12px;
+      cursor: zoom-out;
+    }
+	 
+	 #notes {
+  overflow: visible !important;
+  position: relative; /* or static */
+  z-index: 1;
+}
+    #zoomed-image-overlay {
   max-width: 90vw;
   max-height: 90vh;
-  width: auto;
-  height: auto;
-  z-index: 2000;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  background: white;
   border-radius: 12px;
-  cursor: zoom-out;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
-
-}
-#image-overlay {
-  display: none;
-  position: fixed;
-  z-index: 1500;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.4);
-  transition: opacity 0.3s ease;
-
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  background: white;
 }
 
 
-    .note-text {
-      font-family: 'fors', sans-serif;
-      font-size: 12px;
-      white-space: pre-wrap;
-    }
 
     .btn-container {
       display: flex;
@@ -340,33 +397,114 @@ card.addEventListener("click", () => {
       margin-top: 0.5rem;
     }
 
-    .editable-textarea {
-      width: 100%;
-      min-height: 120px;
-      box-sizing: border-box;
-      font-family: inherit;
-      font-size: 1rem;
-      border-radius: 8px;
-      padding: 0.5rem;
-      resize: vertical;
-      background-color: #f9f9f9;
-      border: 1px solid #ccc;
-      margin-top: 0.5rem;
+    #search-container {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    margin: 0;
+    padding: 0;
+   }
+
+
+    #search {
+      width: 200px;
+      padding: 0.4rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       color: black;
       outline: none;
     }
 
-    mark {
-      background-color: #f7d1d8;
-      padding: 0 0.2em;
-      border-radius: 4px;
+    #search::placeholder {
+      color: rgba(255, 255, 255, 0.7);
     }
+	.top-bar {
+     max-width: 100%;
+     margin: 0 10px;
+     padding: 10px 0;
+     height: 40px;       /* give it some height */
+    }
+
+    .home-btn {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.4rem 0.8rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      text-decoration: none;
+      color: black;
+      transition: background-color 0.2s ease;
+      font-weight: bold;
+    }
+
+    .home-btn:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+
+    .top-bar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .top-bar h1 {
+     margin: 0;
+     text-align: center;
+     line-height: 30px; 
+     color: black;
+     font-family: 'hellohon', sans-serif;
+     font-weight: normal;
+     font-size: 6.5rem;
+     z-index: 1;
+     position: relative;
+	 
+     }
+    .page-title {
+     text-align: center;
+     margin-top: 20px;
+     color: black;
+     font-family: 'hellohon', sans-serif;
+     font-weight: normal;
+     font-size: 5rem;
+    }
+
+   .home-btn {
+  position: absolute;
+  top: 15px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  color: black;
+  font-weight: bold;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+}
+
+.home-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+  }
+
   </style>
 </head>
 <body>
-  <header class="header">
-    <button class="home-button" onclick="location.href='home.html'">Home</button>
-    <h1>Urgent Care notes</h1>
+   <a href="home.html"><button class="home-btn">Home</button></a>
+  <h1 class="page-title">Urgent Care</h1>
+  
     <div id="search-container">
       <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()"/>
     </div>
