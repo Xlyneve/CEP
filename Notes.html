@@ -226,9 +226,18 @@
     .color3 { background: #e4c9b6; }
     .color4 { background: #eae0da; }
 
-    }
 
-} 
+  
+   .note-date {
+  font-size: 10px;
+  color: #777 !important;  /* Force red text */
+  opacity: 1 !important;
+  text-align: right;
+  margin-top: 4px;
+}
+
+
+
   </style>
 </head>
 <body>
@@ -250,7 +259,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
   import {
     getFirestore, collection, query, orderBy,
-    onSnapshot, addDoc, doc, updateDoc, deleteDoc
+    onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -279,7 +288,7 @@
       grid.innerHTML = "";
       snapshot.docs
         .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
-        .filter(note => note.text.toLowerCase().includes(filter.toLowerCase()))
+        .filter(note => (note.text || "").toLowerCase().includes(filter.toLowerCase()))
         .forEach(note => {
           const tile = document.createElement("div");
           tile.className = "note-tile";
@@ -290,6 +299,20 @@
           textarea.setAttribute("readonly", true);
           textarea.style.pointerEvents = "none";
           requestAnimationFrame(() => autoResize(textarea));
+
+          // Add date element
+          const dateElem = document.createElement("div");
+          dateElem.className = "note-date";
+          const noteDate = note.date?.toDate ? note.date.toDate() : new Date(note.date);
+          dateElem.innerText = noteDate.toLocaleString('en-GB', {
+         day: '2-digit',
+         month: '2-digit',
+         year: 'numeric',
+         hour: '2-digit',
+         minute: '2-digit',
+         hour12: false  // 24-hour format
+        });
+
 
           const editBar = document.createElement("div");
           editBar.className = "edit-bar";
@@ -345,6 +368,7 @@
           footer.appendChild(deleteButton);
 
           tile.appendChild(textarea);
+          tile.appendChild(dateElem);
           tile.appendChild(editBar);
           tile.appendChild(footer);
           grid.appendChild(tile);
@@ -356,7 +380,7 @@
   document.getElementById('addNoteBtn').addEventListener('click', async () => {
     const newNote = {
       text: '',
-      date: new Date(),
+      date: serverTimestamp(),
       color: "rgba(255,255,255,0.2)"
     };
     try {
@@ -384,7 +408,6 @@
   function enableTileClickZoom() {
     document.querySelectorAll('.note-tile').forEach(tile => {
       tile.onclick = (e) => {
-        // Don't zoom if clicking textarea or buttons
         if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
 
         const isZoomed = tile.classList.contains('zoomed');
@@ -398,6 +421,7 @@
 
   renderNotes();
 </script>
+
 
 
 </body>
