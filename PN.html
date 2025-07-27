@@ -37,7 +37,7 @@ body::before {
 
 .note-content {
   font-family: 'Tahoma', sans-serif;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .header {
@@ -250,14 +250,11 @@ h2 {
 }
 
 .note-card {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  color: #000; /* Text color black */
-  box-shadow:
-    0 0 12px rgba(255, 255, 255, 0.7),  /* Whitish glow */
-    0 0 20px rgba(255, 255, 255, 0.5);  /* Softer outer glow */
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(245 245 245 / 0.15);
+  border: 1px solid rgba(210 210 210 / 0.3);
+  box-shadow: inset 0 2px 6px rgba(210 210 210 / 0.35),
+              0 0 8px 3px rgba(210 210 210 / 0.25),
+              0 4px 12px rgba(180 180 180 / 0.1);
   border-radius: 16px;
   padding: 18px;
   flex: 1 1 calc(25% - 20px);
@@ -265,8 +262,15 @@ h2 {
   position: relative;
   box-sizing: border-box;
   word-wrap: break-word;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+ transition: transform 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform; /* improves sharpness */
+
+  /* Fix blur on transform */
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
 }
+
 
 .note-card .note-content,
 .note-card .note-title {
@@ -274,24 +278,15 @@ h2 {
 }
 
 .note-card:hover {
-  transform: scale(1.06);
   box-shadow:
-    0 0 20px rgba(255, 255, 255, 0.9), /* Stronger glow on hover */
-    0 0 30px rgba(255, 255, 255, 0.7);
+    inset 0 3px 8px rgba(220 240 255 / 0.6),
+    0 0 14px 5px rgba(220 240 255 / 0.45),
+    0 8px 24px rgba(190 210 240 / 0.15);
+  transform: translateY(-10px); /* slight lift */
 }
 
 
-/* Optional subtle shine overlay for extra glass effect */
-.note-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border-radius: 16px;
-  pointer-events: none;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.25) 0%, transparent 60%);
-  z-index: 1;
-}
+
 .edit-title {
   width: 93%;
   margin-bottom: 6px;
@@ -560,6 +555,13 @@ button:focus,
 
     <div class="cards-container" id="nurseNotesList"></div>
   </div>
+   
+   <div class="note-card">
+  <div class="note-inner">
+    <!-- title and content -->
+  </div>
+</div>
+ 
 
   <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -740,7 +742,7 @@ button:focus,
           <div class="note-title">${title}</div>
           <div class="note-content">${displayNote.replace(/\n/g, '<br>')}</div>
           ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
-          <div style="font-size:11px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
+          <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
           ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
           <div class="note-actions">
             <button class="edit-btn">Edit</button>
