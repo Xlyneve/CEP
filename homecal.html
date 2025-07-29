@@ -380,6 +380,8 @@ button:hover,
     0 4px 10px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
+
+
 }
 .day:hover {
   box-shadow:
@@ -448,6 +450,48 @@ button:hover,
   margin-bottom: 5px;
   font-size: 10pt;
 }
+.day:hover:not(.today) {
+  transform: scale(1.03);
+  box-shadow:
+    inset 0 0 20px rgba(255, 255, 255, 0.4),
+    0 0 15px rgba(190, 230, 255, 0.6);
+  transition: all 0.3s ease;
+}
+.day.today {
+  transform: scale(1.19);
+  z-index: 6;
+  box-shadow:
+    0 0 20px rgba(255, 255, 255, 1),
+    0 0 40px rgba(190, 230, 255, 0.9),
+    0 0 60px rgba(200, 240, 255, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.6),
+    rgba(210, 240, 255, 0.4)
+  );
+}
+/* Today's hover state - even bigger */
+.day.today:hover {
+  transform: scale(1.22);
+  box-shadow:
+    0 0 30px rgba(255, 255, 255, 1),
+    0 0 50px rgba(190, 230, 255, 1),
+    0 0 70px rgba(200, 240, 255, 0.9);
+}
+.day:hover {
+  box-shadow:
+    inset 0 0 20px rgba(255, 255, 255, 0.4),
+    0 0 15px rgba(190, 230, 255, 0.6);
+  transform: scale(1.03);
+  transition: all 0.3s ease;
+}
+.day textarea:focus {
+  outline: none;
+  box-shadow: 0 0 8px rgba(180, 220, 255, 0.8);
+  background: rgba(255, 255, 255, 0.4);
+}
+
 
 /* Responsive */
 @media (max-width: 600px) {
@@ -643,9 +687,20 @@ button:hover,
 
     // Days with notes textarea
     for (let i = 1; i <= daysInMonth; i++) {
-      const note = notes[i] || "";
-      const day = document.createElement('div');
-      day.className = 'day';
+  const note = notes[i] || "";
+  const day = document.createElement('div');
+  day.className = 'day';
+
+  // Highlight today
+  const today = new Date();
+  if (
+    i === today.getDate() &&
+    month === today.getMonth() &&
+    year === today.getFullYear()
+  ) {
+    day.classList.add('today');
+  }
+
       day.innerHTML = `<div class="date-number">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
       const textarea = day.querySelector('textarea');
       textarea.addEventListener('input', e => {
