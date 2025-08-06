@@ -73,6 +73,8 @@ body::before {
 .box3 { background: rgba(187, 174, 165, 0.15); }
 .box4 { background: rgba(224, 215, 214, 0.15); }
 .box5 { background: rgba(179, 179, 179, 0.15); }
+.box6 { background: rgba(234, 225, 239, 0.15); }
+
 
 
     .calculator h2::before {
@@ -185,6 +187,21 @@ body::before {
   </div>
 </div>
 
+<div class="calculator box6">
+  <h2>Drug Formula</h2>
+  <label for="desired">Desired Dose (D):</label>
+  <input type="number" id="desired">
+
+  <label for="have">Dose on Hand (H):</label>
+  <input type="number" id="have">
+
+  <label for="vehicle">Volume/Tablet (V):</label>
+  <input type="number" id="vehicle">
+
+  <div class="result" id="drugFormulaResult">Result: </div>
+  <div class="note">* Formula: (D ÷ H) × V</div>
+</div>
+
 
 <script>
   // Paracetamol 120 mg/5 mL
@@ -282,6 +299,30 @@ body::before {
       Top-Up Dose (if needed): ${topUpDose} (${topUpVol})
     `;
   });
+
+// Drug Formula (D/H × V)
+const desired = document.getElementById('desired');
+const have = document.getElementById('have');
+const vehicle = document.getElementById('vehicle');
+const drugFormulaResult = document.getElementById('drugFormulaResult');
+
+function calculateDrugFormula() {
+  const D = parseFloat(desired.value);
+  const H = parseFloat(have.value);
+  const V = parseFloat(vehicle.value);
+
+  if (D > 0 && H > 0 && V > 0) {
+    const dose = (D / H) * V;
+    drugFormulaResult.textContent = `Result: ${dose.toFixed(2)} mL or tablets`;
+  } else {
+    drugFormulaResult.textContent = 'Result:';
+  }
+}
+
+desired.addEventListener('input', calculateDrugFormula);
+have.addEventListener('input', calculateDrugFormula);
+vehicle.addEventListener('input', calculateDrugFormula);
+
 </script>
 
 
