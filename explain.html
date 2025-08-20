@@ -308,6 +308,48 @@ mark {
 .editable-div [style*="background-color: #ffff00"] {
   background-color: #ffff00;
 }
+.copied-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+.note-card.show-copied .copied-indicator {
+  opacity: 1;
+  transform: scale(1.2);
+}
+.copied-indicator svg circle {
+  stroke: #4a90e2;
+  stroke-width: 3;
+  fill: rgba(74,144,226,0.15);
+}
+.copied-indicator svg path {
+  stroke: #4a90e2;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+
+@keyframes fadeOut {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* ✅ Hide buttons initially */
+.btn-group {
+  display: none;
+}
+.note-card.show-buttons .btn-group {
+  display: flex;
+}
 /* Mobile & Tablet Adjustments */
 @media (max-width: 768px) {
   .header {
@@ -328,97 +370,141 @@ mark {
 
 </style>
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-    import {
-      getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
-    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import {
+  getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+  authDomain: "cepx-f9d2a.firebaseapp.com",
+  projectId: "cepx-f9d2a",
+  storageBucket: "cepx-f9d2a.appspot.com",
+  messagingSenderId: "840696526325",
+  appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    let allNotes = [];
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+let allNotes = [];
 
-    document.querySelector('.add-btn').addEventListener('click', async () => {
-      const title = document.getElementById('noteTitle').value.trim();
-      const text = document.getElementById('noteText').value.trim();
-      if (!title && !text) return;
+// Add new note
+document.querySelector('.add-btn').addEventListener('click', async () => {
+  const title = document.getElementById('noteTitle').value.trim();
+  const text = document.getElementById('noteText').value.trim();
+  if (!title && !text) return;
 
-      await addDoc(collection(db, 'explainNotes'), {
-        title: title || 'Untitled',
-        text,
-        timestamp: new Date().toISOString()
-      });
+  await addDoc(collection(db, 'explainNotes'), {
+    title: title || 'Untitled',
+    text,
+    timestamp: new Date().toISOString()
+  });
 
-      document.getElementById('noteTitle').value = '';
-      document.getElementById('noteText').value = '';
-    });
+  document.getElementById('noteTitle').value = '';
+  document.getElementById('noteText').value = '';
+});
 
-    function renderNotes(notesToRender = allNotes) {
-      const container = document.getElementById('notesContainer');
-      container.innerHTML = '';
+// Render notes
+function renderNotes(notesToRender = allNotes) {
+  const container = document.getElementById('notesContainer');
+  container.innerHTML = '';
 
-      notesToRender.forEach((note) => {
-        const div = document.createElement('div');
-        div.className = 'note-card';
+  notesToRender.forEach((note) => {
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    card.style.position = 'relative';
 
-        if (note.editing) {
-          div.innerHTML = `
-            <input type="text" id="editTitle-${note.id}" value="${note.title}">
-            <div id="editText-${note.id}" class="edit-box" contenteditable="true" oninput="window.autoResizeDiv(this)">${note.text}</div>
-            <div class="formatting-buttons">
-              <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
-              <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
-            </div>
-            <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
-            <div class="btn-group">
-              <button onclick="window.saveEdit('${note.id}')">Save</button>
-              <button onclick="window.deleteNote('${note.id}')">Delete</button>
-              <button onclick="window.copyNote('${note.id}')">Copy</button>
-            </div>
-          `;
-        } else {
-          div.innerHTML = `
-            <div class="note-title">${note.title}</div>
-            <div class="note-text">${note.text}</div>
-            <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
-            <div class="btn-group">
-              <button onclick="window.toggleEdit('${note.id}')">Edit</button>
-              <button onclick="window.deleteNote('${note.id}')">Delete</button>
-              <button onclick="window.copyNote('${note.id}')">Copy</button>
-            </div>
-          `;
-        }
-
-        container.appendChild(div);
-		
-		const editText = document.getElementById(`editText-${note.id}`);
-if (editText) window.autoResize(editText);
-
-      });
+    if (note.editing) {
+      card.innerHTML = `
+        <input type="text" id="editTitle-${note.id}" value="${escapeAttr(note.title)}">
+        <div id="editText-${note.id}" class="edit-box" contenteditable="true">${note.text || ''}</div>
+        <div class="formatting-buttons">
+          <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
+          <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
+        </div>
+        <div class="timestamp">Last updated: ${formatTS(note.timestamp)}</div>
+        <div class="edit-controls" style="display:flex; gap:8px; margin-top:8px;">
+          <button onclick="window.saveEdit('${note.id}')">Save</button>
+          <button onclick="window.cancelEdit('${note.id}')">Cancel</button>
+        </div>
+        <div class="copied-indicator">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.3"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="note-title">${escapeHTML(note.title)}</div>
+        <div class="note-text">${note.text || ''}</div>
+        <div class="timestamp">Saved on ${formatTS(note.timestamp)}</div>
+        <div class="btn-group">
+          <button onclick="window.toggleEdit('${note.id}')">Edit</button>
+          <button onclick="window.deleteNote('${note.id}')">Delete</button>
+        </div>
+        <div class="copied-indicator">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.3"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+      `;
     }
 
-    window.toggleEdit = (id) => {
-      const note = allNotes.find(n => n.id === id);
-      if (note) {
-        note.editing = true;
-        renderNotes();
-      }
-    };
+    // Click-to-copy (preserve formatting)
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button, input, textarea')) return;
+      copyNoteHTML(note, card);
+    });
 
-    window.saveEdit = async (id) => {
+    // Long press to show Edit/Delete
+    let pressTimer;
+    const startPress = () => {
+      if (note.editing) return;
+      pressTimer = setTimeout(() => { card.classList.add('show-buttons'); }, 800);
+    };
+    const clearPress = () => clearTimeout(pressTimer);
+
+    card.addEventListener('mousedown', startPress);
+    card.addEventListener('mouseup', clearPress);
+    card.addEventListener('mouseleave', clearPress);
+    card.addEventListener('touchstart', startPress, {passive:true});
+    card.addEventListener('touchend', clearPress);
+
+    container.appendChild(card);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.note-card')) {
+      document.querySelectorAll('.note-card.show-buttons').forEach(el => el.classList.remove('show-buttons'));
+    }
+  }, { once: true });
+}
+
+// Helpers
+function formatTS(ts){ try { return new Date(ts).toLocaleString(); } catch { return ''; } }
+function escapeHTML(s=''){ return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function escapeAttr(s=''){ return escapeHTML(s); }
+
+// Toggle edit
+window.toggleEdit = (id) => {
+  const note = allNotes.find(n => n.id === id);
+  if (!note) return;
+  note._originalTitle = note.title;
+  note._originalText = note.text;
+  note.editing = true;
+  renderNotes();
+};
+
+// Save edits
+window.saveEdit = async (id) => {
   const note = allNotes.find(n => n.id === id);
   if (!note) return;
 
-  const newTitle = document.getElementById(`editTitle-${id}`).value.trim();
-  const newText = document.getElementById(`editText-${id}`).innerHTML.trim();  // keep formatting
+  const newTitle = (document.getElementById(`editTitle-${id}`)?.value || '').trim();
+  const newText = (document.getElementById(`editText-${id}`)?.innerHTML || '').trim();
 
   await updateDoc(doc(db, 'explainNotes', note.id), {
     title: newTitle || 'Untitled',
@@ -426,79 +512,135 @@ if (editText) window.autoResize(editText);
     timestamp: new Date().toISOString()
   });
 
+  note.title = newTitle || 'Untitled';
+  note.text = newText;
   note.editing = false;
+  delete note._originalTitle;
+  delete note._originalText;
   renderNotes();
 };
 
-    window.deleteNote = async (id) => {
-      if (confirm("Delete this note?")) {
-        await deleteDoc(doc(db, 'explainNotes', id));
-      }
-    };
-
-    window.copyNote = (id) => {
+// Cancel edits
+window.cancelEdit = (id) => {
   const note = allNotes.find(n => n.id === id);
   if (!note) return;
+  note.title = note._originalTitle ?? note.title;
+  note.text = note._originalText ?? note.text;
+  note.editing = false;
+  delete note._originalTitle;
+  delete note._originalText;
+  renderNotes();
+};
 
-  let textToCopy = '';
+// Delete note
+window.deleteNote = async (id) => {
+  if (confirm("Delete this note?")) {
+    await deleteDoc(doc(db, 'explainNotes', id));
+  }
+};
 
+// Copy note with formatting
+async function copyNoteHTML(note, cardEl){
+  let html = '';
   if (note.editing) {
-    // Copy plain text from the contenteditable div
-    const editDiv = document.getElementById(`editText-${id}`);
-    textToCopy = editDiv ? editDiv.innerText : '';
+    const editDiv = document.getElementById(`editText-${note.id}`);
+    html = editDiv ? editDiv.innerHTML : '';
   } else {
-    // Copy the visible text from the rendered note-text div (strip HTML)
-    const noteElements = document.querySelectorAll('.note-card');
-    for (const card of noteElements) {
-      const titleEl = card.querySelector('.note-title');
-      const textEl = card.querySelector('.note-text');
-      if (titleEl && textEl && titleEl.textContent === note.title) {
-        textToCopy = textEl.innerText;
-        break;
-      }
+    const textEl = cardEl.querySelector('.note-text');
+    html = textEl ? textEl.innerHTML : '';
+  }
+  if (!html) return;
+
+  const normalizedHTML = normalizeHighlightWrappers(html);
+  const plain = stripHTML(normalizedHTML);
+
+  const showTick = () => {
+    const indicator = cardEl.querySelector('.copied-indicator');
+    if (!indicator) return;
+    indicator.style.opacity = '1';
+    indicator.style.transform = 'scale(1.2)';
+    setTimeout(() => {
+      indicator.style.opacity = '0';
+      indicator.style.transform = 'scale(0.8)';
+    }, 900);
+  };
+
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      const data = {
+        'text/html': new Blob([normalizedHTML], { type: 'text/html' }),
+        'text/plain': new Blob([plain], { type: 'text/plain' })
+      };
+      await navigator.clipboard.write([new ClipboardItem(data)]);
+      showTick();
+      return;
     }
-  }
+  } catch {}
 
-  if (textToCopy) {
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      alert("Note copied to clipboard!");
-    });
-  }
-};
+  // fallback
+  const onCopy = (e) => {
+    e.preventDefault();
+    e.clipboardData.setData('text/html', normalizedHTML);
+    e.clipboardData.setData('text/plain', plain);
+  };
+  document.addEventListener('copy', onCopy, { once: true });
+  document.execCommand('copy');
+  showTick();
+}
 
+// Helpers to preserve highlight only
+function normalizeHighlightWrappers(html){
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  tmp.querySelectorAll('mark').forEach(el => {
+    const span = document.createElement('span');
+    span.style.backgroundColor = '#F3F5A9';
+    while(el.firstChild) span.appendChild(el.firstChild);
+    el.replaceWith(span);
+  });
+  tmp.querySelectorAll('[style*="background-color"]').forEach(el => {
+    const bg = el.style.backgroundColor || '#F3F5A9';
+    const span = document.createElement('span');
+    span.style.backgroundColor = bg;
+    while(el.firstChild) span.appendChild(el.firstChild);
+    el.replaceWith(span);
+  });
+  return tmp.innerHTML;
+}
+function stripHTML(html){ const tmp = document.createElement('div'); tmp.innerHTML = html; return tmp.textContent||tmp.innerText||''; }
 
-    window.formatText = function(id, command) {
+// Format buttons
+const HIGHLIGHT_COLOR = '#F3F5A9';
+window.formatText = function(id, command){
   const editableDiv = document.getElementById(`editText-${id}`);
+  if (!editableDiv) return;
   editableDiv.focus();
-
-  if (command === 'bold') {
-    document.execCommand('bold', false, null);
-  } else if (command === 'highlight') {
-    document.execCommand('backColor', false, '#F3F5A9'); // yellow highlight
+  if(command==='bold'){ document.execCommand('bold', false, null); return; }
+  if(command==='highlight'){
+    try{
+      const supported = document.queryCommandSupported && document.queryCommandSupported('hiliteColor');
+      if(supported) document.execCommand('hiliteColor', false, HIGHLIGHT_COLOR);
+      else document.execCommand('backColor', false, HIGHLIGHT_COLOR);
+    }catch{ document.execCommand('backColor', false, HIGHLIGHT_COLOR);}
   }
 };
 
-    function filterNotes(keyword) {
-      const lower = keyword.toLowerCase();
-      const filtered = allNotes.filter(n =>
-        n.title.toLowerCase().includes(lower) || n.text.toLowerCase().includes(lower)
-      );
-      renderNotes(filtered);
-    }
+// Search
+document.getElementById('searchInput').addEventListener('input', e=>{
+  const lower = e.target.value.toLowerCase();
+  renderNotes(allNotes.filter(n=>
+    (n.title||'').toLowerCase().includes(lower)||
+    (n.text||'').toLowerCase().includes(lower)
+  ));
+});
 
-    document.getElementById('searchInput').addEventListener('input', e => {
-      filterNotes(e.target.value);
-    });
+// Firestore live sync
+onSnapshot(collection(db, 'explainNotes'), snapshot=>{
+  allNotes = snapshot.docs.map(docSnap=>({...docSnap.data(), id: docSnap.id, editing:false}));
+  renderNotes();
+});
+</script>
 
-    onSnapshot(collection(db, 'explainNotes'), snapshot => {
-      allNotes = snapshot.docs.map(docSnap => ({
-        ...docSnap.data(),
-        id: docSnap.id,
-        editing: false
-      }));
-      renderNotes();
-    });
-  </script>
 </head>
 <body>
   <a href="home.html" class="home-btn">Home</a>
@@ -518,5 +660,12 @@ if (editText) window.autoResize(editText);
     </div>
     <div class="note-list" id="notesContainer"></div>
   </div>
+  <div class="copied-indicator">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4a90e2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10" stroke-opacity="0.3"/>
+    <path d="M9 12l2 2 4-4"/>
+  </svg>
+</div>
+
 </body>
 </html>
