@@ -142,16 +142,19 @@ body::before {
       backdrop-filter: blur(5px);
     }
 
-    .cards-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      justify-content: flex-start;
-    }
+.cards-container {
+  column-count: 4;        /* Number of columns */
+  column-gap: 15px;       /* Space between columns */
+  width: 100%;
+  padding: 10px 0;
+}
 
-   .note-card {
-  flex: 1 1 calc(25% - 20px);
-  min-width: 260px;
+.note-card {
+  display: inline-block;  /* Required for column layout */
+  width: 90%;            /* Full width of column */
+  margin-bottom: 15px;    /* Vertical spacing */
+  break-inside: avoid;    /* Prevent card from breaking across columns */
+
   padding: 15px;
   border-radius: 12px;
   position: relative;
@@ -163,9 +166,21 @@ body::before {
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15), /* bluish subtle glow */
-              0 0 10px rgba(255, 255, 255, 0.2);    /* white highlight */
+  box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15),
+              0 0 10px rgba(255, 255, 255, 0.2);
 }
+
+/* Responsive column counts */
+@media (max-width: 1200px) {
+  .cards-container { column-count: 3; }
+}
+@media (max-width: 768px) {
+  .cards-container { column-count: 2; }
+}
+@media (max-width: 480px) {
+  .cards-container { column-count: 1; }
+}
+
 
 
     .note-card:hover {
@@ -260,6 +275,27 @@ body::before {
   box-shadow: 0 0 8px rgba(200, 200, 255, 0.4);
 
 }
+.note-card {
+  position: relative;
+}
+
+.checkmark {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 18px;
+  color: green;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.checkmark.show {
+  opacity: 1;
+  transform: scale(1.3);
+}
+
 /* Mobile & Tablet Adjustments */
 @media (max-width: 768px) {
   .header {
@@ -327,7 +363,7 @@ body::before {
     <div class="cards-container" id="nurseNotesList"></div>
   </div>
 
-  <script type="module">
+<script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import {
     getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
@@ -378,39 +414,69 @@ body::before {
   }
 
   function enableEditing(card, id, title, note) {
-  card.innerHTML = `
-    <input type="text" class="edit-title glassy-input" 
-           value="${title}" 
-           style="width: 96.5%; margin-bottom: 6px; padding: 6px;" />
-    <div class="edit-note glassy-input" contenteditable="true" 
-         style="width: 96%; min-height: 100px; padding: 8px; 
-         font-size: 12px; font-family: Tahoma, sans-serif; 
-         border-radius: 6px;">
-      ${note.replace(/\n/g, '<br>')}
-    </div>
-    <div class="editor-buttons">
-      <button onclick="saveRichEdit('${id}', 
-        this.closest('.note-card').querySelector('.edit-title'), 
-        this.closest('.note-card').querySelector('.edit-note'))">
-        Save
-      </button>
-      <button onclick="cancelEdit()">Cancel</button>
-      <button onclick="toggleBold()">Bold</button>
-      <button onclick="highlightSelection()">Highlight</button>
-    </div>
-  `;
+    card.innerHTML = `
+      <input type="text" class="edit-title glassy-input" 
+             value="${title}" 
+             style="width: 96.5%; margin-bottom: 6px; padding: 6px;" />
+      <div class="edit-note glassy-input" contenteditable="true" 
+           style="width: 96%; min-height: 100px; padding: 8px; 
+           font-size: 12px; font-family: Tahoma, sans-serif; 
+           border-radius: 6px;">
+        ${note.replace(/\n/g, '<br>')}
+      </div>
+      <div class="editor-buttons">
+        <button onclick="saveRichEdit('${id}', 
+          this.closest('.note-card').querySelector('.edit-title'), 
+          this.closest('.note-card').querySelector('.edit-note'))">
+          Save
+        </button>
+        <button onclick="cancelEdit()">Cancel</button>
+        <button onclick="toggleBold()">Bold</button>
+        <button onclick="highlightSelection()">Highlight</button>
+      </div>
+    `;
+  }
+
+  // ✅ Copy helper with animated check
+  // ✅ Copy helper with animated check (top-right)
+function copyToClipboard(html, card) {
+  // Copy as HTML so formatting (bold, highlights) is preserved
+  if (navigator.clipboard && navigator.clipboard.write) {
+    const blob = new Blob([html], { type: 'text/html' });
+    const data = [new ClipboardItem({ 'text/html': blob })];
+    navigator.clipboard.write(data).then(() => {
+      // Show checkmark animation
+      const check = document.createElement("div");
+      check.innerHTML = "&#10004;"; // checkmark
+      check.style.position = "absolute";
+      check.style.top = "6px";
+      check.style.right = "8px";
+      check.style.fontSize = "18px";
+      check.style.color = "green";
+      check.style.fontWeight = "bold";
+      check.style.opacity = "0";
+      check.style.transform = "scale(0.5)";
+      check.style.transition = "all 0.3s ease";
+      card.appendChild(check);
+
+      requestAnimationFrame(() => {
+        check.style.opacity = "1";
+        check.style.transform = "scale(1.3)";
+      });
+
+      setTimeout(() => {
+        check.style.opacity = "0";
+        check.style.transform = "scale(0.5)";
+        setTimeout(() => check.remove(), 400);
+      }, 1000);
+    });
+  } else {
+    // Fallback for older browsers: plain text
+    navigator.clipboard.writeText(card.innerText);
+  }
 }
 
 
-  function copyContent(id) {
-    const noteContent = document.querySelector(`#note-${id} .note-content`);
-    const range = document.createRange();
-    range.selectNode(noteContent);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-    document.execCommand('copy');
-    alert("Content copied to clipboard!");
-  }
 
   function renderNotes() {
     onSnapshot(notesCol, snapshot => {
@@ -424,24 +490,52 @@ body::before {
         const div = document.createElement('div');
         div.className = 'note-card';
         div.id = `note-${id}`;
+        div.style.position = "relative";
         div.innerHTML = `
           <div class="note-title">${title}</div>
           <div class="note-content">${note.replace(/\n/g, '<br>')}</div>
-          <div style="font-size:11px;margin-top:10px;color:#555;">${new Date(time).toLocaleString()}</div>
-          <div class="note-actions">
+          <div style="font-size:11px;margin-top:10px;color:#555;">
+            ${new Date(time).toLocaleString()}
+          </div>
+          <div class="note-actions" style="display:none;">
             <button 
               class="edit-btn" 
               data-id="${id}" 
               data-title="${encodeURIComponent(title)}" 
               data-note="${encodeURIComponent(note)}"
             >Edit</button>
-            <button onclick="copyContent('${id}')">Copy</button>
             <button onclick="deleteNote('${id}')">Delete</button>
           </div>
         `;
+
+        // ✅ Handle click (copy) & long press (show buttons)
+        let pressTimer;
+        let longPressed = false;
+
+        div.addEventListener("mousedown", () => {
+          longPressed = false;
+          pressTimer = setTimeout(() => {
+            longPressed = true;
+            div.querySelector(".note-actions").style.display = "flex";
+          }, 600);
+        });
+
+       div.addEventListener("mouseup", () => {
+  clearTimeout(pressTimer);
+  if (!longPressed) {
+    const noteHTML = div.querySelector(".note-content").innerHTML;
+    copyToClipboard(noteHTML, div);
+  }
+});
+
+
+
+        div.addEventListener("mouseleave", () => clearTimeout(pressTimer));
+
         list.appendChild(div);
       });
 
+      // restore edit button event
       document.querySelectorAll('.edit-btn').forEach(button => {
         button.addEventListener('click', () => {
           const card = button.closest('.note-card');
@@ -456,7 +550,7 @@ body::before {
 
   async function saveRichEdit(id, titleInput, editableDiv) {
     const updatedTitle = titleInput.value.trim();
-    const updatedNote = editableDiv.innerHTML.trim(); // Keeps <strong> and <span class="highlight">
+    const updatedNote = editableDiv.innerHTML.trim(); // Keeps <strong> and highlight
 
     await updateDoc(doc(db, "recallNotes", id), {
       title: updatedTitle || "Untitled",
@@ -466,118 +560,27 @@ body::before {
     renderNotes();
   }
 
-  // Helper to unwrap highlight spans in selection
-  function unwrapHighlight(range) {
-    const ancestor = range.commonAncestorContainer;
-    let textNodes = [];
-
-    if (ancestor.nodeType === 3) {
-      textNodes = [ancestor];
-    } else {
-      // Get all text nodes within selection range
-      const treeWalker = document.createTreeWalker(
-        ancestor,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode: node => {
-            const nodeRange = document.createRange();
-            nodeRange.selectNodeContents(node);
-            return (range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
-                    range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0)
-              ? NodeFilter.FILTER_ACCEPT
-              : NodeFilter.FILTER_REJECT;
-          }
-        }
-      );
-      while(treeWalker.nextNode()) {
-        textNodes.push(treeWalker.currentNode);
-      }
-    }
-
-    textNodes.forEach(node => {
-      const parent = node.parentNode;
-      if (parent.classList && parent.classList.contains('highlight')) {
-        // Replace the highlight span with its text content (unwrap)
-        parent.replaceWith(document.createTextNode(parent.textContent));
-      }
-    });
-  }
-
-  // Toggle highlight on selection
-  function highlightSelection() {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-
-    const range = selection.getRangeAt(0);
-    if (range.collapsed) return;
-
-    let commonAncestor = range.commonAncestorContainer;
-    if (commonAncestor.nodeType === 3) commonAncestor = commonAncestor.parentNode;
-
-    // Check if the entire selection is inside a highlight span
-    // We'll detect if all text nodes inside the range are inside .highlight
-    let fullyHighlighted = true;
-    const treeWalker = document.createTreeWalker(
-      commonAncestor,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: node => {
-          const nodeRange = document.createRange();
-          nodeRange.selectNodeContents(node);
-          return (range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
-                  range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0)
-            ? NodeFilter.FILTER_ACCEPT
-            : NodeFilter.FILTER_REJECT;
-        }
-      }
-    );
-
-    while (treeWalker.nextNode()) {
-      const parent = treeWalker.currentNode.parentNode;
-      if (!parent.classList || !parent.classList.contains('highlight')) {
-        fullyHighlighted = false;
-        break;
-      }
-    }
-
-    if (fullyHighlighted) {
-      unwrapHighlight(range);
-      selection.removeAllRanges();
-    } else {
-      // Wrap selection in highlight span
-      const span = document.createElement('span');
-      span.className = 'highlight';
-      span.style.backgroundColor = '#fbe0D2';
-
-      try {
-        range.surroundContents(span);
-      } catch (e) {
-        // For complex selections crossing multiple nodes, fallback
-        document.execCommand('hiliteColor', false, '#fbe0D2');
-      }
-      selection.removeAllRanges();
-    }
-  }
-  
   function cancelEdit() {
-  // Just call renderNotes to reload cards
-  renderNotes();
-}
-window.cancelEdit = cancelEdit;
+    renderNotes();
+  }
+  window.cancelEdit = cancelEdit;
 
-
-  // Toggle bold using execCommand (simpler and reliable)
   function toggleBold() {
     document.execCommand('bold');
   }
-
   window.toggleBold = toggleBold;
+
+  // Highlight selection
+  function highlightSelection() {
+    document.execCommand('hiliteColor', false, '#fbe0D2');
+  }
   window.highlightSelection = highlightSelection;
+
   window.saveRichEdit = saveRichEdit;
   window.addNote = addNote;
   window.deleteNote = deleteNote;
   window.enableEditing = enableEditing;
-  window.copyContent = copyContent;
+
   window.searchNotes = function (event) {
     const query = event.target.value.toLowerCase();
     const cards = document.querySelectorAll('.note-card');
