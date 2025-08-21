@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PN Notes</title>
   <style>
-  
 @font-face {
   font-family: 'fors';
   src: url('fors.ttf') format('truetype');
 }
 
-
-    html, body {
+html, body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -34,6 +32,7 @@ body::before {
   filter: blur(10px) brightness(0.9);
   z-index: -1;
 }
+
 /* Glassy header with shadow */
 .main-header {
   text-align: center;
@@ -46,21 +45,20 @@ body::before {
   left: 0;
   width: 100%;
   border-bottom: 1px solid rgba(220, 220, 255, 0.3);
-  box-shadow: 0 6px 20px rgba(180, 180, 255, 0.35); /* Bluish lilac shadow */
+  box-shadow: 0 6px 20px rgba(180, 180, 255, 0.35);
   border-radius: 0 0 12px 12px;
   z-index: 999;
 }
 
 .main-header h1 {
   font-size: 25px;
-  font-weight: normal;     /* regular weight, not bold */
-  font-style: normal;      /* regular style, not italic */
+  font-weight: normal;
+  font-style: normal;
   margin: 0;
   color: #111;
   text-shadow: 0 2px 4px rgba(180, 180, 255, 0.3);
   text-align: center;
 }
-
 
 /* Home button */
 .home-btn {
@@ -85,30 +83,20 @@ body::before {
 .home-btn:hover {
   background: rgba(245, 245, 245, 0.5);
 }
+
 .home-btn,
 .add-btn,
 .btn-group button {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Outer shadow */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
+
 /* Search */
 .search-container {
   position: fixed;
   top: 10px;
   right: 20px;
   z-index: 1000;
-}
-
-.note-url a {
-  color: #6c63ff; /* A soft bluish-purple link color */
-  text-decoration: none; /* Remove underline (optional) */
-  font-weight: 500;      /* Slightly bold (optional) */
-  transition: color 0.3s ease;
-}
-
-.note-url a:hover {
-  color: #4a3edb; /* Darker bluish-purple on hover */
-  text-decoration: underline; /* Add underline on hover (optional) */
 }
 
 .search-input {
@@ -135,10 +123,8 @@ body::before {
   border-radius: 0 !important;
   box-shadow: none !important;
   max-width: 100%;
-  padding: 80px 10px 20px 10px; /* Push content below fixed header */
+  padding: 80px 10px 20px 10px;
 }
-
-
 
 input[type="text"],
 textarea {
@@ -157,10 +143,10 @@ textarea {
   color: #222;
   transition: box-shadow 0.3s ease;
 }
+
 input[type="text"]:focus,
 textarea:focus {
-  box-shadow:
-    0 0 12px 3px rgba(100, 120, 255, 0.6);
+  box-shadow: 0 0 12px 3px rgba(100, 120, 255, 0.6);
   background: rgba(255, 255, 255, 0.4);
   outline: none;
 }
@@ -191,39 +177,50 @@ textarea {
 .input-group {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center children horizontally */
-  gap: 10px; /* Optional spacing between inputs and button */
+  align-items: center;
+  gap: 10px;
 }
 
-/* Note cards */
+/* Masonry note cards */
 .note-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 15px;
+  column-count: 1;
+  column-gap: 15px;
+  margin-top: 20px;
+  margin-bottom: 20px; /* add bottom spacing */
+  width: 100%;
 }
+
 
 .note-card {
-  bbackground: rgba(250, 250, 255, 0.8);
-  border: 1px solid rgba(220, 220, 255, 2);
+  display: inline-block;
+  width: 90%;
+  margin: 0 0 15px;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+ background: rgba(255, 255, 255, 0.25); /* semi-transparent white */
+  border: 1px solid rgba(220, 220, 255, 0.5);
   border-radius: 12px;
   padding: 15px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 6px 15px rgba(180, 180, 255, 0.4);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
-  overflow-wrap: break-word;
-  margin-top: 20px;
- 
+
+  /* NEW: prevent breaking across columns */
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
 }
 
+
 .note-card:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
   box-shadow: 0 10px 25px rgba(180, 180, 255, 0.5);
 }
 
-/* Text inside notes */
 .note-title {
   font-weight: bold;
   font-size: 14px;
@@ -245,7 +242,21 @@ textarea {
   background: rgba(255, 255, 255, 0.4);
 }
 
-/* Buttons in notes */
+.note-url a {
+  word-break: break-word;
+  display: block;
+  color: #6c63ff;
+  text-decoration: none;
+  font-weight: 100;
+  font-size: 10px;
+  transition: color 0.3s ease;
+}
+
+.note-url a:hover {
+  color: #4a3edb;
+  text-decoration: underline;
+}
+
 .btn-group {
   margin-top: 10px;
   display: flex;
@@ -278,81 +289,26 @@ mark {
   background-color: #F3F5A9;
 }
 
-@media only screen and (max-width: 480px) {
-  .header {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 15px;
-    gap: 10px;
-    position: relative !important; /* remove fixed/absolute if any */
-    height: auto !important;
-  }
+/* Responsive masonry columns */
+@media (min-width: 500px) { .note-list { column-count: 2; } }
+@media (min-width: 800px) { .note-list { column-count: 3; } }
+@media (min-width: 1100px) { .note-list { column-count: 4; } }
 
-  .header-left, 
-  .header-right {
-    position: static !important; /* reset absolute */
-    order: 1;
-    flex: 1 1 100%; /* full width */
-    text-align: center;
-  }
-
-  .header-title {
-    position: static !important; /* remove absolute */
-    order: 0;
-    flex-basis: 100% !important;  /* take full width */
-    width: 100% !important;
-    margin: 0;
-    font-size: 18px;
-    text-align: center;
-    transform: none !important;  /* remove translateX */
-    pointer-events: auto;
-  }
-
-  .search-box input {
-    width: 90%;
-    max-width: 300px;
-    margin: 0 auto;
-    display: block;
-  }
-
-  .header a.header-link {
-    padding: 8px 12px;
-    font-size: 14px;
-  }
-@media only screen and (max-width: 480px) {
-  .main-header {
-    position: relative; /* Remove fixed overlap */
-    padding: 8px 0;
-    text-align: center;
-    font-size: 18px;
-    box-shadow: none; /* Optional: remove shadow if too big */
-  }
-
-  .main-header h1 {
-    font-size: 20px;  /* smaller for mobile */
-    margin: 10px 0;
-  }
-
-  .home-btn,
-  .search-container {
-    position: relative !important; /* Stop overlapping header */
-    display: inline-block;
-    top: auto;
-    left: auto;
-    right: auto;
-    margin: 5px 10px;
-  }
-
-  /* Stack buttons above the title */
-  body {
-    padding-top: 0 !important;
-  }
+/* Padding inside cards */
+.note-card .note-title,
+.note-card .note-text,
+.note-card .note-url {
+  display: block;
+  padding-bottom: 6px;
 }
 
-
-
+/* Mobile adjustments */
+@media only screen and (max-width: 480px) {
+  .main-header { position: relative; padding: 8px 0; font-size: 18px; box-shadow: none; }
+  .main-header h1 { font-size: 20px; margin: 10px 0; }
+  .home-btn, .search-container { position: relative; display: inline-block; top: auto; left: auto; right: auto; margin: 5px 10px; }
+  body { padding-top: 0 !important; }
+}
 
   </style>
 </head>
