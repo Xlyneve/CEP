@@ -218,7 +218,7 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  background: #4caf50;
+  background: #f0e10e;
   color: white;
   font-size: 16px;
   font-weight: bold;
@@ -322,6 +322,10 @@
   const auth = getAuth(app);
   const notesCol = collection(db, "clinicalNotes");
 
+  // --- Track currently active editable element ---
+  const noteTextEl = document.getElementById('noteText');
+  let activeEditable = noteTextEl; // default: left panel input
+
   // --- Auth flow ---
   onAuthStateChanged(auth, user => {
     if (user) {
@@ -343,13 +347,12 @@
 
   // --- Formatting buttons ---
   window.formatText = (cmd) => {
-    const editable = document.getElementById('noteText');
-    editable.focus();
+    if (!activeEditable) return;
+    activeEditable.focus();
     document.execCommand(cmd, false, null);
   };
 
   // --- Auto-resize contenteditable in left panel ---
-  const noteTextEl = document.getElementById('noteText');
   const autoGrow = (el) => {
     if (el.textContent.trim() === '') el.innerHTML = '';
     el.style.height = 'auto';
@@ -420,7 +423,7 @@
         if (linkWrap) div.appendChild(linkWrap);
         div.appendChild(actions);
 
-        // --- Click to copy (with formatting + fixed newlines) ---
+        // --- Click to copy ---
         let longPressed = false;
         div.addEventListener('click', () => {
           if (longPressed || div.classList.contains('is-editing')) return;
@@ -431,18 +434,14 @@
           const temp = document.createElement('div');
           temp.innerHTML = bodyHTML;
           temp.querySelectorAll('div, p, br').forEach(el => {
-            if (el.tagName === 'BR') {
-              el.replaceWith('\n');
-            } else {
-              el.insertAdjacentText('beforeend', '\n');
-            }
+            if (el.tagName === 'BR') el.replaceWith('\n');
+            else el.insertAdjacentText('beforeend', '\n');
           });
           const bodyText = temp.textContent.trim();
 
           const combinedHTML = titleText
             ? `<div><strong>${titleText}</strong></div><div>${bodyHTML}</div>`
             : `<div>${bodyHTML}</div>`;
-
           const combinedText = titleText
             ? `${titleText}\n${bodyText}`
             : bodyText;
@@ -463,7 +462,7 @@
           });
         });
 
-        // --- Long press (1s) to reveal actions ---
+        // --- Long press to show actions ---
         let pressTimer;
         const startPress = () => {
           longPressed = false;
@@ -488,6 +487,8 @@
           titleEl.classList.add('editing');
           contentEl.classList.add('editing');
 
+          activeEditable = contentEl; // formatting now targets this card
+
           actions.innerHTML = `
             <button class="save-btn">Save</button>
             <button class="cancel-btn">Cancel</button>
@@ -501,16 +502,15 @@
             const t = document.createElement('div');
             t.innerHTML = newHTML;
             if (!t.textContent.trim()) {
+              // reset without saving
               titleEl.contentEditable = 'false';
               contentEl.contentEditable = 'false';
               titleEl.classList.remove('editing');
               contentEl.classList.remove('editing');
               div.classList.remove('is-editing');
               actions.style.display = 'none';
-              actions.innerHTML = `
-                <button class="edit-btn">Edit</button>
-                <button class="delete-btn">Delete</button>
-              `;
+              actions.innerHTML = `<button class="edit-btn">Edit</button><button class="delete-btn">Delete</button>`;
+              activeEditable = noteTextEl;
               bindActionButtons(div, actions, docSnap.id, titleEl, contentEl);
               return;
             }
@@ -527,16 +527,14 @@
             titleEl.classList.remove('editing');
             contentEl.classList.remove('editing');
             div.classList.remove('is-editing');
-
             actions.style.display = 'none';
-            actions.innerHTML = `
-              <button class="edit-btn">Edit</button>
-              <button class="delete-btn">Delete</button>
-            `;
+            actions.innerHTML = `<button class="edit-btn">Edit</button><button class="delete-btn">Delete</button>`;
+            activeEditable = noteTextEl;
             bindActionButtons(div, actions, docSnap.id, titleEl, contentEl);
           });
 
           actions.querySelector('.cancel-btn').addEventListener('click', () => {
+            activeEditable = noteTextEl;
             renderNotes();
           });
         });
@@ -550,16 +548,12 @@
 
         list.appendChild(div);
 
-        // helper to rebind after save/cancel
+        // --- helper to rebind after save/cancel ---
         function bindActionButtons(card, actionsEl, id, titleNode, contentNode) {
           const editBtn = actionsEl.querySelector('.edit-btn');
           const delBtn  = actionsEl.querySelector('.delete-btn');
-          if (editBtn) editBtn.addEventListener('click', () => {
-            actions.querySelector('.edit-btn').click();
-          });
-          if (delBtn) delBtn.addEventListener('click', async () => {
-            if (confirm('Delete note?')) await deleteDoc(doc(db, 'clinicalNotes', id));
-          });
+          if (editBtn) editBtn.addEventListener('click', () => { actions.querySelector('.edit-btn').click(); });
+          if (delBtn) delBtn.addEventListener('click', async () => { if (confirm('Delete note?')) await deleteDoc(doc(db, 'clinicalNotes', id)); });
         }
       });
     });
@@ -576,6 +570,7 @@
     });
   });
 </script>
+
 
 </body>
 </html>
