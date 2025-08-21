@@ -373,7 +373,7 @@ mark {
 }
 
 </style>
-  <script type="module">
+ <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import {
   getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
@@ -457,7 +457,7 @@ function renderNotes(notesToRender = allNotes) {
       `;
     }
 
-    // Click-to-copy (preserve formatting)
+    // Click-to-copy only the note text
     card.addEventListener('click', (e) => {
       if (e.target.closest('button, input, textarea')) return;
       copyNoteHTML(note, card);
@@ -543,16 +543,10 @@ window.deleteNote = async (id) => {
   }
 };
 
-// Copy note with formatting
+// Copy note text only (exclude title)
 async function copyNoteHTML(note, cardEl){
-  let html = '';
-  if (note.editing) {
-    const editDiv = document.getElementById(`editText-${note.id}`);
-    html = editDiv ? editDiv.innerHTML : '';
-  } else {
-    const textEl = cardEl.querySelector('.note-text');
-    html = textEl ? textEl.innerHTML : '';
-  }
+  const textEl = cardEl.querySelector('.note-text') || document.getElementById(`editText-${note.id}`);
+  const html = textEl ? textEl.innerHTML : '';
   if (!html) return;
 
   const normalizedHTML = normalizeHighlightWrappers(html);
@@ -581,7 +575,6 @@ async function copyNoteHTML(note, cardEl){
     }
   } catch {}
 
-  // fallback
   const onCopy = (e) => {
     e.preventDefault();
     e.clipboardData.setData('text/html', normalizedHTML);
@@ -644,6 +637,7 @@ onSnapshot(collection(db, 'explainNotes'), snapshot=>{
   renderNotes();
 });
 </script>
+
 
 </head>
 <body>
