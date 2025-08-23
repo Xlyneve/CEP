@@ -4,6 +4,10 @@
 <meta charset="UTF-8" />
 <!-- Keep zoomable; we'll handle the "fit to phone" with CSS transform -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+html {
+  -webkit-text-size-adjust: 100%; /* prevents font resizing on zoom */
+  text-size-adjust: 100%;
+}
 
 <title>Nurses Roster</title>
 <style>
@@ -40,6 +44,9 @@ body {
   /* Avoid accidental text blur on iOS during transforms */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 /* Subtle frosted overlay effect */
@@ -199,6 +206,10 @@ body.logged-in .nurse-list {
   cursor: grabbing;
   transform: scale(0.95);
 }
+.nurse-list, .calendar {
+  flex-shrink: 0;
+  min-width: 0;
+}
 
 /* Nurse items */
 .nurse {
@@ -219,6 +230,23 @@ body.logged-in .nurse-list {
   gap: 8px;
   flex-grow: 1;
 }
+.nurse-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #666;
+  background: #f9f9f9;
+  padding: 6px 8px;
+  border-left: 3px solid #ccc;
+  border-radius: 6px;
+}
+.nurse-note ul {
+  margin: 5px 0 0 15px;
+  padding: 0;
+}
+.nurse-note li {
+  margin: 2px 0;
+}
+
 /* highlight when a nurse is dragged over a day */
 .day.drag-over {
   outline: 2px dashed #ff9800;
@@ -502,14 +530,26 @@ footer {
 
   <div class="container">
     <!-- Nurse List -->
-    <div class="nurse-list">
-      <h3>Nurses / HCA</h3> <!-- moved here instead of header -->
-      <div id="nurseContainer"></div>
-      <div class="add-nurse">
-        <input type="text" id="newNurseName" placeholder="Add Nurse">
-        <button class="btn" id="addNurseBtn">Add</button>
-      </div>
-    </div>
+   <div class="nurse-list">
+  <h3>Nurses / HCA</h3> <!-- moved here instead of header -->
+  <div id="nurseContainer"></div>
+
+  <div class="add-nurse">
+    <input type="text" id="newNurseName" placeholder="Add Nurse">
+    <button class="btn" id="addNurseBtn">Add</button>
+  </div>
+
+  <div class="nurse-note">
+    <p>💡 <b>Tips:</b></p>
+    <ul>
+      <li><b>Shift+Click</b> to delete staff</li>
+      <li><b>Long Press</b> to delete shift</li>
+	  <li><b>Right Click</b> to edit shift</li>
+    </ul>
+  </div>
+</div>
+
+
 
     <!-- Calendar -->
     <div class="calendar">
