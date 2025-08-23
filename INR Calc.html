@@ -1,111 +1,1081 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>INR Management</title>
-  <style>
-    body {
-      font-family: Tahoma, sans-serif;
-      background-color: #fdfcfe;
-      color: #333;
-      padding: 40px;
-    }
-    h1 {
-      color: #6a1b9a;
-      text-align: center;
-    }
-    .info, .calculator {
-      margin: 30px auto;
-      max-width: 600px;
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 12px;
-      border-left: 10px solid #b39ddb;
-      box-shadow: 0 4px 12px rgba(138, 115, 196, 0.1);
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
-    input[type="number"] {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    .result {
-      margin-top: 20px;
-      font-weight: bold;
-      background: #ede7f6;
-      padding: 10px;
-      border-radius: 6px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<!-- Keep zoomable; we'll handle the "fit to phone" with CSS transform -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<title>Nurses Roster</title>
+<style>
+:root{
+  --cal-w: 900px;   /* calendar width (keep same as your design) */
+  --nurse-w: 250px; /* nurse panel width */
+  --gap: 20px;      /* visual gap between nurse panel and calendar */
+
+  /* desktop total width ≈ nurse + gap + calendar + margins/padding */
+  --desktop-w: 1220px; /* tweak if your desktop width changes */
+  --app-scale: 1;      /* JS updates this to fit smaller screens */
+}
+
+/* ===== Base ===== */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #ededed; /* very light gray */
+  color: #333;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Auto-scaling root:
+   - We scale the whole desktop UI down to fit phone width
+   - Width compensation keeps internal layout intact (no wrapping) */
+#zoomRoot {
+  transform: scale(var(--app-scale));
+  transform-origin: top left;
+  width: calc(100% / var(--app-scale));
+  /* Avoid accidental text blur on iOS during transforms */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle frosted overlay effect */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: -1;
+}
+
+/* Glassy panels (applied to nurse-list by default; calendar gets overridden below) */
+.nurse-list,
+.calendar {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+}
+
+/* Header with logo */
+.main-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border-bottom: 1px solid rgba(200,200,200,0.35);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.main-header .logo {
+  max-height: 70px;
+  object-fit: contain;
+}
+
+/* ===== Auth section ===== */
+.auth-section {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  margin:10px auto 20px auto;
+  text-align:center;
+  font-size:0.85em;
+  padding: 12px;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(14px) saturate(150%);
+  border-radius: 12px;
+  border: 1px solid rgba(200,200,200,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  width: fit-content;
+}
+
+.auth-section input {
+  padding:6px;
+  margin:4px;
+  width:180px;
+  font-size:0.85em;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+
+.auth-section button {
+  padding:4px 10px;
+  font-size:0.8em;
+  margin: 2px;
+  border:none;
+  border-radius:6px;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(8px);
+  color:#333;
+  cursor:pointer;
+  transition: 0.2s ease;
+}
+
+.auth-section button:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+.auth-buttons { margin-top: 6px; }
+
+#loginBtn { background: #4cafef; color: white; }
+#loginBtn:hover { background: #369ed8; }
+#logoutBtn { background: #888; color: white; }
+#logoutBtn:hover { background: #666; }
+
+#userStatus {
+  margin-top: 6px;
+  font-size: 0.8em;
+  color: #444;
+}
+
+/* ===== Layout: Desktop side-by-side ===== */
+.container {
+  position: relative;          /* add this line */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.nurse-list {
+  display: block;
+  position: fixed;    /* fixed so it always stays in place */
+  top: 110px;         /* distance from top of viewport */
+  left: 10px;         /* distance from left of viewport */
+
+  width: var(--nurse-w);
+  max-width: var(--nurse-w);
+
+  max-height: 90vh;          /* scrollable if list is long */
+  overflow-y: auto;
+
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  border: 1px solid rgba(200,200,200,0.4);
+
+  padding: 10px;
+  z-index: 1000;  /* keep above calendar */
+}
+body.logged-in .nurse-list {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;       /* make it fill vertically */
+  overflow-y: auto;
+}
+/* nurse items look draggable */
+.nurse-list .nurse-item {
+  cursor: grab;
+  user-select: none;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: transform 0.15s ease;
+}
+
+.nurse-list .nurse-item:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+/* Nurse items */
+.nurse {
+  display: flex;
+  align-items: center;
+  margin: 3px 0;
+  justify-content: space-between;
+  position: relative;
+  padding-right: 20px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.nurse.selected { background: rgba(255, 152, 0, 0.15); }
+
+.nurse-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-grow: 1;
+}
+/* highlight when a nurse is dragged over a day */
+.day.drag-over {
+  outline: 2px dashed #ff9800;
+  background: rgba(255, 152, 0, 0.1);
+}
+
+.color-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #aaa;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+.color-box:hover { opacity: 1; border-color: #666; }
+
+.color-picker {
+  position: absolute;
+  left: 70px;
+  top: 1px;
+  display: none;
+}
+
+.delete-btn {
+  color: red;
+  font-weight: normal;
+  font-size: 1em;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  user-select: none;
+}
+.nurse:hover .delete-btn { opacity: 1; }
+
+.add-nurse {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.add-nurse input {
+  padding: 2px 4px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 152, 0, 0.6);
+  background: rgba(255, 255, 255, 0.6);
+  color: #333;
+  width: 90px;
+  transition: border 0.3s, box-shadow 0.3s;
+}
+.add-nurse input:focus {
+  outline: none;
+  border: 1px solid #ff9800;
+  box-shadow: 0 0 4px rgba(255, 152, 0, 0.7);
+}
+.add-nurse button {
+  padding: 2px 4px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  border: none;
+  background: #ff9800;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.add-nurse button:hover { background: #e68900; }
+
+.calendar {
+  flex: 0 0 var(--cal-w);
+  max-width: var(--cal-w);
+  width: var(--cal-w);
+  margin: 0 auto;
+  padding: 10px;
+
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+
+  justify-self: center;
+  overflow-x: hidden;
+}
+
+/* Calendar header + buttons */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 20px; /* increased from 16px */
+  font-weight: bold; /* optional: makes it more prominent */
+}
+
+.left-buttons {
+  display: flex;
+  gap: 20px;
+}
+
+.right-button {
+  display: flex;
+}
+
+.month-label {
+  text-align: center;
+  flex-grow: 2;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.btn {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 6px;
+  background: #d8e2dc;
+  color: black;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.btn:hover { background: #e68900; }
+
+/* Weekdays row */
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  text-align: center;
+  margin-bottom: 5px;
+  width: 100%;
+}
+.weekdays div {
+  padding: 8px 0;
+  background: rgba(231, 227, 229, 0.8);
+  border-radius: 4px;
+  border: 1px solid rgba(203, 191, 197, 0.8);
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+/* Calendar grid */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  width: 100%;
+}
+.calendar-scroll-wrapper {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 10px;
+}
+
+/* Day cells */
+.day {
+  padding: 10px;
+  border: 1px solid rgba(180, 180, 180, 0.6);
+  border-radius: 12px;
+  min-height: 140px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  color: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.day.weekend { background: rgba(245, 245, 245, 0.4); }
+
+/* Today */
+.day.today {
+  border: 2px solid rgba(200, 200, 200, 0.8);
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  transform: scale(1.10);
+  z-index: 2;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.12),
+              0 0 25px rgba(255, 255, 255, 0.65);
+}
+
+.day-number {
+  margin-bottom: 5px;
+  cursor: pointer;
+  color: black;
+  font-size: 1.1rem;
+}
+
+.day-note {
+  font-size: 0.8em;
+  color: black;
+  background-color: #f5f2c1cc;
+  margin-left: 5px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  user-select: none;
+}
+
+.shift {
+  display: block;
+  margin: 2px 0;
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-size: 0.85em;
+  font-weight: 500;
+  text-align: center;
+  color: #fff;
+  background-clip: padding-box;
+}
+.shift .delete-btn {
+  font-size: 1.2em !important;
+  margin-left: 5px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  padding: 0 8px !important;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+  user-select: none;
+}
+.shift:hover .delete-btn { opacity: 1; }
+
+/* Current week highlight */
+.day.current-week {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85),
+              inset 0 0 14px rgba(220, 220, 220, 0.8);
+  border: 1px solid rgba(200, 200, 200, 0.65);
+}
+.day.current-week.today {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid rgba(220, 220, 220, 0.95);
+  transform: scale(1.1);
+  z-index: 2;
+  box-shadow: 0 0 16px rgba(253, 255, 182, 0.95),
+              0 0 28px rgba(253, 255, 182, 0.75);
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.5);
+  padding: 10px 0;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* ===== Removed the mobile stacking media query entirely to preserve desktop layout on phones ===== */
+
+</style>
 </head>
 <body>
 
-  <h1>INR & Warfarin Management</h1>
+<div id="zoomRoot">
+  <!-- Header with Logo -->
+  <header class="main-header">
+    <img src="onehealth-logo.png" alt="Onehealth Logo" class="logo">
+  </header>
 
-  <div class="info">
-    <h2>What is INR?</h2>
-    <p>The International Normalized Ratio (INR) is a lab measurement of how long it takes blood to form a clot.
-    It's used to monitor patients on warfarin (Coumadin). The usual target INR range is:</p>
-    <ul>
-      <li><strong>2.0–3.0</strong>: Atrial fibrillation, DVT, PE</li>
-      <li><strong>2.5–3.5</strong>: Mechanical heart valves</li>
-    </ul>
+  <!-- Auth Section (kept minimal under logo) -->
+  <div id="authSection" class="auth-section">
+    <input type="email" id="emailInput" placeholder="Email" />
+    <input type="password" id="passwordInput" placeholder="Password" />
+    <div class="auth-buttons">
+      <button id="loginBtn">Login</button>
+      <button id="logoutBtn" style="display:none;">Logout</button>
+    </div>
+    <p id="userStatus">Not signed in</p>
   </div>
 
-  <div class="calculator">
-    <h2>INR Dose & Next Test Recommendation</h2>
-    <label for="currentDose">Current Warfarin Dose (mg/day):</label>
-    <input type="number" id="currentDose" placeholder="e.g. 5">
+  <div class="container">
+    <!-- Nurse List -->
+    <div class="nurse-list">
+      <h3>Nurses / HCA</h3> <!-- moved here instead of header -->
+      <div id="nurseContainer"></div>
+      <div class="add-nurse">
+        <input type="text" id="newNurseName" placeholder="Add Nurse">
+        <button class="btn" id="addNurseBtn">Add</button>
+      </div>
+    </div>
 
-    <label for="currentINR">Current INR Result:</label>
-    <input type="number" id="currentINR" step="0.1" placeholder="e.g. 2.5">
+    <!-- Calendar -->
+    <div class="calendar">
+      <div class="calendar-header">
+        <button class="btn" id="prevMonth">◀ Prev</button>
+        <button class="btn" id="todayBtn">Today</button>
 
-    <div class="result" id="inrAdvice"></div>
+        <h2 id="monthYear" class="month-label"></h2>
+
+        <button class="btn" id="nextMonth">Next ▶</button>
+      </div>
+
+      <div class="calendar-scroll-wrapper">
+        <div class="weekdays">
+          <div>Mon</div><div>Tue</div><div>Wed</div>
+          <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
+    </div>
   </div>
 
-  <script>
-    const doseInput = document.getElementById('currentDose');
-    const inrInput = document.getElementById('currentINR');
-    const adviceOutput = document.getElementById('inrAdvice');
+  <footer>CEP/C 2025</footer>
+</div> <!-- /#zoomRoot -->
 
-    function calculateRecommendation() {
-      const dose = parseFloat(doseInput.value);
-      const inr = parseFloat(inrInput.value);
+<script type="module">
+  /* ========= Auto-scale to show desktop on phones =========
+     - Calculates a scale factor so the full desktop width fits any viewport
+     - Keeps pinch-zoom working (users can zoom in for readability)
+  */
+  function applyAutoScale() {
+    const root = document.documentElement;
+    const desktopWRaw = getComputedStyle(root).getPropertyValue('--desktop-w').trim();
+    const desktopWidth = parseFloat(desktopWRaw); // px
+    if (!desktopWidth) {
+      root.style.setProperty('--app-scale', 1);
+      return;
+    }
+    const vw = window.innerWidth;
+    // Scale down if viewport is narrower than desktop; never scale above 1
+    const scale = Math.min(1, Math.max(0.3, vw / desktopWidth));
+    root.style.setProperty('--app-scale', scale.toString());
+  }
+  // Run immediately (after CSS is parsed) and on resize/orientation changes
+  applyAutoScale();
+  window.addEventListener('resize', applyAutoScale);
+  window.addEventListener('orientationchange', applyAutoScale);
 
-      if (isNaN(dose) || isNaN(inr)) {
-        adviceOutput.textContent = '';
-        return;
+  /* ========= Your existing app logic (unchanged) ========= */
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getFirestore, doc, setDoc, getDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import {
+    getAuth,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBZtCGzOb_5klWvVo-2fU7Wp2vnUakA4Rc",
+    authDomain: "ohnurse-43369.firebaseapp.com",
+    projectId: "ohnurse-43369",
+    storageBucket: "ohnurse-43369.firebasestorage.app",
+    messagingSenderId: "1041626418661",
+    appId: "1:1041626418661:web:1d9aeffb23a33baf9c730c",
+    measurementId: "G-ZHKSXSTTXR"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  const emailInput = document.getElementById('emailInput');
+  const passwordInput = document.getElementById('passwordInput');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const userStatus = document.getElementById('userStatus');
+
+  const calendarGrid = document.getElementById('calendarGrid');
+  const monthYear = document.getElementById('monthYear');
+  const prevMonthBtn = document.getElementById('prevMonth');
+  const nextMonthBtn = document.getElementById('nextMonth');
+  const todayBtn = document.getElementById('todayBtn');
+  const nurseContainer = document.getElementById('nurseContainer');
+  const newNurseName = document.getElementById('newNurseName');
+  const addNurseBtn = document.getElementById('addNurseBtn');
+
+  let currentUser = null;
+  let canEdit = false;  // controls if editing is allowed
+
+  // Authorized UIDs for editing rights
+  const authorizedUIDs = [
+    "xEda6HcmfLT16EtTiznHy3FAesj1",  // your UID
+    "OEjMA3NNeFQGP62Yohk5DliXqwH2"   // add staff UIDs here
+  ];
+
+  let roster = {};
+  let nurses = [
+    { name: "Alice", color: "#ff9800" },
+    { name: "Bob", color: "#e65100" },
+    { name: "Carol", color: "#f57c00" }
+  ];
+  let selectedNurseIndex = null;
+  let currentDate = new Date();
+
+  /** ---------- Authentication ---------- **/
+  loginBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    if (!email || !password) {
+      alert('Please enter email and password');
+      return;
+    }
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      currentUser = userCredential.user;
+      updateUIOnAuth();
+    } catch (error) {
+      alert('Login failed: ' + error.message);
+    }
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    await signOut(auth);
+    currentUser = null;
+    updateUIOnAuth();
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    updateUIOnAuth();
+  });
+
+  function updateUIOnAuth() {
+    if (currentUser) {
+      userStatus.textContent = `Signed in as ${currentUser.email}`;
+      loginBtn.style.display = 'none';
+      emailInput.style.display = 'none';
+      passwordInput.style.display = 'none';
+      logoutBtn.style.display = 'inline-block';
+    } else {
+      userStatus.textContent = 'Not signed in';
+      loginBtn.style.display = 'inline-block';
+      emailInput.style.display = 'inline-block';
+      passwordInput.style.display = 'inline-block';
+      logoutBtn.style.display = 'none';
+    }
+    checkEditPermission();
+    loadData();
+  }
+
+  function checkEditPermission() {
+    canEdit = currentUser && authorizedUIDs.includes(currentUser.uid);
+    toggleEditUI();
+  }
+
+  function toggleEditUI() {
+    addNurseBtn.disabled = !canEdit;
+    newNurseName.disabled = !canEdit;
+    addNurseBtn.style.opacity = canEdit ? '1' : '0.5';
+    newNurseName.style.opacity = canEdit ? '1' : '0.5';
+
+    const nurseList = document.querySelector('.nurse-list');
+    nurseList.style.display = currentUser ? 'block' : 'none';
+
+    document.body.classList.toggle('logged-in', !!currentUser);
+
+    renderNurseList();
+    renderCalendar();
+  }
+
+  /** ---------- Firebase Data ---------- **/
+  async function loadData() {
+    try {
+      const docRef = doc(db, "nursesRoster", "main");
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        roster = data.roster || {};
+        nurses = data.nurses || nurses;
       }
+      syncShiftColorsWithNurses();  
+      renderNurseList();
+      renderCalendar();
+    } catch (error) {
+      console.error("Failed to load data from Firestore:", error);
+      alert("Failed to load data from Firestore. Check console.");
+    }
+  }
 
-      let advice = '';
+  async function saveData() {
+    if (!canEdit) {
+      alert("You do not have permission to edit.");
+      return;
+    }
+    try {
+      await setDoc(doc(db, "nursesRoster", "main"), { roster, nurses });
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("Failed to save data. Check console.");
+    }
+  }
 
-      if (inr < 1.5) {
-        advice = "INR too low. Increase dose by 10-20%. Recheck INR in 3-5 days.";
-      } else if (inr >= 1.5 && inr < 2.0) {
-        advice = "INR below target. Slight dose increase may be needed. Recheck in 3-5 days.";
-      } else if (inr >= 2.0 && inr <= 3.0) {
-        advice = "INR is in target range. Maintain current dose. Recheck in 7-14 days.";
-      } else if (inr > 3.0 && inr <= 4.0) {
-        advice = "INR slightly high. Consider reducing dose by 5-10%. Recheck in 3-5 days.";
-      } else if (inr > 4.0 && inr <= 5.0) {
-        advice = "INR high. Hold 1 dose, reduce maintenance dose. Recheck in 2-3 days.";
-      } else {
-        advice = "INR very high! Hold warfarin. Consider vitamin K. Urgent review needed.";
+  /** ---------- Nurse List ---------- **/
+  function renderNurseList() {
+    nurseContainer.innerHTML = '';
+    nurses.forEach((nurse, idx) => {
+      const div = document.createElement('div');
+      div.classList.add('nurse');
+      div.draggable = canEdit;  // ✅ make draggable
+      div.dataset.index = idx;
+
+      if (selectedNurseIndex === idx) div.classList.add('selected');
+
+      const infoDiv = document.createElement('div');
+      infoDiv.classList.add('nurse-info');
+
+      const colorBox = document.createElement('div');
+      colorBox.classList.add('color-box');
+      colorBox.style.background = nurse.color;
+
+      const colorPicker = document.createElement('input');
+      colorPicker.type = 'color';
+      colorPicker.value = nurse.color;
+      colorPicker.classList.add('color-picker');
+      colorPicker.style.display = 'none'; 
+
+      colorBox.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!canEdit) return;
+        document.querySelectorAll('.color-picker').forEach(p => {
+          if (p !== colorPicker) p.style.display = 'none';
+        });
+        colorPicker.style.display = colorPicker.style.display === 'block' ? 'none' : 'block';
+      });
+
+      colorPicker.addEventListener('mousedown', e => e.stopPropagation());
+      colorPicker.addEventListener('click', e => e.stopPropagation());
+      colorPicker.addEventListener('dragstart', e => e.stopPropagation());
+
+      colorPicker.addEventListener('input', (e) => {
+        if (!canEdit) return;
+        nurse.color = e.target.value;
+        syncShiftColorsWithNurses();
+        saveData();
+        renderNurseList();
+        renderCalendar();
+      });
+
+      infoDiv.appendChild(colorBox);
+      infoDiv.appendChild(document.createTextNode(nurse.name));
+
+      // ✅ Updated click handler for selection and shift+click deletion
+      infoDiv.addEventListener('click', (e) => {
+        if (!canEdit) return;
+
+        if (e.shiftKey) {
+          // Shift+click → delete nurse
+          if (confirm(`Delete nurse ${nurse.name}?`)) {
+            nurses.splice(idx, 1);
+            if (selectedNurseIndex === idx) selectedNurseIndex = null;
+            saveData();
+            renderNurseList();
+            renderCalendar();
+          }
+        } else {
+          // Normal click → select nurse
+          selectedNurseIndex = idx;
+          renderNurseList();
+        }
+      });
+
+      div.appendChild(infoDiv);
+      div.appendChild(colorPicker);
+
+      // ✅ Dragstart handler
+      div.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('nurseIndex', idx);
+      });
+
+      nurseContainer.appendChild(div);
+    });
+  }
+
+  /** ---------- Global Listener to Close Color Pickers ---------- **/
+  document.addEventListener('pointerdown', (e) => {
+    const isInside = e.target.closest('.color-picker, .color-box');
+    if (!isInside) {
+      document.querySelectorAll('.color-picker').forEach(p => p.style.display = 'none');
+    }
+  });
+
+  function getRandomColor() {
+    const colors = ['#ff9800', '#e65100', '#f57c00', '#ffb74d', '#ef6c00'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  addNurseBtn.addEventListener('click', () => {
+    if (!canEdit) {
+      alert("You do not have permission to add nurses.");
+      return;
+    }
+    const name = newNurseName.value.trim();
+    if (name) {
+      nurses.push({ name, color: getRandomColor() });
+      newNurseName.value = '';
+      saveData();
+      renderNurseList();
+    }
+  });
+
+  /** ---------- Calendar ---------- **/
+  function createShiftElement(shift, key, shiftIndex) {
+    const shiftDiv = document.createElement('div');
+    shiftDiv.classList.add('shift');
+    shiftDiv.style.backgroundColor = shift.color;
+
+    const rgb = parseInt(shift.color.slice(1), 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = rgb & 0xff;
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    shiftDiv.style.color = brightness > 150 ? "#000" : "#fff";
+
+    shiftDiv.textContent = `${shift.name}: ${shift.time}`;
+    shiftDiv.draggable = canEdit;
+
+    shiftDiv.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    // Right-click to edit remains
+    shiftDiv.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!canEdit) return;
+      const newTime = prompt(
+        `Edit shift for ${shift.name} (current: ${shift.time || 'unset'}):`,
+        shift.time || ''
+      );
+      if (newTime !== null) {
+        const trimmed = newTime.trim();
+        if (trimmed !== '') {
+          roster[key].shifts[shiftIndex].time = trimmed;
+          saveData();
+          renderCalendar();
+        }
       }
+    });
 
-      adviceOutput.textContent = advice;
+    if (canEdit) {
+      shiftDiv.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', JSON.stringify(shift));
+      });
     }
 
-    doseInput.addEventListener('input', calculateRecommendation);
-    inrInput.addEventListener('input', calculateRecommendation);
-  </script>
+    // -------- Long click delete ----------
+    let pressTimer;
+    shiftDiv.addEventListener('mousedown', (e) => {
+      if (!canEdit) return;
+      pressTimer = setTimeout(() => {
+        if (confirm(`Delete shift for ${shift.name}?`)) {
+          roster[key].shifts.splice(shiftIndex, 1);
+          saveData();
+          renderCalendar();
+        }
+      }, 800); // 800ms long press
+    });
+
+    shiftDiv.addEventListener('mouseup', () => clearTimeout(pressTimer));
+    shiftDiv.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+
+    return shiftDiv;
+  }
+
+  function renderDayCell(year, month, day) {
+    const key = `${year}-${month}-${day}`;
+    if (!roster[key]) roster[key] = { shifts: [], notes: '' };
+
+    const dayCell = document.createElement('div');
+    dayCell.classList.add('day');
+    dayCell.dataset.dayKey = key; // ✅ needed for shift editing
+
+    const date = new Date(year, month, day);
+    dayCell.dataset.date = date.toDateString(); // ✅ add date attribute for Today scroll
+
+    if (date.getDay() === 0 || date.getDay() === 6) dayCell.classList.add('weekend');
+
+    // Highlight today
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+      dayCell.classList.add('today');
+    }
+
+    const dayNumber = document.createElement('div');
+    dayNumber.classList.add('day-number');
+    dayNumber.innerHTML = day + (roster[key].notes ? `<span class="day-note">${roster[key].notes}</span>` : '');
+    dayNumber.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!canEdit) return;
+      const note = prompt('Enter notes for this day:', roster[key].notes || '');
+      if (note !== null) {
+        roster[key].notes = note;
+        saveData();
+        renderCalendar();
+      }
+    });
+
+    const dragHandle = document.createElement('span');
+    dragHandle.textContent = '⇅';
+    dragHandle.style.cursor = canEdit ? 'grab' : 'default';
+    dragHandle.title = 'Drag all shifts of this day';
+    dragHandle.draggable = canEdit;
+
+    if (canEdit) {
+      dragHandle.addEventListener('dragstart', (e) => {
+        e.stopPropagation();
+        const allShifts = roster[key].shifts || [];
+        e.dataTransfer.setData('text/day-shifts', JSON.stringify(allShifts));
+      });
+    }
+
+    const header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    header.appendChild(dayNumber);
+    header.appendChild(dragHandle);
+
+    dayCell.appendChild(header);
+
+    if (canEdit) {
+      // ✅ allow nurse drop from left list
+      dayCell.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dayCell.classList.add('drag-over');
+      });
+      dayCell.addEventListener('dragleave', () => dayCell.classList.remove('drag-over'));
+      dayCell.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dayCell.classList.remove('drag-over');
+
+        const nurseIndex = e.dataTransfer.getData('nurseIndex');
+        if (nurseIndex !== '') {
+          const nurse = nurses[nurseIndex];
+          roster[key].shifts.push({
+            name: nurse.name,
+            color: nurse.color,
+            time: "Shift"
+          });
+          saveData();
+          renderCalendar();
+          return;
+        }
+
+        const dayShiftsData = e.dataTransfer.getData('text/day-shifts');
+        if (dayShiftsData) {
+          const shifts = JSON.parse(dayShiftsData);
+          roster[key].shifts = roster[key].shifts.concat(shifts);
+          saveData();
+          renderCalendar();
+          return;
+        }
+
+        const shiftData = e.dataTransfer.getData('text/plain');
+        if (shiftData) {
+          const shift = JSON.parse(shiftData);
+          roster[key].shifts.push(shift);
+          saveData();
+          renderCalendar();
+        }
+      });
+    }
+
+    roster[key].shifts.forEach((shift, i) => {
+      dayCell.appendChild(createShiftElement(shift, key, i));
+    });
+
+    return dayCell;
+  }
+
+  function renderCalendar() {
+    calendarGrid.innerHTML = '';
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    monthYear.textContent = currentDate.toLocaleString('default', { month: 'long' }) + ' ' + year;
+
+    // First day of the month
+    const firstDay = new Date(year, month, 1).getDay();
+    const leadingBlanks = (firstDay === 0) ? 6 : firstDay - 1;
+
+    // Add empty cells for alignment
+    for (let i = 0; i < leadingBlanks; i++) {
+      calendarGrid.appendChild(document.createElement('div'));
+    }
+
+    const today = new Date();
+    const todayStr = today.toDateString();
+
+    // Determine start and end of current week (Monday–Sunday)
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1));
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayCell = renderDayCell(year, month, day);
+
+      const cellDate = new Date(year, month, day);
+      const cellStr = cellDate.toDateString();
+
+      // Highlight today
+      if (cellStr === todayStr) {
+        dayCell.classList.add('today');
+      }
+
+      // Highlight current week
+      if (cellDate >= startOfWeek && cellDate <= endOfWeek) {
+        dayCell.classList.add('current-week');
+      }
+
+      calendarGrid.appendChild(dayCell);
+    }
+  }
+
+  // Month navigation
+  prevMonthBtn.addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+  });
+
+  nextMonthBtn.addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+  });
+
+  // Today button
+  todayBtn.addEventListener("click", () => {
+    currentDate = new Date(); // reset to today
+    renderCalendar();
+
+    // Scroll to the current week
+    setTimeout(() => {
+      const todayCell = calendarGrid.querySelector('.today');
+      if (todayCell) {
+        todayCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
+  });
+
+  function syncShiftColorsWithNurses() {
+    for (const dayKey in roster) {
+      if (!roster[dayKey].shifts) continue;
+      roster[dayKey].shifts.forEach(shift => {
+        const nurse = nurses.find(n => n.name === shift.name);
+        if (nurse) shift.color = nurse.color;
+      });
+    }
+  }
+</script>
 
 </body>
 </html>
