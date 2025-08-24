@@ -4,13 +4,14 @@
 <meta charset="UTF-8" />
 <!-- Keep zoomable; we'll handle the "fit to phone" with CSS transform -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<title>Nurses Roster</title>
+<style>
 html {
   -webkit-text-size-adjust: 100%; /* prevents font resizing on zoom */
   text-size-adjust: 100%;
 }
 
-<title>Nurses Roster</title>
-<style>
 :root{
   --cal-w: 900px;   /* calendar width (keep same as your design) */
   --nurse-w: 250px; /* nurse panel width */
@@ -420,17 +421,45 @@ body.logged-in .nurse-list {
 }
 .day.weekend { background: rgba(245, 245, 245, 0.4); }
 
-/* Today */
 .day.today {
-  border: 2px solid rgba(200, 200, 200, 0.8);
-  background: rgba(255, 255, 255, 0.75) !important;
+  position: relative;
+  z-index: 2;
+  border: 2px solid transparent; /* Base border */
+  border-radius: 0; /* Sharp corners */
+  background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(14px) saturate(180%);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
-  transform: scale(1.10);
-  z-index: 2;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.12),
-              0 0 25px rgba(255, 255, 255, 0.65);
 }
+
+.day.today::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 8px; /* Sharp corners */
+  border: 2px solid;
+  border-color: #ffdab4; /* Theme glow color */
+  box-shadow: 0 0 10px #ffdab4, 0 0 20px #ffdab4, 0 0 30px #ffdab4;
+  pointer-events: none;
+  animation: glowBorder 1.5s linear infinite;
+}
+
+@keyframes glowBorder {
+  0% {
+    box-shadow: 0 0 5px #ffdab4, 0 0 10px #ffdab4, 0 0 15px #ffdab4;
+  }
+  50% {
+    box-shadow: 0 0 15px #ffdab4, 0 0 25px #ffdab4, 0 0 35px #ffdab4;
+  }
+  100% {
+    box-shadow: 0 0 5px #ffdab4, 0 0 10px #ffdab4, 0 0 15px #ffdab4;
+  }
+}
+
+
+
 
 .day-number {
   margin-bottom: 5px;
@@ -475,20 +504,11 @@ body.logged-in .nurse-list {
 
 /* Current week highlight */
 .day.current-week {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85),
-              inset 0 0 14px rgba(220, 220, 220, 0.8);
-  border: 1px solid rgba(200, 200, 200, 0.65);
-}
-.day.current-week.today {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border: 2px solid rgba(220, 220, 220, 0.95);
-  transform: scale(1.1);
-  z-index: 2;
-  box-shadow: 0 0 16px rgba(253, 255, 182, 0.95),
-              0 0 28px rgba(253, 255, 182, 0.75);
+  border: 3px solid rgba(200, 200, 200, 0.85); /* Thicker border */
+  background: transparent; /* Remove background blur */
+  box-shadow: none; /* Remove any shadows */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Footer */
@@ -1032,54 +1052,58 @@ footer {
 
     return dayCell;
   }
+function renderCalendar() {
+  calendarGrid.innerHTML = '';
 
-  function renderCalendar() {
-    calendarGrid.innerHTML = '';
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
 
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+  monthYear.textContent =
+    currentDate.toLocaleString('default', { month: 'long' }) + ' ' + year;
 
-    monthYear.textContent = currentDate.toLocaleString('default', { month: 'long' }) + ' ' + year;
+  const firstDay = new Date(year, month, 1).getDay();
+  const leadingBlanks = (firstDay === 0 ? 6 : firstDay - 1);
 
-    // First day of the month
-    const firstDay = new Date(year, month, 1).getDay();
-    const leadingBlanks = (firstDay === 0) ? 6 : firstDay - 1;
-
-    // Add empty cells for alignment
-    for (let i = 0; i < leadingBlanks; i++) {
-      calendarGrid.appendChild(document.createElement('div'));
-    }
-
-    const today = new Date();
-    const todayStr = today.toDateString();
-
-    // Determine start and end of current week (Monday–Sunday)
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1));
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dayCell = renderDayCell(year, month, day);
-
-      const cellDate = new Date(year, month, day);
-      const cellStr = cellDate.toDateString();
-
-      // Highlight today
-      if (cellStr === todayStr) {
-        dayCell.classList.add('today');
-      }
-
-      // Highlight current week
-      if (cellDate >= startOfWeek && cellDate <= endOfWeek) {
-        dayCell.classList.add('current-week');
-      }
-
-      calendarGrid.appendChild(dayCell);
-    }
+  // Add empty cells for alignment
+  for (let i = 0; i < leadingBlanks; i++) {
+    calendarGrid.appendChild(document.createElement('div'));
   }
+
+  const today = new Date();
+  const todayStr = today.toDateString();
+
+  // Start and end of the current week (Monday–Sunday)
+  const currentWeekMonday = new Date(today);
+  currentWeekMonday.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1));
+  const currentWeekSunday = new Date(currentWeekMonday);
+  currentWeekSunday.setDate(currentWeekMonday.getDate() + 6);
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayCell = renderDayCell(year, month, day);
+
+    const cellDate = new Date(year, month, day);
+    const cellStr = cellDate.toDateString();
+
+    // Highlight today
+    if (cellStr === todayStr) {
+      dayCell.classList.add('today');
+    }
+
+    // Highlight current week — check if this day is within the same week as today
+    // Compare year, month, and ISO week
+    const isSameWeek =
+      cellDate >= currentWeekMonday && cellDate <= currentWeekSunday;
+
+    if (isSameWeek) {
+      dayCell.classList.add('current-week');
+    }
+
+    calendarGrid.appendChild(dayCell);
+  }
+}
+
 
   // Month navigation
   prevMonthBtn.addEventListener("click", () => {
