@@ -165,7 +165,7 @@ body::after {
 
 .nurse-list {
   display: block;
-  position: fixed;    /* fixed so it always stays in place */
+  position: sticky;    /* fixed so it always stays in place */
   top: 110px;         /* distance from top of viewport */
   left: 10px;         /* distance from left of viewport */
 
@@ -1074,18 +1074,21 @@ function renderCalendar() {
 
   // --- Fixed week calculation (Monday–Sunday) ---
   function getWeekStart(date) {
-    const d = new Date(date);
-    const day = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const diff = day === 0 ? -6 : 1 - day; // shift Sunday to previous Monday
-    d.setDate(d.getDate() + diff);
-    return d;
-  }
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = Sunday, 1 = Monday
+  const diff = (day + 6) % 7; // 0=Sunday→6, 1=Monday→0, 2=Tuesday→1 ...
+  d.setDate(d.getDate() - diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
 
-  function getWeekEnd(monday) {
-    const d = new Date(monday);
-    d.setDate(d.getDate() + 6);
-    return d;
-  }
+function getWeekEnd(monday) {
+  const d = new Date(monday);
+  d.setDate(d.getDate() + 6);
+  d.setHours(23,59,59,999);
+  return d;
+}
+
 
   const currentWeekMonday = getWeekStart(today);
   const currentWeekSunday = getWeekEnd(currentWeekMonday);
