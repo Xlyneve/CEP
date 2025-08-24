@@ -42,13 +42,12 @@ body {
   transform: scale(var(--app-scale));
   transform-origin: top left;
   width: calc(100% / var(--app-scale));
-  /* Avoid accidental text blur on iOS during transforms */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  
   will-change: transform;
-  backface-visibility: hidden;
 }
+#zoomRoot {
+  transform: scale(var(--app-scale)) translateZ(0);
+}
+
 
 /* Subtle frosted overlay effect */
 body::after {
@@ -530,55 +529,55 @@ footer {
 </style>
 </head>
 <body>
-
 <div id="zoomRoot">
   <!-- Header with Logo -->
   <header class="main-header">
     <img src="onehealth-logo.png" alt="Onehealth Logo" class="logo">
   </header>
 
-  <!-- Auth Section (kept minimal under logo) -->
+  <!-- Auth Section (minimal under logo) -->
   <div id="authSection" class="auth-section">
+    <label for="emailInput" class="sr-only">Email</label>
     <input type="email" id="emailInput" placeholder="Email" />
+
+    <label for="passwordInput" class="sr-only">Password</label>
     <input type="password" id="passwordInput" placeholder="Password" />
+
     <div class="auth-buttons">
-      <button id="loginBtn">Login</button>
-      <button id="logoutBtn" style="display:none;">Logout</button>
+      <button id="loginBtn" class="btn">Login</button>
+      <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
     </div>
+
     <p id="userStatus">Not signed in</p>
   </div>
 
   <div class="container">
-    <!-- Nurse List -->
-   <div class="nurse-list">
-  <h3>Nurses / HCA</h3> <!-- moved here instead of header -->
-  <div id="nurseContainer"></div>
+    <!-- Nurse List Section -->
+    <div class="nurse-list">
+      <h3>Nurses / HCA</h3>
+      <div id="nurseContainer"></div>
 
-  <div class="add-nurse">
-    <input type="text" id="newNurseName" placeholder="Add Nurse">
-    <button class="btn" id="addNurseBtn">Add</button>
-  </div>
+      <div class="add-nurse">
+        <input type="text" id="newNurseName" placeholder="Add Nurse">
+        <button id="addNurseBtn" class="btn">Add</button>
+      </div>
 
-  <div class="nurse-note">
-    <p>💡 <b>Tips:</b></p>
-    <ul>
-      <li><b>Shift+Click</b> to delete staff</li>
-      <li><b>Long Press</b> to delete shift</li>
-	  <li><b>Right Click</b> to edit shift</li>
-    </ul>
-  </div>
-</div>
+      <div class="nurse-note">
+        <p>💡 <b>Tips:</b></p>
+        <ul>
+          <li><b>Shift+Click</b> to delete staff</li>
+          <li><b>Long Press</b> to delete shift</li>
+          <li><b>Right Click</b> to edit shift</li>
+        </ul>
+      </div>
+    </div>
 
-
-
-    <!-- Calendar -->
+    <!-- Calendar Section -->
     <div class="calendar">
       <div class="calendar-header">
         <button class="btn" id="prevMonth">◀ Prev</button>
         <button class="btn" id="todayBtn">Today</button>
-
         <h2 id="monthYear" class="month-label"></h2>
-
         <button class="btn" id="nextMonth">Next ▶</button>
       </div>
 
@@ -594,6 +593,7 @@ footer {
 
   <footer>CEP/C 2025</footer>
 </div> <!-- /#zoomRoot -->
+
 
 <script type="module">
   /* ========= Auto-scale to show desktop on phones =========
@@ -1072,11 +1072,23 @@ function renderCalendar() {
   const today = new Date();
   const todayStr = today.toDateString();
 
-  // Start and end of the current week (Monday–Sunday)
-  const currentWeekMonday = new Date(today);
-  currentWeekMonday.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1));
-  const currentWeekSunday = new Date(currentWeekMonday);
-  currentWeekSunday.setDate(currentWeekMonday.getDate() + 6);
+  // --- Fixed week calculation (Monday–Sunday) ---
+  function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const diff = day === 0 ? -6 : 1 - day; // shift Sunday to previous Monday
+    d.setDate(d.getDate() + diff);
+    return d;
+  }
+
+  function getWeekEnd(monday) {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + 6);
+    return d;
+  }
+
+  const currentWeekMonday = getWeekStart(today);
+  const currentWeekSunday = getWeekEnd(currentWeekMonday);
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -1092,11 +1104,7 @@ function renderCalendar() {
     }
 
     // Highlight current week — check if this day is within the same week as today
-    // Compare year, month, and ISO week
-    const isSameWeek =
-      cellDate >= currentWeekMonday && cellDate <= currentWeekSunday;
-
-    if (isSameWeek) {
+    if (cellDate >= currentWeekMonday && cellDate <= currentWeekSunday) {
       dayCell.classList.add('current-week');
     }
 
@@ -1104,41 +1112,45 @@ function renderCalendar() {
   }
 }
 
+// Month navigation
+prevMonthBtn.addEventListener("click", () => {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar();
+});
 
-  // Month navigation
-  prevMonthBtn.addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar();
-  });
+nextMonthBtn.addEventListener("click", () => {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar();
+});
 
-  nextMonthBtn.addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-  });
+// Today button
+todayBtn.addEventListener("click", () => {
+  currentDate = new Date(); // reset to today
+  renderCalendar();
 
-  // Today button
-  todayBtn.addEventListener("click", () => {
-    currentDate = new Date(); // reset to today
-    renderCalendar();
-
-    // Scroll to the current week
-    setTimeout(() => {
-      const todayCell = calendarGrid.querySelector('.today');
-      if (todayCell) {
-        todayCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 50);
-  });
-
-  function syncShiftColorsWithNurses() {
-    for (const dayKey in roster) {
-      if (!roster[dayKey].shifts) continue;
-      roster[dayKey].shifts.forEach(shift => {
-        const nurse = nurses.find(n => n.name === shift.name);
-        if (nurse) shift.color = nurse.color;
-      });
+  // Scroll to the current week
+  setTimeout(() => {
+    const todayCell = calendarGrid.querySelector('.today');
+    if (todayCell) {
+      todayCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+  }, 50);
+});
+
+function syncShiftColorsWithNurses() {
+  for (const dayKey in roster) {
+    if (!roster[dayKey].shifts) continue;
+    roster[dayKey].shifts.forEach(shift => {
+      const nurse = nurses.find(n => n.name === shift.name);
+      if (nurse) shift.color = nurse.color;
+    });
   }
+}
+
+onAuthStateChanged(auth, () => {
+  loadData();
+});
+
 </script>
 
 </body>
