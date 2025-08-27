@@ -334,189 +334,225 @@ mark {
     <div class="note-list" id="notesContainer"></div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    let notes = [];
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  let notes = [];
 
-    document.getElementById('searchInput').addEventListener('input', renderNotes);
+  document.getElementById('searchInput').addEventListener('input', renderNotes);
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelector('.add-btn').addEventListener('click', async () => {
-        const title = document.getElementById('noteTitle').value.trim();
-        let text = document.getElementById('noteText').value.trim();
-        const url = document.getElementById('noteUrl').value.trim();
-        if (!title && !text && !url) return;
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('.add-btn').addEventListener('click', async () => {
+      const title = document.getElementById('noteTitle').value.trim();
+      let text = document.getElementById('noteText').innerText.trim(); // use contentEditable
+      const url = document.getElementById('noteUrl').value.trim();
+      if (!title && !text && !url) return;
 
-        text = formatText(text);
+      text = formatText(text);
 
-        await addDoc(collection(db, 'practiceNNotes'), {
-          title: title || "Untitled",
-          text,
-          url,
-          timestamp: new Date().toISOString()
-        });
-
-        document.getElementById('noteTitle').value = '';
-        document.getElementById('noteText').value = '';
-        document.getElementById('noteUrl').value = '';
+      await addDoc(collection(db, 'practiceNNotes'), {
+        title: title || "Untitled",
+        text,
+        url,
+        timestamp: new Date().toISOString()
       });
 
-      onSnapshot(collection(db, 'practiceNNotes'), snapshot => {
-        notes = snapshot.docs.map(docSnap => ({
-          ...docSnap.data(),
-          id: docSnap.id,
-          editing: false
-        }));
-        renderNotes();
-      });
+      document.getElementById('noteTitle').value = '';
+      document.getElementById('noteText').innerText = '';
+      document.getElementById('noteUrl').value = '';
     });
 
-    function formatText(text) {
-      return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/==(.+?)==/g, '<mark>$1</mark>');
-    }
-
-    function renderNotes() {
-      const container = document.getElementById('notesContainer');
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      container.innerHTML = '';
-
-      notes
-        .filter(note =>
-          note.title.toLowerCase().includes(search) ||
-          note.text.toLowerCase().includes(search) ||
-          note.url.toLowerCase().includes(search)
-        )
-        .forEach((note, index) => {
-          const div = document.createElement('div');
-          div.className = 'note-card';
-
-          if (note.editing) {
-            div.innerHTML = `
-              <input type="text" id="editTitle${note.id}" value="${note.title}">
-             <div id="editText${note.id}" contenteditable="true" class="note-text">${note.text}</div>
-   <div class="btn-group">
-  <button onclick="formatEditText('${note.id}', 'bold')"><b>B</b></button>
-  <button onclick="formatEditText('${note.id}', 'highlight')"><mark>H</mark></button>
-  </div>
-
-              <input type="text" id="editUrl${note.id}" value="${note.url}" placeholder="Optional URL" />
-              <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
-              <div class="btn-group">
-                <button onclick="saveEdit('${note.id}')">Save</button>
-                <button onclick="deleteNote('${note.id}')">Delete</button>
-                <button onclick="copyToClipboard('${note.id}')">Copy</button>
-              </div>
-            `;
-          } else {
-            div.innerHTML = `
-              <div class="note-title">${note.title}</div>
-              <div class="note-text">${note.text}</div>
-              ${note.url ? `<div class="note-url"><a href="${note.url}" target="_blank">${note.url}</a></div>` : ''}
-              <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
-              <div class="btn-group">
-                <button onclick="toggleEdit('${note.id}')">Edit</button>
-                <button onclick="deleteNote('${note.id}')">Delete</button>
-                <button onclick="copyToClipboard('${note.id}')">Copy</button>
-              </div>
-            `;
-          }
-
-          container.appendChild(div);
-        });
-    }
-
-    window.toggleEdit = (id) => {
-  notes = notes.map(note =>
-    note.id === id ? { ...note, editing: true } : { ...note, editing: false }
-  );
-  renderNotes();
-};
-
-    window.saveEdit = async (id) => {
-  const index = notes.findIndex(n => n.id === id);
-  const note = notes[index];
-
-  const newTitle = document.getElementById(`editTitle${id}`).value.trim();
-  let newText = document.getElementById(`editText${id}`).innerHTML.trim();
-  const newUrl = document.getElementById(`editUrl${id}`).value.trim();
-
-  newText = formatText(newText);
-
-  await updateDoc(doc(db, 'practiceNNotes', note.id), {
-    title: newTitle || 'Untitled',
-    text: newText,
-    url: newUrl,
-    timestamp: new Date().toISOString()
+    onSnapshot(collection(db, 'practiceNNotes'), snapshot => {
+      notes = snapshot.docs.map(docSnap => ({
+        ...docSnap.data(),
+        id: docSnap.id,
+        editing: false
+      }));
+      renderNotes();
+    });
   });
 
-  notes[index].editing = false;
-  renderNotes();
-};
-window.formatEditText = (id, type) => {
-  const el = document.getElementById(`editText${id}`);
-  el.focus();
-  const selection = window.getSelection();
-  if (!selection.rangeCount) return;
+  function formatText(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/==(.+?)==/g, '<mark>$1</mark>');
+  }
 
-  const range = selection.getRangeAt(0);
-  if (!el.contains(range.commonAncestorContainer)) return;
+  function renderNotes() {
+    const container = document.getElementById('notesContainer');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    container.innerHTML = '';
 
-  const selectedText = range.toString();
-  if (!selectedText) return;
+    notes
+      .filter(note =>
+        note.title.toLowerCase().includes(search) ||
+        note.text.toLowerCase().includes(search) ||
+        note.url.toLowerCase().includes(search)
+      )
+      .forEach(note => {
+        const div = document.createElement('div');
+        div.className = 'note-card';
+        div.dataset.id = note.id;
 
-  const span = document.createElement(type === 'bold' ? 'strong' : 'mark');
-  span.textContent = selectedText;
+        if (note.editing) {
+          div.innerHTML = `
+            <input type="text" id="editTitle${note.id}" value="${note.title}">
+            <div id="editText${note.id}" contenteditable="true" class="note-text">${note.text}</div>
+            <div class="btn-group">
+              <button onclick="formatEditText('${note.id}', 'bold')"><b>B</b></button>
+              <button onclick="formatEditText('${note.id}', 'highlight')"><mark>H</mark></button>
+            </div>
+            <input type="text" id="editUrl${note.id}" value="${note.url}" placeholder="Optional URL" />
+            <div class="timestamp">Last updated: ${new Date(note.timestamp).toLocaleString()}</div>
+            <div class="btn-group">
+              <button onclick="saveEdit('${note.id}')">Save</button>
+              <button onclick="cancelEdit('${note.id}')">Cancel</button>
+            </div>
+          `;
+        } else {
+          div.innerHTML = `
+            <div class="note-title">${note.title}</div>
+            <div class="note-text">${note.text}</div>
+            ${note.url ? `<div class="note-url"><a href="${note.url}" target="_blank">${note.url}</a></div>` : ''}
+            <div class="timestamp">Saved on ${new Date(note.timestamp).toLocaleString()}</div>
+            <div class="btn-group hidden">
+              <button onclick="toggleEdit('${note.id}')">Edit</button>
+              <button onclick="deleteNote('${note.id}')">Delete</button>
+            </div>
+            <div class="check-mark">✔</div>
+          `;
 
-  range.deleteContents();
-  range.insertNode(span);
+          // Single click → copy
+          div.addEventListener("click", (e) => {
+            if (note.editing) return;
+            const btnGroup = div.querySelector(".btn-group");
+            if (btnGroup.contains(e.target)) return; // ignore clicks on buttons
 
-  // Move cursor after inserted span
-  const newRange = document.createRange();
-  newRange.setStartAfter(span);
-  newRange.collapse(true);
-  selection.removeAllRanges();
-  selection.addRange(newRange);
-};
+            const text = note.text.replace(/<[^>]*>/g, ''); // remove HTML
+            navigator.clipboard.writeText(text).then(() => {
+              const mark = div.querySelector(".check-mark");
+              mark.style.opacity = "1";
+              setTimeout(() => mark.style.opacity = "0", 1200);
+            });
+          });
 
+          // Long press → show buttons
+          let pressTimer;
+          div.addEventListener("mousedown", () => {
+            pressTimer = setTimeout(() => {
+              div.querySelector(".btn-group").classList.remove("hidden");
+            }, 700);
+          });
+          div.addEventListener("mouseup", () => clearTimeout(pressTimer));
+          div.addEventListener("mouseleave", () => clearTimeout(pressTimer));
+        }
 
-    window.deleteNote = async (id) => {
-      if (confirm("Delete this note?")) {
-        await deleteDoc(doc(db, 'practiceNNotes', id));
+        container.appendChild(div);
+      });
+  }
+
+  window.toggleEdit = (id) => {
+    notes = notes.map(note =>
+      note.id === id ? { ...note, editing: true } : { ...note, editing: false }
+    );
+    renderNotes();
+  };
+
+  window.cancelEdit = (id) => {
+    notes = notes.map(note =>
+      note.id === id ? { ...note, editing: false } : note
+    );
+    renderNotes();
+  };
+
+  window.saveEdit = async (id) => {
+    const index = notes.findIndex(n => n.id === id);
+    const note = notes[index];
+
+    const newTitle = document.getElementById(`editTitle${id}`).value.trim();
+    let newText = document.getElementById(`editText${id}`).innerHTML.trim();
+    const newUrl = document.getElementById(`editUrl${id}`).value.trim();
+
+    newText = formatText(newText);
+
+    await updateDoc(doc(db, 'practiceNNotes', note.id), {
+      title: newTitle || 'Untitled',
+      text: newText,
+      url: newUrl,
+      timestamp: new Date().toISOString()
+    });
+
+    notes[index].editing = false;
+    renderNotes();
+  };
+
+  window.formatEditText = (id, type) => {
+    const el = document.getElementById(`editText${id}`);
+    el.focus();
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    if (!el.contains(range.commonAncestorContainer)) return;
+
+    const selectedText = range.toString();
+    if (!selectedText) return;
+
+    if (type === 'bold') {
+      document.execCommand("bold");
+    } else if (type === 'highlight') {
+      const parent = range.commonAncestorContainer.parentElement;
+      if (parent && parent.tagName === "MARK") {
+        parent.replaceWith(document.createTextNode(parent.textContent)); // remove highlight
+      } else {
+        document.execCommand("backColor", false, "yellow");
       }
-    };
+    }
+  };
 
-   window.copyToClipboard = (id) => {
-  const note = notes.find(n => n.id === id);
-  const text = note.editing
-    ? document.getElementById(`editText${id}`).value
-    : note.text.replace(/<[^>]*>/g, '');
+  window.deleteNote = async (id) => {
+    if (confirm("Delete this note?")) {
+      await deleteDoc(doc(db, 'practiceNNotes', id));
+    }
+  };
 
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Note copied to clipboard!");
-  });
-};
+  window.toggleSearch = () => {
+    document.getElementById('searchBox').classList.toggle('active');
+  };
+</script>
 
+<style>
+.check-mark {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 20px;
+  color: #d625ff; 
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.note-card {
+  position: relative;
+}
+.hidden {
+  display: none;
+}
+</style>
 
-    window.toggleSearch = () => {
-      document.getElementById('searchBox').classList.toggle('active');
-    };
-  </script>
 </body>
 </html>
