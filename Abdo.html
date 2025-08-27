@@ -4,191 +4,280 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Abdominis</title>
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-  import {
-    getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
-  } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-    authDomain: "cepx-f9d2a.firebaseapp.com",
-    projectId: "cepx-f9d2a",
-    storageBucket: "cepx-f9d2a.appspot.com",
-    messagingSenderId: "840696526325",
-    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+const firebaseConfig = {
+  apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+  authDomain: "cepx-f9d2a.firebaseapp.com",
+  projectId: "cepx-f9d2a",
+  storageBucket: "cepx-f9d2a.appspot.com",
+  messagingSenderId: "840696526325",
+  appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const notesCollection = collection(db, "abdominisNotes");
+
+/* ---------- Helpers ---------- */
+
+/** Robust long-press (mouse & touch) */
+function addLongPress(el, onLongPress, threshold = 600) {
+  let timer = null;
+  let pressed = false;
+  let startX = 0, startY = 0;
+
+  function start(e) {
+    pressed = true;
+    startX = e.clientX ?? (e.touches && e.touches[0]?.clientX) ?? 0;
+    startY = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? 0;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (pressed) onLongPress(e);
+      pressed = false;
+    }, threshold);
+  }
+  function move(e) {
+    if (!pressed) return;
+    const cx = e.clientX ?? (e.touches && e.touches[0]?.clientX) ?? 0;
+    const cy = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? 0;
+    const dx = cx - startX, dy = cy - startY;
+    if (Math.hypot(dx, dy) > 8) cancel(); // cancel if user scrolls/drags
+  }
+  function cancel() {
+    pressed = false;
+    clearTimeout(timer);
+    timer = null;
+  }
+
+  // Pointer events where supported
+  el.addEventListener("pointerdown", start, { passive: true });
+  el.addEventListener("pointermove", move, { passive: true });
+  el.addEventListener("pointerup", cancel, { passive: true });
+  el.addEventListener("pointerleave", cancel, { passive: true });
+  el.addEventListener("pointercancel", cancel, { passive: true });
+
+  // Fallback touch/mouse (older browsers)
+  el.addEventListener("touchstart", start, { passive: true });
+  el.addEventListener("touchmove", move, { passive: true });
+  el.addEventListener("touchend", cancel, { passive: true });
+  el.addEventListener("mousedown", start);
+  el.addEventListener("mousemove", move);
+  el.addEventListener("mouseup", cancel);
+
+  // Prevent native long-press context menu interfering on mobile
+  el.addEventListener("contextmenu", (e) => e.preventDefault());
+}
+
+/** Debounce */
+function debounce(fn, delay) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), delay);
   };
+}
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const handNotesCollection = collection(db, "abdominisNotes");
+/* ---------- Core actions ---------- */
 
-  function formatNote(text) {
-    const escaped = text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-    return escaped
-      .replace(/\n/g, "<br>")
-      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
-      .replace(/==(.+?)==/g, '<span style="background-color:#f9e1a8">$1</span>');
-  }
+async function saveNote() {
+  const noteEl = document.getElementById("note");
+  const imgEl = document.getElementById("image");
+  const noteText = noteEl.value.trim();
+  const imageFile = imgEl.files[0];
+  if (!noteText && !imageFile) return;
 
-  async function saveNote() {
-    const noteText = document.getElementById("note").value;
-    const imageFile = document.getElementById("image").files[0];
-    if (!noteText && !imageFile) return;
-
-    let imageData = "";
-    if (imageFile) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        imageData = reader.result;
-        await addDoc(handNotesCollection, { note: noteText, image: imageData });
-        document.getElementById("note").value = "";
-        document.getElementById("image").value = "";
-        loadNotes();
-      };
-      reader.readAsDataURL(imageFile);
-    } else {
-      await addDoc(handNotesCollection, { note: noteText, image: "" });
-      document.getElementById("note").value = "";
+  let imageData = "";
+  if (imageFile) {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      imageData = reader.result;
+      await addDoc(notesCollection, { note: noteText, image: imageData });
+      hideInputs();
       loadNotes();
-    }
+    };
+    reader.readAsDataURL(imageFile);
+  } else {
+    await addDoc(notesCollection, { note: noteText, image: "" });
+    hideInputs();
+    loadNotes();
   }
+}
 
-  async function loadNotes(filter = "") {
-    const notesContainer = document.getElementById("notes");
-    notesContainer.innerHTML = "";
+function hideInputs() {
+  const note = document.getElementById("note");
+  const image = document.getElementById("image");
+  const saveBtn = document.getElementById("save-note-btn");
+  const plus = document.getElementById("add-note-btn");
 
-    const querySnapshot = await getDocs(handNotesCollection);
+  note.value = "";
+  image.value = "";
+  note.style.display = "none";
+  image.style.display = "none";
+  saveBtn.style.display = "none";
+  plus.style.display = "flex";
+}
 
-    const searchWords = filter
-      .toLowerCase()
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
+async function loadNotes(filter = "") {
+  const notesContainer = document.getElementById("notes");
+  notesContainer.innerHTML = "";
 
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      const noteText = data.note || "";
+  const querySnapshot = await getDocs(notesCollection);
+  const searchWords = filter.toLowerCase().trim().split(/\s+/).filter(Boolean);
 
-      // Skip if not matching all search terms
-      if (
-        searchWords.length > 0 &&
-        !searchWords.every((word) => noteText.toLowerCase().includes(word))
-      ) {
-        return;
-      }
+  querySnapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const noteText = data.note || "";
 
-      const card = document.createElement("div");
-      card.className = "note-card";
+    // filter
+    if (searchWords.length && !searchWords.every(w => noteText.toLowerCase().includes(w))) return;
 
-      // Image zoom logic (Cephalon style)
-      if (data.image) {
-        const img = document.createElement("img");
-        img.src = data.image;
-        img.alt = "Note Image";
-        img.className = "note-image";
-        img.addEventListener("click", () => {
-          if (!img.classList.contains("zoomed")) {
-            const zoomedImg = img.cloneNode(true);
-            zoomedImg.classList.add("zoomed");
-            zoomedImg.style.position = "fixed";
-            zoomedImg.style.top = "50%";
-            zoomedImg.style.left = "50%";
-            zoomedImg.style.transform = "translate(-50%, -50%)";
-            zoomedImg.style.zIndex = "9999";
-            zoomedImg.style.cursor = "zoom-out";
-            zoomedImg.id = "zoomed-image-overlay";
+    const card = document.createElement("div");
+    card.className = "note-card";
 
-            zoomedImg.addEventListener("click", () => {
-              zoomedImg.remove();
-            });
+    // image (tap to zoom overlay)
+    if (data.image) {
+      const img = document.createElement("img");
+      img.src = data.image;
+      img.alt = "Note Image";
+      img.className = "note-image";
+      img.addEventListener("click", () => {
+        const overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.top = 0;
+        overlay.style.left = 0;
+        overlay.style.width = "100%";
+        overlay.style.height = "100%";
+        overlay.style.background = "rgba(0,0,0,0.8)";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        overlay.style.zIndex = 10000;
+        const zoomImg = document.createElement("img");
+        zoomImg.src = img.src;
+        zoomImg.style.maxWidth = "90%";
+        zoomImg.style.maxHeight = "90%";
+        zoomImg.style.borderRadius = "12px";
+        overlay.appendChild(zoomImg);
+        document.body.appendChild(overlay);
+        overlay.addEventListener("click", () => overlay.remove());
+      });
+      card.appendChild(img);
+    }
 
-            document.body.appendChild(zoomedImg);
+    // note text (contenteditable off by default)
+    const noteDiv = document.createElement("div");
+    noteDiv.className = "note-text";
+    noteDiv.innerHTML = noteText;
+    noteDiv.setAttribute("contenteditable", "false");
+    card.appendChild(noteDiv);
+
+    // action buttons (hidden until long-press)
+    const btnContainer = document.createElement("div");
+    btnContainer.className = "btn-container";
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Edit";
+    editBtn.onclick = () => {
+      noteDiv.setAttribute("contenteditable", "true");
+      noteDiv.focus();
+
+      // live formatting toolbar
+      const toolbar = document.createElement("div");
+      toolbar.className = "format-toolbar";
+      [
+        { cmd: "bold", label: "Bold" },
+        { cmd: "underline", label: "Underline" },
+        { cmd: "highlight", label: "Highlight" }
+      ].forEach(({ cmd, label }) => {
+        const b = document.createElement("button");
+        b.textContent = label;
+        b.onclick = () => {
+          if (cmd === "highlight") {
+            document.execCommand("backColor", false, "#f9e1a8");
+          } else {
+            document.execCommand(cmd, false, null);
           }
-        });
-        card.appendChild(img);
-      }
+        };
+        toolbar.appendChild(b);
+      });
+      card.insertBefore(toolbar, noteDiv);
 
-      // Highlight search terms
-      let formattedText = formatNote(noteText);
-      if (searchWords.length > 0) {
-        searchWords.forEach((word) => {
-          const regex = new RegExp(`(${word})`, "gi");
-          formattedText = formattedText.replace(regex, "<mark>$1</mark>");
-        });
-      }
-
-      const p = document.createElement("p");
-      p.innerHTML = formattedText;
-      card.appendChild(p);
-
-      const btnContainer = document.createElement("div");
-      btnContainer.className = "btn-container";
-
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "Delete";
-      delBtn.onclick = async () => {
-        await deleteDoc(doc(handNotesCollection, docSnap.id));
+      // swap actions to Save/Cancel
+      btnContainer.innerHTML = "";
+      const saveBtn = document.createElement("button");
+      saveBtn.textContent = "Save Changes";
+      saveBtn.onclick = async () => {
+        await updateDoc(doc(notesCollection, docSnap.id), { note: noteDiv.innerHTML });
+        noteDiv.setAttribute("contenteditable", "false");
+        toolbar.remove();
         loadNotes(filter);
       };
 
-      const editBtn = document.createElement("button");
-      editBtn.textContent = "Edit";
-      editBtn.onclick = () => {
-        p.style.display = "none";
-
-        const editArea = document.createElement("textarea");
-        editArea.value = data.note;
-        editArea.className = "edit-textarea";
-
-        const saveBtn = document.createElement("button");
-        saveBtn.textContent = "Save";
-        saveBtn.onclick = async () => {
-          const updatedNote = editArea.value;
-          await updateDoc(doc(handNotesCollection, docSnap.id), { note: updatedNote });
-          loadNotes(filter);
-        };
-
-        const cancelBtn = document.createElement("button");
-        cancelBtn.textContent = "Cancel";
-        cancelBtn.onclick = () => loadNotes(filter);
-
-        card.insertBefore(editArea, btnContainer);
-        card.insertBefore(saveBtn, btnContainer);
-        btnContainer.appendChild(cancelBtn);
+      const cancelBtn = document.createElement("button");
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.onclick = () => {
+        noteDiv.setAttribute("contenteditable", "false");
+        toolbar.remove();
+        loadNotes(filter);
       };
 
-      btnContainer.appendChild(editBtn);
-      btnContainer.appendChild(delBtn);
-      card.appendChild(btnContainer);
-
-      notesContainer.appendChild(card);
-    });
-  }
-
-  // Debounce helper
-  function debounce(fn, delay) {
-    let timeout;
-    return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => fn(...args), delay);
+      btnContainer.appendChild(saveBtn);
+      btnContainer.appendChild(cancelBtn);
     };
-  }
 
-  // Debounced search
-  window.searchNotes = debounce(() => {
-    const searchVal = document.getElementById("search").value;
-    loadNotes(searchVal);
-  }, 300);
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "Delete";
+    delBtn.onclick = async () => {
+      await deleteDoc(doc(notesCollection, docSnap.id));
+      loadNotes(filter);
+    };
 
-  window.saveNote = saveNote;
-  window.loadNotes = loadNotes;
-  window.onload = () => loadNotes();
+    btnContainer.appendChild(editBtn);
+    btnContainer.appendChild(delBtn);
+    card.appendChild(btnContainer);
+
+    // make card respond to long-press
+    addLongPress(card, () => {
+      card.classList.add("show-actions");   // CSS reveals buttons
+    });
+
+    notesContainer.appendChild(card);
+  });
+}
+
+/* ---------- Wiring ---------- */
+
+window.searchNotes = debounce(() => {
+  const q = document.getElementById("search").value;
+  loadNotes(q);
+}, 300);
+
+window.saveNote = saveNote;
+window.loadNotes = loadNotes;
+
+window.addEventListener("load", () => {
+  loadNotes();
+
+  // + button toggles inputs
+  const addBtn = document.getElementById("add-note-btn");
+  const note = document.getElementById("note");
+  const image = document.getElementById("image");
+  const saveBtn = document.getElementById("save-note-btn");
+
+  addBtn.addEventListener("click", () => {
+    note.style.display = "block";
+    image.style.display = "block";
+    saveBtn.style.display = "inline-block";
+    note.focus();
+    addBtn.style.display = "none";
+  });
+});
 </script>
-
 
    <style>
    
@@ -303,27 +392,29 @@ input[type="file"]::file-selector-button:hover {
 }
 
 
+button {
+  margin-top: 10px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1); /* translucent background */
+  color: black;
+  font-family: 'fors', sans-serif;
+  font-weight: 300;
+  cursor: pointer;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 4px 10px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
 
-     button {
-      margin-top: 10px;
-      background: rgba(228, 201, 182, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      padding: 0.5rem 1rem;
-      border-radius: 12px;
-      cursor: pointer;
-      color: gray;
-      font-family: 'fors', sans-serif;
-      box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-    }
-
-    button:hover {
-      background-color: rgba(172, 163, 126, 0.7);
-      border-color: rgba(172, 163, 126, 0.8);
-      color: black;
-    }
+button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #000;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15), inset 0 4px 12px rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
 
     #notes {
       display: grid;
@@ -498,6 +589,48 @@ input[type="file"]::file-selector-button:hover {
 .home-btn:hover {
   background-color: rgba(255, 255, 255, 0.3);
 }
+/* Hide note input area initially */
+#note-inputs {
+  display: none;
+  margin-top: 1rem;
+}
+
+/* Plus button under search */
+#add-btn {
+  position: absolute;
+  top: 60px; 
+  right: 20px;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Formatting toolbar */
+#formatting-toolbar {
+  display: none;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+#formatting-toolbar button {
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+}
+
+/* Hide edit/delete until long press */
+.btn-container button {
+  display: none;
+}
+.note-card.show-actions .btn-container button {
+  display: inline-block;
+}
+
 
   }
 
@@ -510,14 +643,63 @@ input[type="file"]::file-selector-button:hover {
  
 
   <div id="search-container">
-    <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
-  </div>
+  <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
+</div>
 
-  <div class="container">
-    <textarea id="note" placeholder="Write your note here... Use **bold** and ==highlight=="></textarea>
-    <input type="file" id="image" accept="image/*">
-    <button onclick="saveNote()">Save Note</button>
-    <div id="notes"></div>
-  </div>
+<div class="container">
+
+  <!-- Note input area (hidden by default) -->
+<!-- Hidden inputs for note -->
+<textarea id="note" placeholder="Write your note here..." style="display:none;"></textarea>
+<input type="file" id="image" accept="image/*" style="display:none;">
+<button id="save-note-btn" onclick="saveNote()" style="display:none;">Save Note</button>
+
+<div id="notes"></div>
+
+<!-- Plain + button below search -->
+<span id="add-note-btn" class="plus-text">+</span>
+
+<style>
+  .plus-text {
+    position: absolute;
+    top: 1px; /* just below search input */
+    right: 25px;
+    font-size: 2rem;  /* same size as desired */
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    z-index: 1000;
+  }
+
+  .plus-text:hover {
+    color: gray; /* subtle hover effect */
+  }
+</style>
+
+<script>
+  const noteTextarea = document.getElementById("note");
+  const imageInput = document.getElementById("image");
+  const saveBtn = document.getElementById("save-note-btn");
+  const addNoteBtn = document.getElementById("add-note-btn");
+
+  addNoteBtn.addEventListener("click", () => {
+    noteTextarea.style.display = "block";
+    imageInput.style.display = "block";
+    saveBtn.style.display = "inline-block";
+    noteTextarea.focus();
+    addNoteBtn.style.display = "none"; // hide + while editing
+  });
+
+  const originalSaveNote = window.saveNote;
+  window.saveNote = async function() {
+    await originalSaveNote(); // call original save function
+
+    // Hide inputs after saving
+    noteTextarea.style.display = "none";
+    imageInput.style.display = "none";
+    saveBtn.style.display = "none";
+    addNoteBtn.style.display = "inline"; // show + again
+  }
+</script>
 </body>
 </html>
