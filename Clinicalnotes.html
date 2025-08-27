@@ -262,111 +262,116 @@ body::before {
 
   <div class="notes-panel" id="notesList"></div>
 </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
+// --- Firebase config ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDcM4E3wFhjUwZBYbnZoi1AAQtMe7TzNL8",
+  authDomain: "notes-bcba6.firebaseapp.com",
+  projectId: "notes-bcba6",
+  storageBucket: "notes-bcba6.appspot.com",
+  messagingSenderId: "101524739050",
+  appId: "1:101524739050:web:7e5fe1c8fa224d69909893",
+  measurementId: "G-SFWTJF4XVG"
+};
 
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+const notesCol = collection(db, "clinicalNotes");
 
- <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import {
-    getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-  import {
-    getAuth, signInWithEmailAndPassword, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+// --- Track active editable ---
+const noteTextEl = document.getElementById('noteText');
+let activeEditable = noteTextEl;
 
-  // --- Firebase config ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyDcM4E3wFhjUwZBYbnZoi1AAQtMe7TzNL8",
-    authDomain: "notes-bcba6.firebaseapp.com",
-    projectId: "notes-bcba6",
-    storageBucket: "notes-bcba6.appspot.com",
-    messagingSenderId: "101524739050",
-    appId: "1:101524739050:web:7e5fe1c8fa224d69909893",
-    measurementId: "G-SFWTJF4XVG"
-  };
+// --- Auth flow ---
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById('loginDiv').style.display  = 'none';
+    document.getElementById('notesDiv').style.display  = 'flex';
+    renderNotes();
+  } else {
+    document.getElementById('loginDiv').style.display  = 'block';
+    document.getElementById('notesDiv').style.display  = 'none';
+  }
+});
 
-  const app  = initializeApp(firebaseConfig);
-  const db   = getFirestore(app);
-  const auth = getAuth(app);
-  const notesCol = collection(db, "clinicalNotes");
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value;
+  const pass  = document.getElementById('loginPass').value;
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch (err) {
+    document.getElementById('loginError').textContent = err.message;
+  }
+});
 
-  // --- Track currently active editable element ---
-  const noteTextEl = document.getElementById('noteText');
-  let activeEditable = noteTextEl; // default: left panel input
+// --- Formatting buttons ---
+window.formatText = (cmd) => {
+  if (!activeEditable) return;
+  activeEditable.focus();
+  document.execCommand(cmd, false, null);
+};
 
-  // --- Auth flow ---
-  onAuthStateChanged(auth, user => {
-    if (user) {
-      document.getElementById('loginDiv').style.display  = 'none';
-      document.getElementById('notesDiv').style.display  = 'flex';
-      renderNotes();
-    } else {
-      document.getElementById('loginDiv').style.display  = 'block';
-      document.getElementById('notesDiv').style.display  = 'none';
-    }
-  });
+// --- Auto-resize contenteditable ---
+const autoGrow = el => {
+  if (el.textContent.trim() === '') el.innerHTML = '';
+  el.style.height = 'auto';
+  el.style.height = Math.max(100, el.scrollHeight) + 'px';
+};
+noteTextEl.addEventListener('input', () => autoGrow(noteTextEl));
+noteTextEl.addEventListener('blur',  () => autoGrow(noteTextEl));
+autoGrow(noteTextEl);
 
-  document.getElementById('loginBtn').addEventListener('click', async () => {
-    const email = document.getElementById('loginEmail').value;
-    const pass  = document.getElementById('loginPass').value;
-    try { await signInWithEmailAndPassword(auth, email, pass); }
-    catch (err) { document.getElementById('loginError').textContent = err.message; }
-  });
+// --- Add Note ---
+document.getElementById('addNoteBtn').addEventListener('click', async () => {
+  const title = document.getElementById('noteTitle').value.trim() || "Untitled";
+  const noteHTML = noteTextEl.innerHTML.trim();
+  const url = document.getElementById('noteURL').value.trim();
 
-  // --- Formatting buttons ---
-  window.formatText = (cmd) => {
-    if (!activeEditable) return;
-    activeEditable.focus();
-    document.execCommand(cmd, false, null);
-  };
+  const temp = document.createElement('div');
+  temp.innerHTML = noteHTML;
+  const plain = temp.textContent.trim();
+  if (!plain) { alert("Cannot add empty note"); return; }
 
-  // --- Auto-resize contenteditable in left panel ---
-  const autoGrow = (el) => {
-    if (el.textContent.trim() === '') el.innerHTML = '';
-    el.style.height = 'auto';
-    el.style.height = Math.max(100, el.scrollHeight) + 'px';
-  };
-  noteTextEl.addEventListener('input', () => autoGrow(noteTextEl));
-  noteTextEl.addEventListener('blur',  () => autoGrow(noteTextEl));
-  autoGrow(noteTextEl);
-
-  // --- Add Note ---
-  document.getElementById('addNoteBtn').addEventListener('click', async () => {
-    const title = document.getElementById('noteTitle').value.trim() || "Untitled";
-    const noteHTML = noteTextEl.innerHTML.trim();
-    const url   = document.getElementById('noteURL').value.trim();
-
-    const temp = document.createElement('div');
-    temp.innerHTML = noteHTML;
-    const plain = temp.textContent.trim();
-    if (!plain) return;
-
+  try {
     await addDoc(notesCol, { title, note: noteHTML, url, time: new Date().toISOString() });
-
     document.getElementById('noteTitle').value = '';
-    document.getElementById('noteURL').value   = '';
+    document.getElementById('noteURL').value = '';
     noteTextEl.innerHTML = '';
     autoGrow(noteTextEl);
-  });
+  } catch (err) {
+    console.error(err);
+    alert("Failed to add note");
+  }
+});
 
-  // --- Render Notes + interactions ---
-  function renderNotes() {
-    onSnapshot(notesCol, snapshot => {
-      const list = document.getElementById('notesList');
-      list.innerHTML = '';
-
-      snapshot.forEach(docSnap => {
+// --- Render Notes ---
+function renderNotes() {
+  onSnapshot(notesCol, snapshot => {
+    const list = document.getElementById('notesList');
+    list.innerHTML = '';
+    snapshot.docs
+      .sort((a,b) => new Date(b.data().time) - new Date(a.data().time))
+      .forEach(docSnap => {
         const data = docSnap.data();
         const div = document.createElement('div');
         div.className = 'note-card';
 
         const titleEl = document.createElement('div');
         titleEl.className = 'note-title';
-        titleEl.textContent = data.title || 'Untitled';
+        titleEl.textContent = data.title || "Untitled";
 
         const contentEl = document.createElement('div');
         contentEl.className = 'note-content';
-        contentEl.innerHTML = data.note || '';
+        contentEl.innerHTML = data.note || "";
 
         let linkWrap = null;
         if (data.url) {
@@ -381,162 +386,94 @@ body::before {
         const actions = document.createElement('div');
         actions.className = 'note-actions';
         actions.style.display = 'none';
-        actions.innerHTML = `
-          <button class="edit-btn">Edit</button>
-          <button class="delete-btn">Delete</button>
-        `;
+        actions.innerHTML = `<button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button>`;
 
-        div.appendChild(titleEl);
-        div.appendChild(contentEl);
-        if (linkWrap) div.appendChild(linkWrap);
+        div.append(titleEl, contentEl);
+        if(linkWrap) div.appendChild(linkWrap);
         div.appendChild(actions);
+        list.appendChild(div);
 
-        // --- Click to copy ---
-        let longPressed = false;
+        // --- Copy note ---
         div.addEventListener('click', () => {
-          if (longPressed || div.classList.contains('is-editing')) return;
-
-          const titleText = titleEl.textContent || '';
-          const bodyHTML  = contentEl.innerHTML || '';
-
-          const temp = document.createElement('div');
-          temp.innerHTML = bodyHTML;
-          temp.querySelectorAll('div, p, br').forEach(el => {
-            if (el.tagName === 'BR') el.replaceWith('\n');
-            else el.insertAdjacentText('beforeend', '\n');
-          });
-          const bodyText = temp.textContent.trim();
-
-          const combinedHTML = titleText
-            ? `<div><strong>${titleText}</strong></div><div>${bodyHTML}</div>`
-            : `<div>${bodyHTML}</div>`;
-          const combinedText = titleText
-            ? `${titleText}\n${bodyText}`
-            : bodyText;
-
+          if (div.classList.contains('is-editing')) return;
+          const combinedText = `${titleEl.textContent}\n${contentEl.textContent}`;
+          const combinedHTML = `<strong>${titleEl.textContent}</strong><br>${contentEl.innerHTML}`;
           navigator.clipboard.write([
             new ClipboardItem({
-              "text/plain": new Blob([combinedText], { type: "text/plain" }),
-              "text/html": new Blob([combinedHTML], { type: "text/html" })
+              "text/plain": new Blob([combinedText], {type:"text/plain"}),
+              "text/html": new Blob([combinedHTML], {type:"text/html"})
             })
           ]).then(() => {
-            if (div.querySelector('.copy-check')) return;
-            const check = document.createElement('div');
-            check.className = 'copy-check';
-            check.textContent = '✓';
-            div.style.position = 'relative';
-            div.appendChild(check);
-            setTimeout(() => check.remove(), 1100);
+            if(!div.querySelector('.copy-check')) {
+              const check = document.createElement('div');
+              check.className = 'copy-check';
+              check.textContent = '✓';
+              div.style.position = 'relative';
+              div.appendChild(check);
+              setTimeout(()=>check.remove(),1100);
+            }
           });
         });
 
         // --- Long press to show actions ---
         let pressTimer;
-        const startPress = () => {
-          longPressed = false;
-          clearTimeout(pressTimer);
-          pressTimer = setTimeout(() => {
-            longPressed = true;
-            actions.style.display = 'flex';
-          }, 1000);
-        };
-        const endPress = () => { clearTimeout(pressTimer); };
+        const startPress = () => { pressTimer = setTimeout(()=>{actions.style.display='flex';}, 800); };
+        const endPress = () => clearTimeout(pressTimer);
         div.addEventListener('mousedown', startPress);
         div.addEventListener('mouseup', endPress);
         div.addEventListener('mouseleave', endPress);
-        div.addEventListener('touchstart', startPress, { passive: true });
+        div.addEventListener('touchstart', startPress, {passive:true});
         div.addEventListener('touchend', endPress);
 
-        // --- Edit inline ---
+        // --- Edit ---
         actions.querySelector('.edit-btn').addEventListener('click', () => {
           div.classList.add('is-editing');
-          titleEl.contentEditable   = 'true';
+          titleEl.contentEditable = 'true';
           contentEl.contentEditable = 'true';
-          titleEl.classList.add('editing');
-          contentEl.classList.add('editing');
+          activeEditable = contentEl;
+          actions.innerHTML = `<button class="save-btn">Save</button> <button class="cancel-btn">Cancel</button>`;
+          actions.style.display='flex';
 
-          activeEditable = contentEl; // formatting now targets this card
-
-          actions.innerHTML = `
-            <button class="save-btn">Save</button>
-            <button class="cancel-btn">Cancel</button>
-          `;
-          actions.style.display = 'flex';
-
-          actions.querySelector('.save-btn').addEventListener('click', async () => {
-            const newTitle = (titleEl.textContent || '').trim() || 'Untitled';
-            const newHTML  = contentEl.innerHTML.trim();
-
-            const t = document.createElement('div');
-            t.innerHTML = newHTML;
-            if (!t.textContent.trim()) {
-              // reset without saving
-              titleEl.contentEditable = 'false';
-              contentEl.contentEditable = 'false';
-              titleEl.classList.remove('editing');
-              contentEl.classList.remove('editing');
-              div.classList.remove('is-editing');
-              actions.style.display = 'none';
-              actions.innerHTML = `<button class="edit-btn">Edit</button><button class="delete-btn">Delete</button>`;
-              activeEditable = noteTextEl;
-              bindActionButtons(div, actions, docSnap.id, titleEl, contentEl);
-              return;
-            }
-
-            await updateDoc(doc(db, 'clinicalNotes', docSnap.id), {
-              title: newTitle,
-              note: newHTML,
-              url: (data.url || '').trim(),
-              time: new Date().toISOString()
-            });
-
+          actions.querySelector('.save-btn').addEventListener('click', async ()=>{
+            const newTitle = titleEl.textContent.trim() || "Untitled";
+            const newHTML = contentEl.innerHTML.trim();
+            if(!newHTML){ alert("Cannot save empty note"); return; }
+            await updateDoc(doc(db,'clinicalNotes',docSnap.id),{ title:newTitle, note:newHTML, url:data.url||'', time:new Date().toISOString() });
             titleEl.contentEditable = 'false';
             contentEl.contentEditable = 'false';
-            titleEl.classList.remove('editing');
-            contentEl.classList.remove('editing');
             div.classList.remove('is-editing');
-            actions.style.display = 'none';
-            actions.innerHTML = `<button class="edit-btn">Edit</button><button class="delete-btn">Delete</button>`;
+            actions.style.display='none';
             activeEditable = noteTextEl;
-            bindActionButtons(div, actions, docSnap.id, titleEl, contentEl);
           });
 
-          actions.querySelector('.cancel-btn').addEventListener('click', () => {
+          actions.querySelector('.cancel-btn').addEventListener('click', ()=>{
+            titleEl.contentEditable='false';
+            contentEl.contentEditable='false';
+            div.classList.remove('is-editing');
+            actions.style.display='none';
             activeEditable = noteTextEl;
-            renderNotes();
           });
         });
 
         // --- Delete ---
-        actions.querySelector('.delete-btn').addEventListener('click', async () => {
-          if (confirm('Delete note?')) {
-            await deleteDoc(doc(db, 'clinicalNotes', docSnap.id));
+        actions.querySelector('.delete-btn').addEventListener('click', async ()=>{
+          if(confirm("Delete note?")){
+            await deleteDoc(doc(db,'clinicalNotes',docSnap.id));
           }
         });
-
-        list.appendChild(div);
-
-        // --- helper to rebind after save/cancel ---
-        function bindActionButtons(card, actionsEl, id, titleNode, contentNode) {
-          const editBtn = actionsEl.querySelector('.edit-btn');
-          const delBtn  = actionsEl.querySelector('.delete-btn');
-          if (editBtn) editBtn.addEventListener('click', () => { actions.querySelector('.edit-btn').click(); });
-          if (delBtn) delBtn.addEventListener('click', async () => { if (confirm('Delete note?')) await deleteDoc(doc(db, 'clinicalNotes', id)); });
-        }
       });
-    });
-  }
-
-  // --- Search ---
-  document.getElementById('searchInput').addEventListener('input', () => {
-    const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-    const cards = document.querySelectorAll('.note-card');
-    cards.forEach(card => {
-      const title = card.querySelector('.note-title').textContent.toLowerCase();
-      const content = card.querySelector('.note-content').innerText.toLowerCase();
-      card.style.display = (title.includes(searchTerm) || content.includes(searchTerm)) ? 'block' : 'none';
-    });
   });
+}
+
+// --- Search ---
+document.getElementById('searchInput').addEventListener('input', ()=>{
+  const term = document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('.note-card').forEach(card=>{
+    const title = card.querySelector('.note-title').textContent.toLowerCase();
+    const content = card.querySelector('.note-content').innerText.toLowerCase();
+    card.style.display = (title.includes(term)||content.includes(term))?'block':'none';
+  });
+});
 </script>
 
 
