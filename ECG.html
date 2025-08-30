@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ECG</title>
-  <script type="module">
+  <title>Electrocardiogram</title>
+<script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
   import {
     getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+  // ------------------ Firebase config ------------------
   const firebaseConfig = {
     apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
     authDomain: "cepx-f9d2a.firebaseapp.com",
@@ -19,187 +20,219 @@
     appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
   };
 
+  // ------------------ Init ------------------
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const ecgNotesCollection = collection(db, "ecgNotes");
 
-  function formatText(text) {
-    text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
-    text = text.replace(/==(.*?)==/g, "<span style='background-color: yellow'>$1</span>");
-    return text;
-  }
+  // ------------------ Show/hide note input ------------------
+  window.showNoteInput = () => {
+    document.getElementById("noteInputContainer").style.display = "flex";
+    document.getElementById("addNoteBtn").style.display = "none";
+  };
 
+  window.hideNoteInput = () => {
+    document.getElementById("noteInputContainer").style.display = "none";
+    document.getElementById("addNoteBtn").style.display = "inline-block";
+    document.getElementById("note").innerHTML = "";
+    document.getElementById("image").value = "";
+  };
+
+  // ------------------ Formatting ------------------
+  function applyFormat(command, value = null) {
+    document.execCommand(command, false, value);
+  }
+  window.boldText = () => applyFormat("bold");
+  window.underlineText = () => applyFormat("underline");
+  window.highlightText = () => {
+  const color = "#d8bee5"; // <-- your hex color here
+  if (document.queryCommandSupported("hiliteColor")) {
+    applyFormat("hiliteColor", color);
+  } else {
+    applyFormat("backColor", color);
+  }
+};
+
+
+  // ------------------ Save Note ------------------
   async function saveNote() {
-    const noteText = document.getElementById("note").innerHTML;
-    const titleText = document.getElementById("title").value.trim();
-    const formattedText = formatText(noteText);
+    const noteDiv = document.getElementById("note");
+    const noteText = noteDiv.innerHTML.trim();
     const imageFile = document.getElementById("image").files[0];
-    if (!formattedText && !imageFile && !titleText) return;
+    if (!noteText && !imageFile) return;
 
     let imageData = "";
     if (imageFile) {
       const reader = new FileReader();
       reader.onloadend = async () => {
         imageData = reader.result;
-        await addDoc(ecgNotesCollection, { title: titleText, note: formattedText, image: imageData });
-        document.getElementById("note").innerHTML = "";
-        document.getElementById("title").value = "";
-        document.getElementById("image").value = "";
+        await addDoc(ecgNotesCollection, { note: noteText, image: imageData });
+        hideNoteInput();
         loadNotes();
       };
       reader.readAsDataURL(imageFile);
     } else {
-      await addDoc(ecgNotesCollection, { title: titleText, note: formattedText, image: "" });
-      document.getElementById("note").innerHTML = "";
-      document.getElementById("title").value = "";
+      await addDoc(ecgNotesCollection, { note: noteText, image: "" });
+      hideNoteInput();
       loadNotes();
     }
   }
 
+  // ------------------ Load Notes ------------------
+  let isLoadingNotes = false;
   async function loadNotes(filter = "") {
+    if (isLoadingNotes) return;
+    isLoadingNotes = true;
+
     const notesContainer = document.getElementById("notes");
     notesContainer.innerHTML = "";
+    const searchWords = filter.toLowerCase().trim().split(/\s+/).filter(Boolean);
+
     const querySnapshot = await getDocs(ecgNotesCollection);
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      if (filter && !data.note?.toLowerCase().trim().includes(filter.toLowerCase().trim())) return;
+      const noteText = data.note?.toLowerCase() || "";
+
+      if (searchWords.length && !searchWords.every(w => noteText.includes(w))) return;
 
       const card = document.createElement("div");
       card.className = "note-card";
 
+      // ------------------ Image ------------------
       if (data.image) {
         const img = document.createElement("img");
         img.src = data.image;
         img.alt = "Note Image";
         img.className = "note-image";
-
-        // Open fullscreen on click
-        img.addEventListener("click", () => openImageFullscreen(img.src));
-
+        img.addEventListener("click", () => {
+          if (!img.classList.contains("zoomed")) {
+            const zoomedImg = img.cloneNode(true);
+            zoomedImg.classList.add("zoomed");
+            Object.assign(zoomedImg.style, {
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              zIndex: "9999",
+              cursor: "zoom-out"
+            });
+            zoomedImg.id = "zoomed-image-overlay";
+            zoomedImg.addEventListener("click", () => zoomedImg.remove());
+            document.body.appendChild(zoomedImg);
+          }
+        });
         card.appendChild(img);
       }
 
-      const titleEl = document.createElement("h3");
-      titleEl.textContent = data.title || "Untitled";
-      card.appendChild(titleEl);
-
-      const p = document.createElement("p");
+      // ------------------ Note text ------------------
+      const p = document.createElement("div");
       p.innerHTML = data.note;
+      p.className = "note-text";
+      p.style.cursor = "text";
       card.appendChild(p);
 
+      // ------------------ Buttons ------------------
       const btnContainer = document.createElement("div");
       btnContainer.className = "btn-container";
+      btnContainer.style.display = "none";
 
-      // Delete button
+      // Delete
       const delBtn = document.createElement("button");
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
-        await deleteDoc(doc(db, "ecgNotes", docSnap.id));
-        loadNotes();
+        await deleteDoc(doc(ecgNotesCollection, docSnap.id));
+        loadNotes(filter);
       };
 
-      // Edit button
+      // Edit
       const editBtn = document.createElement("button");
       editBtn.textContent = "Edit";
       editBtn.onclick = () => {
-        p.style.display = "none";
-        titleEl.style.display = "none";
-        editBtn.style.display = "none";
+        // Replace note with editable div
+        const editDiv = document.createElement("div");
+        editDiv.setAttribute("contenteditable", "true");
+        editDiv.innerHTML = p.innerHTML;
+        editDiv.className = "note-text";
+        p.replaceWith(editDiv);
 
-        const editableDiv = document.createElement("div");
-        editableDiv.id = "note";
-        editableDiv.contentEditable = true;
-        editableDiv.innerHTML = data.note;
-        editableDiv.style.width = "100%";
-        editableDiv.style.marginTop = "0.5rem";
+        // Formatting buttons (specific to this edit)
+        const formatContainer = document.createElement("div");
+        formatContainer.style.display = "flex";
+        formatContainer.style.gap = "0.5rem";
 
-        const editableTitle = document.createElement("input");
-        editableTitle.type = "text";
-        editableTitle.value = data.title || "";
-        editableTitle.style.width = "100%";
-        editableTitle.style.marginTop = "0.5rem";
+        const boldBtn = document.createElement("button");
+        boldBtn.textContent = "B";
+        boldBtn.onclick = () => applyFormat("bold");
 
-        card.insertBefore(editableTitle, btnContainer);
-        card.insertBefore(editableDiv, btnContainer);
+        const underlineBtn = document.createElement("button");
+        underlineBtn.textContent = "U";
+        underlineBtn.onclick = () => applyFormat("underline");
 
+        const highlightBtn = document.createElement("button");
+        highlightBtn.textContent = "H";
+        highlightBtn.onclick = () => window.highlightText();
+
+        formatContainer.append(boldBtn, underlineBtn, highlightBtn);
+
+        // Save
         const saveBtn = document.createElement("button");
-        saveBtn.textContent = "Save";
+        saveBtn.textContent = "Save Changes";
         saveBtn.onclick = async () => {
-          const updatedNote = editableDiv.innerHTML;
-          const formattedUpdatedNote = formatText(updatedNote);
-          const updatedTitle = editableTitle.value.trim();
-          await updateDoc(doc(db, "ecgNotes", docSnap.id), {
-            note: formattedUpdatedNote,
-            title: updatedTitle
-          });
-          loadNotes();
+          const newNote = editDiv.innerHTML;
+          await updateDoc(doc(ecgNotesCollection, docSnap.id), { note: newNote });
+          loadNotes(filter);
         };
 
-        const cancelBtn = document.createElement("button");
-        cancelBtn.textContent = "Cancel";
-        cancelBtn.onclick = () => {
-          editableDiv.remove();
-          editableTitle.remove();
-          saveBtn.remove();
-          cancelBtn.remove();
-          p.style.display = "";
-          titleEl.style.display = "";
-          editBtn.style.display = "";
-        };
-
+        card.insertBefore(formatContainer, editDiv.nextSibling);
+        btnContainer.innerHTML = "";
         btnContainer.appendChild(saveBtn);
-        btnContainer.appendChild(cancelBtn);
+        btnContainer.style.display = "flex";
       };
 
       btnContainer.appendChild(editBtn);
       btnContainer.appendChild(delBtn);
       card.appendChild(btnContainer);
 
+      // ------------------ Show buttons on long press ------------------
+      let pressTimer;
+      card.addEventListener("mousedown", () => {
+        pressTimer = setTimeout(() => {
+          btnContainer.style.display = "flex";
+        }, 500);
+      });
+      card.addEventListener("mouseup", () => clearTimeout(pressTimer));
+      card.addEventListener("mouseleave", () => clearTimeout(pressTimer));
+
       notesContainer.appendChild(card);
     });
+
+    isLoadingNotes = false;
   }
 
-  function openImageFullscreen(src) {
-    const overlay = document.createElement("div");
-    overlay.id = "img-overlay";
-
-    const fullImg = document.createElement("img");
-    fullImg.src = src;
-    fullImg.className = "fullscreen-img";
-
-    overlay.appendChild(fullImg);
-    document.body.appendChild(overlay);
-
-    overlay.addEventListener("click", () => overlay.remove());
+  // ------------------ Search Debounce ------------------
+  function debounce(fn, delay) {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), delay);
+    };
   }
 
-  function autoResizeTextarea() {
-    const textarea = document.getElementById("note");
-    textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
-  }
-
-  window.saveNote = saveNote;
-  window.loadNotes = loadNotes;
-
-  window.onload = () => loadNotes();
-
-  window.searchNotes = () => {
+  window.searchNotes = debounce(() => {
     const searchVal = document.getElementById("search").value;
     loadNotes(searchVal);
-  };
+  }, 300);
 
-  document.addEventListener("input", function (event) {
-    if (event.target && event.target.id === "note") {
-      autoResizeTextarea();
-    }
-  });
+  // ------------------ Expose globals ------------------
+  window.saveNote = saveNote;
+  window.loadNotes = loadNotes;
+  window.onload = () => loadNotes();
 </script>
 
 
-
   <style>
-        html, body {
+
+    html, body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -210,7 +243,9 @@
   align-items: center;
   flex-direction: column;
 }
- body::before {
+
+/* Background image with full-page blur overlay */
+body::before {
   content: "";
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -219,27 +254,31 @@
   filter: blur(10px) brightness(0.9);
   z-index: -1;
 }
-	 @font-face {
+
+
+	@font-face {
       font-family: 'fors';
       src: url('fors.ttf') format('truetype'); /* Adjust the path */
-     } 
-      @font-face {
+    } 
+@font-face {
       font-family: 'hellohon';
       src: url('hellohon.otf') format('opentype'); /* Adjust the path */
 	  }
        
-	 h1 {
-     position: relative;
-     top: -20px;        /* adjust vertical position */
-     text-align: center;
-     color: black;
-     font-family: 'hellohon', sans-serif;
-     font-weight: normal;
-     font-size: 6.5rem;
-     margin: 0;
-     padding: 0;
-     letter-spacing: 0.1em;  /* Adjust spacing here */
-    }
+	   h1 {
+  position: relative;
+  top: -5px;        /* adjust vertical position */
+  text-align: center;
+  color: black;
+  font-family: 'hellohon', sans-serif;
+  font-weight: normal;
+  font-size: 6rem;
+  margin: 0;
+  padding: 0;
+  letter-spacing: -0.06em;  /* Adjust spacing here */
+}
+
+
 
     .container {
      max-width: 100%;
@@ -251,7 +290,7 @@
      }
 
     
-     textarea, input[type="file"], input[type="text"] {
+     textarea, input[type="file"] {
       display: block;
       margin: 0.5rem auto;
       padding: 0.5rem;
@@ -260,137 +299,101 @@
       border-radius: 12px;
       width: 90%;
       max-width: 600px;
-      color: black;
+      color: #fff;
       font-family: 'fors', sans-serif;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.1);
     }
 
-     textarea:focus, input[type="file"]:focus, #search:focus {
-     background: rgba(255, 255, 255, 0.3);
-     border-color: rgba(255, 255, 255, 0.7);
-     box-shadow: inset 0 4px 16px rgba(255, 255, 255, 0.3);
-     color: #000;
-    }
-	
-	
-	 #title {
-     margin-bottom: 0.1rem; /* Reduce gap below the Note Title */
-     }
-
-     #note {
-     margin-top: 0.1rem;
-     margin-bottom: 0.1rem;
-     }
-
-     #image {
-     margin-top: 0.2rem; /* Reduce gap above the Choose File box */
-     }
-
-
+textarea:focus, input[type="file"]:focus, #search:focus {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 4px 16px rgba(255, 255, 255, 0.3);
+  color: #000;
+}
       /* Make choose file button glassy */
-    input[type="file"] {
-    color: black; /* file name text color */
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 12px;
-    padding: 0.5rem;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+input[type="file"] {
+  color: white; /* file name text color */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 0.5rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Style the actual 'Choose File' button */
+input[type="file"]::file-selector-button {
+  background: rgba(228, 201, 182, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #333;
+  font-family: 'fors', sans-serif;
+  box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: rgba(172, 163, 126, 0.7);
+  border-color: rgba(172, 163, 126, 0.8);
+  color: white;
+}
+
+
+
+   button {
+  margin-top: 10px;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;           /* rounded corners */
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.2);  /* semi-transparent glass */
+  color: black;
+  font-family: 'fors', sans-serif;
+  cursor: pointer;
+  box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+button:hover {
+  background-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: black;
+}
+
+
+    #notes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
     }
 
-    /* Style the actual 'Choose File' button */
-    input[type="file"]::file-selector-button {
-    background: rgba(228, 201, 182, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    padding: 0.4rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    color: black;
-    font-family: 'fors', sans-serif;
-    box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-     }
-
-     input[type="file"]::file-selector-button:hover {
-     background-color: rgba(172, 163, 126, 0.7);
-     border-color: rgba(172, 163, 126, 0.8);
-     color: white;
-     }
-
-     button {
-      margin-top: 10px;
-      background: rgba(228, 201, 182, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      padding: 0.5rem 1rem;
+     .note-card {
+      background: rgba(234, 224, 218, 0.15);
       border-radius: 12px;
-      cursor: pointer;
-      color: gray;
-      font-family: 'fors', sans-serif;
-      box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-    }
-
-     button:hover {
-      background-color: rgba(172, 163, 126, 0.7);
-      border-color: rgba(172, 163, 126, 0.8);
+      padding: 1rem;
+      box-shadow:
+        0 8px 32px rgba(31, 38, 135, 0.05),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      text-align: left;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
       color: black;
     }
 
-    #note {
-    display: block;
-    margin: 0.5rem auto;
-    padding: 0.5rem 0.8rem; /* Extra left padding for spacing */
-    background: rgba(234, 224, 218, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
-    min-height: 100px;
-    color: black;
-    font-family: 'fors', sans-serif;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.1);
-    outline: none;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    text-align: left; /* Text starts on the left */
-   }
-
-
-     #note:focus {
-     background: rgba(255, 255, 255, 0.3);
-     border-color: rgba(255, 255, 255, 0.7);
-     box-shadow: inset 0 4px 16px rgba(255, 255, 255, 0.3);
-     color: #000;
+    .note-card:hover {
+      box-shadow:
+        0 12px 48px rgba(31, 38, 135, 0.1),
+        0 0 15px rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
     }
-
-
-    .note-card {
-    background: rgba(234, 224, 218, 0.15);
-    border-radius: 12px;
-    padding: 1rem;
-    box-shadow:
-      0 8px 32px rgba(31, 38, 135, 0.05),
-      0 0 0 1px rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    text-align: left;
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
-    color: black;
-   }
-
-     .note-card:hover {
-     box-shadow:
-      0 12px 48px rgba(31, 38, 135, 0.1),
-     0 0 15px rgba(255, 255, 255, 0.2);
-     transform: translateY(-3px);
-   }
 
     .note-image {
       max-width: 100%;
@@ -400,46 +403,45 @@
       margin-bottom: 0.5rem;
     }
 
-    #img-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-   cursor: zoom-out;
-   }
-
-   .fullscreen-img {
-    max-width: 90%;
-    max-height: 90%;
-    border-radius: 8px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-   }
+    .note-image.zoomed {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 90vw;
+      max-height: 90vh;
+      width: auto;
+      height: auto;
+      z-index: 9999 !important;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      background: white;
+      border-radius: 12px;
+      cursor: zoom-out;
+    }
+	
+	.note-text {
+  font-size: 12px; /* adjust as needed */
+  font-family: 'Tahoma', sans-serif; /* optional */
+  line-height: 1.4;
+}
 
 	 
-    #notes {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-top: 2rem;
-    padding: 0;
-   }
+	 #notes {
+  overflow: visible !important;
+  position: relative; /* or static */
+  z-index: 1;
+}
+    #zoomed-image-overlay {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  background: white;
+}
 
-	
-     #zoomed-image-overlay {
-     max-width: 90vw;
-     max-height: 90vh;
-     border-radius: 12px;
-     box-shadow: 0 0 10px rgba(0,0,0,0.4);
-     background: white;
-     }
 
-     .btn-container {
+
+    .btn-container {
       display: flex;
       justify-content: flex-end;
       gap: 1rem;
@@ -454,7 +456,8 @@
     padding: 0;
    }
 
-      #search {
+
+    #search {
       width: 200px;
       padding: 0.4rem;
       border-radius: 10px;
@@ -466,7 +469,7 @@
       outline: none;
     }
 
-      #search::placeholder {
+    #search::placeholder {
       color: rgba(255, 255, 255, 0.7);
     }
 	.top-bar {
@@ -476,7 +479,7 @@
      height: 40px;       /* give it some height */
     }
 
-     .home-btn {
+    .home-btn {
       background: rgba(255, 255, 255, 0.2);
       padding: 0.4rem 0.8rem;
       border-radius: 10px;
@@ -487,12 +490,12 @@
       font-weight: bold;
     }
 
-     .home-btn:hover {
+    .home-btn:hover {
       background-color: rgba(255, 255, 255, 0.3);
     }
 
 
-     .top-bar {
+    .top-bar {
       position: relative;
       display: flex;
       align-items: center;
@@ -517,52 +520,139 @@
 	 
      }
     .page-title {
-    text-align: center;
-    margin: 40px 0 20px 0; /* Adds extra spacing on top and bottom */
-    color: black;
-    font-family: 'hellohon', sans-serif;
-    font-weight: normal;
-    font-size: 5rem;
-    letter-spacing: 0.1em; /* Optional: Slightly adjust spacing between letters */
-   }
-
+     text-align: center;
+     margin-top: 20px;
+     color: black;
+     font-family: 'hellohon', sans-serif;
+     font-weight: normal;
+     font-size: 5rem;
+    }
 
    .home-btn {
-    position: absolute;
-    top: 15px;
-    left: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 0.4rem 0.8rem;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    text-decoration: none;
-    color: black;
-    font-weight: bold;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: 1000;
-   }
+  position: absolute;
+  top: 15px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  color: black;
+  font-weight: bold;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+}
 
-   .home-btn:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-   }
+.home-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
   }
 
   </style>
 </head>
 <body>
-  <a href="home.html"><button class="home-btn">Home</button></a>
-  <h1 class="page-title">Electrocardiogram</h1>
+   <a href="home.html"><button class="home-btn">Home</button></a>
+    <h1 class="page-title">Electrocardiogram</h1>
   
-  <div id="search-container">
-    <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
+    <button id="addNoteBtn" onclick="showNoteInput()" 
+        style="
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          border: 1px solid rgba(255,255,255,0.5);
+          background: rgba(255,255,255,0.2);
+          color: black;
+          font-size: 2rem;
+          cursor: pointer;
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          box-shadow: inset 0 4px 10px rgba(255,255,255,0.2);
+          transition: background-color 0.3s, color 0.3s;
+        ">+</button>
+
+<div id="search-container">
+  <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
+</div>
+
+<div class="container">
+
+  <!-- Note input container (hidden by default) -->
+  <div id="noteInputContainer" style="display:none; flex-direction:column; align-items:center; margin-top:20px; width:100%;">
+    
+    <!-- Editable Note Box -->
+    <div style="display: flex; justify-content: center; margin-bottom:10px; width: 100%;">
+      <div id="note" contenteditable="true" 
+           placeholder="Write your note here..." 
+           style="
+              min-height: 150px;
+              padding: 12px 16px;
+              background: rgba(255, 255, 255, 0.4);
+              border-radius: 12px;
+              color: black;
+              text-align: left;
+              text-indent: 10px;
+              outline: none;
+              width: 90%;
+              max-width: 700px;
+              font-size: 16px;
+              font-family: 'Tahoma', sans-serif;
+              backdrop-filter: blur(10px);
+              -webkit-backdrop-filter: blur(10px);
+              box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.2);
+           ">
+      </div>
+    </div>
+
+    <!-- File Input -->
+    <input type="file" id="image" accept="image/*" style="margin-bottom:10px;">
+
+    <!-- Save / Cancel Buttons -->
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+      <button id="saveBtn" onclick="saveNote()">Save Note</button>
+      <button onclick="hideNoteInput()">Cancel</button>
+    </div>
+
   </div>
-  <div class="container">
-    <input type="text" id="title" placeholder="Note title...">
-    <div id="note" contenteditable="true" placeholder="Write your note here..."></div>
-    <input type="file" id="image" accept="image/*">
-    <button onclick="saveNote()">Save Note</button>
-    <div id="notes"></div>
-  </div>
+
+  <div id="notes"></div>
+</div>
+
+<style>
+  .plus-text {
+    position: absolute;
+    top: 1px; /* just below search input */
+    right: 25px;
+    font-size: 2rem;  /* same size as desired */
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    z-index: 1000;
+  }
+
+  .plus-text:hover {
+    color: gray; /* subtle hover effect */
+  }
+</style>
+
+<script>
+function showNoteInput() {
+  document.getElementById('noteInputContainer').style.display = 'flex';
+}
+
+function hideNoteInput() {
+  document.getElementById('noteInputContainer').style.display = 'none';
+  document.getElementById('note').innerHTML = "";
+  document.getElementById('image').value = "";
+}
+</script>
+
 </body>
 </html>
