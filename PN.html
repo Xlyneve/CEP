@@ -468,6 +468,74 @@ button:focus,
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
 
 }
+.hidden {
+  display: none;
+}
+.form-section {
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 40;
+  align-items: flex-start;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+
+#toggleFormBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3); /* semi-transparent */
+  backdrop-filter: blur(90px); /* glass blur */
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 28px;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+
+#toggleFormBtn:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+#nurseFormWrapper {
+  position: fixed;
+  bottom: -100%; /* hidden offscreen */
+  right: 20px;
+  width: 300px;
+  padding: 15px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  transition: bottom 0.4s ease, opacity 0.4s ease;
+  opacity: 0;
+  z-index: 999;
+}
+
+#nurseFormWrapper.show {
+  bottom: 80px;
+  opacity: 1;
+}
+
+
 /* Mobile & Tablet Adjustments */
 @media (max-width: 768px) {
   .header {
@@ -536,25 +604,25 @@ button:focus,
   </div>
 </div>
 
-
 <div class="container">
-    <div class="form-section">
-  <input id="nurseTitle" placeholder="Title">
-  <textarea id="nurseNote" placeholder="Note..."></textarea>
-  <input id="nurseURL" placeholder="Optional URL (if any)">
-  <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
-<label for="nurseImage" class="custom-file-btn">Choose File</label>
+  <!-- Hidden glassy form -->
+  <div id="nurseFormWrapper" class="form-section">
+    <input id="nurseTitle" placeholder="Title">
+    <textarea id="nurseNote" placeholder="Note..."></textarea>
+    <input id="nurseURL" placeholder="Optional URL (if any)">
+    <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
+    <label for="nurseImage" class="custom-file-btn">Choose File</label>
+    <button class="add-btn" onclick="addNote()">Add</button>
+  </div>
 
-  <button class="add-btn" onclick="addNote()">Add</button>
+  <!-- Notes container -->
+  <div class="cards-container" id="nurseNotesList"></div>
 </div>
 
-    <div class="cards-container" id="nurseNotesList"></div>
-  </div>
-   
-   <div class="note-card">
-  <div class="note-inner">
-    <!-- title and content -->
-  </div>
+<!-- Floating glassy + button -->
+<button id="toggleFormBtn">+</button>
+
+
 </div>
  
 
@@ -796,6 +864,18 @@ button:focus,
 
   // Initial load
   renderNotes();
+  
+ // Toggle form
+const toggleBtn = document.getElementById('toggleFormBtn');
+const nurseForm = document.getElementById('nurseFormWrapper');
+
+toggleBtn.addEventListener('click', () => {
+  nurseForm.classList.toggle('show');
+
+  // Optional: change + to × when open
+  toggleBtn.textContent = nurseForm.classList.contains('show') ? '×' : '+';
+});
+
 </script>
 
 </body>
