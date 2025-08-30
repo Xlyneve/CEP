@@ -5,203 +5,233 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Shoulder. Elbow. Upper Arm</title>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import {
-  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
-} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-  authDomain: "cepx-f9d2a.firebaseapp.com",
-  projectId: "cepx-f9d2a",
-  storageBucket: "cepx-f9d2a.appspot.com",
-  messagingSenderId: "840696526325",
-  appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-};
+  // ------------------ Firebase config ------------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
 
-const app = initializeApp(firebaseConfig);
+  // ------------------ Init ------------------
+  const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const upperArmNotesCollection = collection(db, "upperArmNotes");
 
-// Save note
-async function saveNote() {
-  const noteText = document.getElementById("note").value.trim();
-  const imageFile = document.getElementById("image").files[0];
-  if (!noteText && !imageFile) return;
-
-  let imageData = "";
-  if (imageFile) {
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      imageData = reader.result;
-      await addDoc(upperArmNotesCollection, { note: noteText, image: imageData });
-      resetInputs();
-      loadNotes();
-    };
-    reader.readAsDataURL(imageFile);
-  } else {
-    await addDoc(upperArmNotesCollection, { note: noteText, image: "" });
-    resetInputs();
-    loadNotes();
-  }
-}
-
-function resetInputs() {
-  document.getElementById("note").value = "";
-  document.getElementById("image").value = "";
-  document.getElementById("note").style.display = "none";
-  document.getElementById("image").style.display = "none";
-  document.getElementById("save-note-btn").style.display = "none";
-  document.getElementById("add-note-btn").style.display = "inline";
-}
-
-// Load notes
-async function loadNotes(filter = "") {
-  const notesContainer = document.getElementById("notes");
-  notesContainer.innerHTML = "";
-
-  const querySnapshot = await getDocs(upperArmNotesCollection);
-  const searchWords = filter.toLowerCase().trim().split(/\s+/).filter(Boolean);
-
-  querySnapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-
-    const card = document.createElement("div");
-    card.className = "note-card";
-
-    if (data.image) {
-      const img = document.createElement("img");
-      img.src = data.image;
-      img.alt = "Note Image";
-      img.className = "note-image";
-      img.addEventListener("click", () => {
-        const overlay = document.getElementById("image-overlay");
-        const overlayImg = document.getElementById("overlay-img");
-        overlayImg.src = img.src;
-        overlay.style.display = "flex";
-      });
-      card.appendChild(img);
-    }
-
-    const noteDiv = document.createElement("div");
-    noteDiv.className = "note-text";
-    noteDiv.innerHTML = data.note;
-    noteDiv.setAttribute("contenteditable", "false");
-    card.appendChild(noteDiv);
-
-    const btnContainer = document.createElement("div");
-    btnContainer.className = "btn-container";
-    btnContainer.style.display = "none";
-
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "Delete";
-    delBtn.onclick = async () => {
-      await deleteDoc(doc(upperArmNotesCollection, docSnap.id));
-      loadNotes(filter);
-    };
-
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "Edit";
-    editBtn.onclick = () => {
-      noteDiv.setAttribute("contenteditable", "true");
-      noteDiv.focus();
-
-      const toolbar = document.createElement("div");
-      toolbar.className = "format-toolbar";
-      ["bold", "underline", "highlight"].forEach(cmd => {
-        const btn = document.createElement("button");
-        btn.textContent = cmd === "highlight" ? "H" : cmd.charAt(0).toUpperCase();
-        btn.onclick = () => {
-          if (cmd === "highlight") {
-            document.execCommand("backColor", false, "#f9e1a8");
-          } else {
-            document.execCommand(cmd, false, null);
-          }
-        };
-        toolbar.appendChild(btn);
-      });
-      card.insertBefore(toolbar, noteDiv);
-
-      const saveBtn = document.createElement("button");
-      saveBtn.textContent = "Save Changes";
-      saveBtn.onclick = async () => {
-        await updateDoc(doc(upperArmNotesCollection, docSnap.id), { note: noteDiv.innerHTML });
-        noteDiv.setAttribute("contenteditable", "false");
-        toolbar.remove();
-        loadNotes(filter);
-      };
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.onclick = () => {
-        noteDiv.setAttribute("contenteditable", "false");
-        toolbar.remove();
-        loadNotes(filter);
-      };
-
-      btnContainer.innerHTML = "";
-      btnContainer.appendChild(saveBtn);
-      btnContainer.appendChild(cancelBtn);
-    };
-
-    btnContainer.appendChild(editBtn);
-    btnContainer.appendChild(delBtn);
-    card.appendChild(btnContainer);
-
-    // Long press to reveal buttons
-    let pressTimer;
-    card.addEventListener("mousedown", () => {
-      pressTimer = setTimeout(() => btnContainer.style.display = "flex", 600);
-    });
-    card.addEventListener("mouseup", () => clearTimeout(pressTimer));
-    card.addEventListener("mouseleave", () => clearTimeout(pressTimer));
-
-    notesContainer.appendChild(card);
-  });
-}
-
-// Debounce
-function debounce(fn, delay) {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), delay);
+  // ------------------ Show/hide note input ------------------
+  window.showNoteInput = () => {
+    document.getElementById("noteInputContainer").style.display = "flex";
+    document.getElementById("addNoteBtn").style.display = "none";
   };
-}
 
-window.searchNotes = debounce(() => {
-  const searchVal = document.getElementById("search").value;
-  loadNotes(searchVal);
-}, 300);
+  window.hideNoteInput = () => {
+    document.getElementById("noteInputContainer").style.display = "none";
+    document.getElementById("addNoteBtn").style.display = "inline-block";
+    document.getElementById("note").innerHTML = "";
+    document.getElementById("image").value = "";
+  };
 
-window.saveNote = saveNote;
-window.loadNotes = loadNotes;
-
-// Toggle input area
-const noteTextarea = document.getElementById("note");
-const imageInput = document.getElementById("image");
-const saveBtn = document.getElementById("save-note-btn");
-const addNoteBtn = document.getElementById("add-note-btn");
-
-addNoteBtn.addEventListener("click", () => {
-  noteTextarea.style.display = "block";
-  imageInput.style.display = "block";
-  saveBtn.style.display = "inline-block";
-  noteTextarea.focus();
-  addNoteBtn.style.display = "none";
-});
-
-window.onload = () => {
-  loadNotes();
-  const overlay = document.getElementById("image-overlay");
-  overlay.addEventListener("click", () => {
-    overlay.style.display = "none";
-  });
+  // ------------------ Formatting ------------------
+  function applyFormat(command, value = null) {
+    document.execCommand(command, false, value);
+  }
+  window.boldText = () => applyFormat("bold");
+  window.underlineText = () => applyFormat("underline");
+  window.highlightText = () => {
+  const color = "#d8bee5"; // <-- your hex color here
+  if (document.queryCommandSupported("hiliteColor")) {
+    applyFormat("hiliteColor", color);
+  } else {
+    applyFormat("backColor", color);
+  }
 };
+
+
+  // ------------------ Save Note ------------------
+  async function saveNote() {
+    const noteDiv = document.getElementById("note");
+    const noteText = noteDiv.innerHTML.trim();
+    const imageFile = document.getElementById("image").files[0];
+    if (!noteText && !imageFile) return;
+
+    let imageData = "";
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        imageData = reader.result;
+        await addDoc(upperArmNotesCollection , { note: noteText, image: imageData });
+        hideNoteInput();
+        loadNotes();
+      };
+      reader.readAsDataURL(imageFile);
+    } else {
+      await addDoc(upperArmNotesCollection , { note: noteText, image: "" });
+      hideNoteInput();
+      loadNotes();
+    }
+  }
+
+  // ------------------ Load Notes ------------------
+  let isLoadingNotes = false;
+  async function loadNotes(filter = "") {
+    if (isLoadingNotes) return;
+    isLoadingNotes = true;
+
+    const notesContainer = document.getElementById("notes");
+    notesContainer.innerHTML = "";
+    const searchWords = filter.toLowerCase().trim().split(/\s+/).filter(Boolean);
+
+    const querySnapshot = await getDocs(upperArmNotesCollection );
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const noteText = data.note?.toLowerCase() || "";
+
+      if (searchWords.length && !searchWords.every(w => noteText.includes(w))) return;
+
+      const card = document.createElement("div");
+      card.className = "note-card";
+
+      // ------------------ Image ------------------
+      if (data.image) {
+        const img = document.createElement("img");
+        img.src = data.image;
+        img.alt = "Note Image";
+        img.className = "note-image";
+        img.addEventListener("click", () => {
+          if (!img.classList.contains("zoomed")) {
+            const zoomedImg = img.cloneNode(true);
+            zoomedImg.classList.add("zoomed");
+            Object.assign(zoomedImg.style, {
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              zIndex: "9999",
+              cursor: "zoom-out"
+            });
+            zoomedImg.id = "zoomed-image-overlay";
+            zoomedImg.addEventListener("click", () => zoomedImg.remove());
+            document.body.appendChild(zoomedImg);
+          }
+        });
+        card.appendChild(img);
+      }
+
+      // ------------------ Note text ------------------
+      const p = document.createElement("div");
+      p.innerHTML = data.note;
+      p.className = "note-text";
+      p.style.cursor = "text";
+      card.appendChild(p);
+
+      // ------------------ Buttons ------------------
+      const btnContainer = document.createElement("div");
+      btnContainer.className = "btn-container";
+      btnContainer.style.display = "none";
+
+      // Delete
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Delete";
+      delBtn.onclick = async () => {
+        await deleteDoc(doc(upperArmNotesCollection , docSnap.id));
+        loadNotes(filter);
+      };
+
+      // Edit
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "Edit";
+      editBtn.onclick = () => {
+        // Replace note with editable div
+        const editDiv = document.createElement("div");
+        editDiv.setAttribute("contenteditable", "true");
+        editDiv.innerHTML = p.innerHTML;
+        editDiv.className = "note-text";
+        p.replaceWith(editDiv);
+
+        // Formatting buttons (specific to this edit)
+        const formatContainer = document.createElement("div");
+        formatContainer.style.display = "flex";
+        formatContainer.style.gap = "0.5rem";
+
+        const boldBtn = document.createElement("button");
+        boldBtn.textContent = "B";
+        boldBtn.onclick = () => applyFormat("bold");
+
+        const underlineBtn = document.createElement("button");
+        underlineBtn.textContent = "U";
+        underlineBtn.onclick = () => applyFormat("underline");
+
+        const highlightBtn = document.createElement("button");
+        highlightBtn.textContent = "H";
+        highlightBtn.onclick = () => window.highlightText();
+
+        formatContainer.append(boldBtn, underlineBtn, highlightBtn);
+
+        // Save
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "Save Changes";
+        saveBtn.onclick = async () => {
+          const newNote = editDiv.innerHTML;
+          await updateDoc(doc(upperArmNotesCollection , docSnap.id), { note: newNote });
+          loadNotes(filter);
+        };
+
+        card.insertBefore(formatContainer, editDiv.nextSibling);
+        btnContainer.innerHTML = "";
+        btnContainer.appendChild(saveBtn);
+        btnContainer.style.display = "flex";
+      };
+
+      btnContainer.appendChild(editBtn);
+      btnContainer.appendChild(delBtn);
+      card.appendChild(btnContainer);
+
+      // ------------------ Show buttons on long press ------------------
+      let pressTimer;
+      card.addEventListener("mousedown", () => {
+        pressTimer = setTimeout(() => {
+          btnContainer.style.display = "flex";
+        }, 500);
+      });
+      card.addEventListener("mouseup", () => clearTimeout(pressTimer));
+      card.addEventListener("mouseleave", () => clearTimeout(pressTimer));
+
+      notesContainer.appendChild(card);
+    });
+
+    isLoadingNotes = false;
+  }
+
+  // ------------------ Search Debounce ------------------
+  function debounce(fn, delay) {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), delay);
+    };
+  }
+
+  window.searchNotes = debounce(() => {
+    const searchVal = document.getElementById("search").value;
+    loadNotes(searchVal);
+  }, 300);
+
+  // ------------------ Expose globals ------------------
+  window.saveNote = saveNote;
+  window.loadNotes = loadNotes;
+  window.onload = () => loadNotes();
 </script>
 
+
   <style>
-    
+
     html, body {
   height: 100%;
   margin: 0;
@@ -225,6 +255,7 @@ body::before {
   z-index: -1;
 }
 
+
 	@font-face {
       font-family: 'fors';
       src: url('fors.ttf') format('truetype'); /* Adjust the path */
@@ -244,7 +275,7 @@ body::before {
   font-size: 6rem;
   margin: 0;
   padding: 0;
-  letter-spacing: -0.012em;  /* Adjust spacing here */
+  letter-spacing: -0.06em;  /* Adjust spacing here */
 }
 
 
@@ -314,29 +345,27 @@ input[type="file"]::file-selector-button:hover {
 
 
 
-     button {
+   button {
   margin-top: 10px;
-  padding: 0.6rem 1.2rem;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1); /* translucent background */
+  padding: 0.5rem 1rem;
+  border-radius: 12px;           /* rounded corners */
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.2);  /* semi-transparent glass */
   color: black;
   font-family: 'fors', sans-serif;
-  font-weight: 300;
   cursor: pointer;
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 4px 10px rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-  color: #000;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15), inset 0 4px 12px rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: black;
 }
+
 
     #notes {
       display: grid;
@@ -389,17 +418,18 @@ button:hover {
       border-radius: 12px;
       cursor: zoom-out;
     }
+	
+	.note-text {
+  font-size: 12px; /* adjust as needed */
+  font-family: 'Tahoma', sans-serif; /* optional */
+  line-height: 1.4;
+}
+
 	 
 	 #notes {
   overflow: visible !important;
   position: relative; /* or static */
   z-index: 1;
-}
-
-.note-text {
-  font-size: 12px; /* adjust as needed */
-  font-family: 'Tahoma', sans-serif; /* optional */
-  line-height: 1.4;
 }
     #zoomed-image-overlay {
   max-width: 90vw;
@@ -407,28 +437,6 @@ button:hover {
   border-radius: 12px;
   box-shadow: 0 0 10px rgba(0,0,0,0.4);
   background: white;
-}
-
-#image-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  cursor: zoom-out;
-}
-
-#image-overlay img {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease;
 }
 
 
@@ -539,71 +547,112 @@ button:hover {
 .home-btn:hover {
   background-color: rgba(255, 255, 255, 0.3);
 }
-/* Plus button */
-.plus-text {
-  position: absolute;
-  top: 1px; /* just below search input */
-  right: 25px;
-  font-size: 2rem;
-  font-weight: bold;
-  color: black;
-  cursor: pointer;
-  z-index: 1000;
-}
-.plus-text:hover {
-  color: gray;
-}
-
-/* Hide note input area initially */
-#note,
-#image,
-#save-note-btn {
-  display: none;
-}
-
-/* Formatting toolbar */
-.format-toolbar {
-  display: flex;
-  gap: 0.5rem;
-  margin: 0.5rem 0;
-}
-.format-toolbar button {
-  padding: 0.3rem 0.6rem;
-  font-size: 0.9rem;
-  border-radius: 8px;
-}
 
   }
 
   </style>
 </head>
 <body>
+   <a href="home.html"><button class="home-btn">Home</button></a>
+    <h1 class="page-title">Shoulder. Elbow. Upper Arm</h1>
   
-    <a href="home.html"><button class="home-btn">Home</button></a>
-    <h1 class="page-title">Shoulder.Elbow</h1>
-  </div>
-  
-  <div id="image-overlay" style="display:none;">
-  <img id="overlay-img" src="" alt="Zoomed Image">
+    <button id="addNoteBtn" onclick="showNoteInput()" 
+        style="
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          border: 1px solid rgba(255,255,255,0.5);
+          background: rgba(255,255,255,0.2);
+          color: black;
+          font-size: 2rem;
+          cursor: pointer;
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          box-shadow: inset 0 4px 10px rgba(255,255,255,0.2);
+          transition: background-color 0.3s, color 0.3s;
+        ">+</button>
+
+<div id="search-container">
+  <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
 </div>
 
+<div class="container">
 
-  <div id="search-container">
-    <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
+  <!-- Note input container (hidden by default) -->
+  <div id="noteInputContainer" style="display:none; flex-direction:column; align-items:center; margin-top:20px; width:100%;">
+    
+    <!-- Editable Note Box -->
+    <div style="display: flex; justify-content: center; margin-bottom:10px; width: 100%;">
+      <div id="note" contenteditable="true" 
+           placeholder="Write your note here..." 
+           style="
+              min-height: 150px;
+              padding: 12px 16px;
+              background: rgba(255, 255, 255, 0.4);
+              border-radius: 12px;
+              color: black;
+              text-align: left;
+              text-indent: 10px;
+              outline: none;
+              width: 90%;
+              max-width: 700px;
+              font-size: 16px;
+              font-family: 'Tahoma', sans-serif;
+              backdrop-filter: blur(10px);
+              -webkit-backdrop-filter: blur(10px);
+              box-shadow: inset 0 4px 10px rgba(255, 255, 255, 0.2);
+           ">
+      </div>
+    </div>
+
+    <!-- File Input -->
+    <input type="file" id="image" accept="image/*" style="margin-bottom:10px;">
+
+    <!-- Save / Cancel Buttons -->
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+      <button id="saveBtn" onclick="saveNote()">Save Note</button>
+      <button onclick="hideNoteInput()">Cancel</button>
+    </div>
+
   </div>
 
-  <div class="container">
-  <!-- Hidden inputs -->
-  <textarea id="note" placeholder="Write your note here..."></textarea>
-  <input type="file" id="image" accept="image/*">
-  <button id="save-note-btn" onclick="saveNote()">Save Note</button>
-
-  <!-- Notes container -->
   <div id="notes"></div>
-
-  <!-- Plus button -->
-  <span id="add-note-btn" class="plus-text">+</span>
 </div>
+
+<style>
+  .plus-text {
+    position: absolute;
+    top: 1px; /* just below search input */
+    right: 25px;
+    font-size: 2rem;  /* same size as desired */
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    z-index: 1000;
+  }
+
+  .plus-text:hover {
+    color: gray; /* subtle hover effect */
+  }
+</style>
+
+<script>
+function showNoteInput() {
+  document.getElementById('noteInputContainer').style.display = 'flex';
+}
+
+function hideNoteInput() {
+  document.getElementById('noteInputContainer').style.display = 'none';
+  document.getElementById('note').innerHTML = "";
+  document.getElementById('image').value = "";
+}
+</script>
 
 </body>
 </html>
