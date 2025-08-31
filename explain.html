@@ -126,7 +126,7 @@ body::before {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) translateY(200px);
+  transform: translate(-50%, -50%);
   padding: 25px;
   width: 90%;           /* make it wider */
   max-width: 500px;     /* optional max width */
@@ -137,7 +137,7 @@ body::before {
   box-shadow: 0 8px 20px rgba(210, 230, 255, 0.3);
   transition: transform 0.4s ease-out, opacity 0.4s ease-out;
   opacity: 0;
-  z-index: 999;
+  z-index: 9999;
 }
 
 .input-group.show {
@@ -253,6 +253,33 @@ button:hover,
   color: #777;
   margin-top: 10px;
 }
+.edit-title {
+  width: 80%;
+  min-height: 50px;
+  max-height: 200px;
+  max-width: 400px;
+  font-size: 12px;
+  font-family: Tahoma, sans-serif;
+  font-weight: regular;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: saturate(180%) blur(8px);
+  -webkit-backdrop-filter: saturate(180%) blur(8px);
+  box-shadow: inset 0 2px 6px rgba(255,255,255,0.2);
+  resize: none;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+}
+
+/* Auto-resize the title */
+.edit-title:focus {
+  outline: none;
+}
+
 .btn-group {
   margin-top: 10px;
   display: flex;
@@ -380,21 +407,21 @@ function renderNotes(notesToRender = allNotes) {
     card.style.position = 'relative';
 
     if (note.editing) {
-      // Editing mode
-      card.innerHTML = `
-        <input type="text" id="editTitle-${note.id}" value="${escapeAttr(note.title)}">
-        <div id="editText-${note.id}" class="edit-box" contenteditable="true">${note.text || ''}</div>
-        <div class="formatting-buttons">
-          <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
-          <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
-        </div>
-        <div class="timestamp">Last updated: ${formatTS(note.timestamp)}</div>
-        <div class="edit-controls" style="display:flex; gap:8px; margin-top:8px;">
-          <button onclick="window.saveEdit('${note.id}')">Save</button>
-          <button onclick="window.cancelEdit('${note.id}')">Cancel</button>
-        </div>
-        <div class="copied-indicator">✓</div>
-      `;
+  // Keep the card where it is
+  card.innerHTML = `
+    <input type="text" id="editTitle-${note.id}" class="edit-title" value="${escapeAttr(note.title)}" />
+    <div id="editText-${note.id}" class="edit-box" contenteditable="true">${note.text || ''}</div>
+    <div class="formatting-buttons">
+      <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
+      <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
+    </div>
+    <div class="timestamp">Last updated: ${formatTS(note.timestamp)}</div>
+    <div class="edit-controls" style="display:flex; gap:8px; margin-top:8px;">
+      <button onclick="window.saveEdit('${note.id}')">Save</button>
+      <button onclick="window.cancelEdit('${note.id}')">Cancel</button>
+    </div>
+    <div class="copied-indicator">✓</div>
+  `;
     } else {
       // Display mode
       card.innerHTML = `
@@ -599,8 +626,14 @@ const noteText = document.getElementById('noteText');
 toggleBtn.addEventListener('click', () => {
   inputGroup.classList.toggle('show');
   toggleBtn.textContent = inputGroup.classList.contains('show') ? '×' : '+';
-  if (inputGroup.classList.contains('show')) noteTitle.focus();
+  if (inputGroup.classList.contains('show')) {
+    noteTitle.focus();
+    // Scroll popup into view
+    inputGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 });
+
+
 
 // Close input if click outside
 document.addEventListener('click', (e) => {
@@ -629,6 +662,16 @@ noteText.addEventListener('input', () => {
   noteText.style.height = 'auto';
   noteText.style.height = noteText.scrollHeight + 'px';
 });
+
+// Auto-resize editable title (start with 1 line)
+document.addEventListener('input', (e) => {
+  if (e.target.classList.contains('edit-title')) {
+    e.target.style.height = 'auto'; 
+    e.target.style.height = e.target.scrollHeight + 'px'; 
+  }
+});
+
+
 </script>
 
 
