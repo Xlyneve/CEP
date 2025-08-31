@@ -308,7 +308,7 @@ h2 {
 
 .note-actions {
   margin-top: 12px;
-  display: flex;
+  display: none;
   justify-content: flex-end;
   gap: 6px;
 }
@@ -716,6 +716,36 @@ button:focus,
     });
   }
 
+function handleCardPress(card, noteContent) {
+  let pressTimer;
+
+  card.addEventListener('mousedown', () => {
+    pressTimer = setTimeout(() => {
+      // Show edit/delete buttons on long press
+      const actions = card.querySelector('.note-actions');
+      if (actions) actions.style.display = 'flex';
+    }, 600); // 600ms for long press
+  });
+
+  card.addEventListener('mouseup', () => {
+    clearTimeout(pressTimer);
+  });
+
+  card.addEventListener('mouseleave', () => {
+    clearTimeout(pressTimer);
+  });
+
+  card.addEventListener('click', (e) => {
+    // Short click copies content (but not if clicking buttons)
+    if (!e.target.classList.contains('edit-btn') &&
+        !e.target.classList.contains('delete-btn')) {
+      navigator.clipboard.writeText(noteContent).then(() => {
+        alert('Note copied!');
+      });
+    }
+  });
+}
+
   // Helper to escape HTML special characters
   function escapeHtml(text) {
     return text.replace(/&/g, "&amp;")
@@ -801,8 +831,8 @@ button:focus,
 
 
 
- function renderNotes() {
-  const list = document.getElementById('nurseNotesList'); // Corrected
+function renderNotes() {
+  const list = document.getElementById('nurseNotesList');
   onSnapshot(notesCol, snapshot => {
     list.innerHTML = '';
     snapshot.forEach(docSnap => {
@@ -813,18 +843,71 @@ button:focus,
       div.className = 'note-card';
       div.innerHTML = `
         <div class="note-title">${title}</div>
-        <div class="note-content">${note}</div> <!-- keep HTML formatting -->
+        <div class="note-content">${note}</div>
         ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
         <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
         ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
-        <div class="note-actions">
+        <div class="note-actions" style="display:none;">
           <button class="edit-btn">Edit</button>
           <button class="delete-btn">Delete</button>
         </div>
       `;
 
-      div.querySelector('.edit-btn').addEventListener('click', () => enableEditing(div, id, title, note));
-      div.querySelector('.delete-btn').addEventListener('click', () => deleteNote(id));
+      const editBtn = div.querySelector('.edit-btn');
+      const deleteBtn = div.querySelector('.delete-btn');
+
+      editBtn.addEventListener('click', () => enableEditing(div, id, title, note));
+      deleteBtn.addEventListener('click', () => deleteNote(id));
+
+      // Long press + short press handler
+      let pressTimer;
+      div.addEventListener('mousedown', () => {
+        pressTimer = setTimeout(() => {
+          const actions = div.querySelector('.note-actions');
+          if (actions) actions.style.display = 'flex';
+        }, 600); // long press = 600ms
+      });
+
+      div.addEventListener('mouseup', () => clearTimeout(pressTimer));
+      div.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+
+      div.addEventListener('click', (e) => {
+  if (!e.target.classList.contains('edit-btn') &&
+      !e.target.classList.contains('delete-btn')) {
+
+    // Copy note as plain text (as seen)
+    navigator.clipboard.writeText(div.querySelector('.note-content').innerText).then(() => {
+      // Create tick element
+      const tick = document.createElement('div');
+      tick.textContent = '✔';
+      tick.style.position = 'absolute';
+      tick.style.top = '10px';
+      tick.style.right = '10px';
+      tick.style.color = '#d291bc';
+      tick.style.fontSize = '20px';
+      tick.style.opacity = '0';
+      tick.style.pointerEvents = 'none';
+      tick.style.transition = 'all 0.6s ease-out';
+      div.appendChild(tick);
+
+      // Animate tick: grow and fade
+      requestAnimationFrame(() => {
+        tick.style.opacity = '1';
+        tick.style.transform = 'scale(1.5)';
+      });
+
+      setTimeout(() => {
+        tick.style.opacity = '0';
+        tick.style.transform = 'scale(0.8)';
+      }, 600);
+
+      setTimeout(() => {
+        tick.remove();
+      }, 1200);
+    });
+  }
+});
+
 
       list.appendChild(div);
     });
