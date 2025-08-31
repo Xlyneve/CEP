@@ -5,142 +5,238 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Recalls</title>
   <style>
-    @font-face {
-      font-family: 'fors';
-      src: url('fors.ttf') format('truetype');
-    }
-
-    body {
-  margin: 0;
-  font-family: 'fors', sans-serif;
-  font-size: 12px;
-  color: #222;
-  background: none;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+@font-face {
+  font-family: 'fors';
+  src: url('fors.ttf') format('truetype');
 }
 
+
+    html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Tahoma', sans-serif;
+  overflow-x: hidden;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* Background image with full-page blur overlay */
 body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('2b.png') no-repeat center center;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('2b.png') no-repeat center center fixed;
   background-size: cover;
-  filter: blur(25px);
+  filter: blur(10px) brightness(0.9);
   z-index: -1;
-  pointer-events: none;
 }
 
-    /* Glassmorphism style */
-    .glass {
-      background: rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
+.note-content {
+  font-family: 'Tahoma', sans-serif;
+  font-size: 12px;
+}
 
-    .note-content {
-      font-family: 'Tahoma', sans-serif;
-      font-size: 11px;
-    }
-	.glassy-input {
+.header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-sizing: border-box;
+
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  z-index: 50;
+  pointer-events: auto;
+}
+.header-left {
+  position: absolute;
+  top: 18px;
+  left: 10px;
+  z-index: 1001;
+}
+
+.header-left a.header-link,
+.header a.header-link {
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: rgba(189, 191, 218, 0.6);
+  border-radius: 6px;
+  border: 1px solid rgba(204, 186, 181, 0.6);
+  color: black;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.3s ease;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1000;
+}
+.header-left a.header-link {
+  padding: 4px 10px;
+  font-size: 13px;
+  background-color: rgba(189, 191, 218, 0.7);
+  border: 1px solid rgba(204, 186, 181, 0.6);
+  position: absolute;
+  top: 3px;
+  left: 10px;
+  z-index: 1001;
+}
+
+.header a:hover,
+.header-left a.header-link:hover {
+  background-color: #b88eaa;
+  color: #000;
+}
+.header-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 25px;
+  margin: 10px 0;
+  font-weight: bold;
+  text-align: center;
+  z-index: 60;
+  pointer-events: auto;
+}
+a.header-link {
+  position: relative;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+
+
+.header a:hover {
+  background-color: #b88eaa;
+}
+
+.search-box {
+  z-index: 50;
+  pointer-events: auto;
+}
+
+
+.search-box input {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 150px; /* keep fixed width */
+}
+
+.container {
+  /* Remove background and blur */
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  /* Keep padding so layout stays similar */
+  padding: 100px 20px 20px 20px;
+
+  /* Keep positioning and z-index */
+  position: relative;
+  z-index: 40;
+}
+
+
+h2 {
+  text-align: center;
+  font-size: 20px;
+}
+
+ .form-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 40;
+  align-items: flex-start; /* Align items to top */
+ background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+/* Glassy input fields (general) */
+.form-section input[type="file"],
+.form-section textarea {
   background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  color: #333;
-  transition: all 0.3s ease-in-out;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #222;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: 'fors', sans-serif;
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
 }
 
+/* Title and URL input boxes (no border) */
+#nurseTitle,
+#nurseURL {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: none; /* removed border */
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.15);
+  color: #222;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: 'fors', sans-serif;
+  transition: all 0.3s ease;
+}
 
+#nurseTitle:focus,
+#nurseURL:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
 
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 999;
-      padding: 15px 15px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      z-index: 10;
-    }
-    .header.glass { border-radius: 0 0 12px 12px; }
+/* Sizing */
+#nurseTitle {
+  flex: 1 1 180px;
+  height: 60px;
+  min-width: 150px;
+}
 
-    .header a {
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 14px;
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: black;
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(5px);
-    }
-    .header a:hover {
-      background: rgba(255, 255, 255, 0.6);
-    }
+#nurseNote {
+  flex: 2 1 280px;
+  min-height: 60px;
+  resize: vertical;
+}
 
-    .search-box input {
-      padding: 4px 8px;
-      font-size: 12px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.4);
-      color: #333;
-      backdrop-filter: blur(5px);
-    }
+#nurseURL {
+  flex: 1 1 180px;
+  height: 60px;
+  min-width: 150px;
+}
 
-    .container {
-      width: 100%;
-      padding: 80px 20px 20px;
-      box-sizing: border-box;
-    }
+#nurseImage {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
 
-    h2 {
-      text-align: center;
-      font-size: 20px;
-    }
-
-    .form-section {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .form-section input,
-    .form-section textarea {
-      flex: 1 1 300px;
-      margin-top: 20px;
-      padding: 8px;
-      font-size: 13px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(5px);
-    }
-
-    .add-btn {
-      padding: 8px;
-      font-size: 13px;
-      height: calc(2 * 10px + 1em);
-      line-height: 1.2;
-      background: rgba(255, 255, 255, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 6px;
-      cursor: pointer;
-      min-width: 100px;
-      margin-top: 20px;
-      backdrop-filter: blur(5px);
-    }
 
 .cards-container {
   column-count: 4;        /* Number of columns */
@@ -170,131 +266,289 @@ body::before {
               0 0 10px rgba(255, 255, 255, 0.2);
 }
 
-/* Responsive column counts */
-@media (max-width: 1200px) {
-  .cards-container { column-count: 3; }
-}
-@media (max-width: 768px) {
-  .cards-container { column-count: 2; }
-}
-@media (max-width: 480px) {
-  .cards-container { column-count: 1; }
+
+.note-card .note-content,
+.note-card .note-title {
+  color: #000; /* Keep black text */
 }
 
-
-
-    .note-card:hover {
-      transform: scale(1.05);
-    }
-
-    .note-title {
-      font-weight: bold;
-      font-size: 14px;
-      margin-bottom: 6px;
-      padding-top: 10px;
-    }
-
-    .note-actions {
-  margin-top: auto;             /* Push buttons to bottom */
-  display: flex;
-  gap: 6px;                    /* Small gap between buttons */
-  justify-content: flex-end;   /* Align buttons to right */
-  padding-top: 10px;           /* Optional spacing above buttons */
+.note-card:hover {
+  box-shadow:
+    inset 0 3px 8px rgba(220 240 255 / 0.6),
+    0 0 14px 5px rgba(220 240 255 / 0.45),
+    0 8px 24px rgba(190 210 240 / 0.15);
+  transform: translateY(-10px); /* slight lift */
 }
 
-    /* Glassy Edit, Copy, Delete Buttons */
-.note-actions button {
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 11px;
-  cursor: pointer;
-  color: #333;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease-in-out;
-}
 
-.note-actions button:hover {
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 8px rgba(200, 200, 255, 0.4);
-}
+
 .edit-title {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #333;
-  border-radius: 6px;
-  padding: 4px 6px;
-}
-
-.edit-note {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 6px;
-  padding: 8px;
-  color: #333;
-  min-height: 100px;
-}
-
-
-    .highlight {
-      background-color: #fbe0D2;
-    }
-
-    .editor-buttons {
-      display: flex;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .editor-buttons button {
+  width: 93%;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  font-family: Tahoma, sans-serif;
   font-size: 11px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+  color: #222;
+  transition: all 0.3s ease;
+}
+
+
+
+.note-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.note-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+
+.highlight {
+  background-color: #f67a66;
+}
+
+.editor-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+/* Glassy button base style */
+button,
+.note-actions button,
+.editor-buttons button,
+.header a.header-link {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #111;
+  padding: 6px 12px;
+  font-size: 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow:
+    0 4px 15px rgba(255, 255, 255, 0.3),
+    inset 0 0 10px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+  text-align: center;
+}
+
+/* Hover state */
+button:hover,
+.note-actions button:hover,
+.editor-buttons button:hover,
+.header a.header-link:hover {
+  background: rgba(255, 255, 255, 0.35);
+  color: #000;
+  box-shadow:
+    0 6px 20px rgba(255, 255, 255, 0.5),
+    inset 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+/* Active/focus states */
+button:active,
+.note-actions button:active,
+.editor-buttons button:active,
+.header a.header-link:active,
+button:focus,
+.note-actions button:focus,
+.editor-buttons button:focus,
+.header a.header-link:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 8px 25px rgba(255, 255, 255, 0.6),
+    inset 0 0 14px rgba(255, 255, 255, 0.4);
+  color: #000;
+}
+button:hover,
+.note-actions button:hover,
+.editor-buttons button:hover,
+.header a.header-link:hover {
+  background: rgba(255, 255, 255, 0.35);
+  color: #000;
+  box-shadow:
+    0 6px 20px rgba(255, 255, 255, 0.5),
+    inset 0 0 12px rgba(255, 255, 255, 0.3);
+}
+button:active,
+.note-actions button:active,
+.editor-buttons button:active,
+.header a.header-link:active,
+button:focus,
+.note-actions button:focus,
+.editor-buttons button:focus,
+.header a.header-link:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 8px 25px rgba(255, 255, 255, 0.6),
+    inset 0 0 14px rgba(255, 255, 255, 0.4);
+  color: #000;
+}
+
+/* URL link in notes */
+.note-url {
+  margin-top: 10px;
+  display: inline-block;
+}
+
+.note-url a {
+  background: rgba(255, 255, 255, 0.3); /* semi-transparent glass */
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  color: #333;
+  color: #222;
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+}
+
+.note-url a:hover {
+  background: rgba(255, 255, 255, 0.45); /* slightly stronger glow on hover */
+  color: #000;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+}
+
+.note-url a .icon {
+  margin-right: 4px;
+}
+
+/* Custom file button */
+.custom-file-btn {
+  display: inline-block;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.5);  /* more opaque */
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  border-radius: 7px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease-in-out;
+  font-family: 'fors', sans-serif;
+  font-size: 13px;
+  color: #222;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+  user-select: none;
+  transition: all 0.3s ease;
+  margin-left: 8px; /* space from inputs */
+  vertical-align: middle;
 }
 
-.editor-buttons button:hover {
-  background: rgba(255, 255, 255, 0.5);
+.custom-file-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  color: #000;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
 }
-.editor-buttons button:hover {
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 8px rgba(200, 200, 255, 0.4);
+.add-btn {
+  height: 30px;
+  min-width: 100px;
+  align-self: flex-start;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.65); /* more opaque */
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  color: #111;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px; /* space from inputs */
+  vertical-align: middle;
+}
+
+.add-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
 
 }
-.note-card {
+.hidden {
+  display: none;
+}
+.form-section {
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
   position: relative;
+  z-index: 40;
+  align-items: flex-start;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
-.checkmark {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 18px;
-  color: rgb(138, 37, 185);
+
+#toggleFormBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3); /* semi-transparent */
+  backdrop-filter: blur(90px); /* glass blur */
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 28px;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+
+#toggleFormBtn:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+#nurseFormWrapper {
+  position: fixed;
+  bottom: -100%; /* hidden offscreen */
+  right: 20px;
+  width: 300px;
+  padding: 15px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.15),       /* subtle shadow */
+    0 0 15px rgba(184, 142, 170, 0.2);     /* subtle accent-colored glow */
+  transition: bottom 0.4s ease, opacity 0.4s ease, box-shadow 0.4s ease;
   opacity: 0;
-  transform: scale(0.5);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  pointer-events: none;
+  z-index: 999;
 }
 
-.checkmark.show {
+#nurseFormWrapper.show {
+  bottom: 80px;
   opacity: 1;
-  transform: scale(1.3);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.15), 
+    0 0 20px rgba(184, 142, 170, 0.25);   /* slightly stronger glow on show */
 }
+
 
 /* Mobile & Tablet Adjustments */
 @media (max-width: 768px) {
@@ -343,27 +597,50 @@ body::before {
   }
 }
 
-  </style>
+
+</style>
 </head>
 <body>
-  <div class="header glass">
-    <a href="home.html">Home</a>
-    <span style="font-size: 30px; font-weight: bold; margin-left: 20px;">Recalls</span>
+
+<div class="header">
+  <div class="header-bg"></div>
+
+  <div class="header-left">
+    <a href="home.html" class="header-link">Home</a>
+  </div>
+
+  <h1 class="header-title">Recalls</h1>
+
+  <div class="header-right">
     <div class="search-box">
       <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
     </div>
   </div>
+</div>
 
-  <div class="container">
-    <div class="form-section">
-      <input id="nurseTitle" placeholder="Title">
-      <textarea id="nurseNote" placeholder="Note..."></textarea>
-      <button class="add-btn" onclick="addNote()">Add</button>
-    </div>
-    <div class="cards-container" id="nurseNotesList"></div>
+<div class="container">
+  <!-- Hidden glassy form -->
+  <div id="nurseFormWrapper" class="form-section">
+    <input id="nurseTitle" placeholder="Title">
+    <textarea id="nurseNote" placeholder="Note..."></textarea>
+    <input id="nurseURL" placeholder="Optional URL (if any)">
+    <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
+    <label for="nurseImage" class="custom-file-btn">Choose File</label>
+    <button class="add-btn" onclick="addNote()">Add</button>
   </div>
 
-<script type="module">
+  <!-- Notes container -->
+  <div class="cards-container" id="nurseNotesList"></div>
+</div>
+
+<!-- Floating glassy + button -->
+<button id="toggleFormBtn">+</button>
+
+
+</div>
+ 
+
+  <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import {
     getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
@@ -385,16 +662,45 @@ body::before {
   async function addNote() {
     const title = nurseTitle.value.trim();
     const note = nurseNote.value.trim();
-    if (!title && !note) return;
+    const url = nurseURL.value.trim();
+    const fileInput = document.getElementById('nurseImage');
+    const file = fileInput.files[0];
 
-    await addDoc(notesCol, {
-      title: title || "Untitled",
-      note,
-      time: new Date().toISOString()
-    });
+    let imageBase64 = "";
 
-    nurseTitle.value = '';
-    nurseNote.value = '';
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        imageBase64 = reader.result;
+
+        await addDoc(notesCol, {
+          title: title || "Untitled",
+          note,
+          url: url || "",
+          image: imageBase64,
+          time: new Date().toISOString()
+        });
+
+        nurseTitle.value = '';
+        nurseNote.value = '';
+        nurseURL.value = '';
+        nurseImage.value = '';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      await addDoc(notesCol, {
+        title: title || "Untitled",
+        note,
+        url: url || "",
+        image: "",
+        time: new Date().toISOString()
+      });
+
+      nurseTitle.value = '';
+      nurseNote.value = '';
+      nurseURL.value = '';
+      nurseImage.value = '';
+    }
   }
 
   async function deleteNote(id) {
@@ -403,185 +709,131 @@ body::before {
     }
   }
 
-  async function saveEdit(id, titleInput, noteTextarea) {
-    const updatedTitle = titleInput.value.trim();
-    const updatedNote = noteTextarea.value.trim();
-
+  async function saveEdit(id, updatedTitle, updatedNote) {
     await updateDoc(doc(db, "recallNotes", id), {
       title: updatedTitle || "Untitled",
       note: updatedNote
     });
+  }
+
+  // Helper to escape HTML special characters
+  function escapeHtml(text) {
+    return text.replace(/&/g, "&amp;")
+               .replace(/</g, "&lt;")
+               .replace(/>/g, "&gt;")
+               .replace(/"/g, "&quot;")
+               .replace(/'/g, "&#039;");
   }
 
   function enableEditing(card, id, title, note) {
-    card.innerHTML = `
-      <input type="text" class="edit-title glassy-input" 
-             value="${title}" 
-             style="width: 96.5%; margin-bottom: 6px; padding: 6px;" />
-      <div class="edit-note glassy-input" contenteditable="true" 
-           style="width: 96%; min-height: 100px; padding: 8px; 
-           font-size: 12px; font-family: Tahoma, sans-serif; 
-           border-radius: 6px;">
-        ${note.replace(/\n/g, '<br>')}
-      </div>
-      <div class="editor-buttons">
-        <button onclick="saveRichEdit('${id}', 
-          this.closest('.note-card').querySelector('.edit-title'), 
-          this.closest('.note-card').querySelector('.edit-note'))">
-          Save
-        </button>
-        <button onclick="cancelEdit()">Cancel</button>
-        <button onclick="toggleBold()">Bold</button>
-        <button onclick="highlightSelection()">Highlight</button>
-      </div>
-    `;
-  }
+  card.innerHTML = `
+    <input type="text" class="edit-title" value="${escapeHtml(title)}" />
 
-  // ✅ Copy ONLY the note body (no title, no timestamp)
-  function copyToClipboard(card) {
-    const contentEl = card.querySelector(".note-content");
-    if (!contentEl) return;
-    const html = contentEl.innerHTML;
+    
+    <div class="edit-note" contenteditable="true"
+  style="width:95%; min-height:60px; padding:6px; border:1px solid rgba(255, 255, 255, 0.4);
+         border-radius:8px; background:rgba(255,255,255,0.5); backdrop-filter:blur(7px);
+         -webkit-backdrop-filter:blur(8px); font-family:Tahoma,sans-serif; font-size:11px;">
 
-    if (navigator.clipboard && navigator.clipboard.write) {
-      const blob = new Blob([html], { type: "text/html" });
-      const textBlob = new Blob([contentEl.innerText], { type: "text/plain" });
-      const data = [new ClipboardItem({ "text/html": blob, "text/plain": textBlob })];
+      ${note.replace(/\n/g, "<br>")}
+    </div>
+    
+    <div class="editor-buttons" style="margin-top:6px;">
+      <button class="btn-save">Save</button>
+      <button class="btn-cancel">Cancel</button>
+      <button class="btn-bold">Bold</button>
+      <button class="btn-highlight">Highlight</button>
+    </div>
+  `;
 
-      navigator.clipboard.write(data).then(() => showCheckmark(card));
-    } else {
-      // Fallback plain text
-      navigator.clipboard.writeText(contentEl.innerText).then(() => showCheckmark(card));
-    }
-  }
+  const inputTitle = card.querySelector('.edit-title');
+  const editableDiv = card.querySelector('.edit-note');
+  const btnSave = card.querySelector('.btn-save');
+  const btnCancel = card.querySelector('.btn-cancel');
+  const btnBold = card.querySelector('.btn-bold');
+  const btnHighlight = card.querySelector('.btn-highlight');
 
-  // ✅ Animated checkmark feedback
-  function showCheckmark(card) {
-    const check = document.createElement("div");
-    check.innerHTML = "&#10004;";
-    check.style.position = "absolute";
-    check.style.top = "6px";
-    check.style.right = "8px";
-    check.style.fontSize = "18px";
-    check.style.color = "#f0e10e";
-    check.style.fontWeight = "bold";
-    check.style.opacity = "0";
-    check.style.transform = "scale(0.5)";
-    check.style.transition = "all 0.3s ease";
-    card.appendChild(check);
-
-    requestAnimationFrame(() => {
-      check.style.opacity = "1";
-      check.style.transform = "scale(1.3)";
-    });
-
-    setTimeout(() => {
-      check.style.opacity = "0";
-      check.style.transform = "scale(0.5)";
-      setTimeout(() => check.remove(), 400);
-    }, 1000);
-  }
-
-  function renderNotes() {
-    onSnapshot(notesCol, snapshot => {
-      const list = document.getElementById('nurseNotesList');
-      list.innerHTML = '';
-
-      snapshot.forEach(docSnap => {
-        const { title, note, time } = docSnap.data();
-        const id = docSnap.id;
-
-        const div = document.createElement('div');
-        div.className = 'note-card';
-        div.id = `note-${id}`;
-        div.style.position = "relative";
-        div.innerHTML = `
-          <div class="note-title">${title}</div>
-          <div class="note-content">${note.replace(/\n/g, '<br>')}</div>
-          <div class="note-time" style="font-size:11px;margin-top:10px;color:#555;">
-            ${new Date(time).toLocaleString()}
-          </div>
-          <div class="note-actions" style="display:none;">
-            <button 
-              class="edit-btn" 
-              data-id="${id}" 
-              data-title="${encodeURIComponent(title)}" 
-              data-note="${encodeURIComponent(note)}"
-            >Edit</button>
-            <button onclick="deleteNote('${id}')">Delete</button>
-          </div>
-        `;
-
-        // ✅ Handle click (copy) & long press (show buttons)
-        let pressTimer;
-        let longPressed = false;
-
-        div.addEventListener("mousedown", () => {
-          longPressed = false;
-          pressTimer = setTimeout(() => {
-            longPressed = true;
-            div.querySelector(".note-actions").style.display = "flex";
-          }, 600);
-        });
-
-        div.addEventListener("mouseup", () => {
-          clearTimeout(pressTimer);
-          if (!longPressed) {
-            copyToClipboard(div);
-          }
-        });
-
-        div.addEventListener("mouseleave", () => clearTimeout(pressTimer));
-
-        list.appendChild(div);
-      });
-
-      // restore edit button event
-      document.querySelectorAll('.edit-btn').forEach(button => {
-        button.addEventListener('click', () => {
-          const card = button.closest('.note-card');
-          const id = button.dataset.id;
-          const title = decodeURIComponent(button.dataset.title);
-          const note = decodeURIComponent(button.dataset.note);
-          enableEditing(card, id, title, note);
-        });
-      });
-    });
-  }
-
-  async function saveRichEdit(id, titleInput, editableDiv) {
-    const updatedTitle = titleInput.value.trim();
+  btnSave.addEventListener('click', async () => {
+    const updatedTitle = inputTitle.value.trim() || "Untitled";
     const updatedNote = editableDiv.innerHTML.trim();
-
-    await updateDoc(doc(db, "recallNotes", id), {
-      title: updatedTitle || "Untitled",
-      note: updatedNote
-    });
-
+    await saveEdit(id, updatedTitle, updatedNote);
     renderNotes();
-  }
+  });
 
-  function cancelEdit() {
+  btnCancel.addEventListener('click', () => {
     renderNotes();
-  }
-  window.cancelEdit = cancelEdit;
+  });
 
-  function toggleBold() {
+  btnBold.addEventListener('click', () => {
     document.execCommand('bold');
-  }
-  window.toggleBold = toggleBold;
+  });
 
-  function highlightSelection() {
-    document.execCommand('hiliteColor', false, '#fbe0D2');
-  }
-  window.highlightSelection = highlightSelection;
+  btnHighlight.addEventListener('click', () => {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = selection.toString();
 
-  window.saveRichEdit = saveRichEdit;
-  window.addNote = addNote;
-  window.deleteNote = deleteNote;
-  window.enableEditing = enableEditing;
+      if (!selectedText) return;
 
-  window.searchNotes = function (event) {
+      // Check if already highlighted
+      const container = range.commonAncestorContainer;
+      const parent = container.nodeType === 3 ? container.parentNode : container;
+
+      if (parent.tagName === 'SPAN' && parent.style.backgroundColor === 'rgb(251, 224, 210)') {
+        // Remove highlight
+        const textNode = document.createTextNode(parent.textContent);
+        parent.replaceWith(textNode);
+      } else {
+        // Apply highlight
+        const span = document.createElement('span');
+        span.style.backgroundColor = '#d0c3f1';
+        span.textContent = selectedText;
+
+        range.deleteContents();
+        range.insertNode(span);
+      }
+
+      selection.removeAllRanges();
+    }
+  });
+}
+
+
+
+ function renderNotes() {
+  const list = document.getElementById('nurseNotesList'); // Corrected
+  onSnapshot(notesCol, snapshot => {
+    list.innerHTML = '';
+    snapshot.forEach(docSnap => {
+      const { title, note, time, url, image } = docSnap.data();
+      const id = docSnap.id;
+
+      const div = document.createElement('div');
+      div.className = 'note-card';
+      div.innerHTML = `
+        <div class="note-title">${title}</div>
+        <div class="note-content">${note}</div> <!-- keep HTML formatting -->
+        ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
+        <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
+        ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
+        <div class="note-actions">
+          <button class="edit-btn">Edit</button>
+          <button class="delete-btn">Delete</button>
+        </div>
+      `;
+
+      div.querySelector('.edit-btn').addEventListener('click', () => enableEditing(div, id, title, note));
+      div.querySelector('.delete-btn').addEventListener('click', () => deleteNote(id));
+
+      list.appendChild(div);
+    });
+  });
+}
+
+
+  // Search/filter notes live by title or content
+  function searchNotes(event) {
     const query = event.target.value.toLowerCase();
     const cards = document.querySelectorAll('.note-card');
 
@@ -595,11 +847,38 @@ body::before {
         card.style.display = 'none';
       }
     });
-  };
+  }
 
+  // Add event listener for search input after DOM loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keyup', searchNotes);
+    }
+  });
+
+  // Expose to window if needed
+  window.addNote = addNote;
+  window.deleteNote = deleteNote;
+  window.saveEdit = saveEdit;
+  window.enableEditing = enableEditing;
+  window.renderNotes = renderNotes;
+
+  // Initial load
   renderNotes();
-</script>
+  
+ // Toggle form
+const toggleBtn = document.getElementById('toggleFormBtn');
+const nurseForm = document.getElementById('nurseFormWrapper');
 
+toggleBtn.addEventListener('click', () => {
+  nurseForm.classList.toggle('show');
+
+  // Optional: change + to × when open
+  toggleBtn.textContent = nurseForm.classList.contains('show') ? '×' : '+';
+});
+
+</script>
 
 </body>
 </html>
