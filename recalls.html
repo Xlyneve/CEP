@@ -480,6 +480,30 @@ button:focus,
 .hidden {
   display: none;
 }
+/* Zoom modal background */
+.image-modal {
+  display: none; /* hidden by default */
+  position: fixed;
+  z-index: 2000; /* higher than everything */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+}
+
+/* Zoomed image */
+.image-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(255,255,255,0.3);
+  cursor: zoom-out;
+}
+
 .form-section {
   flex-wrap: wrap;
   gap: 12px;
@@ -639,6 +663,10 @@ button:focus,
 
 </div>
  
+<!-- Image Zoom Modal -->
+<div id="imgModal" class="image-modal">
+  <img id="modalImg" src="" alt="Zoomed Image" />
+</div>
 
   <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -841,10 +869,11 @@ function renderNotes() {
 
       const div = document.createElement('div');
       div.className = 'note-card';
+      div.style.position = 'relative'; // so ✔ positions correctly
       div.innerHTML = `
         <div class="note-title">${title}</div>
         <div class="note-content">${note}</div>
-        ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
+        ${image ? `<img class="zoomable" src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px; cursor:zoom-in;" />` : ""}
         <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
         ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
         <div class="note-actions" style="display:none;">
@@ -859,57 +888,69 @@ function renderNotes() {
       editBtn.addEventListener('click', () => enableEditing(div, id, title, note));
       deleteBtn.addEventListener('click', () => deleteNote(id));
 
-      // Long press + short press handler
+      // Long press handler
       let pressTimer;
       div.addEventListener('mousedown', () => {
         pressTimer = setTimeout(() => {
           const actions = div.querySelector('.note-actions');
           if (actions) actions.style.display = 'flex';
-        }, 600); // long press = 600ms
+        }, 600);
       });
-
       div.addEventListener('mouseup', () => clearTimeout(pressTimer));
       div.addEventListener('mouseleave', () => clearTimeout(pressTimer));
 
+      // Short press -> copy note
       div.addEventListener('click', (e) => {
-  if (!e.target.classList.contains('edit-btn') &&
-      !e.target.classList.contains('delete-btn')) {
+        if (!e.target.classList.contains('edit-btn') &&
+            !e.target.classList.contains('delete-btn') &&
+            !e.target.classList.contains('zoomable')) {
 
-    // Copy note as plain text (as seen)
-    navigator.clipboard.writeText(div.querySelector('.note-content').innerText).then(() => {
-      // Create tick element
-      const tick = document.createElement('div');
-      tick.textContent = '✔';
-      tick.style.position = 'absolute';
-      tick.style.top = '10px';
-      tick.style.right = '10px';
-      tick.style.color = '#d291bc';
-      tick.style.fontSize = '20px';
-      tick.style.opacity = '0';
-      tick.style.pointerEvents = 'none';
-      tick.style.transition = 'all 0.6s ease-out';
-      div.appendChild(tick);
+          navigator.clipboard.writeText(div.querySelector('.note-content').innerText).then(() => {
+            const tick = document.createElement('div');
+            tick.textContent = '✔';
+            tick.style.position = 'absolute';
+            tick.style.top = '10px';
+            tick.style.right = '10px';
+            tick.style.color = '#d291bc';
+            tick.style.fontSize = '20px';
+            tick.style.opacity = '0';
+            tick.style.pointerEvents = 'none';
+            tick.style.transition = 'all 0.6s ease-out';
+            div.appendChild(tick);
 
-      // Animate tick: grow and fade
-      requestAnimationFrame(() => {
-        tick.style.opacity = '1';
-        tick.style.transform = 'scale(1.5)';
+            requestAnimationFrame(() => {
+              tick.style.opacity = '1';
+              tick.style.transform = 'scale(1.5)';
+            });
+
+            setTimeout(() => {
+              tick.style.opacity = '0';
+              tick.style.transform = 'scale(0.8)';
+            }, 600);
+
+            setTimeout(() => {
+              tick.remove();
+            }, 1200);
+          });
+        }
       });
 
-      setTimeout(() => {
-        tick.style.opacity = '0';
-        tick.style.transform = 'scale(0.8)';
-      }, 600);
-
-      setTimeout(() => {
-        tick.remove();
-      }, 1200);
-    });
-  }
-});
-
-
       list.appendChild(div);
+    });
+
+    // Re-bind zoom images each snapshot
+    const modal = document.getElementById("imgModal");
+    const modalImg = document.getElementById("modalImg");
+
+    document.querySelectorAll(".zoomable").forEach(img => {
+      img.addEventListener("click", () => {
+        modal.style.display = "flex";
+        modalImg.src = img.src;
+      });
+    });
+
+    modal.addEventListener("click", () => {
+      modal.style.display = "none";
     });
   });
 }
