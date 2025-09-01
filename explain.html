@@ -352,6 +352,11 @@ mark {
   opacity: 1;
   transform: scale(1.2);
 }
+/* Make the active/hovered card sit above neighbors so buttons are clickable */
+.note-card { position: relative; z-index: 1; touch-action: manipulation; }
+.note-card.show-buttons,
+.note-card:hover { z-index: 999; }
+
 
 /* Mobile & Tablet Adjustments */
 @media (max-width: 768px) {
@@ -379,6 +384,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 let allNotes = [];
+let currentFilter = "";
 
 // --- Add new note ---
 document.querySelector('.add-btn').addEventListener('click', async () => {
@@ -405,32 +411,31 @@ function renderNotes(notesToRender = allNotes) {
     const card = document.createElement('div');
     card.className = 'note-card';
     card.style.position = 'relative';
+    card.dataset.id = note.id; // store note ID for delegation
 
     if (note.editing) {
-  // Keep the card where it is
-  card.innerHTML = `
-    <input type="text" id="editTitle-${note.id}" class="edit-title" value="${escapeAttr(note.title)}" />
-    <div id="editText-${note.id}" class="edit-box" contenteditable="true">${note.text || ''}</div>
-    <div class="formatting-buttons">
-      <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
-      <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
-    </div>
-    <div class="timestamp">Last updated: ${formatTS(note.timestamp)}</div>
-    <div class="edit-controls" style="display:flex; gap:8px; margin-top:8px;">
-      <button onclick="window.saveEdit('${note.id}')">Save</button>
-      <button onclick="window.cancelEdit('${note.id}')">Cancel</button>
-    </div>
-    <div class="copied-indicator">✓</div>
-  `;
+      card.innerHTML = `
+        <input type="text" id="editTitle-${note.id}" class="edit-title" value="${escapeAttr(note.title)}" />
+        <div id="editText-${note.id}" class="edit-box" contenteditable="true">${note.text || ''}</div>
+        <div class="formatting-buttons">
+          <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
+          <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
+        </div>
+        <div class="timestamp">Last updated: ${formatTS(note.timestamp)}</div>
+        <div class="edit-controls" style="display:flex; gap:8px; margin-top:8px;">
+          <button onclick="window.saveEdit('${note.id}')">Save</button>
+          <button onclick="window.cancelEdit('${note.id}')">Cancel</button>
+        </div>
+        <div class="copied-indicator">✓</div>
+      `;
     } else {
-      // Display mode
       card.innerHTML = `
         <div class="note-title">${escapeHTML(note.title)}</div>
         <div class="note-text">${note.text || ''}</div>
         <div class="timestamp">Saved on ${formatTS(note.timestamp)}</div>
         <div class="btn-group">
-          <button onclick="window.toggleEdit('${note.id}')">Edit</button>
-          <button onclick="window.deleteNote('${note.id}')">Delete</button>
+          <button class="btn-edit">Edit</button>
+          <button class="btn-delete">Delete</button>
         </div>
         <div class="copied-indicator">✓</div>
       `;
@@ -446,32 +451,55 @@ function renderNotes(notesToRender = allNotes) {
     let pressTimer;
     const startPress = () => {
       if (note.editing) return;
-      pressTimer = setTimeout(() => { card.classList.add('show-buttons'); }, 800);
+      pressTimer = setTimeout(() => {
+        card.classList.add('show-buttons');
+      }, 800);
     };
     const clearPress = () => clearTimeout(pressTimer);
 
-    ['mousedown','mouseup','mouseleave','touchstart','touchend'].forEach(evt=>{
-      const fn = (evt==='touchstart') ? startPress : (evt==='touchend'? clearPress : ['mousedown','mouseup','mouseleave'].includes(evt)? evt==='mousedown'?startPress:clearPress: null);
-      if(evt==='touchstart'||evt==='touchend'){
-        card.addEventListener(evt, fn, {passive:true});
-      } else card.addEventListener(evt, fn);
-    });
+    card.addEventListener('pointerdown', startPress);
+    card.addEventListener('pointerup', clearPress);
+    card.addEventListener('pointerleave', clearPress);
+    card.addEventListener('pointercancel', clearPress);
 
     container.appendChild(card);
   });
-
-  // Clicking outside hides buttons
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.note-card')) {
-      document.querySelectorAll('.note-card.show-buttons').forEach(el => el.classList.remove('show-buttons'));
-    }
-  }, { once: true });
 }
+
+// ✅ Attach this ONCE globally (outside renderNotes)
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.note-card')) {
+    document.querySelectorAll('.note-card.show-buttons')
+      .forEach(el => el.classList.remove('show-buttons'));
+  }
+});
+
+// ✅ Delegated Edit/Delete (outside renderNotes)
+document.getElementById('notesContainer').addEventListener('click', (e) => {
+  const card = e.target.closest('.note-card');
+  if (!card) return;
+  const id = card.dataset.id;
+
+  if (e.target.closest('.btn-edit')) {
+    e.stopPropagation();
+    window.toggleEdit(id);
+  } else if (e.target.closest('.btn-delete')) {
+    e.stopPropagation();
+    window.deleteNote(id);
+  }
+});
 
 // --- Helpers ---
 function formatTS(ts){ try { return new Date(ts).toLocaleString(); } catch { return ''; } }
 function escapeHTML(s=''){ return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function escapeAttr(s=''){ return escapeHTML(s); }
+function getFilteredNotes(){
+  if (!currentFilter) return allNotes;
+  return allNotes.filter(n =>
+    (n.title||'').toLowerCase().includes(currentFilter) ||
+    (n.text||'').toLowerCase().includes(currentFilter)
+  );
+}
 
 // Toggle edit
 window.toggleEdit = (id) => {
@@ -480,7 +508,7 @@ window.toggleEdit = (id) => {
   note._originalTitle = note.title;
   note._originalText = note.text;
   note.editing = true;
-  renderNotes();
+  renderNotes(getFilteredNotes());
 };
 
 // Save edits
@@ -501,7 +529,7 @@ window.saveEdit = async (id) => {
   note.editing = false;
   delete note._originalTitle;
   delete note._originalText;
-  renderNotes();
+  renderNotes(getFilteredNotes());
 };
 
 // Cancel edits
@@ -513,7 +541,7 @@ window.cancelEdit = (id) => {
   note.editing = false;
   delete note._originalTitle;
   delete note._originalText;
-  renderNotes();
+  renderNotes(getFilteredNotes());
 };
 
 // Delete note
@@ -604,17 +632,14 @@ window.formatText = function(id, command){
 
 // Search
 document.getElementById('searchInput').addEventListener('input', e=>{
-  const lower = e.target.value.toLowerCase();
-  renderNotes(allNotes.filter(n=>
-    (n.title||'').toLowerCase().includes(lower)||
-    (n.text||'').toLowerCase().includes(lower)
-  ));
+  currentFilter = e.target.value.toLowerCase();
+  renderNotes(getFilteredNotes());
 });
 
 // Firestore live sync
 onSnapshot(collection(db, 'explainNotes'), snapshot=>{
   allNotes = snapshot.docs.map(docSnap=>({...docSnap.data(), id: docSnap.id, editing:false}));
-  renderNotes();
+  renderNotes(getFilteredNotes());
 });
 
 // Toggle input group visibility
@@ -628,12 +653,9 @@ toggleBtn.addEventListener('click', () => {
   toggleBtn.textContent = inputGroup.classList.contains('show') ? '×' : '+';
   if (inputGroup.classList.contains('show')) {
     noteTitle.focus();
-    // Scroll popup into view
     inputGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 });
-
-
 
 // Close input if click outside
 document.addEventListener('click', (e) => {
@@ -663,15 +685,13 @@ noteText.addEventListener('input', () => {
   noteText.style.height = noteText.scrollHeight + 'px';
 });
 
-// Auto-resize editable title (start with 1 line)
+// Auto-resize editable title
 document.addEventListener('input', (e) => {
   if (e.target.classList.contains('edit-title')) {
     e.target.style.height = 'auto'; 
     e.target.style.height = e.target.scrollHeight + 'px'; 
   }
 });
-
-
 </script>
 
 
