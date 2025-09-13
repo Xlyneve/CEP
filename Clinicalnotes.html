@@ -394,26 +394,29 @@ function renderNotes() {
         list.appendChild(div);
 
         // --- Copy note ---
-        div.addEventListener('click', () => {
-          if (div.classList.contains('is-editing')) return;
-          const combinedText = `${titleEl.textContent}\n${contentEl.textContent}`;
-          const combinedHTML = `<strong>${titleEl.textContent}</strong><br>${contentEl.innerHTML}`;
-          navigator.clipboard.write([
-            new ClipboardItem({
-              "text/plain": new Blob([combinedText], {type:"text/plain"}),
-              "text/html": new Blob([combinedHTML], {type:"text/html"})
-            })
-          ]).then(() => {
-            if(!div.querySelector('.copy-check')) {
-              const check = document.createElement('div');
-              check.className = 'copy-check';
-              check.textContent = '✓';
-              div.style.position = 'relative';
-              div.appendChild(check);
-              setTimeout(()=>check.remove(),1100);
-            }
-          });
-        });
+        // --- Copy note ---
+div.addEventListener('click', () => {
+  if (div.classList.contains('is-editing')) return;
+
+  const plainContent = contentEl.textContent;
+  const htmlContent  = contentEl.innerHTML;
+
+  navigator.clipboard.write([
+    new ClipboardItem({
+      "text/plain": new Blob([plainContent], { type: "text/plain" }),
+      "text/html":  new Blob([htmlContent], { type: "text/html" })
+    })
+  ]).then(() => {
+    if (!div.querySelector('.copy-check')) {
+      const check = document.createElement('div');
+      check.className = 'copy-check';
+      check.textContent = '✓';
+      div.style.position = 'relative';
+      div.appendChild(check);
+      setTimeout(() => check.remove(), 1100);
+    }
+  });
+});
 
         // --- Long press to show actions ---
         let pressTimer;
