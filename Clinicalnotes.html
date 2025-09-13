@@ -291,6 +291,41 @@ const notesCol = collection(db, "clinicalNotes");
 const noteTextEl = document.getElementById('noteText');
 let activeEditable = noteTextEl;
 
+// --- Handle Enter key → insert single <br> and move caret after it ---
+noteTextEl.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault(); 
+  noteTextEl.focus();
+  const sel = window.getSelection();
+  if (!sel) return;
+
+  if (sel.rangeCount === 0) {
+    const br = document.createElement('br');
+    noteTextEl.appendChild(br);
+    const zw = document.createTextNode('\u200B');
+    noteTextEl.appendChild(zw);
+    const rng = document.createRange();
+    rng.setStartAfter(zw);
+    rng.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(rng);
+    if (typeof autoGrow === 'function') autoGrow(noteTextEl);
+    return;
+  }
+
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+  const br = document.createElement('br');
+  range.insertNode(br);
+  const zw = document.createTextNode('\u200B');
+  br.parentNode.insertBefore(zw, br.nextSibling);
+  range.setStartAfter(zw);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  if (typeof autoGrow === 'function') autoGrow(noteTextEl);
+});
+
 // --- Auth flow ---
 onAuthStateChanged(auth, user => {
   if (user) {
@@ -335,11 +370,7 @@ document.getElementById('addNoteBtn').addEventListener('click', async () => {
   const title = document.getElementById('noteTitle').value.trim() || "Untitled";
   const noteHTML = noteTextEl.innerHTML.trim();
   const url = document.getElementById('noteURL').value.trim();
-
-  const temp = document.createElement('div');
-  temp.innerHTML = noteHTML;
-  const plain = temp.textContent.trim();
-  if (!plain) { alert("Cannot add empty note"); return; }
+  if (!noteHTML.replace(/<br\s*\/?>/gi,'').trim()) { alert("Cannot add empty note"); return; }
 
   try {
     await addDoc(notesCol, { title, note: noteHTML, url, time: new Date().toISOString() });
@@ -394,29 +425,46 @@ function renderNotes() {
         list.appendChild(div);
 
         // --- Copy note ---
-        // --- Copy note ---
-div.addEventListener('click', () => {
-  if (div.classList.contains('is-editing')) return;
+        div.addEventListener('click', () => {
+          if (div.classList.contains('is-editing')) return;
+          const htmlContent = contentEl.innerHTML;
 
-  const plainContent = contentEl.textContent;
-  const htmlContent  = contentEl.innerHTML;
+          // Convert <br>, <div>, <p> into newline for plain text copy
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = htmlContent;
 
-  navigator.clipboard.write([
-    new ClipboardItem({
-      "text/plain": new Blob([plainContent], { type: "text/plain" }),
-      "text/html":  new Blob([htmlContent], { type: "text/html" })
-    })
-  ]).then(() => {
-    if (!div.querySelector('.copy-check')) {
-      const check = document.createElement('div');
-      check.className = 'copy-check';
-      check.textContent = '✓';
-      div.style.position = 'relative';
-      div.appendChild(check);
-      setTimeout(() => check.remove(), 1100);
-    }
-  });
-});
+          const getPlainText = (node) => {
+            let text = '';
+            node.childNodes.forEach((child) => {
+              if (child.nodeType === Node.TEXT_NODE) {
+                text += child.textContent;
+              } else if (child.nodeName === 'BR' || child.nodeName === 'DIV' || child.nodeName === 'P') {
+                text += '\n' + getPlainText(child);
+              } else {
+                text += getPlainText(child);
+              }
+            });
+            return text;
+          };
+
+          const plainContent = getPlainText(tempDiv);
+
+          navigator.clipboard.write([
+            new ClipboardItem({
+              "text/plain": new Blob([plainContent], { type: "text/plain" }),
+              "text/html":  new Blob([htmlContent], { type: "text/html" })
+            })
+          ]).then(() => {
+            if (!div.querySelector('.copy-check')) {
+              const check = document.createElement('div');
+              check.className = 'copy-check';
+              check.textContent = '✓';
+              div.style.position = 'relative';
+              div.appendChild(check);
+              setTimeout(() => check.remove(), 1100);
+            }
+          });
+        });
 
         // --- Long press to show actions ---
         let pressTimer;
@@ -478,6 +526,7 @@ document.getElementById('searchInput').addEventListener('input', ()=>{
   });
 });
 </script>
+
 
 
 </body>
