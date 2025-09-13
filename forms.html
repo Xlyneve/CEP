@@ -67,23 +67,37 @@ body::before {
 
     /* Search input: also frosted glass */
 #searchInput {
-  display: none;
+  display: block;
   position: absolute;
   top: 50px;
   right: 10px;
-  padding: 6px 10px;
-  width: 180px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.5);
-  background: rgba(255, 255, 255, 0.25);
+  padding: 8px 12px;
+  width: 220px;
+  border-radius: 12px;
+  border: 1px solid rgba(170, 160, 255, 0.6); /* hint of bluish purple */
+  background: rgba(255, 255, 255, 0.15);
   color: #111;
   font-size: 14px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 4px 10px rgba(255,255,255,0.15) inset;
-  transition: opacity 0.3s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  /* strong bluish-purple glow */
+  box-shadow: 
+    0 0 8px rgba(170, 160, 255, 0.6),  /* outer glow */
+    0 4px 10px rgba(255, 255, 255, 0.15) inset; /* glass depth */
+  outline: none;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
   z-index: 10;
 }
+
+#searchInput:focus {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(170, 160, 255, 0.8);
+  box-shadow: 
+    0 0 12px rgba(170, 160, 255, 0.8),  /* stronger glow on focus */
+    0 4px 10px rgba(255, 255, 255, 0.2) inset;
+  color: #000;
+}
+
 
 /* File grid container */
 .file-grid {
@@ -209,8 +223,7 @@ button:hover {
 
 <!-- Top Buttons -->
 <a href="home.html" class="top-left">Home</a>
-<div class="top-right" id="searchButton">Search</div>
-<input type="text" id="searchInput" placeholder="Search title..." oninput="filterFiles()">
+<input type="text" id="searchInput" placeholder="Search" oninput="filterFiles()">
 
 <h1>Informations</h1>
 
@@ -234,7 +247,7 @@ button:hover {
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 
 <script>
-  // TODO: Replace with your Firebase config
+  // Firebase config
   const firebaseConfig = {
      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
       authDomain: "cepx-f9d2a.firebaseapp.com",
@@ -265,7 +278,7 @@ button:hover {
     document.getElementById('urlInput').value = '';
     document.getElementById('urlTitle').value = '';
     document.getElementById('urlNote').value = '';
-    fetchURLs();
+    fetchURLs(document.getElementById('searchInput').value);
   }
 
   async function fetchURLs(filter = '') {
@@ -282,7 +295,9 @@ button:hover {
           <div>
             <strong>${data.title}</strong><br>
             <em>${data.note}</em><br>
-            <small><button onclick="window.open('${data.url}', '_blank')" style="padding:4px 8px; background:#f8edeb; border:none; border-radius:6px; cursor:pointer;">Visit Link</button></small>
+            <small>
+              <button onclick="window.open('${data.url}', '_blank')" style="padding:4px 8px; background:#f8edeb; border:none; border-radius:6px; cursor:pointer;">Visit Link</button>
+            </small>
           </div>
           <div class="file-buttons">
             <button onclick="editURL('${doc.id}', '${data.title.replace(/'/g, "\\'")}', '${data.note.replace(/'/g, "\\'")}')">Edit</button>
@@ -302,46 +317,31 @@ button:hover {
         title: newTitle || oldTitle,
         note: newNote || oldNote
       });
-      fetchURLs();
+      fetchURLs(document.getElementById('searchInput').value);
     }
   }
 
   async function deleteURL(id) {
     if (confirm('Delete this URL entry?')) {
       await db.collection('urlForms').doc(id).delete();
-      fetchURLs();
+      fetchURLs(document.getElementById('searchInput').value);
     }
   }
 
+  // Filter files based on search input
   function filterFiles() {
     const term = document.getElementById('searchInput').value;
     fetchURLs(term);
   }
 
-  // Search button hover logic
-  const searchButton = document.getElementById('searchButton');
+  // Always show search input
   const searchInput = document.getElementById('searchInput');
-
-  searchButton.addEventListener('mouseenter', () => {
-    searchInput.style.display = 'block';
-  });
-  searchButton.addEventListener('mouseleave', () => {
-    setTimeout(() => {
-      if (!searchInput.matches(':hover')) {
-        searchInput.style.display = 'none';
-        searchInput.value = '';
-        fetchURLs();
-      }
-    }, 500);
-  });
-  searchInput.addEventListener('mouseleave', () => {
-    searchInput.style.display = 'none';
-    searchInput.value = '';
-    fetchURLs();
-  });
+  searchInput.style.display = 'block';
+  searchInput.addEventListener('input', filterFiles);
 
   fetchURLs(); // Initial load
 </script>
+
 
 </body>
 </html>
