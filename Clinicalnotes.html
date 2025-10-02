@@ -27,12 +27,11 @@ body::before {
   z-index: -1;
 }
 
-/* Main layout */
 .main {
   display: flex;
   padding-top: 20px;
   gap: 20px;
-  height: calc(100vh - 80px);
+  align-items: flex-start; /* keeps top aligned */
 }
 
 /* Left input panel */
@@ -130,32 +129,29 @@ body::before {
 
 /* Notes masonry panel - true masonry using CSS columns */
 .notes-panel {
-  column-count: 1; /* default for mobile */
+  flex: 1;                /* use remaining width */
+  column-count: 1;        /* default: 1 column */
   column-gap: 16px;
-  width: 100%;
   padding: 16px;
   box-sizing: border-box;
+ 
 }
 
-/* Note card for masonry */
+/* Each note fits into a column */
 .note-card {
-  display: inline-block; /* required for CSS columns masonry */
-  width: 90%;
+  display: inline-block;  /* needed for masonry */
+  width: 90%;            /* fill column width */
   background: rgba(245, 245, 245, 0.25);
   border-radius: 16px;
   padding: 18px;
-  margin-bottom: 16px;
+  margin-bottom: 16px;    /* space between notes */
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   transition: transform 0.3s, box-shadow 0.3s;
-  word-wrap: break-word;
-  break-inside: avoid; /* avoid breaking card between columns */
+  break-inside: avoid;    /* prevents breaking inside a column */
   overflow-wrap: break-word;
   backdrop-filter: blur(8px);
 }
-.note-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-}
+
 
 /* Responsive column adjustments */
 @media (min-width: 480px) { .notes-panel { column-count: 2; } }
