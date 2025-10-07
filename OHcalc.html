@@ -6,346 +6,280 @@
   <style>
     body {
       position: relative;
-      z-index: 0;
       margin: 0;
       padding: 40px;
       font-family: "fors", sans-serif;
       color: #000;
-      background: none;
       overflow-x: hidden;
     }
-
     body::before {
       content: "";
       position: fixed;
       top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100vw; height: 100vh;
       background: url('2b.png') no-repeat center center fixed;
       background-size: cover;
       filter: blur(25px);
       z-index: -1;
     }
-
     @font-face {
       font-family: 'fors';
       src: url('fors.ttf') format('truetype');
     }
-
-    header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    h1 {
-      margin: 0;
-    }
-
+    header { text-align: center; margin-bottom: 30px; }
+    h1 { margin: 0; }
     .calculator-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 20px;
     }
-
     .calculator {
       padding: 20px;
       border-radius: 15px;
       background: rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow:
-        0 8px 32px 0 rgba(31, 38, 135, 0.1),
-        0 0 0 1px rgba(255, 255, 255, 0.2);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 32px rgba(31,38,135,0.1);
+      transition: transform .2s, box-shadow .2s;
       color: #000;
     }
-
     .calculator:hover {
       transform: translateY(-4px);
-      box-shadow:
-        0 12px 48px rgba(31, 38, 135, 0.2),
-        0 0 12px rgba(255, 255, 255, 0.3);
+      box-shadow: 0 12px 48px rgba(31,38,135,0.2);
     }
-
-    .box1 { background: rgba(236, 231, 225, 0.15); }
-    .box2 { background: rgba(219, 212, 206, 0.15); }
-    .box3 { background: rgba(187, 174, 165, 0.15); }
-    .box4 { background: rgba(224, 215, 214, 0.15); }
-    .box5 { background: rgba(179, 179, 179, 0.15); }
-    .box6 { background: rgba(234, 225, 239, 0.15); }
-    .box7 { background: rgba(214, 239, 229, 0.15); }
-
-    label, input {
-      display: block;
-      margin-bottom: 10px;
+    .box1{background:rgba(236,231,225,0.15);}
+    .box2{background:rgba(219,212,206,0.15);}
+    .box3{background:rgba(187,174,165,0.15);}
+    .box4{background:rgba(224,215,214,0.15);}
+    .box5{background:rgba(179,179,179,0.15);}
+    .box6{background:rgba(234,225,239,0.15);}
+    .box7{background:rgba(214,239,229,0.15);}
+    label,input{display:block;margin-bottom:10px;}
+    input[type="number"]{padding:6px;width:100%;box-sizing:border-box;}
+    .result{margin-top:10px;font-weight:bold;}
+    .note{font-size:.9em;color:#333;margin-top:8px;}
+    .home-button{
+      position:fixed;top:20px;left:20px;
+      padding:8px 16px;font-size:18px;border-radius:12px;
+      color:#333;text-decoration:none;
+      background:rgba(255,255,255,0.25);
+      border:1.5px solid rgba(255,255,255,0.6);
+      box-shadow:0 4px 12px rgba(255,255,255,0.2);
+      backdrop-filter:blur(10px);
+      transition:all .3s;
+      z-index:999;
     }
-
-    input[type="number"] {
-      padding: 6px;
-      width: 100%;
-      box-sizing: border-box;
+    .home-button:hover{
+      background:rgba(255,255,255,0.4);
+      transform:scale(1.05);
     }
-
-    .result {
-      margin-top: 10px;
-      font-weight: bold;
+    /* collapsible */
+    .collapsible{
+      cursor:pointer;
+      background:rgba(255,255,255,0.25);
+      border:1px solid rgba(255,255,255,0.4);
+      border-radius:12px;
+      padding:15px 20px;
+      font-size:20px;
+      margin-top:30px;
+      text-align:center;
+      font-weight:bold;
+      backdrop-filter:blur(10px);
+      transition:all .3s;
     }
-
-    .note {
-      font-size: 0.9em;
-      color: #333;
-      margin-top: 8px;
+    .collapsible:hover{background:rgba(255,255,255,0.4);}
+    .collapsible-content{
+      max-height:0;
+      overflow:hidden;
+      transition:max-height .5s ease-out;
     }
-
-    .home-button {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      padding: 8px 16px;
-      font-size: 18px;
-      border-radius: 12px;
-      color: #333;
-      text-decoration: none;
-      background: rgba(255, 255, 255, 0.25);
-      border: 1.5px solid rgba(255, 255, 255, 0.6);
-      box-shadow:
-        0 4px 12px rgba(255, 255, 255, 0.2),
-        inset 0 0 10px rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: all 0.3s ease;
-      z-index: 999;
-    }
-
-    .home-button:hover {
-      background: rgba(255, 255, 255, 0.4);
-      color: #000;
-      box-shadow:
-        0 8px 20px rgba(255, 255, 255, 0.35),
-        inset 0 0 12px rgba(255, 255, 255, 0.2);
-      transform: scale(1.05);
+    .collapsible-content.open{
+      max-height:2000px;
+      transition:max-height .6s ease-in;
+      margin-top:20px;
     }
   </style>
 </head>
 <body>
 
 <a class="home-button" href="home.html">Home</a>
+<header><h1>Drug Calculators</h1></header>
 
-<header>
-  <h1>Drug Calculators</h1>
-</header>
-
+<!-- ====== MAIN CALCULATORS ====== -->
 <div class="calculator-grid">
 
-  <!-- Your Original Calculators -->
   <div class="calculator box1">
-    <h2>Paracetamol (120 mg/5 mL)</h2>
+    <h2>Paracetamol 120 mg/5 mL</h2>
     <label>Weight (kg):</label>
-    <input type="number" id="paraWeight120">
-    <div class="result" id="paracetamolDose120">Dose: </div>
-    <div class="note">Give every 4–6 hrs, max 4 doses/day.</div>
+    <input type="number" id="p120Weight">
+    <div class="result" id="p120Result">Dose: </div>
   </div>
 
   <div class="calculator box2">
-    <h2>Paracetamol (250 mg/5 mL)</h2>
+    <h2>Paracetamol 250 mg/5 mL</h2>
     <label>Weight (kg):</label>
-    <input type="number" id="paraWeight250">
-    <div class="result" id="paracetamolDose250">Dose: </div>
-    <div class="note">Give every 4–6 hrs, max 4 doses/day.</div>
+    <input type="number" id="p250Weight">
+    <div class="result" id="p250Result">Dose: </div>
   </div>
 
   <div class="calculator box3">
-    <h2>Redipred</h2>
+    <h2>Redipred 1 mg/mL</h2>
     <label>Weight (kg):</label>
-    <input type="number" id="weight">
-    <div class="result" id="redipredDose">Dose: </div>
-    <div class="note">Strength 25 mg / 5 mL.</div>
+    <input type="number" id="redipredWeight">
+    <div class="result" id="redipredResult">Dose: </div>
   </div>
 
   <div class="calculator box4">
-    <h2>Ibuprofen (100 mg/5 mL)</h2>
+    <h2>Ibuprofen 100 mg/5 mL</h2>
     <label>Weight (kg):</label>
-    <input type="number" id="ibuWeight">
-    <div class="result" id="ibuprofenDose">Dose: </div>
-    <div class="note">6 mg/kg per dose (max 400 mg) q6–8h.</div>
+    <input type="number" id="ibuprofenWeight">
+    <div class="result" id="ibuprofenResult">Dose: </div>
   </div>
 
   <div class="calculator box5">
-    <h2>Fentanyl (Kids)</h2>
-    <label>Weight (kg):</label>
-    <input type="number" id="fentanylWeight">
-    <div class="result" id="fentanylResult"></div>
-    <div class="note">1.5 mcg/kg initial (min 21 mcg). 0.5 mcg/kg top-up. 100 mcg in 2 mL.</div>
+    <h2>Fentanyl</h2>
+    <label>Dose required (mcg):</label>
+    <input type="number" id="fentDose">
+    <label>Stock strength (mcg/mL):</label>
+    <input type="number" id="fentStock">
+    <div class="result" id="fentResult">Volume required: </div>
   </div>
 
   <div class="calculator box6">
     <h2>Drug Formula</h2>
-    <label>Desired Dose (D):</label>
-    <input type="number" id="desired">
-    <label>Dose on Hand (H):</label>
+    <label>What you want:</label>
+    <input type="number" id="want">
+    <label>What you have:</label>
     <input type="number" id="have">
-    <label>Volume/Tablet (V):</label>
-    <input type="number" id="vehicle">
-    <div class="result" id="drugFormulaResult">Result: </div>
-    <div class="note">Formula: (D ÷ H) × V</div>
+    <label>Volume of stock (mL):</label>
+    <input type="number" id="volume">
+    <div class="result" id="formulaResult">Result: </div>
   </div>
 
-  <!-- NEW General Drug Calculators -->
-  <div class="calculator box7">
-    <h2>Tablets & Capsules</h2>
-    <label>Strength Required:</label>
-    <input type="number" id="tabRequired">
-    <label>Strength Available:</label>
-    <input type="number" id="tabAvailable">
-    <div class="result" id="tabResult">Result:</div>
-    <div class="note">(What you want ÷ What you have available)</div>
-  </div>
+</div>
 
-  <div class="calculator box7">
-    <h2>Liquid Medication</h2>
-    <label>Strength Required:</label>
-    <input type="number" id="liqRequired">
-    <label>Strength Available:</label>
-    <input type="number" id="liqAvailable">
-    <label>Volume of Stock Solution (mL):</label>
-    <input type="number" id="liqStock">
-    <div class="result" id="liqResult">Result:</div>
-    <div class="note">(What you want ÷ What you have) × Volume</div>
-  </div>
+<!-- ====== COLLAPSIBLE NEW CALCULATORS ====== -->
+<div class="collapsible" id="toggleGeneral">💊 General Drug Calculators ▼</div>
+<div class="collapsible-content" id="generalCalculators">
+  <div class="calculator-grid">
 
-  <div class="calculator box7">
-    <h2>Volume for Injection</h2>
-    <label>Strength Required:</label>
-    <input type="number" id="injRequired">
-    <label>Strength Available:</label>
-    <input type="number" id="injAvailable">
-    <label>Volume of Stock (mL):</label>
-    <input type="number" id="injStock">
-    <div class="result" id="injResult">Result:</div>
-    <div class="note">(What you want ÷ What you have) × Volume</div>
-  </div>
+    <div class="calculator box7">
+      <h2>Tablets & Capsules</h2>
+      <label>Strength Required:</label>
+      <input type="number" id="tabRequired">
+      <label>Strength Available:</label>
+      <input type="number" id="tabAvailable">
+      <div class="result" id="tabResult">Result:</div>
+    </div>
 
-  <div class="calculator box7">
-    <h2>Infusion Flow Rate</h2>
-    <label>Total Volume to Infuse (mL):</label>
-    <input type="number" id="infuseVolume">
-    <label>Hours to Infuse Over:</label>
-    <input type="number" id="infuseHours">
-    <div class="result" id="infuseResult">Result:</div>
-    <div class="note">(Total volume ÷ hours)</div>
-  </div>
+    <div class="calculator box7">
+      <h2>Liquid Medication</h2>
+      <label>Strength Required:</label>
+      <input type="number" id="liqRequired">
+      <label>Strength Available:</label>
+      <input type="number" id="liqAvailable">
+      <label>Volume of Stock (mL):</label>
+      <input type="number" id="liqStock">
+      <div class="result" id="liqResult">Result:</div>
+    </div>
 
-  <div class="calculator box7">
-    <h2>Drip Rate</h2>
-    <label>Total Fluid (mL):</label>
-    <input type="number" id="dripVolume">
-    <label>Set Calibration (drops/mL):</label>
-    <input type="number" id="dripCalib">
-    <label>Total Hours:</label>
-    <input type="number" id="dripHours">
-    <div class="result" id="dripResult">Result:</div>
-    <div class="note">(Volume × calibration) ÷ (hours × 60)</div>
+    <div class="calculator box7">
+      <h2>Volume for Injection</h2>
+      <label>Strength Required:</label>
+      <input type="number" id="injRequired">
+      <label>Strength Available:</label>
+      <input type="number" id="injAvailable">
+      <label>Volume of Stock (mL):</label>
+      <input type="number" id="injStock">
+      <div class="result" id="injResult">Result:</div>
+    </div>
+
+    <div class="calculator box7">
+      <h2>Infusion Flow Rate</h2>
+      <label>Total Volume (mL):</label>
+      <input type="number" id="infuseVolume">
+      <label>Hours to Infuse:</label>
+      <input type="number" id="infuseHours">
+      <div class="result" id="infuseResult">Result:</div>
+    </div>
+
+    <div class="calculator box7">
+      <h2>Drip Rate</h2>
+      <label>Total Fluid (mL):</label>
+      <input type="number" id="dripVolume">
+      <label>Set Calibration (drops/mL):</label>
+      <input type="number" id="dripCalib">
+      <label>Total Hours:</label>
+      <input type="number" id="dripHours">
+      <div class="result" id="dripResult">Result:</div>
+    </div>
+
   </div>
 </div>
 
 <script>
-  // Paracetamol 120
-  document.getElementById('paraWeight120').addEventListener('input', e => {
-    const wt = +e.target.value;
-    const dose = wt * 15;
-    const vol = dose / (120/5);
-    document.getElementById('paracetamolDose120').textContent =
-      wt ? `Dose: ${dose.toFixed(1)} mg = ${vol.toFixed(2)} mL` : 'Dose:';
-  });
+/* collapsible toggle */
+const toggleBtn = document.getElementById('toggleGeneral');
+const content = document.getElementById('generalCalculators');
+toggleBtn.addEventListener('click',()=>{
+  content.classList.toggle('open');
+  toggleBtn.innerHTML = content.classList.contains('open')
+    ? '💊 General Drug Calculators ▲'
+    : '💊 General Drug Calculators ▼';
+});
 
-  // Paracetamol 250
-  document.getElementById('paraWeight250').addEventListener('input', e => {
-    const wt = +e.target.value;
-    const dose = wt * 15;
-    const vol = dose / (250/5);
-    document.getElementById('paracetamolDose250').textContent =
-      wt ? `Dose: ${dose.toFixed(1)} mg = ${vol.toFixed(2)} mL` : 'Dose:';
-  });
+/* ===== main calculator logic ===== */
+function id(i){return document.getElementById(i);}
+id('p120Weight').addEventListener('input',()=>{
+  const w=+id('p120Weight').value;
+  if(w) id('p120Result').innerText='Dose: '+(w*15/120*5).toFixed(1)+' mL';
+});
+id('p250Weight').addEventListener('input',()=>{
+  const w=+id('p250Weight').value;
+  if(w) id('p250Result').innerText='Dose: '+(w*15/250*5).toFixed(1)+' mL';
+});
+id('redipredWeight').addEventListener('input',()=>{
+  const w=+id('redipredWeight').value;
+  if(w) id('redipredResult').innerText='Dose: '+(w*1).toFixed(1)+' mg';
+});
+id('ibuprofenWeight').addEventListener('input',()=>{
+  const w=+id('ibuprofenWeight').value;
+  if(w) id('ibuprofenResult').innerText='Dose: '+(w*10/100*5).toFixed(1)+' mL';
+});
+id('fentDose').addEventListener('input',calcFent);
+id('fentStock').addEventListener('input',calcFent);
+function calcFent(){
+  const d=+id('fentDose').value, s=+id('fentStock').value;
+  if(d&&s) id('fentResult').innerText='Volume: '+(d/s).toFixed(2)+' mL';
+}
+['want','have','volume'].forEach(i=>id(i).addEventListener('input',calcFormula));
+function calcFormula(){
+  const w=+id('want').value,h=+id('have').value,v=+id('volume').value;
+  if(w&&h&&v) id('formulaResult').innerText='Result: '+(w/h*v).toFixed(2)+' mL';
+}
 
-  // Redipred
-  document.getElementById('weight').addEventListener('input', e => {
-    const wt = +e.target.value;
-    const dose = wt * 1;
-    const vol = dose / (25/5);
-    document.getElementById('redipredDose').textContent =
-      wt ? `Dose: ${dose.toFixed(1)} mg = ${vol.toFixed(2)} mL` : 'Dose:';
-  });
-
-  // Ibuprofen
-  document.getElementById('ibuWeight').addEventListener('input', e => {
-    const wt = +e.target.value;
-    const dose = Math.min(wt * 6, 400);
-    const vol = dose / (100/5);
-    document.getElementById('ibuprofenDose').textContent =
-      wt ? `Dose: ${dose.toFixed(1)} mg = ${vol.toFixed(2)} mL` : 'Dose:';
-  });
-
-  // Fentanyl
-  const fentanylWeight = document.getElementById('fentanylWeight');
-  const fentanylResult = document.getElementById('fentanylResult');
-  fentanylWeight.addEventListener('input', () => {
-    const wt = +fentanylWeight.value;
-    if (!wt) return fentanylResult.textContent = "Dose:";
-    const conc = 50;
-    const init = Math.max(21, wt*1.5);
-    const top = wt*0.5;
-    fentanylResult.innerHTML =
-      `Initial: ${init.toFixed(1)} mcg (${(init/conc).toFixed(2)} mL)<br>
-       Top-up: ${top.toFixed(1)} mcg (${(top/conc).toFixed(2)} mL)`;
-  });
-
-  // Drug Formula
-  const D = document.getElementById('desired');
-  const H = document.getElementById('have');
-  const V = document.getElementById('vehicle');
-  const R = document.getElementById('drugFormulaResult');
-  [D,H,V].forEach(i=>i.addEventListener('input',()=>{
-    const d=+D.value,h=+H.value,v=+V.value;
-    R.textContent = d&&h&&v ? `Result: ${(d/h*v).toFixed(2)} mL or tablets` : 'Result:';
-  }));
-
-  // Tablets & Capsules
-  const calcSimple = (req, avail, out) => {
-    const r = +document.getElementById(req).value;
-    const a = +document.getElementById(avail).value;
-    document.getElementById(out).textContent = (r&&a)?`Result: ${(r/a).toFixed(2)} tablets/capsules`:'Result:';
-  };
-  document.getElementById('tabRequired').addEventListener('input',()=>calcSimple('tabRequired','tabAvailable','tabResult'));
-  document.getElementById('tabAvailable').addEventListener('input',()=>calcSimple('tabRequired','tabAvailable','tabResult'));
-
-  // Liquids
-  const calcLiquid = ()=>{
-    const req=+liqRequired.value, avail=+liqAvailable.value, vol=+liqStock.value;
-    liqResult.textContent = (req&&avail&&vol)?`Result: ${(req/avail*vol).toFixed(2)} mL`:'Result:';
-  };
-  [liqRequired,liqAvailable,liqStock].forEach(i=>i.addEventListener('input',calcLiquid));
-
-  // Injection
-  const calcInj = ()=>{
-    const req=+injRequired.value, avail=+injAvailable.value, vol=+injStock.value;
-    injResult.textContent = (req&&avail&&vol)?`Result: ${(req/avail*vol).toFixed(2)} mL`:'Result:';
-  };
-  [injRequired,injAvailable,injStock].forEach(i=>i.addEventListener('input',calcInj));
-
-  // Infusion
-  const calcInf = ()=>{
-    const v=+infuseVolume.value, h=+infuseHours.value;
-    infuseResult.textContent = (v&&h)?`Rate: ${(v/h).toFixed(2)} mL/hr`:'Result:';
-  };
-  [infuseVolume,infuseHours].forEach(i=>i.addEventListener('input',calcInf));
-
-  // Drip
-  const calcDrip = ()=>{
-    const v=+dripVolume.value, c=+dripCalib.value, h=+dripHours.value;
-    dripResult.textContent = (v&&c&&h)?`Rate: ${((v*c)/(h*60)).toFixed(1)} drops/min`:'Result:';
-  };
-  [dripVolume,dripCalib,dripHours].forEach(i=>i.addEventListener('input',calcDrip));
+/* ===== general calculators logic ===== */
+function safeDivide(a,b){return b? a/b:0;}
+['tabRequired','tabAvailable'].forEach(i=>id(i).addEventListener('input',()=>{
+  const r=+id('tabRequired').value,a=+id('tabAvailable').value;
+  if(r&&a) id('tabResult').innerText='Result: '+(safeDivide(r,a)).toFixed(2);
+}));
+['liqRequired','liqAvailable','liqStock'].forEach(i=>id(i).addEventListener('input',()=>{
+  const r=+id('liqRequired').value,a=+id('liqAvailable').value,v=+id('liqStock').value;
+  if(r&&a&&v) id('liqResult').innerText='Result: '+(safeDivide(r,a)*v).toFixed(2)+' mL';
+}));
+['injRequired','injAvailable','injStock'].forEach(i=>id(i).addEventListener('input',()=>{
+  const r=+id('injRequired').value,a=+id('injAvailable').value,v=+id('injStock').value;
+  if(r&&a&&v) id('injResult').innerText='Result: '+(safeDivide(r,a)*v).toFixed(2)+' mL';
+}));
+['infuseVolume','infuseHours'].forEach(i=>id(i).addEventListener('input',()=>{
+  const vol=+id('infuseVolume').value,hrs=+id('infuseHours').value;
+  if(vol&&hrs) id('infuseResult').innerText='Result: '+(safeDivide(vol,hrs)).toFixed(2)+' mL/hr';
+}));
+['dripVolume','dripCalib','dripHours'].forEach(i=>id(i).addEventListener('input',()=>{
+  const v=+id('dripVolume').value,c=+id('dripCalib').value,h=+id('dripHours').value;
+  if(v&&c&&h) id('dripResult').innerText='Result: '+(safeDivide(v*c,(h*60))).toFixed(2)+' drops/min';
+}));
 </script>
 
 </body>
