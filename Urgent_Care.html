@@ -367,41 +367,64 @@ button:hover {
 }
 
 
-    #notes {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-      margin-top: 2rem;
-    }
+    /* Masonry container */
+#notes {
+  column-count: 4;                /* Adjust the number of columns (try 3–5 depending on screen size) */
+  column-gap: 1rem;               /* Space between columns */
+  padding: 1rem;
+  margin-top: 2rem;
+}
 
-     .note-card {
-      background: rgba(234, 224, 218, 0.15);
-      border-radius: 12px;
-      padding: 1rem;
-      box-shadow:
-        0 8px 32px rgba(31, 38, 135, 0.05),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      text-align: left;
-      transition: box-shadow 0.3s ease, transform 0.3s ease;
-      color: black;
-    }
+/* Responsive column counts */
+@media (max-width: 1000px) {
+  #notes {
+    column-count: 3;
+  }
+}
+@media (max-width: 600px) {
+  #notes {
+    column-count: 2;
+  }
+}
+@media (max-width: 300px) {
+  #notes {
+    column-count: 1;
+  }
+}
 
-    .note-card:hover {
-      box-shadow:
-        0 12px 48px rgba(31, 38, 135, 0.1),
-        0 0 15px rgba(255, 255, 255, 0.2);
-      transform: translateY(-3px);
-    }
+/* Individual note card */
+.note-card {
+  display: inline-block;          /* Let cards flow naturally in columns */
+  width: 90%;                    /* Fill column width */
+  margin-bottom: 1rem;            /* Space below each card */
+  background: rgba(234, 224, 218, 0.15);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.05),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  text-align: left;
+  color: black;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  break-inside: avoid;            /* Prevent card splitting across columns */
+}
 
-    .note-image {
-      max-width: 100%;
-      max-height: 200px;
-      cursor: zoom-in;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-    }
+.note-card:hover {
+  box-shadow:
+    0 12px 48px rgba(31, 38, 135, 0.1),
+    0 0 15px rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+}
+
+.note-image {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  cursor: zoom-in;
+}
+
 
     .note-image.zoomed {
       position: fixed;
