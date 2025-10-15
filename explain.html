@@ -35,18 +35,25 @@ body::before {
   pointer-events: none;
 }
 
-.page-header {
+/* Full width top header glassmorphism */
+.top-header {
   position: fixed;
   top: 0;
+  left: 0;
   width: 100%;
-  z-index: 999;
-  padding: 20px 0;
-  text-align: center;
-  background: rgba(245 245 245 / 0.3);
-  border-bottom: 1px solid rgba(210 210 210 / 0.3);
-  box-shadow: 0 2px 10px rgba(210 210 210 / 0.15);
-  backdrop-filter: saturate(180%) blur(12px);
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  height: 70px; /* adjust height if needed */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px; /* horizontal padding */
+  background: rgba(255, 255, 255, 0.2); /* frosted glass */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  z-index: 1000;
+  animation: fadeIn 1.5s ease forwards;
 }
 
 .page-header h1 {
@@ -54,6 +61,13 @@ body::before {
   font-size: 24px;
   color: #222;
 }
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 
 .home-btn {
   position: fixed;
@@ -80,7 +94,7 @@ body::before {
 .search-bar {
   position: fixed;
   top: 20px;
-  right: 20px;
+  right: 50px;
   z-index: 1000;
 }
 
@@ -357,12 +371,114 @@ mark {
 .note-card.show-buttons,
 .note-card:hover { z-index: 999; }
 
-
-/* Mobile & Tablet Adjustments */
-@media (max-width: 768px) {
-  .container { padding: 80px 10px 10px; }
-  .search-input { width: 120px; font-size: 11px; }
+.center-toggle {
+  position: fixed;
+  top: 20px;
+  left: 700px;
+  width: 30px;
+  height: 30px;
+  z-index: 1002;
 }
+/* 🌸 Glassmorphism style for rays */
+.center-toggle .ray {
+  background: rgba(255, 255, 255, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 6px 12px;
+  color: #000;
+  text-decoration: none !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transform: rotate(var(--angle)) translate(0px);
+  transition: 
+    opacity 0.4s ease, 
+    transform 0.4s ease; /* smooth transition */
+}
+
+/* Show rays when active */
+.center-toggle.active .ray {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Ray hover effect — change box color */
+.center-toggle .ray:hover {
+  background: #ededed;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+.toggle-icon {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #2d4d2d;
+  cursor: pointer;
+  transition: transform 0.4s ease;
+}
+
+.toggle-icon.active {
+  transform: rotate(45deg);
+}
+
+.rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  z-index: 1003;
+}
+
+.ray {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: #2f4f2f;
+  opacity: 0;
+  transform-origin: 0 0;
+  white-space: nowrap;
+  transform: rotate(var(--angle)) translate(40px);
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.ray span {
+  display: inline-block;
+  transform: rotate(calc(-1 * var(--angle)));
+  transition: color 0.3s ease;
+}
+
+/* Text color hover effect */
+.ray:hover span {
+  color: #F0EEEA;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .center-toggle {
+    top: 15px;
+    left: 10px;
+    width: 50px;
+    height: 50px;
+  }
+}
+
+
+
 </style>
 
 <script type="module">
@@ -692,20 +808,132 @@ document.addEventListener('input', (e) => {
     e.target.style.height = e.target.scrollHeight + 'px'; 
   }
 });
+
+const centerToggle = document.querySelector('.center-toggle');
+const toggleIcon = document.getElementById("menuToggle");
+const raysContainer = centerToggle.querySelector(".rays");
+
+let hoverTimeout;
+let currentSet = 0; // tracks which set to show next
+
+const raySets = [
+  [
+    { text: "Home", link: "https://xlyneve.github.io/CEP/home.html" },
+    { text: "Nurse Notes", link: "https://xlyneve.github.io/CEP/PN.html" },
+    { text: "Info", link: "https://xlyneve.github.io/CEP/info.html" },
+    { text: "PN", link: "https://xlyneve.github.io/CEP/practiceN.html" },
+	{ text: "Recall", link: "https://xlyneve.github.io/CEP/recalls.html" }
+  ],
+  [
+    { text: "Drug Calculator", link: "https://xlyneve.github.io/CEP/OHcalc.html" },
+    { text: "Vaccine Calc", link: "https://xlyneve.github.io/CEP/vaccine-spacing.html" },
+    { text: "Vaccines", link: "https://xlyneve.github.io/CEP/complete-vaccine-info.html" },
+    { text: "Meds list", link: "https://xlyneve.github.io/CEP/Npres.html" }
+  ]
+];
+
+const angles = ["-20deg","20deg","60deg","100deg","140deg","180deg"];
+
+function showRays() {
+  raysContainer.querySelectorAll('.ray').forEach(ray => {
+    ray.style.opacity = 1;
+    ray.style.pointerEvents = 'auto';
+  });
+}
+
+function hideRays() {
+  raysContainer.querySelectorAll('.ray').forEach(ray => {
+    ray.style.opacity = 0;
+    ray.style.pointerEvents = 'none';
+  });
+}
+
+// Hover (optional) — only show if no set active
+centerToggle.addEventListener('mouseenter', () => {
+  if (!toggleIcon.classList.contains("active")) {
+    clearTimeout(hoverTimeout);
+    showRays();
+  }
+});
+
+centerToggle.addEventListener('mouseleave', () => {
+  if (!toggleIcon.classList.contains("active")) {
+    hoverTimeout = setTimeout(() => {
+      hideRays();
+    }, 1000);
+  }
+});
+
+// Click rotates between sets
+toggleIcon.addEventListener("click", () => {
+  toggleIcon.classList.add("active");
+
+  // Clear old rays
+  raysContainer.innerHTML = "";
+
+  // Add current set of rays
+  const set = raySets[currentSet];
+  set.forEach((rayData, i) => {
+    const ray = document.createElement("a");
+    ray.className = "ray";
+    ray.href = rayData.link;
+    ray.textContent = rayData.text;
+    ray.style.opacity = "0";
+    ray.style.setProperty("--angle", angles[i] || "0deg");
+	ray.style.pointerEvents = "auto"; // Ensure clickable
+    raysContainer.appendChild(ray);
+	
+    // Small timeout to trigger smooth transition
+    setTimeout(() => {
+      ray.style.opacity = "1";
+      ray.style.transform = `rotate(${angles[i] || "0deg"}) translate(60px)`;
+      ray.style.pointerEvents = "auto";
+    }, 50); // 50ms delay triggers CSS transition
+  });
+  // Move to next set for next click
+  currentSet = (currentSet + 1) % raySets.length;
+});
+
+// Function to hide rays
+function hideAllRays() {
+  const allRays = raysContainer.querySelectorAll(".ray");
+  allRays.forEach(ray => {
+    ray.style.opacity = "0";
+    ray.style.pointerEvents = "none";
+    ray.style.transform = `rotate(${ray.style.getPropertyValue("--angle")}) translate(0px)`;
+  });
+  toggleIcon.classList.remove("active");
+}
+
+// Close rays when clicking outside
+document.addEventListener("click", (e) => {
+  if (!centerToggle.contains(e.target)) {
+    hideAllRays();
+  }
+});
 </script>
 
 
 </head>
 <body>
-  <a href="home.html" class="home-btn">Home</a>
+
+<div class="top-header">
+  <div class="header-left">
+    <!-- Home toggle with rays -->
+    <div class="center-toggle">
+      <div class="toggle-icon" id="menuToggle">☐</div>
+      <div class="rays"></div>
+    </div>
+
+    <h1>Templates</h1>
+  </div>
 
   <div class="search-bar">
     <input type="text" id="searchInput" class="search-input" placeholder="Search notes...">
   </div>
+</div>
 
-  <header class="page-header">
-  <h1>Templates</h1>
-</header>
+
 <div class="container">
   <div class="input-group">
     <input type="text" id="noteTitle" placeholder="Title" />
