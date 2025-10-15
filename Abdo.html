@@ -538,6 +538,7 @@ button:hover {
   text-decoration: none;
   color: black;
   font-weight: bold;
+  font-size: 25px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 1000;
@@ -546,13 +547,84 @@ button:hover {
 .home-btn:hover {
   background-color: rgba(255, 255, 255, 0.3);
 }
+/* HOME MENU + OVERLAY (small, non-invasive additions) */
+#homeMenuOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  z-index: 9000;
+}
+#homeMenuOverlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
 
+#homeMenu {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -120%;                 /* hidden above screen initially */
+  width: 280px;
+  max-width: calc(100% - 40px);
+  background: rgba(255,255,255,0.6);
+  border-radius: 16px;
+  padding: 16px 20px;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  transition: top 0.45s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease;
+  opacity: 0;
+  z-index: 9100;
+}
+#homeMenu.active {
+  top: 80px;      /* drop position — adjust if your top bar is taller */
+  opacity: 1;
+}
+
+.menu-link {
+  display:block;
+  margin: 8px 0;
+  font-family: 'fors', sans-serif;
+  color: black;
+  text-decoration: none;
+  font-size: 1.05rem;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background .18s ease;
+}
+.menu-link:hover { background: rgba(255,255,255,0.5); }
   }
 
   </style>
 </head>
 <body>
-   <a href="home.html"><button class="home-btn">Home</button></a>
+  <button id="homeBtn" class="home-btn" onclick="toggleHomeMenu()">☰</button>
+<!-- DIM BACKGROUND OVERLAY -->
+<div id="homeMenuOverlay" onclick="closeHomeMenu()"></div>
+
+<!-- SLIDING HOME MENU -->
+<div id="homeMenu" aria-hidden="true">
+  <h2 style="font-family:'hellohon',sans-serif;color:black;font-size:40px;margin:0 0 8px 0;">Navigate to:</h2>
+  <ul style="list-style:none;padding:0;margin:0;">
+    <li><a href="https://xlyneve.github.io/CEP/home.html" class="menu-link">Home 🏠</a></li>
+    <li><a href="https://xlyneve.github.io/CEP/face.html" class="menu-link">Head 💀 </a></li>
+	 <li><a href="https://xlyneve.github.io/CEP/Hand.html" class="menu-link">Hand🖐🏼Wrist </a></li>
+    <li><a href="https://xlyneve.github.io/CEP/Sha.html" class="menu-link">Shoulder💪🏻Elbow</a></li>
+    <li><a href="https://xlyneve.github.io/CEP/Spine.html" class="menu-link">Back+Spine</a></li>
+	<li><a href="https://xlyneve.github.io/CEP/LF.html" class="menu-link">Lower🦵🏻limb</a></li>
+	<li><a href="https://xlyneve.github.io/CEP/Urgent_Care.html" class="menu-link">Urgent⏳Care</a></li>
+  </ul>
+  <button type="button" onclick="closeHomeMenu()" style="
+    margin-top:12px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.4);
+    border:1px solid rgba(0,0,0,0.2);cursor:pointer;font-family:'fors',sans-serif;
+  ">Close</button>
+</div>
     <h1 class="page-title">Thorax/ Abdomen</h1>
 	
 	<div id="search-container">
@@ -653,6 +725,37 @@ function hideNoteInput() {
   document.getElementById('image').value = "";
 }
 </script>
+<script>
+  function toggleHomeMenu() {
+    const menu = document.getElementById('homeMenu');
+    const overlay = document.getElementById('homeMenuOverlay');
+    const isActive = menu.classList.contains('active');
 
+    if (isActive) {
+      menu.classList.remove('active');
+      overlay.classList.remove('active');
+      menu.setAttribute('aria-hidden', 'true');
+    } else {
+      menu.classList.add('active');
+      overlay.classList.add('active');
+      menu.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function closeHomeMenu() {
+    document.getElementById('homeMenu').classList.remove('active');
+    document.getElementById('homeMenuOverlay').classList.remove('active');
+    document.getElementById('homeMenu').setAttribute('aria-hidden', 'true');
+  }
+
+  // Auto-close the menu when a menu link is clicked (so on navigation the overlay doesn't linger).
+  document.addEventListener('click', function (e) {
+    const target = e.target;
+    if (target.matches && target.matches('.menu-link')) {
+      closeHomeMenu();
+      // default anchor navigation continues
+    }
+  });
+</script>
 </body>
 </html>
