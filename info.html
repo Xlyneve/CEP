@@ -668,6 +668,7 @@ function escapeHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
+
 // Render old plain-text notes that used **bold** / ==highlight==
 // If text already contains HTML tags, leave it as-is.
 function maybeParseLegacy(text) {
@@ -770,8 +771,20 @@ document.getElementById('addBtn').addEventListener('click', async () => {
 onSnapshot(collection(db, "informationNotes"), (snapshot) => {
   notes = [];
   snapshot.forEach(docSnap => notes.push({ id: docSnap.id, ...docSnap.data() }));
-  renderNotes(notes);
+
+  // Keep current search active
+  const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+  if (searchVal) {
+    const filtered = notes.filter(n =>
+      (n.title || '').toLowerCase().includes(searchVal) ||
+      (String(n.text || '')).toLowerCase().includes(searchVal)
+    );
+    renderNotes(filtered);
+  } else {
+    renderNotes(notes);
+  }
 });
+
 
 /* ---------------- Render ---------------- */
 function renderNotes(arr) {
@@ -994,6 +1007,19 @@ async function saveEdit(card) {
   toggleEdit(card, false);
 }
 
+// Reapply filter immediately after saving
+const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+if (searchVal) {
+  const filtered = notes.filter(n =>
+    (n.title || '').toLowerCase().includes(searchVal) ||
+    (String(n.text || '')).toLowerCase().includes(searchVal)
+  );
+  renderNotes(filtered);
+} else {
+  renderNotes(notes);
+}
+
+
 async function deleteNote(id) {
   if (!confirm("Are you sure you want to delete this note?")) return;
   await deleteDoc(doc(db, "informationNotes", id));
@@ -1131,4 +1157,3 @@ document.addEventListener("click", (e) => {
 </script>
 </body>
 </html>
-
