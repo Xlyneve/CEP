@@ -602,6 +602,7 @@ const db = getFirestore(app);
 let notes = [];
 const notesContainer = document.getElementById('notesContainer');
 const LONG_PRESS_MS = 600;
+let currentSearch = ''; // <-- track current search/filter
 
 /* ---------------- Utilities ---------------- */
 function escapeHtml(text) {
@@ -893,6 +894,14 @@ function renderNotes(arr) {
   });
 }
 
+function renderFilteredNotes() {
+  const filtered = notes.filter(n =>
+    (n.title || '').toLowerCase().includes(currentSearch) ||
+    (String(n.text || '')).toLowerCase().includes(currentSearch)
+  );
+  renderNotes(filtered);
+}
+
 /* ---------------- Edit / Save / Delete ---------------- */
 function toggleEdit(card, editing) {
   const titleEl = card.querySelector('.note-title');
@@ -936,7 +945,9 @@ async function saveEdit(card) {
   const newTitle = titleInput.value.trim();
   if (!newTitle || !newText) return alert("Title and explanation cannot be empty.");
   await updateDoc(doc(db, "practiceNNotes", id), { title: newTitle, text: newText });
-  toggleEdit(card, false);
+toggleEdit(card, false);
+renderFilteredNotes(); // <-- keep current filter applied
+
 }
 
 async function deleteNote(id) {
@@ -946,13 +957,10 @@ async function deleteNote(id) {
 
 /* ---------------- Search ---------------- */
 document.getElementById('searchInput').addEventListener('input', (e) => {
-  const val = e.target.value.toLowerCase();
-  const filtered = notes.filter(n =>
-    (n.title || '').toLowerCase().includes(val) ||
-    (String(n.text || '')).toLowerCase().includes(val)
-  );
-  renderNotes(filtered);
+  currentSearch = e.target.value.toLowerCase();
+  renderFilteredNotes();
 });
+
 const toggleBtn = document.getElementById('toggleInputBtn');
 const inputGroup = document.getElementById('inputGroup');
 
