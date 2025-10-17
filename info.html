@@ -604,6 +604,19 @@ textarea:focus {
     </div>
 
     <input type="text" id="noteUrl" placeholder="Optional URL" />
+	<input type="file" id="noteImage" accept="image/*" style="
+  margin: 6px 0;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(8px);
+  font-size: 12px;
+  color: #222;
+">
+
+	
+	
 
     <div class="action-buttons">
       <div class="format-buttons">
@@ -667,10 +680,6 @@ function escapeHtml(text) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-
-
-// Render old plain-text notes that used **bold** / ==highlight==
-// If text already contains HTML tags, leave it as-is.
 function maybeParseLegacy(text) {
   if (text.indexOf('<') === -1) {
     let s = escapeHtml(text);
@@ -681,51 +690,42 @@ function maybeParseLegacy(text) {
   }
   return text;
 }
-
 function closestTagWithin(node, tagName, container) {
   tagName = tagName.toUpperCase();
-  let el = (node && node.nodeType === 3) ? node.parentNode : node; // text node -> parent
+  let el = (node && node.nodeType === 3) ? node.parentNode : node;
   while (el && el !== container) {
     if (el.nodeType === 1 && el.tagName === tagName) return el;
     el = el.parentNode;
   }
   return null;
 }
-
 function unwrapElement(el) {
   if (!el || !el.parentNode) return;
   const parent = el.parentNode;
   while (el.firstChild) parent.insertBefore(el.firstChild, el);
   parent.removeChild(el);
 }
-
 function toggleHighlightInEditor(editor) {
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
   const range = sel.getRangeAt(0);
   if (!editor.contains(range.commonAncestorContainer)) return;
-
-  // If caret/selection sits inside a <mark>, unwrap it (toggle OFF)
   const m1 = closestTagWithin(sel.anchorNode, 'MARK', editor);
   const m2 = closestTagWithin(sel.focusNode, 'MARK', editor);
   let toggledOff = false;
   if (m1) { unwrapElement(m1); toggledOff = true; }
   if (m2 && m2.isConnected) { unwrapElement(m2); toggledOff = true; }
   if (toggledOff) return;
-
-  // Otherwise, apply highlight (toggle ON)
-  if (range.collapsed) return; // nothing selected
+  if (range.collapsed) return;
   const mark = document.createElement('mark');
   mark.style.backgroundColor = '#feb7ab';
   try {
     range.surroundContents(mark);
-    // keep selection on the new mark
     sel.removeAllRanges();
     const r = document.createRange();
     r.selectNodeContents(mark);
     sel.addRange(r);
   } catch (_) {
-    // Fallback when surroundContents fails (selection spans multiple nodes)
     const frag = range.cloneContents();
     const temp = document.createElement('div');
     temp.appendChild(frag);
@@ -733,13 +733,11 @@ function toggleHighlightInEditor(editor) {
     document.execCommand('insertHTML', false, `<mark style="background-color:#feb7ab;">${html}</mark>`);
   }
 }
-
 async function copyPlainText(text, onDone) {
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       await navigator.clipboard.writeText(text);
     } else {
-      // Fallback
       const ta = document.createElement('textarea');
       ta.value = text;
       document.body.appendChild(ta);
@@ -748,31 +746,46 @@ async function copyPlainText(text, onDone) {
       document.body.removeChild(ta);
     }
     if (onDone) onDone();
-  } catch (e) {
-    console.error('Copy failed', e);
-  }
+  } catch (e) { console.error('Copy failed', e); }
 }
 
-/* ---------------- Create note (from add form) ---------------- */
-// Assumes #noteText is a contenteditable div (live formatting)
+/* ---------------- Create note (with optional image) ---------------- */
 document.getElementById('addBtn').addEventListener('click', async () => {
   const title = document.getElementById('noteTitle').value.trim();
   const textEl = document.getElementById('noteText');
   const text = (textEl ? textEl.innerHTML : '').trim();
   const url = document.getElementById('noteUrl').value.trim();
+  const fileInput = document.getElementById('noteImage');
+  const file = fileInput ? fileInput.files[0] : null;
   if (!title || !text) return alert("Please fill in both Title and Explanation.");
-  await addDoc(collection(db, "informationNotes"), { title, text, url, timestamp: Date.now() });
-  document.getElementById('noteTitle').value = '';
-  if (textEl) textEl.innerHTML = '';
-  document.getElementById('noteUrl').value = '';
+
+  let imageBase64 = "";
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      imageBase64 = reader.result;
+      await addDoc(collection(db, "informationNotes"), { title, text, url, image: imageBase64, timestamp: Date.now() });
+      resetAddForm();
+    };
+    reader.readAsDataURL(file);
+  } else {
+    await addDoc(collection(db, "informationNotes"), { title, text, url, image: "", timestamp: Date.now() });
+    resetAddForm();
+  }
 });
+
+function resetAddForm() {
+  document.getElementById('noteTitle').value = '';
+  if (document.getElementById('noteText')) document.getElementById('noteText').innerHTML = '';
+  document.getElementById('noteUrl').value = '';
+  const fileInput = document.getElementById('noteImage');
+  if (fileInput) fileInput.value = '';
+}
 
 /* ---------------- Real-time updates ---------------- */
 onSnapshot(collection(db, "informationNotes"), (snapshot) => {
   notes = [];
   snapshot.forEach(docSnap => notes.push({ id: docSnap.id, ...docSnap.data() }));
-
-  // Keep current search active
   const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
   if (searchVal) {
     const filtered = notes.filter(n =>
@@ -785,37 +798,25 @@ onSnapshot(collection(db, "informationNotes"), (snapshot) => {
   }
 });
 
-
 /* ---------------- Render ---------------- */
 function renderNotes(arr) {
   notesContainer.innerHTML = '';
   if (!arr.length) { notesContainer.innerHTML = '<p>No notes found.</p>'; return; }
-
   arr.forEach(note => {
     const card = document.createElement('div');
     card.className = 'note-card';
     card.dataset.id = note.id;
     card.style.position = 'relative';
 
-    // Soft yellow check (top-right), hidden by default
+    // Tick feedback
     const tick = document.createElement('div');
     tick.textContent = '✓';
     Object.assign(tick.style, {
-      position: 'absolute',
-      top: '8px',
-      right: '8px',
-      width: '28px',
-      height: '28px',
-      borderRadius: '50%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '24px',
-	  fontWeight: '990',
-      color: '#ffe700',
-      opacity: '0',
-      transform: 'scale(0.85)',
-      transition: 'opacity 200ms ease, transform 200ms ease'
+      position: 'absolute', top: '8px', right: '8px',
+      width: '28px', height: '28px', borderRadius: '50%',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '24px', fontWeight: '990', color: '#ffe700',
+      opacity: '0', transform: 'scale(0.85)', transition: 'opacity 200ms ease, transform 200ms ease'
     });
     card.appendChild(tick);
 
@@ -823,7 +824,6 @@ function renderNotes(arr) {
     const titleEl = document.createElement('div');
     titleEl.className = 'note-title';
     titleEl.textContent = note.title;
-
     const titleInput = document.createElement('input');
     titleInput.type = 'text';
     titleInput.className = 'edit-title';
@@ -835,325 +835,284 @@ function renderNotes(arr) {
     urlEl.className = 'note-url';
     if (note.url) {
       const link = document.createElement('a');
-      link.href = note.url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.textContent = 'URL Link';
-      link.className = 'styled-link';
+      link.href = note.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      link.textContent = 'URL Link'; link.className = 'styled-link';
       urlEl.appendChild(link);
     }
 
-    // Text (display)
+    // Text display
     const textDisplay = document.createElement('div');
     textDisplay.className = 'note-text';
-    const html = maybeParseLegacy(note.text || '');
-    textDisplay.innerHTML = html;
+    textDisplay.innerHTML = maybeParseLegacy(note.text || '');
 
-    // Text (editor)
+    // Text editor
     const textEditor = document.createElement('div');
-    textEditor.className = 'edit-note';
-    textEditor.contentEditable = true;
-    textEditor.style.display = 'none';
-    textEditor.innerHTML = html;
-    textEditor.style.minHeight = '60px';
-    textEditor.style.maxHeight = '200px';
-    textEditor.style.overflowY = 'auto';
-    textEditor.style.margin = '8px 0';
+    textEditor.className = 'edit-note'; textEditor.contentEditable = true;
+    textEditor.style.display = 'none'; textEditor.innerHTML = maybeParseLegacy(note.text || '');
+    textEditor.style.minHeight = '60px'; textEditor.style.maxHeight = '200px'; textEditor.style.overflowY = 'auto'; textEditor.style.margin = '8px 0';
+
+    // Optional image
+    let imgEl = null;
+    if (note.image) {
+      imgEl = document.createElement('img');
+      imgEl.src = note.image;
+      imgEl.style.maxWidth = '100%';
+      imgEl.style.marginTop = '10px';
+      imgEl.style.borderRadius = '6px';
+      imgEl.style.cursor = 'zoom-in';
+      card.appendChild(imgEl);
+
+      // Zoom modal
+      const modal = document.getElementById("imgModal");
+      const modalImg = document.getElementById("modalImg");
+      imgEl.addEventListener("click", () => {
+        if (modal && modalImg) { modal.style.display = "flex"; modalImg.src = imgEl.src; }
+      });
+     const closeModalBtn = document.getElementById('closeModalBtn');
+
+closeModalBtn.addEventListener('click', () => {
+  modal.style.display = 'none';
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+});
+
+    }
 
     // Timestamp
     const timeEl = document.createElement('div');
     timeEl.className = 'timestamp';
     timeEl.textContent = `Added: ${new Date(note.timestamp).toLocaleString()}`;
 
-    // Buttons (hidden until long-press)
+    // Buttons
     const btnGroup = document.createElement('div');
-    btnGroup.className = 'btn-group';
-    btnGroup.style.display = 'none';
-
-    const editBtn = document.createElement('button');
-    editBtn.textContent = 'Edit';
-    editBtn.title = 'Edit this note';
-    editBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleEdit(card, true); });
-
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = 'Save';
-    saveBtn.title = 'Save changes';
-    saveBtn.style.display = 'none';
-    saveBtn.addEventListener('click', (e) => { e.stopPropagation(); saveEdit(card); });
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.title = 'Cancel editing';
-    cancelBtn.style.display = 'none';
-    cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleEdit(card, false); });
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.title = 'Delete this note';
-    deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteNote(note.id); });
-
+    btnGroup.className = 'btn-group'; btnGroup.style.display = 'none';
+    const editBtn = document.createElement('button'); editBtn.textContent = 'Edit'; editBtn.title='Edit'; editBtn.addEventListener('click', e=>{ e.stopPropagation(); toggleEdit(card,true); });
+    const saveBtn = document.createElement('button'); saveBtn.textContent = 'Save'; saveBtn.title='Save'; saveBtn.style.display='none'; saveBtn.addEventListener('click', e=>{ e.stopPropagation(); saveEdit(card); });
+    const cancelBtn = document.createElement('button'); cancelBtn.textContent = 'Cancel'; cancelBtn.title='Cancel'; cancelBtn.style.display='none'; cancelBtn.addEventListener('click', e=>{ e.stopPropagation(); toggleEdit(card,false); });
+    const deleteBtn = document.createElement('button'); deleteBtn.textContent = 'Delete'; deleteBtn.title='Delete'; deleteBtn.addEventListener('click', e=>{ e.stopPropagation(); deleteNote(note.id); });
     btnGroup.append(editBtn, saveBtn, cancelBtn, deleteBtn);
 
-    // Editor formatting (only visible in edit mode)
-    const editorBtns = document.createElement('div');
-    editorBtns.className = 'editor-buttons';
-    editorBtns.style.display = 'none';
-
-    const boldBtn = document.createElement('button');
-    boldBtn.textContent = 'Bold';
-    boldBtn.title = 'Bold';
-    boldBtn.addEventListener('click', (e) => { e.stopPropagation(); document.execCommand('bold'); });
-
-    const highlightBtn = document.createElement('button');
-    highlightBtn.textContent = 'Highlight';
-    highlightBtn.title = 'Highlight';
-    highlightBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHighlightInEditor(textEditor); });
-
+    // Editor formatting
+    const editorBtns = document.createElement('div'); editorBtns.className='editor-buttons'; editorBtns.style.display='none';
+    const boldBtn = document.createElement('button'); boldBtn.textContent='Bold'; boldBtn.title='Bold'; boldBtn.addEventListener('click', e=>{ e.stopPropagation(); document.execCommand('bold'); });
+    const highlightBtn = document.createElement('button'); highlightBtn.textContent='Highlight'; highlightBtn.title='Highlight'; highlightBtn.addEventListener('click', e=>{ e.stopPropagation(); toggleHighlightInEditor(textEditor); });
     editorBtns.append(boldBtn, highlightBtn);
 
     // Assemble card
     card.append(titleEl, titleInput, urlEl, textDisplay, textEditor, editorBtns, timeEl, btnGroup);
     notesContainer.appendChild(card);
 
-    /* ---------- Interactions ---------- */
-    // Long-press to reveal edit/delete
-    let pressTimer = null;
-    let longPressed = false;
-
-    const startPress = () => {
-      if (textEditor.style.display === 'block') return; // ignore while editing
-      longPressed = false;
-      pressTimer = setTimeout(() => {
-        btnGroup.style.display = 'flex';
-        longPressed = true;
-      }, LONG_PRESS_MS);
-    };
-    const endPress = () => {
-      if (pressTimer) clearTimeout(pressTimer);
-      // delay clearing flag so the upcoming click won't copy
-      setTimeout(() => { longPressed = false; }, 10);
-    };
-
+    // Long press
+    let pressTimer = null, longPressed=false;
+    const startPress = ()=>{ if(textEditor.style.display==='block') return; longPressed=false; pressTimer=setTimeout(()=>{ btnGroup.style.display='flex'; longPressed=true; }, LONG_PRESS_MS); };
+    const endPress = ()=>{ if(pressTimer) clearTimeout(pressTimer); setTimeout(()=>{longPressed=false;},10); };
     card.addEventListener('mousedown', startPress);
     card.addEventListener('mouseup', endPress);
     card.addEventListener('mouseleave', endPress);
-    card.addEventListener('touchstart', startPress, { passive: true });
+    card.addEventListener('touchstart', startPress,{passive:true});
     card.addEventListener('touchend', endPress);
 
-    // Click card to copy (only when NOT editing / NOT clicking buttons / NOT long-press)
-    card.addEventListener('click', (e) => {
-      if (textEditor.style.display === 'block') return;            // editing
-      if (longPressed) return;                                     // just long-pressed
-      if (e.target.closest('.btn-group')) return;                  // clicked a button
-      if (e.target.closest('.editor-buttons')) return;             // clicked format buttons
-      if (e.target.closest('.note-url')) return;                   // clicked link area
-      const textToCopy = textDisplay.innerText; // plain text only
-      copyPlainText(textToCopy, () => {
-        // soft yellow check feedback
-        tick.style.opacity = '1';
-        tick.style.transform = 'scale(1)';
-        setTimeout(() => {
-          tick.style.opacity = '0';
-          tick.style.transform = 'scale(0.85)';
-        }, 900);
+    // Click to copy
+    card.addEventListener('click', e=>{
+      if(textEditor.style.display==='block') return;
+      if(longPressed) return;
+      if(e.target.closest('.btn-group')) return;
+      if(e.target.closest('.editor-buttons')) return;
+      if(e.target.closest('.note-url')) return;
+      copyPlainText(textDisplay.innerText, ()=>{
+        tick.style.opacity='1'; tick.style.transform='scale(1)';
+        setTimeout(()=>{ tick.style.opacity='0'; tick.style.transform='scale(0.85)'; },900);
       });
     });
   });
 }
 
 /* ---------------- Edit / Save / Delete ---------------- */
-function toggleEdit(card, editing) {
+function toggleEdit(card, editing){
   const titleEl = card.querySelector('.note-title');
   const titleInput = card.querySelector('.edit-title');
   const textDisplay = card.querySelector('.note-text');
   const textEditor = card.querySelector('.edit-note');
   const btnGroup = card.querySelector('.btn-group');
   const editorBtns = card.querySelector('.editor-buttons');
-
   const [editBtn, saveBtn, cancelBtn] = btnGroup.querySelectorAll('button');
-
-  if (editing) {
-    titleEl.style.display = 'none';
-    titleInput.style.display = 'block';
-    textDisplay.style.display = 'none';
-    textEditor.style.display = 'block';
-    btnGroup.style.display = 'flex';
-    editBtn.style.display = 'none';
-    saveBtn.style.display = 'inline-block';
-    cancelBtn.style.display = 'inline-block';
-    editorBtns.style.display = 'flex';
-    textEditor.focus();
+  if(editing){
+    titleEl.style.display='none'; titleInput.style.display='block';
+    textDisplay.style.display='none'; textEditor.style.display='block';
+    btnGroup.style.display='flex'; editBtn.style.display='none';
+    saveBtn.style.display='inline-block'; cancelBtn.style.display='inline-block';
+    editorBtns.style.display='flex'; textEditor.focus();
   } else {
-    titleEl.style.display = 'block';
-    titleInput.style.display = 'none';
-    textDisplay.style.display = 'block';
-    textEditor.style.display = 'none';
-    // keep edit/delete hidden until long press again
-    editBtn.style.display = '';
-    saveBtn.style.display = 'none';
-    cancelBtn.style.display = 'none';
-    editorBtns.style.display = 'none';
+    titleEl.style.display='block'; titleInput.style.display='none';
+    textDisplay.style.display='block'; textEditor.style.display='none';
+    editBtn.style.display=''; saveBtn.style.display='none'; cancelBtn.style.display='none';
+    editorBtns.style.display='none';
   }
 }
 
-async function saveEdit(card) {
-  const id = card.dataset.id;
-  const textEditor = card.querySelector('.edit-note');
-  const titleInput = card.querySelector('.edit-title');
-  const newText = textEditor.innerHTML.trim();
-  const newTitle = titleInput.value.trim();
-  if (!newTitle || !newText) return alert("Title and explanation cannot be empty.");
-  await updateDoc(doc(db, "informationNotes", id), { title: newTitle, text: newText });
-  toggleEdit(card, false);
-}
-
-// Reapply filter immediately after saving
-const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
-if (searchVal) {
-  const filtered = notes.filter(n =>
-    (n.title || '').toLowerCase().includes(searchVal) ||
-    (String(n.text || '')).toLowerCase().includes(searchVal)
-  );
+async function saveEdit(card){
+  const id=card.dataset.id;
+  const textEditor=card.querySelector('.edit-note');
+  const titleInput=card.querySelector('.edit-title');
+  const newText=textEditor.innerHTML.trim();
+  const newTitle=titleInput.value.trim();
+  if(!newTitle||!newText) return alert("Title and explanation cannot be empty.");
+  await updateDoc(doc(db,"informationNotes",id),{title:newTitle,text:newText});
+  toggleEdit(card,false);
+  // Reapply search
+  const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered = searchVal ? notes.filter(n=>(n.title||'').toLowerCase().includes(searchVal)||(String(n.text||'')).toLowerCase().includes(searchVal)) : notes;
   renderNotes(filtered);
-} else {
-  renderNotes(notes);
 }
 
-
-async function deleteNote(id) {
-  if (!confirm("Are you sure you want to delete this note?")) return;
-  await deleteDoc(doc(db, "informationNotes", id));
+async function deleteNote(id){
+  if(!confirm("Are you sure you want to delete this note?")) return;
+  await deleteDoc(doc(db,"informationNotes",id));
 }
 
 /* ---------------- Search ---------------- */
-document.getElementById('searchInput').addEventListener('input', (e) => {
-  const val = e.target.value.toLowerCase();
-  const filtered = notes.filter(n =>
-    (n.title || '').toLowerCase().includes(val) ||
-    (String(n.text || '')).toLowerCase().includes(val)
-  );
+document.getElementById('searchInput').addEventListener('input',(e)=>{
+  const val=e.target.value.toLowerCase();
+  const filtered=notes.filter(n=>(n.title||'').toLowerCase().includes(val)||(String(n.text||'')).toLowerCase().includes(val));
   renderNotes(filtered);
 });
-const toggleBtn = document.getElementById('toggleInputBtn');
-const inputGroup = document.getElementById('inputGroup');
 
-let isOpen = false;
-
-toggleBtn.addEventListener('click', () => {
-  if (!isOpen) {
-    inputGroup.style.bottom = '80px'; // slide up (adjust if needed)
-    toggleBtn.textContent = '−';
-    inputGroup.scrollIntoView({ behavior: 'smooth' });
-  } else {
-    inputGroup.style.bottom = '-400px'; // slide back down
-    toggleBtn.textContent = '+';
-  }
-  isOpen = !isOpen;
+/* ---------------- Toggle Input Group ---------------- */
+const toggleBtn=document.getElementById('toggleInputBtn');
+const inputGroup=document.getElementById('inputGroup');
+let isOpen=false;
+toggleBtn.addEventListener('click',()=>{
+  if(!isOpen){ inputGroup.style.bottom='80px'; toggleBtn.textContent='−'; inputGroup.scrollIntoView({behavior:'smooth'}); }
+  else{ inputGroup.style.bottom='-400px'; toggleBtn.textContent='+'; }
+  isOpen=!isOpen;
 });
 
-const centerToggle = document.querySelector('.center-toggle');
-const toggleIcon = document.getElementById("menuToggle");
-const raysContainer = centerToggle.querySelector(".rays");
-
+/* ---------------- Rays Menu ---------------- */
+const centerToggle=document.querySelector('.center-toggle');
+const toggleIcon=document.getElementById("menuToggle");
+const raysContainer=centerToggle.querySelector(".rays");
 let hoverTimeout;
-let currentSet = 0; // tracks which set to show next
-
-const raySets = [
-  [
-    { text: "Home", link: "https://xlyneve.github.io/CEP/home.html" },
+let currentSet=0;
+const raySets=[
+  [ { text: "Home", link: "https://xlyneve.github.io/CEP/home.html" },
     { text: "Nurse Notes", link: "https://xlyneve.github.io/CEP/PN.html" },
     { text: "Template", link: "https://xlyneve.github.io/CEP/explain.html" },
     { text: "PN", link: "https://xlyneve.github.io/CEP/practiceN.html" },
-	{ text: "Recall", link: "https://xlyneve.github.io/CEP/recalls.html" }
-  ],
-  [
-    { text: "Drug Calculator", link: "https://xlyneve.github.io/CEP/OHcalc.html" },
+    { text: "Recall", link: "https://xlyneve.github.io/CEP/recalls.html" } ],
+  [ { text: "Drug Calculator", link: "https://xlyneve.github.io/CEP/OHcalc.html" },
     { text: "Vaccine Calc", link: "https://xlyneve.github.io/CEP/vaccine-spacing.html" },
     { text: "Vaccines", link: "https://xlyneve.github.io/CEP/complete-vaccine-info.html" },
-    { text: "Meds list", link: "https://xlyneve.github.io/CEP/Npres.html" }
-  ]
+    { text: "Meds list", link: "https://xlyneve.github.io/CEP/Npres.html" } ]
 ];
-
-const angles = ["-20deg","20deg","60deg","100deg","140deg","180deg"];
-
-function showRays() {
-  raysContainer.querySelectorAll('.ray').forEach(ray => {
-    ray.style.opacity = 1;
-    ray.style.pointerEvents = 'auto';
-  });
-}
-
-function hideRays() {
-  raysContainer.querySelectorAll('.ray').forEach(ray => {
-    ray.style.opacity = 0;
-    ray.style.pointerEvents = 'none';
-  });
-}
-
-// Hover (optional) — only show if no set active
-centerToggle.addEventListener('mouseenter', () => {
-  if (!toggleIcon.classList.contains("active")) {
-    clearTimeout(hoverTimeout);
-    showRays();
-  }
-});
-
-centerToggle.addEventListener('mouseleave', () => {
-  if (!toggleIcon.classList.contains("active")) {
-    hoverTimeout = setTimeout(() => {
-      hideRays();
-    }, 1000);
-  }
-});
-
-// Click rotates between sets
-toggleIcon.addEventListener("click", () => {
+const angles=["-20deg","20deg","60deg","100deg","140deg","180deg"];
+function showRays(){ raysContainer.querySelectorAll('.ray').forEach(ray=>{ ray.style.opacity=1; ray.style.pointerEvents='auto'; }); }
+function hideRays(){ raysContainer.querySelectorAll('.ray').forEach(ray=>{ ray.style.opacity=0; ray.style.pointerEvents='none'; }); }
+centerToggle.addEventListener('mouseenter',()=>{ if(!toggleIcon.classList.contains("active")){ clearTimeout(hoverTimeout); showRays(); } });
+centerToggle.addEventListener('mouseleave',()=>{ if(!toggleIcon.classList.contains("active")){ hoverTimeout=setTimeout(()=>{ hideRays(); },1000); } });
+toggleIcon.addEventListener("click",()=>{
   toggleIcon.classList.add("active");
-
-  // Clear old rays
-  raysContainer.innerHTML = "";
-
-  // Add current set of rays
-  const set = raySets[currentSet];
-  set.forEach((rayData, i) => {
-    const ray = document.createElement("a");
-    ray.className = "ray";
-    ray.href = rayData.link;
-    ray.textContent = rayData.text;
-    ray.style.opacity = "0";
-    ray.style.setProperty("--angle", angles[i] || "0deg");
-	ray.style.pointerEvents = "auto"; // Ensure clickable
+  raysContainer.innerHTML="";
+  const set=raySets[currentSet];
+  set.forEach((rayData,i)=>{
+    const ray=document.createElement("a");
+    ray.className="ray"; ray.href=rayData.link; ray.textContent=rayData.text; ray.style.opacity="0";
+    ray.style.setProperty("--angle", angles[i]||"0deg"); ray.style.pointerEvents="auto";
     raysContainer.appendChild(ray);
-	
-    // Small timeout to trigger smooth transition
-    setTimeout(() => {
-      ray.style.opacity = "1";
-      ray.style.transform = `rotate(${angles[i] || "0deg"}) translate(60px)`;
-      ray.style.pointerEvents = "auto";
-    }, 50); // 50ms delay triggers CSS transition
+    setTimeout(()=>{ ray.style.opacity="1"; ray.style.transform=`rotate(${angles[i]||"0deg"}) translate(60px)`; ray.style.pointerEvents="auto"; },50);
   });
-  // Move to next set for next click
-  currentSet = (currentSet + 1) % raySets.length;
+  currentSet=(currentSet+1)%raySets.length;
+});
+function hideAllRays(){ raysContainer.querySelectorAll(".ray").forEach(ray=>{ ray.style.opacity="0"; ray.style.pointerEvents="none"; ray.style.transform=`rotate(${ray.style.getPropertyValue("--angle")}) translate(0px)`; }); toggleIcon.classList.remove("active"); }
+document.addEventListener("click",(e)=>{ if(!centerToggle.contains(e.target)) hideAllRays(); });
+
+const modal = document.getElementById("imgModal");
+const modalImg = document.getElementById("modalImg");
+const canvas = document.getElementById("rulerCanvas");
+const ctx = canvas.getContext('2d');
+
+let isDrawing = false;
+let startX = 0, startY = 0;
+
+// Update canvas size whenever image loads
+modalImg.addEventListener('load', () => {
+  canvas.width = modalImg.clientWidth;
+  canvas.height = modalImg.clientHeight;
+  canvas.style.width = modalImg.clientWidth + 'px';
+  canvas.style.height = modalImg.clientHeight + 'px';
+  canvas.style.pointerEvents = 'auto';
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 });
 
-// Function to hide rays
-function hideAllRays() {
-  const allRays = raysContainer.querySelectorAll(".ray");
-  allRays.forEach(ray => {
-    ray.style.opacity = "0";
-    ray.style.pointerEvents = "none";
-    ray.style.transform = `rotate(${ray.style.getPropertyValue("--angle")}) translate(0px)`;
-  });
-  toggleIcon.classList.remove("active");
-}
-
-// Close rays when clicking outside
-document.addEventListener("click", (e) => {
-  if (!centerToggle.contains(e.target)) {
-    hideAllRays();
-  }
+// Mouse events
+canvas.addEventListener('mousedown', (e) => {
+  e.stopPropagation(); // <--- add this
+  isDrawing = true;
+  const rect = canvas.getBoundingClientRect();
+  startX = e.clientX - rect.left;
+  startY = e.clientY - rect.top;
 });
+
+canvas.addEventListener('mousemove', (e) => {
+  e.stopPropagation(); // <--- add this
+  if (!isDrawing) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle = '#ffeb3b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(x, startY);
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(startX, y);
+  ctx.stroke();
+});
+
+canvas.addEventListener('mouseup', (e) => {
+  e.stopPropagation(); // <--- add this
+  isDrawing = false;
+});
+
+canvas.addEventListener('mouseleave', (e) => {
+  e.stopPropagation(); // <--- add this
+  isDrawing = false;
+});
+
 
 </script>
+<!-- Image Zoom Modal -->
+<div id="imgModal" style="
+  display:none;
+  position:fixed;
+  top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0.7);
+  justify-content:center;
+  align-items:center;
+  z-index:2000;
+">
+  <div style="position:relative;">
+    <img id="modalImg" src="" style="max-width:90vw; max-height:90vh; display:block; border-radius:6px;">
+    <canvas id="rulerCanvas" style="
+      position:absolute;
+      top:0; left:0;
+      width:100%; height:100%;
+      pointer-events:auto;
+    "></canvas>
+
+    <!-- Close Button -->
+    <button id="closeModalBtn" style="
+      position:absolute;
+      top:10px; right:10px;
+      font-size:24px;
+      background: rgba(255,255,255,0.5);
+      border:none; border-radius:50%;
+      width:36px; height:36px;
+      cursor:pointer;
+      z-index:10;
+    ">×</button>
+  </div>
+</div>
+
 </body>
 </html>
