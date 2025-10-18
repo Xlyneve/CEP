@@ -1,1157 +1,1078 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<!-- Keep zoomable; we'll handle the "fit to phone" with CSS transform -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-
-<title>Nurses Roster</title>
-<style>
-html {
-  -webkit-text-size-adjust: 100%; /* prevents font resizing on zoom */
-  text-size-adjust: 100%;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nurse Notes</title>
+  <style>
+@font-face {
+  font-family: 'fors';
+  src: url('fors.ttf') format('truetype');
 }
 
-:root{
-  --cal-w: 900px;   /* calendar width (keep same as your design) */
-  --nurse-w: 250px; /* nurse panel width */
-  --gap: 20px;      /* visual gap between nurse panel and calendar */
-
-  /* desktop total width ≈ nurse + gap + calendar + margins/padding */
-  --desktop-w: 1220px; /* tweak if your desktop width changes */
-  --app-scale: 1;      /* JS updates this to fit smaller screens */
-}
-
-/* ===== Base ===== */
-body {
-  font-family: Arial, sans-serif;
+html, body {
+  height: 100%;
   margin: 0;
   padding: 0;
-  background: #ededed; /* very light gray */
-  color: #333;
-  position: relative;
+  font-family: 'Tahoma', sans-serif;
   overflow-x: hidden;
-  overflow-y: auto;
-  box-sizing: border-box;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 
-/* Auto-scaling root:
-   - We scale the whole desktop UI down to fit phone width
-   - Width compensation keeps internal layout intact (no wrapping) */
-#zoomRoot {
-  transform: scale(var(--app-scale));
-  transform-origin: top left;
-  width: calc(100% / var(--app-scale));
-  will-change: transform;
-}
-#zoomRoot {
-  transform: scale(var(--app-scale)) translateZ(0);
-}
-
-
-/* Subtle frosted overlay effect */
-body::after {
+/* Background image with full-page blur overlay */
+body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('2b.png') no-repeat center center fixed;
+  background-size: cover;
+  filter: blur(10px) brightness(0.9);
   z-index: -1;
 }
 
-/* Glassy panels (applied to nurse-list by default; calendar gets overridden below) */
-.nurse-list,
-.calendar {
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  padding: 10px;
+.note-content {
+  font-family: 'Tahoma', sans-serif;
+  font-size: 12px;
 }
 
-/* Header with logo */
-.main-header {
+.header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 70px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 12px;
-  background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  border-bottom: 1px solid rgba(200,200,200,0.35);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-}
-
-.main-header .logo {
-  max-height: 70px;
-  object-fit: contain;
-}
-
-/* ===== Auth section ===== */
-.auth-section {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  margin:10px auto 20px auto;
-  text-align:center;
-  font-size:0.85em;
-  padding: 12px;
-  background: rgba(255,255,255,0.25);
-  backdrop-filter: blur(14px) saturate(150%);
-  border-radius: 12px;
-  border: 1px solid rgba(200,200,200,0.3);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-  width: fit-content;
-}
-
-.auth-section input {
-  padding:6px;
-  margin:4px;
-  width:180px;
-  font-size:0.85em;
-  border:1px solid #ccc;
-  border-radius:6px;
-}
-
-.auth-section button {
-  padding:4px 10px;
-  font-size:0.8em;
-  margin: 2px;
-  border:none;
-  border-radius:6px;
-  background: rgba(255,255,255,0.25);
-  backdrop-filter: blur(8px);
-  color:#333;
-  cursor:pointer;
-  transition: 0.2s ease;
-}
-
-.auth-section button:hover {
-  background: rgba(255,255,255,0.4);
-}
-
-.auth-buttons { margin-top: 6px; }
-
-#loginBtn { background: #4cafef; color: white; }
-#loginBtn:hover { background: #369ed8; }
-#logoutBtn { background: #888; color: white; }
-#logoutBtn:hover { background: #666; }
-
-#userStatus {
-  margin-top: 6px;
-  font-size: 0.8em;
-  color: #444;
-}
-
-/* ===== Layout: Desktop side-by-side ===== */
-.container {
-  position: relative;          /* add this line */
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+  justify-content: space-between;
+  padding: 0 20px;
   box-sizing: border-box;
-}
-
-.nurse-list {
-  display: block;
-  position: sticky;    /* fixed so it always stays in place */
-  top: 110px;         /* distance from top of viewport */
-  left: 10px;         /* distance from left of viewport */
-
-  width: var(--nurse-w);
-  max-width: var(--nurse-w);
-
-  max-height: 90vh;          /* scrollable if list is long */
-  overflow-y: auto;
-
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-radius: 12px;
-  border: 1px solid rgba(200,200,200,0.4);
-
-  padding: 10px;
-  z-index: 1000;  /* keep above calendar */
-}
-body.logged-in .nurse-list {
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
-  height: 100vh;       /* make it fill vertically */
-  overflow-y: auto;
-}
-/* nurse items look draggable */
-.nurse-list .nurse-item {
-  cursor: grab;
-  user-select: none;
-  margin-bottom: 8px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: transform 0.15s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  z-index: 50;
+  pointer-events: auto;
 }
 
-.nurse-list .nurse-item:active {
-  cursor: grabbing;
-  transform: scale(0.95);
-}
-.nurse-list, .calendar {
-  flex-shrink: 0;
-  min-width: 0;
-}
-
-/* Nurse items */
-.nurse {
-  display: flex;
-  align-items: center;
-  margin: 3px 0;
-  justify-content: space-between;
-  position: relative;
-  padding-right: 20px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-.nurse.selected { background: rgba(255, 152, 0, 0.15); }
-
-.nurse-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-grow: 1;
-}
-.nurse-note {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #666;
-  background: #f9f9f9;
-  padding: 6px 8px;
-  border-left: 3px solid #ccc;
-  border-radius: 6px;
-}
-.nurse-note ul {
-  margin: 5px 0 0 15px;
-  padding: 0;
-}
-.nurse-note li {
-  margin: 2px 0;
-}
-
-/* highlight when a nurse is dragged over a day */
-.day.drag-over {
-  outline: 2px dashed #ff9800;
-  background: rgba(255, 152, 0, 0.1);
-}
-
-.color-box {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 1px solid #aaa;
-  opacity: 0.6;
-  transition: opacity 0.2s ease, border-color 0.2s ease;
-}
-.color-box:hover { opacity: 1; border-color: #666; }
-
-.color-picker {
+.header-left {
   position: absolute;
-  left: 70px;
-  top: 1px;
+  top: 18px;
+  left: 10px;
+  z-index: 1001;
+}
+
+.header-left a.header-link,
+.header a.header-link {
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: rgba(189, 191, 218, 0.6);
+  border-radius: 6px;
+  border: 1px solid rgba(204, 186, 181, 0.6);
+  color: black;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.3s ease;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1000;
+}
+
+.header-left a.header-link {
+  padding: 4px 10px;
+  font-size: 13px;
+  background-color: rgba(189, 191, 218, 0.7);
+  border: 1px solid rgba(204, 186, 181, 0.6);
+  position: absolute;
+  top: 3px;
+  left: 10px;
+  z-index: 1001;
+}
+
+.header a:hover,
+.header-left a.header-link:hover {
+  background-color: #b88eaa;
+  color: #000;
+}
+
+.header-title {
+  position: absolute;
+  top: 10px;
+  left: 80px;
+  transform: none;
+  font-size: 22px;
+  font-weight: bold;
+  color: #000;
+  text-align: left;
+  z-index: 60;
+  pointer-events: auto;
+  opacity: 0; /* Start hidden */
+  animation: fadeIn 1.5s ease forwards; /* Trigger fade-in */
+}
+
+/* Add keyframes for fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+a.header-link {
+  position: relative;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.search-box {
+  z-index: 50;
+  pointer-events: auto;
+}
+
+.search-box input {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 150px; /* fixed width */
+}
+
+.container {
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 100px 20px 20px 20px;
+  position: relative;
+  z-index: 40;
+}
+
+h2 {
+  text-align: center;
+  font-size: 20px;
+}
+
+.form-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 40;
+  align-items: flex-start;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.form-section input[type="file"],
+.form-section textarea {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #222;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: 'fors', sans-serif;
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+#nurseTitle,
+#nurseURL {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: none;
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.15);
+  color: #222;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: 'fors', sans-serif;
+  transition: all 0.3s ease;
+}
+
+#nurseTitle:focus,
+#nurseURL:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+#nurseTitle {
+  flex: 1 1 180px;
+  height: 60px;
+  min-width: 150px;
+}
+
+#nurseNote {
+  flex: 2 1 280px;
+  min-height: 60px;
+  resize: vertical;
+}
+
+#nurseURL {
+  flex: 1 1 180px;
+  height: 60px;
+  min-width: 150px;
+}
+
+#nurseImage {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.cards-container {
+  column-count: 4;
+  column-gap: 15px;
+  width: 100%;
+  padding: 10px 0;
+}
+
+.note-card {
+  display: inline-block;
+  width: 90%;
+  margin-bottom: 15px;
+  break-inside: avoid;
+  padding: 15px;
+  border-radius: 12px;
+  position: relative;
+  word-wrap: break-word;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15),
+              0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.note-card .note-content,
+.note-card .note-title {
+  color: #000;
+}
+
+.note-card:hover {
+  box-shadow:
+    inset 0 3px 8px rgba(220 240 255 / 0.6),
+    0 0 14px 5px rgba(220 240 255 / 0.45),
+    0 8px 24px rgba(190 210 240 / 0.15);
+  transform: translateY(-10px);
+}
+
+.edit-title {
+  width: 93%;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+  color: #222;
+  transition: all 0.3s ease;
+}
+
+.note-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.note-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.highlight {
+  background-color: #f67a66;
+}
+
+.editor-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+button,
+.note-actions button,
+.editor-buttons button,
+.header a.header-link {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #111;
+  padding: 6px 12px;
+  font-size: 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3),
+              inset 0 0 10px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+  text-align: center;
+}
+
+button:hover,
+.note-actions button:hover,
+.editor-buttons button:hover,
+.header a.header-link:hover {
+  background: rgba(255, 255, 255, 0.35);
+  color: #000;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.5),
+              inset 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+button:active,
+.note-actions button:active,
+.editor-buttons button:active,
+.header a.header-link:active,
+button:focus,
+.note-actions button:focus,
+.editor-buttons button:focus,
+.header a.header-link:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6),
+              inset 0 0 14px rgba(255, 255, 255, 0.4);
+  color: #000;
+}
+
+.note-url {
+  margin-top: 10px;
+}
+
+.note-url a {
+  background-color: #FFF1F5;
+  color: #333;
+  text-decoration: none;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  display: inline-block;
+  transition: background-color 0.3s ease;
+}
+
+.note-url a:hover {
+  background-color: #ddc6b2;
+}
+
+.note-url a .icon {
+  margin-right: 6px;
+}
+
+.custom-file-btn {
+  display: inline-block;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'fors', sans-serif;
+  font-size: 13px;
+  color: #222;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+  user-select: none;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.custom-file-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  color: #000;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.add-btn {
+  height: 34px;
+  min-width: 100px;
+  align-self: flex-start;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  color: #111;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.add-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.hidden {
   display: none;
 }
 
-.delete-btn {
-  color: red;
-  font-weight: normal;
-  font-size: 1em;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  user-select: none;
-}
-.nurse:hover .delete-btn { opacity: 1; }
-
-.add-nurse {
-  margin-top: 10px;
-  display: flex;
-  gap: 5px;
-  align-items: center;
-}
-.add-nurse input {
-  padding: 2px 4px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 152, 0, 0.6);
-  background: rgba(255, 255, 255, 0.6);
-  color: #333;
-  width: 90px;
-  transition: border 0.3s, box-shadow 0.3s;
-}
-.add-nurse input:focus {
-  outline: none;
-  border: 1px solid #ff9800;
-  box-shadow: 0 0 4px rgba(255, 152, 0, 0.7);
-}
-.add-nurse button {
-  padding: 2px 4px;
-  font-size: 0.8rem;
-  border-radius: 6px;
-  border: none;
-  background: #ff9800;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-.add-nurse button:hover { background: #e68900; }
-
-.calendar {
-  flex: 0 0 var(--cal-w);
-  max-width: var(--cal-w);
-  width: var(--cal-w);
-  margin: 0 auto;
-  padding: 10px;
-
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-
-  justify-self: center;
-  overflow-x: hidden;
-}
-
-/* Calendar header + buttons */
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 20px; /* increased from 16px */
-  font-weight: bold; /* optional: makes it more prominent */
-}
-
-.left-buttons {
-  display: flex;
-  gap: 20px;
-}
-
-.right-button {
-  display: flex;
-}
-
-.month-label {
-  text-align: center;
-  flex-grow: 2;
-  font-weight: bold;
-  font-size: 1.2em;
-}
-
-.btn {
-  padding: 8px 16px;
-  font-size: 0.8rem;
-  border: none;
-  border-radius: 6px;
-  background: #d8e2dc;
-  color: black;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-.btn:hover { background: #e68900; }
-
-/* Weekdays row */
-.weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  text-align: center;
-  margin-bottom: 5px;
-  width: 100%;
-}
-.weekdays div {
-  padding: 8px 0;
-  background: rgba(231, 227, 229, 0.8);
-  border-radius: 4px;
-  border: 1px solid rgba(203, 191, 197, 0.8);
-  font-size: 1rem;
-  font-weight: bold;
-}
-
-/* Calendar grid */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  width: 100%;
-}
-.calendar-scroll-wrapper {
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  margin-bottom: 10px;
-}
-
-/* Day cells */
-.day {
-  padding: 10px;
-  border: 1px solid rgba(180, 180, 180, 0.6);
-  border-radius: 12px;
-  min-height: 140px;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(10px) saturate(160%);
-  -webkit-backdrop-filter: blur(10px) saturate(160%);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  transition: transform 0.2s, box-shadow 0.2s;
-  color: #333;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-.day.weekend { background: rgba(245, 245, 245, 0.4); }
-
-.day.today {
-  position: relative;
-  z-index: 2;
-  border: 2px solid transparent; /* Base border */
-  border-radius: 0; /* Sharp corners */
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(14px) saturate(180%);
-  -webkit-backdrop-filter: blur(14px) saturate(180%);
-}
-
-.day.today::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border-radius: 8px; /* Sharp corners */
-  border: 2px solid;
-  border-color: #ffdab4; /* Theme glow color */
-  box-shadow: 0 0 10px #ffdab4, 0 0 20px #ffdab4, 0 0 30px #ffdab4;
-  pointer-events: none;
-  animation: glowBorder 1.5s linear infinite;
-}
-
-@keyframes glowBorder {
-  0% {
-    box-shadow: 0 0 5px #ffdab4, 0 0 10px #ffdab4, 0 0 15px #ffdab4;
-  }
-  50% {
-    box-shadow: 0 0 15px #ffdab4, 0 0 25px #ffdab4, 0 0 35px #ffdab4;
-  }
-  100% {
-    box-shadow: 0 0 5px #ffdab4, 0 0 10px #ffdab4, 0 0 15px #ffdab4;
-  }
-}
-
-
-
-
-.day-number {
-  margin-bottom: 5px;
-  cursor: pointer;
-  color: black;
-  font-size: 1.1rem;
-}
-
-.day-note {
-  font-size: 0.8em;
-  color: black;
-  background-color: #f5f2c1cc;
-  margin-left: 5px;
-  padding: 2px 5px;
-  border-radius: 5px;
-  user-select: none;
-}
-
-.shift {
-  display: block;
-  margin: 2px 0;
-  padding: 3px 6px;
-  border-radius: 6px;
-  font-size: 0.85em;
-  font-weight: 500;
-  text-align: center;
-  color: #fff;
-  background-clip: padding-box;
-}
-.shift .delete-btn {
-  font-size: 1.2em !important;
-  margin-left: 5px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.3);
+#toggleFormBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  padding: 0 8px !important;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(90px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 28px;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+
+#toggleFormBtn:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+#nurseFormWrapper {
+  position: fixed;
+  bottom: -100%;
+  right: 20px;
+  width: 300px;
+  padding: 15px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  transition: bottom 0.4s ease, opacity 0.4s ease;
+  opacity: 0;
+  z-index: 999;
+}
+
+#nurseFormWrapper.show {
+  bottom: 80px;
   opacity: 1;
-  transition: opacity 0.2s ease;
-  user-select: none;
-}
-.shift:hover .delete-btn { opacity: 1; }
-
-/* Current week highlight */
-.day.current-week {
-  border: 3px solid rgba(200, 200, 200, 0.85); /* Thicker border */
-  background: transparent; /* Remove background blur */
-  box-shadow: none; /* Remove any shadows */
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
-/* Footer */
-footer {
-  text-align: center;
-  font-size: 0.8rem;
-  color: rgba(0, 0, 0, 0.5);
-  padding: 10px 0;
-  flex-shrink: 0;
+/* 🌸 Toggle + Rays (updated) */
+.center-toggle {
+  position: fixed;
+  top: 20px;
+  left: 800px;
+  width: 30px;
+  height: 30px;
+  z-index: 1002;
+}
+/* 🌸 Glassmorphism style for rays */
+.center-toggle .ray {
+  background: rgba(255, 255, 255, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 6px 12px;
+  color: #000;
+  text-decoration: none !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transform: rotate(var(--angle)) translate(0px);
+  transition: 
+    opacity 0.4s ease, 
+    transform 0.4s ease; /* smooth transition */
+}
+
+/* Show rays when active */
+.center-toggle.active .ray {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Ray hover effect — change box color */
+.center-toggle .ray:hover {
+  background: #ededed;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+.toggle-icon {
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  position: relative;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #2d4d2d;
+  cursor: pointer;
+  transition: transform 0.4s ease;
 }
 
-/* ===== Removed the mobile stacking media query entirely to preserve desktop layout on phones ===== */
+.toggle-icon.active {
+  transform: rotate(45deg);
+}
+
+.rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  z-index: 1003;
+}
+
+.ray {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: #2f4f2f;
+  opacity: 0;
+  transform-origin: 0 0;
+  white-space: nowrap;
+  transform: rotate(var(--angle)) translate(40px);
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.ray span {
+  display: inline-block;
+  transform: rotate(calc(-1 * var(--angle)));
+  transition: color 0.3s ease;
+}
+
+/* Text color hover effect */
+.ray:hover span {
+  color: #F0EEEA;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .center-toggle {
+    top: 15px;
+    left: 10px;
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* 🧩 Safari-specific layout fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix column layout issue in Safari */
+  .cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    column-count: unset !important;
+  }
+
+  .note-card {
+    flex: 1 1 calc(25% - 15px);
+    max-width: calc(25% - 15px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Avoid Safari backdrop-filter z-index clipping */
+  .header,
+  body::before,
+  #nurseFormWrapper {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Ensure notes show fully and not clipped */
+  .container {
+    overflow: visible;
+  }
+
+  /* Minor blur consistency */
+  .note-card,
+  .form-section input,
+  .form-section textarea {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  /* Make timestamps and URL links visible */
+  .note-content, .note-title, .note-url {
+    z-index: 2;
+    position: relative;
+  }
+}
+/* 🧩 Safari-specific layout fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix column layout issue in Safari */
+  .cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    column-count: unset !important;
+  }
+
+  .note-card {
+    flex: 1 1 calc(25% - 15px);
+    max-width: calc(25% - 15px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Avoid Safari backdrop-filter z-index clipping */
+  .header,
+  body::before,
+  #nurseFormWrapper {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Ensure notes show fully and not clipped */
+  .container {
+    overflow: visible;
+  }
+
+  /* Minor blur consistency */
+  .note-card,
+  .form-section input,
+  .form-section textarea {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  /* Make timestamps and URL links visible */
+  .note-content, .note-title, .note-url {
+    z-index: 2;
+    position: relative;
+  }
+}
+
 
 </style>
 </head>
 <body>
-<div id="zoomRoot">
-  <!-- Header with Logo -->
-  <header class="main-header">
-    <img src="onehealth-logo.png" alt="Onehealth Logo" class="logo">
-  </header>
 
-  <!-- Auth Section (minimal under logo) -->
-  <div id="authSection" class="auth-section">
-    <label for="emailInput" class="sr-only">Email</label>
-    <input type="email" id="emailInput" placeholder="Email" />
+<div class="header">
+  <div class="header-bg"></div>
 
-    <label for="passwordInput" class="sr-only">Password</label>
-    <input type="password" id="passwordInput" placeholder="Password" />
-
-    <div class="auth-buttons">
-      <button id="loginBtn" class="btn">Login</button>
-      <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
-    </div>
-
-    <p id="userStatus">Not signed in</p>
+  <div class="header-left">
+    <!-- 🌸 Home toggle with rays -->
+<div class="center-toggle">
+  <div class="toggle-icon" id="menuToggle">☐</div>
+  <div class="rays">
+    <!-- Rays will be generated dynamically by JS -->
   </div>
+</div>
+</div>
 
-  <div class="container">
-    <!-- Nurse List Section -->
-    <div class="nurse-list">
-      <h3>Nurses / HCA</h3>
-      <div id="nurseContainer"></div>
+  <h1 class="header-title">Nurse Notes</h1>
 
-      <div class="add-nurse">
-        <input type="text" id="newNurseName" placeholder="Add Nurse">
-        <button id="addNurseBtn" class="btn">Add</button>
-      </div>
-
-      <div class="nurse-note">
-        <p>💡 <b>Tips:</b></p>
-        <ul>
-          <li><b>Shift+Click</b> to delete staff</li>
-          <li><b>Long Press</b> to delete shift</li>
-          <li><b>Right Click</b> to edit shift</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Calendar Section -->
-    <div class="calendar">
-      <div class="calendar-header">
-        <button class="btn" id="prevMonth">◀ Prev</button>
-        <button class="btn" id="todayBtn">Today</button>
-        <h2 id="monthYear" class="month-label"></h2>
-        <button class="btn" id="nextMonth">Next ▶</button>
-      </div>
-
-      <div class="calendar-scroll-wrapper">
-        <div class="weekdays">
-          <div>Mon</div><div>Tue</div><div>Wed</div>
-          <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-        </div>
-        <div class="calendar-grid" id="calendarGrid"></div>
-      </div>
+  <div class="header-right">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
     </div>
   </div>
+</div>
 
-  <footer>CEP/C 2025</footer>
-</div> <!-- /#zoomRoot -->
+<div class="container">
+  <!-- Hidden glassy form -->
+  <div id="nurseFormWrapper" class="form-section">
+    <input id="nurseTitle" placeholder="Title">
+    <textarea id="nurseNote" placeholder="Note..."></textarea>
+    <input id="nurseURL" placeholder="Optional URL (if any)">
+    <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
+    <label for="nurseImage" class="custom-file-btn">Choose File</label>
+    <button class="add-btn" onclick="addNote()">Add</button>
+  </div>
 
+  <!-- Notes container -->
+  <div class="cards-container" id="nurseNotesList"></div>
+</div>
 
-<script type="module">
-  /* ========= Auto-scale to show desktop on phones =========
-     - Calculates a scale factor so the full desktop width fits any viewport
-     - Keeps pinch-zoom working (users can zoom in for readability)
-  */
-  function applyAutoScale() {
-    const root = document.documentElement;
-    const desktopWRaw = getComputedStyle(root).getPropertyValue('--desktop-w').trim();
-    const desktopWidth = parseFloat(desktopWRaw); // px
-    if (!desktopWidth) {
-      root.style.setProperty('--app-scale', 1);
-      return;
-    }
-    const vw = window.innerWidth;
-    // Scale down if viewport is narrower than desktop; never scale above 1
-    const scale = Math.min(1, Math.max(0.3, vw / desktopWidth));
-    root.style.setProperty('--app-scale', scale.toString());
-  }
-  // Run immediately (after CSS is parsed) and on resize/orientation changes
-  applyAutoScale();
-  window.addEventListener('resize', applyAutoScale);
-  window.addEventListener('orientationchange', applyAutoScale);
+<!-- Floating glassy + button -->
+<button id="toggleFormBtn">+</button>
 
-  /* ========= Your existing app logic (unchanged) ========= */
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+ 
+
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import {
-    getFirestore, doc, setDoc, getDoc
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  import {
-    getAuth,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyBZtCGzOb_5klWvVo-2fU7Wp2vnUakA4Rc",
-    authDomain: "ohnurse-43369.firebaseapp.com",
-    projectId: "ohnurse-43369",
-    storageBucket: "ohnurse-43369.firebasestorage.app",
-    messagingSenderId: "1041626418661",
-    appId: "1:1041626418661:web:1d9aeffb23a33baf9c730c",
-    measurementId: "G-ZHKSXSTTXR"
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  const auth = getAuth(app);
+  const notesCol = collection(db, "nurseNotes");
 
-  const emailInput = document.getElementById('emailInput');
-  const passwordInput = document.getElementById('passwordInput');
-  const loginBtn = document.getElementById('loginBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const userStatus = document.getElementById('userStatus');
+  async function addNote() {
+    const title = nurseTitle.value.trim();
+    const note = nurseNote.value.trim();
+    const url = nurseURL.value.trim();
+    const fileInput = document.getElementById('nurseImage');
+    const file = fileInput.files[0];
 
-  const calendarGrid = document.getElementById('calendarGrid');
-  const monthYear = document.getElementById('monthYear');
-  const prevMonthBtn = document.getElementById('prevMonth');
-  const nextMonthBtn = document.getElementById('nextMonth');
-  const todayBtn = document.getElementById('todayBtn');
-  const nurseContainer = document.getElementById('nurseContainer');
-  const newNurseName = document.getElementById('newNurseName');
-  const addNurseBtn = document.getElementById('addNurseBtn');
+    let imageBase64 = "";
 
-  let currentUser = null;
-  let canEdit = false;  // controls if editing is allowed
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        imageBase64 = reader.result;
 
-  // Authorized UIDs for editing rights
-  const authorizedUIDs = [
-    "xEda6HcmfLT16EtTiznHy3FAesj1",  // your UID
-    "OEjMA3NNeFQGP62Yohk5DliXqwH2"   // add staff UIDs here
-  ];
-
-  let roster = {};
-  let nurses = [
-    { name: "Alice", color: "#ff9800" },
-    { name: "Bob", color: "#e65100" },
-    { name: "Carol", color: "#f57c00" }
-  ];
-  let selectedNurseIndex = null;
-  let currentDate = new Date();
-
-  /** ---------- Authentication ---------- **/
-  loginBtn.addEventListener('click', async () => {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    if (!email || !password) {
-      alert('Please enter email and password');
-      return;
-    }
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      currentUser = userCredential.user;
-      updateUIOnAuth();
-    } catch (error) {
-      alert('Login failed: ' + error.message);
-    }
-  });
-
-  logoutBtn.addEventListener('click', async () => {
-    await signOut(auth);
-    currentUser = null;
-    updateUIOnAuth();
-  });
-
-  onAuthStateChanged(auth, (user) => {
-    currentUser = user;
-    updateUIOnAuth();
-  });
-
-  function updateUIOnAuth() {
-    if (currentUser) {
-      userStatus.textContent = `Signed in as ${currentUser.email}`;
-      loginBtn.style.display = 'none';
-      emailInput.style.display = 'none';
-      passwordInput.style.display = 'none';
-      logoutBtn.style.display = 'inline-block';
-    } else {
-      userStatus.textContent = 'Not signed in';
-      loginBtn.style.display = 'inline-block';
-      emailInput.style.display = 'inline-block';
-      passwordInput.style.display = 'inline-block';
-      logoutBtn.style.display = 'none';
-    }
-    checkEditPermission();
-    loadData();
-  }
-
-  function checkEditPermission() {
-    canEdit = currentUser && authorizedUIDs.includes(currentUser.uid);
-    toggleEditUI();
-  }
-
-  function toggleEditUI() {
-    addNurseBtn.disabled = !canEdit;
-    newNurseName.disabled = !canEdit;
-    addNurseBtn.style.opacity = canEdit ? '1' : '0.5';
-    newNurseName.style.opacity = canEdit ? '1' : '0.5';
-
-    const nurseList = document.querySelector('.nurse-list');
-    nurseList.style.display = currentUser ? 'block' : 'none';
-
-    document.body.classList.toggle('logged-in', !!currentUser);
-
-    renderNurseList();
-    renderCalendar();
-  }
-
-  /** ---------- Firebase Data ---------- **/
-  async function loadData() {
-    try {
-      const docRef = doc(db, "nursesRoster", "main");
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        roster = data.roster || {};
-        nurses = data.nurses || nurses;
-      }
-      syncShiftColorsWithNurses();  
-      renderNurseList();
-      renderCalendar();
-    } catch (error) {
-      console.error("Failed to load data from Firestore:", error);
-      alert("Failed to load data from Firestore. Check console.");
-    }
-  }
-
-  async function saveData() {
-    if (!canEdit) {
-      alert("You do not have permission to edit.");
-      return;
-    }
-    try {
-      await setDoc(doc(db, "nursesRoster", "main"), { roster, nurses });
-    } catch (error) {
-      console.error("Error saving data:", error);
-      alert("Failed to save data. Check console.");
-    }
-  }
-
-  /** ---------- Nurse List ---------- **/
-  function renderNurseList() {
-    nurseContainer.innerHTML = '';
-    nurses.forEach((nurse, idx) => {
-      const div = document.createElement('div');
-      div.classList.add('nurse');
-      div.draggable = canEdit;  // ✅ make draggable
-      div.dataset.index = idx;
-
-      if (selectedNurseIndex === idx) div.classList.add('selected');
-
-      const infoDiv = document.createElement('div');
-      infoDiv.classList.add('nurse-info');
-
-      const colorBox = document.createElement('div');
-      colorBox.classList.add('color-box');
-      colorBox.style.background = nurse.color;
-
-      const colorPicker = document.createElement('input');
-      colorPicker.type = 'color';
-      colorPicker.value = nurse.color;
-      colorPicker.classList.add('color-picker');
-      colorPicker.style.display = 'none'; 
-
-      colorBox.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!canEdit) return;
-        document.querySelectorAll('.color-picker').forEach(p => {
-          if (p !== colorPicker) p.style.display = 'none';
+        await addDoc(notesCol, {
+          title: title || "Untitled",
+          note,
+          url: url || "",
+          image: imageBase64,
+          time: new Date().toISOString()
         });
-        colorPicker.style.display = colorPicker.style.display === 'block' ? 'none' : 'block';
+
+        nurseTitle.value = '';
+        nurseNote.value = '';
+        nurseURL.value = '';
+        nurseImage.value = '';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      await addDoc(notesCol, {
+        title: title || "Untitled",
+        note,
+        url: url || "",
+        image: "",
+        time: new Date().toISOString()
       });
 
-      colorPicker.addEventListener('mousedown', e => e.stopPropagation());
-      colorPicker.addEventListener('click', e => e.stopPropagation());
-      colorPicker.addEventListener('dragstart', e => e.stopPropagation());
+      nurseTitle.value = '';
+      nurseNote.value = '';
+      nurseURL.value = '';
+      nurseImage.value = '';
+    }
+  }
 
-      colorPicker.addEventListener('input', (e) => {
-        if (!canEdit) return;
-        nurse.color = e.target.value;
-        syncShiftColorsWithNurses();
-        saveData();
-        renderNurseList();
-        renderCalendar();
-      });
+  async function deleteNote(id) {
+    if (confirm("Delete this note?")) {
+      await deleteDoc(doc(db, "nurseNotes", id));
+    }
+  }
 
-      infoDiv.appendChild(colorBox);
-      infoDiv.appendChild(document.createTextNode(nurse.name));
-
-      // ✅ Updated click handler for selection and shift+click deletion
-      infoDiv.addEventListener('click', (e) => {
-        if (!canEdit) return;
-
-        if (e.shiftKey) {
-          // Shift+click → delete nurse
-          if (confirm(`Delete nurse ${nurse.name}?`)) {
-            nurses.splice(idx, 1);
-            if (selectedNurseIndex === idx) selectedNurseIndex = null;
-            saveData();
-            renderNurseList();
-            renderCalendar();
-          }
-        } else {
-          // Normal click → select nurse
-          selectedNurseIndex = idx;
-          renderNurseList();
-        }
-      });
-
-      div.appendChild(infoDiv);
-      div.appendChild(colorPicker);
-
-      // ✅ Dragstart handler
-      div.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('nurseIndex', idx);
-      });
-
-      nurseContainer.appendChild(div);
+  async function saveEdit(id, updatedTitle, updatedNote) {
+    await updateDoc(doc(db, "nurseNotes", id), {
+      title: updatedTitle || "Untitled",
+      note: updatedNote
     });
   }
 
-  /** ---------- Global Listener to Close Color Pickers ---------- **/
-  document.addEventListener('pointerdown', (e) => {
-    const isInside = e.target.closest('.color-picker, .color-box');
-    if (!isInside) {
-      document.querySelectorAll('.color-picker').forEach(p => p.style.display = 'none');
+  // Helper to escape HTML special characters
+  function escapeHtml(text) {
+    return text.replace(/&/g, "&amp;")
+               .replace(/</g, "&lt;")
+               .replace(/>/g, "&gt;")
+               .replace(/"/g, "&quot;")
+               .replace(/'/g, "&#039;");
+  }
+
+  function enableEditing(card, id, title, note) {
+  card.innerHTML = `
+    <input type="text" class="edit-title" value="${escapeHtml(title)}" />
+
+    
+    <div class="edit-note" contenteditable="true"
+  style="width:95%; min-height:60px; padding:6px; border:1px solid rgba(255, 255, 255, 0.4);
+         border-radius:8px; background:rgba(255,255,255,0.3); backdrop-filter:blur(8px);
+         -webkit-backdrop-filter:blur(8px); font-family:Tahoma,sans-serif; font-size:11px;">
+
+      ${note.replace(/\n/g, "<br>")}
+    </div>
+    
+    <div class="editor-buttons" style="margin-top:6px;">
+      <button class="btn-save">Save</button>
+      <button class="btn-cancel">Cancel</button>
+      <button class="btn-bold">Bold</button>
+      <button class="btn-highlight">Highlight</button>
+    </div>
+  `;
+
+  const inputTitle = card.querySelector('.edit-title');
+  const editableDiv = card.querySelector('.edit-note');
+  const btnSave = card.querySelector('.btn-save');
+  const btnCancel = card.querySelector('.btn-cancel');
+  const btnBold = card.querySelector('.btn-bold');
+  const btnHighlight = card.querySelector('.btn-highlight');
+
+  btnSave.addEventListener('click', async () => {
+    const updatedTitle = inputTitle.value.trim() || "Untitled";
+    const updatedNote = editableDiv.innerHTML.trim();
+    await saveEdit(id, updatedTitle, updatedNote);
+    renderNotes();
+  });
+
+  btnCancel.addEventListener('click', () => {
+    renderNotes();
+  });
+
+  btnBold.addEventListener('click', () => {
+    document.execCommand('bold');
+  });
+
+  btnHighlight.addEventListener('click', () => {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = selection.toString();
+
+      if (!selectedText) return;
+
+      // Check if already highlighted
+      const container = range.commonAncestorContainer;
+      const parent = container.nodeType === 3 ? container.parentNode : container;
+
+      if (parent.tagName === 'SPAN' && parent.style.backgroundColor === 'rgb(251, 224, 210)') {
+        // Remove highlight
+        const textNode = document.createTextNode(parent.textContent);
+        parent.replaceWith(textNode);
+      } else {
+        // Apply highlight
+        const span = document.createElement('span');
+        span.style.backgroundColor = '#fbe0D2';
+        span.textContent = selectedText;
+
+        range.deleteContents();
+        range.insertNode(span);
+      }
+
+      selection.removeAllRanges();
+    }
+  });
+}
+
+
+
+  function renderNotes() {
+    const list = document.getElementById('nurseNotesList');
+    onSnapshot(notesCol, snapshot => {
+      // Clear current notes
+      list.innerHTML = '';
+      snapshot.forEach(docSnap => {
+        const { title, note, time, url, image } = docSnap.data();
+        const id = docSnap.id;
+
+        // Replace highlight and bold markers for display
+        const displayNote = note;
+
+        const div = document.createElement('div');
+        div.className = 'note-card';
+        div.innerHTML = `
+          <div class="note-title">${title}</div>
+          <div class="note-content">${displayNote.replace(/\n/g, '<br>')}</div>
+          ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
+          <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
+          ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
+          <div class="note-actions">
+            <button class="edit-btn">Edit</button>
+            <button class="delete-btn">Delete</button>
+          </div>
+        `;
+
+        // Add event listeners for Edit and Delete buttons
+        const editBtn = div.querySelector('.edit-btn');
+        const deleteBtn = div.querySelector('.delete-btn');
+
+        editBtn.addEventListener('click', () => {
+          enableEditing(div, id, title, note);
+        });
+
+        deleteBtn.addEventListener('click', () => {
+          deleteNote(id);
+        });
+
+        list.appendChild(div);
+      });
+    });
+  }
+
+  // Search/filter notes live by title or content
+  function searchNotes(event) {
+    const query = event.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.note-card');
+
+    cards.forEach(card => {
+      const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
+      const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
+
+      if (title.includes(query) || content.includes(query)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Add event listener for search input after DOM loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keyup', searchNotes);
     }
   });
 
-  function getRandomColor() {
-    const colors = ['#ff9800', '#e65100', '#f57c00', '#ffb74d', '#ef6c00'];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
+  // Expose to window if needed
+  window.addNote = addNote;
+  window.deleteNote = deleteNote;
+  window.saveEdit = saveEdit;
+  window.enableEditing = enableEditing;
+  window.renderNotes = renderNotes;
 
-  addNurseBtn.addEventListener('click', () => {
-    if (!canEdit) {
-      alert("You do not have permission to add nurses.");
-      return;
-    }
-    const name = newNurseName.value.trim();
-    if (name) {
-      nurses.push({ name, color: getRandomColor() });
-      newNurseName.value = '';
-      saveData();
-      renderNurseList();
-    }
+  // Initial load
+  renderNotes();
+  
+ // Toggle form
+const toggleBtn = document.getElementById('toggleFormBtn');
+const nurseForm = document.getElementById('nurseFormWrapper');
+
+toggleBtn.addEventListener('click', () => {
+  nurseForm.classList.toggle('show');
+
+  // Optional: change + to × when open
+  toggleBtn.textContent = nurseForm.classList.contains('show') ? '×' : '+';
+});
+
+const centerToggle = document.querySelector('.center-toggle');
+const toggleIcon = document.getElementById("menuToggle");
+const raysContainer = centerToggle.querySelector(".rays");
+
+let hoverTimeout;
+let currentSet = 0; // tracks which set to show next
+
+const raySets = [
+  [
+    { text: "Home", link: "https://xlyneve.github.io/CEP/home.html" },
+    { text: "Info", link: "https://xlyneve.github.io/CEP/info.html" },
+    { text: "Template", link: "https://xlyneve.github.io/CEP/explain.html" },
+    { text: "PN", link: "https://xlyneve.github.io/CEP/practiceN.html" },
+	{ text: "Recall", link: "https://xlyneve.github.io/CEP/recalls.html" }
+  ],
+  [
+    { text: "Drug Calculator", link: "https://xlyneve.github.io/CEP/OHcalc.html" },
+    { text: "Vaccine Calc", link: "https://xlyneve.github.io/CEP/vaccine-spacing.html" },
+    { text: "Vaccines", link: "https://xlyneve.github.io/CEP/complete-vaccine-info.html" },
+    { text: "Meds list", link: "https://xlyneve.github.io/CEP/Npres.html" }
+  ]
+];
+
+const angles = ["-20deg","20deg","60deg","100deg","140deg","180deg"];
+
+function showRays() {
+  raysContainer.querySelectorAll('.ray').forEach(ray => {
+    ray.style.opacity = 1;
+    ray.style.pointerEvents = 'auto';
   });
-
-  /** ---------- Calendar ---------- **/
-  function createShiftElement(shift, key, shiftIndex) {
-    const shiftDiv = document.createElement('div');
-    shiftDiv.classList.add('shift');
-    shiftDiv.style.backgroundColor = shift.color;
-
-    const rgb = parseInt(shift.color.slice(1), 16);
-    const r = (rgb >> 16) & 0xff;
-    const g = (rgb >> 8) & 0xff;
-    const b = rgb & 0xff;
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    shiftDiv.style.color = brightness > 150 ? "#000" : "#fff";
-
-    shiftDiv.textContent = `${shift.name}: ${shift.time}`;
-    shiftDiv.draggable = canEdit;
-
-    shiftDiv.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-
-    // Right-click to edit remains
-    shiftDiv.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!canEdit) return;
-      const newTime = prompt(
-        `Edit shift for ${shift.name} (current: ${shift.time || 'unset'}):`,
-        shift.time || ''
-      );
-      if (newTime !== null) {
-        const trimmed = newTime.trim();
-        if (trimmed !== '') {
-          roster[key].shifts[shiftIndex].time = trimmed;
-          saveData();
-          renderCalendar();
-        }
-      }
-    });
-
-    if (canEdit) {
-      shiftDiv.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify(shift));
-      });
-    }
-
-    // -------- Long click delete ----------
-    let pressTimer;
-    shiftDiv.addEventListener('mousedown', (e) => {
-      if (!canEdit) return;
-      pressTimer = setTimeout(() => {
-        if (confirm(`Delete shift for ${shift.name}?`)) {
-          roster[key].shifts.splice(shiftIndex, 1);
-          saveData();
-          renderCalendar();
-        }
-      }, 800); // 800ms long press
-    });
-
-    shiftDiv.addEventListener('mouseup', () => clearTimeout(pressTimer));
-    shiftDiv.addEventListener('mouseleave', () => clearTimeout(pressTimer));
-
-    return shiftDiv;
-  }
-
-  function renderDayCell(year, month, day) {
-    const key = `${year}-${month}-${day}`;
-    if (!roster[key]) roster[key] = { shifts: [], notes: '' };
-
-    const dayCell = document.createElement('div');
-    dayCell.classList.add('day');
-    dayCell.dataset.dayKey = key; // ✅ needed for shift editing
-
-    const date = new Date(year, month, day);
-    dayCell.dataset.date = date.toDateString(); // ✅ add date attribute for Today scroll
-
-    if (date.getDay() === 0 || date.getDay() === 6) dayCell.classList.add('weekend');
-
-    // Highlight today
-    const today = new Date();
-    if (date.toDateString() === today.toDateString()) {
-      dayCell.classList.add('today');
-    }
-
-    const dayNumber = document.createElement('div');
-    dayNumber.classList.add('day-number');
-    dayNumber.innerHTML = day + (roster[key].notes ? `<span class="day-note">${roster[key].notes}</span>` : '');
-    dayNumber.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!canEdit) return;
-      const note = prompt('Enter notes for this day:', roster[key].notes || '');
-      if (note !== null) {
-        roster[key].notes = note;
-        saveData();
-        renderCalendar();
-      }
-    });
-
-    const dragHandle = document.createElement('span');
-    dragHandle.textContent = '⇅';
-    dragHandle.style.cursor = canEdit ? 'grab' : 'default';
-    dragHandle.title = 'Drag all shifts of this day';
-    dragHandle.draggable = canEdit;
-
-    if (canEdit) {
-      dragHandle.addEventListener('dragstart', (e) => {
-        e.stopPropagation();
-        const allShifts = roster[key].shifts || [];
-        e.dataTransfer.setData('text/day-shifts', JSON.stringify(allShifts));
-      });
-    }
-
-    const header = document.createElement('div');
-    header.style.display = 'flex';
-    header.style.justifyContent = 'space-between';
-    header.style.alignItems = 'center';
-    header.appendChild(dayNumber);
-    header.appendChild(dragHandle);
-
-    dayCell.appendChild(header);
-
-    if (canEdit) {
-      // ✅ allow nurse drop from left list
-      dayCell.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dayCell.classList.add('drag-over');
-      });
-      dayCell.addEventListener('dragleave', () => dayCell.classList.remove('drag-over'));
-      dayCell.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dayCell.classList.remove('drag-over');
-
-        const nurseIndex = e.dataTransfer.getData('nurseIndex');
-        if (nurseIndex !== '') {
-          const nurse = nurses[nurseIndex];
-          roster[key].shifts.push({
-            name: nurse.name,
-            color: nurse.color,
-            time: "Shift"
-          });
-          saveData();
-          renderCalendar();
-          return;
-        }
-
-        const dayShiftsData = e.dataTransfer.getData('text/day-shifts');
-        if (dayShiftsData) {
-          const shifts = JSON.parse(dayShiftsData);
-          roster[key].shifts = roster[key].shifts.concat(shifts);
-          saveData();
-          renderCalendar();
-          return;
-        }
-
-        const shiftData = e.dataTransfer.getData('text/plain');
-        if (shiftData) {
-          const shift = JSON.parse(shiftData);
-          roster[key].shifts.push(shift);
-          saveData();
-          renderCalendar();
-        }
-      });
-    }
-
-    roster[key].shifts.forEach((shift, i) => {
-      dayCell.appendChild(createShiftElement(shift, key, i));
-    });
-
-    return dayCell;
-  }
-function renderCalendar() {
-  calendarGrid.innerHTML = '';
-
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-
-  monthYear.textContent =
-    currentDate.toLocaleString('default', { month: 'long' }) + ' ' + year;
-
-  const firstDay = new Date(year, month, 1).getDay();
-  const leadingBlanks = (firstDay === 0 ? 6 : firstDay - 1);
-
-  // Add empty cells for alignment
-  for (let i = 0; i < leadingBlanks; i++) {
-    calendarGrid.appendChild(document.createElement('div'));
-  }
-
-  const today = new Date();
-  const todayStr = today.toDateString();
-
-  // --- Fixed week calculation (Monday–Sunday) ---
-  function getWeekStart(date) {
-  const d = new Date(date);
-  const day = d.getDay(); // 0 = Sunday, 1 = Monday
-  const diff = (day + 6) % 7; // 0=Sunday→6, 1=Monday→0, 2=Tuesday→1 ...
-  d.setDate(d.getDate() - diff);
-  d.setHours(0,0,0,0);
-  return d;
 }
 
-function getWeekEnd(monday) {
-  const d = new Date(monday);
-  d.setDate(d.getDate() + 6);
-  d.setHours(23,59,59,999);
-  return d;
+function hideRays() {
+  raysContainer.querySelectorAll('.ray').forEach(ray => {
+    ray.style.opacity = 0;
+    ray.style.pointerEvents = 'none';
+  });
 }
 
-
-  const currentWeekMonday = getWeekStart(today);
-  const currentWeekSunday = getWeekEnd(currentWeekMonday);
-
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dayCell = renderDayCell(year, month, day);
-
-    const cellDate = new Date(year, month, day);
-    const cellStr = cellDate.toDateString();
-
-    // Highlight today
-    if (cellStr === todayStr) {
-      dayCell.classList.add('today');
-    }
-
-    // Highlight current week — check if this day is within the same week as today
-    if (cellDate >= currentWeekMonday && cellDate <= currentWeekSunday) {
-      dayCell.classList.add('current-week');
-    }
-
-    calendarGrid.appendChild(dayCell);
+// Hover (optional) — only show if no set active
+centerToggle.addEventListener('mouseenter', () => {
+  if (!toggleIcon.classList.contains("active")) {
+    clearTimeout(hoverTimeout);
+    showRays();
   }
-}
-
-// Month navigation
-prevMonthBtn.addEventListener("click", () => {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar();
 });
 
-nextMonthBtn.addEventListener("click", () => {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar();
-});
-
-// Today button
-todayBtn.addEventListener("click", () => {
-  currentDate = new Date(); // reset to today
-  renderCalendar();
-
-  // Scroll to the current week
-  setTimeout(() => {
-    const todayCell = calendarGrid.querySelector('.today');
-    if (todayCell) {
-      todayCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 50);
-});
-
-function syncShiftColorsWithNurses() {
-  for (const dayKey in roster) {
-    if (!roster[dayKey].shifts) continue;
-    roster[dayKey].shifts.forEach(shift => {
-      const nurse = nurses.find(n => n.name === shift.name);
-      if (nurse) shift.color = nurse.color;
-    });
+centerToggle.addEventListener('mouseleave', () => {
+  if (!toggleIcon.classList.contains("active")) {
+    hoverTimeout = setTimeout(() => {
+      hideRays();
+    }, 1000);
   }
+});
+
+// Click rotates between sets
+toggleIcon.addEventListener("click", () => {
+  toggleIcon.classList.add("active");
+
+  // Clear old rays
+  raysContainer.innerHTML = "";
+
+  // Add current set of rays
+  const set = raySets[currentSet];
+  set.forEach((rayData, i) => {
+    const ray = document.createElement("a");
+    ray.className = "ray";
+    ray.href = rayData.link;
+    ray.textContent = rayData.text;
+    ray.style.opacity = "0";
+    ray.style.setProperty("--angle", angles[i] || "0deg");
+	ray.style.pointerEvents = "auto"; // Ensure clickable
+    raysContainer.appendChild(ray);
+	
+    // Small timeout to trigger smooth transition
+    setTimeout(() => {
+      ray.style.opacity = "1";
+      ray.style.transform = `rotate(${angles[i] || "0deg"}) translate(60px)`;
+      ray.style.pointerEvents = "auto";
+    }, 50); // 50ms delay triggers CSS transition
+  });
+  // Move to next set for next click
+  currentSet = (currentSet + 1) % raySets.length;
+});
+
+// Function to hide rays
+function hideAllRays() {
+  const allRays = raysContainer.querySelectorAll(".ray");
+  allRays.forEach(ray => {
+    ray.style.opacity = "0";
+    ray.style.pointerEvents = "none";
+    ray.style.transform = `rotate(${ray.style.getPropertyValue("--angle")}) translate(0px)`;
+  });
+  toggleIcon.classList.remove("active");
 }
 
-onAuthStateChanged(auth, () => {
-  loadData();
+// Close rays when clicking outside
+document.addEventListener("click", (e) => {
+  if (!centerToggle.contains(e.target)) {
+    hideAllRays();
+  }
 });
 
 </script>
