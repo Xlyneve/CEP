@@ -634,59 +634,49 @@ button:focus,
 
  
 
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import {
-    getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-    authDomain: "cepx-f9d2a.firebaseapp.com",
-    projectId: "cepx-f9d2a",
-    storageBucket: "cepx-f9d2a.appspot.com",
-    messagingSenderId: "840696526325",
-    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-  };
+/* ---------------- Firebase ---------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+  authDomain: "cepx-f9d2a.firebaseapp.com",
+  projectId: "cepx-f9d2a",
+  storageBucket: "cepx-f9d2a.appspot.com",
+  messagingSenderId: "840696526325",
+  appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const notesCol = collection(db, "nurseNotes");
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const notesCol = collection(db, "nurseNotes");
 
-  async function addNote() {
-    const title = nurseTitle.value.trim();
-    const note = nurseNote.value.trim();
-    const url = nurseURL.value.trim();
-    const fileInput = document.getElementById('nurseImage');
-    const file = fileInput.files[0];
+/* ---------------- Global Filter Persistence ---------------- */
+let currentSearchQuery = "";
 
-    let imageBase64 = "";
+/* ---------------- CRUD ---------------- */
+async function addNote() {
+  const title = nurseTitle.value.trim();
+  const note = nurseNote.value.trim();
+  const url = nurseURL.value.trim();
+  const fileInput = document.getElementById('nurseImage');
+  const file = fileInput.files[0];
 
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        imageBase64 = reader.result;
+  let imageBase64 = "";
 
-        await addDoc(notesCol, {
-          title: title || "Untitled",
-          note,
-          url: url || "",
-          image: imageBase64,
-          time: new Date().toISOString()
-        });
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      imageBase64 = reader.result;
 
-        nurseTitle.value = '';
-        nurseNote.value = '';
-        nurseURL.value = '';
-        nurseImage.value = '';
-      };
-      reader.readAsDataURL(file);
-    } else {
       await addDoc(notesCol, {
         title: title || "Untitled",
         note,
         url: url || "",
-        image: "",
+        image: imageBase64,
         time: new Date().toISOString()
       });
 
@@ -694,44 +684,56 @@ button:focus,
       nurseNote.value = '';
       nurseURL.value = '';
       nurseImage.value = '';
-    }
-  }
-
-  async function deleteNote(id) {
-    if (confirm("Delete this note?")) {
-      await deleteDoc(doc(db, "nurseNotes", id));
-    }
-  }
-
-  async function saveEdit(id, updatedTitle, updatedNote) {
-    await updateDoc(doc(db, "nurseNotes", id), {
-      title: updatedTitle || "Untitled",
-      note: updatedNote
+    };
+    reader.readAsDataURL(file);
+  } else {
+    await addDoc(notesCol, {
+      title: title || "Untitled",
+      note,
+      url: url || "",
+      image: "",
+      time: new Date().toISOString()
     });
-  }
 
-  // Helper to escape HTML special characters
-  function escapeHtml(text) {
-    return text.replace(/&/g, "&amp;")
-               .replace(/</g, "&lt;")
-               .replace(/>/g, "&gt;")
-               .replace(/"/g, "&quot;")
-               .replace(/'/g, "&#039;");
+    nurseTitle.value = '';
+    nurseNote.value = '';
+    nurseURL.value = '';
+    nurseImage.value = '';
   }
+}
 
-  function enableEditing(card, id, title, note) {
+async function deleteNote(id) {
+  if (confirm("Delete this note?")) {
+    await deleteDoc(doc(db, "nurseNotes", id));
+  }
+}
+
+async function saveEdit(id, updatedTitle, updatedNote) {
+  await updateDoc(doc(db, "nurseNotes", id), {
+    title: updatedTitle || "Untitled",
+    note: updatedNote
+  });
+}
+
+/* ---------------- Utilities ---------------- */
+function escapeHtml(text) {
+  return text.replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+}
+
+/* ---------------- Editing ---------------- */
+function enableEditing(card, id, title, note) {
   card.innerHTML = `
     <input type="text" class="edit-title" value="${escapeHtml(title)}" />
-
-    
     <div class="edit-note" contenteditable="true"
-  style="width:95%; min-height:60px; padding:6px; border:1px solid rgba(255, 255, 255, 0.4);
-         border-radius:8px; background:rgba(255,255,255,0.3); backdrop-filter:blur(8px);
-         -webkit-backdrop-filter:blur(8px); font-family:Tahoma,sans-serif; font-size:11px;">
-
+      style="width:95%; min-height:60px; padding:6px; border:1px solid rgba(255, 255, 255, 0.4);
+             border-radius:8px; background:rgba(255,255,255,0.3); backdrop-filter:blur(8px);
+             -webkit-backdrop-filter:blur(8px); font-family:Tahoma,sans-serif; font-size:11px;">
       ${note.replace(/\n/g, "<br>")}
     </div>
-    
     <div class="editor-buttons" style="margin-top:6px;">
       <button class="btn-save">Save</button>
       <button class="btn-cancel">Cancel</button>
@@ -751,11 +753,11 @@ button:focus,
     const updatedTitle = inputTitle.value.trim() || "Untitled";
     const updatedNote = editableDiv.innerHTML.trim();
     await saveEdit(id, updatedTitle, updatedNote);
-    renderNotes();
+    renderNotes(); // refresh after saving (filter reapplied)
   });
 
   btnCancel.addEventListener('click', () => {
-    renderNotes();
+    renderNotes(); // revert
   });
 
   btnBold.addEventListener('click', () => {
@@ -767,23 +769,18 @@ button:focus,
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       const selectedText = selection.toString();
-
       if (!selectedText) return;
 
-      // Check if already highlighted
       const container = range.commonAncestorContainer;
       const parent = container.nodeType === 3 ? container.parentNode : container;
 
       if (parent.tagName === 'SPAN' && parent.style.backgroundColor === 'rgb(251, 224, 210)') {
-        // Remove highlight
         const textNode = document.createTextNode(parent.textContent);
         parent.replaceWith(textNode);
       } else {
-        // Apply highlight
         const span = document.createElement('span');
         span.style.backgroundColor = '#fbe0D2';
         span.textContent = selectedText;
-
         range.deleteContents();
         range.insertNode(span);
       }
@@ -793,85 +790,76 @@ button:focus,
   });
 }
 
+/* ---------------- Rendering ---------------- */
+function renderNotes() {
+  const list = document.getElementById('nurseNotesList');
+  onSnapshot(notesCol, snapshot => {
+    list.innerHTML = '';
+    snapshot.forEach(docSnap => {
+      const { title, note, time, url, image } = docSnap.data();
+      const id = docSnap.id;
 
+      const div = document.createElement('div');
+      div.className = 'note-card';
+      div.innerHTML = `
+        <div class="note-title">${title}</div>
+        <div class="note-content">${note.replace(/\n/g, '<br>')}</div>
+        ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
+        <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
+        ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
+        <div class="note-actions">
+          <button class="edit-btn">Edit</button>
+          <button class="delete-btn">Delete</button>
+        </div>
+      `;
 
-  function renderNotes() {
-    const list = document.getElementById('nurseNotesList');
-    onSnapshot(notesCol, snapshot => {
-      // Clear current notes
-      list.innerHTML = '';
-      snapshot.forEach(docSnap => {
-        const { title, note, time, url, image } = docSnap.data();
-        const id = docSnap.id;
-
-        // Replace highlight and bold markers for display
-        const displayNote = note;
-
-        const div = document.createElement('div');
-        div.className = 'note-card';
-        div.innerHTML = `
-          <div class="note-title">${title}</div>
-          <div class="note-content">${displayNote.replace(/\n/g, '<br>')}</div>
-          ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
-          <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
-          ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
-          <div class="note-actions">
-            <button class="edit-btn">Edit</button>
-            <button class="delete-btn">Delete</button>
-          </div>
-        `;
-
-        // Add event listeners for Edit and Delete buttons
-        const editBtn = div.querySelector('.edit-btn');
-        const deleteBtn = div.querySelector('.delete-btn');
-
-        editBtn.addEventListener('click', () => {
-          enableEditing(div, id, title, note);
-        });
-
-        deleteBtn.addEventListener('click', () => {
-          deleteNote(id);
-        });
-
-        list.appendChild(div);
-      });
+      div.querySelector('.edit-btn').addEventListener('click', () => enableEditing(div, id, title, note));
+      div.querySelector('.delete-btn').addEventListener('click', () => deleteNote(id));
+      list.appendChild(div);
     });
-  }
 
-  // Search/filter notes live by title or content
-  function searchNotes(event) {
-    const query = event.target.value.toLowerCase();
-    const cards = document.querySelectorAll('.note-card');
-
-    cards.forEach(card => {
-      const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
-      const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
-
-      if (title.includes(query) || content.includes(query)) {
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-  }
-
-  // Add event listener for search input after DOM loaded
-  document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-      searchInput.addEventListener('keyup', searchNotes);
+    // 👇 Reapply the current search filter after refresh
+    if (currentSearchQuery.trim() !== "") {
+      applySearchFilter(currentSearchQuery);
     }
   });
+}
 
-  // Expose to window if needed
-  window.addNote = addNote;
-  window.deleteNote = deleteNote;
-  window.saveEdit = saveEdit;
-  window.enableEditing = enableEditing;
-  window.renderNotes = renderNotes;
+/* ---------------- Search / Filter ---------------- */
+function applySearchFilter(query) {
+  const cards = document.querySelectorAll('.note-card');
+  query = query.toLowerCase();
+  cards.forEach(card => {
+    const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
+    const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
+    card.style.display = (title.includes(query) || content.includes(query)) ? 'block' : 'none';
+  });
+}
 
-  // Initial load
-  renderNotes();
+function searchNotes(event) {
+  currentSearchQuery = event.target.value; // remember filter text
+  applySearchFilter(currentSearchQuery);
+}
+
+/* ---------------- Setup ---------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keyup', searchNotes);
+  }
+});
+
+window.addNote = addNote;
+window.deleteNote = deleteNote;
+window.saveEdit = saveEdit;
+window.enableEditing = enableEditing;
+window.renderNotes = renderNotes;
+
+// Initial load
+renderNotes();
+
+/* ---------------- Toggle Form + Rays (unchanged) ---------------- */
+// keep your existing toggle & ray animation code here (unchanged)
   
  // Toggle form
 const toggleBtn = document.getElementById('toggleFormBtn');
