@@ -753,16 +753,12 @@ function enableEditing(card, id, title, note) {
     const updatedTitle = inputTitle.value.trim() || "Untitled";
     const updatedNote = editableDiv.innerHTML.trim();
     await saveEdit(id, updatedTitle, updatedNote);
-    renderNotes(); // refresh after saving (filter reapplied)
+    renderNotes();
   });
 
-  btnCancel.addEventListener('click', () => {
-    renderNotes(); // revert
-  });
+  btnCancel.addEventListener('click', () => renderNotes());
 
-  btnBold.addEventListener('click', () => {
-    document.execCommand('bold');
-  });
+  btnBold.addEventListener('click', () => document.execCommand('bold'));
 
   btnHighlight.addEventListener('click', () => {
     const selection = window.getSelection();
@@ -804,7 +800,7 @@ function renderNotes() {
       div.innerHTML = `
         <div class="note-title">${title}</div>
         <div class="note-content">${note.replace(/\n/g, '<br>')}</div>
-        ${image ? `<img src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px;" />` : ""}
+        ${image ? `<img src="${image}" class="note-image" style="max-width:100%; margin-top:10px; border-radius:6px; cursor:pointer;" />` : ""}
         <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
         ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
         <div class="note-actions">
@@ -815,6 +811,13 @@ function renderNotes() {
 
       div.querySelector('.edit-btn').addEventListener('click', () => enableEditing(div, id, title, note));
       div.querySelector('.delete-btn').addEventListener('click', () => deleteNote(id));
+
+      // 👇 Add zoom function to image
+      const img = div.querySelector('.note-image');
+      if (img) {
+        img.addEventListener('click', () => openImageZoom(img.src));
+      }
+
       list.appendChild(div);
     });
 
@@ -823,6 +826,37 @@ function renderNotes() {
       applySearchFilter(currentSearchQuery);
     }
   });
+}
+
+/* ---------------- Image Zoom ---------------- */
+function openImageZoom(src) {
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.background = 'rgba(0, 0, 0, 0.8)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '9999';
+  overlay.style.cursor = 'zoom-out';
+  overlay.addEventListener('click', () => document.body.removeChild(overlay));
+
+  // Image
+  const zoomedImg = document.createElement('img');
+  zoomedImg.src = src;
+  zoomedImg.style.maxWidth = '90%';
+  zoomedImg.style.maxHeight = '90%';
+  zoomedImg.style.borderRadius = '10px';
+  zoomedImg.style.boxShadow = '0 0 20px rgba(255,255,255,0.2)';
+  zoomedImg.style.transition = 'transform 0.3s ease';
+  zoomedImg.addEventListener('click', e => e.stopPropagation());
+
+  overlay.appendChild(zoomedImg);
+  document.body.appendChild(overlay);
 }
 
 /* ---------------- Search / Filter ---------------- */
@@ -854,12 +888,13 @@ window.deleteNote = deleteNote;
 window.saveEdit = saveEdit;
 window.enableEditing = enableEditing;
 window.renderNotes = renderNotes;
+window.openImageZoom = openImageZoom;
 
 // Initial load
 renderNotes();
 
 /* ---------------- Toggle Form + Rays (unchanged) ---------------- */
-// keep your existing toggle & ray animation code here (unchanged)
+// keep your existing toggle & ray animation code here
   
  // Toggle form
 const toggleBtn = document.getElementById('toggleFormBtn');
