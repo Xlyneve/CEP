@@ -4,18 +4,18 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Exit Screening Criteria</title>
+
 <style>
 @font-face {
   font-family: 'Adelicia';
   src: url('AdeliciaRegular.ttf') format('truetype');
 }
-@font-face {
-  font-family: 'Simplicity';
-  src: url('Simplicity.ttf') format('truetype');
+
+body, input, button, div, label, span {
+  font-family: 'Tahoma', sans-serif;
 }
 
 body {
-  font-family: 'Simplicity', sans-serif;
   background: linear-gradient(to bottom, #ebebeb, #f5ecf0);
   margin: 0;
   padding: 20px;
@@ -29,7 +29,7 @@ main {
   max-width: 480px;
   width: 100%;
   padding: 1.2rem;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255,255,255,0.25);
   backdrop-filter: blur(20px);
   border-radius: 14px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.12);
@@ -56,14 +56,21 @@ input[type="date"] {
   padding: 8px;
   border-radius: 8px;
   border: 1px solid #ccc;
-  font-size: 1rem;
+  font-size: 12px;
+}
+
+.ageDisplay {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #333;
+  font-weight: bold;
 }
 
 .result {
   margin-top: 1.5rem;
   padding: 1rem;
   border-radius: 12px;
-  font-size: 1.2rem;
+  font-size: 10px;
   text-align: center;
   font-weight: bold;
 }
@@ -71,21 +78,15 @@ input[type="date"] {
 .yes { color: #1f8f3a; background: #d8f5df; }
 .no { color: #b32626; background: #f5dada; }
 
-#ageInfo {
-  margin-top: 0.8rem;
-  font-size: 1rem;
-  font-weight: bold;
-  color: #444;
-}
-
-#exitCriteriaBox, #exit6574 {
-  background: #ffffffc7;
+#dynamicCriteria {
+  display: none;
+  margin-top: 1.2rem;
   padding: 1rem;
   border-radius: 12px;
   border: 1px solid #ddd;
-  margin-top: 1.5rem;
+  background: #ffffffb8;
+  font-size: 14px;
   line-height: 1.5;
-  font-size: 0.95rem;
 }
 
 button {
@@ -98,11 +99,11 @@ button {
   transition: 0.2s;
 }
 
-#copyBtn { background: #e7c6d9; margin-top: 0.7rem; }
-#copyBtn:hover { background: #d7b0c8; }
-
-#copy6574 { background: #d8e7f9; margin-top: 0.6rem; }
-#copy6574:hover { background: #bcd4ef; }
+#copyDynamic {
+  background: #d8e7f9;
+  margin-top: 0.6rem;
+}
+#copyDynamic:hover { background: #bcd4ef; }
 </style>
 </head>
 <body>
@@ -112,107 +113,94 @@ button {
 
   <label>Date of Birth</label>
   <input type="date" id="dob">
-
-  <div id="ageInfo"></div>
+  <div id="ageNow" class="ageDisplay"></div>
 
   <label>HPV NOT DETECTED Test Date (if applicable)</label>
   <input type="date" id="hpv">
+  <div id="ageHPV" class="ageDisplay"></div>
 
   <label>1st Normal Cytology Test Date</label>
   <input type="date" id="test1">
+  <div id="ageT1" class="ageDisplay"></div>
 
   <label>2nd Normal Cytology Test Date</label>
   <input type="date" id="test2">
+  <div id="ageT2" class="ageDisplay"></div>
 
   <div id="result"></div>
 
-  <!-- Full Copy Box -->
-  <div id="exitCriteriaBox">
-Participants aged 69+:
-• A single HPV Not Detected result is enough to safely discharge from NCSP.
-
-Participants aged 65–74:
-Do not require an exit test if either of the following exit criteria have been met:
-
-1) Two consecutive negative cytology results after age 62,
-   with at least one taken after age 65.
-
-OR
-
-2) An HPV Not Detected result after age 65.
-  </div>
-
-  <button id="copyBtn" onclick="navigator.clipboard.writeText(document.getElementById('exitCriteriaBox').innerText)">
-    Copy All Exit Criteria
-  </button>
-
-  <!-- 65–74 ONLY Copy Box -->
-  <div id="exit6574">
-1) Two consecutive negative cytology results after age 62, with at least one taken after age 65.
-
-OR
-
-2) An HPV Not Detected result after age 65.
-  </div>
-
-  <button id="copy6574" onclick="navigator.clipboard.writeText(document.getElementById('exit6574').innerText)">
-    Copy 65–74 Exit Criteria Only
-  </button>
+  <!-- Dynamic criteria display -->
+  <div id="dynamicCriteria"></div>
+  <button id="copyDynamic" style="display:none;" onclick="copyCriteria()">Copy This Criteria</button>
 
 </main>
 
 <script>
-function getAge(dob, ref) {
+function formatAge(dob, date) {
   const d1 = new Date(dob);
-  const d2 = new Date(ref);
-  return (d2 - d1) / (1000 * 60 * 60 * 24 * 365.25);
+  const d2 = new Date(date);
+  if (isNaN(d1) || isNaN(d2)) return "";
+  const diffMs = d2 - d1;
+  const ageYears = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+  const ageDays = diffMs / (1000 * 60 * 60 * 24);
+  return `Age at this date: ${ageYears.toFixed(1)} years (${Math.floor(ageYears)} yrs, ${Math.floor(ageDays % 365)} days)`;
+}
+
+function getAge(dob, ref) {
+  return (new Date(ref) - new Date(dob)) / (1000 * 60 * 60 * 24 * 365.25);
+}
+
+function copyCriteria() {
+  navigator.clipboard.writeText(document.getElementById("dynamicCriteria").innerText);
 }
 
 function update() {
   const dob = dobInput.value;
-  const hpv = hpvInput.value;
-  const t1 = test1.value;
-  const t2 = test2.value;
-
   if (!dob) return;
 
-  const today = new Date();
-  const currentAge = getAge(dob, today);
-  ageInfo.innerHTML = `Current Age: ${currentAge.toFixed(1)} years`;
+  ageNow.innerText = `Current Age: ${getAge(dob, new Date()).toFixed(1)} years`;
 
-  // Rule 1: Age ≥ 69 + HPV NOT DETECTED anytime
-  if (hpv && currentAge >= 69) {
-    result.innerHTML = `<div class="result yes">✅ Age ≥ 69 + HPV Not Detected → Safe to exit screening.</div>`;
+  ageHPV.innerText = hpvInput.value ? formatAge(dob, hpvInput.value) : "";
+  ageT1.innerText = test1.value ? formatAge(dob, test1.value) : "";
+  ageT2.innerText = test2.value ? formatAge(dob, test2.value) : "";
+
+  const hpv = hpvInput.value, t1 = test1.value, t2 = test2.value;
+  const currentAge = getAge(dob, new Date());
+  const dynamicBox = document.getElementById("dynamicCriteria");
+  const copyBtn = document.getElementById("copyDynamic");
+
+  dynamicBox.style.display = "none";
+  copyBtn.style.display = "none";
+
+  // Rule 2 (HPV after 65 or Age ≥ 69 + HPV)
+  if (hpv && (getAge(dob, hpv) >= 65 || currentAge >= 69)) {
+    result.innerHTML = `<div class="result yes">✅ HPV Not Detected after age 65 → Eligible to exit screening.</div>`;
+    dynamicBox.innerText = `2) An HPV Not Detected result after age 65.`;
+    dynamicBox.style.display = "block";
+    copyBtn.style.display = "block";
     return;
   }
 
-  // Rule 2: Age 65–74 + HPV NOT DETECTED after age 65
-  if (hpv && currentAge >= 65 && currentAge <= 74) {
-    if (getAge(dob, hpv) >= 65) {
-      result.innerHTML = `<div class="result yes">✅ HPV Not Detected after age 65 → Eligible to exit screening.</div>`;
-      return;
-    }
-  }
-
-  // Rule 3: Age 65–74 + Two negative cytology after age 62 with one after 65
-  if (t1 && t2 && currentAge >= 65 && currentAge <= 74) {
+  // Rule 1 (Two cytology results)
+  if (t1 && t2 && currentAge >= 65 && currentAge <= 90) {
     const age1 = getAge(dob, t1);
     const age2 = getAge(dob, t2);
     if (age1 >= 62 && age2 >= 62 && (age1 >= 65 || age2 >= 65)) {
-      result.innerHTML = `<div class="result yes">✅ Two negative cytology results (one after age 65) → Eligible to exit screening.</div>`;
+      result.innerHTML = `<div class="result yes">✅ Cytology criteria met → Eligible to exit screening.</div>`;
+      dynamicBox.innerText = `1) Two consecutive negative cytology results after age 62, with at least one taken after age 65.`;
+      dynamicBox.style.display = "block";
+      copyBtn.style.display = "block";
       return;
     }
   }
 
   result.innerHTML = `<div class="result no">❗ Exit criteria not currently met.</div>`;
 }
-
+  
 const dobInput = document.getElementById("dob");
 const hpvInput = document.getElementById("hpv");
 const test1 = document.getElementById("test1");
 const test2 = document.getElementById("test2");
-const result = document.getElementById("result");
-const ageInfo = document.getElementById("ageInfo");
 
 dobInput.onchange = update;
 hpvInput.onchange = update;
