@@ -242,10 +242,23 @@ id('redipredWeight').addEventListener('input',()=>{
   const w=+id('redipredWeight').value;
   if(w) id('redipredResult').innerText='Dose: '+(w*1).toFixed(1)+' mg';
 });
-id('ibuprofenWeight').addEventListener('input',()=>{
-  const w=+id('ibuprofenWeight').value;
-  if(w) id('ibuprofenResult').innerText='Dose: '+(w*10/100*5).toFixed(1)+' mL';
+id('ibuprofenWeight').addEventListener('input', () => {
+  const w = +id('ibuprofenWeight').value;
+  if (w) {
+    // Calculate the dose based on 6 mg/kg
+    let dose = w * 6;
+    
+    // Cap the dose at 400 mg
+    if (dose > 400) dose = 400;
+    
+    // Calculate the volume needed based on the 100 mg/5 mL concentration
+    const volume = (dose / 100) * 5;
+    
+    // Display the result
+    id('ibuprofenResult').innerText = 'Dose: ' + dose.toFixed(0) + ' mg (' + volume.toFixed(1) + ' mL)';
+  }
 });
+
 id('fentDose').addEventListener('input',calcFent);
 id('fentStock').addEventListener('input',calcFent);
 function calcFent(){
