@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Exit Screening Criteria</title>
+<style>
+@font-face {
+  font-family: 'Adelicia';
+  src: url('AdeliciaRegular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Simplicity';
+  src: url('Simplicity.ttf') format('truetype');
+}
+
+body {
+  font-family: 'Simplicity', sans-serif;
+  background: linear-gradient(to bottom, #ebebeb, #f5ecf0);
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+main {
+  max-width: 480px;
+  width: 100%;
+  padding: 1.2rem;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+h1 {
+  font-family: 'Adelicia', cursive;
+  text-align: center;
+  margin: 0 0 1.5rem;
+  font-size: 2.3rem;
+  color: #000;
+  text-shadow:
+    -1px -1px 0 #f8c8dc,
+     1px -1px 0 #d3c7ce,
+    -1px  1px 0 #f7d9e1,
+     1px  1px 0 #b8b5b9,
+     0 0 12px rgba(255,255,255,0.9);
+}
+
+label { display: block; margin-top: 1rem; font-weight: 600; }
+
+input[type="date"] {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.result {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+.yes { color: #1f8f3a; background: #d8f5df; }
+.no { color: #b32626; background: #f5dada; }
+
+#ageInfo {
+  margin-top: 0.8rem;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #444;
+}
+</style>
+</head>
+<body>
+
+<main>
+  <h1>Exit Screening Criteria</h1>
+
+  <label>Date of Birth</label>
+  <input type="date" id="dob">
+
+  <div id="ageInfo"></div>
+
+  <label>HPV NOT DETECTED Test Date (if applicable)</label>
+  <input type="date" id="hpv">
+
+  <label>1st Normal Cytology Test Date</label>
+  <input type="date" id="test1">
+
+  <label>2nd Normal Cytology Test Date</label>
+  <input type="date" id="test2">
+
+  <div id="result"></div>
+</main>
+
+<script>
+function getAge(dob, ref) {
+  const d1 = new Date(dob);
+  const d2 = new Date(ref);
+  return (d2 - d1) / (1000 * 60 * 60 * 24 * 365.25);
+}
+
+function update() {
+  const dob = dobInput.value;
+  const hpv = hpvInput.value;
+  const t1 = test1.value;
+  const t2 = test2.value;
+
+  if (!dob) return;
+
+  const today = new Date();
+  const currentAge = getAge(dob, today);
+  ageInfo.innerHTML = `Current Age: ${currentAge.toFixed(1)} years`;
+
+  // Condition 1: Age ≥ 69 + single HPV not detected
+  if (hpv && currentAge >= 69) {
+    result.innerHTML = `<div class="result yes">✅ Age ≥ 69 + HPV NOT detected → Safe to exit screening.</div>`;
+    return;
+  }
+
+  // Condition 2: Two normal cytology tests between ages 62–69
+  if (t1 && t2) {
+    const age1 = getAge(dob, t1);
+    const age2 = getAge(dob, t2);
+
+    if (age1 >= 62 && age1 <= 69 && age2 >= 62 && age2 <= 69) {
+      result.innerHTML = `<div class="result yes">✅ Two normal cytology results between age 62–69 → Eligible to exit screening.</div>`;
+      return;
+    }
+  }
+
+  result.innerHTML = `<div class="result no">❗ Criteria for exit screening not currently met.</div>`;
+}
+
+const dobInput = document.getElementById("dob");
+const hpvInput = document.getElementById("hpv");
+const test1 = document.getElementById("test1");
+const test2 = document.getElementById("test2");
+const result = document.getElementById("result");
+const ageInfo = document.getElementById("ageInfo");
+
+dobInput.onchange = update;
+hpvInput.onchange = update;
+test1.onchange = update;
+test2.onchange = update;
+</script>
+
+</body>
+</html>
