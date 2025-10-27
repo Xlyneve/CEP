@@ -77,6 +77,29 @@ input[type="date"] {
   font-weight: bold;
   color: #444;
 }
+
+#exitCriteriaBox {
+  margin-top: 1.7rem;
+  background: #ffffffc7;
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  border: 1px solid #ddd;
+}
+
+#copyBtn {
+  margin-top: 0.7rem;
+  width: 100%;
+  padding: 0.55rem;
+  border-radius: 10px;
+  border: none;
+  background: #e7c6d9;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+#copyBtn:hover { background: #d7b0c8; }
 </style>
 </head>
 <body>
@@ -99,6 +122,26 @@ input[type="date"] {
   <input type="date" id="test2">
 
   <div id="result"></div>
+
+  <!-- Copyable Guidelines -->
+  <div id="exitCriteriaBox">
+Participants aged 69+:
+• A single HPV Not Detected result is enough to safely discharge from NCSP.
+
+Participants aged 65–74:
+Do not require an exit test if either of the following exit criteria have been met:
+
+1) Two consecutive negative cytology results after age 62,
+   with at least one taken after age 65.
+
+OR
+
+2) An HPV Not Detected result after age 65.
+  </div>
+
+  <button id="copyBtn" onclick="navigator.clipboard.writeText(document.getElementById('exitCriteriaBox').innerText)">
+    Copy Exit Criteria
+  </button>
 </main>
 
 <script>
@@ -120,24 +163,33 @@ function update() {
   const currentAge = getAge(dob, today);
   ageInfo.innerHTML = `Current Age: ${currentAge.toFixed(1)} years`;
 
-  // Condition 1: Age ≥ 69 + single HPV not detected
+  // Rule 1: Age ≥ 69 + one HPV NOT DETECTED at any time
   if (hpv && currentAge >= 69) {
-    result.innerHTML = `<div class="result yes">✅ Age ≥ 69 + HPV NOT detected → Safe to exit screening.</div>`;
+    result.innerHTML = `<div class="result yes">✅ Age ≥ 69 + HPV Not Detected → Safe to exit screening.</div>`;
     return;
   }
 
-  // Condition 2: Two normal cytology tests between ages 62–69
-  if (t1 && t2) {
-    const age1 = getAge(dob, t1);
-    const age2 = getAge(dob, t2);
-
-    if (age1 >= 62 && age1 <= 69 && age2 >= 62 && age2 <= 69) {
-      result.innerHTML = `<div class="result yes">✅ Two normal cytology results between age 62–69 → Eligible to exit screening.</div>`;
+  // Rule 2: Age 65–74 + HPV Not Detected after age 65
+  if (hpv && currentAge >= 65 && currentAge <= 74) {
+    const ageHPV = getAge(dob, hpv);
+    if (ageHPV >= 65) {
+      result.innerHTML = `<div class="result yes">✅ HPV Not Detected after age 65 → Eligible to exit screening.</div>`;
       return;
     }
   }
 
-  result.innerHTML = `<div class="result no">❗ Criteria for exit screening not currently met.</div>`;
+  // Rule 3: Age 65–74 + Two negative cytology after age 62, and one after age 65
+  if (t1 && t2 && currentAge >= 65 && currentAge <= 74) {
+    const age1 = getAge(dob, t1);
+    const age2 = getAge(dob, t2);
+
+    if (age1 >= 62 && age2 >= 62 && (age1 >= 65 || age2 >= 65)) {
+      result.innerHTML = `<div class="result yes">✅ Two negative cytology results (one after age 65) → Eligible to exit screening.</div>`;
+      return;
+    }
+  }
+
+  result.innerHTML = `<div class="result no">❗ Exit criteria not currently met.</div>`;
 }
 
 const dobInput = document.getElementById("dob");
