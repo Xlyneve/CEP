@@ -315,184 +315,218 @@ tbody tr:hover {
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, onSnapshot,
-      updateDoc, deleteDoc, doc, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, onSnapshot,
+    updateDoc, deleteDoc, doc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-      authDomain: "cepx-f9d2a.firebaseapp.com",
-      projectId: "cepx-f9d2a",
-      storageBucket: "cepx-f9d2a.appspot.com",
-      messagingSenderId: "840696526325",
-      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const vaccineRef = collection(db, "vaccines");
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const vaccineRef = collection(db, "vaccines");
 
-    const form = document.getElementById("vaccineForm");
-    const tableBody = document.getElementById("tableBody");
-    const searchBox = document.getElementById("searchBox");
+  const form = document.getElementById("vaccineForm");
+  const tableBody = document.getElementById("tableBody");
+  const searchBox = document.getElementById("searchBox");
 
-    let fullData = [];
-    let latestData = [];
-    let editId = null;
+  let fullData = [];
+  let latestData = [];
+  let editId = null;
+  let currentSearch = ""; // <-- persist filter
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      const inj = document.getElementById("inj").value.trim();
-      const name = document.getElementById("name").value.trim();
-      const price = document.getElementById("price").value.trim();
-      const url = document.getElementById("url").value.trim();
-      const notes = document.getElementById("notes").innerHTML.trim();
+    const inj = document.getElementById("inj").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const price = document.getElementById("price").value.trim();
+    const url = document.getElementById("url").value.trim();
+    const notes = document.getElementById("notes").innerHTML.trim();
 
-      if (inj && name) {
-        await addDoc(vaccineRef, {
-          inj, name, price, url, notes,
-          timestamp: serverTimestamp()
-        });
-        form.reset();
-        document.getElementById("notes").innerHTML = '';
-      }
-    });
+    if (inj && name) {
+      await addDoc(vaccineRef, {
+        inj, name, price, url, notes,
+        timestamp: serverTimestamp()
+      });
+      form.reset();
+      document.getElementById("notes").innerHTML = '';
+    }
+  });
 
-    function renderTable() {
-      tableBody.innerHTML = "";
-      latestData.forEach(docSnap => {
-        const v = docSnap.data;
-        const id = docSnap.id;
-
-        const row = document.createElement("tr");
-        row.classList.add("border-t");
-
-        if (editId === id) {
-          row.innerHTML = `
-            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-inj" value="${v.inj || ''}"></td>
-            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-name" value="${v.name || ''}"></td>
-            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-price" value="${v.price || ''}"></td>
-            <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-url" value="${v.url || ''}"></td>
-            <td class="px-4 py-2">
-              <div class="flex space-x-1 mb-1">
-                <button type="button" onclick="formatText('bold')" class="px-1 py-0.5 bg-gray-200 text-xs rounded">B</button>
-                <button type="button" onclick="formatText('underline')" class="px-1 py-0.5 bg-gray-200 text-xs rounded">U</button>
-                <button type="button" onclick="formatText('hiliteColor', 'yellow')" class="px-1 py-0.5 bg-yellow-200 text-xs rounded">Highlight</button>
-              </div>
-              <div id="edit-notes" contenteditable="true" class="border p-1 w-full h-20 overflow-auto bg-white">${v.notes || ''}</div>
-            </td>
-            <td class="px-2 py-2 actions-cell">
-              <button class="bg-[#acc791] text-white px-2 py-1 rounded" onclick="saveVaccine()">Save</button>
-              <button class="bg-[#bfc1ce] text-black px-2 py-1 rounded" onclick="cancelEdit()">Cancel</button>
-            </td>
-          `;
-        } else {
-          row.innerHTML = `
-            <td class="px-4 py-2">${v.inj || ''}</td>
-            <td class="px-4 py-2">${v.name || ''}</td>
-            <td class="px-4 py-2">${v.price || ''}</td>
-            <td class="px-4 py-2">${v.url ? `<a href="${v.url}" target="_blank" class="text-blue-600 underline">Link</a>` : ''}</td>
-            <td class="notes-cell px-4 py-2">${v.notes || ''}</td>
-            <td class="px-2 py-2 actions-cell">
-              <button class="bg-[#efd1d4] text-black px-2 py-1 rounded" onclick="editVaccine('${id}')">Edit</button>
-              <button class="bg-[#c3dcd8] text-white px-2 py-1 rounded" onclick="deleteVaccine('${id}')">Delete</button>
-            </td>
-          `;
-        }
-
-        tableBody.appendChild(row);
+  function applyFilter() {
+    const query = currentSearch.toLowerCase();
+    if (!query) {
+      latestData = [...fullData];
+    } else {
+      latestData = fullData.filter(({ data }) => {
+        const v = data;
+        return (
+          (v.inj || '').toLowerCase().includes(query) ||
+          (v.name || '').toLowerCase().includes(query) ||
+          (v.price || '').toLowerCase().includes(query) ||
+          (v.notes || '').toLowerCase().includes(query)
+        );
       });
     }
+  }
 
-    onSnapshot(vaccineRef, snapshot => {
-      fullData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        data: doc.data()
-      }));
-      latestData = [...fullData];
-      renderTable();
-    });
+  function renderTable() {
+  tableBody.innerHTML = "";
+  latestData.forEach(docSnap => {
+    const v = docSnap.data;
+    const id = docSnap.id;
 
-    window.editVaccine = (id) => {
-      editId = id;
-      renderTable();
-    };
+    const row = document.createElement("tr");
+    row.classList.add("border-t");
 
-    window.cancelEdit = () => {
+    if (editId === id) {
+      row.innerHTML = `
+        <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-inj" value="${v.inj || ''}"></td>
+        <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-name" value="${v.name || ''}"></td>
+        <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-price" value="${v.price || ''}"></td>
+        <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-url" value="${v.url || ''}"></td>
+        <td class="px-4 py-2">
+          <div class="flex space-x-1 mb-1">
+            <button type="button" onclick="formatText('bold')" class="px-1 py-0.5 bg-gray-200 text-xs rounded">B</button>
+            <button type="button" onclick="formatText('underline')" class="px-1 py-0.5 bg-gray-200 text-xs rounded">U</button>
+            <button type="button" onclick="formatText('hiliteColor', 'yellow')" class="px-1 py-0.5 bg-yellow-200 text-xs rounded">Highlight</button>
+          </div>
+          <div id="edit-notes" 
+               contenteditable="true"
+               class="border p-1 w-full min-h-[60px] overflow-hidden bg-white whitespace-pre-wrap break-words rounded"
+               style="font-family: Tahoma, sans-serif; font-size: 14px; line-height: 1.4;">
+               ${v.notes || ''}
+          </div>
+        </td>
+        <td class="px-2 py-2 actions-cell">
+          <button class="bg-[#acc791] text-white px-2 py-1 rounded" onclick="saveVaccine()">Save</button>
+          <button class="bg-[#bfc1ce] text-black px-2 py-1 rounded" onclick="cancelEdit()">Cancel</button>
+        </td>
+      `;
+      tableBody.appendChild(row);
+
+      // ---- Auto-resize editable notes ----
+      const editNotes = row.querySelector("#edit-notes");
+
+      const resizeNotes = () => {
+        editNotes.style.height = "auto";
+        editNotes.style.height = editNotes.scrollHeight + "px";
+      };
+
+      // Initial resize
+      resizeNotes();
+
+      // Listen for input and paste
+      editNotes.addEventListener("input", resizeNotes);
+      editNotes.addEventListener("paste", () => setTimeout(resizeNotes, 0));
+
+      // Smooth expansion
+      editNotes.style.transition = "height 0.2s ease-out";
+    } else {
+      row.innerHTML = `
+        <td class="px-4 py-2">${v.inj || ''}</td>
+        <td class="px-4 py-2">${v.name || ''}</td>
+        <td class="px-4 py-2">${v.price || ''}</td>
+        <td class="px-4 py-2">${v.url ? `<a href="${v.url}" target="_blank" class="text-blue-600 underline">Link</a>` : ''}</td>
+        <td class="notes-cell px-4 py-2" style="font-family: Tahoma, sans-serif; font-size: 12px; line-height: 1.4;">${v.notes || ''}</td>
+        <td class="px-2 py-2 actions-cell">
+          <button class="bg-[#efd1d4] text-black px-2 py-1 rounded" onclick="editVaccine('${id}')">Edit</button>
+          <button class="bg-[#c3dcd8] text-white px-2 py-1 rounded" onclick="deleteVaccine('${id}')">Delete</button>
+        </td>
+      `;
+      tableBody.appendChild(row);
+    }
+  });
+}
+
+
+  onSnapshot(vaccineRef, snapshot => {
+    fullData = snapshot.docs.map(doc => ({
+      id: doc.id,
+      data: doc.data()
+    }));
+
+    // preserve current search
+    applyFilter();
+    renderTable();
+  });
+
+  window.editVaccine = (id) => {
+    editId = id;
+    renderTable();
+  };
+
+  window.cancelEdit = () => {
+    editId = null;
+    renderTable();
+  };
+
+  window.saveVaccine = async () => {
+    if (!editId) return;
+
+    const inj = document.getElementById("edit-inj").value.trim();
+    const name = document.getElementById("edit-name").value.trim();
+    const price = document.getElementById("edit-price").value.trim();
+    const url = document.getElementById("edit-url").value.trim();
+    const notes = document.getElementById("edit-notes").innerHTML.trim();
+
+    if (inj && name) {
+      const docRef = doc(db, "vaccines", editId);
+      await updateDoc(docRef, { inj, name, price, url, notes, timestamp: serverTimestamp() });
       editId = null;
+      // reapply current filter after edit
+      applyFilter();
       renderTable();
-    };
+    }
+  };
 
-    window.saveVaccine = async () => {
-      if (!editId) return;
+  window.deleteVaccine = async (id) => {
+    await deleteDoc(doc(db, "vaccines", id));
+  };
 
-      const inj = document.getElementById("edit-inj").value.trim();
-      const name = document.getElementById("edit-name").value.trim();
-      const price = document.getElementById("edit-price").value.trim();
-      const url = document.getElementById("edit-url").value.trim();
-      const notes = document.getElementById("edit-notes").innerHTML.trim();
+  searchBox.addEventListener("input", () => {
+    currentSearch = searchBox.value; // store current filter
+    applyFilter();
+    renderTable();
+  });
 
-      if (inj && name) {
-        const docRef = doc(db, "vaccines", editId);
-        await updateDoc(docRef, { inj, name, price, url, notes, timestamp: serverTimestamp() });
-        editId = null;
-      }
-    };
+  // Text formatting function
+  window.formatText = function (command, value = null) {
+    document.execCommand(command, false, value);
+  };
 
-    window.deleteVaccine = async (id) => {
-      await deleteDoc(doc(db, "vaccines", id));
-    };
-
-    searchBox.addEventListener("input", () => {
-      const query = searchBox.value.toLowerCase();
-
-      if (query === '') {
-        latestData = [...fullData];
-      } else {
-        latestData = fullData.filter(({ data }) => {
-          const v = data;
-          return (
-            (v.inj || '').toLowerCase().includes(query) ||
-            (v.name || '').toLowerCase().includes(query) ||
-            (v.price || '').toLowerCase().includes(query) ||
-            (v.notes || '').toLowerCase().includes(query)
-          );
-        });
-      }
-
-      renderTable();
-    });
-
-    // Text formatting function
-    window.formatText = function (command, value = null) {
-      document.execCommand(command, false, value);
-    };
-
-    // Keyboard shortcuts
-    document.addEventListener("keydown", function (e) {
-      if (e.ctrlKey) {
-        const active = document.activeElement;
-        if (active && active.isContentEditable) {
-          switch (e.key.toLowerCase()) {
-            case "b":
-              e.preventDefault();
-              formatText("bold");
-              break;
-            case "u":
-              e.preventDefault();
-              formatText("underline");
-              break;
-            case "h":
-              e.preventDefault();
-              formatText("hiliteColor", "yellow");
-              break;
-          }
+  // Keyboard shortcuts for formatting
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey) {
+      const active = document.activeElement;
+      if (active && active.isContentEditable) {
+        switch (e.key.toLowerCase()) {
+          case "b":
+            e.preventDefault();
+            formatText("bold");
+            break;
+          case "u":
+            e.preventDefault();
+            formatText("underline");
+            break;
+          case "h":
+            e.preventDefault();
+            formatText("hiliteColor", "yellow");
+            break;
         }
       }
-    });
-  </script>
+    }
+  });
+</script>
+
 </body>
 </html>
