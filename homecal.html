@@ -930,37 +930,61 @@ function loadTodos() {
 
 // --- FILTER FUNCTION: SHOW ALL MATCHING NOTES GROUPED BY MONTH ---
 async function filterNotes() {
-  const term = document.getElementById("noteFilterInput").value.toLowerCase();
-  if (!term.trim()) {
+  const term = document.getElementById("noteFilterInput").value.trim(); // Get the filter input and remove leading/trailing spaces
+  
+  // If the search term is empty, reload the full calendar (no filtering)
+  if (!term) {
     loadCalendar();
     return;
   }
 
+  // Create a regular expression for partial word matching (case-insensitive)
+  const regExp = new RegExp(term, 'i'); // 'i' flag for case-insensitivity
+  
+  // Get all calendar documents (month-year as document ID)
   const calendarRef = collection(db, 'calendar');
   const allDocs = await getDocs(calendarRef);
+
+  // Clear the existing calendar content
   calendarEl.innerHTML = '';
 
+  // Iterate over all documents in the calendar collection
   allDocs.forEach(docSnap => {
-    const [year, month] = docSnap.id.split('-').map(Number);
-    const notes = docSnap.data();
-    const matchingDays = Object.keys(notes).filter(day => notes[day].toLowerCase().includes(term));
+    const [year, month] = docSnap.id.split('-').map(Number); // Split the document ID into year and month
+    const notes = docSnap.data(); // Get the notes data for that month
+    
+    // Filter the days based on whether the notes contain the search term (using regex for partial matching)
+    const matchingDays = Object.keys(notes).filter(day => {
+      return regExp.test(notes[day]); // Test if the note contains the search term (case-insensitive)
+    });
 
+    // If there are matching days, display them grouped by month
     if (matchingDays.length > 0) {
+      // Create the month-year header (e.g., "June 2025")
       const header = document.createElement('div');
       header.className = 'month-header';
-      header.textContent = `${months[month - 1]} ${year}`;
+      header.textContent = `${months[month - 1]} ${year}`;  // Adjust for zero-indexing if necessary
       calendarEl.appendChild(header);
 
+      // Create a day element for each day with matching notes
       matchingDays.forEach(dayNum => {
         const day = document.createElement('div');
-        day.className = 'day match';
-        day.innerHTML = `<div class="date-number">${getDayName(year, month - 1, dayNum)} ${dayNum}</div><textarea readonly>${notes[dayNum]}</textarea>`;
+        day.className = 'day match'; // Add 'match' class for styling of matched days
+
+        // Create the day content with the note for that day
+        day.innerHTML = `
+          <div class="date-number">${getDayName(year, month - 1, dayNum)} ${dayNum}</div>
+          <textarea readonly>${notes[dayNum]}</textarea> <!-- Display the note for the matched day -->
+        `;
+
+        // Append the day to the calendar
         calendarEl.appendChild(day);
-        autoResizeAllDayTextareas();
+        autoResizeAllDayTextareas(); // Auto-resize all day textareas to fit content
       });
     }
   });
 }
+
 
 // Expose functions
 window.changeMonth = changeMonth;
@@ -1040,7 +1064,6 @@ window.insertEmoji = function(emoji) {
 
 </body>
 </html>
-
 
 
 
