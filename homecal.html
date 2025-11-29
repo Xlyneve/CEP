@@ -109,10 +109,10 @@ body {
 
 .todo-list {
   padding: 10px;
-  border-radius: 12px;
+  border-radius: 1px;
   color: black;
   max-height: none;
-  overflow-y: visible;
+  overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
   box-sizing: border-box;
@@ -153,7 +153,7 @@ body {
   padding: 4px;
   resize: none;
   min-height: 30px;
-  max-height: 300px;
+  max-height: none;
   overflow-y: hidden;
   box-sizing: border-box;
   overflow-wrap: break-word;
@@ -168,6 +168,19 @@ body {
   height: 20px;
   accent-color: #ffe700;
 }
+.todo-item {
+  align-items: stretch; /* CHANGE THIS */
+}
+
+.todo-item textarea {
+  width: 100%;
+  min-height: 30px;
+  resize: none;
+  overflow-y: hidden;
+  line-height: 1.4
+  font-family: Tahoma, sans-serif; /* if you want matching style */
+}
+
 
 .add-todo {
   display: flex;
@@ -509,6 +522,17 @@ s
 }
 	
 </style>
+<style>
+  .day.match {
+    background: rgba(255, 255, 255, 0.25); /* glass-like */
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+}
+
+
+</style>
 
 </head>
 
@@ -516,15 +540,108 @@ s
   <div class="calendar-container">
   <div class="calendar-header">
     <div class="calendar-header-left">
-      <button class="home-button" onclick="location.href='home.html'">Home</button>
-      <button class="emoji-button" onclick="copyEmoji('☐')">☐</button>
-	  <button class="emoji-button" onclick="copyEmoji('✅')">✅</button>
-	   <button class="emoji-button" onclick="copyEmoji('🟡')">🟡</button>
-	   <button class="emoji-button" onclick="copyEmoji('📌')">📌</button>
-	    <button class="emoji-button" onclick="copyEmoji('▪️')">▪️</button>
+    
 		
-		
+		<input 
+    type="text" 
+    id="noteFilterInput" 
+    placeholder="search" 
+    oninput="filterNotes()" 
+    class="glass-input"
+/>
+
+<style>
+.glass-input {
+    background: transparent;       /* fully see-through */
+    border: none;                  /* no border at all */
+    padding: 4px 0;
+    font-size: 11px;
+    width: 120px;
+    color: black;                  /* typed text is normal */
+    outline: none;
+}
+
+.glass-input::placeholder {
+    color: rgba(0, 0, 0, 0.05);   /* extremely faint placeholder */
+    font-style: italic;            /* optional subtle style */
+}
+
+.glass-input:focus::placeholder {
+    color: rgba(0, 0, 0, 0.03);   /* even fainter on focus */
+}
+
+
+.calendar-header-left {
+    display: flex;
+    align-items: center;   /* vertically align search box */
+    gap: 10px;             /* spacing between search + emoji buttons */
+}
+
+#newTodoInput {
+  width: 100%;
+  min-height: 32px;
+  resize: none;
+  overflow-y: hidden;
+  font-family: Tahoma, sans-serif;
+  line-height: 1.4;
+}
+.add-todo textarea {
+  flex: 1;
+  min-height: 36px;
+  resize: none;
+  overflow-y: hidden;
+  line-height: 1.4;
+  font-family: Tahoma, sans-serif;
+
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 10px;
+  padding: 10px;
+  color: black;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.add-todo textarea::placeholder {
+  color: rgba(255,255,255,0.7);
+}
+.emoji-popup {
+  position: fixed;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  gap: 8px;
+  z-index: 9999;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+.emoji-popup.hidden {
+  display: none;
+}
+
+.emoji-popup button {
+  background: rgba(255,255,255,0.3);
+  border: none;
+  border-radius: 10px;
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.emoji-popup button:hover {
+  background: rgba(255,255,255,0.5);
+}
+
+
+</style>
+
     </div>
+	
     <h2 id="monthLabel">Monthly Calendar</h2>
     <div>
       <button onclick="changeMonth(-1)">◀</button>
@@ -534,7 +651,15 @@ s
       <button onclick="changeMonth(1)">▶</button>
     </div>
   </div>
+<div class="note-filter-bar" style="
+  width: 50%;
+  max-width: 100px;
+  margin: 10px auto;
+  display: flex;
+  justify-content: center;
+">
 
+</div>
   <div class="day-headers">
     <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
   </div>
@@ -543,309 +668,372 @@ s
 </div> <!-- End of .calendar-container -->
 
 
-  <div class="todo-container">
-    <div class="todo-title">To-Do List</div>
-    <div class="todo-list" id="todoList"></div>
-    <div class="add-todo">
-      <input type="text" id="newTodo" placeholder="Add new task...">
-      <button onclick="addTodo()">Add</button>
-    </div>
+
+ <div class="todo-container">
+  <div class="todo-title">To-Do List</div>
+
+  <div class="todo-list" id="todoList"></div>
+
+  <div class="add-todo">
+    <textarea id="newTodo" placeholder="Add new task..."></textarea>
+    <button onclick="addTodo()">Add</button>
   </div>
+</div>
 
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import {
-    getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-    authDomain: "cepx-f9d2a.firebaseapp.com",
-    projectId: "cepx-f9d2a",
-    storageBucket: "cepx-f9d2a.appspot.com",
-    messagingSenderId: "840696526325",
-    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, onSnapshot, deleteDoc, addDoc
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSy***************",
+  authDomain: "cepx-f9d2a.firebaseapp.com",
+  projectId: "cepx-f9d2a",
+  storageBucket: "cepx-f9d2a.appspot.com",
+  messagingSenderId: "840696526325",
+  appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let currentDate = new Date();
+const calendarEl = document.getElementById('calendar');
+const monthLabel = document.getElementById('monthLabel');
+const monthSelect = document.getElementById('monthSelect');
+const yearSelect = document.getElementById('yearSelect');
+const todoInput = document.getElementById('newTodo');
+const todoListEl = document.getElementById('todoList');
+
+const months = [...Array(12).keys()].map(i =>
+  new Date(0, i).toLocaleString('default', { month: 'long' })
+);
+
+// Populate month/year selectors
+function populateSelectors() {
+  months.forEach((m, i) => {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = m;
+    monthSelect.appendChild(option);
+  });
+
+  const thisYear = new Date().getFullYear();
+  for (let y = thisYear - 5; y <= thisYear + 5; y++) {
+    const option = document.createElement('option');
+    option.value = y;
+    option.textContent = y;
+    yearSelect.appendChild(option);
+  }
+
+  monthSelect.addEventListener('change', () => {
+    currentDate.setMonth(parseInt(monthSelect.value));
+    loadCalendar();
+  });
+  yearSelect.addEventListener('change', () => {
+    currentDate.setFullYear(parseInt(yearSelect.value));
+    loadCalendar();
+  });
+}
+
+// Go to today
+function goToToday() {
+  currentDate = new Date();
+  loadCalendar();
+}
+
+// Change month
+function changeMonth(offset) {
+  currentDate.setMonth(currentDate.getMonth() + offset);
+  loadCalendar();
+}
+
+// Days in month
+function getDaysInMonth(month, year) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+// Day name
+function getDayName(year, month, day) {
+  return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
+}
+
+// Load calendar for a month
+async function loadCalendar() {
+  const month = currentDate.getMonth();
+  const year = currentDate.getFullYear();
+  calendarEl.innerHTML = '';
+  monthLabel.textContent = `${months[month]} ${year}`;
+  monthSelect.value = month;
+  yearSelect.value = year;
+
+  const daysInMonth = getDaysInMonth(month, year);
+  const firstDay = new Date(year, month, 1).getDay() || 7;
+
+  const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
+  let notes = {};
+  const snap = await getDoc(docRef);
+  if (snap.exists()) notes = snap.data();
+
+  // Blank days before first day
+  for (let i = 1; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'day empty';
+    calendarEl.appendChild(empty);
+  }
+
+  // Days with notes
+  for (let i = 1; i <= daysInMonth; i++) {
+    const note = notes[i] || "";
+    const day = document.createElement('div');
+    day.className = 'day';
+
+    const today = new Date();
+    if (i === today.getDate() &&
+        month === today.getMonth() &&
+        year === today.getFullYear()) {
+      day.classList.add('today');
+    }
+
+    day.innerHTML = `<div class="date-number">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
+    const textarea = day.querySelector('textarea');
+    textarea.addEventListener('input', e => {
+      autoResizeTextarea(e.target);
+      saveCalendar(year, month + 1, i, e.target.value);
+    });
+
+    calendarEl.appendChild(day);
+    autoResizeTextarea(textarea);
+  }
+  autoResizeAllDayTextareas();
+}
+
+// Save note
+async function saveCalendar(year, month, day, note) {
+  const ref = doc(db, 'calendar', `${year}-${month}`);
+  try {
+    await updateDoc(ref, { [day]: note });
+  } catch {
+    await setDoc(ref, { [day]: note }, { merge: true });
+  }
+}
+
+// Auto resize textareas
+function autoResizeTextarea(textarea) {
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+}
+function autoResizeAllDayTextareas() {
+  document.querySelectorAll('.day textarea').forEach(autoResizeTextarea);
+}
+
+const newTodo = document.getElementById('newTodo');
+
+newTodo.addEventListener('input', () => autoResizeTextarea(newTodo));
+
+// ensure fresh reset on load
+autoResizeTextarea(newTodo);
+
+
+// To-do functions
+async function addTodo() {
+  const value = todoInput.value.trim();
+  if (value) {
+    await addDoc(collection(db, 'todos'), { text: value, done: false });
+    todoInput.value = '';
+  }
+}
+function renderTodoItem(id, text, done) {
+  const item = document.createElement('div');
+  item.className = 'todo-item';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = done;
+  checkbox.onchange = () =>
+    updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
+
+  const input = document.createElement('textarea');
+  input.value = text;
+  input.disabled = true;
+  input.style.flex = '1';
+  input.style.border = 'none';
+  input.style.background = 'transparent';
+  input.style.resize = 'none';
+  input.style.overflow = 'hidden';
+
+  // initial autoresize on render
+  autoResizeTextarea(input);
+
+  // autoresize while typing
+  input.addEventListener('input', () => autoResizeTextarea(input));
+
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.display = 'flex';
+  buttonContainer.style.flexDirection = 'column';
+  buttonContainer.style.gap = '6px';
+
+  const editBtn = document.createElement('button');
+  editBtn.textContent = '✏️';
+
+  editBtn.onclick = async () => {
+    if (input.disabled) {
+      // enter edit mode
+      input.disabled = false;
+      input.focus();
+
+      // force auto-resize after becoming editable
+      setTimeout(() => autoResizeTextarea(input), 20);
+
+      editBtn.textContent = '💾';
+    } else {
+      // save changes
+      await updateDoc(doc(db, 'todos', id), { text: input.value });
+      input.disabled = true;
+
+      // ensure height matches final saved text
+      autoResizeTextarea(input);
+
+      editBtn.textContent = '✏️';
+    }
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = '🗑️';
+  deleteBtn.onclick = async () => {
+    if (confirm("Delete this to-do?"))
+      await deleteDoc(doc(db, 'todos', id));
+  };
 
-  let currentDate = new Date();
-  const calendarEl = document.getElementById('calendar');
-  const monthLabel = document.getElementById('monthLabel');
-  const monthSelect = document.getElementById('monthSelect');
-  const yearSelect = document.getElementById('yearSelect');
-  const todoInput = document.getElementById('newTodo');
-  const todoListEl = document.getElementById('todoList');
+  buttonContainer.append(editBtn, deleteBtn);
 
-  const months = [...Array(12).keys()].map(i =>
-    new Date(0, i).toLocaleString('default', { month: 'long' })
-  );
+  item.append(checkbox, input, buttonContainer);
+  todoListEl.appendChild(item);
 
-  function populateSelectors() {
-    months.forEach((m, i) => {
-      const option = document.createElement('option');
-      option.value = i;
-      option.textContent = m;
-      monthSelect.appendChild(option);
-    });
+  // safe double-pass autoresize for long text loaded from db
+  setTimeout(() => autoResizeTextarea(input), 30);
+}
 
-    const thisYear = new Date().getFullYear();
-    for (let y = thisYear - 5; y <= thisYear + 5; y++) {
-      const option = document.createElement('option');
-      option.value = y;
-      option.textContent = y;
-      yearSelect.appendChild(option);
-    }
+// Load todos
+function loadTodos() {
+  const ref = collection(db, 'todos');
+  onSnapshot(ref, snap => {
+    todoListEl.innerHTML = '';
+    snap.forEach(doc => renderTodoItem(doc.id, doc.data().text, doc.data().done));
+  });
+}
 
-    monthSelect.addEventListener('change', () => {
-      currentDate.setMonth(parseInt(monthSelect.value));
-      loadCalendar();
-    });
-
-    yearSelect.addEventListener('change', () => {
-      currentDate.setFullYear(parseInt(yearSelect.value));
-      loadCalendar();
-    });
-  }
-
-  function goToToday() {
-    currentDate = new Date();
+// --- FILTER FUNCTION: SHOW ALL MATCHING NOTES GROUPED BY MONTH ---
+async function filterNotes() {
+  const term = document.getElementById("noteFilterInput").value.toLowerCase();
+  if (!term.trim()) {
     loadCalendar();
+    return;
   }
 
-  function changeMonth(offset) {
-    currentDate.setMonth(currentDate.getMonth() + offset);
-    loadCalendar();
-  }
+  const calendarRef = collection(db, 'calendar');
+  const allDocs = await getDocs(calendarRef);
+  calendarEl.innerHTML = '';
 
-  function getDaysInMonth(month, year) {
-    return new Date(year, month + 1, 0).getDate();
-  }
+  allDocs.forEach(docSnap => {
+    const [year, month] = docSnap.id.split('-').map(Number);
+    const notes = docSnap.data();
+    const matchingDays = Object.keys(notes).filter(day => notes[day].toLowerCase().includes(term));
 
-  function getDayName(year, month, day) {
-    return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
-  }
+    if (matchingDays.length > 0) {
+      const header = document.createElement('div');
+      header.className = 'month-header';
+      header.textContent = `${months[month - 1]} ${year}`;
+      calendarEl.appendChild(header);
 
-  async function loadCalendar() {
-    const month = currentDate.getMonth();
-    const year = currentDate.getFullYear();
-    calendarEl.innerHTML = '';
-    monthLabel.textContent = `${months[month]} ${year}`;
-    monthSelect.value = month;
-    yearSelect.value = year;
-
-    const daysInMonth = getDaysInMonth(month, year);
-    const firstDay = new Date(year, month, 1).getDay() || 7;
-
-    const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
-    let notes = {};
-    const snap = await getDoc(docRef);
-    if (snap.exists()) notes = snap.data();
-
-    // Blank days before first day
-    for (let i = 1; i < firstDay; i++) {
-      const empty = document.createElement('div');
-      empty.className = 'day empty';
-      calendarEl.appendChild(empty);
-    }
-
-    // Days with notes textarea
-    for (let i = 1; i <= daysInMonth; i++) {
-  const note = notes[i] || "";
-  const day = document.createElement('div');
-  day.className = 'day';
-
-  // Highlight today
-  const today = new Date();
-  if (
-    i === today.getDate() &&
-    month === today.getMonth() &&
-    year === today.getFullYear()
-  ) {
-    day.classList.add('today');
-  }
-
-      day.innerHTML = `<div class="date-number">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
-      const textarea = day.querySelector('textarea');
-      textarea.addEventListener('input', e => {
-        autoResizeTextarea(e.target);
-        saveCalendar(year, month + 1, i, e.target.value);
+      matchingDays.forEach(dayNum => {
+        const day = document.createElement('div');
+        day.className = 'day match';
+        day.innerHTML = `<div class="date-number">${getDayName(year, month - 1, dayNum)} ${dayNum}</div><textarea readonly>${notes[dayNum]}</textarea>`;
+        calendarEl.appendChild(day);
+        autoResizeAllDayTextareas();
       });
-      calendarEl.appendChild(day);
-      autoResizeTextarea(textarea);
     }
-    autoResizeAllDayTextareas();
-  }
-
-  async function saveCalendar(year, month, day, note) {
-    const ref = doc(db, 'calendar', `${year}-${month}`);
-    try {
-      await updateDoc(ref, { [day]: note });
-    } catch {
-      await setDoc(ref, { [day]: note }, { merge: true });
-    }
-  }
-
-  async function addTodo() {
-    const value = todoInput.value.trim();
-    if (value) {
-      await addDoc(collection(db, 'todos'), { text: value, done: false });
-      todoInput.value = '';
-    }
-  }
-
-  function autoResizeTextarea(textarea) {
-    textarea.style.height = 'auto'; // reset height
-    textarea.style.height = textarea.scrollHeight + 'px'; // expand to content
-  }
-
-  function renderTodoItem(id, text, done) {
-    const item = document.createElement('div');
-    item.className = 'todo-item';
-    item.style.display = 'flex';
-    item.style.alignItems = 'flex-start';
-    item.style.gap = '10px';
-    item.style.width = '100%';
-    item.style.boxSizing = 'border-box';
-    item.style.padding = '8px 0';
-    item.style.borderBottom = '1px solid #ddd';
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.checked = done;
-    checkbox.onchange = () => updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
-
-    const input = document.createElement('textarea');
-    input.value = text;
-    input.disabled = true;
-    input.style.flex = '1';
-    input.style.border = 'none';
-    input.style.background = 'transparent';
-    input.style.fontFamily = 'champ, sans-serif';
-    input.style.fontSize = '10pt';
-    input.style.resize = 'vertical';
-    input.style.minHeight = '30px';
-    input.style.padding = '4px';
-    input.style.overflowWrap = 'break-word';
-    input.style.whiteSpace = 'pre-wrap';
-    input.style.wordBreak = 'break-word';
-    input.style.color = 'black';
-    autoResizeTextarea(input);
-
-    // Update size dynamically while editing
-    input.addEventListener('input', () => autoResizeTextarea(input));
-
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.flexDirection = 'column';
-    buttonContainer.style.gap = '6px';
-
-    const editBtn = document.createElement('button');
-    editBtn.textContent = '✏️';
-    editBtn.style.background = 'none';
-    editBtn.style.border = 'none';
-    editBtn.style.cursor = 'pointer';
-    editBtn.style.padding = '0';
-    editBtn.style.margin = '0';
-
-    editBtn.onclick = async () => {
-      if (input.disabled) {
-        input.disabled = false;
-        input.focus();
-        editBtn.textContent = '💾';
-      } else {
-        try {
-          await updateDoc(doc(db, 'todos', id), { text: input.value });
-          input.disabled = true;
-          editBtn.textContent = '✏️';
-        } catch (err) {
-          alert('Failed to save changes: ' + err.message);
-        }
-      }
-    };
-
-    input.addEventListener('keydown', async (e) => {
-      if (!input.disabled && e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        try {
-          await updateDoc(doc(db, 'todos', id), { text: input.value });
-          input.disabled = true;
-          editBtn.textContent = '✏️';
-        } catch (err) {
-          alert('Failed to save changes: ' + err.message);
-        }
-      }
-    });
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = '🗑️';
-    deleteBtn.style.background = 'none';
-    deleteBtn.style.border = 'none';
-    deleteBtn.style.cursor = 'pointer';
-    deleteBtn.style.padding = '0';
-    deleteBtn.style.margin = '0';
-    deleteBtn.onclick = async () => {
-      if (confirm("Delete this to-do?")) await deleteDoc(doc(db, 'todos', id));
-    };
-
-    buttonContainer.append(editBtn, deleteBtn);
-
-    item.append(checkbox, input, buttonContainer);
-    todoListEl.appendChild(item);
-    autoResizeTextarea(input);
-  }
-
-  function loadTodos() {
-    const ref = collection(db, 'todos');
-    onSnapshot(ref, snap => {
-      todoListEl.innerHTML = '';
-      snap.forEach(doc => renderTodoItem(doc.id, doc.data().text, doc.data().done));
-    });
-  }
-
-  function autoResizeAllDayTextareas() {
-    const textareas = document.querySelectorAll('.day textarea');
-    let maxHeight = 110; // minimum starting height
-
-    textareas.forEach(textarea => {
-      textarea.style.height = '110px';
-      const scrollHeight = textarea.scrollHeight;
-      if (scrollHeight > maxHeight) maxHeight = scrollHeight;
-    });
-
-    maxHeight = Math.min(maxHeight, 300);
-
-    textareas.forEach(textarea => {
-      textarea.style.height = maxHeight + 'px';
-    });
-  }
-
-  // Run initial setup
-  populateSelectors();
-  loadCalendar();
-  loadTodos();
-
-  // Expose functions for buttons outside module scope
-  window.changeMonth = changeMonth;
-  window.goToToday = goToToday;
-  window.addTodo = addTodo;
-
-  // Resize textareas on window resize
-  window.addEventListener('resize', () => {
-    document.querySelectorAll('.todo-item textarea, .day textarea').forEach(autoResizeTextarea);
-    autoResizeAllDayTextareas();
   });
-window.copyEmoji = function(emoji) {
-  navigator.clipboard.writeText(emoji).catch(err => {
-    console.error('Failed to copy:', err);
-  });
+}
+
+// Expose functions
+window.changeMonth = changeMonth;
+window.goToToday = goToToday;
+window.addTodo = addTodo;
+window.filterNotes = filterNotes;
+
+// Initial load
+populateSelectors();
+loadCalendar();
+loadTodos();
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.todo-item textarea, .day textarea').forEach(autoResizeTextarea);
+  autoResizeAllDayTextareas();
+});
+
+let activeTextarea = null;
+const emojiPopup = document.getElementById("emojiPopup");
+
+// SHOW EMOJI POPUP ON DAY CLICK
+document.addEventListener("click", (e) => {
+    const dayBox = e.target.closest(".day");
+
+    if (dayBox) {
+        const rect = dayBox.getBoundingClientRect();
+
+        // find textarea inside day
+        activeTextarea = dayBox.querySelector("textarea");
+
+        // position popup (centered above the day)
+        emojiPopup.style.left = rect.left + rect.width / 2 + "px";
+        emojiPopup.style.top = rect.top - 55 + "px";
+
+        emojiPopup.classList.remove("hidden");
+        return;
+    }
+
+    // CLICK OUTSIDE → CLOSE POPUP
+    if (!e.target.closest("#emojiPopup")) {
+        emojiPopup.classList.add("hidden");
+    }
+});
+
+// INSERT EMOJI INTO CURRENT DAY NOTE
+window.insertEmoji = function(emoji) {
+    if (!activeTextarea) return;
+
+    const cursorPos = activeTextarea.selectionStart;
+    const text = activeTextarea.value;
+
+    activeTextarea.value =
+        text.slice(0, cursorPos) + emoji + " " + text.slice(cursorPos);
+
+    activeTextarea.focus();
+    activeTextarea.selectionEnd = cursorPos + emoji.length + 1;
+
+    autoResizeTextarea(activeTextarea);
+
+    // keep popup open (optional)
 };
 
 </script>
 
 
+<!-- EMOJI POPUP -->
+<div id="emojiPopup" class="emoji-popup hidden">
+  <button onclick="insertEmoji('☐')">☐</button>
+  <button onclick="insertEmoji('✅')">✅</button>
+  <button onclick="insertEmoji('🟡')">🟡</button>
+  <button onclick="insertEmoji('📌')">📌</button>
+  <button onclick="insertEmoji('▪️')">▪️</button>
+  <button onclick="insertEmoji('🌸')">🌸</button>
+  <button onclick="insertEmoji('⚠️')">⚠️</button>
+</div>
 
 </body>
 </html>
-
