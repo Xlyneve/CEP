@@ -1172,7 +1172,7 @@ addNoteBtn.onclick = async () => {
   const user = auth.currentUser;
   if (!user) return alert('Please log in.');
 
-  const noteContent = noteInput.innerHTML.trim();
+ const noteContent = linkify(noteInput.innerHTML.trim());
   if (!noteContent) return alert('Note is required.');
 
   addNoteBtn.disabled = true;
@@ -1746,6 +1746,30 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// 🔎 Normalize text (case-insensitive search)
+function normalize(text) {
+  return text.toLowerCase().trim();
+}
+
+// 🧹 Strip HTML so we search readable text, not tags
+function htmlToText(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
+// ✅ Core matcher: substring + prefix matching
+function noteMatches(noteHTML, query) {
+  const text = normalize(htmlToText(noteHTML));
+  const q = normalize(query);
+  if (!q) return false;
+
+  // substring match
+  if (text.includes(q)) return true;
+
+  // prefix match (child → children)
+  return text.split(/\s+/).some(word => word.startsWith(q));
+}
 
 
 </script>
