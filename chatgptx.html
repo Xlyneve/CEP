@@ -1593,18 +1593,30 @@ document.getElementById('inputArea').onsubmit = async e => {
 };
 
 async function queryNotes(q) {
-  const snap = await db.collection('notes').orderBy('createdAt', 'desc').get();
-  const isHashtagSearch = q.startsWith('#');
+  const snap = await db.collection('notes')
+    .orderBy('createdAt', 'desc')
+    .get();
+
+  // Split by comma → trim → lowercase → remove empty
+  const terms = q
+    .toLowerCase()
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
 
   return snap.docs
     .filter(d => {
       const content = d.data().content?.toLowerCase() || '';
-      return isHashtagSearch
-        ? content.includes(q.toLowerCase()) // exact hashtag search
-        : content.includes(q.toLowerCase());
+
+      // AND logic: every term must be found somewhere
+      return terms.every(term => content.includes(term));
     })
-    .map(d => ({ ...d.data(), id: d.id }));
+    .map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
 }
+
 
 
 document.getElementById('boldBtn').onclick = () => document.execCommand('bold');
@@ -1770,6 +1782,27 @@ function noteMatches(noteHTML, query) {
   // prefix match (child → children)
   return text.split(/\s+/).some(word => word.startsWith(q));
 }
+
+// Highlight search matches in notes
+const searchInput = document.getElementById('noteSearch'); 
+const notesContainer = document.getElementById('notePanel'); 
+
+function highlightMatchingNotes() {
+  const query = searchInput.value.toLowerCase();
+  const notes = notesContainer.querySelectorAll('.noteCard');
+
+  notes.forEach(note => {
+    // Remove previous highlights
+    note.innerHTML = note.innerHTML.replace(/<mark class="underlineMatch">(.*?)<\/mark>/gi, '$1');
+
+    if (query) {
+      const regex = new RegExp(`(${query})`, 'gi');
+      note.innerHTML = note.innerHTML.replace(regex, `<mark class="underlineMatch">$1</mark>`);
+    }
+  });
+}
+
+searchInput.addEventListener('input', highlightMatchingNotes);
 
 
 </script>
