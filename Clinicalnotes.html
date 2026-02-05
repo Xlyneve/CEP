@@ -422,20 +422,23 @@ function renderNotes() {
 
 function drawNotes(notesArray) {
   const list = document.getElementById('notesList');
-  list.innerHTML = '';
+  list.innerHTML = '';  // clear existing notes
 
   notesArray.forEach(data => {
     const div = document.createElement('div');
     div.className = 'note-card';
 
+    // --- Title ---
     const titleEl = document.createElement('div');
     titleEl.className = 'note-title';
     titleEl.textContent = data.title || "Untitled";
 
+    // --- Content ---
     const contentEl = document.createElement('div');
     contentEl.className = 'note-content';
     contentEl.innerHTML = data.note || "";
 
+    // --- Actions (Edit/Delete) ---
     const actions = document.createElement('div');
     actions.className = 'note-actions';
     actions.style.display = 'none';
@@ -444,18 +447,15 @@ function drawNotes(notesArray) {
       <button class="delete-btn">Delete</button>
     `;
 
+    // Append elements to note card
     div.append(titleEl, contentEl, actions);
     list.appendChild(div);
 
-    // --- Copy note on click ---
+    // --- Copy on click ---
     div.addEventListener('click', () => {
       if (div.classList.contains('is-editing')) return;
-
       const htmlContent = contentEl.innerHTML;
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlContent;
-
-      const plainContent = tempDiv.innerText;
+      const plainContent = contentEl.innerText;
 
       navigator.clipboard.writeText(plainContent).then(() => {
         const check = document.createElement('div');
@@ -469,15 +469,13 @@ function drawNotes(notesArray) {
 
     // --- Long press to show actions ---
     let pressTimer;
-    const startPress = () => {
-      pressTimer = setTimeout(() => { actions.style.display = 'flex'; }, 800);
-    };
+    const startPress = () => { pressTimer = setTimeout(() => { actions.style.display='flex'; }, 800); };
     const endPress = () => clearTimeout(pressTimer);
 
     div.addEventListener('mousedown', startPress);
     div.addEventListener('mouseup', endPress);
     div.addEventListener('mouseleave', endPress);
-    div.addEventListener('touchstart', startPress, { passive: true });
+    div.addEventListener('touchstart', startPress, {passive:true});
     div.addEventListener('touchend', endPress);
 
     // --- Delete ---
@@ -490,20 +488,21 @@ function drawNotes(notesArray) {
     // --- Edit ---
     actions.querySelector('.edit-btn').addEventListener('click', () => {
       div.classList.add('is-editing');
-
       titleEl.contentEditable = 'true';
       contentEl.contentEditable = 'true';
+      activeEditable = contentEl;
 
       actions.innerHTML = `
         <button class="save-btn">Save</button>
         <button class="cancel-btn">Cancel</button>
       `;
-      actions.style.display = 'flex';
+      actions.style.display='flex';
 
+      // --- Save ---
       actions.querySelector('.save-btn').addEventListener('click', async () => {
         const newTitle = titleEl.textContent.trim() || "Untitled";
         const newHTML = contentEl.innerHTML.trim();
-        if (!newHTML) return alert("Cannot save empty note");
+        if(!newHTML){ alert("Cannot save empty note"); return; }
 
         await updateDoc(doc(db, 'clinicalNotes', data.id), {
           title: newTitle,
@@ -513,118 +512,22 @@ function drawNotes(notesArray) {
         });
 
         div.classList.remove('is-editing');
-        actions.style.display = 'none';
+        titleEl.contentEditable = 'false';
+        contentEl.contentEditable = 'false';
+        actions.style.display='none';
+        activeEditable = noteTextEl;
       });
 
+      // --- Cancel ---
       actions.querySelector('.cancel-btn').addEventListener('click', () => {
         div.classList.remove('is-editing');
-        actions.style.display = 'none';
+        titleEl.contentEditable = 'false';
+        contentEl.contentEditable = 'false';
+        actions.style.display='none';
+        activeEditable = noteTextEl;
       });
     });
-  });
-}
 
-
-
-        const actions = document.createElement('div');
-        actions.className = 'note-actions';
-        actions.style.display = 'none';
-        actions.innerHTML = `<button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button>`;
-
-        div.append(titleEl, contentEl);
-        if(linkWrap) div.appendChild(linkWrap);
-        div.appendChild(actions);
-        list.appendChild(div);
-
-        // --- Copy note ---
-        div.addEventListener('click', () => {
-          if (div.classList.contains('is-editing')) return;
-          const htmlContent = contentEl.innerHTML;
-
-          // Convert <br>, <div>, <p> into newline for plain text copy
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = htmlContent;
-
-          const getPlainText = (node) => {
-            let text = '';
-            node.childNodes.forEach((child) => {
-              if (child.nodeType === Node.TEXT_NODE) {
-                text += child.textContent;
-              } else if (child.nodeName === 'BR' || child.nodeName === 'DIV' || child.nodeName === 'P') {
-                text += '\n' + getPlainText(child);
-              } else {
-                text += getPlainText(child);
-              }
-            });
-            return text;
-          };
-
-          const plainContent = getPlainText(tempDiv);
-
-          navigator.clipboard.write([
-            new ClipboardItem({
-              "text/plain": new Blob([plainContent], { type: "text/plain" }),
-              "text/html":  new Blob([htmlContent], { type: "text/html" })
-            })
-          ]).then(() => {
-            if (!div.querySelector('.copy-check')) {
-              const check = document.createElement('div');
-              check.className = 'copy-check';
-              check.textContent = '✓';
-              div.style.position = 'relative';
-              div.appendChild(check);
-              setTimeout(() => check.remove(), 1100);
-            }
-          });
-        });
-
-        // --- Long press to show actions ---
-        let pressTimer;
-        const startPress = () => { pressTimer = setTimeout(()=>{actions.style.display='flex';}, 800); };
-        const endPress = () => clearTimeout(pressTimer);
-        div.addEventListener('mousedown', startPress);
-        div.addEventListener('mouseup', endPress);
-        div.addEventListener('mouseleave', endPress);
-        div.addEventListener('touchstart', startPress, {passive:true});
-        div.addEventListener('touchend', endPress);
-
-        // --- Edit ---
-        actions.querySelector('.edit-btn').addEventListener('click', () => {
-          div.classList.add('is-editing');
-          titleEl.contentEditable = 'true';
-          contentEl.contentEditable = 'true';
-          activeEditable = contentEl;
-          actions.innerHTML = `<button class="save-btn">Save</button> <button class="cancel-btn">Cancel</button>`;
-          actions.style.display='flex';
-
-          actions.querySelector('.save-btn').addEventListener('click', async ()=>{
-            const newTitle = titleEl.textContent.trim() || "Untitled";
-            const newHTML = contentEl.innerHTML.trim();
-            if(!newHTML){ alert("Cannot save empty note"); return; }
-            await updateDoc(doc(db,'clinicalNotes',docSnap.id),{ title:newTitle, note:newHTML, url:data.url||'', time:new Date().toISOString() });
-            titleEl.contentEditable = 'false';
-            contentEl.contentEditable = 'false';
-            div.classList.remove('is-editing');
-            actions.style.display='none';
-            activeEditable = noteTextEl;
-          });
-
-          actions.querySelector('.cancel-btn').addEventListener('click', ()=>{
-            titleEl.contentEditable='false';
-            contentEl.contentEditable='false';
-            div.classList.remove('is-editing');
-            actions.style.display='none';
-            activeEditable = noteTextEl;
-          });
-        });
-
-        // --- Delete ---
-        actions.querySelector('.delete-btn').addEventListener('click', async ()=>{
-          if(confirm("Delete note?")){
-            await deleteDoc(doc(db,'clinicalNotes',docSnap.id));
-          }
-        });
-      });
   });
 }
 
