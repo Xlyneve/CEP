@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clinical Notes</title>
+<style>
+/* General page setup */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Tahoma', sans-serif;
+  overflow-x: hidden;
+  position: relative;
+  flex-direction: column;
+}
+
+/* Background image with blur */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('2b.png') no-repeat center center fixed;
+  background-size: cover;
+  filter: blur(10px) brightness(0.9);
+  z-index: -1;
+}
+
+.main {
+  display: flex;
+  padding-top: 20px;
+  gap: 3px;
+  align-items: flex-start; /* keeps top aligned */
+}
+
+.input-panel {
+  flex: 0 0 260px;              /* thinner (was 320px) */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 15px;
+  border-radius: 20px;
+  background: rgba(245, 245, 245, 0.15);
+  backdrop-filter: blur(12px);
+  height: calc(100vh - 40px);   /* longer (was 100vh - 100px) */
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+
+/* Inputs */
+.input-panel input {
+  border: none;
+  outline: none;
+  background: rgba(255,255,255,0.3);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  transition: background 0.2s, box-shadow 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.input-panel input:focus {
+  background: rgba(255,255,255,0.6);
+  box-shadow: 0 0 6px rgba(111,66,193,0.4);
+}
+
+/* Editable left panel note box */
+#noteText.editable {
+  border: none;
+  outline: none;
+  background: rgba(255,255,255,0.3);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  transition: background 0.2s, box-shadow 0.2s, height 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 100px;
+  max-height: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+#noteText.editable:focus {
+  background: rgba(255,255,255,0.6);
+  box-shadow: 0 0 6px rgba(111,66,193,0.4);
+}
+#noteText.editable:empty:before {
+  content: attr(data-placeholder);
+  color: rgba(0,0,0,0.45);
+}
+
+/* Buttons */
+.input-panel button, .format-buttons button {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 6px 10px;
+  transition: 0.3s;
+}
+.input-panel button {
+  margin-top: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  color: black;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+.input-panel button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #6f42c1;
+  border-color: #6f42c1;
+}
+.format-buttons button {
+  background: rgba(255, 255, 255, 0.6);
+  color: black;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+.format-buttons button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #6f42c1;
+  border-color: #6f42c1;
+}
+#addNoteHint {
+  font-size: 10px;
+  color: rgba(0,0,0,0.5);
+  margin-top: 4px;
+}
+
+
+/* Notes masonry panel - true masonry using CSS columns */
+.notes-panel {
+  flex: 1;                /* use remaining width */
+  column-count: 1;        /* default: 1 column */
+  column-gap: 16px;
+  padding: 16px;
+  box-sizing: border-box;
+ 
+}
+
+/* Each note fits into a column */
+.note-card {
+  display: inline-block;
+  width: 88%;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  break-inside: avoid;
+  overflow-wrap: break-word;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.35);
+}
+
+/* Responsive column adjustments */
+@media (min-width: 480px) { .notes-panel { column-count: 2; } }
+@media (min-width: 768px) { .notes-panel { column-count: 3; } }
+@media (min-width: 1024px) { .notes-panel { column-count: 4; } }
+
+
+/* Titles and content */
+.note-title { font-weight: bold; font-size: 14px; margin-bottom: 6px; }
+.note-content { margin-bottom: 8px; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; }
+.note-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
+
+/* Glassy buttons for note-actions */
+/* Subtle lift on hover */
+.note-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* Title and content remain understated */
+.note-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  margin-bottom: 4px;
+  color: #222;
+}
+
+.note-content {
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #333;
+}
+
+/* Softer, flatter buttons for note-actions */
+.note-actions button {
+  background: rgba(255,255,255,0.2);
+  color: #111;
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 10px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.note-actions button:hover {
+  background: rgba(255,255,255,0.5);
+  color: #6f42c1;
+  border-color: rgba(111,66,193,0.5);
+}.note-actions button:hover {
+  background: rgba(255,255,255,0.45);
+  transform: scale(1.05);
+  border-color: rgba(111,66,193,0.5);
+  color: #6f42c1;
+  box-shadow: 0 4px 12px rgba(111,66,193,0.3);
+}
+
+/* Simple bold check mark */
+.copy-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 26px;       /* slightly larger */
+  font-weight: 1000;      /* bold */
+  color: #bbc5f8;        /* soft yellow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.5);
+  animation: popFade 1s ease forwards;
+  pointer-events: none;  /* so it doesn’t block clicks */
+  
+}
+
+@keyframes popFade {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 1; transform: scale(1.2); }
+  60% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+
+/* Login panel */
+.login-container { padding: 100px 20px; text-align: center; }
+.login-container input { padding: 6px 10px; margin: 4px; font-size: 12px; border-radius: 6px; border: none; background: rgba(255,255,255,0.3); }
+.login-container button { padding: 6px 16px; margin-top: 6px; }
+</style>
+
+</head>
+<body>
+
+  <!-- LOGIN PANEL -->
+  <div id="loginDiv" class="login-container">
+    <h2>Login</h2>
+    <input type="email" id="loginEmail" placeholder="Email"><br>
+    <input type="password" id="loginPass" placeholder="Password"><br>
+    <button id="loginBtn">Login</button>
+    <div id="loginError" style="color:red; margin-top:5px;"></div>
+  </div>
+
+  <!-- MAIN NOTES PANEL -->
+  <div id="notesDiv" class="main" style="display:none;">
+  <div class="input-panel">
+    <!-- Search -->
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Search notes...">
+    </div>
+
+    <input id="noteTitle" placeholder="Title">
+
+    <div class="format-buttons">
+      <button type="button" onclick="formatText('bold')"><b>B</b></button>
+      <button type="button" onclick="formatText('italic')"><i>I</i></button>
+      <button type="button" onclick="formatText('underline')"><u>U</u></button>
+    </div>
+
+    <!-- Editable div instead of textarea -->
+    <div id="noteText" class="editable" contenteditable="true" data-placeholder="Note..."></div>
+
+    <input id="noteURL" placeholder="Optional URL">
+    <button id="addNoteBtn">Add Note</button>
+
+    <!-- Hint for users -->
+    <div id="addNoteHint" style="font-size:10px; color:rgba(0,0,0,0.5); margin-top:4px; font-family: Tahoma, sans-serif;">
+      Use Shift + Enter for a new line
+    </div>
+  </div>
+
+  <div class="notes-panel" id="notesList"></div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+// --- Firebase config ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDcM4E3wFhjUwZBYbnZoi1AAQtMe7TzNL8",
+  authDomain: "notes-bcba6.firebaseapp.com",
+  projectId: "notes-bcba6",
+  storageBucket: "notes-bcba6.appspot.com",
+  messagingSenderId: "101524739050",
+  appId: "1:101524739050:web:7e5fe1c8fa224d69909893",
+  measurementId: "G-SFWTJF4XVG"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+const notesCol = collection(db, "clinicalNotes");
+let ALL_NOTES = [];
+
+
+// --- Track active editable ---
+const noteTextEl = document.getElementById('noteText');
+let activeEditable = noteTextEl;
+
+// --- Handle Enter key → insert single <br> and move caret after it ---
+noteTextEl.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault(); 
+  noteTextEl.focus();
+  const sel = window.getSelection();
+  if (!sel) return;
+
+  if (sel.rangeCount === 0) {
+    const br = document.createElement('br');
+    noteTextEl.appendChild(br);
+    const zw = document.createTextNode('\u200B');
+    noteTextEl.appendChild(zw);
+    const rng = document.createRange();
+    rng.setStartAfter(zw);
+    rng.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(rng);
+    if (typeof autoGrow === 'function') autoGrow(noteTextEl);
+    return;
+  }
+
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+  const br = document.createElement('br');
+  range.insertNode(br);
+  const zw = document.createTextNode('\u200B');
+  br.parentNode.insertBefore(zw, br.nextSibling);
+  range.setStartAfter(zw);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  if (typeof autoGrow === 'function') autoGrow(noteTextEl);
+});
+
+// --- Auth flow ---
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById('loginDiv').style.display  = 'none';
+    document.getElementById('notesDiv').style.display  = 'flex';
+    renderNotes();
+  } else {
+    document.getElementById('loginDiv').style.display  = 'block';
+    document.getElementById('notesDiv').style.display  = 'none';
+  }
+});
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value;
+  const pass  = document.getElementById('loginPass').value;
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch (err) {
+    document.getElementById('loginError').textContent = err.message;
+  }
+});
+
+// --- Formatting buttons ---
+window.formatText = (cmd) => {
+  if (!activeEditable) return;
+  activeEditable.focus();
+  document.execCommand(cmd, false, null);
+};
+
+// --- Auto-resize contenteditable ---
+const autoGrow = el => {
+  if (el.textContent.trim() === '') el.innerHTML = '';
+  el.style.height = 'auto';
+  el.style.height = Math.max(100, el.scrollHeight) + 'px';
+};
+noteTextEl.addEventListener('input', () => autoGrow(noteTextEl));
+noteTextEl.addEventListener('blur',  () => autoGrow(noteTextEl));
+autoGrow(noteTextEl);
+
+// --- Add Note ---
+document.getElementById('addNoteBtn').addEventListener('click', async () => {
+  const title = document.getElementById('noteTitle').value.trim() || "Untitled";
+  const noteHTML = noteTextEl.innerHTML.trim();
+  const url = document.getElementById('noteURL').value.trim();
+  if (!noteHTML.replace(/<br\s*\/?>/gi,'').trim()) { alert("Cannot add empty note"); return; }
+
+  try {
+    await addDoc(notesCol, { title, note: noteHTML, url, time: new Date().toISOString() });
+    document.getElementById('noteTitle').value = '';
+    document.getElementById('noteURL').value = '';
+    noteTextEl.innerHTML = '';
+    autoGrow(noteTextEl);
+  } catch (err) {
+    console.error(err);
+    alert("Failed to add note");
+  }
+});
+
+// --- Render Notes ---
+function renderNotes() {
+  onSnapshot(notesCol, snapshot => {
+    ALL_NOTES = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => new Date(b.time) - new Date(a.time));
+
+    drawNotes(ALL_NOTES);
+  });
+}
+
+function drawNotes(notesArray) {
+  const list = document.getElementById('notesList');
+  list.innerHTML = '';
+
+  notesArray.forEach(data => {
+    const div = document.createElement('div');
+    div.className = 'note-card';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'note-title';
+    titleEl.textContent = data.title || "Untitled";
+
+    const contentEl = document.createElement('div');
+    contentEl.className = 'note-content';
+    contentEl.innerHTML = data.note || "";
+
+    div.append(titleEl, contentEl);
+    list.appendChild(div);
+  });
+}
+
+
+        const actions = document.createElement('div');
+        actions.className = 'note-actions';
+        actions.style.display = 'none';
+        actions.innerHTML = `<button class="edit-btn">Edit</button> <button class="delete-btn">Delete</button>`;
+
+        div.append(titleEl, contentEl);
+        if(linkWrap) div.appendChild(linkWrap);
+        div.appendChild(actions);
+        list.appendChild(div);
+
+        // --- Copy note ---
+        div.addEventListener('click', () => {
+          if (div.classList.contains('is-editing')) return;
+          const htmlContent = contentEl.innerHTML;
+
+          // Convert <br>, <div>, <p> into newline for plain text copy
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = htmlContent;
+
+          const getPlainText = (node) => {
+            let text = '';
+            node.childNodes.forEach((child) => {
+              if (child.nodeType === Node.TEXT_NODE) {
+                text += child.textContent;
+              } else if (child.nodeName === 'BR' || child.nodeName === 'DIV' || child.nodeName === 'P') {
+                text += '\n' + getPlainText(child);
+              } else {
+                text += getPlainText(child);
+              }
+            });
+            return text;
+          };
+
+          const plainContent = getPlainText(tempDiv);
+
+          navigator.clipboard.write([
+            new ClipboardItem({
+              "text/plain": new Blob([plainContent], { type: "text/plain" }),
+              "text/html":  new Blob([htmlContent], { type: "text/html" })
+            })
+          ]).then(() => {
+            if (!div.querySelector('.copy-check')) {
+              const check = document.createElement('div');
+              check.className = 'copy-check';
+              check.textContent = '✓';
+              div.style.position = 'relative';
+              div.appendChild(check);
+              setTimeout(() => check.remove(), 1100);
+            }
+          });
+        });
+
+        // --- Long press to show actions ---
+        let pressTimer;
+        const startPress = () => { pressTimer = setTimeout(()=>{actions.style.display='flex';}, 800); };
+        const endPress = () => clearTimeout(pressTimer);
+        div.addEventListener('mousedown', startPress);
+        div.addEventListener('mouseup', endPress);
+        div.addEventListener('mouseleave', endPress);
+        div.addEventListener('touchstart', startPress, {passive:true});
+        div.addEventListener('touchend', endPress);
+
+        // --- Edit ---
+        actions.querySelector('.edit-btn').addEventListener('click', () => {
+          div.classList.add('is-editing');
+          titleEl.contentEditable = 'true';
+          contentEl.contentEditable = 'true';
+          activeEditable = contentEl;
+          actions.innerHTML = `<button class="save-btn">Save</button> <button class="cancel-btn">Cancel</button>`;
+          actions.style.display='flex';
+
+          actions.querySelector('.save-btn').addEventListener('click', async ()=>{
+            const newTitle = titleEl.textContent.trim() || "Untitled";
+            const newHTML = contentEl.innerHTML.trim();
+            if(!newHTML){ alert("Cannot save empty note"); return; }
+            await updateDoc(doc(db,'clinicalNotes',docSnap.id),{ title:newTitle, note:newHTML, url:data.url||'', time:new Date().toISOString() });
+            titleEl.contentEditable = 'false';
+            contentEl.contentEditable = 'false';
+            div.classList.remove('is-editing');
+            actions.style.display='none';
+            activeEditable = noteTextEl;
+          });
+
+          actions.querySelector('.cancel-btn').addEventListener('click', ()=>{
+            titleEl.contentEditable='false';
+            contentEl.contentEditable='false';
+            div.classList.remove('is-editing');
+            actions.style.display='none';
+            activeEditable = noteTextEl;
+          });
+        });
+
+        // --- Delete ---
+        actions.querySelector('.delete-btn').addEventListener('click', async ()=>{
+          if(confirm("Delete note?")){
+            await deleteDoc(doc(db,'clinicalNotes',docSnap.id));
+          }
+        });
+      });
+  });
+}
+
+// --- Search ---
+document.getElementById('searchInput').addEventListener('input', e => {
+  const term = e.target.value.toLowerCase();
+
+  const filtered = ALL_NOTES.filter(n =>
+    (n.title || '').toLowerCase().includes(term) ||
+    (n.note || '').toLowerCase().includes(term)
+  );
+
+  drawNotes(filtered);
+});
+
+</script>
+
+
+
+</body>
+</html>
