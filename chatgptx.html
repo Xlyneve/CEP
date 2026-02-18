@@ -759,11 +759,7 @@ function setUnlocked(state) {
   localStorage.setItem('notes_unlocked', state ? '1' : '0');
   updateUIForLockState();
 }
-async function ensureSignedIn() {
-  if (!auth.currentUser) {
-    await auth.signInAnonymously();
-  }
-}
+
 
 
 function updateUIForLockState() {
@@ -779,10 +775,7 @@ function updateUIForLockState() {
     addNoteToggle.style.display = 'inline-block';
     notePanel.style.display = 'none';
 
-    ensureSignedIn().then(startNotesListener).catch(err => {
-  console.error(err);
-  showFatal("Auth error: " + (err?.message || err));
-});
+   startNotesListener();
 
   } else {
     lockInfo.textContent = "Locked";
@@ -985,6 +978,7 @@ addNoteBtn.onclick = async () => {
   addNoteBtn.textContent = 'Adding...';
 
   try {
+    await ensureSignedIn();
     await db.collection('notes').add({
       content: noteContent,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1006,6 +1000,31 @@ addNoteBtn.onclick = async () => {
     addNoteBtn.textContent = 'Add Note';
   }
 };
+
+async function ensureSignedIn() {
+  // If already signed in, done
+  if (auth.currentUser) return auth.currentUser;
+
+  // Wait for auth to finish initializing
+  await new Promise((resolve) => {
+    const unsub = auth.onAuthStateChanged(() => {
+      unsub();
+      resolve();
+    });
+  });
+
+  if (auth.currentUser) return auth.currentUser;
+
+  // Try anonymous sign-in
+  try {
+    await auth.signInAnonymously();
+    console.log("Signed in uid:", auth.currentUser?.uid);
+    return auth.currentUser;
+  } catch (e) {
+    console.error("Anonymous sign-in failed:", e);
+    throw e;
+  }
+}
 
 
 function stripLegacyTableControls(html) {
@@ -1243,6 +1262,7 @@ function displayNotesInto(targetEl, notes) {
         if (!updated) return alert('Cannot save empty note');
 
         try {
+		  await ensureSignedIn();
           await db.collection('notes').doc(note.id).update({ content: updated });
           note.content = updated;
 
@@ -1265,6 +1285,7 @@ function displayNotesInto(targetEl, notes) {
     delBtn.onclick = async () => {
       if (!confirm('Delete this note?')) return;
       try {
+	     await ensureSignedIn();
         await db.collection('notes').doc(note.id).delete();
         div.remove();
 
