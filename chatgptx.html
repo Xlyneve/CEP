@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Minimal Chat with Full Features</title>
-
 <style>
 html, body {
   height: 100%;
@@ -22,7 +21,7 @@ html, body {
   position: relative;
 }
 
-/* Glass overlay */
+/* Glass overlay (must NOT block clicks) */
 body::before {
   content: "";
   position: fixed;
@@ -31,6 +30,7 @@ body::before {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   z-index: 0;
+  pointer-events: none;
 }
 
 #chat {
@@ -367,40 +367,67 @@ input[type="file"]::file-selector-button:hover {
   color: #222;
 }
 
-.editable-table {
+/* =========================
+   Minimal Table Style (FIXED)
+========================= */
+
+.cellBox {
+  display: block;
   width: 100%;
-  table-layout: fixed;          /* keeps columns visible and consistent */
+  min-height: 24px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  overflow: hidden;      /* hide scrollbars normally */
+  resize: none;          /* no resize handle by default */
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+/* Show resize ONLY when hovering */
+.editable-table td:hover .cellBox,
+.editable-table th:hover .cellBox {
+  resize: both;
+  overflow: auto;        /* enable scroll only when resizing */
+}
+
+.editable-table {
   border-collapse: collapse;
-  font-size: 13px;
-  margin-top: 8px;
-  border: 1px solid #888;
+  border: 1px solid rgba(0,0,0,0.15);
 }
 
 .editable-table th,
 .editable-table td {
-  border: 1px solid #888;
-  padding: 8px 10px;
-  vertical-align: top;
-
-  min-height: 34px;             /* makes empty cells easy to see */
-  height: 34px;
+  border: 1px solid rgba(0,0,0,0.10);
+  padding: 0;
+  background: transparent;
+  vertical-align: top;   /* fixes middle vs left issue */
+  text-align: left;
 }
 
-.editable-table th { font-weight: 600; }
-
-/* optional: subtle background so empty grid is obvious */
-.editable-table th,
-.editable-table td {
-  background: rgba(255,255,255,0.55);
+.editable-table th .cellBox {
+  font-weight: 600;
 }
 
-/* show a faint placeholder in truly empty cells */
-.editable-table td:empty::before,
-.editable-table th:empty::before {
-  content: " ";
-  display: inline-block;
-  min-width: 10px;
+.cellBox {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: hidden;
+  resize: none;
+  background: transparent;
 }
+
+/* Floating table controls */
 
 
 #notePanel {
@@ -448,8 +475,8 @@ input[type="file"]::file-selector-button:hover {
   padding-bottom: 1px;
 }
 
-/* Auth UI */
-#authToggle {
+/* Lock UI */
+#lockToggle {
   position: fixed;
   top: 12px;
   right: 12px;
@@ -465,7 +492,7 @@ input[type="file"]::file-selector-button:hover {
   z-index: 200;
 }
 
-#authSection {
+#lockSection {
   position: fixed;
   top: 60px;
   right: 12px;
@@ -480,7 +507,7 @@ input[type="file"]::file-selector-button:hover {
   z-index: 199;
 }
 
-#authSection input {
+#lockSection input {
   background: #ecebe8;
   color: #333;
   border: 1px solid #ccc;
@@ -489,7 +516,7 @@ input[type="file"]::file-selector-button:hover {
   font-size: 10px;
 }
 
-#authSection button {
+#lockSection button {
   background: #d0a0a3;
   color: black;
   border: none;
@@ -500,31 +527,32 @@ input[type="file"]::file-selector-button:hover {
   font-size: 10px;
 }
 
-#logoutBtn:hover, #loginBtn:hover { background: #ecebe8; }
-
-#userInfo { color: #555; font-weight: 100; }
+#lockBtn:hover, #unlockBtn:hover { background: #ecebe8; }
+#lockInfo { color: #555; font-weight: 100; }
 
 /* Responsive */
 @media (max-width: 600px) {
   #chat { padding: 12px 4vw 160px 4vw; }
   #inputArea { width: 70vw; bottom: 30px; }
   #notePanel { width: 90vw; right: 5vw; }
-  #authSection { top: 10px; right: 10px; gap: 6px; }
+  #lockSection { top: 10px; right: 10px; gap: 6px; } /* fixed from #authSection */
 }
 </style>
+
+
 </head>
 
 <body>
 
-<div id="authToggle">👩‍💻</div>
+<div id="lockToggle" title="Enter access code">🔒</div>
 
-<div id="authSection">
-  <input type="email" id="email" placeholder="Email" autocomplete="username" />
-  <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
-  <button id="loginBtn">Log In</button>
-  <button id="logoutBtn" style="display:none;" title="Log Out">🚪</button>
-  <div id="userInfo">Not logged in</div>
+<div id="lockSection">
+  <input type="password" id="accessCode" placeholder="Access code" autocomplete="off" />
+  <button id="unlockBtn">Unlock</button>
+  <button id="lockBtn" style="display:none;" title="Lock">🔒</button>
+  <div id="lockInfo">Locked</div>
 </div>
+
 
 <div id="formatToggle">📋</div>
 
@@ -589,8 +617,8 @@ input[type="file"]::file-selector-button:hover {
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 
 <script type="module">
 /* =========================
@@ -608,12 +636,11 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
+const auth = firebase.auth();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-  .catch(e => console.error("Persistence error:", e.code, e.message));
 
 
 /* =========================
@@ -627,16 +654,16 @@ const addNoteBtn = document.getElementById('addNoteBtn');
 const addNoteToggle = document.getElementById('addNoteToggle');
 const notePanel = document.getElementById('notePanel');
 
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const userInfo = document.getElementById('userInfo');
+const lockToggle = document.getElementById('lockToggle');
+const lockSection = document.getElementById('lockSection');
+const accessCodeInput = document.getElementById('accessCode');
+const unlockBtn = document.getElementById('unlockBtn');
+const lockBtn = document.getElementById('lockBtn');
+const lockInfo = document.getElementById('lockInfo');
 
 const inputArea = document.getElementById('inputArea');
 const userInput = document.getElementById('userInput');
 
-const authToggle = document.getElementById('authToggle');
 
 /* =========================
    Live search cache state
@@ -660,6 +687,11 @@ function renderHeaderLine(text) {
   liveResults.appendChild(header);
 }
 
+function renderWelcome() {
+  clearLiveResults();
+  renderHeaderLine('✅ Welcome. Type in the search box to find notes.');
+}
+
 function renderLiveResults(notes, queryLabel) {
   clearLiveResults();
   renderHeaderLine(`Results for: ${queryLabel}`);
@@ -670,6 +702,22 @@ function renderLiveResults(notes, queryLabel) {
   displayNotesInto(container, notes);
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
+
+/* =========================
+   Hard error banner (shows real JS errors)
+========================= */
+function showFatal(msg) {
+  clearLiveResults();
+  renderHeaderLine('❌ ' + msg);
+}
+
+window.addEventListener('error', (e) => {
+  showFatal(e.message || 'Script error');
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  showFatal((e.reason && (e.reason.message || String(e.reason))) || 'Unhandled promise rejection');
+});
 
 /* =========================
    Editor state
@@ -700,14 +748,67 @@ imageUpload.addEventListener('change', function () {
   reader.readAsDataURL(file);
 });
 
+// =========================
+// Simple access code gate
+// =========================
+const ACCESS_CODE = "oatee"; // <-- change this to whatever you want
+let isUnlocked = (localStorage.getItem('notes_unlocked') === '1');
+
+function setUnlocked(state) {
+  isUnlocked = state;
+  localStorage.setItem('notes_unlocked', state ? '1' : '0');
+  updateUIForLockState();
+}
+async function ensureSignedIn() {
+  if (!auth.currentUser) {
+    await auth.signInAnonymously();
+  }
+}
+
+
+function updateUIForLockState() {
+  if (isUnlocked) {
+    lockInfo.textContent = "Unlocked";
+    lockToggle.textContent = "🔓";
+    lockToggle.title = "Unlocked";
+
+    unlockBtn.style.display = "none";
+    lockBtn.style.display = "inline-block";
+    accessCodeInput.style.display = "none";
+
+    addNoteToggle.style.display = 'inline-block';
+    notePanel.style.display = 'none';
+
+    ensureSignedIn().then(startNotesListener).catch(err => {
+  console.error(err);
+  showFatal("Auth error: " + (err?.message || err));
+});
+
+  } else {
+    lockInfo.textContent = "Locked";
+    lockToggle.textContent = "🔒";
+    lockToggle.title = "Enter access code";
+
+    unlockBtn.style.display = "inline-block";
+    lockBtn.style.display = "none";
+    accessCodeInput.style.display = "inline-block";
+    accessCodeInput.value = "";
+
+    addNoteToggle.style.display = 'none';
+    notePanel.style.display = 'none';
+
+    stopNotesListener(); // stop + clear
+  }
+}
+
 /* =========================
    Auth UI + realtime cache
 ========================= */
-function startNotesListener(uid) {
+function startNotesListener() {
+  if (!isUnlocked) return;
   if (unsubscribeNotes) unsubscribeNotes();
 
   unsubscribeNotes = db.collection('notes')
-    .where('uid', '==', uid)
     .onSnapshot((snap) => {
       notesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -718,12 +819,18 @@ function startNotesListener(uid) {
         return tb - ta;
       });
 
-      // If user is typing, refresh live results instantly (no waiting)
       const q = userInput.value.trim();
-      if (q) {
-        runLiveSearch(q, true);
-      }
-    }, (err) => console.error('Notes listener error:', err));
+if (q) {
+  runLiveSearch(q, true);
+} else {
+  // don't show all notes on unlock/refresh
+  renderWelcome();
+}
+
+    }, (err) => {
+      console.error('Notes listener error:', err);
+      showFatal('Firestore: ' + (err?.message || err));
+    });
 }
 
 function stopNotesListener() {
@@ -734,59 +841,6 @@ function stopNotesListener() {
   notesCache = [];
   clearLiveResults();
 }
-
-function updateUIForUser(user) {
-  if (user) {
-    userInfo.textContent = 'Logged in as ' + user.email;
-
-    authToggle.textContent = '✅';
-    authToggle.title = 'Logged in';
-
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'block';
-    emailInput.style.display = 'none';
-    passwordInput.style.display = 'none';
-    addNoteToggle.style.display = 'inline-block';
-    notePanel.style.display = 'none';
-
-    startNotesListener(user.uid);
-
-    // optional: show a small hint once
-    if (!liveResults.innerHTML.trim()) {
-      renderHeaderLine('Type in the bottom box to live-search your notes. Use /ask ... to ask AI.');
-    }
-  } else {
-    userInfo.textContent = 'Not logged in';
-
-    authToggle.textContent = '👩‍💻';
-    authToggle.title = 'Log in';
-
-    loginBtn.style.display = 'inline-block';
-    logoutBtn.style.display = 'none';
-    emailInput.style.display = 'inline-block';
-    passwordInput.style.display = 'inline-block';
-    addNoteToggle.style.display = 'none';
-    notePanel.style.display = 'none';
-
-    stopNotesListener();
-  }
-}
-
-auth.onAuthStateChanged(updateUIForUser);
-
-loginBtn.onclick = async () => {
-  const email = emailInput.value.trim();
-  const pass = passwordInput.value;
-
-  try {
-    await auth.signInWithEmailAndPassword(email, pass);
-  } catch (e) {
-    console.error("LOGIN FAILED:", e.code, e.message);
-    alert(`${e.code}\n${e.message}`);
-  }
-};
-
-logoutBtn.onclick = () => auth.signOut();
 
 /* =========================
    Caret save/restore
@@ -920,8 +974,7 @@ function linkify(html) {
    Add note
 ========================= */
 addNoteBtn.onclick = async () => {
-  const user = auth.currentUser;
-  if (!user) return alert('Please log in.');
+  if (!isUnlocked) return alert('Locked.');
 
   const raw = noteInput.innerHTML.trim();
   const noteContent = linkify(raw);
@@ -934,17 +987,17 @@ addNoteBtn.onclick = async () => {
   try {
     await db.collection('notes').add({
       content: noteContent,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid: user.uid
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      // uid removed
     });
 
     noteInput.innerHTML = '';
     imageUpload.value = '';
     notePanel.style.display = 'none';
 
-    // Kick live search refresh if user has a query typed
     const q = userInput.value.trim();
     if (q) runLiveSearch(q, true);
+    else renderLiveResults(notesCache.slice(0, 30), 'Latest notes');
 
   } catch (e) {
     alert('Error: ' + e.message);
@@ -954,15 +1007,14 @@ addNoteBtn.onclick = async () => {
   }
 };
 
+
 function stripLegacyTableControls(html) {
   if (!html) return '';
-  // remove old toolbar/toggle nodes if they exist in saved notes
   return html
     .replace(/<button[^>]*class="table-control-toggle"[\s\S]*?<\/button>/gi, '')
     .replace(/<div[^>]*class="table-control-panel"[\s\S]*?<\/div>/gi, '')
     .replace(/<button[^>]*class="table-btn"[\s\S]*?<\/button>/gi, '');
 }
-
 
 /* =========================
    "AI" placeholder (only used if you type /ask ...)
@@ -1054,15 +1106,13 @@ function highlightHTML(html, termsNorm) {
 }
 
 /* =========================
-   Cache-based query (NO Firestore index needed)
+   Cache-based query (SYNC + stable)
 ========================= */
-
-async function queryNotesUpgraded(rawQuery) {
-  const user = auth.currentUser;
-  if (!user) throw new Error('Please log in.');
+function queryNotesSync(rawQuery) {
+  if (!isUnlocked) return [];
 
   const { terms } = parseFindQuery(rawQuery);
-  if (!terms.length) return [];
+  if (!terms.length) return notesCache.slice(0, 30);
 
   const results = [];
 
@@ -1083,7 +1133,7 @@ async function queryNotesUpgraded(rawQuery) {
     results.push({
       id: data.id,
       createdAt: data.createdAt,
-      content: cleanedHtml,
+      content: highlightHTML(cleanedHtml, terms),
       score: scoreDoc(textNorm, terms)
     });
   }
@@ -1094,10 +1144,6 @@ async function queryNotesUpgraded(rawQuery) {
     const ta = a.createdAt?.toMillis?.() || 0;
     const tb = b.createdAt?.toMillis?.() || 0;
     return tb - ta;
-  });
-
-  results.forEach(r => {
-    r.content = highlightHTML(r.content, terms);
   });
 
   return results.slice(0, 30);
@@ -1123,10 +1169,9 @@ function displayNotesInto(targetEl, notes) {
     div.className = 'message bot';
 
     const bubble = document.createElement('div');
-bubble.className = 'chatBubble';
-bubble.innerHTML = '🤖 ' + stripLegacyTableControls(note.content || '');
-div.appendChild(bubble);
-
+    bubble.className = 'chatBubble';
+    bubble.innerHTML = '🤖 ' + stripLegacyTableControls(note.content || '');
+    div.appendChild(bubble);
 
     const btns = document.createElement('div');
     btns.style.textAlign = 'center';
@@ -1207,9 +1252,9 @@ div.appendChild(bubble);
           bubble.style.display = '';
           btns.style.display = '';
 
-          // refresh live if query exists
           const q = userInput.value.trim();
           if (q) runLiveSearch(q, true);
+          else renderLiveResults(notesCache.slice(0, 30), 'Latest notes');
 
         } catch (e) {
           alert('Error saving note: ' + e.message);
@@ -1223,9 +1268,9 @@ div.appendChild(bubble);
         await db.collection('notes').doc(note.id).delete();
         div.remove();
 
-        // refresh live if query exists
         const q = userInput.value.trim();
         if (q) runLiveSearch(q, true);
+        else renderLiveResults(notesCache.slice(0, 30), 'Latest notes');
 
       } catch (e) {
         alert('Failed to delete: ' + e.message);
@@ -1235,29 +1280,27 @@ div.appendChild(bubble);
 }
 
 /* =========================
-   Live search runner (debounced)
+   Live search runner (SYNC + stable)
 ========================= */
-async function runLiveSearch(q, immediate = false) {
-  if (!auth.currentUser) return;
+function runLiveSearch(q, immediate = false) {
+  if (!isUnlocked) return;
 
-  const doIt = async () => {
-    if (q === lastLiveQuery) return;
+  const doIt = () => {
     lastLiveQuery = q;
 
     try {
-      const notes = await queryNotesUpgraded('/find ' + q);
+      const notes = queryNotesSync('/find ' + q);
       renderLiveResults(notes, q);
     } catch (e) {
-      clearLiveResults();
-      renderHeaderLine('❌ Search error: ' + (e?.message || e));
       console.error(e);
+      showFatal('Search/render error: ' + (e?.message || e));
     }
   };
 
   if (immediate) return doIt();
 
   clearTimeout(liveTimer);
-  liveTimer = setTimeout(doIt, 180);
+  liveTimer = setTimeout(doIt, 120);
 }
 
 /* =========================
@@ -1267,10 +1310,12 @@ userInput.addEventListener('input', () => {
   const q = userInput.value.trim();
 
   if (!q) {
-    lastLiveQuery = '';
-    clearLiveResults();
-    return;
-  }
+  lastLiveQuery = '';
+  if (isUnlocked) renderWelcome();
+  else clearLiveResults();
+  return;
+}
+
 
   runLiveSearch(q, false);
 });
@@ -1286,7 +1331,6 @@ inputArea.addEventListener('submit', async (e) => {
   const raw = userInput.value.trim();
   if (!raw) return;
 
-  // /ask mode
   if (/^\/ask\b/i.test(raw)) {
     const q = raw.replace(/^\/ask\s*/i, '').trim();
     if (!q) return;
@@ -1303,12 +1347,10 @@ inputArea.addEventListener('submit', async (e) => {
       renderHeaderLine('⚠️ Error getting response');
       console.error(err);
     }
-
     return;
   }
 
-  // Default: search notes
-  await runLiveSearch(raw, true);
+  runLiveSearch(raw, true);
 });
 
 /* =========================
@@ -1393,17 +1435,99 @@ document.getElementById('resetColorBtn').onclick = resetFormatting;
 document.getElementById('increaseFontBtn').onclick = () => changeFontSize(1);
 document.getElementById('decreaseFontBtn').onclick = () => changeFontSize(-1);
 
-/* Table tools (basic) */
-function getClosestTable() {
+/* =========================
+   Table tools (UPGRADED)
+========================= */
+function getCurrentCell() {
   const sel = window.getSelection();
   if (!sel.rangeCount) return null;
+  const node = sel.anchorNode;
+  if (!node) return null;
 
-  let node = sel.anchorNode;
-  while (node && node !== activeEditable) {
-    if (node.nodeName === 'TABLE') return node;
-    node = node.parentNode;
+  const el = (node.nodeType === 1) ? node : node.parentElement;
+  if (!el) return null;
+
+  return el.closest('td, th');
+}
+
+function getTableFromCell(cell) {
+  return cell ? cell.closest('table') : null;
+}
+
+function ensureColgroup(table) {
+  if (!table) return null;
+  let colgroup = table.querySelector('colgroup');
+  const colCount = table.tHead?.rows?.[0]?.cells?.length || table.rows?.[0]?.cells?.length || 0;
+
+  if (!colgroup) {
+    colgroup = document.createElement('colgroup');
+    for (let i = 0; i < colCount; i++) {
+      const col = document.createElement('col');
+      col.style.width = `${Math.floor(100 / Math.max(colCount, 1))}%`;
+      colgroup.appendChild(col);
+    }
+    table.insertBefore(colgroup, table.firstChild);
+  } else {
+    const existing = colgroup.querySelectorAll('col').length;
+    if (existing < colCount) {
+      for (let i = existing; i < colCount; i++) {
+        const col = document.createElement('col');
+        col.style.width = `${Math.floor(100 / Math.max(colCount, 1))}%`;
+        colgroup.appendChild(col);
+      }
+    }
   }
-  return null;
+  return colgroup;
+}
+
+function normalizeColWidths(table) {
+  const colgroup = table.querySelector('colgroup');
+  if (!colgroup) return;
+
+  const cols = Array.from(colgroup.querySelectorAll('col'));
+  const n = cols.length;
+  if (!n) return;
+
+  const anyPx = cols.some(c => (c.style.width || '').includes('px'));
+  if (!anyPx) {
+    const pct = `${Math.floor(100 / n)}%`;
+    cols.forEach(c => (c.style.width = pct));
+  }
+}
+
+function ensureCellBoxes(table) {
+  if (!table) return;
+
+  const cells = table.querySelectorAll('th, td');
+
+  cells.forEach(cell => {
+    const existing = cell.querySelector(':scope > .cellBox');
+    if (existing) {
+      cell.contentEditable = 'false';
+      existing.contentEditable = 'true';
+      return;
+    }
+
+    const box = document.createElement('div');
+    box.className = 'cellBox';
+    box.contentEditable = 'true';
+    box.innerHTML = cell.innerHTML || '';
+
+    cell.innerHTML = '';
+    cell.appendChild(box);
+    cell.contentEditable = 'false';
+  });
+}
+
+function persistCellSizeFromBox(box) {
+  const cell = box.closest('td, th');
+  if (!cell) return;
+
+  const w = box.style.width;
+  const h = box.style.height;
+
+  if (w) cell.style.width = w;
+  if (h) cell.style.height = h;
 }
 
 document.getElementById('insertTableBtn').onclick = () => {
@@ -1415,14 +1539,14 @@ document.getElementById('insertTableBtn').onclick = () => {
     </colgroup>
     <thead>
       <tr>
-        <th contenteditable="true"></th>
-        <th contenteditable="true"></th>
+        <th><div class="cellBox" contenteditable="true"></div></th>
+        <th><div class="cellBox" contenteditable="true"></div></th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td contenteditable="true"></td>
-        <td contenteditable="true"></td>
+        <td><div class="cellBox" contenteditable="true"></div></td>
+        <td><div class="cellBox" contenteditable="true"></div></td>
       </tr>
     </tbody>
   </table><br>`;
@@ -1450,66 +1574,151 @@ document.getElementById('insertTableBtn').onclick = () => {
   }
 
   saveCaret();
+
+  setTimeout(() => {
+    const cell = getCurrentCell();
+    const table = getTableFromCell(cell) || activeEditable.querySelector('table.editable-table:last-of-type');
+    if (table) {
+      ensureCellBoxes(table);
+      ensureColgroup(table);
+      normalizeColWidths(table);
+    }
+  }, 0);
 };
 
+function addTableRowAtCursor() {
+  const cell = getCurrentCell();
+  const table = getTableFromCell(cell);
+  if (!table) return alert('Place the cursor inside a table.');
 
-function addTableRow() {
-  const table = getClosestTable();
-  if (!table) return alert('Place the cursor inside a table to add a row.');
+  ensureCellBoxes(table);
+  const tbody = table.tBodies[0] || table.createTBody();
 
-  const colCount = table.rows[0].cells.length;
-  const newRow = table.tBodies[0].insertRow(-1);
+  const colCount =
+    table.tHead?.rows?.[0]?.cells?.length ||
+    tbody.rows?.[0]?.cells?.length ||
+    1;
 
+  let insertIndex = tbody.rows.length;
+  const row = cell?.parentElement;
+  if (row && row.parentElement === tbody) {
+    insertIndex = row.rowIndex;
+    const headRows = table.tHead ? table.tHead.rows.length : 0;
+    const tbodyIndex = insertIndex - headRows;
+    insertIndex = Math.min(tbodyIndex + 1, tbody.rows.length);
+  }
+
+  const newRow = tbody.insertRow(insertIndex);
   for (let i = 0; i < colCount; i++) {
-    const cell = newRow.insertCell();
-    cell.contentEditable = 'true';
-    cell.textContent = '';
-    cell.style.fontWeight = 'normal';
-    cell.style.textAlign = 'left';
+    const c = newRow.insertCell();
+    c.contentEditable = 'false';
+    c.innerHTML = `<div class="cellBox" contenteditable="true"></div>`;
   }
 }
 
-function deleteTableRow() {
-  const table = getClosestTable();
-  if (!table) return alert('Place the cursor inside a table to delete a row.');
-  if (table.tBodies[0].rows.length <= 1) return alert('Cannot delete the last row.');
-  table.tBodies[0].deleteRow(table.tBodies[0].rows.length - 1);
+function deleteTableRowAtCursor() {
+  const cell = getCurrentCell();
+  const table = getTableFromCell(cell);
+  if (!table) return alert('Place the cursor inside a table.');
+
+  const tbody = table.tBodies[0];
+  if (!tbody) return alert('No table body found.');
+  if (tbody.rows.length <= 1) return alert('Cannot delete the last row.');
+
+  const row = cell?.parentElement;
+  if (!row || row.parentElement !== tbody) return alert('Click inside a body row to delete it.');
+  row.remove();
 }
 
-function addTableColumn() {
-  const table = getClosestTable();
-  if (!table) return alert('Place the cursor inside a table to add a column.');
+function addTableColumnAtCursor() {
+  const cell = getCurrentCell();
+  const table = getTableFromCell(cell);
+  if (!table) return alert('Place the cursor inside a table.');
 
-  const th = table.tHead.rows[0].insertCell(-1);
-  th.outerHTML = `<th contenteditable="true"></th>`;
+  ensureCellBoxes(table);
+  const colgroup = ensureColgroup(table);
 
-  Array.from(table.tBodies[0].rows).forEach(row => {
-    const td = row.insertCell(-1);
-    td.contentEditable = 'true';
-    td.textContent = '';
-    td.style.fontWeight = 'normal';
-    td.style.textAlign = 'left';
+  const idx = cell ? cell.cellIndex : (table.tHead?.rows?.[0]?.cells?.length || 0) - 1;
+  const insertAt = Math.max(0, idx + 1);
+
+  if (table.tHead && table.tHead.rows[0]) {
+    const th = table.tHead.rows[0].insertCell(insertAt);
+    th.outerHTML = `<th><div class="cellBox" contenteditable="true"></div></th>`;
+  }
+
+  const tbody = table.tBodies[0] || table.createTBody();
+  Array.from(tbody.rows).forEach(row => {
+    const td = row.insertCell(insertAt);
+    td.contentEditable = 'false';
+    td.innerHTML = `<div class="cellBox" contenteditable="true"></div>`;
   });
+
+  if (colgroup) {
+    const cols = Array.from(colgroup.querySelectorAll('col'));
+    const newCol = document.createElement('col');
+    const ref = cols[Math.min(insertAt, cols.length - 1)];
+    newCol.style.width = ref?.style?.width || `${Math.floor(100 / (cols.length + 1))}%`;
+
+    if (insertAt >= cols.length) colgroup.appendChild(newCol);
+    else colgroup.insertBefore(newCol, cols[insertAt]);
+
+    normalizeColWidths(table);
+  }
 }
 
-function deleteTableColumn() {
-  const table = getClosestTable();
-  if (!table) return alert('Place the cursor inside a table to delete a column.');
+function deleteTableColumnAtCursor() {
+  const cell = getCurrentCell();
+  const table = getTableFromCell(cell);
+  if (!table) return alert('Place the cursor inside a table.');
 
-  const colCount = table.tHead.rows[0].cells.length;
+  const idx = cell ? cell.cellIndex : null;
+  if (idx === null) return alert('Click inside a column to delete it.');
+
+  const headCells = table.tHead?.rows?.[0]?.cells?.length || 0;
+  const bodyCells = table.tBodies[0]?.rows?.[0]?.cells?.length || 0;
+  const colCount = Math.max(headCells, bodyCells);
+
   if (colCount <= 1) return alert('Cannot delete the last column.');
 
-  table.tHead.rows[0].deleteCell(colCount - 1);
+  if (table.tHead && table.tHead.rows[0] && table.tHead.rows[0].cells[idx]) {
+    table.tHead.rows[0].deleteCell(idx);
+  }
 
-  Array.from(table.tBodies[0].rows).forEach(row => {
-    if (row.cells.length) row.deleteCell(colCount - 1);
-  });
+  const tbody = table.tBodies[0];
+  if (tbody) {
+    Array.from(tbody.rows).forEach(row => {
+      if (row.cells[idx]) row.deleteCell(idx);
+    });
+  }
+
+  const colgroup = table.querySelector('colgroup');
+  if (colgroup) {
+    const cols = colgroup.querySelectorAll('col');
+    if (cols[idx]) cols[idx].remove();
+    normalizeColWidths(table);
+  }
 }
 
-document.getElementById('addRowBtn').onclick = addTableRow;
-document.getElementById('deleteRowBtn').onclick = deleteTableRow;
-document.getElementById('addColBtn').onclick = addTableColumn;
-document.getElementById('deleteColBtn').onclick = deleteTableColumn;
+document.getElementById('addRowBtn').onclick = addTableRowAtCursor;
+document.getElementById('deleteRowBtn').onclick = deleteTableRowAtCursor;
+document.getElementById('addColBtn').onclick = addTableColumnAtCursor;
+document.getElementById('deleteColBtn').onclick = deleteTableColumnAtCursor;
+
+document.addEventListener('click', (e) => {
+  const table = e.target.closest('table.editable-table');
+  if (!table) return;
+  ensureCellBoxes(table);
+  ensureColgroup(table);
+  normalizeColWidths(table);
+});
+
+document.addEventListener('mouseup', (e) => {
+  const box = e.target.closest?.('.cellBox');
+  if (!box) return;
+  persistCellSizeFromBox(box);
+});
+
+
 
 /* Prevent Enter from breaking out of table cells */
 document.addEventListener('keydown', (e) => {
@@ -1525,9 +1734,24 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* UI toggles */
-authToggle.onclick = () => {
-  const s = document.getElementById('authSection');
-  s.style.display = (s.style.display === 'flex') ? 'none' : 'flex';
+lockToggle.onclick = () => {
+  lockSection.style.display = (lockSection.style.display === 'flex') ? 'none' : 'flex';
+};
+
+unlockBtn.onclick = () => {
+  const code = (accessCodeInput.value || '').trim();
+  if (code === ACCESS_CODE) {
+    setUnlocked(true);
+    lockSection.style.display = 'none';
+  } else {
+    lockInfo.textContent = "Wrong code";
+    accessCodeInput.select();
+  }
+};
+
+lockBtn.onclick = () => {
+  setUnlocked(false);
+  lockSection.style.display = 'none';
 };
 
 document.getElementById('formatToggle').onclick = () =>
@@ -1581,6 +1805,10 @@ document.addEventListener('dblclick', (e) => {
     document.body.appendChild(popup);
   }
 });
+
+updateUIForLockState();
+
 </script>
+
 </body>
 </html>
