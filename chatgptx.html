@@ -612,6 +612,10 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .catch(e => console.error("Persistence error:", e.code, e.message));
+
+
 /* =========================
    DOM refs
 ========================= */
@@ -770,9 +774,17 @@ function updateUIForUser(user) {
 
 auth.onAuthStateChanged(updateUIForUser);
 
-loginBtn.onclick = () =>
-  auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value)
-    .catch(e => alert(e.message));
+loginBtn.onclick = async () => {
+  const email = emailInput.value.trim();
+  const pass = passwordInput.value;
+
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (e) {
+    console.error("LOGIN FAILED:", e.code, e.message);
+    alert(`${e.code}\n${e.message}`);
+  }
+};
 
 logoutBtn.onclick = () => auth.signOut();
 
