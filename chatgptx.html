@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Minimal Chat with Full Features</title>
+
 <style>
 html, body {
   height: 100%;
@@ -25,16 +26,12 @@ html, body {
 body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.7);  /* More whitish */
-  backdrop-filter: blur(16px);            /* Stronger blur */
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   z-index: 0;
 }
-
 
 #chat {
   flex-grow: 1;
@@ -47,11 +44,19 @@ body::before {
   -webkit-backdrop-filter: blur(6px);
   box-sizing: border-box;
   border-radius: 12px;
+  position: relative;
+  z-index: 1;
 }
 
+/* Live results area */
+#liveResults {
+  position: relative;
+  z-index: 2;
+}
 
+/* Message bubbles */
 .message {
-  margin-left: 7px; /* ← shift message bubbles */
+  margin-left: 7px;
   margin-bottom: 8px;
   line-height: 1.6;
   font-size: 12px;
@@ -63,23 +68,7 @@ body::before {
   align-items: flex-start;
 }
 
-.editableNote a {
-  word-break: break-word;       /* Allow breaking inside long URLs */
-  overflow-wrap: anywhere;      /* Another option for wrapping */
-  color: #1a0dab;               /* Typical link blue color */
-  text-decoration: underline;   /* Show underline for clarity */
-}
-
-.chatBubble a {
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  color: #1a0dab;
-  text-decoration: underline;
-}
-
-.message.user {
-  align-items: flex-end;
-}
+.message.user { align-items: flex-end; }
 
 .message.bot {
   border-top: 1px solid rgba(0, 0, 0, 0.1);
@@ -92,6 +81,14 @@ body::before {
   max-width: 100%;
   margin-top: 6px;
   border-radius: 8px;
+}
+
+.editableNote a,
+.chatBubble a {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  color: #1a0dab;
+  text-decoration: underline;
 }
 
 .chatBubble {
@@ -109,19 +106,19 @@ body::before {
 }
 
 .message.user .chatBubble {
-   background: rgba(224, 193, 198, 0.25);
+  background: rgba(224, 193, 198, 0.25);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   align-self: flex-end;
 }
 
 .message.bot .chatBubble {
-  background: rgba(255, 255, 255, 0.15);  /* lighter, more transparent */
-backdrop-filter: blur(10px);
--webkit-backdrop-filter: blur(10px);
-box-shadow: 0 0 12px 3px rgba(255, 255, 255, 0.8);  /* white glow */
-border-radius: 12px;
-border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 12px 3px rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   align-self: flex-start;
 }
 
@@ -129,6 +126,7 @@ border: 1px solid rgba(255, 255, 255, 0.3);
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
 input[type="file"]::file-selector-button {
   background: rgba(255, 255, 255, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -168,8 +166,7 @@ input[type="file"]::file-selector-button:hover {
   box-sizing: border-box;
 }
 
-#inputArea,
-#notePanel {
+#inputArea, #notePanel {
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -192,9 +189,7 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 0 6px rgba(100, 100, 100, 0.4);
 }
 
-#sendBtn {
-  display: none;
-}
+#sendBtn { display: none; }
 
 /* Note Input */
 #noteInput {
@@ -211,12 +206,10 @@ input[type="file"]::file-selector-button:hover {
   white-space: pre-wrap;
   margin-top: 0 !important;
   padding-top: 0 !important;
-
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.3);
 }
-
 
 #noteInput:empty:before {
   content: attr(data-placeholder);
@@ -235,6 +228,20 @@ input[type="file"]::file-selector-button:hover {
   font-family: 'Tahoma', sans-serif;
   white-space: pre-wrap;
   outline: none;
+}
+
+.editableNote img {
+  resize: both;
+  overflow: auto;
+  max-width: 100%;
+  display: block;
+  margin: 10px 0;
+}
+
+.resizableEmoji {
+  font-size: 1.4em;
+  font-weight: bold;
+  display: inline-block;
 }
 
 /* Toolbar + Toggle */
@@ -268,7 +275,7 @@ input[type="file"]::file-selector-button:hover {
   position: fixed;
   bottom: 80px;
   left: 20px;
-  display: none; /* hidden by default */
+  display: none;
   flex-direction: column;
   flex-wrap: nowrap;
   gap: 8px;
@@ -292,12 +299,8 @@ input[type="file"]::file-selector-button:hover {
   color: #444;
 }
 
-#formatToolbar.visible {
-  display: flex;
-}
+#formatToolbar.visible { display: flex; }
 
-
-/* Format Buttons */
 .format-btn {
   flex: 0 0 auto;
   background: none;
@@ -316,18 +319,6 @@ input[type="file"]::file-selector-button:hover {
   transform: scale(1.2);
   opacity: 1;
   color: #222;
-}
-	
-
-/* Emoji */
-#emojiColumn {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  z-index: 101;
 }
 
 .emoji {
@@ -361,7 +352,7 @@ input[type="file"]::file-selector-button:hover {
   height: 50px;
   font-size: 28px;
   border-radius: 50%;
-  background: rgba(208, 160, 163, 0.3);  /* translucent with original color tint */
+  background: rgba(208, 160, 163, 0.3);
   color: #333;
   border: 1px solid rgba(255, 255, 255, 0.4);
   cursor: pointer;
@@ -376,6 +367,42 @@ input[type="file"]::file-selector-button:hover {
   color: #222;
 }
 
+.editable-table {
+  width: 100%;
+  table-layout: fixed;          /* keeps columns visible and consistent */
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+  border: 1px solid #888;
+}
+
+.editable-table th,
+.editable-table td {
+  border: 1px solid #888;
+  padding: 8px 10px;
+  vertical-align: top;
+
+  min-height: 34px;             /* makes empty cells easy to see */
+  height: 34px;
+}
+
+.editable-table th { font-weight: 600; }
+
+/* optional: subtle background so empty grid is obvious */
+.editable-table th,
+.editable-table td {
+  background: rgba(255,255,255,0.55);
+}
+
+/* show a faint placeholder in truly empty cells */
+.editable-table td:empty::before,
+.editable-table th:empty::before {
+  content: " ";
+  display: inline-block;
+  min-width: 10px;
+}
+
+
 #notePanel {
   position: absolute;
   bottom: 60px;
@@ -388,7 +415,7 @@ input[type="file"]::file-selector-button:hover {
   display: none;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 
+  box-shadow:
     0 0 6px 1px rgba(220, 230, 255, 0.2),
     0 0 25px 8px rgba(204, 153, 255, 0.2);
   backdrop-filter: blur(16px);
@@ -397,91 +424,6 @@ input[type="file"]::file-selector-button:hover {
   z-index: 104;
   transition: none;
 }
-
-#notePanel:hover {
-  box-shadow: 
-    0 0 6px 1px rgba(210, 190, 255, 0.15),
-    0 0 10px 3px rgba(210, 190, 255, 0.08);
-}
-
-.editable-table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 13px;
-  margin-top: 8px;
-  border: 1px solid #888;
-  position: relative; /* for positioning control panel */
-}
-
-.editable-table th,
-.editable-table td {
-  border: 1px solid #888;
-  padding: 6px 8px;
-  vertical-align: middle;
-}
-
-/* Remove any hover highlight */
-.editable-table tr:hover,
-.editable-table td:hover,
-.editable-table th:hover {
-  background-color: transparent !important;
-}
-
-/* Minimalist toggle button positioned upper right of table */
-.table-control-toggle {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: transparent;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  user-select: none;
-}
-
-/* Control panel container (hidden by default) */
-.table-control-panel {
-  position: absolute;
-  top: 28px;
-  right: 4px;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 4px 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  display: none;
-  z-index: 10;
-  white-space: nowrap;
-}
-
-/* Buttons inside the control panel */
-.table-btn {
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  margin: 0 4px;
-  user-select: none;
-  color: #555;
-  padding: 2px 6px;
-  border-radius: 3px;
-  transition: background-color 0.2s ease;
-}
-
-.table-btn:hover {
-  background-color: #eee;
-}
-table.editable-table td,
-table.editable-table th {
-  font-weight: normal !important;
-  text-align: left;
-  white-space: pre-wrap; /* allow new lines */
-  padding: 6px;
-  vertical-align: top;
-}
-
-
-
 
 #addNoteBtn {
   background: rgba(236, 235, 232, 0.25);
@@ -501,129 +443,9 @@ table.editable-table th {
   color: #222;
 }
 
-
-/* Note Card */
-.noteCard {
-  position: relative;
-  background: #fff;
-  border-radius: 12px;
-  padding: 14px 18px;
-  margin: 10px 0;
-  box-shadow: 0 1.5px 5px rgba(0, 0, 0, 0.08);
-  animation-name: slideFade, popIn;
-  animation-duration: 0.35s, 0.25s;
-  animation-timing-function: ease-out, ease-out;
-  animation-fill-mode: forwards, forwards;
-  font-size: 15px;
-  color: #222;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* stagger animation delays */
-.noteCard:nth-child(1) {
-  animation-delay: 0.05s, 0.05s;
-}
-.noteCard:nth-child(2) {
-  animation-delay: 0.1s, 0.1s;
-}
-.noteCard:nth-child(3) {
-  animation-delay: 0.15s, 0.15s;
-}
-.noteCard:nth-child(4) {
-  animation-delay: 0.2s, 0.2s;
-}
-/* add more as needed */
-
-
-.noteCard:hover {
-  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
-  transform: translateY(-3px);
-}
-
-.noteCard::before {
-  content: '';
-  display: block;
-  width: 6px;
-  height: 100%;
-  background: #fbd4d4;
-  position: absolute;
-  left: 0;
-  top: 0;
-  border-radius: 12px 0 0 12px;
-}
-
-@keyframes slideFade {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes popIn {
-  0%   { transform: scale(0.97); }
-  100% { transform: scale(1); }
-}
-/* Note Card Buttons */
-.note-btn {
-  font-size: 14px;
-  opacity: 0.6;
-  background: none;
-  border: none;
-  margin-top: 8px;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-  color: #555;
-  padding: 0 6px;
-}
-
-.note-btn:hover {
-  opacity: 1;
-  color: #333;
-}
-
-/* Highlight Effect */
-.highlighted {
-  position: relative;
-  font-weight: 500;
-  color: #222;
-}
-
-.highlighted::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  border-bottom: 1px dotted #888;
-  animation: underlineFade 1.2s ease-in-out infinite alternate;
-}
 .underlineMatch {
   border-bottom: 1px dotted #999;
   padding-bottom: 1px;
-}
-.editableNote img {
-  resize: both;
-  overflow: auto;
-  max-width: 100%;
-  display: block;
-  margin: 10px 0;
-}
-.resizableEmoji {
-  font-size: 1.4em;
-  font-weight: bold;
-  display: inline-block;
-}
-
-
-
-
-@keyframes underlineFade {
-  from { opacity: 0.2; }
-  to   { opacity: 1; }
 }
 
 /* Auth UI */
@@ -678,42 +500,20 @@ table.editable-table th {
   font-size: 10px;
 }
 
-#logoutBtn:hover,
-#loginBtn:hover {
-  background: #ecebe8;
-}
+#logoutBtn:hover, #loginBtn:hover { background: #ecebe8; }
 
-#userInfo {
-  color: #555;
-  font-weight: 100;
-}
+#userInfo { color: #555; font-weight: 100; }
 
 /* Responsive */
 @media (max-width: 600px) {
-  #chat {
-    padding: 12px 4vw 160px 4vw;
-  }
-
-  #inputArea {
-    width: 70vw;
-    bottom: 30px;
-  }
-
-  #notePanel {
-    width: 90vw;
-    right: 5vw;
-  }
-
-  #authSection {
-    top: 10px;
-    right: 10px;
-    gap: 6px;
-  }
+  #chat { padding: 12px 4vw 160px 4vw; }
+  #inputArea { width: 70vw; bottom: 30px; }
+  #notePanel { width: 90vw; right: 5vw; }
+  #authSection { top: 10px; right: 10px; gap: 6px; }
 }
-
 </style>
-
 </head>
+
 <body>
 
 <div id="authToggle">👩‍💻</div>
@@ -730,15 +530,12 @@ table.editable-table th {
 
 <div id="formatToolbar">
   <button class="format-btn" id="boldBtn"><b>B</b></button>
-<button class="format-btn" id="italicBtn"><i>I</i></button>
-<button class="format-btn" id="underlineBtn"><u>U</u></button>
-<button class="format-btn" id="highlightBtn">🟪</button>
-<button class="format-btn" id="redFontBtn">🟥</button>
-<button class="format-btn" id="blueFontBtn">🟦</button>
+  <button class="format-btn" id="italicBtn"><i>I</i></button>
+  <button class="format-btn" id="underlineBtn"><u>U</u></button>
+  <button class="format-btn" id="highlightBtn">🟪</button>
+  <button class="format-btn" id="redFontBtn">🟥</button>
+  <button class="format-btn" id="blueFontBtn">🟦</button>
 
-
-
-  <!-- 🔤 Font Size Controls -->
   <button class="format-btn" id="increaseFontBtn" title="Increase Font Size">🔺A</button>
   <button class="format-btn" id="decreaseFontBtn" title="Decrease Font Size">🔻A</button>
 
@@ -750,8 +547,6 @@ table.editable-table th {
 
   <button class="format-btn" id="resetColorBtn">↺</button>
 
-
-  <div class="divider"></div>
   <div class="emoji" data-emoji="📌">📌</div>
   <div class="emoji" data-emoji="🟡">🟡</div>
   <div class="emoji" data-emoji="🔴">🔴</div>
@@ -771,7 +566,6 @@ table.editable-table th {
   <div class="emoji" data-emoji="➁">➁</div>
   <div class="emoji" data-emoji="➂">➂</div>
   <div class="emoji" data-emoji="➃">➃</div>
-  
 </div>
 
 <!-- Container for add button and note panel -->
@@ -779,16 +573,17 @@ table.editable-table th {
   <button id="addNoteToggle" title="Add Note">＋</button>
   <div id="notePanel" style="display:none; flex-direction: column;">
     <div id="noteInput" contenteditable="true" data-placeholder="Type or paste your note here..."></div>
-    
     <button id="addNoteBtn">Add Note</button>
   </div>
 </div>
 
-<div id="chat"></div>
-
+<!-- Chat area + Live Results go inside this -->
+<div id="chat">
+  <div id="liveResults"></div>
+</div>
 
 <form id="inputArea">
-  <input type="text" id="userInput" placeholder="Type here..." autocomplete="off" required />
+  <input type="text" id="userInput" placeholder="Type to search notes… (use /ask to ask AI)" autocomplete="off" required />
   <button type="submit" id="sendBtn">Send</button>
 </form>
 
@@ -798,7 +593,9 @@ table.editable-table th {
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
 <script type="module">
-// Firebase config
+/* =========================
+   Firebase init
+========================= */
 const firebaseConfig = {
   apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
   authDomain: "notes-chat-c5ff3.firebaseapp.com",
@@ -808,28 +605,77 @@ const firebaseConfig = {
   appId: "1:597780727252:web:8407eb4096dbe301d74241",
   measurementId: "G-YQD63H7L5T"
 };
+
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
+/* =========================
+   DOM refs
+========================= */
 const chat = document.getElementById('chat');
+const liveResults = document.getElementById('liveResults');
+
 const noteInput = document.getElementById('noteInput');
 const addNoteBtn = document.getElementById('addNoteBtn');
 const addNoteToggle = document.getElementById('addNoteToggle');
 const notePanel = document.getElementById('notePanel');
+
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const userInfo = document.getElementById('userInfo');
-const toggleBtn = document.getElementById('formatToggle');
-const toolbar = document.getElementById('formatToolbar');
 
+const inputArea = document.getElementById('inputArea');
+const userInput = document.getElementById('userInput');
+
+const authToggle = document.getElementById('authToggle');
+
+/* =========================
+   Live search cache state
+========================= */
+let notesCache = [];
+let unsubscribeNotes = null;
+let liveTimer = null;
+let lastLiveQuery = '';
+
+function clearLiveResults() {
+  liveResults.innerHTML = '';
+}
+
+function renderHeaderLine(text) {
+  const header = document.createElement('div');
+  header.className = 'message bot';
+  const bubble = document.createElement('div');
+  bubble.className = 'chatBubble';
+  bubble.textContent = '🤖 ' + text;
+  header.appendChild(bubble);
+  liveResults.appendChild(header);
+}
+
+function renderLiveResults(notes, queryLabel) {
+  clearLiveResults();
+  renderHeaderLine(`Results for: ${queryLabel}`);
+
+  const container = document.createElement('div');
+  liveResults.appendChild(container);
+
+  displayNotesInto(container, notes);
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+}
+
+/* =========================
+   Editor state
+========================= */
 let activeEditable = noteInput;
 noteInput.addEventListener('focus', () => activeEditable = noteInput);
 
-// Create image upload input inside notePanel
+/* =========================
+   Image upload inside notePanel (preview only)
+========================= */
 const imageUpload = document.createElement('input');
 imageUpload.type = 'file';
 imageUpload.accept = 'image/*';
@@ -837,37 +683,111 @@ imageUpload.id = 'imageUpload';
 imageUpload.style.marginTop = '10px';
 notePanel.insertBefore(imageUpload, addNoteBtn);
 
+imageUpload.addEventListener('change', function () {
+  const file = this.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    activeEditable.innerHTML += `<br><img src="${e.target.result}" style="max-width:100%; border-radius:8px;" /><br>`;
+    placeCaretAtEnd(activeEditable);
+    saveCaret();
+  };
+  reader.readAsDataURL(file);
+});
+
+/* =========================
+   Auth UI + realtime cache
+========================= */
+function startNotesListener(uid) {
+  if (unsubscribeNotes) unsubscribeNotes();
+
+  unsubscribeNotes = db.collection('notes')
+    .where('uid', '==', uid)
+    .onSnapshot((snap) => {
+      notesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // newest first
+      notesCache.sort((a, b) => {
+        const ta = a.createdAt?.toMillis?.() || 0;
+        const tb = b.createdAt?.toMillis?.() || 0;
+        return tb - ta;
+      });
+
+      // If user is typing, refresh live results instantly (no waiting)
+      const q = userInput.value.trim();
+      if (q) {
+        runLiveSearch(q, true);
+      }
+    }, (err) => console.error('Notes listener error:', err));
+}
+
+function stopNotesListener() {
+  if (unsubscribeNotes) {
+    unsubscribeNotes();
+    unsubscribeNotes = null;
+  }
+  notesCache = [];
+  clearLiveResults();
+}
+
 function updateUIForUser(user) {
   if (user) {
     userInfo.textContent = 'Logged in as ' + user.email;
+
+    authToggle.textContent = '✅';
+    authToggle.title = 'Logged in';
+
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'block';
     emailInput.style.display = 'none';
     passwordInput.style.display = 'none';
     addNoteToggle.style.display = 'inline-block';
     notePanel.style.display = 'none';
+
+    startNotesListener(user.uid);
+
+    // optional: show a small hint once
+    if (!liveResults.innerHTML.trim()) {
+      renderHeaderLine('Type in the bottom box to live-search your notes. Use /ask ... to ask AI.');
+    }
   } else {
     userInfo.textContent = 'Not logged in';
+
+    authToggle.textContent = '👩‍💻';
+    authToggle.title = 'Log in';
+
     loginBtn.style.display = 'inline-block';
     logoutBtn.style.display = 'none';
     emailInput.style.display = 'inline-block';
     passwordInput.style.display = 'inline-block';
     addNoteToggle.style.display = 'none';
     notePanel.style.display = 'none';
+
+    stopNotesListener();
   }
 }
+
 auth.onAuthStateChanged(updateUIForUser);
 
-loginBtn.onclick = () => auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value).catch(e => alert(e.message));
+loginBtn.onclick = () =>
+  auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value)
+    .catch(e => alert(e.message));
+
 logoutBtn.onclick = () => auth.signOut();
 
+/* =========================
+   Caret save/restore
+========================= */
 let savedRange = null;
+
 function saveCaret() {
   const sel = window.getSelection();
   if (sel.rangeCount > 0 && activeEditable.contains(sel.anchorNode)) {
     savedRange = sel.getRangeAt(0).cloneRange();
   }
 }
+
 function restoreCaret() {
   if (!savedRange) return false;
   const sel = window.getSelection();
@@ -875,6 +795,7 @@ function restoreCaret() {
   sel.addRange(savedRange);
   return true;
 }
+
 function placeCaretAtEnd(el) {
   el.focus();
   const range = document.createRange();
@@ -890,290 +811,110 @@ function placeCaretAtEnd(el) {
   noteInput.addEventListener(evt, saveCaret);
 });
 
+/* =========================
+   Emoji insert
+========================= */
 document.querySelectorAll('.emoji').forEach(btn => {
   btn.onclick = async () => {
     const emoji = btn.dataset.emoji;
     activeEditable.focus();
+
+    const resizable = ["⬇", "⬆", "⬅", "➡", "➀", "➁", "➂", "➃"].includes(emoji);
+
     if (!restoreCaret()) {
-      if (["⬇", "⬆", "⬅", "➡", "➀", "➁", "➂", "➃"].includes(emoji)) {
-       activeEditable.innerHTML += `<span class="resizableEmoji">${emoji}</span>`;
-      } else {
-        activeEditable.innerHTML += emoji;
-      }
+      activeEditable.innerHTML += resizable
+        ? `<span class="resizableEmoji">${emoji}</span>`
+        : emoji;
       placeCaretAtEnd(activeEditable);
     } else {
       const sel = window.getSelection();
       const range = sel.getRangeAt(0);
       range.deleteContents();
-      if (["⬇", "⬆", "⬅", "➡", "➀", "➁", "➂", "➃"].includes(emoji)) {
-  const span = document.createElement('span');
-  span.className = 'resizableEmoji';
-  span.textContent = emoji;
-  range.insertNode(span);
-  range.setStartAfter(span);
 
+      if (resizable) {
+        const span = document.createElement('span');
+        span.className = 'resizableEmoji';
+        span.textContent = emoji;
+        range.insertNode(span);
+        range.setStartAfter(span);
       } else {
         const textNode = document.createTextNode(emoji);
         range.insertNode(textNode);
         range.setStartAfter(textNode);
       }
+
       range.collapse(true);
       sel.removeAllRanges();
       sel.addRange(range);
     }
+
     saveCaret();
-    try {
-      await navigator.clipboard.writeText(emoji);
-    } catch {}
+
+    try { await navigator.clipboard.writeText(emoji); } catch {}
+
     btn.style.transform = 'scale(1.3)';
     setTimeout(() => (btn.style.transform = 'scale(1)'), 200);
   };
 });
 
-
-imageUpload.addEventListener('change', function () {
-  const file = this.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      activeEditable.innerHTML += `<br><img src="${e.target.result}" style="max-width:100%; border-radius:8px;" /><br>`;
-      placeCaretAtEnd(activeEditable);
-      saveCaret();
-    };
-    reader.readAsDataURL(file);
-  }
-});
-
-document.getElementById('insertTableBtn').onclick = () => {
-const html = `
-<div style="position: relative; width: 100%; margin-top: 0; margin-bottom: 8px; padding: 0;">
-  
-  <div class="table-control-panel" aria-hidden="true">
-    <button class="table-btn" data-action="add-row" title="Add Row">➕ Row</button>
-    <button class="table-btn" data-action="delete-row" title="Delete Row">➖ Row</button>
-    <button class="table-btn" data-action="add-col" title="Add Column">➕ Col</button>
-    <button class="table-btn" data-action="delete-col" title="Delete Column">➖ Col</button>
-  </div>
-<table contenteditable="false" border="1" class="editable-table">
-  <thead>
-    <tr>
-      <th contenteditable="true"></th>
-      <th contenteditable="true"></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td contenteditable="true"></td>
-      <td contenteditable="true"></td>
-    </tr>
-  </tbody>
-</table>
-</div>`;
-
-function setupTableControlPanel(container) {
-  const toggleBtn = container.querySelector('.table-control-toggle');
-  const controlPanel = container.querySelector('.table-control-panel');
-  const table = container.querySelector('table');
-
-  toggleBtn.onclick = () => {
-    if (controlPanel.style.display === 'block') {
-      controlPanel.style.display = 'none';
-      controlPanel.setAttribute('aria-hidden', 'true');
-    } else {
-      controlPanel.style.display = 'block';
-      controlPanel.setAttribute('aria-hidden', 'false');
-    }
-  };
-
-  controlPanel.querySelectorAll('.table-btn').forEach(btn => {
-    btn.onclick = () => {
-      const action = btn.getAttribute('data-action');
-      const colCount = table.rows[0].cells.length;
-
-      if (action === 'add-row') {
-        const newRow = table.insertRow(-1);
-        for (let i = 0; i < colCount; i++) {
-          const cell = newRow.insertCell();
-          cell.contentEditable = 'true';
-          cell.innerHTML = ''; // ✅ blank and no formatting
-		  cell.style.textAlign = 'left'; // ✅ force left alignment
-          cell.removeAttribute('style');
-          cell.removeAttribute('class');
-		  cell.style.fontWeight = 'normal';  // ✅ Remove bold
-        }
-      } else if (action === 'delete-row') {
-        if (table.rows.length > 2) {
-          table.deleteRow(table.rows.length - 1);
-        } else {
-          alert('Cannot delete all rows');
-        }
-      } else if (action === 'add-col') {
-        for (const row of table.rows) {
-          const cell = row.insertCell(-1);
-          cell.contentEditable = 'true';
-           cell.innerHTML = ''; // ✅ no text, no formatting
-		   cell.style.textAlign = 'left'; // ✅ force left alignment
-           cell.removeAttribute('style');
-          cell.removeAttribute('class');
-		  cell.style.fontWeight = 'normal';  // ✅ Remove bold
-          }
-      } else if (action === 'delete-col') {
-        if (colCount > 1) {
-          for (const row of table.rows) {
-            row.deleteCell(colCount - 1);
-          }
-        } else {
-          alert('Cannot delete all columns');
-        }
-      }
-    };
-  });
-
-  // Optional: close panel if click outside
-  document.addEventListener('click', (e) => {
-    if (!container.contains(e.target)) {
-      controlPanel.style.display = 'none';
-      controlPanel.setAttribute('aria-hidden', 'true');
-    }
-  });
-}
-
-const containers = activeEditable.querySelectorAll('div[style*="position: relative"]');
-if (containers.length) {
-  setupTableControlPanel(containers[containers.length - 1]); // last inserted table container
-}
-
-
-// After inserting the table HTML, call this function:
-function setupTableControls(table) {
-  table.querySelectorAll('.table-control-toggle').forEach(btn => {
-    btn.onclick = () => {
-      const controls = btn.nextElementSibling;
-      if (!controls) return;
-      controls.style.display = controls.style.display === 'none' ? 'block' : 'none';
-    };
-  });
-
-  // Add event listeners for add/delete row/col buttons:
-  table.querySelectorAll('.add-row').forEach(btn => {
-    btn.onclick = () => {
-      const row = btn.closest('tr');
-      const table = row.closest('table');
-      const newRow = table.insertRow(row.rowIndex + 1);
-      // Add same number of cells with contenteditable=true except last cell
-      const colCount = table.rows[0].cells.length;
-      for (let i = 0; i < colCount - 1; i++) {
-        const cell = newRow.insertCell();
-        cell.contentEditable = 'true';
-        cell.textContent = '';
-      }
-      // Last cell with toggle button + hidden controls (clone from current row)
-      const controlCell = newRow.insertCell();
-      controlCell.innerHTML = row.cells[colCount -1].innerHTML;
-      setupTableControls(table); // re-setup event listeners for new controls
-    };
-  });
-
-  table.querySelectorAll('.delete-row').forEach(btn => {
-    btn.onclick = () => {
-      const row = btn.closest('tr');
-      const table = row.closest('table');
-      if (table.rows.length > 2) { // keep header + at least one row
-        row.remove();
-      } else {
-        alert('Cannot delete all rows');
-      }
-    };
-  });
-
-  table.querySelectorAll('.add-col').forEach(btn => {
-    btn.onclick = () => {
-      const table = btn.closest('table');
-      const colCount = table.rows[0].cells.length;
-      for (const row of table.rows) {
-        const cell = row.insertCell(colCount - 1);
-        if (row.sectionRowIndex === 0) {
-          cell.contentEditable = 'true';
-          cell.textContent = '';
-        } else {
-          cell.contentEditable = 'true';
-          cell.textContent = '';
-        }
-        // For last col, add toggle button + controls for last cell
-        if (row === table.rows[0]) {
-          // Add toggle button cell in last column
-          // Already handled by inserting before last column, so no extra here
-        }
-      }
-    };
-  });
-
-  table.querySelectorAll('.delete-col').forEach(btn => {
-    btn.onclick = () => {
-      const table = btn.closest('table');
-      const colCount = table.rows[0].cells.length;
-      if (colCount <= 2) { // 1 header + toggle col minimum
-        alert('Cannot delete all columns');
-        return;
-      }
-      for (const row of table.rows) {
-        row.deleteCell(colCount - 2); // delete second last col (before toggle button col)
-      }
-    };
-  });
-}
-
-
-
-  
-  activeEditable.focus();
-  if (!restoreCaret()) {
-    activeEditable.innerHTML += html;
-    placeCaretAtEnd(activeEditable);
-  } else {
-  // Remove trailing <br> or empty text nodes at the end of activeEditable
-while (
-  activeEditable.lastChild &&
-  (
-    (activeEditable.lastChild.nodeName === 'BR') ||
-    (activeEditable.lastChild.nodeType === 3 && activeEditable.lastChild.textContent.trim() === '') ||
-    (activeEditable.lastChild.nodeType === 1 && activeEditable.lastChild.textContent.trim() === '')
-  )
-) {
-  activeEditable.removeChild(activeEditable.lastChild);
-}
-
-    const sel = window.getSelection();
-    const range = sel.getRangeAt(0);
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-    const frag = document.createDocumentFragment();
-    while (temp.firstChild) frag.appendChild(temp.firstChild);
-    range.deleteContents();
-    range.insertNode(frag);
-    sel.removeAllRanges();
-    range.collapse(false);
-    sel.addRange(range);
-  }
-  saveCaret();
-
-  // Setup toggle and control button event listeners on the new table
-  const tables = activeEditable.querySelectorAll('table.editable-table');
-  if (tables.length) setupTableControls(tables[tables.length - 1]); // last inserted table
-};
-
+/* =========================
+   Notes panel toggle
+========================= */
 addNoteToggle.onclick = () => {
-  notePanel.style.display = notePanel.style.display === 'flex' ? 'none' : 'flex';
+  notePanel.style.display = (notePanel.style.display === 'flex') ? 'none' : 'flex';
   activeEditable = noteInput;
   noteInput.focus();
 };
-// Add note button clicked — SAVE noteInput.innerHTML directly
+
+/* =========================
+   Linkify
+========================= */
+function linkify(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+
+  const walker = document.createTreeWalker(div, NodeFilter.SHOW_TEXT, null);
+  const urlRegex = /\bhttps?:\/\/[^\s<]+/gi;
+
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  textNodes.forEach(node => {
+    const text = node.nodeValue;
+    if (!urlRegex.test(text)) return;
+
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+    text.replace(urlRegex, (match, offset) => {
+      frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+      const a = document.createElement('a');
+      a.href = match;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.textContent = match;
+      frag.appendChild(a);
+      lastIndex = offset + match.length;
+      return match;
+    });
+    frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+
+    node.parentNode.replaceChild(frag, node);
+  });
+
+  return div.innerHTML;
+}
+
+/* =========================
+   Add note
+========================= */
 addNoteBtn.onclick = async () => {
   const user = auth.currentUser;
   if (!user) return alert('Please log in.');
 
- const noteContent = linkify(noteInput.innerHTML.trim());
-  if (!noteContent) return alert('Note is required.');
+  const raw = noteInput.innerHTML.trim();
+  const noteContent = linkify(raw);
+
+  if (!noteContent || noteContent === '<br>') return alert('Note is required.');
 
   addNoteBtn.disabled = true;
   addNoteBtn.textContent = 'Adding...';
@@ -1185,10 +926,13 @@ addNoteBtn.onclick = async () => {
       uid: user.uid
     });
 
-    addMessage('bot', '✅ Note added!');
     noteInput.innerHTML = '';
     imageUpload.value = '';
     notePanel.style.display = 'none';
+
+    // Kick live search refresh if user has a query typed
+    const q = userInput.value.trim();
+    if (q) runLiveSearch(q, true);
 
   } catch (e) {
     alert('Error: ' + e.message);
@@ -1198,237 +942,179 @@ addNoteBtn.onclick = async () => {
   }
 };
 
-function addMessage(sender, content, isHTML = false) {
+function stripLegacyTableControls(html) {
+  if (!html) return '';
+  // remove old toolbar/toggle nodes if they exist in saved notes
+  return html
+    .replace(/<button[^>]*class="table-control-toggle"[\s\S]*?<\/button>/gi, '')
+    .replace(/<div[^>]*class="table-control-panel"[\s\S]*?<\/div>/gi, '')
+    .replace(/<button[^>]*class="table-btn"[\s\S]*?<\/button>/gi, '');
+}
+
+
+/* =========================
+   "AI" placeholder (only used if you type /ask ...)
+========================= */
+async function askAI(question) {
+  await new Promise(res => setTimeout(res, 250));
+  return `You asked:\n${question}`;
+}
+
+/* =========================
+   Search helpers
+========================= */
+function normalizeText(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function htmlToText(html) {
   const div = document.createElement('div');
-  div.className = 'message ' + sender;
-  const bubble = document.createElement('div');
-  bubble.className = 'chatBubble';
-  bubble[isHTML ? 'innerHTML' : 'textContent'] = (sender === 'user' ? '🧠 ' : '🤖 ') + content;
-  div.appendChild(bubble);
-  chat.appendChild(div);
-  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  div.innerHTML = html || '';
+  return div.textContent || div.innerText || '';
 }
 
-function addRow(btn) {
-  const table = btn.closest('table');
-  const row = table.insertRow(table.tBodies[0].rows.length);
-  const cols = table.rows[0].cells.length - 1;
-  for (let i = 0; i < cols; i++) {
-    const cell = row.insertCell();
-    cell.contentEditable = true;
-    cell.textContent = '';
+function parseFindQuery(raw) {
+  const s = raw.replace(/^\/find\s+/i, '').trim();
+
+  const phrases = [];
+  const quoteRegex = /"([^"]+)"/g;
+  let m;
+  while ((m = quoteRegex.exec(s)) !== null) {
+    const p = m[1].trim();
+    if (p) phrases.push(p);
   }
-  const controlCell = row.insertCell();
-  controlCell.innerHTML = `<button onclick="this.closest('tr').remove()">➖</button>`;
+
+  const remainder = s.replace(quoteRegex, ' ').split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  const terms = [...phrases, ...remainder].filter(Boolean);
+
+  return { raw: s, terms: terms.map(normalizeText).filter(Boolean) };
 }
 
-function addCol(btn) {
-  const table = btn.closest('table');
-  for (let row of table.rows) {
-    const isFooter = row.parentNode.tagName === 'TFOOT';
-    const cell = row.insertCell(row.cells.length - (isFooter ? 0 : 1));
-    cell.contentEditable = true;
-    cell.textContent = isFooter ? '' : '';
-    if (row.parentNode.tagName === 'THEAD') {
-      cell.outerHTML = `<th contenteditable="true"></th>`;
-    }
-    if (row.parentNode.tagName === 'TBODY' && !isFooter) {
-      cell.outerHTML = `<td contenteditable="true">New</td>`;
-    }
+function scoreDoc(textNorm, termsNorm) {
+  let score = 0;
+  for (const t of termsNorm) {
+    if (!t) continue;
+    if (textNorm.startsWith(t)) score += 6;
+
+    const wholeWord = new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (wholeWord.test(textNorm)) score += 3;
+
+    if (textNorm.includes(t)) score += 1;
   }
+  return score;
 }
 
-function removeCol(btn) {
-  const table = btn.closest('table');
-  const rowCount = table.rows.length;
-  const colCount = table.rows[0].cells.length;
-  if (colCount <= 2) return alert('Minimum 1 data column required');
-  for (let row of table.rows) {
-    row.deleteCell(colCount - 2); // remove last data column (before control)
-  }
-}
-// Utility function: find closest ancestor table from current selection/caret
-function getClosestTable() {
-  const sel = window.getSelection();
-  if (!sel.rangeCount) return null;
-  let node = sel.anchorNode;
-  while (node && node !== noteInput) {
-    if (node.nodeName === 'TABLE') return node;
-    node = node.parentNode;
-  }
-  return null;
-}
+function highlightHTML(html, termsNorm) {
+  if (!termsNorm?.length) return html;
 
-function addTableRow() {
-  const table = getClosestTable();
-  if (!table) {
-    alert('Place the cursor inside a table to add a row.');
-    return;
-  }
-  const colCount = table.rows[0].cells.length;
-  const newRow = table.insertRow(-1);
-  for (let i = 0; i < colCount; i++) {
-    const cell = newRow.insertCell();
-    cell.contentEditable = 'true';
-    if (table.tHead && i < table.tHead.rows[0].cells.length) {
-      // Check if header exists - make cells normal td for body rows
-      cell.textContent = '';
-    } else {
-      cell.textContent = '';
-    }
-  }
-}
+  const container = document.createElement('div');
+  container.innerHTML = html;
 
-function deleteTableRow() {
-  const table = getClosestTable();
-  if (!table) {
-    alert('Place the cursor inside a table to delete a row.');
-    return;
-  }
-  if (table.rows.length <= 2) { // keep header + 1 row minimum
-    alert('Cannot delete all rows.');
-    return;
-  }
-  table.deleteRow(table.rows.length - 1);
-}
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
 
-function addTableColumn() {
-  const table = getClosestTable();
-  if (!table) {
-    alert('Place the cursor inside a table to add a column.');
-    return;
-  }
-  const colCount = table.rows[0].cells.length;
-  for (let row of table.rows) {
-    const cell = row.insertCell(-1);
-    cell.contentEditable = 'true';
-    if (row.sectionRowIndex === 0) {
-      cell.outerHTML = `<th contenteditable="true"></th>`;
-    } else {
-      cell.textContent = '';
-    }
-  }
-}
+  const escaped = termsNorm
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
-function deleteTableColumn() {
-  const table = getClosestTable();
-  if (!table) {
-    alert('Place the cursor inside a table to delete a column.');
-    return;
-  }
-  const colCount = table.rows[0].cells.length;
-  if (colCount <= 1) {
-    alert('Cannot delete all columns.');
-    return;
-  }
-  for (let row of table.rows) {
-    row.deleteCell(colCount - 1);
-  }
-}
+  if (!escaped.length) return html;
+  const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
 
-// Attach listeners
-document.getElementById('addRowBtn').onclick = addTableRow;
-document.getElementById('deleteRowBtn').onclick = deleteTableRow;
-document.getElementById('addColBtn').onclick = addTableColumn;
-document.getElementById('deleteColBtn').onclick = deleteTableColumn;
+  nodes.forEach(node => {
+    const text = node.nodeValue;
+    if (!regex.test(text)) return;
 
-function changeFontSize(delta) {
-  const sel = window.getSelection();
-  if (!sel.rangeCount || !activeEditable.contains(sel.anchorNode)) return;
-
-  const range = sel.getRangeAt(0);
-
-  if (!range.collapsed) {
-    // Check for emoji spans inside selection
-    const selectedNodes = range.cloneContents().querySelectorAll('span.resizableEmoji');
-
-    if (selectedNodes.length) {
-      selectedNodes.forEach(span => {
-        const currentSize = parseFloat(window.getComputedStyle(span).fontSize);
-        const newSize = Math.max(8, currentSize + delta * 2); // Min size safeguard
-        span.style.fontSize = newSize + 'px';
-      });
-
-      return; // Stop here so it doesn't insert new span
-    }
-
-    // Otherwise wrap selection in new span
     const span = document.createElement('span');
-    span.style.fontSize = delta > 0 ? 'larger' : 'smaller';
-    span.appendChild(range.extractContents());
-    range.insertNode(span);
-  } else {
-    // No selection — insert styled span at caret
-    const span = document.createElement('span');
-    span.style.fontSize = delta > 0 ? 'larger' : 'smaller';
-    span.appendChild(document.createTextNode('\u200B')); // cursor marker
-    range.insertNode(span);
-    range.setStart(span, 1);
-    range.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-
-  saveCaret();
-}
-
-function resetFormatting() {
-  const sel = window.getSelection();
-  if (!sel.rangeCount || !activeEditable.contains(sel.anchorNode)) return;
-
-  const range = sel.getRangeAt(0);
-  if (range.collapsed) return;
-
-  // Extract the selected content
-  const extracted = range.extractContents();
-
-  // Create a helper function to recursively unwrap nodes
-  function unwrapNode(node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      return document.createTextNode(node.textContent);
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-      // Create a document fragment to hold unwrapped children
-      const frag = document.createDocumentFragment();
-      node.childNodes.forEach(child => {
-        frag.appendChild(unwrapNode(child));
-      });
-      return frag;
-    } else {
-      // For other node types, ignore
-      return document.createTextNode('');
-    }
-  }
-
-  // Unwrap the extracted content completely
-  const cleanFragment = document.createDocumentFragment();
-  extracted.childNodes.forEach(node => {
-    cleanFragment.appendChild(unwrapNode(node));
+    span.innerHTML = text.replace(regex, `<mark class="underlineMatch">$1</mark>`);
+    node.parentNode.replaceChild(span, node);
   });
 
-  // Insert the clean fragment back into the range
-  range.insertNode(cleanFragment);
-
-  // Collapse caret after inserted content
-  range.collapse(false);
-
-  // Clear selection and set caret to new position
-  sel.removeAllRanges();
-  sel.addRange(range);
-
-  saveCaret();
+  return container.innerHTML;
 }
 
+/* =========================
+   Cache-based query (NO Firestore index needed)
+========================= */
 
-function displayNotes(notes) {
-  if (!notes.length) return addMessage('bot', '❌ No matching notes found.');
+async function queryNotesUpgraded(rawQuery) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Please log in.');
+
+  const { terms } = parseFindQuery(rawQuery);
+  if (!terms.length) return [];
+
+  const results = [];
+
+  for (const data of notesCache) {
+    const originalHtml = data.content || '';
+    const cleanedHtml = stripLegacyTableControls(originalHtml);
+
+    const textNorm = normalizeText(htmlToText(cleanedHtml));
+
+    const ok = terms.every(t => {
+      if (!t) return true;
+      if (textNorm.includes(t)) return true;
+      return textNorm.split(/\s+/).some(w => w.startsWith(t));
+    });
+
+    if (!ok) continue;
+
+    results.push({
+      id: data.id,
+      createdAt: data.createdAt,
+      content: cleanedHtml,
+      score: scoreDoc(textNorm, terms)
+    });
+  }
+
+  results.sort((a, b) => {
+    const s = b.score - a.score;
+    if (s !== 0) return s;
+    const ta = a.createdAt?.toMillis?.() || 0;
+    const tb = b.createdAt?.toMillis?.() || 0;
+    return tb - ta;
+  });
+
+  results.forEach(r => {
+    r.content = highlightHTML(r.content, terms);
+  });
+
+  return results.slice(0, 30);
+}
+
+/* =========================
+   Render notes into ANY container
+========================= */
+function displayNotesInto(targetEl, notes) {
+  if (!notes.length) {
+    const msg = document.createElement('div');
+    msg.className = 'message bot';
+    const bubble = document.createElement('div');
+    bubble.className = 'chatBubble';
+    bubble.textContent = '🤖 ❌ No matching notes found.';
+    msg.appendChild(bubble);
+    targetEl.appendChild(msg);
+    return;
+  }
+
   for (const note of notes) {
     const div = document.createElement('div');
     div.className = 'message bot';
 
     const bubble = document.createElement('div');
-    bubble.className = 'chatBubble';
-    bubble.innerHTML = '🤖 ' + note.content;
-    div.appendChild(bubble);
+bubble.className = 'chatBubble';
+bubble.innerHTML = '🤖 ' + stripLegacyTableControls(note.content || '');
+div.appendChild(bubble);
+
 
     const btns = document.createElement('div');
     btns.style.textAlign = 'center';
@@ -1440,74 +1126,27 @@ function displayNotes(notes) {
     delBtn.textContent = '🗑️';
 
     [editBtn, delBtn].forEach(btn => Object.assign(btn.style, {
-      background: 'none', border: 'none', color: '#666', fontSize: '16px', cursor: 'pointer', marginRight: '12px'
+      background: 'none',
+      border: 'none',
+      color: '#666',
+      fontSize: '16px',
+      cursor: 'pointer',
+      marginRight: '12px'
     }));
 
     btns.append(editBtn, delBtn);
     div.appendChild(btns);
-    chat.appendChild(div);
+    targetEl.appendChild(div);
 
     editBtn.onclick = () => {
-      bubble.style.display = btns.style.display = 'none';
+      bubble.style.display = 'none';
+      btns.style.display = 'none';
 
       const editable = document.createElement('div');
       editable.contentEditable = true;
-      editable.innerHTML = note.content;
+      editable.innerHTML = (note.content || '').replace(/<mark class="underlineMatch">([\s\S]*?)<\/mark>/gi, '$1');
       editable.className = 'editableNote';
       activeEditable = editable;
-
-  // 📸 Multi-image upload with caret positioning and resizable images
-  const editImageUpload = document.createElement('input');
-  editImageUpload.type = 'file';
-  editImageUpload.accept = 'image/*';
-  editImageUpload.multiple = true;
-  editImageUpload.style.display = 'block';
-  editImageUpload.style.margin = '10px auto';
-
-  editImageUpload.addEventListener('change', function () {
-    const files = Array.from(this.files);
-    if (!files.length) return;
-
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const img = document.createElement('img');
-        img.src = e.target.result;
-        img.style.maxWidth = '100%';
-        img.style.borderRadius = '8px';
-        img.style.resize = 'both';
-        img.style.overflow = 'auto';
-        img.style.display = 'block';
-        img.style.margin = '10px 0';
-
-        const sel = window.getSelection();
-        if (!sel.rangeCount) {
-          editable.appendChild(img);
-          return;
-        }
-
-        const range = sel.getRangeAt(0);
-        range.deleteContents();
-        const brBefore = document.createElement('br');
-        const brAfter = document.createElement('br');
-        const frag = document.createDocumentFragment();
-        frag.appendChild(brBefore);
-        frag.appendChild(img);
-        frag.appendChild(brAfter);
-        range.insertNode(frag);
-
-        range.setStartAfter(brAfter);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        saveCaret();
-      };
-      reader.readAsDataURL(file);
-    });
-
-    this.value = ''; // Clear selection for next upload
-  });
-
 
       editable.addEventListener('focus', () => activeEditable = editable);
       editable.addEventListener('input', saveCaret);
@@ -1533,121 +1172,360 @@ function displayNotes(notes) {
       actions.style.marginTop = '6px';
       actions.append(saveBtn, cancelBtn);
 
-        div.append(editable, editImageUpload, actions);
+      div.append(editable, actions);
 
       cancelBtn.onclick = () => {
-        bubble.style.display = btns.style.display = '';
         editable.remove();
         actions.remove();
+        bubble.style.display = '';
+        btns.style.display = '';
       };
 
       saveBtn.onclick = async () => {
-  const updated = editable.innerHTML.trim();
-  if (!updated) return alert('Cannot save empty note');
-  try {
-    await db.collection('notes').doc(note.id).update({ content: updated });
-    note.content = updated;
-    bubble.innerHTML = '🤖 ' + updated;
-    bubble.style.display = btns.style.display = '';
-    editable.remove();
-    actions.remove();
-    editImageUpload.style.display = 'none';  // <-- Hide the file input here
-  } catch (e) {
-    alert('Error saving note: ' + e.message);
-  }
-};
+        const updated = editable.innerHTML.trim();
+        if (!updated) return alert('Cannot save empty note');
+
+        try {
+          await db.collection('notes').doc(note.id).update({ content: updated });
+          note.content = updated;
+
+          bubble.innerHTML = '🤖 ' + updated;
+          editable.remove();
+          actions.remove();
+          bubble.style.display = '';
+          btns.style.display = '';
+
+          // refresh live if query exists
+          const q = userInput.value.trim();
+          if (q) runLiveSearch(q, true);
+
+        } catch (e) {
+          alert('Error saving note: ' + e.message);
+        }
+      };
     };
 
     delBtn.onclick = async () => {
-      if (confirm('Delete this note?')) {
-        try {
-          await db.collection('notes').doc(note.id).delete();
-          div.remove();
-        } catch (e) {
-          alert('Failed to delete: ' + e.message);
-        }
+      if (!confirm('Delete this note?')) return;
+      try {
+        await db.collection('notes').doc(note.id).delete();
+        div.remove();
+
+        // refresh live if query exists
+        const q = userInput.value.trim();
+        if (q) runLiveSearch(q, true);
+
+      } catch (e) {
+        alert('Failed to delete: ' + e.message);
       }
     };
   }
-  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
 
-document.getElementById('inputArea').onsubmit = async e => {
-  e.preventDefault();
-  const q = document.getElementById('userInput').value.trim();
-  if (!q) return;
-  addMessage('user', q);
-  document.getElementById('userInput').value = '';
-  const loading = document.createElement('div');
-  loading.className = 'message bot';
-  loading.textContent = '🤖 ⏳ Searching...';
-  chat.appendChild(loading);
-  try {
-    const notes = await queryNotes(q);
-    chat.removeChild(loading);
-    displayNotes(notes);
-  } catch (e) {
-    chat.removeChild(loading);
-    addMessage('bot', '❌ Search error: ' + e.message);
+/* =========================
+   Live search runner (debounced)
+========================= */
+async function runLiveSearch(q, immediate = false) {
+  if (!auth.currentUser) return;
+
+  const doIt = async () => {
+    if (q === lastLiveQuery) return;
+    lastLiveQuery = q;
+
+    try {
+      const notes = await queryNotesUpgraded('/find ' + q);
+      renderLiveResults(notes, q);
+    } catch (e) {
+      clearLiveResults();
+      renderHeaderLine('❌ Search error: ' + (e?.message || e));
+      console.error(e);
+    }
+  };
+
+  if (immediate) return doIt();
+
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(doIt, 180);
+}
+
+/* =========================
+   LIVE SEARCH as you type
+========================= */
+userInput.addEventListener('input', () => {
+  const q = userInput.value.trim();
+
+  if (!q) {
+    lastLiveQuery = '';
+    clearLiveResults();
+    return;
   }
-};
 
-async function queryNotes(q) {
-  const snap = await db.collection('notes')
-    .orderBy('createdAt', 'desc')
-    .get();
+  runLiveSearch(q, false);
+});
 
-  // Split by comma → trim → lowercase → remove empty
-  const terms = q
-    .toLowerCase()
-    .split(',')
-    .map(t => t.trim())
-    .filter(Boolean);
+/* =========================
+   Enter key behavior
+   - default: searches notes (no chat spam)
+   - use /ask ... to call askAI()
+========================= */
+inputArea.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-  return snap.docs
-    .filter(d => {
-      const content = d.data().content?.toLowerCase() || '';
+  const raw = userInput.value.trim();
+  if (!raw) return;
 
-      // AND logic: every term must be found somewhere
-      return terms.every(term => content.includes(term));
-    })
-    .map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
-}
+  // /ask mode
+  if (/^\/ask\b/i.test(raw)) {
+    const q = raw.replace(/^\/ask\s*/i, '').trim();
+    if (!q) return;
 
+    clearLiveResults();
+    renderHeaderLine('Thinking…');
 
+    try {
+      const answer = await askAI(q);
+      clearLiveResults();
+      renderHeaderLine(answer);
+    } catch (err) {
+      clearLiveResults();
+      renderHeaderLine('⚠️ Error getting response');
+      console.error(err);
+    }
 
+    return;
+  }
+
+  // Default: search notes
+  await runLiveSearch(raw, true);
+});
+
+/* =========================
+   Formatting toolbar
+========================= */
 document.getElementById('boldBtn').onclick = () => document.execCommand('bold');
 document.getElementById('italicBtn').onclick = () => document.execCommand('italic');
 document.getElementById('underlineBtn').onclick = () => document.execCommand('underline');
 document.getElementById('highlightBtn').onclick = () => document.execCommand('foreColor', false, '#5c6ac4');
-document.getElementById('redFontBtn').onclick = () =>
-  document.execCommand('foreColor', false, 'red');
+document.getElementById('redFontBtn').onclick = () => document.execCommand('foreColor', false, 'red');
+document.getElementById('blueFontBtn').onclick = () => document.execCommand('foreColor', false, 'blue');
 
-document.getElementById('blueFontBtn').onclick = () =>
-  document.execCommand('foreColor', false, 'blue');
+/* Font size controls */
+function changeFontSize(delta) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !activeEditable.contains(sel.anchorNode)) return;
+
+  const range = sel.getRangeAt(0);
+
+  if (!range.collapsed) {
+    const selectedNodes = range.cloneContents().querySelectorAll('span.resizableEmoji');
+
+    if (selectedNodes.length) {
+      selectedNodes.forEach(span => {
+        const currentSize = parseFloat(window.getComputedStyle(span).fontSize);
+        const newSize = Math.max(8, currentSize + delta * 2);
+        span.style.fontSize = newSize + 'px';
+      });
+      return;
+    }
+
+    const span = document.createElement('span');
+    span.style.fontSize = delta > 0 ? 'larger' : 'smaller';
+    span.appendChild(range.extractContents());
+    range.insertNode(span);
+  } else {
+    const span = document.createElement('span');
+    span.style.fontSize = delta > 0 ? 'larger' : 'smaller';
+    span.appendChild(document.createTextNode('\u200B'));
+    range.insertNode(span);
+    range.setStart(span, 1);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  saveCaret();
+}
+
+function resetFormatting() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !activeEditable.contains(sel.anchorNode)) return;
+
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) return;
+
+  const extracted = range.extractContents();
+
+  function unwrapNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return document.createTextNode(node.textContent);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const frag = document.createDocumentFragment();
+      node.childNodes.forEach(child => frag.appendChild(unwrapNode(child)));
+      return frag;
+    }
+    return document.createTextNode('');
+  }
+
+  const cleanFragment = document.createDocumentFragment();
+  extracted.childNodes.forEach(node => cleanFragment.appendChild(unwrapNode(node)));
+
+  range.insertNode(cleanFragment);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  saveCaret();
+}
 
 document.getElementById('resetColorBtn').onclick = resetFormatting;
 document.getElementById('increaseFontBtn').onclick = () => changeFontSize(1);
 document.getElementById('decreaseFontBtn').onclick = () => changeFontSize(-1);
 
+/* Table tools (basic) */
+function getClosestTable() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
 
-document.getElementById('authToggle').onclick = () => {
+  let node = sel.anchorNode;
+  while (node && node !== activeEditable) {
+    if (node.nodeName === 'TABLE') return node;
+    node = node.parentNode;
+  }
+  return null;
+}
+
+document.getElementById('insertTableBtn').onclick = () => {
+  const html = `
+  <table class="editable-table" contenteditable="false">
+    <colgroup>
+      <col style="width:50%">
+      <col style="width:50%">
+    </colgroup>
+    <thead>
+      <tr>
+        <th contenteditable="true"></th>
+        <th contenteditable="true"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+      </tr>
+    </tbody>
+  </table><br>`;
+
+  activeEditable.focus();
+
+  if (!restoreCaret()) {
+    activeEditable.innerHTML += html;
+    placeCaretAtEnd(activeEditable);
+  } else {
+    const sel = window.getSelection();
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+
+    const frag = document.createDocumentFragment();
+    while (temp.firstChild) frag.appendChild(temp.firstChild);
+
+    range.insertNode(frag);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  saveCaret();
+};
+
+
+function addTableRow() {
+  const table = getClosestTable();
+  if (!table) return alert('Place the cursor inside a table to add a row.');
+
+  const colCount = table.rows[0].cells.length;
+  const newRow = table.tBodies[0].insertRow(-1);
+
+  for (let i = 0; i < colCount; i++) {
+    const cell = newRow.insertCell();
+    cell.contentEditable = 'true';
+    cell.textContent = '';
+    cell.style.fontWeight = 'normal';
+    cell.style.textAlign = 'left';
+  }
+}
+
+function deleteTableRow() {
+  const table = getClosestTable();
+  if (!table) return alert('Place the cursor inside a table to delete a row.');
+  if (table.tBodies[0].rows.length <= 1) return alert('Cannot delete the last row.');
+  table.tBodies[0].deleteRow(table.tBodies[0].rows.length - 1);
+}
+
+function addTableColumn() {
+  const table = getClosestTable();
+  if (!table) return alert('Place the cursor inside a table to add a column.');
+
+  const th = table.tHead.rows[0].insertCell(-1);
+  th.outerHTML = `<th contenteditable="true"></th>`;
+
+  Array.from(table.tBodies[0].rows).forEach(row => {
+    const td = row.insertCell(-1);
+    td.contentEditable = 'true';
+    td.textContent = '';
+    td.style.fontWeight = 'normal';
+    td.style.textAlign = 'left';
+  });
+}
+
+function deleteTableColumn() {
+  const table = getClosestTable();
+  if (!table) return alert('Place the cursor inside a table to delete a column.');
+
+  const colCount = table.tHead.rows[0].cells.length;
+  if (colCount <= 1) return alert('Cannot delete the last column.');
+
+  table.tHead.rows[0].deleteCell(colCount - 1);
+
+  Array.from(table.tBodies[0].rows).forEach(row => {
+    if (row.cells.length) row.deleteCell(colCount - 1);
+  });
+}
+
+document.getElementById('addRowBtn').onclick = addTableRow;
+document.getElementById('deleteRowBtn').onclick = deleteTableRow;
+document.getElementById('addColBtn').onclick = addTableColumn;
+document.getElementById('deleteColBtn').onclick = deleteTableColumn;
+
+/* Prevent Enter from breaking out of table cells */
+document.addEventListener('keydown', (e) => {
+  const isCell = e.target.closest('td, th');
+  if (isCell && e.key === 'Enter') {
+    if (e.shiftKey) {
+      document.execCommand('insertHTML', false, '<br><br>');
+      e.preventDefault();
+    } else {
+      e.preventDefault();
+    }
+  }
+});
+
+/* UI toggles */
+authToggle.onclick = () => {
   const s = document.getElementById('authSection');
-  s.style.display = s.style.display === 'flex' ? 'none' : 'flex';
+  s.style.display = (s.style.display === 'flex') ? 'none' : 'flex';
 };
 
 document.getElementById('formatToggle').onclick = () =>
   document.getElementById('formatToolbar').classList.toggle('visible');
 
-addMessage('bot', '👋 Welcome! Please log in to add or manage notes.');
-
-// 📐 Double-click on image to open resize popup
+/* Double-click resize popup for images inside editable note editor */
 document.addEventListener('dblclick', (e) => {
   if (e.target.tagName === 'IMG' && e.target.closest('.editableNote')) {
     const img = e.target;
+
     const popup = document.createElement('div');
     popup.style.position = 'fixed';
     popup.style.left = `${e.clientX}px`;
@@ -1677,7 +1555,7 @@ document.addEventListener('dblclick', (e) => {
     applyBtn.onclick = () => {
       img.style.width = widthInput.value + 'px';
       img.style.height = heightInput.value + 'px';
-      document.body.removeChild(popup);
+      popup.remove();
     };
 
     document.addEventListener('click', function outsideClick(ev) {
@@ -1691,123 +1569,6 @@ document.addEventListener('dblclick', (e) => {
     document.body.appendChild(popup);
   }
 });
-
-// --- Table edit helpers ---
-window.addRow = function(btn) {
-  const table = btn.closest('table');
-  const row = table.tBodies[0].insertRow();
-  const colCount = table.rows[0].cells.length - 1;
-
-  for (let i = 0; i < colCount; i++) {
-    const cell = row.insertCell();
-    cell.contentEditable = true;
-    cell.innerHTML = '';
-    cell.removeAttribute('style');
-    cell.removeAttribute('class');
-  }
-
-  const delCell = row.insertCell();
-  delCell.innerHTML = `<button class="table-btn" onclick="this.closest('tr').remove()">➖</button>`;
-};
-
-window.addCol = function(btn) {
-  const table = btn.closest('table');
-  const rows = table.rows;
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const isFooter = row.parentNode.tagName === 'TFOOT';
-    const insertBeforeLast = row.cells.length - (isFooter ? 0 : 1);
-
-    const cell = row.insertCell(insertBeforeLast);
-    if (row.parentNode.tagName === 'THEAD') {
-    cell.outerHTML = `<td contenteditable="true" style="text-align: left; font-weight: normal;"></td>`;
-    } else if (row.parentNode.tagName === 'TBODY') {
-    cell.outerHTML = `<th contenteditable="true" style="text-align: left; font-weight: normal;"></th>`;
-    } else if (isFooter) {
-      cell.outerHTML = `<td></td>`;
-    }
-  }
-};
-
-window.removeCol = function(btn) {
-  const table = btn.closest('table');
-  const rows = table.rows;
-  const lastDataColIndex = rows[0].cells.length - 2;
-
-  if (lastDataColIndex < 1) return alert('At least one column required.');
-
-  for (let row of rows) {
-    if (row.cells.length > 1) {
-      row.deleteCell(lastDataColIndex);
-    }
-  }
-};
-
-document.addEventListener('keydown', (e) => {
-  const isCell = e.target.closest('td, th');
-  if (isCell && e.key === 'Enter') {
-    if (e.shiftKey) {
-      // Allow new line
-      document.execCommand('insertHTML', false, '<br><br>');
-      e.preventDefault(); // prevent double insertion
-    } else {
-      // Prevent Enter from breaking out of the cell
-      e.preventDefault();
-    }
-  }
-});
-
-// 🔎 Normalize text (case-insensitive search)
-function normalize(text) {
-  return text.toLowerCase().trim();
-}
-
-// 🧹 Strip HTML so we search readable text, not tags
-function htmlToText(html) {
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  return div.textContent || div.innerText || '';
-}
-
-// ✅ Core matcher: substring + prefix matching
-function noteMatches(noteHTML, query) {
-  const text = normalize(htmlToText(noteHTML));
-  const q = normalize(query);
-  if (!q) return false;
-
-  // substring match
-  if (text.includes(q)) return true;
-
-  // prefix match (child → children)
-  return text.split(/\s+/).some(word => word.startsWith(q));
-}
-
-// Highlight search matches in notes
-const searchInput = document.getElementById('noteSearch'); 
-const notesContainer = document.getElementById('notePanel'); 
-
-function highlightMatchingNotes() {
-  const query = searchInput.value.toLowerCase();
-  const notes = notesContainer.querySelectorAll('.noteCard');
-
-  notes.forEach(note => {
-    // Remove previous highlights
-    note.innerHTML = note.innerHTML.replace(/<mark class="underlineMatch">(.*?)<\/mark>/gi, '$1');
-
-    if (query) {
-      const regex = new RegExp(`(${query})`, 'gi');
-      note.innerHTML = note.innerHTML.replace(regex, `<mark class="underlineMatch">$1</mark>`);
-    }
-  });
-}
-
-searchInput.addEventListener('input', highlightMatchingNotes);
-
-
 </script>
-
-
-
 </body>
 </html>
