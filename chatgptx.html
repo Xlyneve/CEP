@@ -484,6 +484,60 @@ mark.underlineMatch{
   background: rgba(208, 160, 163, 0.25);
 }
 
+/* Floating emoji button + picker */
+#floatingEmojiBtn {
+  position: fixed;
+  display: none;
+  z-index: 10050;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  cursor: pointer;
+  user-select: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+#floatingEmojiBtn:hover {
+  transform: scale(1.06);
+}
+
+#floatingEmojiPanel {
+  position: fixed;
+  display: none;
+  z-index: 10051;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.40);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+
+#floatingEmojiPanel .pick {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+#floatingEmojiPanel .pick:hover {
+  opacity: 1;
+  transform: scale(1.12);
+}
 
 /* Lock UI */
 #lockToggle {
@@ -585,25 +639,7 @@ mark.underlineMatch{
 
   <button class="format-btn" id="resetColorBtn">↺</button>
 
-  <div class="emoji" data-emoji="📌">📌</div>
-  <div class="emoji" data-emoji="🟡">🟡</div>
-  <div class="emoji" data-emoji="🔴">🔴</div>
-  <div class="emoji" data-emoji="🔸">🔸</div>
-  <div class="emoji" data-emoji="▶">▶</div>
-  <div class="emoji" data-emoji="👉🏻">👉🏻</div>
-  <div class="emoji" data-emoji="⚠️">⚠️</div>
-  <div class="emoji" data-emoji="🧠">🧠</div>
-  <div class="emoji" data-emoji="💊">💊</div>
-  <div class="emoji" data-emoji="❤️">❤️</div>
-  <div class="emoji" data-emoji="🚨">🚨</div>
-  <div class="emoji" data-emoji="⬇">⬇</div>
-  <div class="emoji" data-emoji="⬆">⬆</div>
-  <div class="emoji" data-emoji="⬅">⬅</div>
-  <div class="emoji" data-emoji="➡">➡</div>
-  <div class="emoji" data-emoji="➀">➀</div>
-  <div class="emoji" data-emoji="➁">➁</div>
-  <div class="emoji" data-emoji="➂">➂</div>
-  <div class="emoji" data-emoji="➃">➃</div>
+  
 </div>
 
 <!-- Container for add button and note panel -->
@@ -624,6 +660,9 @@ mark.underlineMatch{
   <input type="text" id="userInput" placeholder="Type to search notes… (use /ask to ask AI)" autocomplete="off" required />
   <button type="submit" id="sendBtn">Send</button>
 </form>
+
+<div id="floatingEmojiBtn" title="Insert emoji">📌</div>
+<div id="floatingEmojiPanel" aria-hidden="true"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -880,51 +919,7 @@ function placeCaretAtEnd(el) {
   noteInput.addEventListener(evt, saveCaret);
 });
 
-/* =========================
-   Emoji insert
-========================= */
-document.querySelectorAll('.emoji').forEach(btn => {
-  btn.onclick = async () => {
-    const emoji = btn.dataset.emoji;
-    activeEditable.focus();
 
-    const resizable = ["⬇", "⬆", "⬅", "➡", "➀", "➁", "➂", "➃"].includes(emoji);
-
-    if (!restoreCaret()) {
-      activeEditable.innerHTML += resizable
-        ? `<span class="resizableEmoji">${emoji}</span>`
-        : emoji;
-      placeCaretAtEnd(activeEditable);
-    } else {
-      const sel = window.getSelection();
-      const range = sel.getRangeAt(0);
-      range.deleteContents();
-
-      if (resizable) {
-        const span = document.createElement('span');
-        span.className = 'resizableEmoji';
-        span.textContent = emoji;
-        range.insertNode(span);
-        range.setStartAfter(span);
-      } else {
-        const textNode = document.createTextNode(emoji);
-        range.insertNode(textNode);
-        range.setStartAfter(textNode);
-      }
-
-      range.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
-
-    saveCaret();
-
-    try { await navigator.clipboard.writeText(emoji); } catch {}
-
-    btn.style.transform = 'scale(1.3)';
-    setTimeout(() => (btn.style.transform = 'scale(1)'), 200);
-  };
-});
 
 /* =========================
    Notes panel toggle
@@ -1466,6 +1461,198 @@ document.getElementById('resetColorBtn').onclick = resetFormatting;
 document.getElementById('increaseFontBtn').onclick = () => changeFontSize(1);
 document.getElementById('decreaseFontBtn').onclick = () => changeFontSize(-1);
 
+/* =========================
+   Floating Emoji (Shift+Click near caret)
+========================= */
+
+// Emoji set (feel free to adjust)
+const FLOAT_EMOJIS = ["📌","🟡","🔴","🔸","▶","👉🏻","⚠️","🧠","💊","❤️","🚨","⬇","⬆","⬅","➡","➀","➁","➂","➃"];
+const RESIZABLE_EMOJIS = new Set(["⬇","⬆","⬅","➡","➀","➁","➂","➃"]);
+
+const floatingEmojiBtn = document.getElementById('floatingEmojiBtn');
+const floatingEmojiPanel = document.getElementById('floatingEmojiPanel');
+
+// remembers where to insert
+let floatingTargetEditable = null;
+let floatingSavedRange = null;
+let lastEmojiUsed = "📌";
+let shiftHeld = false;
+
+function buildFloatingPanel() {
+  floatingEmojiPanel.innerHTML = '';
+  FLOAT_EMOJIS.forEach(em => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pick';
+    b.textContent = em;
+    b.title = `Insert ${em}`;
+    b.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      lastEmojiUsed = em;
+      floatingEmojiBtn.textContent = lastEmojiUsed;
+      insertEmojiAtFloatingCaret(em);
+      hideFloatingEmoji();
+    });
+    floatingEmojiPanel.appendChild(b);
+  });
+}
+buildFloatingPanel();
+
+function isEditableTarget(el) {
+  if (!el) return false;
+  return el === noteInput || el.classList?.contains('editableNote') || el.closest?.('.editableNote') || el.closest?.('#noteInput');
+}
+
+function hideFloatingEmoji() {
+  floatingEmojiBtn.style.display = 'none';
+  floatingEmojiPanel.style.display = 'none';
+  floatingEmojiPanel.setAttribute('aria-hidden', 'true');
+  floatingTargetEditable = null;
+  // keep floatingSavedRange so if you re-open quickly it still works? usually better to clear:
+  // floatingSavedRange = null;
+}
+
+function showFloatingEmojiAt(x, y) {
+  const offset = 10;
+
+  floatingEmojiBtn.textContent = lastEmojiUsed;
+  floatingEmojiBtn.style.left = (x + offset) + 'px';
+  floatingEmojiBtn.style.top  = (y + offset) + 'px';
+  floatingEmojiBtn.style.display = 'flex';
+
+  // panel appears to the right of the button
+  floatingEmojiPanel.style.left = (x + offset + 38) + 'px';
+  floatingEmojiPanel.style.top  = (y + offset) + 'px';
+  floatingEmojiPanel.style.display = 'none';
+  floatingEmojiPanel.setAttribute('aria-hidden', 'true');
+}
+
+function saveFloatingCaretFromSelection() {
+  // use your existing savedRange if it's inside activeEditable
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return false;
+
+  const r = sel.getRangeAt(0);
+  const anchorNode = sel.anchorNode;
+
+  // pick the actual editable that contains the caret
+  let editable =
+    (activeEditable && activeEditable.contains(anchorNode)) ? activeEditable : null;
+
+  if (!editable) {
+    // try to infer from DOM
+    const el = (anchorNode?.nodeType === 1) ? anchorNode : anchorNode?.parentElement;
+    editable = el?.closest?.('#noteInput, .editableNote') || null;
+  }
+
+  if (!editable) return false;
+
+  floatingTargetEditable = (editable.id === 'noteInput') ? noteInput : editable;
+  floatingSavedRange = r.cloneRange();
+  return true;
+}
+
+function restoreFloatingCaret() {
+  if (!floatingSavedRange || !floatingTargetEditable) return false;
+
+  floatingTargetEditable.focus();
+
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(floatingSavedRange);
+  return true;
+}
+
+function insertEmojiAtFloatingCaret(emoji) {
+  if (!restoreFloatingCaret()) return;
+
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+
+  if (RESIZABLE_EMOJIS.has(emoji)) {
+    const span = document.createElement('span');
+    span.className = 'resizableEmoji';
+    span.textContent = emoji;
+    range.insertNode(span);
+    range.setStartAfter(span);
+  } else {
+    const textNode = document.createTextNode(emoji);
+    range.insertNode(textNode);
+    range.setStartAfter(textNode);
+  }
+
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  // keep your global caret savedRange in sync too
+  saveCaret();
+}
+
+// Shift+click shows the floating emoji button near the cursor
+document.addEventListener('mousedown', (e) => {
+  if (!e.shiftKey) return;
+
+  const t = e.target;
+  if (!isEditableTarget(t)) return;
+
+  Promise.resolve().then(() => {
+    const ok = saveFloatingCaretFromSelection();
+    if (!ok) return;
+
+    showFloatingEmojiAt(e.clientX, e.clientY);
+  });
+}, true);
+
+// Clicking the floating emoji button inserts the last emoji used.
+// (Also toggles open/close of the mini picker)
+floatingEmojiBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // toggle panel
+  const open = floatingEmojiPanel.style.display === 'block';
+  if (open) {
+    floatingEmojiPanel.style.display = 'none';
+    floatingEmojiPanel.setAttribute('aria-hidden', 'true');
+    // if user clicks the button while open, insert the current emoji
+    insertEmojiAtFloatingCaret(lastEmojiUsed);
+    hideFloatingEmoji();
+  } else {
+    floatingEmojiPanel.style.display = 'block';
+    floatingEmojiPanel.setAttribute('aria-hidden', 'false');
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (floatingEmojiBtn.style.display === 'none') return;
+
+  // If Shift is still held and you're clicking inside the editor, don't hide
+  if (shiftHeld && isEditableTarget(e.target)) return;
+
+  if (floatingEmojiBtn.contains(e.target) || floatingEmojiPanel.contains(e.target)) return;
+  hideFloatingEmoji();
+});
+
+
+// Escape hides
+// Escape hides
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideFloatingEmoji();
+  if (e.key === 'Shift') shiftHeld = true;   // ✅ NEW: track shift as a keyboard state
+}, true);
+
+document.addEventListener('keyup', (e) => {
+  if (e.key !== 'Shift') return;
+  shiftHeld = false;
+  hideFloatingEmoji();                       // ✅ hide immediately when shift released
+}, true);
+// Hide on scroll (so it doesn’t drift away from the caret context)
+chat.addEventListener('scroll', hideFloatingEmoji, { passive: true });
 /* =========================
    Table tools (UPGRADED)
 ========================= */
