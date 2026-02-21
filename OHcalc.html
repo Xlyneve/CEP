@@ -98,6 +98,14 @@
       transition:max-height .6s ease-in;
       margin-top:20px;
     }
+	
+	.ml-highlight {
+  background: #ffe9a8;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: #000;
+}
   </style>
 </head>
 <body>
@@ -122,12 +130,20 @@
     <div class="result" id="p250Result">Dose: </div>
   </div>
 
+  <!-- UPDATED: Redipred now 5 mg/mL + shows mg and mL -->
   <div class="calculator box3">
-    <h2>Redipred 1 mg/mL</h2>
-    <label>Weight (kg):</label>
-    <input type="number" id="redipredWeight">
-    <div class="result" id="redipredResult">Dose: </div>
-  </div>
+  <h2>Redipred (general) — stock 5 mg/mL</h2>
+  <label>Weight (kg):</label>
+  <input type="number" id="redipredWeight">
+  <div class="result" id="redipredResult">Dose: </div>
+</div>
+
+<div class="calculator box3">
+  <h2>Redipred for Croup — stock 5 mg/mL</h2>
+  <label>Weight (kg):</label>
+  <input type="number" id="redipredCroupWeight">
+  <div class="result" id="redipredCroupResult">Dose: </div>
+</div>
 
   <div class="calculator box4">
     <h2>Ibuprofen 100 mg/5 mL</h2>
@@ -156,12 +172,42 @@
     <div class="result" id="formulaResult">Result: </div>
   </div>
 
+
+
 </div>
 
 <!-- ====== COLLAPSIBLE NEW CALCULATORS ====== -->
 <div class="collapsible" id="toggleGeneral">💊 General Drug Calculators ▼</div>
 <div class="collapsible-content" id="generalCalculators">
   <div class="calculator-grid">
+
+<div class="calculator box7">
+  <h2>Ordered mg per kg → mL</h2>
+
+  <label>Weight:</label>
+  <div style="display:flex; gap:10px;">
+    <input type="number" id="customWeight" step="0.1">
+    <span>kg</span>
+  </div>
+
+  <label>Ordered dose:</label>
+  <div style="display:flex; gap:10px;">
+    <input type="number" id="orderedMg" placeholder="mg" step="0.1">
+    <span>mg per</span>
+    <input type="number" id="orderedKg" placeholder="kg" step="0.1">
+    <span>kg</span>
+  </div>
+
+  <label>Formulation available:</label>
+  <div style="display:flex; gap:10px;">
+    <input type="number" id="stockMg" placeholder="mg" step="0.1">
+    <span>mg per</span>
+    <input type="number" id="stockMl" placeholder="mL" step="0.1">
+    <span>mL</span>
+  </div>
+
+  <div class="result" id="customResult">Result:</div>
+</div>
 
     <div class="calculator box7">
       <h2>Tablets & Capsules</h2>
@@ -228,71 +274,193 @@ toggleBtn.addEventListener('click',()=>{
     : '💊 General Drug Calculators ▼';
 });
 
-/* ===== main calculator logic ===== */
-function id(i){return document.getElementById(i);}
+function id(i){ return document.getElementById(i); }
+function safeDivide(a,b){ return b ? a/b : 0; }
+
+/* ===== MAIN CALCULATORS ===== */
+
 id('p120Weight').addEventListener('input',()=>{
-  const w=+id('p120Weight').value;
-  if(w) id('p120Result').innerText='Dose: '+(w*15/120*5).toFixed(1)+' mL';
-});
-id('p250Weight').addEventListener('input',()=>{
-  const w=+id('p250Weight').value;
-  if(w) id('p250Result').innerText='Dose: '+(w*15/250*5).toFixed(1)+' mL';
-});
-id('redipredWeight').addEventListener('input',()=>{
-  const w=+id('redipredWeight').value;
-  if(w) id('redipredResult').innerText='Dose: '+(w*1).toFixed(1)+' mg';
-});
-id('ibuprofenWeight').addEventListener('input', () => {
-  const w = +id('ibuprofenWeight').value;
-  if (w) {
-    // Calculate the dose based on 6 mg/kg
-    let dose = w * 6;
-    
-    // Cap the dose at 400 mg
-    if (dose > 400) dose = 400;
-    
-    // Calculate the volume needed based on the 100 mg/5 mL concentration
-    const volume = (dose / 100) * 5;
-    
-    // Display the result
-    id('ibuprofenResult').innerText = 'Dose: ' + dose.toFixed(0) + ' mg (' + volume.toFixed(1) + ' mL)';
-  }
+  const w = +id('p120Weight').value;
+id('p120Result').innerHTML =
+  w ? 'Dose: <span class="ml-highlight">' +
+      (w*15/120*5).toFixed(1) + ' mL</span>'
+    : 'Dose: ';
 });
 
+id('p250Weight').addEventListener('input',()=>{
+  const w = +id('p250Weight').value;
+  id('p250Result').innerHTML =
+  w ? 'Dose: <span class="ml-highlight">' +
+      (w*15/250*5).toFixed(1) + ' mL</span>'
+    : 'Dose: ';
+});
+
+/* ===== Redipred 5 mg/mL ===== */
+
+const REDIPRED_STRENGTH_MG_PER_ML = 5;
+
+// 1) General: 5 mg/kg using stock 5 mg/mL  (=> 1 mL/kg)
+id('redipredWeight').addEventListener('input', () => {
+  const w = +id('redipredWeight').value;
+  if (!w) {
+    id('redipredResult').innerText = 'Dose: ';
+    return;
+  }
+
+  const mg = w * 5; // 5 mg/kg
+  const ml = mg / REDIPRED_STRENGTH_MG_PER_ML;
+
+  id('redipredResult').innerHTML =
+  'Dose: ' + mg.toFixed(1) + ' mg (' +
+  '<span class="ml-highlight">' + ml.toFixed(2) + ' mL</span>)';
+});
+
+// 2) Croup: 1 mg/kg using stock 5 mg/mL
+id('redipredCroupWeight').addEventListener('input', () => {
+  const w = +id('redipredCroupWeight').value;
+  if (!w) {
+    id('redipredCroupResult').innerText = 'Dose: ';
+    return;
+  }
+
+  const mg = w * 1; // 1 mg/kg
+  const ml = mg / REDIPRED_STRENGTH_MG_PER_ML;
+
+  id('redipredCroupResult').innerHTML =
+  'Dose: ' + mg.toFixed(1) + ' mg (' +
+  '<span class="ml-highlight">' + ml.toFixed(2) + ' mL</span>)';
+});
+
+id('ibuprofenWeight').addEventListener('input', () => {
+  const w = +id('ibuprofenWeight').value;
+
+  if (!w){
+    id('ibuprofenResult').innerText = 'Dose: ';
+    return;
+  }
+
+  let dose = w * 6;
+  if (dose > 400) dose = 400;
+
+  const volume = (dose / 100) * 5;
+
+  id('ibuprofenResult').innerHTML =
+  'Dose: ' + dose.toFixed(0) + ' mg (' +
+  '<span class="ml-highlight">' + volume.toFixed(1) + ' mL</span>)';
+});
+
+/* Fentanyl */
 id('fentDose').addEventListener('input',calcFent);
 id('fentStock').addEventListener('input',calcFent);
 function calcFent(){
-  const d=+id('fentDose').value, s=+id('fentStock').value;
-  if(d&&s) id('fentResult').innerText='Volume: '+(d/s).toFixed(2)+' mL';
-}
-['want','have','volume'].forEach(i=>id(i).addEventListener('input',calcFormula));
-function calcFormula(){
-  const w=+id('want').value,h=+id('have').value,v=+id('volume').value;
-  if(w&&h&&v) id('formulaResult').innerText='Result: '+(w/h*v).toFixed(2)+' mL';
+  const d = +id('fentDose').value;
+  const s = +id('fentStock').value;
+
+  id('fentResult').innerText =
+    (d && s)
+      ? 'Volume: ' + (d/s).toFixed(2) + ' mL'
+      : 'Volume required: ';
 }
 
-/* ===== general calculators logic ===== */
-function safeDivide(a,b){return b? a/b:0;}
+/* Drug Formula */
+['want','have','volume'].forEach(i=>id(i).addEventListener('input',calcFormula));
+function calcFormula(){
+  const w = +id('want').value;
+  const h = +id('have').value;
+  const v = +id('volume').value;
+
+ id('formulaResult').innerHTML =
+  (w && h && v)
+    ? 'Result: <span class="ml-highlight">' +
+      (w/h*v).toFixed(2) + ' mL</span>'
+    : 'Result: ';
+}
+
+/* ===== GENERAL CALCULATORS ===== */
+
 ['tabRequired','tabAvailable'].forEach(i=>id(i).addEventListener('input',()=>{
-  const r=+id('tabRequired').value,a=+id('tabAvailable').value;
-  if(r&&a) id('tabResult').innerText='Result: '+(safeDivide(r,a)).toFixed(2);
+  const r = +id('tabRequired').value;
+  const a = +id('tabAvailable').value;
+
+  id('tabResult').innerText =
+    (r && a)
+      ? 'Result: ' + (safeDivide(r,a)).toFixed(2)
+      : 'Result:';
 }));
+
 ['liqRequired','liqAvailable','liqStock'].forEach(i=>id(i).addEventListener('input',()=>{
-  const r=+id('liqRequired').value,a=+id('liqAvailable').value,v=+id('liqStock').value;
-  if(r&&a&&v) id('liqResult').innerText='Result: '+(safeDivide(r,a)*v).toFixed(2)+' mL';
+  const r = +id('liqRequired').value;
+  const a = +id('liqAvailable').value;
+  const v = +id('liqStock').value;
+
+  id('liqResult').innerHTML =
+  (r && a && v)
+    ? 'Result: <span class="ml-highlight">' +
+      (safeDivide(r,a)*v).toFixed(2) + ' mL</span>'
+    : 'Result:';
 }));
+
 ['injRequired','injAvailable','injStock'].forEach(i=>id(i).addEventListener('input',()=>{
-  const r=+id('injRequired').value,a=+id('injAvailable').value,v=+id('injStock').value;
-  if(r&&a&&v) id('injResult').innerText='Result: '+(safeDivide(r,a)*v).toFixed(2)+' mL';
+  const r = +id('injRequired').value;
+  const a = +id('injAvailable').value;
+  const v = +id('injStock').value;
+
+  id('injResult').innerHTML =
+  (r && a && v)
+    ? 'Result: <span class="ml-highlight">' +
+      (safeDivide(r,a)*v).toFixed(2) + ' mL</span>'
+    : 'Result:';
 }));
+
 ['infuseVolume','infuseHours'].forEach(i=>id(i).addEventListener('input',()=>{
-  const vol=+id('infuseVolume').value,hrs=+id('infuseHours').value;
-  if(vol&&hrs) id('infuseResult').innerText='Result: '+(safeDivide(vol,hrs)).toFixed(2)+' mL/hr';
+  const vol = +id('infuseVolume').value;
+  const hrs = +id('infuseHours').value;
+
+  id('infuseResult').innerHTML =
+  (vol && hrs)
+    ? 'Result: <span class="ml-highlight">' +
+      (safeDivide(vol,hrs)).toFixed(2) + ' mL/hr</span>'
+    : 'Result:';
 }));
+
 ['dripVolume','dripCalib','dripHours'].forEach(i=>id(i).addEventListener('input',()=>{
-  const v=+id('dripVolume').value,c=+id('dripCalib').value,h=+id('dripHours').value;
-  if(v&&c&&h) id('dripResult').innerText='Result: '+(safeDivide(v*c,(h*60))).toFixed(2)+' drops/min';
+  const v = +id('dripVolume').value;
+  const c = +id('dripCalib').value;
+  const h = +id('dripHours').value;
+
+  id('dripResult').innerText =
+    (v && c && h)
+      ? 'Result: ' + (safeDivide(v*c,(h*60))).toFixed(2) + ' drops/min'
+      : 'Result:';
 }));
+
+// ✅ Ordered mg per kg → mL (custom formulation)
+['customWeight','orderedMg','orderedKg','stockMg','stockMl']
+  .forEach(i => id(i).addEventListener('input', calcCustomMgKg));
+
+function calcCustomMgKg(){
+  const weight = +id('customWeight').value;   // kg
+  const orderedMg = +id('orderedMg').value;   // mg
+  const orderedKg = +id('orderedKg').value;   // kg (denominator)
+  const stockMg = +id('stockMg').value;       // mg
+  const stockMl = +id('stockMl').value;       // mL
+
+  if(!weight || !orderedMg || !orderedKg || !stockMg || !stockMl){
+    id('customResult').innerText = 'Result:';
+    return;
+  }
+
+  const mgPerKg = orderedMg / orderedKg;      // mg/kg ordered
+  const totalMg = mgPerKg * weight;           // total mg required
+
+  const mgPerMl = stockMg / stockMl;          // mg/mL available
+  const mlToGive = totalMg / mgPerMl;         // mL required
+
+  id('customResult').innerHTML =
+    'Result: ' + totalMg.toFixed(1) + ' mg total (' +
+    '<span class="ml-highlight">' + mlToGive.toFixed(2) + ' mL</span>)';
+}
+
 </script>
 
 </body>
