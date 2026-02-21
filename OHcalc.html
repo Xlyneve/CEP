@@ -34,19 +34,24 @@
       gap: 20px;
     }
     .calculator {
-      padding: 20px;
-      border-radius: 15px;
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 8px 32px rgba(31,38,135,0.1);
-      transition: transform .2s, box-shadow .2s;
-      color: #000;
-    }
+  padding: 24px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+  transition: all .25s ease;
+  color: #000;
+}
     .calculator:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 48px rgba(31,38,135,0.2);
-    }
+  transform: translateY(-6px) scale(1.02);
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.5);
+}
     .box1{background:rgba(236,231,225,0.15);}
     .box2{background:rgba(219,212,206,0.15);}
     .box3{background:rgba(187,174,165,0.15);}
@@ -73,6 +78,21 @@
       background:rgba(255,255,255,0.4);
       transform:scale(1.05);
     }
+	input[type="number"] {
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(6px);
+  font-size: 14px;
+  outline: none;
+  transition: all .2s ease;
+}
+
+input[type="number"]:focus {
+  background: rgba(255,255,255,0.8);
+  box-shadow: 0 0 0 2px rgba(255, 233, 168, 0.6);
+}
     /* collapsible */
     .collapsible{
       cursor:pointer;
@@ -100,12 +120,88 @@
     }
 	
 	.ml-highlight {
-  background: #ffe9a8;
-  padding: 3px 8px;
-  border-radius: 8px;
+  background: #cceaca;
+  padding: 6px 12px;
+  border-radius: 999px;
   font-weight: bold;
-  color: #000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
+
+/* Make general calculators grid like main ones */
+.general-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Make accordion items behave like calculator cards */
+.acc-item {
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.35);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(31,38,135,0.10);
+  height: fit-content;
+}
+/* Accordion list for calculators */
+.accordion {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.acc-item {
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.35);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(31,38,135,0.10);
+}
+
+.acc-title {
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  cursor: pointer;
+  border: 0;
+  background: rgba(255,255,255,0.18);
+  color: #000;
+  font-family: "fors", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.acc-title:hover {
+  background: rgba(255,255,255,0.28);
+}
+
+.acc-chevron {
+  font-size: 18px;
+  opacity: 0.75;
+}
+
+.acc-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.45s ease;
+}
+
+.acc-panel.open {
+  max-height: 1200px; /* big enough for your forms */
+}
+
+.acc-inner {
+  padding: 18px;
+}
+
+/* Optional: tighter inputs inside accordion */
+.acc-inner label, .acc-inner input { margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -121,6 +217,17 @@
     <label>Weight (kg):</label>
     <input type="number" id="p120Weight">
     <div class="result" id="p120Result">Dose: </div>
+	
+	<div class="note">
+  <strong>How often:</strong> Give every <strong>4 hours</strong> if needed.<br>
+  <strong>Max in 24 hours:</strong> up to <strong>5 doses</strong> for the first <strong>48 hours</strong>,
+  then up to <strong>4 doses</strong> per day after that.<br>
+  <strong>Important:</strong> Do not exceed <strong>4 g/day</strong> total.
+</div>
+<div class="note">
+  <strong>If using both:</strong> You can stagger them — e.g. Paracetamol now, then Ibuprofen <strong>3 hours later</strong> if still uncomfortable.
+  Keep Paracetamol ≥ <strong>4 hours apart</strong> and Ibuprofen ≥ <strong>6 hours apart</strong>, and don’t exceed the daily max doses above.
+</div>
   </div>
 
   <div class="calculator box2">
@@ -128,6 +235,17 @@
     <label>Weight (kg):</label>
     <input type="number" id="p250Weight">
     <div class="result" id="p250Result">Dose: </div>
+	
+	<div class="note">
+  <strong>How often:</strong> Give every <strong>4 hours</strong> if needed.<br>
+  <strong>Max in 24 hours:</strong> up to <strong>5 doses</strong> for the first <strong>48 hours</strong>,
+  then up to <strong>4 doses</strong> per day after that.<br>
+  <strong>Important:</strong> Do not exceed <strong>4 g/day</strong> total.
+</div>
+<div class="note">
+  <strong>If using both:</strong> You can stagger them — e.g. Paracetamol now, then Ibuprofen <strong>3 hours later</strong> if still uncomfortable.
+  Keep Paracetamol ≥ <strong>4 hours apart</strong> and Ibuprofen ≥ <strong>6 hours apart</strong>, and don’t exceed the daily max doses above.
+</div>
   </div>
 
   <!-- UPDATED: Redipred now 5 mg/mL + shows mg and mL -->
@@ -150,6 +268,15 @@
     <label>Weight (kg):</label>
     <input type="number" id="ibuprofenWeight">
     <div class="result" id="ibuprofenResult">Dose: </div>
+	<div class="note">
+  <strong>How often:</strong> Give every <strong>6–8 hours</strong> if needed.<br>
+  <strong>Max in 24 hours:</strong> <strong>3 doses</strong> total.<br>
+  <strong>Tip:</strong> Avoid if dehydrated / vomiting a lot, or kidney problems (seek advice).
+</div>
+<div class="note">
+  <strong>If using both:</strong> You can stagger them — e.g. Paracetamol now, then Ibuprofen <strong>3 hours later</strong> if still uncomfortable.
+  Keep Paracetamol ≥ <strong>4 hours apart</strong> and Ibuprofen ≥ <strong>6 hours apart</strong>, and don’t exceed the daily max doses above.
+</div>
   </div>
 
   <div class="calculator box5">
@@ -176,88 +303,135 @@
 
 </div>
 
-<!-- ====== COLLAPSIBLE NEW CALCULATORS ====== -->
 <div class="collapsible" id="toggleGeneral">💊 General Drug Calculators ▼</div>
 <div class="collapsible-content" id="generalCalculators">
-  <div class="calculator-grid">
 
-<div class="calculator box7">
-  <h2>Ordered mg per kg → mL</h2>
+  <div class="general-grid">
 
-  <label>Weight:</label>
-  <div style="display:flex; gap:10px;">
-    <input type="number" id="customWeight" step="0.1">
-    <span>kg</span>
-  </div>
+    <!-- 1) Ordered mg per kg → mL -->
+    <div class="acc-item">
+      <button class="acc-title" type="button">
+        Ordered mg per kg → mL
+        <span class="acc-chevron">▼</span>
+      </button>
+      <div class="acc-panel">
+        <div class="acc-inner">
+          <label>Weight:</label>
+          <div style="display:flex; gap:10px;">
+            <input type="number" id="customWeight" step="0.1">
+            <span>kg</span>
+          </div>
 
-  <label>Ordered dose:</label>
-  <div style="display:flex; gap:10px;">
-    <input type="number" id="orderedMg" placeholder="mg" step="0.1">
-    <span>mg per</span>
-    <input type="number" id="orderedKg" placeholder="kg" step="0.1">
-    <span>kg</span>
-  </div>
+          <label>Ordered dose:</label>
+          <div style="display:flex; gap:10px;">
+            <input type="number" id="orderedMg" placeholder="mg" step="0.1">
+            <span>mg per</span>
+            <input type="number" id="orderedKg" placeholder="kg" step="0.1">
+            <span>kg</span>
+          </div>
 
-  <label>Formulation available:</label>
-  <div style="display:flex; gap:10px;">
-    <input type="number" id="stockMg" placeholder="mg" step="0.1">
-    <span>mg per</span>
-    <input type="number" id="stockMl" placeholder="mL" step="0.1">
-    <span>mL</span>
-  </div>
+          <label>Formulation available:</label>
+          <div style="display:flex; gap:10px;">
+            <input type="number" id="stockMg" placeholder="mg" step="0.1">
+            <span>mg per</span>
+            <input type="number" id="stockMl" placeholder="mL" step="0.1">
+            <span>mL</span>
+          </div>
 
-  <div class="result" id="customResult">Result:</div>
-</div>
-
-    <div class="calculator box7">
-      <h2>Tablets & Capsules</h2>
-      <label>Strength Required:</label>
-      <input type="number" id="tabRequired">
-      <label>Strength Available:</label>
-      <input type="number" id="tabAvailable">
-      <div class="result" id="tabResult">Result:</div>
+          <div class="result" id="customResult">Result:</div>
+        </div>
+      </div>
     </div>
 
-    <div class="calculator box7">
-      <h2>Liquid Medication</h2>
-      <label>Strength Required:</label>
-      <input type="number" id="liqRequired">
-      <label>Strength Available:</label>
-      <input type="number" id="liqAvailable">
-      <label>Volume of Stock (mL):</label>
-      <input type="number" id="liqStock">
-      <div class="result" id="liqResult">Result:</div>
+    <!-- 2) Tablets & Capsules -->
+    <div class="acc-item">
+      <button class="acc-title" type="button">
+        Tablets & Capsules
+        <span class="acc-chevron">▼</span>
+      </button>
+      <div class="acc-panel">
+        <div class="acc-inner">
+          <label>Strength Required:</label>
+          <input type="number" id="tabRequired">
+          <label>Strength Available:</label>
+          <input type="number" id="tabAvailable">
+          <div class="result" id="tabResult">Result:</div>
+        </div>
+      </div>
     </div>
 
-    <div class="calculator box7">
-      <h2>Volume for Injection</h2>
-      <label>Strength Required:</label>
-      <input type="number" id="injRequired">
-      <label>Strength Available:</label>
-      <input type="number" id="injAvailable">
-      <label>Volume of Stock (mL):</label>
-      <input type="number" id="injStock">
-      <div class="result" id="injResult">Result:</div>
+    <!-- 3) Liquid Medication -->
+    <div class="acc-item">
+      <button class="acc-title" type="button">
+        Liquid Medication
+        <span class="acc-chevron">▼</span>
+      </button>
+      <div class="acc-panel">
+        <div class="acc-inner">
+          <label>Strength Required:</label>
+          <input type="number" id="liqRequired">
+          <label>Strength Available:</label>
+          <input type="number" id="liqAvailable">
+          <label>Volume of Stock (mL):</label>
+          <input type="number" id="liqStock">
+          <div class="result" id="liqResult">Result:</div>
+        </div>
+      </div>
     </div>
 
-    <div class="calculator box7">
-      <h2>Infusion Flow Rate</h2>
-      <label>Total Volume (mL):</label>
-      <input type="number" id="infuseVolume">
-      <label>Hours to Infuse:</label>
-      <input type="number" id="infuseHours">
-      <div class="result" id="infuseResult">Result:</div>
+    <!-- 4) Volume for Injection -->
+    <div class="acc-item">
+      <button class="acc-title" type="button">
+        Volume for Injection
+        <span class="acc-chevron">▼</span>
+      </button>
+      <div class="acc-panel">
+        <div class="acc-inner">
+          <label>Strength Required:</label>
+          <input type="number" id="injRequired">
+          <label>Strength Available:</label>
+          <input type="number" id="injAvailable">
+          <label>Volume of Stock (mL):</label>
+          <input type="number" id="injStock">
+          <div class="result" id="injResult">Result:</div>
+        </div>
+      </div>
     </div>
 
-    <div class="calculator box7">
-      <h2>Drip Rate</h2>
-      <label>Total Fluid (mL):</label>
-      <input type="number" id="dripVolume">
-      <label>Set Calibration (drops/mL):</label>
-      <input type="number" id="dripCalib">
-      <label>Total Hours:</label>
-      <input type="number" id="dripHours">
-      <div class="result" id="dripResult">Result:</div>
+    <!-- 5) Infusion Flow Rate -->
+    <div class="acc-item">
+      <button class="acc-title" type="button">
+        Infusion Flow Rate
+        <span class="acc-chevron">▼</span>
+      </button>
+      <div class="acc-panel">
+        <div class="acc-inner">
+          <label>Total Volume (mL):</label>
+          <input type="number" id="infuseVolume">
+          <label>Hours to Infuse:</label>
+          <input type="number" id="infuseHours">
+          <div class="result" id="infuseResult">Result:</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6) Drip Rate -->
+    <div class="acc-item">
+      <button class="acc-title" type="button">
+        Drip Rate
+        <span class="acc-chevron">▼</span>
+      </button>
+      <div class="acc-panel">
+        <div class="acc-inner">
+          <label>Total Fluid (mL):</label>
+          <input type="number" id="dripVolume">
+          <label>Set Calibration (drops/mL):</label>
+          <input type="number" id="dripCalib">
+          <label>Total Hours:</label>
+          <input type="number" id="dripHours">
+          <div class="result" id="dripResult">Result:</div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -461,6 +635,17 @@ function calcCustomMgKg(){
     '<span class="ml-highlight">' + mlToGive.toFixed(2) + ' mL</span>)';
 }
 
+// Accordion behavior (inside General Calculators)
+document.querySelectorAll('#generalCalculators .acc-title').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const panel = btn.nextElementSibling;
+    const chevron = btn.querySelector('.acc-chevron');
+
+    panel.classList.toggle('open');
+    const isOpen = panel.classList.contains('open');
+    if (chevron) chevron.textContent = isOpen ? '▲' : '▼';
+  });
+});
 </script>
 
 </body>
