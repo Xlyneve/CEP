@@ -1750,20 +1750,41 @@ document.addEventListener('mouseup', (e) => {
 });
 
 
-
-/* Prevent Enter from breaking out of table cells */
+/* Table cells: Shift+Enter = newline INSIDE cellBox, Enter = blocked */
 document.addEventListener('keydown', (e) => {
-  const isCell = e.target.closest('td, th');
-  if (isCell && e.key === 'Enter') {
-    if (e.shiftKey) {
-      document.execCommand('insertHTML', false, '<br><br>');
-      e.preventDefault();
-    } else {
-      e.preventDefault();
-    }
-  }
-});
+  if (e.key !== 'Enter') return;
 
+  // Find the .cellBox from the current selection (more reliable than e.target)
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+
+  const anchorEl =
+    (sel.anchorNode?.nodeType === 1 ? sel.anchorNode : sel.anchorNode?.parentElement) ||
+    (range.commonAncestorContainer?.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer?.parentElement);
+
+  const box = anchorEl?.closest?.('.cellBox');
+  if (!box) return; // not inside a table cellBox
+
+  // Always stop the browser from doing table/contenteditable weirdness
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Only Shift+Enter inserts a newline
+  if (!e.shiftKey) return;
+
+  // Insert a real line break and place caret after it
+  const br = document.createElement('br');
+  range.deleteContents();
+  range.insertNode(br);
+
+  // Move caret after the <br>
+  range.setStartAfter(br);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}, true); // <-- capture mode so it runs before other handlers
 /* UI toggles */
 lockToggle.onclick = () => {
   lockSection.style.display = (lockSection.style.display === 'flex') ? 'none' : 'flex';
