@@ -126,6 +126,13 @@ input[type="number"]:focus {
   font-weight: bold;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
+.fent-line {
+  margin-bottom: 10px;
+}
+
+.fent-line:last-child {
+  margin-bottom: 0;
+}
 
 /* Make general calculators grid like main ones */
 .general-grid {
@@ -202,6 +209,8 @@ input[type="number"]:focus {
 
 /* Optional: tighter inputs inside accordion */
 .acc-inner label, .acc-inner input { margin-bottom: 10px; }
+
+
   </style>
 </head>
 <body>
@@ -286,13 +295,24 @@ input[type="number"]:focus {
   </div>
 
   <div class="calculator box5">
-    <h2>Fentanyl</h2>
-    <label>Dose required (mcg):</label>
-    <input type="number" id="fentDose">
-    <label>Stock strength (mcg/mL):</label>
-    <input type="number" id="fentStock">
-    <div class="result" id="fentResult">Volume required: </div>
+  <h2>Fentanyl IV — 100 mcg / 2 mL</h2>
+
+  <label>Weight (kg):</label>
+  <input type="number" id="fentWeight" step="0.1">
+
+  <label style="display:flex; gap:10px; align-items:center; margin-top:6px;">
+    <input type="checkbox" id="fentSecondDose" style="width:auto; margin:0;">
+    Second dose required (after 10 minutes if pain persists)
+  </label>
+
+  <div class="result" id="fentResult">Dose: </div>
+
+  <div class="note">
+    <strong>Guideline:</strong> 1.5 mcg/kg (min 21 mcg, max 100 mcg).<br>
+    <strong>Second dose:</strong> 0.5 mcg/kg after 10 min if still significant pain.<br>
+    <strong>Stock:</strong> 100 mcg/2 mL (50 mcg/mL).
   </div>
+</div>
 
   <div class="calculator box6">
     <h2>Drug Formula</h2>
@@ -530,16 +550,54 @@ id('ibuprofenWeight').addEventListener('input', () => {
 });
 
 /* Fentanyl */
-id('fentDose').addEventListener('input',calcFent);
-id('fentStock').addEventListener('input',calcFent);
-function calcFent(){
-  const d = +id('fentDose').value;
-  const s = +id('fentStock').value;
+// ===== Fentanyl IV (100 mcg/2 mL => 50 mcg/mL) =====
+const FENT_MCG_PER_ML = 50;
 
-  id('fentResult').innerText =
-    (d && s)
-      ? 'Volume: ' + (d/s).toFixed(2) + ' mL'
-      : 'Volume required: ';
+id('fentWeight').addEventListener('input', calcFentanyl);
+id('fentSecondDose').addEventListener('change', calcFentanyl);
+
+function clamp(val, min, max){
+  return Math.min(Math.max(val, min), max);
+}
+
+function calcFentanyl(){
+  const w = +id('fentWeight').value;
+  const second = id('fentSecondDose').checked;
+
+  if(!w){
+    id('fentResult').innerText = 'Dose: ';
+    return;
+  }
+
+  // First dose: 1.5 mcg/kg, min 21, max 100
+  let dose1 = w * 1.5;
+  dose1 = clamp(dose1, 21, 100);
+
+  const ml1 = dose1 / FENT_MCG_PER_ML;
+
+  if(!second){
+    id('fentResult').innerHTML =
+      'Dose 1: ' + dose1.toFixed(0) + ' mcg (' +
+      '<span class="ml-highlight">' + ml1.toFixed(2) + ' mL</span>)';
+    return;
+  }
+
+  // Second dose: 0.5 mcg/kg (no min/max stated in your bullet points)
+  const dose2 = w * 0.5;
+  const ml2 = dose2 / FENT_MCG_PER_ML;
+
+  const totalMcg = dose1 + dose2;
+  const totalMl = totalMcg / FENT_MCG_PER_ML;
+
+  id('fentResult').innerHTML =
+  '<div class="fent-line">Dose 1: ' + dose1.toFixed(0) + ' mcg (' +
+  '<span class="ml-highlight">' + ml1.toFixed(2) + ' mL</span>)</div>' +
+
+  '<div class="fent-line">Dose 2: ' + dose2.toFixed(0) + ' mcg (' +
+  '<span class="ml-highlight">' + ml2.toFixed(2) + ' mL</span>)</div>' +
+
+  '<div class="fent-line"><strong>Total:</strong> ' + totalMcg.toFixed(0) + ' mcg (' +
+  '<span class="ml-highlight">' + totalMl.toFixed(2) + ' mL</span>)</div>';
 }
 
 /* Drug Formula */
