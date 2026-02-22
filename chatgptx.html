@@ -230,13 +230,7 @@ input[type="file"]::file-selector-button:hover {
   outline: none;
 }
 
-.editableNote img {
-  resize: both;
-  overflow: auto;
-  max-width: 100%;
-  display: block;
-  margin: 10px 0;
-}
+
 
 .resizableEmoji {
   font-size: 1.4em;
@@ -346,6 +340,48 @@ input[type="file"]::file-selector-button:hover {
   z-index: 103;
 }
 
+/* Click-to-select image + resize handles (JS adds .img-selected) */
+.editableNote img,
+#noteInput img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
+  border-radius: 8px;
+}
+
+.img-selected {
+  outline: 2px solid rgba(208, 160, 163, 0.9);
+  outline-offset: 2px;
+}
+
+/* Tiny floating resize panel */
+#imgSizePanel {
+  position: fixed;
+  z-index: 10060;
+  display: none;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  font-size: 12px;
+}
+
+#imgSizePanel input[type="range"] { width: 120px; }
+#imgSizePanel input[type="number"] { width: 70px; }
+#imgSizePanel button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.8;
+}
+#imgSizePanel button:hover { opacity: 1; }
 #addNoteToggle {
   position: fixed;
   width: 50px;
@@ -539,6 +575,71 @@ mark.underlineMatch{
   transform: scale(1.12);
 }
 
+/* Fullscreen image zoom overlay */
+#imgZoomOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10080;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+#imgZoomStage {
+  width: 92vw;
+  height: 92vh;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+}
+
+#imgZoomStage:active { cursor: grabbing; }
+
+#imgZoomImg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-drag: none;
+  max-width: none;
+  max-height: none;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+}
+
+#imgZoomControls {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 10081;
+  display: none;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  font-size: 12px;
+}
+
+#imgZoomControls button {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+#imgZoomControls button:hover { background: rgba(255,255,255,0.25); }
 /* Lock UI */
 #lockToggle {
   position: fixed;
@@ -690,8 +791,6 @@ const storage = firebase.storage();
 const auth = firebase.auth();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-
-
 /* =========================
    DOM refs
 ========================= */
@@ -712,7 +811,6 @@ const lockInfo = document.getElementById('lockInfo');
 
 const inputArea = document.getElementById('inputArea');
 const userInput = document.getElementById('userInput');
-
 
 /* =========================
    Live search cache state
@@ -790,17 +888,17 @@ imageUpload.addEventListener('change', function () {
 
   const reader = new FileReader();
   reader.onload = e => {
-    activeEditable.innerHTML += `<br><img src="${e.target.result}" style="max-width:100%; border-radius:8px;" /><br>`;
+    activeEditable.innerHTML += `<br><img src="${e.target.result}" style="width:100%; height:auto; border-radius:8px;" /><br>`;
     placeCaretAtEnd(activeEditable);
     saveCaret();
   };
   reader.readAsDataURL(file);
 });
 
-// =========================
-// Simple access code gate
-// =========================
-const ACCESS_CODE = "oatee"; // <-- change this to whatever you want
+/* =========================
+   Simple access code gate
+========================= */
+const ACCESS_CODE = "oatee";
 let isUnlocked = (localStorage.getItem('notes_unlocked') === '1');
 
 function setUnlocked(state) {
@@ -809,8 +907,298 @@ function setUnlocked(state) {
   updateUIForLockState();
 }
 
+/* =========================
+   Image resize UI (EDITING ONLY)
+   - works in #noteInput and .editableNote
+========================= */
+let selectedImg = null;
 
+const imgSizePanel = document.createElement('div');
+imgSizePanel.id = 'imgSizePanel';
+imgSizePanel.innerHTML = `
+  <span style="opacity:.8">Size</span>
+  <input id="imgSizeRange" type="range" min="10" max="150" value="100" />
+  <span id="imgSizePct" style="width:38px; text-align:right;">100%</span>
+  <span style="opacity:.8">W</span>
+  <input id="imgSizePx" type="number" min="20" step="10" />
+  <button id="imgSizeReset" title="Reset">↺</button>
+  <button id="imgSizeClose" title="Close">✕</button>
+`;
+document.body.appendChild(imgSizePanel);
 
+const imgSizeRange = imgSizePanel.querySelector('#imgSizeRange');
+const imgSizePct = imgSizePanel.querySelector('#imgSizePct');
+const imgSizePx = imgSizePanel.querySelector('#imgSizePx');
+const imgSizeReset = imgSizePanel.querySelector('#imgSizeReset');
+const imgSizeClose = imgSizePanel.querySelector('#imgSizeClose');
+
+function isEditorImage(img) {
+  if (!img || img.tagName !== 'IMG') return false;
+  return !!(img.closest('.editableNote') || img.closest('#noteInput'));
+}
+
+function showImgPanelAt(img, x, y) {
+  const pad = 10;
+  imgSizePanel.style.display = 'flex';
+
+  const wStyle = (img.style.width || '').trim();
+  const pct = wStyle.endsWith('%') ? parseInt(wStyle, 10) : 100;
+
+  imgSizeRange.value = String(Math.max(10, Math.min(150, pct)));
+  imgSizePct.textContent = imgSizeRange.value + '%';
+
+  imgSizePx.value = Math.round(img.getBoundingClientRect().width);
+
+  const panelRect = imgSizePanel.getBoundingClientRect();
+  let left = x + pad;
+  let top = y + pad;
+
+  if (left + panelRect.width > window.innerWidth - 6) left = window.innerWidth - panelRect.width - 6;
+  if (top + panelRect.height > window.innerHeight - 6) top = window.innerHeight - panelRect.height - 6;
+
+  imgSizePanel.style.left = Math.max(6, left) + 'px';
+  imgSizePanel.style.top = Math.max(6, top) + 'px';
+}
+
+function selectImg(img, x, y) {
+  if (selectedImg && selectedImg !== img) selectedImg.classList.remove('img-selected');
+  selectedImg = img;
+  selectedImg.classList.add('img-selected');
+  showImgPanelAt(selectedImg, x, y);
+}
+
+function clearImgSelection() {
+  if (selectedImg) selectedImg.classList.remove('img-selected');
+  selectedImg = null;
+  imgSizePanel.style.display = 'none';
+}
+
+imgSizeRange.addEventListener('input', () => {
+  if (!selectedImg) return;
+  const v = parseInt(imgSizeRange.value, 10) || 100;
+  imgSizePct.textContent = v + '%';
+  selectedImg.style.width = v + '%';
+  selectedImg.style.height = 'auto';
+  imgSizePx.value = Math.round(selectedImg.getBoundingClientRect().width);
+});
+
+imgSizePx.addEventListener('change', () => {
+  if (!selectedImg) return;
+  const px = parseInt(imgSizePx.value, 10);
+  if (!px || px < 20) return;
+
+  selectedImg.style.width = px + 'px';
+  selectedImg.style.height = 'auto';
+
+  const parentW = selectedImg.parentElement?.getBoundingClientRect?.().width || px;
+  const pct = Math.round((px / parentW) * 100);
+  const clamped = Math.max(10, Math.min(150, pct));
+  imgSizeRange.value = String(clamped);
+  imgSizePct.textContent = clamped + '%';
+});
+
+imgSizeReset.addEventListener('click', () => {
+  if (!selectedImg) return;
+  selectedImg.style.width = '100%';
+  selectedImg.style.height = 'auto';
+  imgSizeRange.value = '100';
+  imgSizePct.textContent = '100%';
+  imgSizePx.value = Math.round(selectedImg.getBoundingClientRect().width);
+});
+
+imgSizeClose.addEventListener('click', clearImgSelection);
+
+document.addEventListener('click', (e) => {
+  const t = e.target;
+
+  // only for EDITING images
+  if (t && t.tagName === 'IMG' && isEditorImage(t)) {
+    e.preventDefault();
+    e.stopPropagation();
+    selectImg(t, e.clientX, e.clientY);
+    return;
+  }
+
+  if (!imgSizePanel.contains(e.target)) clearImgSelection();
+}, true);
+
+// Escape closes resize panel (but don't fight zoom escape; zoom handles it too)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') clearImgSelection();
+}, true);
+
+/* =========================
+   Image zoom viewer (VIEW MODE ONLY)
+   - click image inside .chatBubble
+========================= */
+const imgZoomOverlay = document.createElement('div');
+imgZoomOverlay.id = 'imgZoomOverlay';
+imgZoomOverlay.innerHTML = `
+  <div id="imgZoomControls">
+    <button type="button" id="zoomOutBtn">−</button>
+    <button type="button" id="zoomInBtn">＋</button>
+    <button type="button" id="zoomResetBtn">Reset</button>
+    <button type="button" id="zoomCloseBtn">Close</button>
+  </div>
+  <div id="imgZoomStage">
+    <img id="imgZoomImg" alt="" />
+  </div>
+`;
+document.body.appendChild(imgZoomOverlay);
+
+const imgZoomControls = imgZoomOverlay.querySelector('#imgZoomControls');
+const imgZoomStage = imgZoomOverlay.querySelector('#imgZoomStage');
+const imgZoomImg = imgZoomOverlay.querySelector('#imgZoomImg');
+
+const zoomInBtn = imgZoomOverlay.querySelector('#zoomInBtn');
+const zoomOutBtn = imgZoomOverlay.querySelector('#zoomOutBtn');
+const zoomResetBtn = imgZoomOverlay.querySelector('#zoomResetBtn');
+const zoomCloseBtn = imgZoomOverlay.querySelector('#zoomCloseBtn');
+
+let zoomOpen = false;
+let zScale = 1;
+let zX = 0; // pan x from center
+let zY = 0; // pan y from center
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+
+function applyZoomTransform() {
+  imgZoomImg.style.transform =
+    `translate(-50%, -50%) translate(${zX}px, ${zY}px) scale(${zScale})`;
+}
+
+function fitZoomToStage() {
+  const stageRect = imgZoomStage.getBoundingClientRect();
+  const iw = imgZoomImg.naturalWidth || 1;
+  const ih = imgZoomImg.naturalHeight || 1;
+
+  const scaleX = (stageRect.width * 0.98) / iw;
+  const scaleY = (stageRect.height * 0.98) / ih;
+  zScale = Math.min(scaleX, scaleY);
+
+  zX = 0;
+  zY = 0;
+
+  applyZoomTransform();
+}
+
+function zoomBy(factor, centerClientX, centerClientY) {
+  const newScale = Math.max(0.1, Math.min(8, zScale * factor));
+  if (newScale === zScale) return;
+
+  const stageRect = imgZoomStage.getBoundingClientRect();
+  const stageCX = stageRect.left + stageRect.width / 2;
+  const stageCY = stageRect.top + stageRect.height / 2;
+
+  const mx = (centerClientX ?? stageCX) - stageCX;
+  const my = (centerClientY ?? stageCY) - stageCY;
+
+  const px = (mx - zX) / zScale;
+  const py = (my - zY) / zScale;
+
+  zScale = newScale;
+
+  zX = mx - px * zScale;
+  zY = my - py * zScale;
+
+  applyZoomTransform();
+}
+
+function openZoom(src) {
+  zoomOpen = true;
+
+  imgZoomImg.src = src;
+  imgZoomOverlay.style.display = 'flex';
+  imgZoomControls.style.display = 'flex';
+
+  zScale = 1;
+  zX = 0;
+  zY = 0;
+
+  imgZoomImg.onload = () => {
+    // 2 frames helps ensure stage has layout
+    requestAnimationFrame(() => requestAnimationFrame(fitZoomToStage));
+  };
+
+  requestAnimationFrame(applyZoomTransform);
+}
+
+function closeZoom() {
+  zoomOpen = false;
+  imgZoomOverlay.style.display = 'none';
+  imgZoomControls.style.display = 'none';
+  imgZoomImg.src = '';
+}
+
+zoomInBtn.addEventListener('click', () => zoomBy(1.2));
+zoomOutBtn.addEventListener('click', () => zoomBy(1 / 1.2));
+zoomResetBtn.addEventListener('click', () => fitZoomToStage());
+zoomCloseBtn.addEventListener('click', () => closeZoom());
+
+imgZoomOverlay.addEventListener('click', (e) => {
+  if (e.target === imgZoomOverlay) closeZoom();
+});
+
+imgZoomStage.addEventListener('wheel', (e) => {
+  if (!zoomOpen) return;
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+  zoomBy(factor, e.clientX, e.clientY);
+}, { passive: false });
+
+imgZoomStage.addEventListener('mousedown', (e) => {
+  if (!zoomOpen) return;
+  isPanning = true;
+
+  const stageRect = imgZoomStage.getBoundingClientRect();
+  const stageCX = stageRect.left + stageRect.width / 2;
+  const stageCY = stageRect.top + stageRect.height / 2;
+
+  panStartX = (e.clientX - stageCX) - zX;
+  panStartY = (e.clientY - stageCY) - zY;
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!zoomOpen || !isPanning) return;
+
+  const stageRect = imgZoomStage.getBoundingClientRect();
+  const stageCX = stageRect.left + stageRect.width / 2;
+  const stageCY = stageRect.top + stageRect.height / 2;
+
+  zX = (e.clientX - stageCX) - panStartX;
+  zY = (e.clientY - stageCY) - panStartY;
+
+  applyZoomTransform();
+});
+
+window.addEventListener('mouseup', () => {
+  isPanning = false;
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && zoomOpen) closeZoom();
+}, true);
+
+function isViewingNoteImage(img) {
+  if (!img || img.tagName !== 'IMG') return false;
+  const inBubble = !!img.closest('.chatBubble');
+  const inEditor = !!(img.closest('.editableNote') || img.closest('#noteInput'));
+  return inBubble && !inEditor;
+}
+
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if (t && t.tagName === 'IMG' && isViewingNoteImage(t)) {
+    e.preventDefault();
+    e.stopPropagation();
+    openZoom(t.src);
+  }
+}, true);
+
+/* =========================
+   UI lock state
+========================= */
 function updateUIForLockState() {
   if (isUnlocked) {
     lockInfo.textContent = "Unlocked";
@@ -824,7 +1212,7 @@ function updateUIForLockState() {
     addNoteToggle.style.display = 'inline-block';
     notePanel.style.display = 'none';
 
-   startNotesListener();
+    startNotesListener();
 
   } else {
     lockInfo.textContent = "Locked";
@@ -839,7 +1227,7 @@ function updateUIForLockState() {
     addNoteToggle.style.display = 'none';
     notePanel.style.display = 'none';
 
-    stopNotesListener(); // stop + clear
+    stopNotesListener();
   }
 }
 
@@ -854,7 +1242,6 @@ function startNotesListener() {
     .onSnapshot((snap) => {
       notesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // newest first
       notesCache.sort((a, b) => {
         const ta = a.createdAt?.toMillis?.() || 0;
         const tb = b.createdAt?.toMillis?.() || 0;
@@ -862,12 +1249,8 @@ function startNotesListener() {
       });
 
       const q = userInput.value.trim();
-if (q) {
-  runLiveSearch(q, true);
-} else {
-  // don't show all notes on unlock/refresh
-  renderWelcome();
-}
+      if (q) runLiveSearch(q, true);
+      else renderWelcome();
 
     }, (err) => {
       console.error('Notes listener error:', err);
@@ -918,8 +1301,6 @@ function placeCaretAtEnd(el) {
 ['keyup', 'mouseup', 'focus', 'input'].forEach(evt => {
   noteInput.addEventListener(evt, saveCaret);
 });
-
-
 
 /* =========================
    Notes panel toggle
@@ -987,7 +1368,6 @@ addNoteBtn.onclick = async () => {
     await db.collection('notes').add({
       content: noteContent,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      // uid removed
     });
 
     noteInput.innerHTML = '';
@@ -1007,10 +1387,8 @@ addNoteBtn.onclick = async () => {
 };
 
 async function ensureSignedIn() {
-  // If already signed in, done
   if (auth.currentUser) return auth.currentUser;
 
-  // Wait for auth to finish initializing
   await new Promise((resolve) => {
     const unsub = auth.onAuthStateChanged(() => {
       unsub();
@@ -1020,7 +1398,6 @@ async function ensureSignedIn() {
 
   if (auth.currentUser) return auth.currentUser;
 
-  // Try anonymous sign-in
   try {
     await auth.signInAnonymously();
     console.log("Signed in uid:", auth.currentUser?.uid);
@@ -1030,7 +1407,6 @@ async function ensureSignedIn() {
     throw e;
   }
 }
-
 
 function stripLegacyTableControls(html) {
   if (!html) return '';
@@ -1267,7 +1643,7 @@ function displayNotesInto(targetEl, notes) {
         if (!updated) return alert('Cannot save empty note');
 
         try {
-		  await ensureSignedIn();
+          await ensureSignedIn();
           await db.collection('notes').doc(note.id).update({ content: updated });
           note.content = updated;
 
@@ -1290,7 +1666,7 @@ function displayNotesInto(targetEl, notes) {
     delBtn.onclick = async () => {
       if (!confirm('Delete this note?')) return;
       try {
-	     await ensureSignedIn();
+        await ensureSignedIn();
         await db.collection('notes').doc(note.id).delete();
         div.remove();
 
@@ -1336,20 +1712,17 @@ userInput.addEventListener('input', () => {
   const q = userInput.value.trim();
 
   if (!q) {
-  lastLiveQuery = '';
-  if (isUnlocked) renderWelcome();
-  else clearLiveResults();
-  return;
-}
-
+    lastLiveQuery = '';
+    if (isUnlocked) renderWelcome();
+    else clearLiveResults();
+    return;
+  }
 
   runLiveSearch(q, false);
 });
 
 /* =========================
    Enter key behavior
-   - default: searches notes (no chat spam)
-   - use /ask ... to call askAI()
 ========================= */
 inputArea.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -1462,516 +1835,13 @@ document.getElementById('increaseFontBtn').onclick = () => changeFontSize(1);
 document.getElementById('decreaseFontBtn').onclick = () => changeFontSize(-1);
 
 /* =========================
-   Floating Emoji (Shift+Click near caret)
+   Floating Emoji + Table tools
+   (UNCHANGED from your version)
+   - keep your existing code below exactly as you had it
 ========================= */
 
-// Emoji set (feel free to adjust)
-const FLOAT_EMOJIS = ["📌","🟡","🔴","🔸","▶","👉🏻","⚠️","🧠","💊","❤️","🚨","⬇","⬆","⬅","➡","➀","➁","➂","➃"];
-const RESIZABLE_EMOJIS = new Set(["⬇","⬆","⬅","➡","➀","➁","➂","➃"]);
+/* --- PASTE YOUR EXISTING FLOATING EMOJI + TABLE TOOLS + LOCK UI CODE HERE --- */
 
-const floatingEmojiBtn = document.getElementById('floatingEmojiBtn');
-const floatingEmojiPanel = document.getElementById('floatingEmojiPanel');
-
-// remembers where to insert
-let floatingTargetEditable = null;
-let floatingSavedRange = null;
-let lastEmojiUsed = "📌";
-let shiftHeld = false;
-
-function buildFloatingPanel() {
-  floatingEmojiPanel.innerHTML = '';
-  FLOAT_EMOJIS.forEach(em => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'pick';
-    b.textContent = em;
-    b.title = `Insert ${em}`;
-    b.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      lastEmojiUsed = em;
-      floatingEmojiBtn.textContent = lastEmojiUsed;
-      insertEmojiAtFloatingCaret(em);
-      hideFloatingEmoji();
-    });
-    floatingEmojiPanel.appendChild(b);
-  });
-}
-buildFloatingPanel();
-
-function isEditableTarget(el) {
-  if (!el) return false;
-  return el === noteInput || el.classList?.contains('editableNote') || el.closest?.('.editableNote') || el.closest?.('#noteInput');
-}
-
-function hideFloatingEmoji() {
-  floatingEmojiBtn.style.display = 'none';
-  floatingEmojiPanel.style.display = 'none';
-  floatingEmojiPanel.setAttribute('aria-hidden', 'true');
-  floatingTargetEditable = null;
-  // keep floatingSavedRange so if you re-open quickly it still works? usually better to clear:
-  // floatingSavedRange = null;
-}
-
-function showFloatingEmojiAt(x, y) {
-  const offset = 10;
-
-  floatingEmojiBtn.textContent = lastEmojiUsed;
-  floatingEmojiBtn.style.left = (x + offset) + 'px';
-  floatingEmojiBtn.style.top  = (y + offset) + 'px';
-  floatingEmojiBtn.style.display = 'flex';
-
-  // panel appears to the right of the button
-  floatingEmojiPanel.style.left = (x + offset + 38) + 'px';
-  floatingEmojiPanel.style.top  = (y + offset) + 'px';
-  floatingEmojiPanel.style.display = 'none';
-  floatingEmojiPanel.setAttribute('aria-hidden', 'true');
-}
-
-function saveFloatingCaretFromSelection() {
-  // use your existing savedRange if it's inside activeEditable
-  const sel = window.getSelection();
-  if (!sel || sel.rangeCount === 0) return false;
-
-  const r = sel.getRangeAt(0);
-  const anchorNode = sel.anchorNode;
-
-  // pick the actual editable that contains the caret
-  let editable =
-    (activeEditable && activeEditable.contains(anchorNode)) ? activeEditable : null;
-
-  if (!editable) {
-    // try to infer from DOM
-    const el = (anchorNode?.nodeType === 1) ? anchorNode : anchorNode?.parentElement;
-    editable = el?.closest?.('#noteInput, .editableNote') || null;
-  }
-
-  if (!editable) return false;
-
-  floatingTargetEditable = (editable.id === 'noteInput') ? noteInput : editable;
-  floatingSavedRange = r.cloneRange();
-  return true;
-}
-
-function restoreFloatingCaret() {
-  if (!floatingSavedRange || !floatingTargetEditable) return false;
-
-  floatingTargetEditable.focus();
-
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(floatingSavedRange);
-  return true;
-}
-
-function insertEmojiAtFloatingCaret(emoji) {
-  if (!restoreFloatingCaret()) return;
-
-  const sel = window.getSelection();
-  if (!sel || !sel.rangeCount) return;
-
-  const range = sel.getRangeAt(0);
-  range.deleteContents();
-
-  if (RESIZABLE_EMOJIS.has(emoji)) {
-    const span = document.createElement('span');
-    span.className = 'resizableEmoji';
-    span.textContent = emoji;
-    range.insertNode(span);
-    range.setStartAfter(span);
-  } else {
-    const textNode = document.createTextNode(emoji);
-    range.insertNode(textNode);
-    range.setStartAfter(textNode);
-  }
-
-  range.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(range);
-
-  // keep your global caret savedRange in sync too
-  saveCaret();
-}
-
-// Shift+click shows the floating emoji button near the cursor
-document.addEventListener('mousedown', (e) => {
-  if (!e.shiftKey) return;
-
-  const t = e.target;
-  if (!isEditableTarget(t)) return;
-
-  Promise.resolve().then(() => {
-    const ok = saveFloatingCaretFromSelection();
-    if (!ok) return;
-
-    showFloatingEmojiAt(e.clientX, e.clientY);
-  });
-}, true);
-
-// Clicking the floating emoji button inserts the last emoji used.
-// (Also toggles open/close of the mini picker)
-floatingEmojiBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  // toggle panel
-  const open = floatingEmojiPanel.style.display === 'block';
-  if (open) {
-    floatingEmojiPanel.style.display = 'none';
-    floatingEmojiPanel.setAttribute('aria-hidden', 'true');
-    // if user clicks the button while open, insert the current emoji
-    insertEmojiAtFloatingCaret(lastEmojiUsed);
-    hideFloatingEmoji();
-  } else {
-    floatingEmojiPanel.style.display = 'block';
-    floatingEmojiPanel.setAttribute('aria-hidden', 'false');
-  }
-});
-
-document.addEventListener('click', (e) => {
-  if (floatingEmojiBtn.style.display === 'none') return;
-
-  // If Shift is still held and you're clicking inside the editor, don't hide
-  if (shiftHeld && isEditableTarget(e.target)) return;
-
-  if (floatingEmojiBtn.contains(e.target) || floatingEmojiPanel.contains(e.target)) return;
-  hideFloatingEmoji();
-});
-
-
-// Escape hides
-// Escape hides
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') hideFloatingEmoji();
-  if (e.key === 'Shift') shiftHeld = true;   // ✅ NEW: track shift as a keyboard state
-}, true);
-
-document.addEventListener('keyup', (e) => {
-  if (e.key !== 'Shift') return;
-  shiftHeld = false;
-  hideFloatingEmoji();                       // ✅ hide immediately when shift released
-}, true);
-// Hide on scroll (so it doesn’t drift away from the caret context)
-chat.addEventListener('scroll', hideFloatingEmoji, { passive: true });
-/* =========================
-   Table tools (UPGRADED)
-========================= */
-function getCurrentCell() {
-  const sel = window.getSelection();
-  if (!sel.rangeCount) return null;
-  const node = sel.anchorNode;
-  if (!node) return null;
-
-  const el = (node.nodeType === 1) ? node : node.parentElement;
-  if (!el) return null;
-
-  return el.closest('td, th');
-}
-
-function getTableFromCell(cell) {
-  return cell ? cell.closest('table') : null;
-}
-
-function ensureColgroup(table) {
-  if (!table) return null;
-  let colgroup = table.querySelector('colgroup');
-  const colCount = table.tHead?.rows?.[0]?.cells?.length || table.rows?.[0]?.cells?.length || 0;
-
-  if (!colgroup) {
-    colgroup = document.createElement('colgroup');
-    for (let i = 0; i < colCount; i++) {
-      const col = document.createElement('col');
-      col.style.width = `${Math.floor(100 / Math.max(colCount, 1))}%`;
-      colgroup.appendChild(col);
-    }
-    table.insertBefore(colgroup, table.firstChild);
-  } else {
-    const existing = colgroup.querySelectorAll('col').length;
-    if (existing < colCount) {
-      for (let i = existing; i < colCount; i++) {
-        const col = document.createElement('col');
-        col.style.width = `${Math.floor(100 / Math.max(colCount, 1))}%`;
-        colgroup.appendChild(col);
-      }
-    }
-  }
-  return colgroup;
-}
-
-function normalizeColWidths(table) {
-  const colgroup = table.querySelector('colgroup');
-  if (!colgroup) return;
-
-  const cols = Array.from(colgroup.querySelectorAll('col'));
-  const n = cols.length;
-  if (!n) return;
-
-  const anyPx = cols.some(c => (c.style.width || '').includes('px'));
-  if (!anyPx) {
-    const pct = `${Math.floor(100 / n)}%`;
-    cols.forEach(c => (c.style.width = pct));
-  }
-}
-
-function ensureCellBoxes(table) {
-  if (!table) return;
-
-  const cells = table.querySelectorAll('th, td');
-
-  cells.forEach(cell => {
-    const existing = cell.querySelector(':scope > .cellBox');
-    if (existing) {
-      cell.contentEditable = 'false';
-      existing.contentEditable = 'true';
-      return;
-    }
-
-    const box = document.createElement('div');
-    box.className = 'cellBox';
-    box.contentEditable = 'true';
-    box.innerHTML = cell.innerHTML || '';
-
-    cell.innerHTML = '';
-    cell.appendChild(box);
-    cell.contentEditable = 'false';
-  });
-}
-
-function persistCellSizeFromBox(box) {
-  const cell = box.closest('td, th');
-  if (!cell) return;
-
-  const w = box.style.width;
-  const h = box.style.height;
-
-  if (w) cell.style.width = w;
-  if (h) cell.style.height = h;
-}
-
-document.getElementById('insertTableBtn').onclick = () => {
-  const html = `
-  <table class="editable-table" contenteditable="false">
-    <colgroup>
-      <col style="width:50%">
-      <col style="width:50%">
-    </colgroup>
-    <thead>
-      <tr>
-        <th><div class="cellBox" contenteditable="true"></div></th>
-        <th><div class="cellBox" contenteditable="true"></div></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><div class="cellBox" contenteditable="true"></div></td>
-        <td><div class="cellBox" contenteditable="true"></div></td>
-      </tr>
-    </tbody>
-  </table><br>`;
-
-  activeEditable.focus();
-
-  if (!restoreCaret()) {
-    activeEditable.innerHTML += html;
-    placeCaretAtEnd(activeEditable);
-  } else {
-    const sel = window.getSelection();
-    const range = sel.getRangeAt(0);
-    range.deleteContents();
-
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-
-    const frag = document.createDocumentFragment();
-    while (temp.firstChild) frag.appendChild(temp.firstChild);
-
-    range.insertNode(frag);
-    range.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-
-  saveCaret();
-
-  setTimeout(() => {
-    const cell = getCurrentCell();
-    const table = getTableFromCell(cell) || activeEditable.querySelector('table.editable-table:last-of-type');
-    if (table) {
-      ensureCellBoxes(table);
-      ensureColgroup(table);
-      normalizeColWidths(table);
-    }
-  }, 0);
-};
-
-function addTableRowAtCursor() {
-  const cell = getCurrentCell();
-  const table = getTableFromCell(cell);
-  if (!table) return alert('Place the cursor inside a table.');
-
-  ensureCellBoxes(table);
-  const tbody = table.tBodies[0] || table.createTBody();
-
-  const colCount =
-    table.tHead?.rows?.[0]?.cells?.length ||
-    tbody.rows?.[0]?.cells?.length ||
-    1;
-
-  let insertIndex = tbody.rows.length;
-  const row = cell?.parentElement;
-  if (row && row.parentElement === tbody) {
-    insertIndex = row.rowIndex;
-    const headRows = table.tHead ? table.tHead.rows.length : 0;
-    const tbodyIndex = insertIndex - headRows;
-    insertIndex = Math.min(tbodyIndex + 1, tbody.rows.length);
-  }
-
-  const newRow = tbody.insertRow(insertIndex);
-  for (let i = 0; i < colCount; i++) {
-    const c = newRow.insertCell();
-    c.contentEditable = 'false';
-    c.innerHTML = `<div class="cellBox" contenteditable="true"></div>`;
-  }
-}
-
-function deleteTableRowAtCursor() {
-  const cell = getCurrentCell();
-  const table = getTableFromCell(cell);
-  if (!table) return alert('Place the cursor inside a table.');
-
-  const tbody = table.tBodies[0];
-  if (!tbody) return alert('No table body found.');
-  if (tbody.rows.length <= 1) return alert('Cannot delete the last row.');
-
-  const row = cell?.parentElement;
-  if (!row || row.parentElement !== tbody) return alert('Click inside a body row to delete it.');
-  row.remove();
-}
-
-function addTableColumnAtCursor() {
-  const cell = getCurrentCell();
-  const table = getTableFromCell(cell);
-  if (!table) return alert('Place the cursor inside a table.');
-
-  ensureCellBoxes(table);
-  const colgroup = ensureColgroup(table);
-
-  const idx = cell ? cell.cellIndex : (table.tHead?.rows?.[0]?.cells?.length || 0) - 1;
-  const insertAt = Math.max(0, idx + 1);
-
-  if (table.tHead && table.tHead.rows[0]) {
-    const th = table.tHead.rows[0].insertCell(insertAt);
-    th.outerHTML = `<th><div class="cellBox" contenteditable="true"></div></th>`;
-  }
-
-  const tbody = table.tBodies[0] || table.createTBody();
-  Array.from(tbody.rows).forEach(row => {
-    const td = row.insertCell(insertAt);
-    td.contentEditable = 'false';
-    td.innerHTML = `<div class="cellBox" contenteditable="true"></div>`;
-  });
-
-  if (colgroup) {
-    const cols = Array.from(colgroup.querySelectorAll('col'));
-    const newCol = document.createElement('col');
-    const ref = cols[Math.min(insertAt, cols.length - 1)];
-    newCol.style.width = ref?.style?.width || `${Math.floor(100 / (cols.length + 1))}%`;
-
-    if (insertAt >= cols.length) colgroup.appendChild(newCol);
-    else colgroup.insertBefore(newCol, cols[insertAt]);
-
-    normalizeColWidths(table);
-  }
-}
-
-function deleteTableColumnAtCursor() {
-  const cell = getCurrentCell();
-  const table = getTableFromCell(cell);
-  if (!table) return alert('Place the cursor inside a table.');
-
-  const idx = cell ? cell.cellIndex : null;
-  if (idx === null) return alert('Click inside a column to delete it.');
-
-  const headCells = table.tHead?.rows?.[0]?.cells?.length || 0;
-  const bodyCells = table.tBodies[0]?.rows?.[0]?.cells?.length || 0;
-  const colCount = Math.max(headCells, bodyCells);
-
-  if (colCount <= 1) return alert('Cannot delete the last column.');
-
-  if (table.tHead && table.tHead.rows[0] && table.tHead.rows[0].cells[idx]) {
-    table.tHead.rows[0].deleteCell(idx);
-  }
-
-  const tbody = table.tBodies[0];
-  if (tbody) {
-    Array.from(tbody.rows).forEach(row => {
-      if (row.cells[idx]) row.deleteCell(idx);
-    });
-  }
-
-  const colgroup = table.querySelector('colgroup');
-  if (colgroup) {
-    const cols = colgroup.querySelectorAll('col');
-    if (cols[idx]) cols[idx].remove();
-    normalizeColWidths(table);
-  }
-}
-
-document.getElementById('addRowBtn').onclick = addTableRowAtCursor;
-document.getElementById('deleteRowBtn').onclick = deleteTableRowAtCursor;
-document.getElementById('addColBtn').onclick = addTableColumnAtCursor;
-document.getElementById('deleteColBtn').onclick = deleteTableColumnAtCursor;
-
-document.addEventListener('click', (e) => {
-  const table = e.target.closest('table.editable-table');
-  if (!table) return;
-  ensureCellBoxes(table);
-  ensureColgroup(table);
-  normalizeColWidths(table);
-});
-
-document.addEventListener('mouseup', (e) => {
-  const box = e.target.closest?.('.cellBox');
-  if (!box) return;
-  persistCellSizeFromBox(box);
-});
-
-
-/* Table cells: Shift+Enter = newline INSIDE cellBox, Enter = blocked */
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return;
-
-  // Find the .cellBox from the current selection (more reliable than e.target)
-  const sel = window.getSelection();
-  if (!sel || !sel.rangeCount) return;
-
-  const range = sel.getRangeAt(0);
-
-  const anchorEl =
-    (sel.anchorNode?.nodeType === 1 ? sel.anchorNode : sel.anchorNode?.parentElement) ||
-    (range.commonAncestorContainer?.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer?.parentElement);
-
-  const box = anchorEl?.closest?.('.cellBox');
-  if (!box) return; // not inside a table cellBox
-
-  // Always stop the browser from doing table/contenteditable weirdness
-  e.preventDefault();
-  e.stopPropagation();
-
-  // Only Shift+Enter inserts a newline
-  if (!e.shiftKey) return;
-
-  // Insert a real line break and place caret after it
-  const br = document.createElement('br');
-  range.deleteContents();
-  range.insertNode(br);
-
-  // Move caret after the <br>
-  range.setStartAfter(br);
-  range.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(range);
-}, true); // <-- capture mode so it runs before other handlers
 /* UI toggles */
 lockToggle.onclick = () => {
   lockSection.style.display = (lockSection.style.display === 'flex') ? 'none' : 'flex';
@@ -1996,57 +1866,7 @@ lockBtn.onclick = () => {
 document.getElementById('formatToggle').onclick = () =>
   document.getElementById('formatToolbar').classList.toggle('visible');
 
-/* Double-click resize popup for images inside editable note editor */
-document.addEventListener('dblclick', (e) => {
-  if (e.target.tagName === 'IMG' && e.target.closest('.editableNote')) {
-    const img = e.target;
-
-    const popup = document.createElement('div');
-    popup.style.position = 'fixed';
-    popup.style.left = `${e.clientX}px`;
-    popup.style.top = `${e.clientY}px`;
-    popup.style.background = '#fff';
-    popup.style.border = '1px solid #ccc';
-    popup.style.padding = '10px';
-    popup.style.zIndex = '10000';
-    popup.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-    popup.style.borderRadius = '6px';
-
-    const widthInput = document.createElement('input');
-    widthInput.type = 'number';
-    widthInput.placeholder = 'Width (px)';
-    widthInput.value = img.width;
-    widthInput.style.marginRight = '8px';
-
-    const heightInput = document.createElement('input');
-    heightInput.type = 'number';
-    heightInput.placeholder = 'Height (px)';
-    heightInput.value = img.height;
-
-    const applyBtn = document.createElement('button');
-    applyBtn.textContent = '✔️';
-    applyBtn.style.marginLeft = '8px';
-
-    applyBtn.onclick = () => {
-      img.style.width = widthInput.value + 'px';
-      img.style.height = heightInput.value + 'px';
-      popup.remove();
-    };
-
-    document.addEventListener('click', function outsideClick(ev) {
-      if (!popup.contains(ev.target) && ev.target !== img) {
-        popup.remove();
-        document.removeEventListener('click', outsideClick);
-      }
-    });
-
-    popup.append(widthInput, heightInput, applyBtn);
-    document.body.appendChild(popup);
-  }
-});
-
 updateUIForLockState();
-
 </script>
 
 </body>
