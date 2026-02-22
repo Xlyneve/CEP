@@ -1549,6 +1549,88 @@ function queryNotesSync(rawQuery) {
   return results.slice(0, 30);
 }
 
+function insertImageAtCaret(dataUrl) {
+  if (!activeEditable) return;
+
+  // Try to restore caret if we previously saved it
+  restoreCaret();
+
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.style.width = '100%';
+  img.style.height = 'auto';
+  img.style.borderRadius = '8px';
+
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount && activeEditable.contains(sel.anchorNode)) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+
+    // Insert a <br>, the image, then another <br> for nicer spacing
+    const br1 = document.createElement('br');
+    const br2 = document.createElement('br');
+
+    range.insertNode(br2);
+    range.insertNode(img);
+    range.insertNode(br1);
+
+    // Move caret after the image
+    range.setStartAfter(br2);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    saveCaret();
+  } else {
+    // Fallback: append at end
+    activeEditable.appendChild(document.createElement('br'));
+    activeEditable.appendChild(img);
+    activeEditable.appendChild(document.createElement('br'));
+    placeCaretAtEnd(activeEditable);
+  }
+}
+
+function makeInlineImagePickerButton(onPicked) {
+  const wrap = document.createElement('span');
+
+  const pickBtn = document.createElement('button');
+  pickBtn.type = 'button';
+  pickBtn.textContent = '🖼️';
+
+  Object.assign(pickBtn.style, {
+    background: 'none',
+    border: 'none',
+    color: '#666',
+    fontSize: '16px',
+    cursor: 'pointer',
+    marginRight: '12px'
+  });
+
+  const file = document.createElement('input');
+  file.type = 'file';
+  file.accept = 'image/*';
+  file.style.display = 'none';
+
+  pickBtn.addEventListener('click', () => file.click());
+
+  file.addEventListener('change', () => {
+    const f = file.files?.[0];
+    if (!f) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result;
+      if (typeof dataUrl === 'string') onPicked(dataUrl);
+      file.value = ''; // allow re-picking same file
+    };
+    reader.readAsDataURL(f);
+  });
+
+  wrap.appendChild(pickBtn);
+  wrap.appendChild(file);
+  return wrap;
+}
+
 /* =========================
    Render notes into ANY container
 ========================= */
@@ -1611,25 +1693,31 @@ function displayNotesInto(targetEl, notes) {
       editable.addEventListener('keyup', saveCaret);
 
       const saveBtn = document.createElement('button');
-      const cancelBtn = document.createElement('button');
-      saveBtn.textContent = '💾';
-      cancelBtn.textContent = '❌';
+const cancelBtn = document.createElement('button');
+saveBtn.textContent = '💾';
+cancelBtn.textContent = '❌';
 
-      [saveBtn, cancelBtn].forEach(btn => Object.assign(btn.style, {
-        background: 'none',
-        border: 'none',
-        color: '#666',
-        fontSize: '16px',
-        cursor: 'pointer',
-        marginRight: '12px'
-      }));
+[saveBtn, cancelBtn].forEach(btn => Object.assign(btn.style, {
+  background: 'none',
+  border: 'none',
+  color: '#666',
+  fontSize: '16px',
+  cursor: 'pointer',
+  marginRight: '12px'
+}));
 
-      const actions = document.createElement('div');
-      actions.style.textAlign = 'center';
-      actions.style.marginTop = '6px';
-      actions.append(saveBtn, cancelBtn);
+const imgBtnWrap = makeInlineImagePickerButton((dataUrl) => {
+  activeEditable = editable;
+  editable.focus();
+  insertImageAtCaret(dataUrl);
+});
 
-      div.append(editable, actions);
+const actions = document.createElement('div');
+actions.style.textAlign = 'center';
+actions.style.marginTop = '6px';
+actions.append(imgBtnWrap, saveBtn, cancelBtn);
+
+div.append(editable, actions);
 
       cancelBtn.onclick = () => {
         editable.remove();
@@ -1637,6 +1725,7 @@ function displayNotesInto(targetEl, notes) {
         bubble.style.display = '';
         btns.style.display = '';
       };
+
 
       saveBtn.onclick = async () => {
         const updated = editable.innerHTML.trim();
@@ -1680,6 +1769,8 @@ function displayNotesInto(targetEl, notes) {
     };
   }
 }
+
+
 
 /* =========================
    Live search runner (SYNC + stable)
