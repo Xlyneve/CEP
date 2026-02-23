@@ -92,17 +92,20 @@ body::before {
 }
 
 .chatBubble {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  padding: 8px 12px;
-  max-width: 70%;
+  background: rgba(255, 255, 255, 0.65);   /* more solid */
+  border-radius: 14px;
+  padding: 10px 14px;
+  max-width: 88%;
   animation: fadeIn 0.3s ease;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  color: #222;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.5);   /* soft edge */
+
+  color: #1f1f1f;   /* stronger text contrast */
 }
 
 .message.user .chatBubble {
@@ -802,6 +805,7 @@ mark.underlineMatch{
   <button class="format-btn" id="boldBtn"><b>B</b></button>
   <button class="format-btn" id="italicBtn"><i>I</i></button>
   <button class="format-btn" id="underlineBtn"><u>U</u></button>
+  <button class="format-btn" id="indentBtn" title="Indent (Tab) — Shift+Click = Outdent">👉🏻</button>
   <button class="format-btn" id="highlightBtn">🟪</button>
   <button class="format-btn" id="redFontBtn">🟥</button>
   <button class="format-btn" id="blueFontBtn">🟦</button>
@@ -1365,6 +1369,87 @@ function restoreCaret() {
   return true;
 }
 
+/* =========================
+   Indent helpers (same behavior as TAB)
+========================= */
+const INDENT_SPACES = 4;
+
+function isIndentableEditable(el) {
+  if (!el) return false;
+  if (el === noteInput) return true;
+  if (el.classList?.contains('editableNote')) return true;
+  if (el.classList?.contains('cellBox')) return true;
+  return false;
+}
+
+function insertIndentAtCaret(spacesCount = INDENT_SPACES) {
+  if (!activeEditable || !isIndentableEditable(activeEditable)) return;
+
+  activeEditable.focus();
+  restoreCaret();
+
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+  if (!activeEditable.contains(range.startContainer)) return;
+
+  const indentText = '\u00A0'.repeat(spacesCount); // NBSPs don't collapse
+  range.deleteContents();
+
+  const tn = document.createTextNode(indentText);
+  range.insertNode(tn);
+
+  range.setStartAfter(tn);
+  range.collapse(true);
+
+  sel.removeAllRanges();
+  sel.addRange(range);
+  saveCaret();
+}
+
+function outdentAtCaret(spacesCount = INDENT_SPACES) {
+  if (!activeEditable || !isIndentableEditable(activeEditable)) return;
+
+  activeEditable.focus();
+  restoreCaret();
+
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+  if (!range.collapsed) return;
+
+  const node = range.startContainer;
+  const offset = range.startOffset;
+
+  if (!node || node.nodeType !== Node.TEXT_NODE) return;
+
+  const text = node.nodeValue || '';
+  const before = text.slice(0, offset);
+  const after = text.slice(offset);
+
+  const nbsp = '\u00A0';
+  let removeCount = 0;
+
+  for (let i = before.length - 1; i >= 0 && removeCount < spacesCount; i--) {
+    if (before[i] === nbsp) removeCount++;
+    else break;
+  }
+
+  if (!removeCount) return;
+
+  node.nodeValue = before.slice(0, before.length - removeCount) + after;
+
+  const newOffset = Math.max(0, offset - removeCount);
+  const newRange = document.createRange();
+  newRange.setStart(node, newOffset);
+  newRange.collapse(true);
+
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+  saveCaret();
+}
 function placeCaretAtEnd(el) {
   el.focus();
   const range = document.createRange();
@@ -1395,7 +1480,7 @@ addNoteToggle.onclick = () => {
 const floatingEmojiPanel = document.getElementById('floatingEmojiPanel');
 
 // pick your favourites
-const EMOJIS = ['°','🔴','🟠','🟡','🟢','🔵','🟣','⚫️','⚪️','➜','⬇︎','⬅','➜ ','✅','❌','⭐','🔥','◼️','❤️','🧠','📝','📌','📍','💊','⚠️','🚨','⏳','💥','💪🏻'];
+const EMOJIS = ['°','🔴','🟠','🟡','🟢','🔵','🟣','⚫️','⚪️','➜','⬇︎','⬅','➜ ','✅','❌','⭐','🔥','🦠','◼️','❤️','🧠','🌡️','📝','📌','📍','💊','⚠️','🚨','⏳','💥','💪🏻'];
 
 function hideEmojiPanel() {
   floatingEmojiPanel.style.display = 'none';
@@ -1918,7 +2003,7 @@ const imgBtnWrap = makeInlineImagePickerButton((dataUrl) => {
 // ✅ NEW: emoji button
 const emojiBtn = document.createElement('button');
 emojiBtn.type = 'button';
-emojiBtn.textContent = '😊';
+emojiBtn.textContent = '🌟';
 
 Object.assign(emojiBtn.style, {
   background: 'none',
@@ -2312,6 +2397,24 @@ document.getElementById('highlightBtn').onclick = () => document.execCommand('fo
 document.getElementById('redFontBtn').onclick = () => document.execCommand('foreColor', false, 'red');
 document.getElementById('blueFontBtn').onclick = () => document.execCommand('foreColor', false, 'blue');
 
+const indentBtn = document.getElementById('indentBtn');
+
+if (indentBtn) {
+  indentBtn.addEventListener('mousedown', (e) => {
+    // mousedown so it works even if focus shifts
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Ensure we act on the current editor
+    if (!activeEditable) activeEditable = noteInput;
+    activeEditable.focus();
+    saveCaret();
+
+    // Shift+Click = outdent, normal click = indent
+    if (e.shiftKey) outdentAtCaret(INDENT_SPACES);
+    else insertIndentAtCaret(INDENT_SPACES);
+  });
+}
 /* Font size controls */
 function changeFontSize(delta) {
   const sel = window.getSelection();
