@@ -2322,6 +2322,13 @@ actions.style.marginTop = '6px';
 // order: image, emoji, save, cancel
 actions.append(imgBtnWrap, emojiBtn, saveBtn, cancelBtn);
 
+/* 🔧 ADD THIS RIGHT HERE */
+actions.addEventListener('mousedown', () => {
+  activeEditable = editable;
+  editable.focus({ preventScroll: true });
+  saveCaret();
+}, true);
+
 div.append(editable, actions);
 
 // --- Tag chips (click to filter) ---
@@ -2970,29 +2977,53 @@ function wrapRangeWithConcept(range) {
   saveCaret?.();
 }
 
+/* =========================
+   Ctrl+L = wrap selection (or word) as [[concept]]
+   FIX: restore caret + use savedRange if selection isn't inside editor
+========================= */
 document.addEventListener('keydown', (e) => {
-  // Ctrl+L on Windows/Linux, Cmd+L on Mac (optional)
   const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
   const mod = isMac ? e.metaKey : e.ctrlKey;
 
   if (!mod || e.key.toLowerCase() !== 'l') return;
 
-  // Don't hijack if you're typing in the search input
+  // don't hijack search box
   if (document.activeElement === userInput) return;
 
-  // Must have an active editor
+  // must have an active editor
   if (!activeEditable || !isIndentableEditable(activeEditable)) return;
 
   e.preventDefault();
   e.stopPropagation();
 
-  activeEditable.focus();
+  // Focus editor and restore caret if we have one
+  activeEditable.focus({ preventScroll: true });
 
-  // Prefer existing selection, else grab current word
+  // Try restoring the last caret we saved (very important for edit mode)
+  restoreCaret();
+
   const sel = window.getSelection();
   let r = (sel && sel.rangeCount) ? sel.getRangeAt(0) : null;
 
+  // If current selection isn't inside the editor, fall back to savedRange (if valid)
+  if (!r || !sel || !activeEditable.contains(sel.anchorNode)) {
+    if (savedRange && activeEditable.contains(savedRange.startContainer)) {
+      r = savedRange.cloneRange();
+      sel?.removeAllRanges();
+      sel?.addRange(r);
+    } else {
+      r = null;
+    }
+  }
+
+  // If still no range or collapsed, grab current word
   if (!r || r.collapsed) {
+    r = getWordRangeAtCaret(activeEditable);
+  }
+
+  // Absolute fallback: put caret at end and try again
+  if (!r) {
+    placeCaretAtEnd(activeEditable);
     r = getWordRangeAtCaret(activeEditable);
   }
 
