@@ -1931,7 +1931,229 @@ document.getElementById('decreaseFontBtn').onclick = () => changeFontSize(-1);
    - keep your existing code below exactly as you had it
 ========================= */
 
-/* --- PASTE YOUR EXISTING FLOATING EMOJI + TABLE TOOLS + LOCK UI CODE HERE --- */
+/* =========================
+   Table tools (WORKING)
+========================= */
+
+let activeTable = null;
+
+function closestEditableTable(node) {
+  if (!node) return null;
+  if (node.nodeType === 3) node = node.parentNode; // text -> element
+  if (!node || !node.closest) return null;
+  return node.closest('table.editable-table');
+}
+
+function buildEditableTable(rows = 3, cols = 3) {
+  const table = document.createElement('table');
+  table.className = 'editable-table';
+  table.setAttribute('data-editable-table', '1');
+
+  const tbody = document.createElement('tbody');
+
+  for (let r = 0; r < rows; r++) {
+    const tr = document.createElement('tr');
+
+    for (let c = 0; c < cols; c++) {
+      const td = document.createElement('td');
+
+      const cell = document.createElement('div');
+      cell.className = 'cellBox';
+      cell.contentEditable = 'true';
+      cell.innerHTML = '&nbsp;';
+
+      td.appendChild(cell);
+      tr.appendChild(td);
+    }
+
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  return table;
+}
+
+function insertNodeAtCaret(nodeToInsert) {
+  if (!activeEditable) return;
+
+  activeEditable.focus();
+  restoreCaret(); // your existing caret restore
+
+  const sel = window.getSelection();
+  const canUseRange = sel && sel.rangeCount && activeEditable.contains(sel.anchorNode);
+
+  if (canUseRange) {
+    const range = sel.getRangeAt(0);
+
+    // Ensure we don't insert inside a .cellBox in a weird way
+    const inCell = range.startContainer?.nodeType
+      ? (range.startContainer.nodeType === 1
+          ? range.startContainer.closest?.('.cellBox')
+          : range.startContainer.parentElement?.closest?.('.cellBox'))
+      : null;
+
+    // If caret is inside a cellBox, just insert at end of that cell
+    if (inCell) {
+      inCell.appendChild(document.createElement('br'));
+      inCell.appendChild(nodeToInsert);
+      inCell.appendChild(document.createElement('br'));
+      placeCaretAtEnd(inCell);
+      return;
+    }
+
+    range.deleteContents();
+
+    const br1 = document.createElement('br');
+    const br2 = document.createElement('br');
+
+    range.insertNode(br2);
+    range.insertNode(nodeToInsert);
+    range.insertNode(br1);
+
+    // Move caret after insertion
+    range.setStartAfter(br2);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    saveCaret();
+  } else {
+    // Fallback: append at end
+    activeEditable.appendChild(document.createElement('br'));
+    activeEditable.appendChild(nodeToInsert);
+    activeEditable.appendChild(document.createElement('br'));
+    placeCaretAtEnd(activeEditable);
+  }
+}
+
+function ensureActiveTableFromSelection() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return null;
+  const node = sel.anchorNode;
+  const t = closestEditableTable(node);
+  if (t) activeTable = t;
+  return activeTable;
+}
+
+function addRowToTable(table) {
+  const tbody = table.tBodies[0] || table.createTBody();
+  const colCount =
+    (tbody.rows[0] && tbody.rows[0].cells.length) ? tbody.rows[0].cells.length : 1;
+
+  const tr = document.createElement('tr');
+  for (let c = 0; c < colCount; c++) {
+    const td = document.createElement('td');
+    const cell = document.createElement('div');
+    cell.className = 'cellBox';
+    cell.contentEditable = 'true';
+    cell.innerHTML = '&nbsp;';
+    td.appendChild(cell);
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+}
+
+function deleteRowFromTable(table) {
+  const tbody = table.tBodies[0];
+  if (!tbody || !tbody.rows.length) return;
+  tbody.deleteRow(tbody.rows.length - 1);
+  if (!tbody.rows.length) table.remove();
+}
+
+function addColToTable(table) {
+  const tbody = table.tBodies[0];
+  if (!tbody || !tbody.rows.length) return;
+
+  for (const tr of tbody.rows) {
+    const td = document.createElement('td');
+    const cell = document.createElement('div');
+    cell.className = 'cellBox';
+    cell.contentEditable = 'true';
+    cell.innerHTML = '&nbsp;';
+    td.appendChild(cell);
+    tr.appendChild(td);
+  }
+}
+
+function deleteColFromTable(table) {
+  const tbody = table.tBodies[0];
+  if (!tbody || !tbody.rows.length) return;
+
+  const colCount = tbody.rows[0].cells.length;
+  if (colCount <= 1) {
+    table.remove();
+    return;
+  }
+
+  for (const tr of tbody.rows) {
+    tr.deleteCell(colCount - 1);
+  }
+}
+
+/* Track which table is "active" when user clicks inside it */
+document.addEventListener('mousedown', (e) => {
+  const t = closestEditableTable(e.target);
+  if (t) activeTable = t;
+}, true);
+
+/* Wire up toolbar buttons */
+const insertTableBtn = document.getElementById('insertTableBtn');
+const addRowBtn = document.getElementById('addRowBtn');
+const deleteRowBtn = document.getElementById('deleteRowBtn');
+const addColBtn = document.getElementById('addColBtn');
+const deleteColBtn = document.getElementById('deleteColBtn');
+
+if (insertTableBtn) {
+  insertTableBtn.onclick = () => {
+    if (!activeEditable) return;
+
+    // Make sure caret is saved/restored correctly
+    restoreCaret();
+
+    const table = buildEditableTable(3, 3);
+    insertNodeAtCaret(table);
+    activeTable = table;
+
+    // Focus first cell for immediate typing
+    const firstCell = table.querySelector('.cellBox');
+    if (firstCell) {
+      firstCell.focus();
+      placeCaretAtEnd(firstCell);
+    }
+  };
+}
+
+if (addRowBtn) {
+  addRowBtn.onclick = () => {
+    const t = ensureActiveTableFromSelection() || activeTable;
+    if (!t) return alert('Click inside a table first.');
+    addRowToTable(t);
+  };
+}
+
+if (deleteRowBtn) {
+  deleteRowBtn.onclick = () => {
+    const t = ensureActiveTableFromSelection() || activeTable;
+    if (!t) return alert('Click inside a table first.');
+    deleteRowFromTable(t);
+  };
+}
+
+if (addColBtn) {
+  addColBtn.onclick = () => {
+    const t = ensureActiveTableFromSelection() || activeTable;
+    if (!t) return alert('Click inside a table first.');
+    addColToTable(t);
+  };
+}
+
+if (deleteColBtn) {
+  deleteColBtn.onclick = () => {
+    const t = ensureActiveTableFromSelection() || activeTable;
+    if (!t) return alert('Click inside a table first.');
+    deleteColFromTable(t);
+  };
+}
 
 /* UI toggles */
 lockToggle.onclick = () => {
