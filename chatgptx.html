@@ -233,8 +233,6 @@ input[type="file"]::file-selector-button:hover {
 
 
 .resizableEmoji {
-  font-size: 1.4em;
-  font-weight: bold;
   display: inline-block;
 }
 
@@ -1312,6 +1310,96 @@ addNoteToggle.onclick = () => {
 };
 
 /* =========================
+   Inline Emoji Picker (for edit actions)
+========================= */
+const floatingEmojiPanel = document.getElementById('floatingEmojiPanel');
+
+// pick your favourites
+const EMOJIS = ['°','🔴','🟠','🟡','🟢','🔵','🟣','⚫️','⚪️','➜','⬇︎','⬅','➜ ','✅','❌','⭐','🔥','◼️','❤️','🧠','📝','📌','📍','💊','⚠️','🚨','⏳','💥','💪🏻'];
+
+function hideEmojiPanel() {
+  floatingEmojiPanel.style.display = 'none';
+  floatingEmojiPanel.setAttribute('aria-hidden', 'true');
+  floatingEmojiPanel.innerHTML = '';
+}
+
+function showEmojiPanelNearButton(btnEl, onPick) {
+  // rebuild panel each time so we can capture the current "editable"
+  floatingEmojiPanel.innerHTML = '';
+  EMOJIS.forEach(e => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pick';
+    b.textContent = e;
+    b.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      onPick(e);
+      hideEmojiPanel();
+    });
+    floatingEmojiPanel.appendChild(b);
+  });
+
+  const r = btnEl.getBoundingClientRect();
+  const pad = 8;
+
+  floatingEmojiPanel.style.display = 'block';
+  floatingEmojiPanel.setAttribute('aria-hidden', 'false');
+
+  // position to the right of the clicked button
+  const left = Math.min(window.innerWidth - 10, r.right + pad);
+  const top = Math.min(window.innerHeight - 10, r.top);
+
+  floatingEmojiPanel.style.left = left + 'px';
+  floatingEmojiPanel.style.top = top + 'px';
+}
+
+// close when clicking outside
+document.addEventListener('mousedown', (e) => {
+  if (floatingEmojiPanel.style.display !== 'block') return;
+  if (floatingEmojiPanel.contains(e.target)) return;
+  hideEmojiPanel();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideEmojiPanel();
+});
+
+function insertEmojiAtCaret(emoji) {
+  if (!activeEditable) return;
+
+  activeEditable.focus();
+  restoreCaret();
+
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount && activeEditable.contains(sel.anchorNode)) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+
+    const span = document.createElement('span');
+    span.className = 'resizableEmoji';
+    span.textContent = emoji;
+
+    range.insertNode(span);
+
+    // Move caret OUTSIDE the emoji span
+    const space = document.createTextNode('\u00A0'); // non-breaking space
+    span.after(space);
+
+    range.setStartAfter(space);
+    range.collapse(true);
+
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    saveCaret();
+  } else {
+    activeEditable.appendChild(document.createTextNode(emoji + ' '));
+    placeCaretAtEnd(activeEditable);
+  }
+}
+
+/* =========================
    Linkify
 ========================= */
 function linkify(html) {
@@ -1712,19 +1800,52 @@ const imgBtnWrap = makeInlineImagePickerButton((dataUrl) => {
   insertImageAtCaret(dataUrl);
 });
 
+// ✅ NEW: emoji button
+const emojiBtn = document.createElement('button');
+emojiBtn.type = 'button';
+emojiBtn.textContent = '😊';
+
+Object.assign(emojiBtn.style, {
+  background: 'none',
+  border: 'none',
+  color: '#666',
+  fontSize: '16px',
+  cursor: 'pointer',
+  marginRight: '12px'
+});
+
+emojiBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // ensure we insert into THIS editor
+  activeEditable = editable;
+  editable.focus();
+  saveCaret();
+
+  showEmojiPanelNearButton(emojiBtn, (picked) => {
+    activeEditable = editable;
+    editable.focus();
+    insertEmojiAtCaret(picked);
+  });
+});
+
 const actions = document.createElement('div');
 actions.style.textAlign = 'center';
 actions.style.marginTop = '6px';
-actions.append(imgBtnWrap, saveBtn, cancelBtn);
+
+// order: image, emoji, save, cancel
+actions.append(imgBtnWrap, emojiBtn, saveBtn, cancelBtn);
 
 div.append(editable, actions);
 
       cancelBtn.onclick = () => {
-        editable.remove();
-        actions.remove();
-        bubble.style.display = '';
-        btns.style.display = '';
-      };
+  hideEmojiPanel();
+  editable.remove();
+  actions.remove();
+  bubble.style.display = '';
+  btns.style.display = '';
+};
 
 
       saveBtn.onclick = async () => {
@@ -1737,6 +1858,7 @@ div.append(editable, actions);
           note.content = updated;
 
           bubble.innerHTML = '🤖 ' + updated;
+		  hideEmojiPanel();
           editable.remove();
           actions.remove();
           bubble.style.display = '';
