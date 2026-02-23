@@ -104,6 +104,9 @@ body::before {
   color: #1f1f1f;
 }
 
+.chatBubble { position: relative; overflow: visible; }
+.message { overflow: visible; }
+
 .message.user .chatBubble {
   background: rgba(248, 244, 246, 0.75);
 }
@@ -737,16 +740,46 @@ mark.underlineMatch{
 }
 
 /* Definition badge on concept pills */
-.conceptDefBadge{
-  margin-left: 6px;
-  font-size: 11px;
-  opacity: 0.75;
-  line-height: 1;
-  vertical-align: middle;
+/* Make pills a positioning context for the dot + tooltip */
+a.conceptLink {
+  position: relative;
+  overflow: visible; /* ensure tooltip can escape */
 }
 
-a.conceptLink.hasDef:hover{
-  position: relative;
+/* Yellow dot indicator when a definition exists */
+a.conceptLink.hasDef::before{
+  content: "";
+  position: absolute;
+  top: -4px;
+  right: -4px;
+
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+
+  background: rgba(255, 214, 102, 0.95); /* soft yellow */
+  border: 1px solid rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+
+  pointer-events: none; /* never block hover/click */
+}
+
+a.conceptLink.hasDef::before{
+  top: -0.45em;
+  right: -0.45em;
+  width: 0.75em;
+  height: 0.75em;
+  min-width: 10px;
+  min-height: 10px;
+}
+
+/* Ensure tooltip always floats above */
+a.conceptLink.hasDef:hover::after{
+  z-index: 10120;
+}
+
+.conceptCount{
+  margin-left: 6px;
 }
 
 /* Hover tooltip definition */
@@ -754,21 +787,35 @@ a.conceptLink.hasDef:hover::after{
   content: attr(data-def);
   position: absolute;
   left: 0;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   z-index: 10120;
 
-  width: min(320px, 70vw);
-  padding: 8px 10px;
+  width: min(360px, 78vw);
+  max-height: 240px;
+  overflow: auto;
+
+  padding: 10px 12px;
   border-radius: 12px;
 
-  background: rgba(255,255,255,0.70);
-  border: 1px solid rgba(255,255,255,0.55);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  /* ✅ much clearer */
+ background: rgba(255, 244, 204, 0.96);
+border: 1px solid rgba(255, 214, 102, 0.45);
 
-  color: #222;
-  font-size: 11px;
+  /* keep your glass look but less “see-through” */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  /* ✅ stronger separation */
+ box-shadow:
+  0 14px 40px rgba(255, 214, 102, 0.20),
+  0 0 0 1px rgba(255,255,255,0.6) inset;
+
+  color: #3a3200;
+  font-size: 12px;
+  line-height: 1.35;
+  
+   backdrop-filter: none;
+-webkit-backdrop-filter: none;  
   white-space: pre-wrap;
 }
 #defPanel .topRow{
@@ -1121,6 +1168,9 @@ let notesCache = [];
 let unsubscribeNotes = null;
 let liveTimer = null;
 let lastLiveQuery = '';
+let tagIndexSorted = [];            // [{tag,count}, ...]
+let conceptCountMap = new Map();    // normalizedConcept -> countOfNotesContainingIt
+let notesDerived = new Map();       // noteId -> { cleanedHtml, textNorm, tags }
 
 function clearLiveResults() {
   liveResults.innerHTML = '';
@@ -1151,7 +1201,7 @@ function renderLiveResults(notes, queryLabel) {
   displayNotesInto(container, notes);
   chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 }
-
+refreshConceptDefBadges(liveResults);
 /* =========================
    Hard error banner (shows real JS errors)
 ========================= */
@@ -1666,6 +1716,44 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+function buildDerivedCachesFromNotes() {
+  notesDerived.clear();
+  conceptCountMap = new Map();
+
+  const tagMap = new Map(); // tag -> count
+
+  for (const n of notesCache) {
+    const cleanedHtml = stripLegacyTableControls(n.content || '');
+    const plainText = htmlToText(cleanedHtml);
+    const textNorm = normalizeText(plainText);
+
+    const tags = extractTagsFromHtml(cleanedHtml); // already normalized list
+
+    // tag counts
+    for (const t of tags) tagMap.set(t, (tagMap.get(t) || 0) + 1);
+
+    // concepts counted once per note (unique concepts within that note)
+    const conceptsSet = new Set();
+    const re = /\[\[([^\]\[]+?)\]\]/g;
+    let m;
+    while ((m = re.exec(plainText)) !== null) {
+      const concept = (m[1] || '').trim();
+      if (!concept) continue;
+      conceptsSet.add(normalizeText(concept));
+    }
+
+    for (const c of conceptsSet) {
+      conceptCountMap.set(c, (conceptCountMap.get(c) || 0) + 1);
+    }
+
+    notesDerived.set(n.id, { cleanedHtml, textNorm, tags });
+  }
+
+  tagIndexSorted = [...tagMap.entries()]
+    .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+    .map(([tag, count]) => ({ tag, count }));
+}
+
 /* =========================
    Auth UI + realtime cache
 ========================= */
@@ -1682,6 +1770,7 @@ function startNotesListener() {
         const tb = b.createdAt?.toMillis?.() || 0;
         return tb - ta;
       });
+	  buildDerivedCachesFromNotes();
 
       const q = userInput.value.trim();
       if (q) runLiveSearch(q, true);
@@ -1703,23 +1792,42 @@ function stopNotesListener() {
 }
 
 /* =========================
-   Caret save/restore
+   Caret save/restore (PER-EDITOR)
 ========================= */
-let savedRange = null;
+const caretMap = new WeakMap(); // editorEl -> Range
 
 function saveCaret() {
   const sel = window.getSelection();
-  if (sel.rangeCount > 0 && activeEditable.contains(sel.anchorNode)) {
-    savedRange = sel.getRangeAt(0).cloneRange();
+  if (!sel || !sel.rangeCount || !activeEditable) return;
+
+  const r = sel.getRangeAt(0);
+  if (activeEditable.contains(r.startContainer)) {
+    caretMap.set(activeEditable, r.cloneRange());
   }
 }
 
 function restoreCaret() {
-  if (!savedRange) return false;
+  if (!activeEditable) return false;
+
+  const r = caretMap.get(activeEditable);
+  if (!r) return false;
+
   const sel = window.getSelection();
   sel.removeAllRanges();
-  sel.addRange(savedRange);
+  sel.addRange(r);
   return true;
+}
+
+function placeCaretAtEnd(el) {
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  caretMap.set(el, range.cloneRange());
 }
 
 /* =========================
@@ -1803,16 +1911,7 @@ function outdentAtCaret(spacesCount = INDENT_SPACES) {
   sel.addRange(newRange);
   saveCaret();
 }
-function placeCaretAtEnd(el) {
-  el.focus();
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  range.collapse(false);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-  savedRange = range.cloneRange();
-}
+
 
 ['keyup', 'mouseup', 'focus', 'input'].forEach(evt => {
   noteInput.addEventListener(evt, saveCaret);
@@ -2304,6 +2403,22 @@ function getDefinition(concept) {
   return defMap[k] || '';
 }
 
+function refreshConceptDefBadges(root = document) {
+  const links = root.querySelectorAll('a.conceptLink');
+  links.forEach(a => {
+    const concept = (a.getAttribute('data-concept') || a.textContent || '').trim();
+    const def = (getDefinition(concept) || '').trim();
+
+    if (def) {
+      a.classList.add('hasDef');
+      a.setAttribute('data-def', def);
+    } else {
+      a.classList.remove('hasDef');
+      a.removeAttribute('data-def');
+    }
+  });
+}
+
 function setDefinition(concept, value) {
   const k = defKeyForConcept(concept);
   if (!k) return;
@@ -2368,7 +2483,9 @@ defCloseBtn?.addEventListener('click', closeDefPanel);
 
 defSaveBtn?.addEventListener('click', () => {
   if (!currentDefConcept) return;
-  setDefinition(currentDefConcept, defBox.textContent || '');
+setDefinition(currentDefConcept, defBox.textContent || '');
+refreshConceptDefBadges(document.getElementById('chat'));
+
   // tiny feedback
   defSaveBtn.style.opacity = '1';
   setTimeout(() => (defSaveBtn.style.opacity = ''), 250);
@@ -2377,7 +2494,8 @@ defSaveBtn?.addEventListener('click', () => {
 defDeleteBtn?.addEventListener('click', () => {
   if (!currentDefConcept) return;
   deleteDefinition(currentDefConcept);
-  defBox.textContent = '';
+defBox.textContent = '';
+refreshConceptDefBadges(document.getElementById('chat'));
 });
 
 defSearchBtn?.addEventListener('click', () => {
@@ -2437,10 +2555,7 @@ function conceptLinkifyHTML(html) {
 
       // Count how many notes contain this concept
       const normalized = normalizeText(concept);
-      const count = notesCache.filter(n => {
-        const text = normalizeText(htmlToText(n.content || ''));
-        return text.includes(normalized);
-      }).length;
+const count = conceptCountMap.get(normalized) || 0;
 
       // Build the link
       const a = document.createElement('a');
@@ -2455,15 +2570,10 @@ function conceptLinkifyHTML(html) {
 
       // definition badge/tooltip (only if definition exists)
       const def = (getDefinition(concept) || '').trim();
-      if (def) {
-        a.classList.add('hasDef');
-        a.setAttribute('data-def', def);
-
-        const d = document.createElement('span');
-        d.className = 'conceptDefBadge';
-        d.textContent = '📘';
-        a.appendChild(d);
-      }
+if (def) {
+  a.classList.add('hasDef');
+  a.setAttribute('data-def', def);
+}
 
       // count badge
       if (count > 0) {
@@ -2582,18 +2692,18 @@ Object.assign(emojiBtn.style, {
   marginRight: '12px'
 });
 
-emojiBtn.addEventListener('click', (e) => {
+emojiBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
 
-  // ensure we insert into THIS editor
   activeEditable = editable;
-  editable.focus();
+  editable.focus({ preventScroll: true });
   saveCaret();
 
   showEmojiPanelNearButton(emojiBtn, (picked) => {
     activeEditable = editable;
-    editable.focus();
+    editable.focus({ preventScroll: true });
+    restoreCaret();
     insertEmojiAtCaret(picked);
   });
 });
@@ -2611,6 +2721,13 @@ actions.addEventListener('mousedown', () => {
   editable.focus({ preventScroll: true });
   saveCaret();
 }, true);
+
+setTimeout(() => {
+  activeEditable = editable;
+  editable.focus({ preventScroll: true });
+  placeCaretAtEnd(editable);   // seeds caretMap for this editor
+  saveCaret();
+}, 0);
 
 div.append(editable, actions);
 
@@ -2676,7 +2793,8 @@ if (tags.length) {
           const q = userInput.value.trim();
           if (q) runLiveSearch(q, true);
           else renderLiveResults(notesCache.slice(0, 30), 'Latest notes');
-
+          
+		refreshConceptDefBadges(liveResults);
         } catch (e) {
           alert('Error saving note: ' + e.message);
         }
@@ -2858,7 +2976,7 @@ function updateTagSuggestions() {
 
   const typed = normalizeTag(token.typed);
 
-  const index = buildTagIndexFromCache();
+  const index = tagIndexSorted;
   const filtered = typed
     ? index.filter(x => x.tag.startsWith(typed)).slice(0, 12)
     : index.slice(0, 12);
@@ -2935,7 +3053,7 @@ function runLiveSearch(q, immediate = false) {
   if (immediate) return doIt();
 
   clearTimeout(liveTimer);
-  liveTimer = setTimeout(doIt, 120);
+  liveTimer = setTimeout(doIt, 220);
 }
 
 /* =========================
@@ -2988,12 +3106,36 @@ inputArea.addEventListener('submit', async (e) => {
 /* =========================
    Formatting toolbar
 ========================= */
-document.getElementById('boldBtn').onclick = () => document.execCommand('bold');
-document.getElementById('italicBtn').onclick = () => document.execCommand('italic');
-document.getElementById('underlineBtn').onclick = () => document.execCommand('underline');
-document.getElementById('highlightBtn').onclick = () => document.execCommand('foreColor', false, '#5c6ac4');
-document.getElementById('redFontBtn').onclick = () => document.execCommand('foreColor', false, 'red');
-document.getElementById('blueFontBtn').onclick = () => document.execCommand('foreColor', false, 'blue');
+
+function runCmd(cmd, value = null) {
+  if (!activeEditable) activeEditable = noteInput;
+
+  activeEditable.focus({ preventScroll: true });
+  restoreCaret();
+
+  if (value === null) document.execCommand(cmd);
+  else document.execCommand(cmd, false, value);
+
+  saveCaret();
+}
+
+function bindToolbarBtn(id, cmd, value = null) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+
+  btn.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    runCmd(cmd, value);
+  });
+}
+
+bindToolbarBtn('boldBtn', 'bold');
+bindToolbarBtn('italicBtn', 'italic');
+bindToolbarBtn('underlineBtn', 'underline');
+bindToolbarBtn('highlightBtn', 'foreColor', '#5c6ac4');
+bindToolbarBtn('redFontBtn', 'foreColor', 'red');
+bindToolbarBtn('blueFontBtn', 'foreColor', 'blue');
 
 const indentBtn = document.getElementById('indentBtn');
 
@@ -3292,16 +3434,10 @@ document.addEventListener('keydown', (e) => {
   const sel = window.getSelection();
   let r = (sel && sel.rangeCount) ? sel.getRangeAt(0) : null;
 
-  // If current selection isn't inside the editor, fall back to savedRange (if valid)
-  if (!r || !sel || !activeEditable.contains(sel.anchorNode)) {
-    if (savedRange && activeEditable.contains(savedRange.startContainer)) {
-      r = savedRange.cloneRange();
-      sel?.removeAllRanges();
-      sel?.addRange(r);
-    } else {
-      r = null;
-    }
-  }
+ // If selection isn't inside the editor, just treat as no range
+if (!r || !sel || !activeEditable.contains(sel.anchorNode)) {
+  r = null;
+}
 
   // If still no range or collapsed, grab current word
   if (!r || r.collapsed) {
