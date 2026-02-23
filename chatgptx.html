@@ -234,6 +234,40 @@ input[type="file"]::file-selector-button:hover {
 
 .resizableEmoji {
   display: inline-block;
+  font-size: 1.5em;   /* Bigger than text */
+  font-weight: normal;
+  line-height: 1;
+  vertical-align: middle;
+  transform: translateY(0.8px);
+}
+
+/* Tag chips under notes */
+.tagRow{
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tagChip{
+  font-family: 'Tahoma', sans-serif;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+
+  background: rgba(208, 160, 163, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #444;
+  opacity: 0.9;
+}
+
+.tagChip:hover{
+  opacity: 1;
+  transform: scale(1.03);
 }
 
 /* Toolbar + Toggle */
@@ -504,6 +538,51 @@ input[type="file"]::file-selector-button:hover {
   color: #222;
 }
 
+/* Hashtag suggest dropdown */
+#tagSuggest {
+  position: fixed;
+  display: none;
+  z-index: 10090;
+
+  min-width: 180px;
+  max-width: 70vw;
+  max-height: 220px;
+  overflow: auto;
+
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+
+  font-size: 12px;
+}
+
+#tagSuggest .item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding: 6px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  color: #333;
+}
+
+#tagSuggest .item:hover,
+#tagSuggest .item.active {
+  background: rgba(208, 160, 163, 0.22);
+}
+
+#tagSuggest .count {
+  opacity: 0.65;
+  font-size: 11px;
+}
+
 /* search highlight color */
 .underlineMatch{
   background: rgba(208, 160, 163, 0.25); /* <-- change this */
@@ -760,6 +839,7 @@ mark.underlineMatch{
   <button type="submit" id="sendBtn">Send</button>
 </form>
 
+<div id="tagSuggest" aria-hidden="true"></div>
 <div id="floatingEmojiBtn" title="Insert emoji">📌</div>
 <div id="floatingEmojiPanel" aria-hidden="true"></div>
 
@@ -1382,11 +1462,12 @@ function insertEmojiAtCaret(emoji) {
 
     range.insertNode(span);
 
-    // Move caret OUTSIDE the emoji span
-    const space = document.createTextNode('\u00A0'); // non-breaking space
-    span.after(space);
+    // Insert invisible separator AFTER emoji
+    const spacer = document.createTextNode('\u200B'); // zero-width space
+    span.after(spacer);
 
-    range.setStartAfter(space);
+    // Move caret outside emoji
+    range.setStartAfter(spacer);
     range.collapse(true);
 
     sel.removeAllRanges();
@@ -1394,7 +1475,7 @@ function insertEmojiAtCaret(emoji) {
 
     saveCaret();
   } else {
-    activeEditable.appendChild(document.createTextNode(emoji + ' '));
+    activeEditable.appendChild(document.createTextNode(emoji));
     placeCaretAtEnd(activeEditable);
   }
 }
@@ -1529,6 +1610,27 @@ function htmlToText(html) {
   return div.textContent || div.innerText || '';
 }
 
+function normalizeTag(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function extractTagsFromHtml(html) {
+  const text = htmlToText(html || '');
+  // tags like #cardio #drug_notes #bp-check
+  const re = /(^|[\s(>])#([a-zA-Z0-9_][a-zA-Z0-9_-]*)/g;
+  const tags = [];
+  let m;
+
+  while ((m = re.exec(text)) !== null) {
+    const tag = normalizeTag(m[2]);
+    if (tag && !tags.includes(tag)) tags.push(tag);
+  }
+  return tags;
+}
 function parseFindQuery(raw) {
   const s = raw.replace(/^\/find\s+/i, '').trim();
 
@@ -1610,11 +1712,24 @@ function queryNotesSync(rawQuery) {
 
     const textNorm = normalizeText(htmlToText(cleanedHtml));
 
-    const ok = terms.every(t => {
-      if (!t) return true;
-      if (textNorm.includes(t)) return true;
-      return textNorm.split(/\s+/).some(w => w.startsWith(t));
-    });
+    const tags = extractTagsFromHtml(cleanedHtml); // normalized tag list like ["cardio","drug"]
+
+const ok = terms.every(t => {
+  if (!t) return true;
+
+  // Tag terms: "#something"
+  if (t.startsWith('#')) {
+    const tagTerm = normalizeTag(t.slice(1));
+    if (!tagTerm) return true;
+
+    // allow prefix match: "#car" matches "#cardio"
+    return tags.some(tag => tag === tagTerm || tag.startsWith(tagTerm));
+  }
+
+  // Normal text terms
+  if (textNorm.includes(t)) return true;
+  return textNorm.split(/\s+/).some(w => w.startsWith(t));
+});
 
     if (!ok) continue;
 
@@ -1839,6 +1954,40 @@ actions.append(imgBtnWrap, emojiBtn, saveBtn, cancelBtn);
 
 div.append(editable, actions);
 
+// --- Tag chips (click to filter) ---
+const tags = extractTagsFromHtml(stripLegacyTableControls(note.content || ''));
+if (tags.length) {
+  const row = document.createElement('div');
+  row.className = 'tagRow';
+
+  tags.forEach(tag => {
+    const chip = document.createElement('span');
+    chip.className = 'tagChip';
+    chip.textContent = '#' + tag;
+
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const token = '#' + tag;
+      const current = (userInput.value || '').trim();
+
+      // append the tag if not already present
+      const next = current
+        ? (current.includes(token) ? current : (current + ' ' + token))
+        : token;
+
+      userInput.value = next.trim();
+      userInput.focus();
+      runLiveSearch(userInput.value.trim(), true);
+    });
+
+    row.appendChild(chip);
+  });
+
+  div.appendChild(row);
+}
+// --- end tag chips ---
       cancelBtn.onclick = () => {
   hideEmojiPanel();
   editable.remove();
@@ -1892,7 +2041,195 @@ div.append(editable, actions);
   }
 }
 
+/* =========================
+   Hashtag suggestions in search bar
+========================= */
+const tagSuggest = document.getElementById('tagSuggest');
+let suggestOpen = false;
+let suggestItems = [];
+let suggestIndex = -1;
 
+function buildTagIndexFromCache() {
+  const map = new Map(); // tag -> count
+  for (const n of notesCache) {
+    const cleaned = stripLegacyTableControls(n.content || '');
+    const tags = extractTagsFromHtml(cleaned);
+    for (const t of tags) {
+      map.set(t, (map.get(t) || 0) + 1);
+    }
+  }
+  // return sorted array: most common first then alpha
+  return [...map.entries()]
+    .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+    .map(([tag, count]) => ({ tag, count }));
+}
+
+function getCurrentHashToken(inputValue, caretPos) {
+  const left = inputValue.slice(0, caretPos);
+  // last "#word" fragment (no spaces)
+  const m = left.match(/(^|\s)#([a-zA-Z0-9_-]*)$/);
+  if (!m) return null;
+
+  return {
+    prefix: m[1] || '',
+    typed: (m[2] || ''),
+    start: left.length - m[2].length, // start of typed part (after #)
+  };
+}
+
+function positionSuggestUnderInput() {
+  const r = userInput.getBoundingClientRect();
+  const pad = 10;
+
+  // width: follow the input width (nice + predictable)
+  const w = Math.max(220, Math.min(r.width, window.innerWidth - 20));
+  tagSuggest.style.width = w + 'px';
+
+  // center it over the input
+  let left = r.left + (r.width - w) / 2;
+  left = Math.max(10, Math.min(left, window.innerWidth - w - 10));
+  tagSuggest.style.left = left + 'px';
+
+  // IMPORTANT: measure height after it has content
+  const h = tagSuggest.getBoundingClientRect().height || 180;
+
+  // Prefer ABOVE the input (so it won't be hidden at the bottom)
+  let top = r.top - h - pad;
+
+  // If not enough room above, put it below
+  if (top < 10) top = r.bottom + pad;
+
+  // Final clamp
+  top = Math.max(10, Math.min(top, window.innerHeight - h - 10));
+  tagSuggest.style.top = top + 'px';
+}
+
+function closeSuggest() {
+  suggestOpen = false;
+  suggestItems = [];
+  suggestIndex = -1;
+  tagSuggest.style.display = 'none';
+  tagSuggest.setAttribute('aria-hidden', 'true');
+  tagSuggest.innerHTML = '';
+}
+
+function openSuggest(items) {
+  suggestOpen = true;
+  suggestItems = items;
+  suggestIndex = 0;
+
+  tagSuggest.innerHTML = '';
+  items.forEach((it, idx) => {
+    const row = document.createElement('div');
+    row.className = 'item' + (idx === suggestIndex ? ' active' : '');
+    row.innerHTML = `<span>#${it.tag}</span><span class="count">${it.count}</span>`;
+
+    row.addEventListener('mousedown', (e) => {
+      // mousedown so it works even if input loses focus
+      e.preventDefault();
+      applySuggestion(it.tag);
+    });
+
+    tagSuggest.appendChild(row);
+  });
+
+ tagSuggest.style.display = 'block';
+tagSuggest.setAttribute('aria-hidden', 'false');
+requestAnimationFrame(positionSuggestUnderInput);
+}
+
+function renderSuggestActive() {
+  const rows = tagSuggest.querySelectorAll('.item');
+  rows.forEach((r, i) => r.classList.toggle('active', i === suggestIndex));
+}
+
+function applySuggestion(tag) {
+  const caret = userInput.selectionStart ?? (userInput.value || '').length;
+  const token = getCurrentHashToken(userInput.value, caret);
+  if (!token) return closeSuggest();
+
+  // Replace "#typed" with "#tag "
+  const before = userInput.value.slice(0, caret).replace(/(^|\s)#([a-zA-Z0-9_-]*)$/, `$1#${tag} `);
+  const after = userInput.value.slice(caret);
+
+  userInput.value = before + after;
+
+  // move caret to end of inserted tag (right after the space)
+  const newCaret = before.length;
+  userInput.setSelectionRange(newCaret, newCaret);
+
+  closeSuggest();
+  runLiveSearch(userInput.value.trim(), true);
+}
+
+/* update suggestions whenever user types */
+function updateTagSuggestions() {
+  if (!isUnlocked) return closeSuggest();
+
+  const val = userInput.value || '';
+  const caret = userInput.selectionStart ?? val.length;
+  const token = getCurrentHashToken(val, caret);
+
+  // only show suggestions when user is currently typing a hashtag
+  if (!token) return closeSuggest();
+
+  const typed = normalizeTag(token.typed);
+
+  const index = buildTagIndexFromCache();
+  const filtered = typed
+    ? index.filter(x => x.tag.startsWith(typed)).slice(0, 12)
+    : index.slice(0, 12);
+
+  if (!filtered.length) return closeSuggest();
+  openSuggest(filtered);
+}
+
+/* close on click elsewhere */
+document.addEventListener('mousedown', (e) => {
+  if (!suggestOpen) return;
+  if (tagSuggest.contains(e.target)) return;
+  if (e.target === userInput) return;
+  closeSuggest();
+});
+
+/* keyboard nav */
+userInput.addEventListener('keydown', (e) => {
+  if (!suggestOpen) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    suggestIndex = Math.min(suggestItems.length - 1, suggestIndex + 1);
+    renderSuggestActive();
+    return;
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    suggestIndex = Math.max(0, suggestIndex - 1);
+    renderSuggestActive();
+    return;
+  }
+  if (e.key === 'Enter') {
+    // If dropdown is open, enter picks tag (and prevents form submit)
+    e.preventDefault();
+    const it = suggestItems[suggestIndex];
+    if (it) applySuggestion(it.tag);
+    return;
+  }
+  if (e.key === 'Escape') {
+    closeSuggest();
+    return;
+  }
+});
+
+/* hook into your existing input handler */
+userInput.addEventListener('input', () => {
+  updateTagSuggestions();
+});
+
+/* reposition on resize/scroll (input is fixed but still safe) */
+window.addEventListener('resize', () => {
+  if (suggestOpen) positionSuggestUnderInput();
+});
 
 /* =========================
    Live search runner (SYNC + stable)
