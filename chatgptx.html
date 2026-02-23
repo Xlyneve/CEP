@@ -791,6 +791,7 @@ mark.underlineMatch{
 <div id="formatToggle">📋</div>
 
 <div id="formatToolbar">
+  <button class="format-btn" id="recallBtn" title="Smart Recall (Shift+Click includes pinned)">📖</button>
   <button class="format-btn" id="boldBtn"><b>B</b></button>
   <button class="format-btn" id="italicBtn"><i>I</i></button>
   <button class="format-btn" id="underlineBtn"><u>U</u></button>
@@ -1301,6 +1302,139 @@ function updateUIForLockState() {
     stopNotesListener();
   }
 }
+
+const recallBtn = document.getElementById('recallBtn');
+
+/* =========================
+   Smart Recall (spaced-ish)
+   - Stores "seen" timestamps in localStorage (private)
+========================= */
+const SEEN_KEY = 'notes_seen_v1';
+let seenMap = {};
+
+try {
+  seenMap = JSON.parse(localStorage.getItem(SEEN_KEY) || '{}') || {};
+} catch {
+  seenMap = {};
+}
+
+function saveSeenMap() {
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify(seenMap));
+  } catch {}
+}
+
+function getSeenAt(noteId) {
+  return Number(seenMap[noteId] || 0);
+}
+
+function markSeen(noteId) {
+  seenMap[noteId] = Date.now();
+  saveSeenMap();
+}
+
+function pickWeightedUnique(items, k) {
+  const pool = items.slice();
+  const picked = [];
+
+  for (let i = 0; i < k && pool.length; i++) {
+    const total = pool.reduce((sum, x) => sum + x.weight, 0);
+    let r = Math.random() * (total || 1);
+
+    let idx = 0;
+    for (; idx < pool.length; idx++) {
+      r -= pool[idx].weight;
+      if (r <= 0) break;
+    }
+    idx = Math.min(idx, pool.length - 1);
+
+    picked.push(pool[idx]);
+    pool.splice(idx, 1);
+  }
+  return picked;
+}
+
+function runSmartRecall({ count = 3, includePinned = false } = {}) {
+  if (!isUnlocked) return alert('Locked.');
+
+  if (!notesCache.length) {
+    clearLiveResults();
+    renderHeaderLine('📖 Smart Recall: no notes yet.');
+    return;
+  }
+
+  const now = Date.now();
+  const DAY = 86400000;
+
+  // candidates from cache
+  const candidates = notesCache
+    .filter(n => includePinned ? true : !n.pinned) // if you add pinning later
+    .map(n => {
+      const seenAt = getSeenAt(n.id);
+      const daysSinceSeen = seenAt ? (now - seenAt) / DAY : 999;
+
+      // Weight: never-seen > long-ago-seen > recently seen
+      // Keep it stable and not too extreme.
+      const weight =
+        !seenAt ? 12 :
+        daysSinceSeen > 30 ? 10 :
+        daysSinceSeen > 14 ? 7 :
+        daysSinceSeen > 7  ? 4 :
+        daysSinceSeen > 3  ? 2 :
+        0.8;
+
+      return {
+        id: n.id,
+        createdAt: n.createdAt,
+        content: n.content || '',
+        pinned: !!n.pinned,
+        weight
+      };
+    });
+
+  const chosen = pickWeightedUnique(candidates, count);
+
+  // mark chosen as seen
+  chosen.forEach(n => markSeen(n.id));
+
+  // render like search results
+  clearLiveResults();
+  renderHeaderLine(`📖 Smart Recall (${chosen.length})`);
+
+  const container = document.createElement('div');
+  liveResults.appendChild(container);
+
+  // displayNotesInto expects items with .content
+  displayNotesInto(container, chosen.map(n => ({
+    id: n.id,
+    createdAt: n.createdAt,
+    content: stripLegacyTableControls(n.content),
+    pinned: n.pinned,
+    score: 0
+  })));
+
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+}
+
+if (recallBtn) {
+  recallBtn.addEventListener('click', (e) => {
+
+    // subtle feedback animation
+    recallBtn.style.opacity = '1';
+    setTimeout(() => (recallBtn.style.opacity = ''), 250);
+
+    runSmartRecall({ count: 3, includePinned: e.shiftKey });
+  });
+}
+
+/* Optional keyboard shortcut: Alt+R */
+document.addEventListener('keydown', (e) => {
+  if (!isUnlocked) return;
+  if (e.altKey && (e.key === 'r' || e.key === 'R')) {
+    e.preventDefault();
+    runSmartRecall({ count: 3, includePinned: e.shiftKey });
+  }
+});
 
 /* =========================
    Auth UI + realtime cache
