@@ -712,6 +712,151 @@ mark.underlineMatch{
   transform: scale(1.12);
 }
 
+/* =========================
+   Concept Definition Panel
+========================= */
+#defPanel {
+  position: fixed;
+  z-index: 10110;
+  display: none;
+  width: min(360px, 86vw);
+  max-height: 60vh;
+  overflow: auto;
+
+  padding: 10px 12px;
+  border-radius: 14px;
+
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+
+  color: #222;
+  font-family: 'Tahoma', sans-serif;
+}
+
+/* Definition badge on concept pills */
+.conceptDefBadge{
+  margin-left: 6px;
+  font-size: 11px;
+  opacity: 0.75;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+a.conceptLink.hasDef:hover{
+  position: relative;
+}
+
+/* Hover tooltip definition */
+a.conceptLink.hasDef:hover::after{
+  content: attr(data-def);
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 10120;
+
+  width: min(320px, 70vw);
+  padding: 8px 10px;
+  border-radius: 12px;
+
+  background: rgba(255,255,255,0.70);
+  border: 1px solid rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+
+  color: #222;
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+#defPanel .topRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+#defPanel .title {
+  font-weight: 700;
+  font-size: 12px;
+  color: #222;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+#defPanel .hint {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: 6px;
+  font-weight: 400;
+}
+
+#defPanel .closeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.8;
+}
+#defPanel .closeBtn:hover { opacity: 1; }
+
+#defBox {
+  width: 100%;
+  min-height: 90px;
+  max-height: 260px;
+  overflow: auto;
+
+  padding: 10px;
+  border-radius: 12px;
+
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  outline: none;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+#defBox:empty:before{
+  content: "Write a definition… (saved locally)";
+  color: rgba(0,0,0,0.35);
+}
+
+#defPanel .btnRow{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  margin-top:10px;
+}
+
+#defPanel .miniBtn{
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.8;
+  padding: 6px 8px;
+  border-radius: 10px;
+
+  border: 1px solid rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+#defPanel .miniBtn:hover{ opacity: 1; }
+
+#defPanel .danger{
+  border-color: rgba(208,160,163,0.55);
+  background: rgba(208,160,163,0.20);
+}
+
 /* Fullscreen image zoom overlay */
 #imgZoomOverlay {
   position: fixed;
@@ -905,6 +1050,23 @@ mark.underlineMatch{
 <div id="floatingEmojiBtn" title="Insert emoji">📌</div>
 <div id="floatingEmojiPanel" aria-hidden="true"></div>
 
+<div id="defPanel" aria-hidden="true">
+  <div class="topRow">
+    <div class="title">
+      <span id="defTitle">Concept</span>
+      <span class="hint">(Shift+Click = definitions)</span>
+    </div>
+    <button class="closeBtn" id="defCloseBtn" title="Close">✕</button>
+  </div>
+
+  <div id="defBox" contenteditable="true"></div>
+
+  <div class="btnRow">
+    <button class="miniBtn" id="defSearchBtn" title="Search this concept">🔎</button>
+    <button class="miniBtn danger" id="defDeleteBtn" title="Delete definition">🗑️</button>
+    <button class="miniBtn" id="defSaveBtn" title="Save definition">💾</button>
+  </div>
+</div>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -2116,6 +2278,127 @@ function makeInlineImagePickerButton(onPicked) {
   return wrap;
 }
 
+/* =========================
+   Local Definitions (Glossary)
+   - stored in localStorage
+========================= */
+const DEF_KEY = 'concept_defs_v1';
+let defMap = {};
+try {
+  defMap = JSON.parse(localStorage.getItem(DEF_KEY) || '{}') || {};
+} catch {
+  defMap = {};
+}
+
+function saveDefMap() {
+  try { localStorage.setItem(DEF_KEY, JSON.stringify(defMap)); } catch {}
+}
+
+function defKeyForConcept(concept) {
+  // normalize key to reduce duplicates
+  return normalizeText(concept || '');
+}
+
+function getDefinition(concept) {
+  const k = defKeyForConcept(concept);
+  return defMap[k] || '';
+}
+
+function setDefinition(concept, value) {
+  const k = defKeyForConcept(concept);
+  if (!k) return;
+  defMap[k] = (value || '').trim();
+  saveDefMap();
+}
+
+function deleteDefinition(concept) {
+  const k = defKeyForConcept(concept);
+  if (!k) return;
+  delete defMap[k];
+  saveDefMap();
+}
+
+/* Panel wiring */
+const defPanel = document.getElementById('defPanel');
+const defTitle = document.getElementById('defTitle');
+const defBox = document.getElementById('defBox');
+const defCloseBtn = document.getElementById('defCloseBtn');
+const defSaveBtn = document.getElementById('defSaveBtn');
+const defDeleteBtn = document.getElementById('defDeleteBtn');
+const defSearchBtn = document.getElementById('defSearchBtn');
+
+let currentDefConcept = '';
+
+function openDefPanel(concept, clientX, clientY) {
+  currentDefConcept = (concept || '').trim();
+  if (!currentDefConcept) return;
+
+  defTitle.textContent = currentDefConcept;
+
+  // load saved definition (plain text is safest here)
+  const saved = getDefinition(currentDefConcept);
+  defBox.textContent = saved;
+
+  defPanel.style.display = 'block';
+  defPanel.setAttribute('aria-hidden', 'false');
+
+  // position near click
+  const pad = 10;
+  const rect = defPanel.getBoundingClientRect();
+  let left = (clientX ?? 80) + pad;
+  let top = (clientY ?? 80) + pad;
+
+  if (left + rect.width > window.innerWidth - 10) left = window.innerWidth - rect.width - 10;
+  if (top + rect.height > window.innerHeight - 10) top = window.innerHeight - rect.height - 10;
+
+  defPanel.style.left = Math.max(10, left) + 'px';
+  defPanel.style.top = Math.max(10, top) + 'px';
+
+  // focus box for quick typing
+  setTimeout(() => defBox.focus({ preventScroll: true }), 0);
+}
+
+function closeDefPanel() {
+  defPanel.style.display = 'none';
+  defPanel.setAttribute('aria-hidden', 'true');
+  currentDefConcept = '';
+}
+
+defCloseBtn?.addEventListener('click', closeDefPanel);
+
+defSaveBtn?.addEventListener('click', () => {
+  if (!currentDefConcept) return;
+  setDefinition(currentDefConcept, defBox.textContent || '');
+  // tiny feedback
+  defSaveBtn.style.opacity = '1';
+  setTimeout(() => (defSaveBtn.style.opacity = ''), 250);
+});
+
+defDeleteBtn?.addEventListener('click', () => {
+  if (!currentDefConcept) return;
+  deleteDefinition(currentDefConcept);
+  defBox.textContent = '';
+});
+
+defSearchBtn?.addEventListener('click', () => {
+  if (!currentDefConcept) return;
+  userInput.value = `"${currentDefConcept}"`;
+  userInput.focus();
+  runLiveSearch(userInput.value.trim(), true);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && defPanel.style.display === 'block') closeDefPanel();
+}, true);
+
+// click outside closes
+document.addEventListener('mousedown', (e) => {
+  if (defPanel.style.display !== 'block') return;
+  if (defPanel.contains(e.target)) return;
+  closeDefPanel();
+}, true);
+
+
 function conceptLinkifyHTML(html) {
   if (!html) return html;
 
@@ -2126,18 +2409,17 @@ function conceptLinkifyHTML(html) {
 
   const walker = document.createTreeWalker(wrap, NodeFilter.SHOW_TEXT, null);
   const textNodes = [];
-
   while (walker.nextNode()) textNodes.push(walker.currentNode);
 
   textNodes.forEach(node => {
     const parent = node.parentElement;
     if (!parent) return;
 
-    if (parent.closest('a, button, [contenteditable="true"]')) return;
+    // Don't mess with existing interactive elements
+    if (parent.closest('a, button')) return;
 
     const txt = node.nodeValue || '';
     if (!re.test(txt)) return;
-
     re.lastIndex = 0;
 
     const frag = document.createDocumentFragment();
@@ -2147,16 +2429,20 @@ function conceptLinkifyHTML(html) {
       frag.appendChild(document.createTextNode(txt.slice(last, offset)));
 
       const concept = (inner || '').trim();
-      if (!concept) return m;
+      if (!concept) {
+        frag.appendChild(document.createTextNode(m));
+        last = offset + m.length;
+        return m;
+      }
 
       // Count how many notes contain this concept
       const normalized = normalizeText(concept);
-
       const count = notesCache.filter(n => {
         const text = normalizeText(htmlToText(n.content || ''));
         return text.includes(normalized);
       }).length;
 
+      // Build the link
       const a = document.createElement('a');
       a.href = '#';
       a.className = 'conceptLink';
@@ -2165,14 +2451,27 @@ function conceptLinkifyHTML(html) {
       // main text
       const label = document.createElement('span');
       label.textContent = concept;
+      a.appendChild(label);
+
+      // definition badge/tooltip (only if definition exists)
+      const def = (getDefinition(concept) || '').trim();
+      if (def) {
+        a.classList.add('hasDef');
+        a.setAttribute('data-def', def);
+
+        const d = document.createElement('span');
+        d.className = 'conceptDefBadge';
+        d.textContent = '📘';
+        a.appendChild(d);
+      }
 
       // count badge
-      const badge = document.createElement('span');
-      badge.className = 'conceptCount';
-      badge.textContent = count;
-
-      a.appendChild(label);
-      if (count > 0) a.appendChild(badge);
+      if (count > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'conceptCount';
+        badge.textContent = String(count);
+        a.appendChild(badge);
+      }
 
       frag.appendChild(a);
 
@@ -2187,24 +2486,8 @@ function conceptLinkifyHTML(html) {
   return wrap.innerHTML;
 }
 
-// turns [[Hypertension]] into a clickable link that displays "Hypertension"
-function linkifyConcepts(html) {
-  if (!html) return html;
 
-  return html.replace(/\[\[([\s\S]+?)\]\]/g, (_, raw) => {
-    const topic = (raw || '').trim();
-    if (!topic) return '';
 
-    // escape for safety
-    const esc = topic
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-
-    return `<a href="#" class="conceptLink" data-concept="${esc}">${esc}</a>`;
-  });
-}
 /* =========================
    Render notes into ANY container
 ========================= */
@@ -2546,13 +2829,17 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   e.stopPropagation();
 
-  // Prefer data attribute
   let topic = (a.getAttribute('data-concept') || a.textContent || '').trim();
-
-  // Remove [[ ]] if still present
   topic = topic.replace(/^\[\[\s*/, '').replace(/\s*\]\]$/, '').trim();
   if (!topic) return;
 
+  // ✅ Shift+Click = open definition panel (no search unless you hit 🔎)
+  if (e.shiftKey) {
+    openDefPanel(topic, e.clientX, e.clientY);
+    return;
+  }
+
+  // normal click = your existing search behavior
   userInput.value = `"${topic}"`;
   userInput.focus();
   runLiveSearch(userInput.value.trim(), true);
