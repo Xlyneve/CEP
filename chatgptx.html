@@ -527,34 +527,57 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 0 16px rgba(236, 235, 232, 0.7);
   color: #222;
 }
-/* Concept links: [[topic]] */
+
+/* Concept links: [[topic]] — soft pastel pill + subtle ring */
 .chatBubble a.conceptLink,
 .editableNote a.conceptLink,
 a.conceptLink,
 a.conceptLink:visited,
 a.conceptLink:active,
 a.conceptLink:focus {
-  color: #2a2a2a !important;         /* overrides the global blue link rule */
-  text-decoration: none !important;  /* overrides underline */
+  color: #2a2a2a !important;
+  text-decoration: none !important;
 
-  border-bottom: none;
-  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.25);
+  display: inline-block;
+  padding: 0px 7px;
+  border-radius: 999px;
 
-  padding: 0 3px;
-  border-radius: 6px;
+  /* pastel tint (matches your pinky/neutral palette) */
+  background: rgba(208, 160, 163, 0.18);
 
-  background: rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* gentle “clickable” ring */
+  border: 1px solid rgba(208, 160, 163, 0.30);
 
-  transition: all 0.15s ease;
+  /* soft inner depth (not underline-blue-ish) */
+  box-shadow:
+    inset 0 -1px 0 rgba(0,0,0,0.18),
+    0 1px 6px rgba(0,0,0,0.06);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
+/* Hover: slightly more tinted + tiny lift */
 .chatBubble a.conceptLink:hover,
 .editableNote a.conceptLink:hover {
-  background: rgba(255, 255, 255, 0.55);
-  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.45);
+  background: rgba(208, 160, 163, 0.26);
+  border-color: rgba(208, 160, 163, 0.45);
+  box-shadow:
+    inset 0 -1px 0 rgba(0,0,0,0.22),
+    0 6px 18px rgba(0,0,0,0.10);
+  transform: translateY(-0.5px);
 }
+
+/* Keyboard focus: visible but still soft */
+.chatBubble a.conceptLink:focus-visible,
+.editableNote a.conceptLink:focus-visible {
+  outline: 2px solid rgba(208, 160, 163, 0.35);
+  outline-offset: 2px;
+}
+
 /* Hashtag suggest dropdown */
 #tagSuggest {
   position: fixed;
@@ -854,7 +877,7 @@ mark.underlineMatch{
 </div>
 
 <form id="inputArea">
-  <input type="text" id="userInput" placeholder="Type to search notes… (use /ask to ask AI)" autocomplete="off" required />
+  <input type="text" id="userInput" placeholder='Search…  Tip: Ctrl+L = make [[concept]] (Shift+Click Recall includes pinned)' autocomplete="off" required />
   <button type="submit" id="sendBtn">Send</button>
 </form>
 
@@ -2829,6 +2852,113 @@ function insertNodeAtCaret(nodeToInsert) {
     placeCaretAtEnd(activeEditable);
   }
 }
+
+/* =========================
+   Ctrl+L = wrap selection (or word) as [[concept]]
+========================= */
+function getWordRangeAtCaret(rootEl) {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return null;
+
+  const range = sel.getRangeAt(0);
+  if (!range.collapsed) return range; // selection already exists
+
+  // Must be inside the active editor
+  const node = sel.anchorNode;
+  if (!rootEl || !node || !rootEl.contains(node)) return null;
+
+  // If we're not in a text node, try to find a nearby text node
+  let textNode = node.nodeType === Node.TEXT_NODE ? node : null;
+  if (!textNode) {
+    // Try to find a text node inside the element
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
+    textNode = walker.nextNode();
+    if (!textNode) return null;
+  }
+
+  const text = textNode.nodeValue || '';
+  let i = sel.anchorOffset;
+
+  // Clamp offset into text bounds
+  i = Math.max(0, Math.min(i, text.length));
+
+  // Expand left/right to word boundaries (letters/numbers/_/-)
+  const isWordChar = (ch) => /[A-Za-z0-9_-]/.test(ch);
+
+  let start = i;
+  let end = i;
+
+  // If caret is at end, step back one char
+  if (start > 0 && start === end && !isWordChar(text[start]) && isWordChar(text[start - 1])) {
+    start--;
+    end--;
+  }
+
+  while (start > 0 && isWordChar(text[start - 1])) start--;
+  while (end < text.length && isWordChar(text[end])) end++;
+
+  if (start === end) return null;
+
+  const r = document.createRange();
+  r.setStart(textNode, start);
+  r.setEnd(textNode, end);
+  return r;
+}
+
+function wrapRangeWithConcept(range) {
+  if (!range) return;
+
+  const raw = range.toString();
+  const topic = (raw || '').trim();
+  if (!topic) return;
+
+  // If already wrapped like [[topic]], do nothing
+  if (/^\[\[\s*[\s\S]*?\s*\]\]$/.test(topic)) return;
+
+  // Replace selection with [[topic]]
+  range.deleteContents();
+  const tn = document.createTextNode(`[[${topic}]]`);
+  range.insertNode(tn);
+
+  // Place caret after inserted text
+  const sel = window.getSelection();
+  const after = document.createRange();
+  after.setStartAfter(tn);
+  after.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(after);
+
+  saveCaret?.();
+}
+
+document.addEventListener('keydown', (e) => {
+  // Ctrl+L on Windows/Linux, Cmd+L on Mac (optional)
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+  const mod = isMac ? e.metaKey : e.ctrlKey;
+
+  if (!mod || e.key.toLowerCase() !== 'l') return;
+
+  // Don't hijack if you're typing in the search input
+  if (document.activeElement === userInput) return;
+
+  // Must have an active editor
+  if (!activeEditable || !isIndentableEditable(activeEditable)) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  activeEditable.focus();
+
+  // Prefer existing selection, else grab current word
+  const sel = window.getSelection();
+  let r = (sel && sel.rangeCount) ? sel.getRangeAt(0) : null;
+
+  if (!r || r.collapsed) {
+    r = getWordRangeAtCaret(activeEditable);
+  }
+
+  wrapRangeWithConcept(r);
+}, true);
 
 function ensureActiveTableFromSelection() {
   const sel = window.getSelection();
