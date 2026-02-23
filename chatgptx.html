@@ -83,10 +83,8 @@ body::before {
   border-radius: 8px;
 }
 
-.editableNote a,
-.chatBubble a {
-  word-break: break-word;
-  overflow-wrap: anywhere;
+.editableNote a:not(.conceptLink),
+.chatBubble a:not(.conceptLink) {
   color: #1a0dab;
   text-decoration: underline;
 }
@@ -529,7 +527,34 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 0 16px rgba(236, 235, 232, 0.7);
   color: #222;
 }
+/* Concept links: [[topic]] */
+.chatBubble a.conceptLink,
+.editableNote a.conceptLink,
+a.conceptLink,
+a.conceptLink:visited,
+a.conceptLink:active,
+a.conceptLink:focus {
+  color: #2a2a2a !important;         /* overrides the global blue link rule */
+  text-decoration: none !important;  /* overrides underline */
 
+  border-bottom: none;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.25);
+
+  padding: 0 3px;
+  border-radius: 6px;
+
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  transition: all 0.15s ease;
+}
+
+.chatBubble a.conceptLink:hover,
+.editableNote a.conceptLink:hover {
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.45);
+}
 /* Hashtag suggest dropdown */
 #tagSuggest {
   position: fixed;
@@ -1892,13 +1917,16 @@ function highlightHTML(html, termsNorm) {
   const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
 
   nodes.forEach(node => {
-    const text = node.nodeValue;
-    if (!regex.test(text)) return;
+  const parent = node.parentElement;
+  if (parent && parent.closest('a.conceptLink')) return;
 
-    const span = document.createElement('span');
-    span.innerHTML = text.replace(regex, `<mark class="underlineMatch">$1</mark>`);
-    node.parentNode.replaceChild(span, node);
-  });
+  const text = node.nodeValue;
+  if (!regex.test(text)) return;
+
+  const span = document.createElement('span');
+  span.innerHTML = text.replace(regex, `<mark class="underlineMatch">$1</mark>`);
+  node.parentNode.replaceChild(span, node);
+});
 
   return container.innerHTML;
 }
@@ -1941,12 +1969,15 @@ const ok = terms.every(t => {
 
     if (!ok) continue;
 
-    results.push({
-      id: data.id,
-      createdAt: data.createdAt,
-      content: highlightHTML(cleanedHtml, terms),
-      score: scoreDoc(textNorm, terms)
-    });
+    const withConcepts = conceptLinkifyHTML(cleanedHtml);
+const withHighlights = highlightHTML(withConcepts, terms);
+
+results.push({
+  id: data.id,
+  createdAt: data.createdAt,
+  content: withHighlights,
+  score: scoreDoc(textNorm, terms)
+});
   }
 
   results.sort((a, b) => {
@@ -2042,6 +2073,76 @@ function makeInlineImagePickerButton(onPicked) {
   return wrap;
 }
 
+function conceptLinkifyHTML(html) {
+  if (!html) return html;
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = html;
+
+  // Match [[something]] (non-greedy, avoids nested brackets)
+  const re = /\[\[([^\]\[]+?)\]\]/g;
+
+  const walker = document.createTreeWalker(wrap, NodeFilter.SHOW_TEXT, null);
+  const textNodes = [];
+
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  textNodes.forEach(node => {
+    const parent = node.parentElement;
+    if (!parent) return;
+
+    // don't rewrite inside existing links/buttons/contenteditable regions
+    if (parent.closest('a, button, [contenteditable="true"]')) return;
+
+    const txt = node.nodeValue || '';
+    if (!re.test(txt)) return;
+
+    re.lastIndex = 0;
+
+    const frag = document.createDocumentFragment();
+    let last = 0;
+
+    txt.replace(re, (m, inner, offset) => {
+      frag.appendChild(document.createTextNode(txt.slice(last, offset)));
+
+      const concept = (inner || '').trim();
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'conceptLink';
+      a.dataset.concept = concept;
+     a.textContent = concept;
+
+      frag.appendChild(a);
+
+      last = offset + m.length;
+      return m;
+    });
+
+    frag.appendChild(document.createTextNode(txt.slice(last)));
+    node.parentNode.replaceChild(frag, node);
+  });
+
+  return wrap.innerHTML;
+}
+
+// turns [[Hypertension]] into a clickable link that displays "Hypertension"
+function linkifyConcepts(html) {
+  if (!html) return html;
+
+  return html.replace(/\[\[([\s\S]+?)\]\]/g, (_, raw) => {
+    const topic = (raw || '').trim();
+    if (!topic) return '';
+
+    // escape for safety
+    const esc = topic
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    return `<a href="#" class="conceptLink" data-concept="${esc}">${esc}</a>`;
+  });
+}
 /* =========================
    Render notes into ANY container
 ========================= */
@@ -2063,8 +2164,7 @@ function displayNotesInto(targetEl, notes) {
 
     const bubble = document.createElement('div');
     bubble.className = 'chatBubble';
-    bubble.innerHTML = '🤖 ' + stripLegacyTableControls(note.content || '');
-    div.appendChild(bubble);
+bubble.innerHTML = '🤖 ' + conceptLinkifyHTML(stripLegacyTableControls(note.content || ''));    div.appendChild(bubble);
 
     const btns = document.createElement('div');
     btns.style.textAlign = 'center';
@@ -2214,7 +2314,7 @@ if (tags.length) {
           await db.collection('notes').doc(note.id).update({ content: updated });
           note.content = updated;
 
-          bubble.innerHTML = '🤖 ' + updated;
+          bubble.innerHTML = '🤖 ' + conceptLinkifyHTML(stripLegacyTableControls(updated));
 		  hideEmojiPanel();
           editable.remove();
           actions.remove();
@@ -2369,6 +2469,25 @@ function applySuggestion(tag) {
   closeSuggest();
   runLiveSearch(userInput.value.trim(), true);
 }
+
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a.conceptLink');
+  if (!a) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Prefer data attribute
+  let topic = (a.getAttribute('data-concept') || a.textContent || '').trim();
+
+  // Remove [[ ]] if still present
+  topic = topic.replace(/^\[\[\s*/, '').replace(/\s*\]\]$/, '').trim();
+  if (!topic) return;
+
+  userInput.value = `"${topic}"`;
+  userInput.focus();
+  runLiveSearch(userInput.value.trim(), true);
+}, true);
 
 /* update suggestions whenever user types */
 function updateTagSuggestions() {
