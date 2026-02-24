@@ -236,21 +236,36 @@ h2 {
       <div class="result" id="dob45">DOB + 45 Years: </div>
     </div>
 
-    <div class="calculator">
-      <h2>Age in Years and Months</h2>
-      <label for="dobYM">Date of Birth:</label>
-      <input type="date" id="dobYM">
-      <div class="result" id="ageYMResult">Age: </div>
-    </div>
-
-    <div class="calculator">
+        <div class="calculator">
       <h2>Age Calculator</h2>
       <label for="dob">Date of Birth:</label>
       <input type="date" id="dob">
       <div class="result" id="ageResult">Age: </div>
     </div>
 
-  </div>
+        <div class="calculator">
+  <h2>Age in Years and Months</h2>
+  <label for="dobYM">Date of Birth:</label>
+  <input type="date" id="dobYM">
+  <div class="result" id="ageYMResult">Age: </div>
+</div>
+
+    <!-- NEW: Pregnancy calculator tile -->
+    <div class="calculator">
+      <h2>Pregnancy Weeks (GA from EDD)</h2>
+
+      <label for="edd">EDD (Estimated Due Date):</label>
+      <input type="date" id="edd">
+
+      <label for="gaOnDate">Calculate GA on date:</label>
+      <input type="date" id="gaOnDate">
+
+      <div class="result" id="gaResult">GA: </div>
+      <div class="result" id="lmpResult">Estimated LMP: </div>
+      <div class="result" id="daysToEddResult">Days until EDD: </div>
+    </div>
+
+  </div> <!-- ✅ closes tile-container -->
 
   <script>
     function formatDate(date) {
@@ -368,30 +383,100 @@ h2 {
       });
 
       const dobYM = document.getElementById('dobYM');
-      const ageYMResult = document.getElementById('ageYMResult');
+const ageYMResult = document.getElementById('ageYMResult');
 
-      dobYM.addEventListener('change', () => {
-        const birthDate = new Date(dobYM.value);
-        const today = new Date();
-        let years = today.getFullYear() - birthDate.getFullYear();
-        let months = today.getMonth() - birthDate.getMonth();
+if (dobYM && ageYMResult) {
+  dobYM.addEventListener('change', () => {
+    const birthDate = new Date(dobYM.value);
+    const today = new Date();
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
 
-        if (today.getDate() < birthDate.getDate()) {
-          months--;
-        }
+    if (today.getDate() < birthDate.getDate()) {
+      months--;
+    }
 
-        if (months < 0) {
-          years--;
-          months += 12;
-        }
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
 
-        if (today < birthDate) {
-          ageYMResult.textContent = 'Age: Invalid (future DOB)';
-        } else {
-          ageYMResult.textContent = `Age: ${years} years and ${months} months`;
-        }
-      });
-    });
+    if (today < birthDate) {
+      ageYMResult.textContent = 'Age: Invalid (future DOB)';
+    } else {
+      ageYMResult.textContent = `Age: ${years} years and ${months} months`;
+    }
+  });
+}
+
+       // --- Pregnancy GA from EDD (robust, DST-safe) ---
+const eddEl = document.getElementById('edd');
+const gaOnDateEl = document.getElementById('gaOnDate');
+const gaResultEl = document.getElementById('gaResult');
+const lmpResultEl = document.getElementById('lmpResult');
+const daysToEddResultEl = document.getElementById('daysToEddResult');
+
+// If the tile isn't on the page, don't crash the rest of the calculators
+if (eddEl && gaOnDateEl && gaResultEl && lmpResultEl && daysToEddResultEl) {
+
+  function parseYMDToUTC(ymd) {
+    if (!ymd) return null;
+    const [y, m, d] = ymd.split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(Date.UTC(y, m - 1, d)); // UTC midnight
+  }
+
+  function formatDateFromUTC(dateUTC) {
+    // Convert UTC date to a "local" date string display (stable)
+    const local = new Date(dateUTC.getUTCFullYear(), dateUTC.getUTCMonth(), dateUTC.getUTCDate());
+    return formatDate(local);
+  }
+
+  function diffDaysUTC(aUTC, bUTC) {
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.floor((aUTC - bUTC) / msPerDay);
+  }
+
+  function calculateGA() {
+    const eddUTC = parseYMDToUTC(eddEl.value);
+    const onUTC = parseYMDToUTC(gaOnDateEl.value);
+
+    if (!eddUTC || !onUTC) {
+      gaResultEl.textContent = 'GA: -';
+      lmpResultEl.textContent = 'Estimated LMP: -';
+      daysToEddResultEl.textContent = 'Days until EDD: -';
+      return;
+    }
+
+    // LMP = EDD - 280 days (40w)
+    const lmpUTC = new Date(eddUTC);
+    lmpUTC.setUTCDate(lmpUTC.getUTCDate() - 280);
+
+    const gaDays = diffDaysUTC(onUTC, lmpUTC);
+    const daysToEdd = diffDaysUTC(eddUTC, onUTC);
+
+    if (gaDays < 0) {
+      gaResultEl.textContent = 'GA: Invalid (date is before estimated LMP)';
+      lmpResultEl.textContent = 'Estimated LMP: ' + formatDateFromUTC(lmpUTC);
+      daysToEddResultEl.textContent = 'Days until EDD: ' + daysToEdd;
+      return;
+    }
+
+    const weeks = Math.floor(gaDays / 7);
+    const days = gaDays % 7;
+
+    gaResultEl.textContent = `GA: ${weeks} weeks + ${days} days (${gaDays} days)`;
+    lmpResultEl.textContent = 'Estimated LMP: ' + formatDateFromUTC(lmpUTC);
+    daysToEddResultEl.textContent = 'Days until EDD: ' + daysToEdd;
+  }
+
+  eddEl.addEventListener('change', calculateGA);
+  eddEl.addEventListener('input', calculateGA);
+  gaOnDateEl.addEventListener('change', calculateGA);
+  gaOnDateEl.addEventListener('input', calculateGA);
+}
+});
+
   </script>
 </body>
 </html>
