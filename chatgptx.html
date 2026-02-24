@@ -1262,6 +1262,308 @@ imageUpload.addEventListener('change', function () {
 });
 
 /* =========================
+   FIX 1) Keep caret updated in NOTE INPUT too
+========================= */
+['input','keyup','mouseup','touchend','focus'].forEach(evt => {
+  noteInput.addEventListener(evt, () => {
+    activeEditable = noteInput;
+    saveCaret();
+  }, true);
+});
+
+// When opening toolbar, keep caret (toggle click can steal focus/selection)
+const formatToggle = document.getElementById('formatToggle');
+formatToggle.addEventListener('mousedown', (e) => {
+  // prevent selection being lost
+  e.preventDefault();
+  e.stopPropagation();
+  if (activeEditable?.isContentEditable) {
+    activeEditable.focus({ preventScroll: true });
+    saveCaret();
+  }
+}, true);
+
+// Prevent toolbar from stealing focus; keep editor active while clicking buttons
+const formatToolbar = document.getElementById('formatToolbar');
+formatToolbar.addEventListener('mousedown', (e) => {
+  // allow button handlers to run, but don’t let focus jump
+  if (activeEditable?.isContentEditable) {
+    activeEditable.focus({ preventScroll: true });
+    saveCaret();
+  }
+}, true);
+
+/* =========================
+   FIX 2) Wire the missing buttons
+========================= */
+
+// Indent / Outdent (Shift+Click = outdent)
+const indentBtn = document.getElementById('indentBtn');
+indentBtn?.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // execCommand indent/outdent is flaky unless lists/blocks exist,
+  // but it still works often enough for your use-case.
+  runCmd(e.shiftKey ? 'outdent' : 'indent');
+}, true);
+
+/* =========================
+   RESET (selection only): remove formatting + black
+========================= */
+const resetColorBtn = document.getElementById('resetColorBtn');
+
+resetColorBtn?.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const editor = getActiveEditor();
+  if (!editor) return;
+
+  editor.focus({ preventScroll: true });
+  restoreCaret();
+
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+  // Only operate if selection is inside editor and not collapsed
+  if (!editor.contains(range.commonAncestorContainer) || sel.isCollapsed) return;
+
+  // 1) Remove inline formatting wrappers (bold/italic/underline/etc) for selection
+  document.execCommand('removeFormat');
+
+  // 2) Clear highlight/background for selection (browser differences)
+  document.execCommand('hiliteColor', false, 'transparent');
+  document.execCommand('backColor', false, 'transparent');
+
+  // 3) Force selected text color back to black
+  document.execCommand('foreColor', false, '#000000');
+
+  saveCaret();
+}, true);
+
+/* =========================
+   Font size (robust, works on spans + selection)
+   - We wrap selection in <span style="font-size: ...">
+========================= */
+function getSelectionRangeInEditor(editor) {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return null;
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return null;
+  return range;
+}
+
+function bumpFontSize(deltaPx) {
+  const editor = getActiveEditor();
+  if (!editor) return;
+
+  editor.focus({ preventScroll: true });
+  restoreCaret();
+
+  const range = getSelectionRangeInEditor(editor);
+  if (!range) return;
+
+  const selectedText = range.toString();
+  if (!selectedText.trim()) return;
+
+  // Determine a “base” font size from the editor’s computed style
+  const base = parseFloat(getComputedStyle(editor).fontSize) || 12;
+  const next = Math.max(8, Math.min(42, Math.round(base + deltaPx)));
+
+  const span = document.createElement('span');
+  span.style.fontSize = next + 'px';
+  span.textContent = selectedText;
+
+  range.deleteContents();
+  range.insertNode(span);
+
+  // Move caret after inserted span
+  range.setStartAfter(span);
+  range.collapse(true);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  saveCaret();
+}
+
+document.getElementById('increaseFontBtn')?.addEventListener('mousedown', (e) => {
+  e.preventDefault(); e.stopPropagation();
+  bumpFontSize(+2);
+}, true);
+
+document.getElementById('decreaseFontBtn')?.addEventListener('mousedown', (e) => {
+  e.preventDefault(); e.stopPropagation();
+  bumpFontSize(-2);
+}, true);
+
+/* =========================
+   Table tools (insert + row/col ops)
+   Works in #noteInput and .editableNote editor
+========================= */
+
+function makeTable(rows = 2, cols = 2) {
+  const table = document.createElement('table');
+  table.className = 'editable-table';
+  table.setAttribute('data-editable-table', '1');
+
+  const tbody = document.createElement('tbody');
+
+  for (let r = 0; r < rows; r++) {
+    const tr = document.createElement('tr');
+    for (let c = 0; c < cols; c++) {
+      const td = document.createElement('td');
+      const cell = document.createElement('div');
+      cell.className = 'cellBox';
+      cell.contentEditable = 'true';
+      cell.innerHTML = '&nbsp;';
+      td.appendChild(cell);
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  return table;
+}
+
+function getClosestTableContext() {
+  const editor = getActiveEditor();
+  if (!editor) return null;
+
+  const sel = window.getSelection();
+  const node = sel?.anchorNode || null;
+  if (!node) return { editor, table: null, cell: null };
+
+  const el = (node.nodeType === 1 ? node : node.parentElement);
+  const cell = el?.closest?.('.cellBox') || null;
+  const table = el?.closest?.('table.editable-table') || null;
+
+  return { editor, table, cell };
+}
+
+function insertNodeAtCaret(node) {
+  const editor = getActiveEditor();
+  if (!editor) return;
+
+  editor.focus({ preventScroll: true });
+  restoreCaret();
+
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) {
+    editor.appendChild(node);
+    placeCaretAtEnd(editor);
+    return;
+  }
+
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) {
+    editor.appendChild(node);
+    placeCaretAtEnd(editor);
+    return;
+  }
+
+  range.deleteContents();
+
+  // add spacing around table so caret navigation feels nicer
+  const br1 = document.createElement('br');
+  const br2 = document.createElement('br');
+
+  range.insertNode(br2);
+  range.insertNode(node);
+  range.insertNode(br1);
+
+  range.setStartAfter(br2);
+  range.collapse(true);
+
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  saveCaret();
+}
+
+document.getElementById('insertTableBtn')?.addEventListener('mousedown', (e) => {
+  e.preventDefault(); e.stopPropagation();
+  const t = makeTable(2, 2);
+  insertNodeAtCaret(t);
+
+  // focus first cell
+  setTimeout(() => t.querySelector('.cellBox')?.focus?.(), 0);
+}, true);
+
+document.getElementById('addRowBtn')?.addEventListener('mousedown', (e) => {
+  e.preventDefault(); e.stopPropagation();
+  const ctx = getClosestTableContext();
+  if (!ctx?.table) return alert('Click inside a table cell first.');
+
+  const colCount = ctx.table.rows?.[0]?.cells?.length || 0;
+  if (!colCount) return;
+
+  const tr = document.createElement('tr');
+  for (let c = 0; c < colCount; c++) {
+    const td = document.createElement('td');
+    const cell = document.createElement('div');
+    cell.className = 'cellBox';
+    cell.contentEditable = 'true';
+    cell.innerHTML = '&nbsp;';
+    td.appendChild(cell);
+    tr.appendChild(td);
+  }
+  ctx.table.tBodies[0].appendChild(tr);
+}, true);
+
+document.getElementById('deleteRowBtn')?.addEventListener('mousedown', (e) => {
+  e.preventDefault(); e.stopPropagation();
+  const ctx = getClosestTableContext();
+  if (!ctx?.cell || !ctx?.table) return alert('Click inside a table cell first.');
+
+  const td = ctx.cell.closest('td');
+  const tr = td?.parentElement;
+  if (!tr) return;
+
+  // Keep at least 1 row
+  if (ctx.table.rows.length <= 1) return alert('Cannot delete the last row.');
+  tr.remove();
+}, true);
+
+document.getElementById('addColBtn')?.addEventListener('mousedown', (e) => {
+  e.preventDefault(); e.stopPropagation();
+  const ctx = getClosestTableContext();
+  if (!ctx?.table) return alert('Click inside a table cell first.');
+
+  [...ctx.table.rows].forEach((tr) => {
+    const td = document.createElement('td');
+    const cell = document.createElement('div');
+    cell.className = 'cellBox';
+    cell.contentEditable = 'true';
+    cell.innerHTML = '&nbsp;';
+    td.appendChild(cell);
+    tr.appendChild(td);
+  });
+}, true);
+
+document.getElementById('deleteColBtn')?.addEventListener('mousedown', (e) => {
+  e.preventDefault(); e.stopPropagation();
+  const ctx = getClosestTableContext();
+  if (!ctx?.cell || !ctx?.table) return alert('Click inside a table cell first.');
+
+  const td = ctx.cell.closest('td');
+  const tr = td?.parentElement;
+  if (!td || !tr) return;
+
+  const colIndex = [...tr.children].indexOf(td);
+  const colCount = tr.children.length;
+
+  if (colCount <= 1) return alert('Cannot delete the last column.');
+
+  [...ctx.table.rows].forEach((row) => {
+    row.children[colIndex]?.remove?.();
+  });
+}, true);
+
+/* =========================
    Simple access code gate
 ========================= */
 const ACCESS_CODE = "oatee";
