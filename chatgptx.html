@@ -1355,6 +1355,15 @@ function getSelectionRangeInEditor(editor) {
   return range;
 }
 
+function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+function getFontSizePxFromNode(node, fallbackPx = 12) {
+  const el = (node?.nodeType === 1) ? node : node?.parentElement;
+  if (!el) return fallbackPx;
+  const px = parseFloat(getComputedStyle(el).fontSize);
+  return Number.isFinite(px) ? px : fallbackPx;
+}
+
 function bumpFontSize(deltaPx) {
   const editor = getActiveEditor();
   if (!editor) return;
@@ -1365,30 +1374,62 @@ function bumpFontSize(deltaPx) {
   const range = getSelectionRangeInEditor(editor);
   if (!range) return;
 
-  const selectedText = range.toString();
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return;
+
+  // Make sure we’re operating inside the editor
+  if (!editor.contains(range.commonAncestorContainer)) return;
+
+  const selectedText = sel.toString();
   if (!selectedText.trim()) return;
 
-  // Determine a “base” font size from the editor’s computed style
-  const base = parseFloat(getComputedStyle(editor).fontSize) || 12;
-  const next = Math.max(8, Math.min(42, Math.round(base + deltaPx)));
+  // If selection is fully inside an existing font-sized span, just adjust it (no nesting)
+  const startEl = (range.startContainer.nodeType === 1)
+    ? range.startContainer
+    : range.startContainer.parentElement;
 
-  const span = document.createElement('span');
-  span.style.fontSize = next + 'px';
-  span.textContent = selectedText;
+  const sizedSpan = startEl?.closest?.('span[data-fs="1"]') || null;
 
-  range.deleteContents();
-  range.insertNode(span);
+  if (sizedSpan && editor.contains(sizedSpan)) {
+    // Only safe to “edit the span” if the selection equals the span’s full text
+    const spanText = (sizedSpan.innerText || sizedSpan.textContent || '').trim();
+    if (spanText && spanText === selectedText.trim()) {
+      const cur = parseFloat(sizedSpan.style.fontSize) || getFontSizePxFromNode(sizedSpan, 12);
+      const next = clamp(Math.round(cur + deltaPx), 8, 42);
+      sizedSpan.style.fontSize = next + 'px';
 
-  // Move caret after inserted span
-  range.setStartAfter(span);
-  range.collapse(true);
-  const sel = window.getSelection();
+      // Keep selection on the same content
+      const r = document.createRange();
+      r.selectNodeContents(sizedSpan);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      saveCaret();
+      return;
+    }
+  }
+
+  // Otherwise: wrap the *actual selected DOM fragment* (preserves bold/italic/links/etc.)
+  const basePx = getFontSizePxFromNode(range.startContainer, parseFloat(getComputedStyle(editor).fontSize) || 12);
+  const nextPx = clamp(Math.round(basePx + deltaPx), 8, 42);
+
+  const wrapper = document.createElement('span');
+  wrapper.setAttribute('data-fs', '1');     // marker so we can detect later
+  wrapper.style.fontSize = nextPx + 'px';
+
+  const frag = range.extractContents();     // keeps formatting inside selection
+  wrapper.appendChild(frag);
+  range.insertNode(wrapper);
+
+  // Re-select the wrapper’s contents so you can click again and it keeps increasing
+  const newRange = document.createRange();
+  newRange.selectNodeContents(wrapper);
   sel.removeAllRanges();
-  sel.addRange(range);
+  sel.addRange(newRange);
 
   saveCaret();
 }
 
+// keep your existing listeners (these are fine)
 document.getElementById('increaseFontBtn')?.addEventListener('mousedown', (e) => {
   e.preventDefault(); e.stopPropagation();
   bumpFontSize(+2);
@@ -1403,6 +1444,19 @@ document.getElementById('decreaseFontBtn')?.addEventListener('mousedown', (e) =>
    Table tools (insert + row/col ops)
    Works in #noteInput and .editableNote editor
 ========================= */
+
+// Track last focused table cell so toolbar clicks don't break -R/-C
+let lastTableCell = null;
+
+document.addEventListener('focusin', (e) => {
+  const cell = e.target?.closest?.('.cellBox');
+  if (cell) lastTableCell = cell;
+}, true);
+
+document.addEventListener('mousedown', (e) => {
+  const cell = e.target?.closest?.('.cellBox');
+  if (cell) lastTableCell = cell;
+}, true);
 
 function makeTable(rows = 2, cols = 2) {
   const table = document.createElement('table');
@@ -1435,9 +1489,14 @@ function getClosestTableContext() {
 
   const sel = window.getSelection();
   const node = sel?.anchorNode || null;
-  if (!node) return { editor, table: null, cell: null };
 
-  const el = (node.nodeType === 1 ? node : node.parentElement);
+  let el = node ? (node.nodeType === 1 ? node : node.parentElement) : null;
+
+  // fallback when toolbar steals selection
+  if (!el || !editor.contains(el)) {
+    el = lastTableCell ? lastTableCell : null;
+  }
+
   const cell = el?.closest?.('.cellBox') || null;
   const table = el?.closest?.('table.editable-table') || null;
 
@@ -3399,6 +3458,7 @@ function getActiveEditor() {
   if (!el.isContentEditable) return null;
   return el;
 }
+
 
 function wrapSelectionWithBrackets(mode = 'wrap') {
   const editor = getActiveEditor();
