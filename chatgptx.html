@@ -2544,8 +2544,9 @@ function queryNotesSync(rawQuery) {
         return tags.some(tag => tag === tagTerm || tag.startsWith(tagTerm));
       }
 
-      if (textNorm.includes(t)) return true;
-      return textNorm.split(/\s+/).some(w => w.startsWith(t));
+      const esc = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const whole = new RegExp(`\\b${esc}\\b`, 'i');
+      return whole.test(htmlToText(cleanedHtml));
     });
 
     if (!ok) continue;
