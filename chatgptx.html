@@ -933,6 +933,35 @@ border: 1px solid rgba(255, 214, 102, 0.45);
   border-color: rgba(208,160,163,0.55);
   background: rgba(208,160,163,0.20);
 }
+#whyBox {
+  width: 100%;
+  min-height: 44px;
+  height: auto;
+
+  overflow: hidden;
+  overflow-x: hidden;
+
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  padding: 10px;
+  border-radius: 12px;
+
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.30);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  outline: none;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+#whyBox:empty:before{
+  content: "Why it matters to me… (saved with the concept)";
+  color: rgba(0,0,0,0.35);
+}
 
 /* Fullscreen image zoom overlay */
 #imgZoomOverlay {
@@ -1126,7 +1155,6 @@ border: 1px solid rgba(255, 214, 102, 0.45);
 <div id="tagSuggest" aria-hidden="true"></div>
 <div id="floatingEmojiBtn" title="Insert emoji">📌</div>
 <div id="floatingEmojiPanel" aria-hidden="true"></div>
-
 <div id="defPanel" aria-hidden="true">
   <div class="topRow">
     <div class="title">
@@ -1136,12 +1164,15 @@ border: 1px solid rgba(255, 214, 102, 0.45);
     <button class="closeBtn" id="defCloseBtn" title="Close">✕</button>
   </div>
 
-  <div id="defBox" contenteditable="true"></div>
+  <div id="defBox" contenteditable="true" data-placeholder="Definition…"></div>
+
+  <div id="whyBox" contenteditable="true" data-placeholder="Why / memory hook…"></div>
 
   <div class="btnRow">
     <button class="miniBtn" id="defSearchBtn" title="Search this concept">🔎</button>
     <button class="miniBtn danger" id="defDeleteBtn" title="Delete definition">🗑️</button>
     <button class="miniBtn" id="defSaveBtn" title="Save definition">💾</button>
+    <button class="miniBtn" id="defMergeBtn" title="Merge this concept">🧬</button>
   </div>
 </div>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -1198,7 +1229,7 @@ let notesCache = [];
 let unsubscribeNotes = null;
 
 let unsubscribeDefs = null;         // defs listener
-let defsCache = {};                 // { normalizedConceptKey: definitionText }
+let defsCache = {}; // { normalizedKey: { value: "", why: "", concept: "" } }  (legacy-safe)
 
 let liveTimer = null;
 let lastLiveQuery = '';
@@ -1297,7 +1328,6 @@ imageUpload.addEventListener('change', function () {
 // When opening toolbar, keep caret (toggle click can steal focus/selection)
 const formatToggle = document.getElementById('formatToggle');
 formatToggle.addEventListener('mousedown', (e) => {
-  // prevent selection being lost
   e.preventDefault();
   e.stopPropagation();
   if (activeEditable?.isContentEditable) {
@@ -1309,7 +1339,6 @@ formatToggle.addEventListener('mousedown', (e) => {
 // Prevent toolbar from stealing focus; keep editor active while clicking buttons
 const formatToolbar = document.getElementById('formatToolbar');
 formatToolbar.addEventListener('mousedown', (e) => {
-  // allow button handlers to run, but don’t let focus jump
   if (activeEditable?.isContentEditable) {
     activeEditable.focus({ preventScroll: true });
     saveCaret();
@@ -1325,9 +1354,6 @@ const indentBtn = document.getElementById('indentBtn');
 indentBtn?.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
-
-  // execCommand indent/outdent is flaky unless lists/blocks exist,
-  // but it still works often enough for your use-case.
   runCmd(e.shiftKey ? 'outdent' : 'indent');
 }, true);
 
@@ -1350,17 +1376,11 @@ resetColorBtn?.addEventListener('mousedown', (e) => {
   if (!sel || !sel.rangeCount) return;
 
   const range = sel.getRangeAt(0);
-  // Only operate if selection is inside editor and not collapsed
   if (!editor.contains(range.commonAncestorContainer) || sel.isCollapsed) return;
 
-  // 1) Remove inline formatting wrappers (bold/italic/underline/etc) for selection
   document.execCommand('removeFormat');
-
-  // 2) Clear highlight/background for selection (browser differences)
   document.execCommand('hiliteColor', false, 'transparent');
   document.execCommand('backColor', false, 'transparent');
-
-  // 3) Force selected text color back to black
   document.execCommand('foreColor', false, '#000000');
 
   saveCaret();
@@ -1368,7 +1388,6 @@ resetColorBtn?.addEventListener('mousedown', (e) => {
 
 /* =========================
    Font size (robust, works on spans + selection)
-   - We wrap selection in <span style="font-size: ...">
 ========================= */
 function getSelectionRangeInEditor(editor) {
   const sel = window.getSelection();
@@ -1400,13 +1419,11 @@ function bumpFontSize(deltaPx) {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) return;
 
-  // Make sure we’re operating inside the editor
   if (!editor.contains(range.commonAncestorContainer)) return;
 
   const selectedText = sel.toString();
   if (!selectedText.trim()) return;
 
-  // If selection is fully inside an existing font-sized span, just adjust it (no nesting)
   const startEl = (range.startContainer.nodeType === 1)
     ? range.startContainer
     : range.startContainer.parentElement;
@@ -1414,14 +1431,12 @@ function bumpFontSize(deltaPx) {
   const sizedSpan = startEl?.closest?.('span[data-fs="1"]') || null;
 
   if (sizedSpan && editor.contains(sizedSpan)) {
-    // Only safe to “edit the span” if the selection equals the span’s full text
     const spanText = (sizedSpan.innerText || sizedSpan.textContent || '').trim();
     if (spanText && spanText === selectedText.trim()) {
       const cur = parseFloat(sizedSpan.style.fontSize) || getFontSizePxFromNode(sizedSpan, 12);
       const next = clamp(Math.round(cur + deltaPx), 8, 42);
       sizedSpan.style.fontSize = next + 'px';
 
-      // Keep selection on the same content
       const r = document.createRange();
       r.selectNodeContents(sizedSpan);
       sel.removeAllRanges();
@@ -1431,19 +1446,17 @@ function bumpFontSize(deltaPx) {
     }
   }
 
-  // Otherwise: wrap the *actual selected DOM fragment* (preserves bold/italic/links/etc.)
   const basePx = getFontSizePxFromNode(range.startContainer, parseFloat(getComputedStyle(editor).fontSize) || 12);
   const nextPx = clamp(Math.round(basePx + deltaPx), 8, 42);
 
   const wrapper = document.createElement('span');
-  wrapper.setAttribute('data-fs', '1');     // marker so we can detect later
+  wrapper.setAttribute('data-fs', '1');
   wrapper.style.fontSize = nextPx + 'px';
 
-  const frag = range.extractContents();     // keeps formatting inside selection
+  const frag = range.extractContents();
   wrapper.appendChild(frag);
   range.insertNode(wrapper);
 
-  // Re-select the wrapper’s contents so you can click again and it keeps increasing
   const newRange = document.createRange();
   newRange.selectNodeContents(wrapper);
   sel.removeAllRanges();
@@ -1452,7 +1465,6 @@ function bumpFontSize(deltaPx) {
   saveCaret();
 }
 
-// keep your existing listeners (these are fine)
 document.getElementById('increaseFontBtn')?.addEventListener('mousedown', (e) => {
   e.preventDefault(); e.stopPropagation();
   bumpFontSize(+2);
@@ -1465,10 +1477,7 @@ document.getElementById('decreaseFontBtn')?.addEventListener('mousedown', (e) =>
 
 /* =========================
    Table tools (insert + row/col ops)
-   Works in #noteInput and .editableNote editor
 ========================= */
-
-// Track last focused table cell so toolbar clicks don't break -R/-C
 let lastTableCell = null;
 
 document.addEventListener('focusin', (e) => {
@@ -1515,7 +1524,6 @@ function getClosestTableContext() {
 
   let el = node ? (node.nodeType === 1 ? node : node.parentElement) : null;
 
-  // fallback when toolbar steals selection
   if (!el || !editor.contains(el)) {
     el = lastTableCell ? lastTableCell : null;
   }
@@ -1549,7 +1557,6 @@ function insertNodeAtCaret(node) {
 
   range.deleteContents();
 
-  // add spacing around table so caret navigation feels nicer
   const br1 = document.createElement('br');
   const br2 = document.createElement('br');
 
@@ -1570,8 +1577,6 @@ document.getElementById('insertTableBtn')?.addEventListener('mousedown', (e) => 
   e.preventDefault(); e.stopPropagation();
   const t = makeTable(2, 2);
   insertNodeAtCaret(t);
-
-  // focus first cell
   setTimeout(() => t.querySelector('.cellBox')?.focus?.(), 0);
 }, true);
 
@@ -1605,7 +1610,6 @@ document.getElementById('deleteRowBtn')?.addEventListener('mousedown', (e) => {
   const tr = td?.parentElement;
   if (!tr) return;
 
-  // Keep at least 1 row
   if (ctx.table.rows.length <= 1) return alert('Cannot delete the last row.');
   tr.remove();
 }, true);
@@ -2172,24 +2176,31 @@ function stopNotesListener() {
 }
 
 /* =========================
-   Definitions listener (FIXED: no instant stop!)
+   Definitions listener (FIXED: loads {value, why, concept})
 ========================= */
 function startDefsListener() {
   if (!isUnlocked) return;
   if (unsubscribeDefs) unsubscribeDefs();
 
   ensureSignedIn().then(() => {
+    if (!isUnlocked) return;
+
     unsubscribeDefs = db.collection('concept_defs')
       .onSnapshot((snap) => {
         const next = {};
         snap.forEach(doc => {
           const d = doc.data() || {};
-          if (typeof d.value === 'string') next[doc.id] = d.value;
+
+          // legacy-safe: if earlier docs stored just "value" string in your old cache shape
+          const value = typeof d.value === 'string' ? d.value : '';
+          const why   = typeof d.why === 'string' ? d.why : '';
+          const concept = typeof d.concept === 'string' ? d.concept : '';
+
+          next[doc.id] = { value, why, concept };
         });
 
         defsCache = next;
 
-        // apply dots/tooltips to current view
         refreshConceptDefBadges(liveResults);
       }, (err) => {
         console.error('Defs listener error:', err);
@@ -2695,12 +2706,23 @@ function defKeyForConcept(concept) {
   return normalizeText(concept || '');
 }
 
+// legacy-safe getters: handle both {value,why} objects and old string cache entries
 function getDefinition(concept) {
   const k = defKeyForConcept(concept);
-  return defsCache[k] || '';
+  const v = defsCache[k];
+  if (!v) return '';
+  if (typeof v === 'string') return v;
+  return (v?.value) || '';
 }
 
-async function setDefinition(concept, value) {
+function getWhy(concept) {
+  const k = defKeyForConcept(concept);
+  const v = defsCache[k];
+  if (!v || typeof v === 'string') return '';
+  return (v?.why) || '';
+}
+
+async function setDefinition(concept, value, why) {
   const k = defKeyForConcept(concept);
   if (!k) return;
 
@@ -2709,6 +2731,7 @@ async function setDefinition(concept, value) {
   await db.collection('concept_defs').doc(k).set({
     concept: (concept || '').trim(),
     value: (value || '').trim(),
+    why: (why || '').trim(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
 }
@@ -2738,36 +2761,46 @@ function refreshConceptDefBadges(root = document) {
 }
 
 /* =========================
-   Definition panel wiring (FIXED ORDER)
+   Definition panel wiring (FIXED + stable + MERGE)
+   NOTE: your HTML must include:
+   - #defPanel #defTitle #defBox #whyBox #defCloseBtn #defSaveBtn #defDeleteBtn #defSearchBtn #defMergeBtn
 ========================= */
 const defPanel = document.getElementById('defPanel');
 const defTitle = document.getElementById('defTitle');
 const defBox = document.getElementById('defBox');
+const whyBox = document.getElementById('whyBox'); // may be null if not added yet
 const defCloseBtn = document.getElementById('defCloseBtn');
 const defSaveBtn = document.getElementById('defSaveBtn');
 const defDeleteBtn = document.getElementById('defDeleteBtn');
 const defSearchBtn = document.getElementById('defSearchBtn');
+const defMergeBtn = document.getElementById('defMergeBtn');
 
 let currentDefConcept = '';
 
-function autoGrowDefBox() {
-  if (!defBox) return;
-  defBox.style.height = 'auto';
-  defBox.style.height = (defBox.scrollHeight + 2) + 'px';
+function autoGrowBox(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight + 2) + 'px';
 }
-defBox.addEventListener('input', autoGrowDefBox);
-defBox.addEventListener('paste', () => setTimeout(autoGrowDefBox, 0));
+
+defBox?.addEventListener('input', () => autoGrowBox(defBox));
+defBox?.addEventListener('paste', () => setTimeout(() => autoGrowBox(defBox), 0));
+whyBox?.addEventListener('input', () => autoGrowBox(whyBox));
+whyBox?.addEventListener('paste', () => setTimeout(() => autoGrowBox(whyBox), 0));
 
 function openDefPanel(concept, clientX, clientY) {
   currentDefConcept = (concept || '').trim();
   if (!currentDefConcept) return;
 
-  defTitle.textContent = currentDefConcept;
+  if (defTitle) defTitle.textContent = currentDefConcept;
 
-  const saved = getDefinition(currentDefConcept);
-  defBox.textContent = saved;
+  if (defBox) defBox.textContent = getDefinition(currentDefConcept);
+  if (whyBox) whyBox.textContent = getWhy(currentDefConcept);
 
-  autoGrowDefBox();
+  autoGrowBox(defBox);
+  autoGrowBox(whyBox);
+
+  if (!defPanel) return;
 
   defPanel.style.display = 'block';
   defPanel.setAttribute('aria-hidden', 'false');
@@ -2783,18 +2816,26 @@ function openDefPanel(concept, clientX, clientY) {
   defPanel.style.left = Math.max(10, left) + 'px';
   defPanel.style.top = Math.max(10, top) + 'px';
 
-  setTimeout(() => defBox.focus({ preventScroll: true }), 0);
+  setTimeout(() => defBox?.focus?.({ preventScroll: true }), 0);
 }
 
 function closeDefPanel() {
+  if (!defPanel) return;
   defPanel.style.display = 'none';
   defPanel.setAttribute('aria-hidden', 'true');
   currentDefConcept = '';
 }
 
-defCloseBtn?.addEventListener('click', closeDefPanel);
+defCloseBtn?.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  closeDefPanel();
+});
 
-defSaveBtn?.addEventListener('click', async () => {
+defSaveBtn?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
   if (!currentDefConcept) return;
 
   const prev = defSaveBtn.textContent;
@@ -2802,7 +2843,11 @@ defSaveBtn?.addEventListener('click', async () => {
   defSaveBtn.textContent = 'Saving…';
 
   try {
-    await setDefinition(currentDefConcept, defBox.textContent || '');
+    await setDefinition(
+      currentDefConcept,
+      defBox?.textContent || '',
+      whyBox?.textContent || ''
+    );
     refreshConceptDefBadges(document.getElementById('chat'));
 
     defSaveBtn.textContent = 'Saved ✓';
@@ -2811,8 +2856,8 @@ defSaveBtn?.addEventListener('click', async () => {
       defSaveBtn.textContent = prev;
     }, 450);
 
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error(err);
     defSaveBtn.textContent = 'Error';
     setTimeout(() => (defSaveBtn.textContent = prev), 900);
   } finally {
@@ -2820,7 +2865,10 @@ defSaveBtn?.addEventListener('click', async () => {
   }
 });
 
-defDeleteBtn?.addEventListener('click', async () => {
+defDeleteBtn?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
   if (!currentDefConcept) return;
 
   const prev = defDeleteBtn.textContent;
@@ -2828,12 +2876,13 @@ defDeleteBtn?.addEventListener('click', async () => {
 
   try {
     await deleteDefinition(currentDefConcept);
-    defBox.textContent = '';
+    if (defBox) defBox.textContent = '';
+    if (whyBox) whyBox.textContent = '';
     refreshConceptDefBadges(document.getElementById('chat'));
     setTimeout(() => closeDefPanel(), 150);
 
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error(err);
     defDeleteBtn.textContent = 'Error';
     setTimeout(() => (defDeleteBtn.textContent = prev), 900);
   } finally {
@@ -2842,19 +2891,158 @@ defDeleteBtn?.addEventListener('click', async () => {
   }
 });
 
-defSearchBtn?.addEventListener('click', () => {
+defSearchBtn?.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
   if (!currentDefConcept) return;
   userInput.value = `"${currentDefConcept}"`;
   userInput.focus();
   runLiveSearch(userInput.value.trim(), true);
 });
 
+/* =========================
+   MERGE: unify [[old]] -> [[new]] across notes + defs
+   - Only replaces exact concept pills [[...]] (not plain text)
+   - Case-insensitive match of the inner concept text
+   - Preserves the NEW concept casing exactly as you type it
+========================= */
+function escapeRegExp(s) {
+  return (s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildConceptPillRegex(oldConcept) {
+  // matches [[  oldConcept  ]] with flexible whitespace
+  // and case-insensitive on the concept text
+  const inner = escapeRegExp((oldConcept || '').trim());
+  return new RegExp(`\\[\\[\\s*${inner}\\s*\\]\\]`, 'gi');
+}
+
+async function mergeConceptEverywhere(oldConcept, newConcept) {
+  const oldTrim = (oldConcept || '').trim();
+  const newTrim = (newConcept || '').trim();
+  if (!oldTrim || !newTrim) return { changed: 0 };
+
+  const oldKey = defKeyForConcept(oldTrim);
+  const newKey = defKeyForConcept(newTrim);
+  if (!oldKey || !newKey) return { changed: 0 };
+
+  if (oldKey === newKey) {
+    // same normalized key — no need to rewrite defs doc; but we can still unify casing in notes
+  }
+
+  await ensureSignedIn();
+
+  // 1) Update notes in batches (500 limit per batch write)
+  const rx = buildConceptPillRegex(oldTrim);
+  const repl = `[[${newTrim}]]`;
+
+  const changedDocs = [];
+  for (const n of notesCache) {
+    const html = (n.content || '');
+    if (!rx.test(html)) continue;
+    const nextHtml = html.replace(rx, repl);
+    if (nextHtml !== html) changedDocs.push({ id: n.id, content: nextHtml });
+  }
+
+  let changed = 0;
+  for (let i = 0; i < changedDocs.length; i += 400) {
+    const chunk = changedDocs.slice(i, i + 400);
+    const batch = db.batch();
+    chunk.forEach(doc => {
+      batch.update(db.collection('notes').doc(doc.id), { content: doc.content });
+    });
+    await batch.commit();
+    changed += chunk.length;
+  }
+
+  // 2) Merge definition docs (prefer keeping existing NEW text if it already exists)
+  // pull latest from cache first (listener may lag a moment; we still handle safely)
+  const oldDef = defsCache?.[oldKey] || null;
+  const newDef = defsCache?.[newKey] || null;
+
+  const oldVal = (oldDef?.value || '').trim();
+  const oldWhy = (oldDef?.why || '').trim();
+
+  const newVal = (newDef?.value || '').trim();
+  const newWhy = (newDef?.why || '').trim();
+
+  // If the target has no definition/why, carry over from old.
+  // If it already has content, keep it (don’t overwrite).
+  if ((oldVal || oldWhy) && (!newVal || !newWhy)) {
+    await db.collection('concept_defs').doc(newKey).set({
+      concept: newTrim,
+      value: newVal || oldVal,
+      why: newWhy || oldWhy,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } else {
+    // still make sure the pretty concept name is stored
+    await db.collection('concept_defs').doc(newKey).set({
+      concept: newTrim,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  }
+
+  // Delete the old doc if it’s a different key
+  if (oldKey !== newKey) {
+    try { await db.collection('concept_defs').doc(oldKey).delete(); } catch {}
+  }
+
+  return { changed };
+}
+
+defMergeBtn?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (!currentDefConcept) return;
+
+  const from = currentDefConcept;
+  const to = prompt(`Merge concept:\n\nFrom: ${from}\n\nInto (new name):`, from);
+  if (!to) return;
+
+  const toTrim = to.trim();
+  if (!toTrim) return;
+
+  // quick guard: avoid accidental same target (case-insensitive)
+  if (normalizeText(from) === normalizeText(toTrim)) {
+    // still allow casing unify in notes
+    // proceed anyway
+  }
+
+  const prev = defMergeBtn.textContent;
+  defMergeBtn.disabled = true;
+  defMergeBtn.textContent = 'Merging…';
+
+  try {
+    const res = await mergeConceptEverywhere(from, toTrim);
+
+    // refresh UI
+    closeDefPanel();
+    refreshConceptDefBadges(document.getElementById('chat'));
+
+    // re-run current search so results + badges update immediately
+    const q = (userInput.value || '').trim();
+    if (q) runLiveSearch(q, true);
+    else renderWelcome();
+
+    alert(`Merged ✓\nUpdated notes: ${res.changed}`);
+  } catch (err) {
+    console.error(err);
+    alert('Merge failed: ' + (err?.message || err));
+  } finally {
+    defMergeBtn.disabled = false;
+    defMergeBtn.textContent = prev;
+  }
+});
+
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && defPanel.style.display === 'block') closeDefPanel();
+  if (e.key === 'Escape' && defPanel?.style?.display === 'block') closeDefPanel();
 }, true);
 
 document.addEventListener('mousedown', (e) => {
-  if (defPanel.style.display !== 'block') return;
+  if (defPanel?.style?.display !== 'block') return;
   if (defPanel.contains(e.target)) return;
   closeDefPanel();
 }, true);
@@ -2937,7 +3125,6 @@ function conceptLinkifyHTML(html) {
 
 /* =========================
    Render notes into ANY container
-   (your existing displayNotesInto with button types included)
 ========================= */
 function displayNotesInto(targetEl, notes) {
   if (!notes.length) {
@@ -3453,14 +3640,7 @@ bindToolbarBtn('blueFontBtn', 'foreColor', 'blue');
 
 /* =========================
    (Everything below here stays as-is in your file)
-   - indent/outdent
-   - font size
-   - table tools
-   - Ctrl+L wrap
-   - lock UI toggles
 ========================= */
-
-/* --- your existing INDENT/TABLE/Ctrl+L code continues here --- */
 
 /* UI toggles */
 lockToggle.onclick = () => {
@@ -3487,14 +3667,12 @@ document.getElementById('formatToggle').onclick = () =>
   document.getElementById('formatToolbar').classList.toggle('visible');
 
 function getActiveEditor() {
-  // only allow wrapping inside editable note areas (not search bar)
   const el = activeEditable;
   if (!el) return null;
   if (el === userInput) return null;
   if (!el.isContentEditable) return null;
   return el;
 }
-
 
 function wrapSelectionWithBrackets(mode = 'wrap') {
   const editor = getActiveEditor();
@@ -3513,8 +3691,6 @@ function wrapSelectionWithBrackets(mode = 'wrap') {
   if (!selectedText || !selectedText.trim()) return;
 
   const trimmed = selectedText.trim();
-
-  // If selection already includes brackets, unwrap
   const hasBrackets = /^\s*\[\[[\s\S]*\]\]\s*$/.test(selectedText);
 
   let replacement = '';
@@ -3524,31 +3700,25 @@ function wrapSelectionWithBrackets(mode = 'wrap') {
     replacement = `[[${trimmed}]]`;
   }
 
-  // replace selection with plain text node (safe)
   range.deleteContents();
   range.insertNode(document.createTextNode(replacement));
 
-  // move caret to end of inserted text
   range.collapse(false);
   sel.removeAllRanges();
   sel.addRange(range);
 
   saveCaret();
-
-  // update concept pills/dots in view if needed
   refreshConceptDefBadges(document.getElementById('chat'));
 }
 
 // Ctrl+L = wrap, Shift+L = unwrap
 document.addEventListener('keydown', (e) => {
-  // don’t trigger while typing in search input or access code
   const t = e.target;
   if (t === userInput || t === accessCodeInput) return;
 
   const key = (e.key || '').toLowerCase();
   if (key !== 'l') return;
 
-  // Ctrl+L (or Cmd+L on Mac) often focuses address bar, so we must preventDefault
   if (e.ctrlKey || e.metaKey) {
     e.preventDefault();
     wrapSelectionWithBrackets('wrap');
