@@ -909,7 +909,7 @@ a.conceptLink.hasDef::before{
   max-width: min(320px, 70vw);
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 237, 243);
+  background: rgba(238, 238, 238);
   border: 1px solid rgba(0,0,0,0.08);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -939,7 +939,7 @@ a.conceptLink.hasDef::before{
   padding: 8px 10px;
   border-radius: 10px;
 
-  background: rgba(173, 238, 217);  
+  background: rgba(235, 217, 209);  
   border: 1px solid rgba(180, 190, 235, 0.28);
 
   box-shadow: 0 4px 12px rgba(0,0,0,0.04); /* very subtle lift */
@@ -976,7 +976,7 @@ a.conceptLink.hasDef::before{
   border-radius: 12px;
 
   border: 1px solid rgba(255,255,255,0.55);
-  background: rgba(255,255,255,0.30);
+  background: rgba(246, 222, 216);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
@@ -2327,6 +2327,8 @@ function stopDefsListener() {
   defsCache = {};
 }
 
+
+
 /* =========================
    Caret save/restore (PER-EDITOR)
 ========================= */
@@ -2890,6 +2892,25 @@ const defSaveBtn = document.getElementById('defSaveBtn');
 const defDeleteBtn = document.getElementById('defDeleteBtn');
 const defSearchBtn = document.getElementById('defSearchBtn');
 const defMergeBtn = document.getElementById('defMergeBtn');
+
+function enableSoftLineBreaks(el){
+  if (!el) return;
+
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+
+      // Always insert a single line break
+      document.execCommand('insertLineBreak');
+
+      // Re-grow box height
+      setTimeout(() => autoGrowBox(el), 0);
+    }
+  });
+}
+
+enableSoftLineBreaks(defBox);
+enableSoftLineBreaks(whyBox);
 
 let currentDefConcept = '';
 
