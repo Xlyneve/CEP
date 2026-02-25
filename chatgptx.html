@@ -909,7 +909,7 @@ a.conceptLink.hasDef::before{
   max-width: min(320px, 70vw);
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(245, 239, 255);
+  background: rgba(255, 237, 243);
   border: 1px solid rgba(0,0,0,0.08);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -918,7 +918,46 @@ a.conceptLink.hasDef::before{
   line-height: 1.35;
   color: #222;
   pointer-events: none; /* important: don't steal hover/click */
-  white-space: pre-wrap;
+  white-space: normal;
+}
+
+#defTip .defLabel{
+  font-size: 10px;
+  opacity: 0.7;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin-bottom: 4px;
+}
+
+#defTip .defText{
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+#defTip .whyWrap{
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+
+  background: rgba(173, 238, 217);  
+  border: 1px solid rgba(180, 190, 235, 0.28);
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04); /* very subtle lift */
+}
+
+#defTip .whyText{
+  font-size: 12px;
+  line-height: 1.35;
+  font-style: italic;
+}
+
+#defTip .defText,
+#defTip .whyText{
+  white-space: pre-wrap;   /* preserve user-entered new lines */
+  margin: 0;
+}
+#defTip .whyWrap .defLabel{
+  opacity: 0.6;
 }
 
 #whyBox {
@@ -2821,6 +2860,7 @@ function refreshConceptDefBadges(root = document) {
   links.forEach(a => {
     const concept = (a.getAttribute('data-concept') || a.textContent || '').trim();
     const def = (getDefinition(concept) || '').trim();
+    const why = (getWhy(concept) || '').trim();
 
     if (def) {
       a.classList.add('hasDef');
@@ -2829,6 +2869,10 @@ function refreshConceptDefBadges(root = document) {
       a.classList.remove('hasDef');
       a.removeAttribute('data-def');
     }
+
+    // store why too (even if def exists or not)
+    if (why) a.setAttribute('data-why', why);
+    else a.removeAttribute('data-why');
   });
 }
 
@@ -2859,9 +2903,10 @@ document.body.appendChild(defTip);
 
 let tipOpen = false;
 
-function showDefTip(text, x, y) {
-  if (!text) return;
-  defTip.textContent = text;
+function showDefTip(defText, whyText, x, y) {
+  if (!defText && !whyText) return;
+
+  defTip.innerHTML = renderTip(defText, whyText);
   defTip.style.display = 'block';
   tipOpen = true;
 
@@ -2878,16 +2923,48 @@ function showDefTip(text, x, y) {
   defTip.style.top = Math.max(10, top) + 'px';
 }
 
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+function renderTip(defText, whyText) {
+  const defSafe = escapeHtml(defText);
+  const whySafe = escapeHtml(whyText);
+
+  // Only show Why block if it exists
+  return `
+    <div class="defLabel">DEFINITION</div>
+    <div class="defText">${defSafe || '<span style="opacity:.6">(none)</span>'}</div>
+    ${whySafe ? `
+      <div class="whyWrap">
+        <div class="defLabel">WHY IT MATTERS</div>
+        <div class="whyText">${whySafe}</div>
+      </div>
+    ` : ''}
+  `;
+}
+
 function hideDefTip() {
   tipOpen = false;
   defTip.style.display = 'none';
-  defTip.textContent = '';
+  defTip.innerHTML = '';
 }
 
 document.addEventListener('mousemove', (e) => {
   if (!tipOpen) return;
-  // gently follow mouse so it feels natural
-  showDefTip(defTip.textContent, e.clientX, e.clientY);
+
+  const pad = 12;
+  const r = defTip.getBoundingClientRect();
+  let left = e.clientX + pad;
+  let top = e.clientY + pad;
+
+  if (left + r.width > window.innerWidth - 10) left = window.innerWidth - r.width - 10;
+  if (top + r.height > window.innerHeight - 10) top = window.innerHeight - r.height - 10;
+
+  defTip.style.left = Math.max(10, left) + 'px';
+  defTip.style.top = Math.max(10, top) + 'px';
 }, true);
 
 // Use capture so tables/cells don’t swallow hover
@@ -2895,10 +2972,11 @@ document.addEventListener('mouseover', (e) => {
   const a = e.target.closest?.('a.conceptLink.hasDef');
   if (!a) return;
 
-  const text = (a.getAttribute('data-def') || '').trim();
-  if (!text) return;
+  const def = (a.getAttribute('data-def') || '').trim();
+  const why = (a.getAttribute('data-why') || '').trim();
 
-  showDefTip(text, e.clientX, e.clientY);
+  if (!def && !why) return;
+  showDefTip(def, why, e.clientX, e.clientY);
 }, true);
 
 document.addEventListener('mouseout', (e) => {
