@@ -1428,6 +1428,9 @@ function isCaretAtStartOfBlock(range, block) {
 
 // Capture key behavior inside editors only
 document.addEventListener('keydown', (e) => {
+  // ✅ Don't let indent logic touch the definition panel boxes
+  if (defPanel && defPanel.contains(e.target)) return;
+
   const editor = getActiveEditor();
   if (!editor) return;
 
@@ -1442,32 +1445,49 @@ document.addEventListener('keydown', (e) => {
   if (!block) return;
 
   const tag = (block.tagName || '').toLowerCase();
-  const inIndentContext = (tag === 'blockquote') || (tag === 'li');
+
+  // Detect indent even when Safari uses margin/padding instead of <blockquote>
+  function hasLeftIndent(el){
+    let cur = el;
+    let steps = 0;
+
+    while (cur && cur !== editor && steps < 4) {
+      const cs = getComputedStyle(cur);
+      const ml = parseFloat(cs.marginLeft) || 0;
+      const pl = parseFloat(cs.paddingLeft) || 0;
+      if (ml > 0.5 || pl > 0.5) return true;
+
+      cur = cur.parentElement;
+      steps++;
+    }
+    return false;
+  }
+
+  const inIndentContext =
+    (tag === 'blockquote') ||
+    (tag === 'li') ||
+    hasLeftIndent(block);
 
   // 1) Backspace at start => outdent
   if (e.key === 'Backspace' && inIndentContext && isCaretAtStartOfBlock(range, block)) {
     e.preventDefault();
-    // For lists/quotes, outdent usually does the right thing
     document.execCommand('outdent');
     saveCaret();
     return;
   }
 
   // 2) Enter ALWAYS exits indent
-if (e.key === 'Enter' && inIndentContext && !e.shiftKey) {
-  e.preventDefault();
+  if (e.key === 'Enter' && inIndentContext && !e.shiftKey) {
+    e.preventDefault();
 
-  // First create the next line (still inside the current block)
-  document.execCommand('insertParagraph');
+    // create a new line then exit indent for that new line
+    document.execCommand('insertParagraph');
+    document.execCommand('outdent');
 
-  // Then immediately step back out (so the new line is not indented)
-  document.execCommand('outdent');
-
-  saveCaret();
-  return;
-}
+    saveCaret();
+    return;
+  }
 }, true);
-
 /* =========================
    RESET (selection only): remove formatting + black
 ========================= */
@@ -2897,13 +2917,12 @@ function enableSoftLineBreaks(el){
   if (!el) return;
 
   el.addEventListener('keydown', (e) => {
+    // Only run inside definition panel
+    if (!defPanel.contains(e.target)) return;
+
     if (e.key === 'Enter') {
       e.preventDefault();
-
-      // Always insert a single line break
       document.execCommand('insertLineBreak');
-
-      // Re-grow box height
       setTimeout(() => autoGrowBox(el), 0);
     }
   });
