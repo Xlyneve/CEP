@@ -474,6 +474,25 @@ input[type="file"]::file-selector-button:hover {
   font-weight: 600;
 }
 
+table.editable-table{
+  width: 100%;
+  table-layout: auto;   /* allow natural growth */
+  border-collapse: collapse;
+}
+
+table.editable-table td{
+  vertical-align: top;
+}
+
+.cellBox{
+  display: block;
+  min-height: 0;        /* no forced height */
+  padding: 6px 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+}
+
 .cellBox {
   display: block;
   width: 100%;
@@ -489,6 +508,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 /* Floating table controls */
+
 
 
 #notePanel {
@@ -762,85 +782,34 @@ mark.underlineMatch{
   font-family: 'Tahoma', sans-serif;
 }
 
-/* Definition badge on concept pills */
-/* Make pills a positioning context for the dot + tooltip */
-a.conceptLink {
-  position: relative;
-  overflow: visible; /* ensure tooltip can escape */
+a.conceptLink { 
+  position: relative; 
+  overflow: visible; 
 }
 
-/* Yellow dot indicator when a definition exists */
+.conceptCount { 
+  margin-left: 2px; /* keep your newer tighter spacing */
+}
+
+/* Definition badge/dot (NO tooltip) */
 a.conceptLink.hasDef::before{
   content: "";
   position: absolute;
   top: -4px;
   right: -4px;
 
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
 
-  background: rgba(255, 214, 102, 0.95); /* soft yellow */
-  border: 1px solid rgba(0,0,0,0.12);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  /* subtle but visible */
+  background: rgba(255, 251, 177);
+  border: 2px solid rgba(255,255,255,0.85);
 
-  pointer-events: none; /* never block hover/click */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  pointer-events: none;
 }
 
-a.conceptLink.hasDef::before{
-  top: -0.45em;
-  right: -0.45em;
-  width: 0.75em;
-  height: 0.75em;
-  min-width: 10px;
-  min-height: 10px;
-}
-
-/* Ensure tooltip always floats above */
-a.conceptLink.hasDef:hover::after{
-  z-index: 10120;
-}
-
-.conceptCount{
-  margin-left: 6px;
-}
-
-/* Hover tooltip definition */
-a.conceptLink.hasDef:hover::after{
-  content: attr(data-def);
-  position: absolute;
-  left: 0;
-  top: calc(100% + 8px);
-  z-index: 10120;
-
-  width: min(360px, 78vw);
-  max-height: 240px;
-  overflow: auto;
-
-  padding: 10px 12px;
-  border-radius: 12px;
-
-  /* ✅ much clearer */
- background: rgba(255, 244, 204, 0.96);
-border: 1px solid rgba(255, 214, 102, 0.45);
-
-  /* keep your glass look but less “see-through” */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-
-  /* ✅ stronger separation */
- box-shadow:
-  0 14px 40px rgba(255, 214, 102, 0.20),
-  0 0 0 1px rgba(255,255,255,0.6) inset;
-
-  color: #3a3200;
-  font-size: 12px;
-  line-height: 1.35;
-  
-   backdrop-filter: none;
--webkit-backdrop-filter: none;  
-  white-space: pre-wrap;
-}
 #defPanel .topRow{
   display:flex;
   align-items:center;
@@ -933,6 +902,25 @@ border: 1px solid rgba(255, 214, 102, 0.45);
   border-color: rgba(208,160,163,0.55);
   background: rgba(208,160,163,0.20);
 }
+
+#defTip{
+  position: fixed;
+  z-index: 999999;
+  max-width: min(320px, 70vw);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(245, 239, 255);
+  border: 1px solid rgba(0,0,0,0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.12);
+  font-size: 13px;
+  line-height: 1.35;
+  color: #222;
+  pointer-events: none; /* important: don't steal hover/click */
+  white-space: pre-wrap;
+}
+
 #whyBox {
   width: 100%;
   min-height: 44px;
@@ -2777,6 +2765,72 @@ const defMergeBtn = document.getElementById('defMergeBtn');
 
 let currentDefConcept = '';
 
+/* =========================
+   Floating definition tooltip (always above tables)
+========================= */
+const defTip = document.createElement('div');
+defTip.id = 'defTip';
+defTip.style.display = 'none';
+document.body.appendChild(defTip);
+
+let tipOpen = false;
+
+function showDefTip(text, x, y) {
+  if (!text) return;
+  defTip.textContent = text;
+  defTip.style.display = 'block';
+  tipOpen = true;
+
+  const pad = 12;
+  const r = defTip.getBoundingClientRect();
+
+  let left = x + pad;
+  let top = y + pad;
+
+  if (left + r.width > window.innerWidth - 10) left = window.innerWidth - r.width - 10;
+  if (top + r.height > window.innerHeight - 10) top = window.innerHeight - r.height - 10;
+
+  defTip.style.left = Math.max(10, left) + 'px';
+  defTip.style.top = Math.max(10, top) + 'px';
+}
+
+function hideDefTip() {
+  tipOpen = false;
+  defTip.style.display = 'none';
+  defTip.textContent = '';
+}
+
+document.addEventListener('mousemove', (e) => {
+  if (!tipOpen) return;
+  // gently follow mouse so it feels natural
+  showDefTip(defTip.textContent, e.clientX, e.clientY);
+}, true);
+
+// Use capture so tables/cells don’t swallow hover
+document.addEventListener('mouseover', (e) => {
+  const a = e.target.closest?.('a.conceptLink.hasDef');
+  if (!a) return;
+
+  const text = (a.getAttribute('data-def') || '').trim();
+  if (!text) return;
+
+  showDefTip(text, e.clientX, e.clientY);
+}, true);
+
+document.addEventListener('mouseout', (e) => {
+  const from = e.target.closest?.('a.conceptLink.hasDef');
+  if (!from) return;
+
+  // if moving to another link, don’t hide
+  const to = e.relatedTarget?.closest?.('a.conceptLink.hasDef');
+  if (to) return;
+
+  hideDefTip();
+}, true);
+
+document.addEventListener('scroll', hideDefTip, true);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideDefTip(); }, true);
+
 function autoGrowBox(el) {
   if (!el) return;
   el.style.height = 'auto';
@@ -3145,6 +3199,7 @@ function displayNotesInto(targetEl, notes) {
     const bubble = document.createElement('div');
     bubble.className = 'chatBubble';
     bubble.innerHTML = '🤖 ' + conceptLinkifyHTML(stripLegacyTableControls(note.content || ''));
+    setTableCellsEditable(bubble, false);
     div.appendChild(bubble);
 
     const btns = document.createElement('div');
@@ -3181,6 +3236,7 @@ function displayNotesInto(targetEl, notes) {
       const editable = document.createElement('div');
       editable.contentEditable = true;
       editable.innerHTML = (note.content || '').replace(/<mark class="underlineMatch">([\s\S]*?)<\/mark>/gi, '$1');
+      setTableCellsEditable(editable, true);
       editable.className = 'editableNote';
       activeEditable = editable;
 
@@ -3536,6 +3592,20 @@ document.addEventListener('click', (e) => {
   userInput.focus();
   runLiveSearch(userInput.value.trim(), true);
 }, true);
+
+function setTableCellsEditable(root, editable) {
+  if (!root) return;
+  root.querySelectorAll('.cellBox').forEach(cell => {
+    cell.contentEditable = editable ? 'true' : 'false';
+    if (!editable) {
+      cell.setAttribute('tabindex', '-1');
+      cell.style.caretColor = 'transparent';
+    } else {
+      cell.removeAttribute('tabindex');
+      cell.style.caretColor = '';
+    }
+  });
+}
 
 /* =========================
    Live search runner
