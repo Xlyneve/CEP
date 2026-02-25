@@ -531,48 +531,78 @@ input[type="file"]::file-selector-button:hover {
   color: #222;
 }
 
-/* Concept links: [[topic]] — soft pastel pill + subtle ring */
+/* =========================
+   Concept pills (INLINE-FRIENDLY)
+   - still looks like a pill
+   - doesn’t “stand off” inside sentences
+========================= */
 .chatBubble a.conceptLink,
 .editableNote a.conceptLink,
 a.conceptLink,
-a.conceptLink:visited,
-a.conceptLink:active,
-a.conceptLink:focus {
+a.conceptLink:visited {
   color: #2a2a2a !important;
   text-decoration: none !important;
 
-  display: inline-block;
-  padding: 0px 7px;
-  border-radius: 999px;
+  display: inline-flex;           /* key: inline + stable */
+  align-items: baseline;          /* keeps text aligned */
+  gap: 4px;                       /* space before badge */
+  vertical-align: baseline;
 
-  /* pastel tint (matches your pinky/neutral palette) */
-  background: rgba(208, 160, 163, 0.18);
+  padding: 0 6px;                 /* tighter than before */
+  border-radius: 10px;            /* less “capsule” */
 
-  /* gentle “clickable” ring */
-  border: 1px solid rgba(208, 160, 163, 0.30);
+  /* subtle pill by default */
+  background: rgba(208, 160, 163, 0.15);
+  border: 1px solid rgba(208, 160, 163, 0.22);
 
-  /* soft inner depth (not underline-blue-ish) */
-  box-shadow:
-    inset 0 -1px 0 rgba(0,0,0,0.18),
-    0 1px 6px rgba(0,0,0,0.06);
+  /* flatter so it doesn’t pop off the line */
+  box-shadow: none;
 
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* make it readable in sentences */
+  line-height: 1.25;
+  transform: translateY(0.35px);  /* tiny optical baseline fix */
 
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
 }
 
-/* Hover: slightly more tinted + tiny lift */
-.chatBubble a.conceptLink:hover,
-.editableNote a.conceptLink:hover {
-  background: rgba(208, 160, 163, 0.26);
-  border-color: rgba(208, 160, 163, 0.45);
-  box-shadow:
-    inset 0 -1px 0 rgba(0,0,0,0.22),
-    0 6px 18px rgba(0,0,0,0.10);
-  transform: translateY(-0.5px);
+/* Add a super subtle “link cue” without blue underline */
+.chatBubble a.conceptLink,
+.editableNote a.conceptLink,
+a.conceptLink {
+  text-decoration: underline !important;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(0,0,0,0.28);
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
 }
+
+/* Hover: more pill + slight lift (only when you interact) */
+.chatBubble a.conceptLink:hover,
+.editableNote a.conceptLink:hover,
+a.conceptLink:hover {
+  background: rgba(208, 160, 163, 0.20);
+  border-color: rgba(208, 160, 163, 0.40);
+
+  box-shadow:
+    0 6px 18px rgba(0,0,0,0.10);
+
+  transform: translateY(-0.5px);
+  text-decoration-style: solid;
+}
+
+/* Keyboard focus (soft but visible) */
+.chatBubble a.conceptLink:focus-visible,
+.editableNote a.conceptLink:focus-visible,
+a.conceptLink:focus-visible {
+  outline: 2px solid rgba(208, 160, 163, 0.35);
+  outline-offset: 2px;
+}
+
 
 /* Keyboard focus: visible but still soft */
 .chatBubble a.conceptLink:focus-visible,
@@ -583,22 +613,19 @@ a.conceptLink:focus {
 
 /* Concept count badge */
 .conceptCount {
-  margin-left: 6px;
-  padding: 0px 6px;
-  font-size: 10px;
-  font-weight: 600;
+  margin-left: 2px;        /* smaller */
+  padding: 0 5px;          /* tighter */
+  font-size: 9px;
+  font-weight: 700;
   border-radius: 999px;
+  line-height: 1.2;
 
-  /* cool glass tone (different from pink concept background) */
-  background: rgba(140, 150, 200, 0.22);
-  border: 1px solid rgba(140, 150, 200, 0.35);
-
+  background: rgba(140, 150, 200, 0.18);
+  border: 1px solid rgba(140, 150, 200, 0.28);
   color: #444;
 
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
-  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.15);
+  box-shadow: none;
+  transform: translateY(-0.5px); /* sits nicer with text */
 }
 
 /* Hashtag suggest dropdown */
