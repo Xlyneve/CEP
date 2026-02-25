@@ -574,11 +574,7 @@ a.conceptLink:visited {
 .chatBubble a.conceptLink,
 .editableNote a.conceptLink,
 a.conceptLink {
-  text-decoration: underline !important;
-  text-decoration-style: dotted;
-  text-decoration-color: rgba(0,0,0,0.28);
-  text-underline-offset: 2px;
-  text-decoration-thickness: 1px;
+  text-decoration: none !important;
 }
 
 /* Hover: more pill + slight lift (only when you interact) */
@@ -2123,6 +2119,18 @@ function buildDerivedCachesFromNotes() {
     .map(([tag, count]) => ({ tag, count }));
 }
 
+function deLinkifyConceptAnchors(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+
+  div.querySelectorAll('a.conceptLink').forEach(a => {
+    const concept = (a.getAttribute('data-concept') || a.textContent || '').trim();
+    a.replaceWith(document.createTextNode(`[[${concept}]]`));
+  });
+
+  return div.innerHTML;
+}
+
 /* =========================
    Notes listener (FIXED: no defs listener here)
 ========================= */
@@ -2371,7 +2379,7 @@ addNoteBtn.onclick = async () => {
   if (!isUnlocked) return alert('Locked.');
 
   const raw = noteInput.innerHTML.trim();
-  const noteContent = linkify(raw);
+  const noteContent = deLinkifyConceptAnchors(linkify(raw));
 
   if (!noteContent || noteContent === '<br>') return alert('Note is required.');
 
@@ -3110,7 +3118,7 @@ function displayNotesInto(targetEl, notes) {
       };
 
       saveBtn.onclick = async () => {
-        const updated = editable.innerHTML.trim();
+        const updated = deLinkifyConceptAnchors(editable.innerHTML.trim());
         if (!updated) return alert('Cannot save empty note');
 
         try {
