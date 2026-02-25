@@ -1346,6 +1346,90 @@ indentBtn?.addEventListener('mousedown', (e) => {
 }, true);
 
 /* =========================
+   Indent UX fix:
+   - Backspace at start of an indented block => outdent
+   - Enter on an empty indented line => outdent
+========================= */
+
+function getClosestBlockEl(node, editor) {
+  let el = node?.nodeType === 1 ? node : node?.parentElement;
+  while (el && el !== editor) {
+    const tag = (el.tagName || '').toLowerCase();
+    if (tag === 'blockquote' || tag === 'li' || tag === 'p' || tag === 'div') return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+
+function isBlockEmpty(block) {
+  if (!block) return true;
+  // treat <br> or whitespace as empty
+  const text = (block.textContent || '').replace(/\u200B/g, '').trim();
+  if (text) return false;
+
+  // if it only contains <br> or empty spans etc, count as empty
+  const html = (block.innerHTML || '').replace(/\u200B/g, '').trim().toLowerCase();
+  return html === '' || html === '<br>' || html === '<br/>' || html === '<br />' || html === '&nbsp;';
+}
+
+function isCaretAtStartOfBlock(range, block) {
+  if (!range || !block) return false;
+
+  // If caret is directly in the block and at offset 0
+  if (range.startContainer === block && range.startOffset === 0) return true;
+
+  // Otherwise: check if there's any text/content before caret inside this block
+  const testRange = document.createRange();
+  testRange.setStart(block, 0);
+  testRange.setEnd(range.startContainer, range.startOffset);
+
+  const fragText = (testRange.toString() || '').replace(/\u200B/g, '').trim();
+  return fragText.length === 0;
+}
+
+// Capture key behavior inside editors only
+document.addEventListener('keydown', (e) => {
+  const editor = getActiveEditor();
+  if (!editor) return;
+
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  if (!sel.isCollapsed) return;
+
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return;
+
+  const block = getClosestBlockEl(range.startContainer, editor);
+  if (!block) return;
+
+  const tag = (block.tagName || '').toLowerCase();
+  const inIndentContext = (tag === 'blockquote') || (tag === 'li');
+
+  // 1) Backspace at start => outdent
+  if (e.key === 'Backspace' && inIndentContext && isCaretAtStartOfBlock(range, block)) {
+    e.preventDefault();
+    // For lists/quotes, outdent usually does the right thing
+    document.execCommand('outdent');
+    saveCaret();
+    return;
+  }
+
+  // 2) Enter ALWAYS exits indent
+if (e.key === 'Enter' && inIndentContext && !e.shiftKey) {
+  e.preventDefault();
+
+  // First create the next line (still inside the current block)
+  document.execCommand('insertParagraph');
+
+  // Then immediately step back out (so the new line is not indented)
+  document.execCommand('outdent');
+
+  saveCaret();
+  return;
+}
+}, true);
+
+/* =========================
    RESET (selection only): remove formatting + black
 ========================= */
 const resetColorBtn = document.getElementById('resetColorBtn');
