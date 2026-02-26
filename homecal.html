@@ -6,19 +6,19 @@
   <title>Calendar and To-Do Page</title>
   
 <style>
-
 @font-face {
   font-family: 'hellohon';
   src: url('hellohon.otf') format('opentype');
 }
-@@font-face {
+
+/* FIX: single @ (your @@font-face breaks the rule) */
+@font-face {
   font-family: 'champ';
   src: url('champ.woff2') format('woff2'),
        url('champ.ttf') format('truetype');
   font-weight: 400;
   font-display: swap;
 }
-
 
 body {
   margin: 0;
@@ -27,24 +27,23 @@ body {
   height: 100vh;
   display: flex;
   flex-wrap: nowrap;
-  overflow-x: auto;
+  overflow-x: hidden; /* prevent blank horizontal scroll area */
   background: url('2b1.png') center center / cover no-repeat fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-.calendar, 
+.calendar,
 .calendar * {
   font-family: 'champ', sans-serif;
-  font-weight: 300; /* thinner */
+  font-weight: 300;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-
-
+/* Shared glass container styling (BOTH) */
 .calendar-container,
 .todo-container {
   position: relative;
@@ -55,8 +54,10 @@ body {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   transition: box-shadow 0.3s ease;
   overflow: hidden;
+  min-width: 0; /* flex overflow safety */
 }
 
+/* Calendar (left) */
 .calendar-container {
   flex: 1 1 auto;
   padding: 8px;
@@ -65,6 +66,7 @@ body {
   overflow-y: auto;
 }
 
+/* Background blur layers */
 .calendar-container::before,
 .todo-container::before {
   content: "";
@@ -77,21 +79,25 @@ body {
   z-index: -1;
   pointer-events: none;
 }
-.calendar-container::before {
-  background-position: left top;
-}
+
+.calendar-container::before { background-position: left top; }
+
+/* Todo (right) — IMPORTANT: do NOT combine this with calendar styles */
 .todo-container {
-  flex: 0 1 auto;
+  flex: 0 0 350px;
   max-width: 350px;
   min-width: 150px;
   padding: 3px;
   border-radius: 0 12px 12px 0;
   white-space: normal;
+  max-height: 100vh;
+
+  display: flex;          /* ADD */
+  flex-direction: column; /* ADD */
 }
 
-.todo-container::before {
-  background-position: right top;
-}
+.todo-container::before { background-position: right top; }
+
 .calendar-container:hover,
 .todo-container:hover {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18),
@@ -103,41 +109,54 @@ body {
   text-align: center;
   margin-bottom: 10px;
   font-family: 'hellohon', cursive;
-  font-weight: regular;
+  font-weight: 400;
   color: black;
 }
 
+/* Scroll area ONLY (no big glass box) */
 .todo-list {
-  padding: 10px;
-  border-radius: 1px;
-  color: black;
-  max-height: none;
-  overflow-y: auto;
-  overflow-x: hidden;
   width: 100%;
   box-sizing: border-box;
-  white-space: normal;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* remove the big container look */
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  /* spacing for items */
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .todo-item {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 10px;
   padding: 8px;
-  border-bottom: 1px solid #ddd;
+
   width: 100%;
   box-sizing: border-box;
+
+  /* remove the list-style divider */
+  border-bottom: none;
+
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.3);
+
   transition: box-shadow 0.2s ease;
 }
+
 .todo-item:hover {
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.4),
               0 0 6px rgba(190, 220, 255, 0.3);
@@ -145,7 +164,12 @@ body {
 
 .todo-item input[type="text"],
 .todo-item textarea {
-  flex: 1;
+  flex: 1 1 0;          /* 0 basis prevents “take full width” behavior */
+  min-width: 0;         /* REQUIRED so it can shrink next to buttons */
+  width: auto;
+  max-width: 100%;
+  display: block;
+
   border: none;
   background: transparent;
   font-size: 10pt;
@@ -157,9 +181,15 @@ body {
   overflow-y: hidden;
   box-sizing: border-box;
   overflow-wrap: break-word;
+  word-break: break-word; /* helps with long strings */
   white-space: pre-wrap;
   color: black;
-  width: 100%;
+}
+
+.todo-item { width: 100%; box-sizing: border-box; }
+
+.todo-item > div:last-child {
+  flex: 0 0 auto;
 }
 
 .todo-item input[type="checkbox"] {
@@ -168,22 +198,11 @@ body {
   height: 20px;
   accent-color: #ffe700;
 }
-.todo-item {
-  align-items: stretch; /* CHANGE THIS */
-}
-
-.todo-item textarea {
-  width: 100%;
-  min-height: 30px;
-  resize: none;
-  overflow-y: hidden;
-  line-height: 1.4
-  font-family: Tahoma, sans-serif; /* if you want matching style */
-}
 
 
 .add-todo {
   display: flex;
+  gap: 8px;
   margin-top: 10px;
 }
 
@@ -197,6 +216,7 @@ body {
   -webkit-backdrop-filter: blur(8px);
   color: black;
 }
+
 .add-todo button {
   padding: 8px;
   border: none;
@@ -208,6 +228,7 @@ body {
   color: #333;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
+
 .add-todo button:hover {
   background: rgba(255, 255, 255, 0.4);
   box-shadow: 0 0 8px rgba(170, 200, 255, 0.4);
@@ -229,6 +250,7 @@ button,
   padding: 6px 12px;
   font-size: 10pt;
 }
+
 button:hover,
 .add-todo button:hover,
 .home-button:hover,
@@ -256,14 +278,16 @@ button:hover,
 .calendar-header h2#monthLabel {
   font-size: 50pt;
   margin: 0;
-  color: Black;
+  color: black;
   font-family: 'hellohon', cursive, sans-serif;
 }
+
 #monthLabel {
   font-family: 'hellohon', cursive, sans-serif;
-  font-weight: regular;
+  font-weight: 400;
   color: rgba(255, 255, 255, 0.85);
 }
+
 .calendar-header select {
   padding: 6px 12px;
   font-size: 10pt;
@@ -294,60 +318,6 @@ button:hover,
   color: white;
 }
 
-.home-button,
-.emoji-button,
-.calendar-header > div > button,
-.add-todo button {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(193, 182, 163, 0.3);
-  border-radius: 8px;
-  color: black;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  padding: 6px 12px;
-  font-size: 10pt;
-}
-
-.home-button:hover,
-.emoji-button:hover,
-.calendar-header > div > button:hover,
-.add-todo button:hover {
-  background: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
-}
-
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.calendar-header h2#monthLabel {
-  flex: 1;
-  text-align: center;
-  font-size: 50pt;
-  margin: 0;
-  color: black;
-  font-family: 'hellohon', cursive, sans-serif;
-}
-.emoji-button {
-  font-size: 14pt;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
-}
-
-.emoji-button:hover {
-  background-color: #ddd3d2;
-}
-
 .day-headers {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -363,6 +333,7 @@ button:hover,
   gap: 10px;
   margin-top: 5px;
 }
+
 .day {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -379,34 +350,14 @@ button:hover,
   position: relative;
   overflow: hidden;
   will-change: transform, box-shadow;
-  
 }
+
 .day:hover {
   box-shadow:
     inset 0 0 8px rgba(255, 255, 255, 0.2),
     0 3px 6px rgba(0, 0, 0, 0.08);
   transform: none;
   transition: none;
-}
-
-.day::before {
-  content: none;
-  position: absolute;
-  top: -30%;
-  left: -30%;
-  width: 160%;
-  height: 160%;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.3) 0%,
-    rgba(255, 255, 255, 0.05) 60%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  pointer-events: none;
-  transform: rotate(-25deg);
-  filter: blur(6px);
-  z-index: 1;
-  opacity: 0.8;
 }
 
 .day.empty {
@@ -445,8 +396,9 @@ button:hover,
   margin-bottom: 5px;
   font-size: 10pt;
 }
+
 .day.today {
-  transform: scale(1.13); /* Slightly bigger than other days */
+  transform: scale(1.13);
   z-index: 5;
   box-shadow:
     0 0 20px rgba(255, 255, 255, 0.9),
@@ -459,15 +411,6 @@ button:hover,
   );
 }
 
-/* Remove pulse animation */
-s
-.day.today:hover {
-  transform: none;
-  box-shadow:
-    0 0 12px rgba(255, 255, 255, 0.7),
-    0 0 25px rgba(190, 230, 255, 0.6);
-}
-
 .day textarea:focus {
   outline: none;
   box-shadow: 0 0 6px rgba(180, 220, 255, 0.8);
@@ -475,9 +418,7 @@ s
 }
 
 @media (max-width: 600px) {
-  body {
-    flex-wrap: wrap;
-  }
+  body { flex-wrap: wrap; }
 
   .calendar-container,
   .todo-container {
@@ -486,11 +427,7 @@ s
     border-radius: 12px !important;
   }
 
-  .calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-  }
+  .calendar { gap: 4px; }
 
   .day {
     min-height: 120px;
@@ -509,28 +446,70 @@ s
     align-items: flex-start;
   }
 
-  .calendar-header h2#monthLabel {
-    font-size: 20pt;
-  }
+  .calendar-header h2#monthLabel { font-size: 20pt; }
 
   .day-headers {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
     font-size: 9pt;
     gap: 4px;
   }
 }
-	
-</style>
-<style>
-  .day.match {
-    background: rgba(255, 255, 255, 0.25); /* glass-like */
-    backdrop-filter: blur(8px) saturate(120%);
-    -webkit-backdrop-filter: blur(8px) saturate(120%);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+
+/* Match highlight */
+.day.match {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
 }
 
+/* =========================
+   GLASS THEME SCROLLBARS
+   ========================= */
+
+/* Firefox */
+.todo-list,
+.calendar-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.45) rgba(255,255,255,0.08);
+}
+
+/* WebKit browsers */
+.todo-list::-webkit-scrollbar,
+.calendar-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Track (the background line) */
+.todo-list::-webkit-scrollbar-track,
+.calendar-container::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.08);
+  border-radius: 20px;
+}
+
+/* Thumb (the draggable part) */
+.todo-list::-webkit-scrollbar-thumb,
+.calendar-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.6),
+    rgba(220,240,255,0.4)
+  );
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.35);
+}
+
+/* Hover effect */
+.todo-list::-webkit-scrollbar-thumb:hover,
+.calendar-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.85),
+    rgba(190,230,255,0.6)
+  );
+  box-shadow: 0 0 6px rgba(190,230,255,0.5);
+}
 
 </style>
 
@@ -1064,6 +1043,5 @@ window.insertEmoji = function(emoji) {
 
 </body>
 </html>
-
 
 
