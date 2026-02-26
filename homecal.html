@@ -11,18 +11,10 @@
   src: url('hellohon.otf') format('opentype');
 }
 
-/* FIX: single @ (your @@font-face breaks the rule) */
-@font-face {
-  font-family: 'champ';
-  src: url('champ.woff2') format('woff2'),
-       url('champ.ttf') format('truetype');
-  font-weight: 400;
-  font-display: swap;
-}
 
 body {
   margin: 0;
-  font-family: 'champ', sans-serif;
+  font-family: Tahoma, sans-serif;
   font-size: 10pt;
   height: 100vh;
   display: flex;
@@ -36,7 +28,7 @@ body {
 
 .calendar,
 .calendar * {
-  font-family: 'champ', sans-serif;
+  font-family: Tahoma, sans-serif;
   font-weight: 300;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -139,51 +131,116 @@ body {
 .todo-item {
   display: flex;
   align-items: stretch;
-  gap: 10px;
-  padding: 8px;
+  gap: 8px;               /* slightly tighter */
+  padding: 6px 8px;       /* less padding = more usable space */
 
   width: 100%;
   box-sizing: border-box;
 
-  /* remove the list-style divider */
-  border-bottom: none;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.30);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-
-  transition: box-shadow 0.2s ease;
+  border-radius: 12px;
 }
 
 .todo-item:hover {
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4),
-              0 0 6px rgba(190, 220, 255, 0.3);
+  box-shadow:
+    inset 0 0 6px rgba(255,255,255,0.2),
+    0 2px 6px rgba(0,0,0,0.05);
+}
+
+
+/* Action container hidden by default */
+.todo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 0 auto;
+
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Show only when hovering the todo item */
+.todo-item:hover .todo-actions {
+  opacity: 1;
+}
+
+/* Minimal glass buttons */
+.todo-actions button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
+  color: rgba(0,0,0,0.55);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+
+  transition: background .2s ease, border-color .2s ease, transform .15s ease;
+}
+
+.todo-actions button:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.35);
+  transform: translateY(-1px);
+}
+
+.todo-actions button:hover{
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.35);
+  transform: translateY(-1px);
+}
+
+.todo-actions button:active{
+  transform: translateY(0);
+}
+
+.todo-item textarea {
+  font-family: Tahoma, sans-serif;
+  color: #000;
+  opacity: 1;
+}
+
+/* keep readOnly looking normal */
+.todo-item textarea[readonly] {
+  cursor: default;
+}
+
+/* optional: show subtle focus when editing */
+.todo-item textarea:not([readonly]):focus {
+  outline: none;
+  box-shadow: 0 0 6px rgba(255,255,255,0.6);
 }
 
 .todo-item input[type="text"],
 .todo-item textarea {
-  flex: 1 1 0;          /* 0 basis prevents “take full width” behavior */
-  min-width: 0;         /* REQUIRED so it can shrink next to buttons */
-  width: auto;
-  max-width: 100%;
-  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+
+  padding: 2px 4px;   /* tighter */
+  margin: 0;
 
   border: none;
   background: transparent;
+
+  font-family: Tahoma, sans-serif;
   font-size: 10pt;
-  font-family: 'champ', sans-serif;
-  padding: 4px;
+  line-height: 1.4;
+
   resize: none;
-  min-height: 30px;
-  max-height: none;
   overflow-y: hidden;
+
   box-sizing: border-box;
-  overflow-wrap: break-word;
-  word-break: break-word; /* helps with long strings */
-  white-space: pre-wrap;
-  color: black;
 }
 
 .todo-item { width: 100%; box-sizing: border-box; }
@@ -464,51 +521,56 @@ button:hover,
 }
 
 /* =========================
-   GLASS THEME SCROLLBARS
+   ULTRA SUBTLE GLASS SCROLLBAR
    ========================= */
 
 /* Firefox */
 .todo-list,
 .calendar-container {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.45) rgba(255,255,255,0.08);
+  scrollbar-color: transparent transparent;
 }
 
-/* WebKit browsers */
+/* WebKit */
 .todo-list::-webkit-scrollbar,
 .calendar-container::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;   /* thinner = more elegant */
+  height: 6px;
 }
 
-/* Track (the background line) */
+/* Invisible track */
 .todo-list::-webkit-scrollbar-track,
 .calendar-container::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.08);
-  border-radius: 20px;
+  background: transparent;
 }
 
-/* Thumb (the draggable part) */
+/* Fully hidden by default */
 .todo-list::-webkit-scrollbar-thumb,
 .calendar-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.6),
-    rgba(220,240,255,0.4)
-  );
+  background: transparent;
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.35);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* Hover effect */
-.todo-list::-webkit-scrollbar-thumb:hover,
-.calendar-container::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.85),
-    rgba(190,230,255,0.6)
-  );
-  box-shadow: 0 0 6px rgba(190,230,255,0.5);
+/* Almost transparent frosted glass on hover */
+.todo-list:hover::-webkit-scrollbar-thumb,
+.calendar-container:hover::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Slightly stronger while dragging */
+.todo-list::-webkit-scrollbar-thumb:active,
+.calendar-container::-webkit-scrollbar-thumb:active {
+  background: rgba(255,255,255,0.28);
+}
+
+/* Firefox hover */
+.todo-list:hover,
+.calendar-container:hover {
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
 }
 
 </style>
@@ -839,7 +901,7 @@ function renderTodoItem(id, text, done) {
 
   const input = document.createElement('textarea');
   input.value = text;
-  input.disabled = true;
+  input.readOnly = true;
   input.style.flex = '1';
   input.style.border = 'none';
   input.style.background = 'transparent';
@@ -853,43 +915,42 @@ function renderTodoItem(id, text, done) {
   input.addEventListener('input', () => autoResizeTextarea(input));
 
   const buttonContainer = document.createElement('div');
-  buttonContainer.style.display = 'flex';
-  buttonContainer.style.flexDirection = 'column';
-  buttonContainer.style.gap = '6px';
+buttonContainer.className = 'todo-actions';
 
-  const editBtn = document.createElement('button');
-  editBtn.textContent = '✏️';
+const editBtn = document.createElement('button');
+editBtn.type = 'button';
+editBtn.title = 'Edit';
+editBtn.textContent = '✎';   // minimalist pencil
 
-  editBtn.onclick = async () => {
-    if (input.disabled) {
-      // enter edit mode
-      input.disabled = false;
-      input.focus();
+editBtn.onclick = async () => {
+  if (input.readOnly) {
+    // enter edit mode
+    input.readOnly = false;
+    input.focus();
 
-      // force auto-resize after becoming editable
-      setTimeout(() => autoResizeTextarea(input), 20);
+    setTimeout(() => autoResizeTextarea(input), 20);
+    editBtn.textContent = '💾';
+  } else {
+    // save changes
+    await updateDoc(doc(db, 'todos', id), { text: input.value });
+    input.readOnly = true;
 
-      editBtn.textContent = '💾';
-    } else {
-      // save changes
-      await updateDoc(doc(db, 'todos', id), { text: input.value });
-      input.disabled = true;
+    autoResizeTextarea(input);
+    editBtn.textContent = '✏️';
+  }
+};
 
-      // ensure height matches final saved text
-      autoResizeTextarea(input);
+const deleteBtn = document.createElement('button');
+deleteBtn.type = 'button';
+deleteBtn.title = 'Delete';
+deleteBtn.textContent = '×';  // minimalist delete
 
-      editBtn.textContent = '✏️';
-    }
-  };
+deleteBtn.onclick = async () => {
+  if (confirm("Delete this to-do?"))
+    await deleteDoc(doc(db, 'todos', id));
+};
 
-  const deleteBtn = document.createElement('button');
-  deleteBtn.textContent = '🗑️';
-  deleteBtn.onclick = async () => {
-    if (confirm("Delete this to-do?"))
-      await deleteDoc(doc(db, 'todos', id));
-  };
-
-  buttonContainer.append(editBtn, deleteBtn);
+buttonContainer.append(editBtn, deleteBtn);
 
   item.append(checkbox, input, buttonContainer);
   todoListEl.appendChild(item);
@@ -1043,5 +1104,4 @@ window.insertEmoji = function(emoji) {
 
 </body>
 </html>
-
 
