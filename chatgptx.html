@@ -234,6 +234,16 @@ input[type="file"]::file-selector-button:hover {
   transform: translateY(0.8px);
 }
 
+/* Normal-size inline symbols (arrows, ≤, ≥, etc.) */
+.inlineSymbol {
+  display: inline-block;
+  font-size: 1em;        /* same as text */
+  font-weight: normal;
+  line-height: 1.1;
+  vertical-align: baseline;
+  transform: none;
+}
+
 /* Tag chips under notes */
 .tagRow{
   margin-top: 8px;
@@ -2398,7 +2408,11 @@ addNoteToggle.onclick = () => {
    Inline Emoji Picker (your existing)
 ========================= */
 const floatingEmojiPanel = document.getElementById('floatingEmojiPanel');
-const EMOJIS = ['°','🔴','🟠','🟡','🟢','🔵','🟣','⚫️','⚪️','➜','⬇︎','⬅','➜ ','✅','❌','⭐','🔥','🦠','◼️','❤️','🧠','🌡️','📝','📌','📍','💊','⚠️','🚨','⏳','💥','💪🏻','±','⤷⤵︎','⤷','⤶','⤹','⤵','↳','⤴︎','≥','≤'];
+// Keep EMOJIS as "big icon" items only (no arrows / inequalities here)
+const EMOJIS = ['°','🔴','🟠','🟡','🟢','🔵','🟣','⚫️','⚪️','✅','❌','⭐','🔥','🦠','◼️','❤️','🧠','🌡️','📝','📌','📍','💊','⚠️','🚨','⏳','💥','💪🏻'];
+
+// New: arrows / math symbols (inserted at normal text size)
+const ARROWS = ['±','⤷','⤶','⤹','⤵','↳','⤴︎','≥','≤','➜','⬇︎','⬅'];
 
 function hideEmojiPanel() {
   floatingEmojiPanel.style.display = 'none';
@@ -2406,17 +2420,18 @@ function hideEmojiPanel() {
   floatingEmojiPanel.innerHTML = '';
 }
 
-function showEmojiPanelNearButton(btnEl, onPick) {
+function showPickerNearButton(btnEl, items, onPick) {
   floatingEmojiPanel.innerHTML = '';
-  EMOJIS.forEach(e => {
+
+  items.forEach(sym => {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'pick';
-    b.textContent = e;
+    b.textContent = sym;
     b.addEventListener('click', (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      onPick(e);
+      onPick(sym);
       hideEmojiPanel();
     });
     floatingEmojiPanel.appendChild(b);
@@ -2474,6 +2489,39 @@ function insertEmojiAtCaret(emoji) {
     saveCaret();
   } else {
     activeEditable.appendChild(document.createTextNode(emoji));
+    placeCaretAtEnd(activeEditable);
+  }
+}
+
+function insertInlineSymbolAtCaret(symbol) {
+  if (!activeEditable) return;
+
+  activeEditable.focus();
+  restoreCaret();
+
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount && activeEditable.contains(sel.anchorNode)) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+
+    const span = document.createElement('span');
+    span.className = 'inlineSymbol';
+    span.textContent = symbol;
+
+    range.insertNode(span);
+
+    const spacer = document.createTextNode('\u200B');
+    span.after(spacer);
+
+    range.setStartAfter(spacer);
+    range.collapse(true);
+
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    saveCaret();
+  } else {
+    activeEditable.appendChild(document.createTextNode(symbol));
     placeCaretAtEnd(activeEditable);
   }
 }
@@ -3475,6 +3523,35 @@ function displayNotesInto(targetEl, notes) {
       emojiBtn.type = 'button';
       emojiBtn.textContent = '🌟';
 
+      const arrowBtn = document.createElement('button');
+arrowBtn.type = 'button';
+arrowBtn.textContent = '↳';
+
+Object.assign(arrowBtn.style, {
+  background: 'none',
+  border: 'none',
+  color: '#666',
+  fontSize: '16px',
+  cursor: 'pointer',
+  marginRight: '12px'
+});
+
+arrowBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  activeEditable = editable;
+  editable.focus({ preventScroll: true });
+  saveCaret();
+
+  showPickerNearButton(arrowBtn, ARROWS, (picked) => {
+    activeEditable = editable;
+    editable.focus({ preventScroll: true });
+    restoreCaret();
+    insertInlineSymbolAtCaret(picked);   // ✅ normal-sized
+  });
+});
+
       Object.assign(emojiBtn.style, {
         background: 'none',
         border: 'none',
@@ -3492,19 +3569,19 @@ function displayNotesInto(targetEl, notes) {
         editable.focus({ preventScroll: true });
         saveCaret();
 
-        showEmojiPanelNearButton(emojiBtn, (picked) => {
-          activeEditable = editable;
-          editable.focus({ preventScroll: true });
-          restoreCaret();
-          insertEmojiAtCaret(picked);
-        });
+        showPickerNearButton(emojiBtn, EMOJIS, (picked) => {
+  activeEditable = editable;
+  editable.focus({ preventScroll: true });
+  restoreCaret();
+  insertEmojiAtCaret(picked);           // ✅ big emoji style
+});
       });
 
       const actions = document.createElement('div');
       actions.style.textAlign = 'center';
       actions.style.marginTop = '6px';
 
-      actions.append(imgBtnWrap, emojiBtn, saveBtn, cancelBtn);
+      actions.append(imgBtnWrap, emojiBtn, arrowBtn, saveBtn, cancelBtn);
 
       actions.addEventListener('mousedown', () => {
         activeEditable = editable;
@@ -4009,5 +4086,6 @@ updateUIForLockState();
 
 </body>
 </html>
+
 
 
