@@ -178,7 +178,7 @@ header h1 {
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.2);
-  max-width: 90vw;
+  max-width: 95vw;
   max-height: 80vh;
   overflow-x: auto;
   font-family: 'fors', sans-serif;
@@ -193,7 +193,8 @@ header h1 {
   border-collapse: collapse;
 }
 
-#vital-signs-table th, td {
+#vital-signs-table th,
+#vital-signs-table td {
   padding: 10px;
   text-align: left;
   white-space: nowrap;
@@ -205,7 +206,16 @@ header h1 {
 
 #vital-signs-table th {
   background-color: rgba(250, 250, 250, 0.4);
-  font-weight: bold;
+ 
+}
+#vital-signs-table table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+#vital-signs-table tbody tr:hover td {
+  background-color: rgba(140, 150, 200, 0.22); /* soft purplish-blue */
+  transition: background-color 0.15s ease;
 }
 
 #close-btn {
@@ -400,6 +410,158 @@ footer {
   max-width: 500px;
 }
 
+/* === Emoji Picker: sleek slide-out glass === */
+#emojiModal{
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  width: 300px;
+  max-width: calc(100vw - 40px);
+  height: 340px;
+  max-height: calc(100vh - 140px);
+  padding: 12px;
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+
+  z-index: 1200;
+
+  /* hidden state (slide out) */
+  opacity: 0;
+  transform: translateX(18px) translateY(10px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 220ms ease;
+}
+
+#emojiModal.open{
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+  pointer-events: auto;
+}
+
+.emojiHeader{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.emojiTitle{
+  font-family: 'fors', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  color: #111;
+  opacity: 0.9;
+}
+
+.emojiClose{
+  border: none;
+  background: rgba(255,255,255,0.30);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 28px;
+  color: #111;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.emojiGrid{
+  height: calc(100% - 46px);
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.emojiBtn{
+  border: none;
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+  font-size: 20px;
+  line-height: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.emojiBtn:hover{
+  background: rgba(255,255,255,0.35);
+  transform: translateY(-1px);
+}
+
+.emojiGrid::-webkit-scrollbar { width: 8px; }
+.emojiGrid::-webkit-scrollbar-track { background: transparent; }
+.emojiGrid::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.30);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+}
+.emojiFab{
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+
+  border: 1px solid rgba(255,255,255,0.40);
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 1300;
+  transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.emojiFab:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.24);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.16);
+}
+
+.emojiFab:active{
+  transform: translateY(0);
+}
+
+.emojiFabIcon{
+  font-family: 'fors', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: rgba(0,0,0,0.72);
+  line-height: 1;
+}
+.emojiFabDots{
+  position: fixed;
+}
+.emojiFabDots::before{
+  content:"";
+  width: 16px;
+  height: 16px;
+  background:
+    radial-gradient(circle, rgba(0,0,0,0.55) 2px, transparent 3px) 0 0/8px 8px;
+  opacity: 0.55;
+  border-radius: 4px;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 992px) {
   .card-group {
@@ -464,6 +626,26 @@ footer {
     margin-top: 100px;
     margin-right: 110px;
   }
+
+@keyframes emojiFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+#emojiSearchInput {
+  width: 100%;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: rgba(255,255,255,0.6);
+  font-family: 'fors', sans-serif;
+}
 }
 
 </style>
@@ -587,13 +769,16 @@ footer {
 
 
       <!-- Emoji Search Icon -->
-      <img src="search-icon.png" alt="Search" id="emojiSearchIcon" style="position:fixed; bottom:20px; right:20px; width:30px; height:30px; cursor:pointer; z-index:1000;" />
+     <button id="emojiSearchIcon" class="emojiFab emojiFabDots" type="button" aria-label="Open emoji picker"></button>
 
-      <!-- Emoji Search Modal -->
-      <div id="emojiModal" style="display:none; position:fixed; bottom:60px; right:20px; background:#fff; padding:12px; border:1px solid #ccc; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000;">
-        <input type="text" id="emojiSearchInput" placeholder="Search emoji..." style="padding:6px; width:160px; font-size:14px;" />
-        <div id="emojiResults" style="margin-top:8px; font-size:18px; max-height:150px; overflow-y:auto;"></div>
-      </div>
+      <!-- Emoji Picker (Slide-out) -->
+<div id="emojiModal" aria-hidden="true">
+  <div class="emojiHeader">
+    <div class="emojiTitle">Emojis</div>
+    <button class="emojiClose" type="button" aria-label="Close">✕</button>
+  </div>
+  <div id="emojiGrid" class="emojiGrid" role="list"></div>
+</div>
 
   <div class="moving-text">💡 Reminder: Stay organized and check your calendar!</div>
 
@@ -601,67 +786,119 @@ footer {
 
     <!-- Vital Signs Table -->
     <div id="vital-signs-table">
-        <button id="close-btn" onclick="closeTable()">Close</button>
+      
         <h2>Normal Vital Signs by Age Group</h2>
-        <table>
+       <table>
   <thead>
     <tr>
-      <th>Age Group</th>
-      <th>Heart Rate</th>
-      <th>Respiratory Rate</th>
-      <th>Systolic BP</th>
-      <th>Capillary Refill</th>
-      <th>Temperature</th>
-      <th>SpO₂</th>
+      <th>Age</th>
+      <th>Approx WE (kg)</th>
+      <th>Systolic BP </th>
+      <th>HR bpm</th>
+      <th>RR br/min</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>&lt; 3 months</td>
-      <td>110–150 bpm</td>
-      <td>30–60 breaths/min</td>
-      <td>60–80 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
+      <td>Term</td>
+      <td>3.5</td>
+      <td>60 to 95</td>
+      <td>120 to 170</td>
+      <td>25 to 60</td>
     </tr>
     <tr>
-      <td>3–12 months</td>
-      <td>100–150 bpm</td>
-      <td>25–50 breaths/min</td>
-      <td>80–100 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
+      <td>3 months</td>
+      <td>6</td>
+      <td>60 to 105</td>
+      <td>115 to 170</td>
+      <td>25 to 60</td>
     </tr>
     <tr>
-      <td>1–5 years</td>
-      <td>90–120 bpm</td>
-      <td>20–40 breaths/min</td>
-      <td>90–110 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
+      <td>6 months</td>
+      <td>8</td>
+      <td>75 to 105</td>
+      <td>110 to 170</td>
+      <td>20 to 55</td>
     </tr>
     <tr>
-      <td>5–12 years</td>
-      <td>70–110 bpm</td>
-      <td>20–30 breaths/min</td>
-      <td>90–120 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
+      <td>1 year</td>
+      <td>10</td>
+      <td>70 to 105</td>
+      <td>105 to 150</td>
+      <td>20 to 45</td>
     </tr>
     <tr>
-      <td>&gt; 12 years</td>
-      <td>60–100 bpm</td>
-      <td>12–17 breaths/min</td>
-      <td>100–130 mmHg</td>
-      <td>&lt; 2 sec</td>
-      <td>36.5–37.5°C</td>
-      <td>&gt; 94% (RA)</td>
+      <td>2 years</td>
+      <td>12</td>
+      <td>70 to 105</td>
+      <td>95 to 150</td>
+      <td>20 to 40</td>
     </tr>
-  </tbody>
+    <tr>
+      <td>4 years</td>
+      <td>15</td>
+      <td>75 to 110</td>
+      <td>80 to 150</td>
+      <td>17 to 30</td>
+    </tr>
+    <tr>
+      <td>6 years</td>
+      <td>20</td>
+      <td>80 to 115</td>
+      <td>75 to 140</td>
+      <td>16 to 30</td>
+    </tr>
+    <tr>
+      <td>8 years</td>
+      <td>25</td>
+      <td>80 to 115</td>
+      <td>70 to 130</td>
+      <td>16 to 30</td>
+    </tr>
+    <tr>
+      <td>10 years</td>
+      <td>30</td>
+      <td>85 to 120</td>
+      <td>60 to 130</td>
+      <td>15 to 25</td>
+    </tr>
+    <tr>
+      <td>12 years</td>
+      <td>40</td>
+      <td>90 to 120</td>
+      <td>65 to 120</td>
+      <td>15 to 25</td>
+    </tr>
+    <tr>
+      <td>14 years</td>
+      <td>50</td>
+      <td>90 to 125</td>
+      <td>60 to 115</td>
+      <td>14 to 25</td>
+    </tr>
+    <tr>
+      <td>16 years</td>
+      <td>60</td>
+      <td>90 to 130</td>
+      <td>60 to 115</td>
+      <td>14 to 25</td>
+    </tr>
+    <tr>
+      <td>17+ years</td>
+      <td>65</td>
+      <td>90 to 135</td>
+      <td>60 to 115</td>
+      <td>14 to 25</td>
+    </tr>
+ 
+<tr>
+  <td>Adult (18+ years)</td>
+  <td>70</td>
+  <td>90 to 140</td>
+  <td>60 to 100</td>
+  <td>12 to 20</td>
+</tr>
+ </tbody>
 </table>
 
     </div>
@@ -671,17 +908,35 @@ footer {
   </div>
 
   <script>
-  
-   // Function to show the vital signs table
-        function showTable() {
-            document.getElementById('vital-signs-table').style.display = 'block';
-        }
+  		     
+  // Function to show the vital signs table
+  function showTable() {
+    document.getElementById('vital-signs-table').style.display = 'block';
+  }
 
-        // Function to close the vital signs table
-        function closeTable() {
-            document.getElementById('vital-signs-table').style.display = 'none';
-        }
-		
+  // Function to close the vital signs table
+  function closeTable() {
+    document.getElementById('vital-signs-table').style.display = 'none';
+  }
+
+  // Close popup when clicking outside it
+  document.addEventListener('click', (e) => {
+    const popup = document.getElementById('vital-signs-table');
+    if (!popup) return;
+
+    // only do this if popup is open
+    if (popup.style.display !== 'block') return;
+
+    // If click is inside popup, do nothing
+    if (popup.contains(e.target)) return;
+
+    // If click was on the Vitals button/circle, do nothing (prevents instant close)
+    const vitalsTrigger = e.target.closest('.vitals-circle, .circle.vitals');
+    if (vitalsTrigger) return;
+
+    closeTable();
+  });
+
     const emojiData = [
       { name: 'smile', symbol: '😊' },
       { name: 'laugh', symbol: '😂' },
@@ -758,48 +1013,64 @@ footer {
       
     ];
 
-    const modal = document.getElementById("emojiModal");
-    const input = document.getElementById("emojiSearchInput");
-    const results = document.getElementById("emojiResults");
+   </script>
+<script>
+  const emojiModal = document.getElementById("emojiModal");
+  const emojiGrid  = document.getElementById("emojiGrid");
+  const emojiIcon  = document.getElementById("emojiSearchIcon");
+  const emojiClose = document.querySelector(".emojiClose");
 
-    document.getElementById("emojiSearchIcon").addEventListener("click", () => {
-      modal.style.display = modal.style.display === "none" ? "block" : "none";
-      input.focus();
-    });
+  function openEmoji(){
+    emojiModal.classList.add("open");
+    emojiModal.setAttribute("aria-hidden", "false");
+  }
+  function closeEmoji(){
+    emojiModal.classList.remove("open");
+    emojiModal.setAttribute("aria-hidden", "true");
+  }
+  function toggleEmoji(){
+    emojiModal.classList.contains("open") ? closeEmoji() : openEmoji();
+  }
 
-    input.addEventListener("input", () => {
-      const term = input.value.toLowerCase();
-      const matches = emojiData.filter(e => e.name.includes(term));
-      results.innerHTML = matches.map(e =>
-        `<span style="cursor:pointer; margin:3px;" onclick="copyToClipboard('${e.symbol}')">${e.symbol}</span>`
-      ).join("");
-    });
+  function renderEmojiGrid(){
+    emojiGrid.innerHTML = emojiData.map(e =>
+      `<button class="emojiBtn" type="button" title="${e.name}" aria-label="${e.name}" data-emoji="${e.symbol}">${e.symbol}</button>`
+    ).join("");
+  }
+  renderEmojiGrid();
 
-    function copyToClipboard(emoji) {
-      const textarea = document.createElement('textarea');
-      textarea.value = emoji;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      alert(`Copied: ${emoji}`);
-    }
-  </script>
-   <script>
-    // Get the elements for the notification and Done button
-    const alertElement = document.getElementById("todoAlert");
-    const doneButton = document.getElementById("doneButton");
+  emojiIcon.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleEmoji();
+  });
 
-    // Set a timer to show the notification (if you want it to appear after page load or some event)
-    setTimeout(() => {
-      alertElement.style.display = 'block'; // Show the notification
-    }, 1000); // Adjust the time delay if needed
+  emojiClose.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeEmoji();
+  });
 
-    // Hide the notification when the Done button is clicked
-    doneButton.addEventListener("click", () => {
-      alertElement.style.display = 'none'; // Hide the notification
-    });
-  </script>
+  emojiGrid.addEventListener("click", (e) => {
+    const btn = e.target.closest(".emojiBtn");
+    if (!btn) return;
+    const emoji = btn.getAttribute("data-emoji") || btn.textContent;
+
+    navigator.clipboard.writeText(emoji).then(() => {
+      btn.style.transform = "scale(1.06)";
+      setTimeout(() => btn.style.transform = "", 120);
+    }).catch(err => console.error("Failed to copy:", err));
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!emojiModal.classList.contains("open")) return;
+    if (emojiModal.contains(e.target)) return;
+    closeEmoji();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeEmoji();
+  });
+</script>
+  
  <style>
   @font-face {
     font-family: 'Fors';
@@ -820,8 +1091,7 @@ footer {
     status.textContent = "Copied!";
     setTimeout(() => { status.textContent = ""; }, 2000);
   }
-</script>
-<script>
+
 function toggleQuickNote() {
   const box = document.getElementById('quick-note-box');
   box.style.display = box.style.display === 'none' ? 'block' : 'none';
@@ -850,27 +1120,5 @@ function autoResize(textarea) {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
