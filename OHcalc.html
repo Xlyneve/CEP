@@ -119,13 +119,15 @@ input[type="number"]:focus {
       margin-top:20px;
     }
 	
-	.ml-highlight {
-  background: #cceaca;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-weight: bold;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
+    .ml-highlight{
+  background: rgba(204, 234, 202, 0.9);
+  padding: 2px 6px;        /* was 6px 12px */
+  border-radius: 10px;     /* was 999px */
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  line-height: 1.2;
+}    
+
 .fent-line {
   margin-bottom: 10px;
 }
@@ -151,6 +153,53 @@ input[type="number"]:focus {
   backdrop-filter: blur(12px);
   box-shadow: 0 8px 28px rgba(31,38,135,0.10);
   height: fit-content;
+}
+
+/* Make the top result line a tidy row */
+.result-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap; /* wraps nicely on small screens */
+}
+
+/* Keeps the main text together but allows wrap if needed */
+.result-row .row-text{
+  display:inline;
+  min-width: 220px;
+  flex: 1 1 auto;
+}
+
+/* Badge stays compact and doesn't push weird spacing */
+.max-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:12px;
+  letter-spacing:0.3px;
+  background: rgba(220, 40, 40, 0.92);
+  color:#fff;
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 8px 18px rgba(220,40,40,0.18);
+  white-space:nowrap; /* never breaks the badge */
+}
+
+select {
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(6px);
+  font-size: 14px;
+  outline: none;
+}
+select:focus {
+  background: rgba(255,255,255,0.8);
+  box-shadow: 0 0 0 2px rgba(255, 233, 168, 0.6);
 }
 /* Accordion list for calculators */
 .accordion {
@@ -517,6 +566,9 @@ toggleBtn.addEventListener('click',()=>{
 function id(i){ return document.getElementById(i); }
 function safeDivide(a,b){ return b ? a/b : 0; }
 
+// Hook up Severe Croup neb adrenaline calculator
+id('adrenNebWeight').addEventListener('input', calcNebAdrenaline);
+id('adrenAmpSize').addEventListener('change', calcNebAdrenaline);
 /* ===== MAIN CALCULATORS ===== */
 
 id('p120Weight').addEventListener('input',()=>{
@@ -739,10 +791,6 @@ function calcCustomMgKg(){
     '<span class="ml-highlight">' + mlToGive.toFixed(2) + ' mL</span>)';
 }
 
-// ===== Severe Croup: Nebulised Adrenaline 1:1000 =====
-id('adrenNebWeight').addEventListener('input', calcNebAdrenaline);
-id('adrenAmpSize').addEventListener('change', calcNebAdrenaline);
-
 function calcNebAdrenaline() {
 
   const w = +id('adrenNebWeight').value;
@@ -754,20 +802,28 @@ function calcNebAdrenaline() {
   }
 
   // 1:1000 = 1 mg/mL
-  let adrenMl = 0.5 * w;      // 0.5 mL/kg
-  if (adrenMl > 5) adrenMl = 5;
+  const rawMl = 0.5 * w;           // 0.5 mL/kg
+  const capped = rawMl > 5;
+  const adrenMl = Math.min(rawMl, 5);
 
-  const adrenMg = adrenMl;    // 1 mg/mL
+  const adrenMg = adrenMl;         // 1 mg/mL
   const totalVolume = Math.max(4, adrenMl);
   const salineMl = Math.max(0, totalVolume - adrenMl);
 
-  // Ampoules required
+  // Ampoules required (round up; cannot use partial ampoules practically)
   const ampoules = Math.ceil(adrenMl / ampSize);
+
+  const capBadge = capped ? '<span class="max-badge">MAX DOSE REACHED</span>' : '';
+  const capNote = capped ? ` <span style="font-weight:600; opacity:0.85;">(calculated ${rawMl.toFixed(2)} mL → capped to 5.00 mL)</span>` : '';
 
   id('adrenNebResult').innerHTML =
 
-    '<div><strong>Adrenaline:</strong> ' + adrenMg.toFixed(2) + ' mg (' +
-    '<span class="ml-highlight">' + adrenMl.toFixed(2) + ' mL</span>)</div>' +
+    '<div class="result-row">' +
+  '<div class="row-text"><strong>Adrenaline:</strong> ' + adrenMg.toFixed(2) + ' mg (' +
+  '<span class="ml-highlight">' + adrenMl.toFixed(2) + ' mL</span>)' +
+  capNote + '</div>' +
+  (capped ? '<span class="max-badge">MAX DOSE REACHED</span>' : '') +
+'</div>' +
 
     '<div><strong>Saline to add:</strong> <span class="ml-highlight">' +
     salineMl.toFixed(2) + ' mL</span></div>' +
@@ -779,10 +835,11 @@ function calcNebAdrenaline() {
 
     '<div><strong>O₂ flow:</strong> 6 L/min</div>' +
 
-    '<div style="margin-top:12px; padding:10px; border-radius:12px; background:rgba(255, 200, 200, 0.4); font-weight:600;">' +
-    '🚑 IMPORTANT: If nebulised adrenaline is given, the child requires urgent paediatric medical assessment and ambulance transfer to hospital — even if symptoms improve.' +
-    '</div>';
+    '<div class="note" style="margin-top:10px; font-weight:700;">' +
+'🚑 IMPORTANT: If nebulised adrenaline is given, the child requires urgent paediatric medical assessment and ambulance transfer to hospital — even if symptoms improve.' +
+'</div>';
 }
+
 
 // Accordion behavior (inside General Calculators)
 document.querySelectorAll('#generalCalculators .acc-title').forEach(btn => {
@@ -793,6 +850,11 @@ document.querySelectorAll('#generalCalculators .acc-title').forEach(btn => {
     panel.classList.toggle('open');
     const isOpen = panel.classList.contains('open');
     if (chevron) chevron.textContent = isOpen ? '▲' : '▼';
+
+    // Recalc neb adrenaline when its panel opens
+    if (isOpen && btn.textContent.includes('Nebulised Adrenaline')) {
+      calcNebAdrenaline();
+    }
   });
 });
 </script>
