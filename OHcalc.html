@@ -358,6 +358,37 @@ input[type="number"]:focus {
         </div>
       </div>
     </div>
+
+<!-- Severe Croup – Nebulised Adrenaline -->
+<div class="acc-item">
+  <button class="acc-title" type="button">
+    Severe Croup — Nebulised Adrenaline (1:1000)
+    <span class="acc-chevron">▼</span>
+  </button>
+
+  <div class="acc-panel">
+    <div class="acc-inner">
+
+      <label>Weight (kg):</label>
+      <input type="number" id="adrenNebWeight" step="0.1">
+
+      <label>Ampoule size available:</label>
+      <select id="adrenAmpSize" style="width:100%; padding:8px; border-radius:14px;">
+        <option value="1">1 mL ampoule (1 mg)</option>
+        <option value="5">5 mL vial (5 mg)</option>
+      </select>
+
+      <div class="result" id="adrenNebResult">Dose:</div>
+
+      <div class="note">
+        <strong>Dose:</strong> 0.5 mL/kg of 1:1000 (1 mg/mL), max 5 mL per dose.<br>
+        <strong>Dilute:</strong> Make up to at least 4 mL total with 0.9% normal saline.<br>
+        <strong>Nebuliser:</strong> Run with <strong>O₂ at 6 L/min</strong>.
+      </div>
+
+    </div>
+  </div>
+</div>
 	
 	<!-- Drug Formula -->
 <div class="acc-item">
@@ -706,6 +737,51 @@ function calcCustomMgKg(){
   id('customResult').innerHTML =
     'Result: ' + totalMg.toFixed(1) + ' mg total (' +
     '<span class="ml-highlight">' + mlToGive.toFixed(2) + ' mL</span>)';
+}
+
+// ===== Severe Croup: Nebulised Adrenaline 1:1000 =====
+id('adrenNebWeight').addEventListener('input', calcNebAdrenaline);
+id('adrenAmpSize').addEventListener('change', calcNebAdrenaline);
+
+function calcNebAdrenaline() {
+
+  const w = +id('adrenNebWeight').value;
+  const ampSize = +id('adrenAmpSize').value;
+
+  if (!w) {
+    id('adrenNebResult').innerText = 'Dose:';
+    return;
+  }
+
+  // 1:1000 = 1 mg/mL
+  let adrenMl = 0.5 * w;      // 0.5 mL/kg
+  if (adrenMl > 5) adrenMl = 5;
+
+  const adrenMg = adrenMl;    // 1 mg/mL
+  const totalVolume = Math.max(4, adrenMl);
+  const salineMl = Math.max(0, totalVolume - adrenMl);
+
+  // Ampoules required
+  const ampoules = Math.ceil(adrenMl / ampSize);
+
+  id('adrenNebResult').innerHTML =
+
+    '<div><strong>Adrenaline:</strong> ' + adrenMg.toFixed(2) + ' mg (' +
+    '<span class="ml-highlight">' + adrenMl.toFixed(2) + ' mL</span>)</div>' +
+
+    '<div><strong>Saline to add:</strong> <span class="ml-highlight">' +
+    salineMl.toFixed(2) + ' mL</span></div>' +
+
+    '<div><strong>Total neb volume:</strong> <span class="ml-highlight">' +
+    totalVolume.toFixed(2) + ' mL</span></div>' +
+
+    '<div><strong>Ampoules required:</strong> ' + ampoules + '</div>' +
+
+    '<div><strong>O₂ flow:</strong> 6 L/min</div>' +
+
+    '<div style="margin-top:12px; padding:10px; border-radius:12px; background:rgba(255, 200, 200, 0.4); font-weight:600;">' +
+    '🚑 IMPORTANT: If nebulised adrenaline is given, the child requires urgent paediatric medical assessment and ambulance transfer to hospital — even if symptoms improve.' +
+    '</div>';
 }
 
 // Accordion behavior (inside General Calculators)
