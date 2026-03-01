@@ -125,8 +125,11 @@ header h1 {
     backdrop-filter 0.4s ease,
     -webkit-backdrop-filter 0.4s ease,
     box-shadow 0.4s ease;
-  animation: pulse 1.8s infinite; /* add pulse effect */
   position: relative;
+
+  will-change: transform;
+  transform: translateZ(0);
+  animation: pulseGlow 2.2s ease-in-out infinite;
 }
 
 .circle:hover {
@@ -158,66 +161,103 @@ header h1 {
   opacity: 1;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      inset 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.18),
+      inset 0 0 12px rgba(255, 255, 255, 0.28);
+  }
 }
-
 
 #vital-signs-table {
   display: none;
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.4);
+
+  /* animate open/close */
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.98);
+  transition: opacity 140ms ease, transform 180ms ease;
+
+  /* Glassy but NOT transparent */
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.97),
+    rgba(248,249,252,0.95)
+  );
+
   backdrop-filter: blur(12px) saturate(140%);
   -webkit-backdrop-filter: blur(12px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  border: 1px solid rgba(255,255,255,0.6);
   border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 22px;
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255,255,255,0.85);
+
   max-width: 95vw;
-  max-height: 80vh;
-  overflow-x: auto;
+  max-height: none;
+  overflow-x: hidden;
+
   font-family: 'fors', sans-serif;
   font-size: 14px;
   z-index: 5000;
-  transition: backdrop-filter 0.6s ease, background 0.6s ease;
+
+  contain: layout paint;
+}
+
+#vital-signs-table.open {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 #vital-signs-table table {
-  width: auto;
-  min-width: 100%;
+  width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 #vital-signs-table th,
 #vital-signs-table td {
   padding: 10px;
   text-align: left;
-  white-space: nowrap;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #111;
-  backdrop-filter: blur(6px);
-}
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 
-#vital-signs-table th {
-  background-color: rgba(250, 250, 250, 0.4);
- 
-}
-#vital-signs-table table {
-  table-layout: fixed;
-  width: 100%;
+  border: 1px solid rgba(230, 235, 240, 0.8);
+  background-color: rgba(255,255,255,0.75);
+  color: #111;
+
+  transition: background-color 40ms linear;
 }
 
 #vital-signs-table tbody tr:hover td {
-  background-color: rgba(140, 150, 200, 0.22); /* soft purplish-blue */
-  transition: background-color 0.15s ease;
+  background-color: rgba(140, 150, 200, 0.18);
 }
 
+/* When vitals is open, stop expensive animations behind it */
+body.vitals-open .moving-text{
+  animation: none !important;
+}
+
+body.vitals-open .circle{
+  animation: none !important;   /* stops pulseGlow */
+}
+
+/* Optional: reduce blur work on the circles while open */
+body.vitals-open .circle{
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
 #close-btn {
   position: absolute;
   top: 10px;
@@ -668,8 +708,6 @@ footer {
 </div>
 
 
-    </div>
-
    <div class="layout">
     <div class="main-content">
       <h2>Home</h2>
@@ -765,17 +803,26 @@ footer {
 
  <script>
   // ===== VITALS POPUP =====
-  function showTable() {
-    const el = document.getElementById('vital-signs-table');
-    if (!el) return;
-    el.style.display = 'block';
-  }
+ function showTable() {
+  const el = document.getElementById('vital-signs-table');
+  if (!el) return;
 
-  function closeTable() {
-    const el = document.getElementById('vital-signs-table');
-    if (!el) return;
+  document.body.classList.add('vitals-open');
+
+  el.style.display = 'block';
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
+function closeTable() {
+  const el = document.getElementById('vital-signs-table');
+  if (!el) return;
+
+  el.classList.remove('open');
+  setTimeout(() => {
     el.style.display = 'none';
-  }
+    document.body.classList.remove('vitals-open');
+  }, 200);
+}
 
   // close button
   document.getElementById('close-btn')?.addEventListener('click', (e) => {
@@ -931,4 +978,3 @@ footer {
 
 </body>
 </html>
-
