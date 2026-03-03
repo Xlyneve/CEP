@@ -1,10 +1,16 @@
 /* emoji.css */
 
+/* Small globals for safe positioning on iOS */
+:root{
+  --emoji-safe-b: env(safe-area-inset-bottom, 0px);
+  --emoji-safe-r: env(safe-area-inset-right, 0px);
+}
+
 /* === Emoji Picker: sleek slide-out glass === */
 #emojiModal{
   position: fixed;
-  bottom: 70px;
-  right: 20px;
+  bottom: calc(70px + var(--emoji-safe-b));
+  right: calc(20px + var(--emoji-safe-r));
   width: 300px;
   max-width: calc(100vw - 40px);
   height: 340px;
@@ -12,13 +18,15 @@
   padding: 12px;
   border-radius: 18px;
 
-  background: rgba(255, 255, 255, 0.28);
+  /* slightly icier + less “white card” */
+  background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.30);
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
 
-  z-index: 1200;
+  /* higher so it stays above other fixed UI */
+  z-index: 9999;
 
   opacity: 0;
   transform: translateX(18px) translateY(10px);
@@ -35,22 +43,19 @@
 .emojiHeader{
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end; /* minimalist: close button only */
   margin-bottom: 10px;
 }
 
 .emojiTitle{
-  font-family: 'fors', sans-serif;
-  font-size: 14px;
-  letter-spacing: 0.4px;
-  color: #111;
-  opacity: 0.9;
+  display: none; /* minimalist */
 }
 
 .emojiClose{
   border: none;
-  background: rgba(255,255,255,0.30);
-  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.18);
+  opacity: 0.9;
   border-radius: 10px;
   width: 30px;
   height: 30px;
@@ -73,12 +78,12 @@
 
 .emojiBtn{
   border: none;
-  background: rgba(255,255,255,0.22);
-  border: 1px solid rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.22);
   border-radius: 14px;
   cursor: pointer;
   padding: 8px 0;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -86,29 +91,29 @@
 }
 
 .emojiBtn:hover{
-  background: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.28);
   transform: translateY(-1px);
 }
 
 .emojiGrid::-webkit-scrollbar { width: 8px; }
 .emojiGrid::-webkit-scrollbar-track { background: transparent; }
 .emojiGrid::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.30);
+  background: rgba(255,255,255,0.26);
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.18);
 }
 
 /* Floating button */
 .emojiFab{
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: calc(20px + var(--emoji-safe-b));
+  right: calc(20px + var(--emoji-safe-r));
   width: 44px;
   height: 44px;
   border-radius: 14px;
 
-  border: 1px solid rgba(255,255,255,0.40);
-  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.30);
+  background: rgba(255,255,255,0.14);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 
@@ -119,13 +124,16 @@
   align-items: center;
   justify-content: center;
 
-  z-index: 1300;
+  z-index: 10000;
   transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
+
+  /* helps on pages with heavy overlays */
+  isolation: isolate;
 }
 
 .emojiFab:hover{
   transform: translateY(-1px);
-  background: rgba(255,255,255,0.24);
+  background: rgba(255,255,255,0.20);
   box-shadow: 0 12px 26px rgba(0,0,0,0.16);
 }
 
@@ -136,7 +144,7 @@
   width: 16px;
   height: 16px;
   background:
-    radial-gradient(circle, rgba(0,0,0,0.55) 2px, transparent 3px) 0 0/8px 8px;
-  opacity: 0.55;
+    radial-gradient(circle, rgba(0,0,0,0.50) 2px, transparent 3px) 0 0/8px 8px;
+  opacity: 0.50;
   border-radius: 4px;
 }
