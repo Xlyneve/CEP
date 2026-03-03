@@ -17,6 +17,8 @@
     { name: 'stet',   symbol: '🩺' },
     { name: 'female', symbol: '♀️' },
     { name: 'male', symbol: '♂️' },
+    { name: 'email', symbol: '🌐' },
+    { name: 'phone', symbol: '☎️' },
   ];
 
   const IDS = { btn: "emojiSearchIcon", modal: "emojiModal", grid: "emojiGrid" };
