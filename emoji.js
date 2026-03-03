@@ -189,7 +189,8 @@
   } else {
     boot();
   }
-})();        <button class="emojiClose" type="button" aria-label="Close">✕</button>
+})();       
+<button class="emojiClose" type="button" aria-label="Close">✕</button>
       </div>
       <div id="emojiGrid" class="emojiGrid" role="list"></div>
     `;
