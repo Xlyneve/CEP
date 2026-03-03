@@ -1,4 +1,4 @@
-// emoji.js (complete, auto-inject, minimalist, safe)
+// emoji.js (complete, auto-inject, minimalist, NO close button)
 (() => {
   const EMOJI_DATA = [
     { name: 'arrowR', symbol: '↪' },
@@ -9,24 +9,34 @@
     { name: 'down',   symbol: '⤵' },
     { name: 'dd',     symbol: '⤹' },
     { name: 'll',     symbol: '⤶' },
-    { name: 'box',   symbol: '☐' },
+    { name: 'box',    symbol: '☐' },
     { name: 'tick',   symbol: '✔️' },
     { name: 'alert',  symbol: '⚠️' },
     { name: 'med',    symbol: '💊' },
     { name: 'blood',  symbol: '🩸' },
     { name: 'stet',   symbol: '🩺' },
     { name: 'female', symbol: '♀️' },
-    { name: 'male', symbol: '♂️' },
-    { name: 'email', symbol: '🌐' },
-    { name: 'phone', symbol: '☎️' },
+    { name: 'male',   symbol: '♂️' },
+    { name: 'email',  symbol: '🌐' },
+    { name: 'phone',  symbol: '☎️' },
   ];
 
-  const IDS = { btn: "emojiSearchIcon", modal: "emojiModal", grid: "emojiGrid" };
+  const IDS  = { btn: "emojiSearchIcon", modal: "emojiModal", grid: "emojiGrid" };
   const FLAG = "__emojiPickerInitialized__";
 
+  function nukeOldCloseUI() {
+    document
+      .querySelectorAll(".emojiClose, .emojiHeader, .emojiTitle")
+      .forEach(el => el.remove());
+  }
+
   function ensureEmojiUI() {
-    if (!document.getElementById(IDS.btn)) {
-      const btn = document.createElement("button");
+    nukeOldCloseUI();
+
+    // Button
+    let btn = document.getElementById(IDS.btn);
+    if (!btn) {
+      btn = document.createElement("button");
       btn.id = IDS.btn;
       btn.className = "emojiFab emojiFabDots";
       btn.type = "button";
@@ -34,58 +44,73 @@
       document.body.appendChild(btn);
     }
 
-    if (!document.getElementById(IDS.modal)) {
-      const modal = document.createElement("div");
+    // Modal
+    let modal = document.getElementById(IDS.modal);
+    if (!modal) {
+      modal = document.createElement("div");
       modal.id = IDS.modal;
-      modal.setAttribute("aria-hidden", "true");
-      modal.innerHTML = `
-        <div class="emojiHeader">
-          <div class="emojiTitle" style="display:none;"></div>
-          <button class="emojiClose" type="button" aria-label="Close">✕</button>
-        </div>
-        <div id="${IDS.grid}" class="emojiGrid" role="list"></div>
-      `;
       document.body.appendChild(modal);
     }
+
+    // Force modal to ONLY grid (wipes any leftover X/header inside modal)
+    modal.innerHTML = `<div id="${IDS.grid}" class="emojiGrid" role="list"></div>`;
+
+    // Accessibility defaults (closed)
+    modal.setAttribute("aria-hidden", "true");
+    modal.inert = true;
+
+    nukeOldCloseUI();
+  }
+
+  function renderEmojiGrid(emojiGrid) {
+    if (!emojiGrid) return;
+
+    emojiGrid.innerHTML = EMOJI_DATA.map(e =>
+      `<button class="emojiBtn" type="button"
+        title="${e.name}" aria-label="${e.name}"
+        data-emoji="${e.symbol}">${e.symbol}</button>`
+    ).join("");
   }
 
   function initEmojiPicker() {
+    const emojiModal = document.getElementById(IDS.modal);
+    const emojiIcon  = document.getElementById(IDS.btn);
+    const emojiGrid  = emojiModal ? emojiModal.querySelector(`#${IDS.grid}`) : null;
+
+    if (!emojiModal || !emojiGrid || !emojiIcon) return;
+
+    // Always re-render so new emojis appear immediately
+    renderEmojiGrid(emojiGrid);
+
+    // Only attach listeners once
     if (window[FLAG]) return;
     window[FLAG] = true;
-
-    const emojiModal = document.getElementById(IDS.modal);
-    const emojiGrid  = document.getElementById(IDS.grid);
-    const emojiIcon  = document.getElementById(IDS.btn);
-    const emojiClose = emojiModal?.querySelector(".emojiClose");
-
-    if (!emojiModal || !emojiGrid || !emojiIcon || !emojiClose) return;
 
     const isOpen = () => emojiModal.classList.contains("open");
 
     const openEmoji = () => {
+      nukeOldCloseUI();
       emojiModal.classList.add("open");
       emojiModal.setAttribute("aria-hidden", "false");
+      emojiModal.inert = false;
     };
 
     const closeEmoji = () => {
+      // IMPORTANT: move focus OUT before hiding from AT (fixes the console warning)
+      if (emojiModal.contains(document.activeElement)) {
+        emojiIcon.focus({ preventScroll: true });
+      }
+
       emojiModal.classList.remove("open");
       emojiModal.setAttribute("aria-hidden", "true");
+      emojiModal.inert = true;
     };
 
     const toggleEmoji = () => (isOpen() ? closeEmoji() : openEmoji());
 
-    emojiGrid.innerHTML = EMOJI_DATA.map(e =>
-      `<button class="emojiBtn" type="button" title="${e.name}" aria-label="${e.name}" data-emoji="${e.symbol}">${e.symbol}</button>`
-    ).join("");
-
     emojiIcon.addEventListener("click", (e) => {
       e.stopPropagation();
       toggleEmoji();
-    });
-
-    emojiClose.addEventListener("click", (e) => {
-      e.stopPropagation();
-      closeEmoji();
     });
 
     emojiGrid.addEventListener("click", async (e) => {
@@ -102,9 +127,12 @@
       } catch {
         window.prompt("Copy:", emoji);
       }
+
+      // optional auto-close after selecting:
+      // closeEmoji();
     });
 
-    // click outside closes (only emoji)
+    // Click outside closes
     document.addEventListener("click", (e) => {
       if (!isOpen()) return;
       if (emojiModal.contains(e.target)) return;
@@ -112,7 +140,7 @@
       closeEmoji();
     });
 
-    // Escape closes emoji ONLY
+    // Escape closes
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
       if (!isOpen()) return;
@@ -121,13 +149,15 @@
   }
 
   function boot() {
+    // CHANGED: nuke first, then build UI
+    nukeOldCloseUI();
     ensureEmojiUI();
     initEmojiPicker();
   }
 
   if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", boot, { once: true });
-} else {
-  boot();
-}
-})(); 
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
+  } else {
+    boot();
+  }
+})();
