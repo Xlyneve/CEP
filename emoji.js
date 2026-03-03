@@ -114,7 +114,7 @@
       if (!isOpen()) return;
       closeEmoji();
     });
-  
+  }
 
   function boot() {
     ensureEmojiUI();
