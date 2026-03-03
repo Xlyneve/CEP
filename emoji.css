@@ -1,16 +1,14 @@
-/* emoji.css */
-
 /* Small globals for safe positioning on iOS */
 :root{
   --emoji-safe-b: env(safe-area-inset-bottom, 0px);
   --emoji-safe-r: env(safe-area-inset-right, 0px);
 }
 
-/* === Emoji Picker: sleek slide-out glass === */
+/* === Modal under the header === */
 #emojiModal{
   position: fixed;
-  top: 70px;
-  left: 20px;
+  top: 74px;     /* just below your ~70px header */
+  left: 44px;    /* matches button */
   width: 300px;
   max-width: calc(100vw - 40px);
   height: 340px;
@@ -18,15 +16,13 @@
   padding: 12px;
   border-radius: 18px;
 
-  /* slightly icier + less “white card” */
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, 0.30);
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
 
-  /* higher so it stays above other fixed UI */
-  z-index: 9999;
+  z-index: 19999;
 
   opacity: 0;
   transform: translateX(18px) translateY(10px);
@@ -43,19 +39,16 @@
 .emojiHeader{
   display: flex;
   align-items: center;
-  justify-content: flex-end; /* minimalist: close button only */
+  justify-content: flex-end;
   margin-bottom: 10px;
 }
 
-.emojiTitle{
-  display: none; /* minimalist */
-}
+.emojiTitle{ display: none; }
 
 .emojiClose{
   border: none;
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.18);
-  opacity: 0.9;
   border-radius: 10px;
   width: 30px;
   height: 30px;
@@ -71,114 +64,66 @@
   height: calc(100% - 46px);
   overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(7, 1fr); /* tighter layout */
+  grid-template-columns: repeat(7, 1fr);
   gap: 6px;
   padding-right: 4px;
 }
 
-.emojiBtn {
+.emojiBtn{
   border: none;
   background: rgba(255,255,255,0.18);
   border-radius: 10px;
   cursor: pointer;
   padding: 6px 0;
-
-  font-size: 15px;   /* ↓ was 18px */
+  font-size: 15px;
   line-height: 1;
-
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-
   transition: transform 120ms ease, background 120ms ease;
 }
+
 .emojiBtn:hover{
   background: rgba(255,255,255,0.28);
   transform: translateY(-1px);
 }
 
-.emojiGrid::-webkit-scrollbar { width: 8px; }
-.emojiGrid::-webkit-scrollbar-track { background: transparent; }
-.emojiGrid::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.26);
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.18);
-}
-
-/* Minimal emoji trigger beside title */
-.emojiFab {
+/* === Minimal trigger beside title === */
+.emojiFab{
   position: fixed;
-  top: 20px;
-  left: 55px; /* adjust slightly to align with title */
-  
-  width: 26px;
-  height: 26px;
+  top: 16px;
+  left: 44px;
+  width: 22px;
+  height: 22px;
 
   border: none;
   background: transparent;
   box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 16px;
   cursor: pointer;
-  z-index: 2000;
+  z-index: 20000;
 
-  opacity: 0.75;
+  opacity: 0.55;
   transition: opacity 150ms ease, transform 150ms ease;
 }
 
-.emojiFab:hover {
-  opacity: 1;
-  transform: scale(1.05);
+.emojiFab:hover{
+  opacity: 0.9;
+  transform: scale(1.04);
 }
 
-/* Replace dots with subtle emoji */
-.emojiFabDots::before {
- content: "⌘";
-  font-size: 16px;
-  color: #222;
-}
-/* === Dock emoji button inside the header (left of title) === */
-.emojiFab{
-  position: fixed !important;
-
-  /* put it inside the header bar */
-  top: 16px !important;
-
-  /* title starts at left:80px; put emoji just before it */
-  left: 44px !important;
-
-  right: auto !important;
-  bottom: auto !important;
-
-  width: 34px !important;
-  height: 34px !important;
-  border-radius: 10px !important;
-
-  z-index: 20000 !important;
-}
-
-/* Make the dots slightly subtler (more “professional”) */
 .emojiFabDots::before{
-  opacity: 0.38 !important;
+  content: "⌘";
+  font-size: 14px;
+  color: #222;
+  opacity: 0.38;
 }
 
-/* === Open the modal from the header area === */
-#emojiModal{
-  position: fixed !important;
-  top: 74px !important;   /* just below the 70px header */
-  left: 44px !important;
-
-  right: auto !important;
-  bottom: auto !important;
-
-  z-index: 19999 !important;
-}
+/* Mobile */
 @media (max-width: 480px){
-  .emojiFab{ left: 10px !important; }
-  #emojiModal{ left: 10px !important; width: 92vw !important; }
+  .emojiFab{ left: 10px; }
+  #emojiModal{ left: 10px; width: 92vw; }
 }
