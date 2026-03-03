@@ -1,51 +1,45 @@
+/* emoji.css */
+/* Goal: smaller, minimalist, auto-expanding modal (NO internal scrollbars).
+   Note: your last line `html, body { overflow: hidden !important; }` hides the PAGE scrollbar.
+   Keep it only if you truly want the whole page non-scrollable.
+*/
+body { outline: 8px solid red !important; }
 /* Small globals for safe positioning on iOS */
 :root{
   --emoji-safe-b: env(safe-area-inset-bottom, 0px);
   --emoji-safe-r: env(safe-area-inset-right, 0px);
 }
 
-/* === Modal under the header === */
+/* === Modal under the header (smaller + auto size) === */
 #emojiModal{
   position: fixed;
   top: 74px;
   left: 44px;
 
-  width: 260px;
-  max-width: calc(100vw - 40px);
+  /* smaller than before */
+  width: 228px;
+  max-width: calc(100vw - 24px);
 
-  padding: 12px;
-  border-radius: 16px;
+  padding: 10px;
+  border-radius: 14px;
 
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.30);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.20);
+  backdrop-filter: blur(16px) saturate(145%);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
 
   z-index: 19999;
 
+  /* auto-expand */
+  height: auto;
+  max-height: none;
+  overflow: visible;
+
   opacity: 0;
-  transform: translateX(18px) translateY(10px);
+  transform: translateX(14px) translateY(8px);
   pointer-events: none;
   transition: opacity 160ms ease, transform 220ms ease;
-}
-#emojiModal {
-  font-size: 16px;
-}
-/* Individual emoji buttons */
-#emojiModal button {
-  font-size: 18px;           /* smaller emoji */
-  padding: 4px 0;
-  line-height: 1;
-  border-radius: 8px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 120ms ease;
-}
-
-#emojiModal button:hover {
-  background: rgba(255,255,255,0.25);
 }
 
 #emojiModal.open{
@@ -54,58 +48,86 @@
   pointer-events: auto;
 }
 
+#emojiModal{
+  font-size: 15px;
+}
+
+/* Header row */
 .emojiHeader{
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .emojiTitle{ display: none; }
 
+/* Close button (smaller + minimalist) */
 .emojiClose{
   border: none;
-  background: rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 10px;
-  width: 30px;
-  height: 30px;
+  border-radius: 9px;
+
+  width: 26px;
+  height: 26px;
+
   cursor: pointer;
+
   font-size: 10px;
-  line-height: 28px;
+  line-height: 24px;
   color: #111;
+
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Grid should NOT stretch rows */
-.emojiGrid{
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 8px;
-
-  max-height: 260px;  /* scroll only if truly large */
-  overflow-y: auto;
-
-  align-content: start;
-  grid-auto-rows: 34px;
+.emojiClose:hover{
+  background: rgba(255,255,255,0.18);
 }
 
-/* Make each emoji a compact square, not a tall pill */
-.emojiBtn{
-  width: 34px;
-  height: 34px;
+/* Buttons inside modal */
+#emojiModal button{
+  font-size: 16px;
   padding: 0;
+  line-height: 1;
+  border-radius: 8px;
+
+  background: transparent;
+  border: none;
+  cursor: pointer;
+
+  transition: background 120ms ease, transform 120ms ease, opacity 120ms ease;
+}
+
+/* === Emoji grid (auto-expands, NO scrolling) === */
+/* Make the grid always fit inside the modal */
+.emojiGrid{
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)); /* KEY */
+  gap: 6px;
+
+  align-content: start;
+  grid-auto-rows: 30px;
+
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* Let buttons follow the cell size */
+.emojiBtn{
+  width: 100% !important;     /* KEY */
+  height: 30px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1;
 
-  background: transparent;   /* remove those big pale boxes */
-  border-radius: 10px;
+  background: transparent;
+  border-radius: 9px;
   border: 0;
   cursor: pointer;
 
@@ -113,18 +135,27 @@
 }
 
 .emojiBtn:hover{
-  background: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.20);
   transform: translateY(-1px);
 }
 
-/* === Minimal trigger beside title === */
+#emojiModal { box-sizing: border-box; }
+#emojiModal * { box-sizing: border-box; }
+/* Safety: prevent any inner wrapper from introducing scroll */
+#emojiModal,
+#emojiModal *{
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* === Minimal trigger beside title (aligned hover box) === */
 .emojiFab{
   position: fixed;
   top: 16px;
   left: 44px;
 
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
 
   display: grid;
   place-items: center;
@@ -140,19 +171,18 @@
   transition: opacity 140ms ease, background 140ms ease;
 }
 
-/* cleaner hover — no scaling */
 .emojiFab:hover{
   opacity: 1;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.14);
   border-radius: 8px;
 }
 
 .emojiFabDots::before{
   content: "⌘";
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1;
   display: block;
-  transform: translateY(0.5px); /* optical correction */
+  transform: translateY(0.5px);
   color: #222;
   opacity: 0.45;
 }
@@ -160,5 +190,18 @@
 /* Mobile */
 @media (max-width: 480px){
   .emojiFab{ left: 10px; }
-  #emojiModal{ left: 10px; width: 92vw; }
+  #emojiModal{
+    left: 10px;
+    width: min(92vw, 260px);
+  }
+  .emojiGrid{
+    /* slightly fewer columns on tiny screens so it's not cramped */
+    grid-template-columns: repeat(7, 1fr);
+  }
 }
+
+/* OPTIONAL:
+   This hides the PAGE scrollbar completely (not just the emoji picker).
+   Keep only if you want your entire app non-scrollable.
+*/
+/* html, body { overflow: hidden !important; } */
