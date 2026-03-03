@@ -1,40 +1,4 @@
-// emoji.js
-(() => {
-  // ====== CONFIG ======
-  const EMOJI_DATA = [
-    { name: 'arrowR', symbol: '↪' },
-    { name: 'arrowL', symbol: '↩' },
-    { name: 'right',  symbol: '➜' },
-    { name: 'left',   symbol: '←' },
-    { name: 'up',     symbol: '⤴' },
-    { name: 'down',   symbol: '⤵' },
-    { name: 'dd',     symbol: '⤹' },
-    { name: 'll',     symbol: '⤶' },
-    { name: 'tick',   symbol: '✅' },
-    { name: 'alert',  symbol: '⚠️' },
-    { name: 'med',    symbol: '💊' },
-    { name: 'blood',  symbol: '🩸' },
-    { name: 'stet',   symbol: '🩺' },
-    // add your full list...
-    { name: 'female', symbol: '♀️' },
-  ];
-
-  const IDS = {
-    btn: "emojiSearchIcon",
-    modal: "emojiModal",
-    grid: "emojiGrid",
-  };
-
-  // Prevent double-init if script accidentally runs twice
-  const FLAG = "__emojiPickerInitialized__";
-
-  function ensureEmojiUI() {
-    const hasBtn = document.getElementById(IDS.btn);
-    const hasModal = document.getElementById(IDS.modal);
-
-    if (!hasBtn) {
-      const btn = document.createElement("button");
-      btn.id = IDS.btn;
+window.__EMOJI_OK__      btn.id = IDS.btn;
       btn.className = "emojiFab emojiFabDots";
       btn.type = "button";
       btn.setAttribute("aria-label", "Emoji picker");
