@@ -9,12 +9,14 @@
     { name: 'down',   symbol: '⤵' },
     { name: 'dd',     symbol: '⤹' },
     { name: 'll',     symbol: '⤶' },
-    { name: 'tick',   symbol: '✅' },
+    { name: 'box',   symbol: '☐' },
+    { name: 'tick',   symbol: '✔️' },
     { name: 'alert',  symbol: '⚠️' },
     { name: 'med',    symbol: '💊' },
     { name: 'blood',  symbol: '🩸' },
     { name: 'stet',   symbol: '🩺' },
     { name: 'female', symbol: '♀️' },
+    { name: 'male', symbol: '♂️' },
   ];
 
   const IDS = { btn: "emojiSearchIcon", modal: "emojiModal", grid: "emojiGrid" };
