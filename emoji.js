@@ -1,40 +1,149 @@
 // emoji.js
 (() => {
-  const emojiData = [
+  // ====== CONFIG ======
+  const EMOJI_DATA = [
     { name: 'arrowR', symbol: '↪' },
     { name: 'arrowL', symbol: '↩' },
-    { name: 'right', symbol: '➜' },
-    { name: 'left', symbol: '←' },
-    { name: 'up', symbol: '⤴' },
-    { name: 'down', symbol: '⤵' },
-    { name: 'dd', symbol: '⤹' },
-    { name: 'll', symbol: '⤶' },
-    { name: 'tick', symbol: '✅' },
-    { name: 'alert', symbol: '⚠️' },
-    { name: 'med', symbol: '💊' },
-    { name: 'blood', symbol: '🩸' },
-    { name: 'stet', symbol: '🩺' },
-    // ...paste your full list here...
+    { name: 'right',  symbol: '➜' },
+    { name: 'left',   symbol: '←' },
+    { name: 'up',     symbol: '⤴' },
+    { name: 'down',   symbol: '⤵' },
+    { name: 'dd',     symbol: '⤹' },
+    { name: 'll',     symbol: '⤶' },
+    { name: 'tick',   symbol: '✅' },
+    { name: 'alert',  symbol: '⚠️' },
+    { name: 'med',    symbol: '💊' },
+    { name: 'blood',  symbol: '🩸' },
+    { name: 'stet',   symbol: '🩺' },
+    // add your full list...
     { name: 'female', symbol: '♀️' },
   ];
 
+  const IDS = {
+    btn: "emojiSearchIcon",
+    modal: "emojiModal",
+    grid: "emojiGrid",
+  };
+
+  // Prevent double-init if script accidentally runs twice
+  const FLAG = "__emojiPickerInitialized__";
+
   function ensureEmojiUI() {
-    // If already present (you pasted the snippet), don't duplicate it.
-    if (document.getElementById("emojiModal") && document.getElementById("emojiSearchIcon")) return;
+    const hasBtn = document.getElementById(IDS.btn);
+    const hasModal = document.getElementById(IDS.modal);
 
-    const btn = document.createElement("button");
-    btn.id = "emojiSearchIcon";
-    btn.className = "emojiFab emojiFabDots";
-    btn.type = "button";
-    btn.setAttribute("aria-label", "Open emoji picker");
+    if (!hasBtn) {
+      const btn = document.createElement("button");
+      btn.id = IDS.btn;
+      btn.className = "emojiFab emojiFabDots";
+      btn.type = "button";
+      btn.setAttribute("aria-label", "Emoji picker");
+      // minimalist: no inner text
+      document.body.appendChild(btn);
+    }
 
-    const modal = document.createElement("div");
-    modal.id = "emojiModal";
-    modal.setAttribute("aria-hidden", "true");
-    modal.innerHTML = `
-      <div class="emojiHeader">
-        <div class="emojiTitle">Emojis</div>
-        <button class="emojiClose" type="button" aria-label="Close">✕</button>
+    if (!hasModal) {
+      const modal = document.createElement("div");
+      modal.id = IDS.modal;
+      modal.setAttribute("aria-hidden", "true");
+
+      // minimalist header: just an X, no title (you can add back a title if you want)
+      modal.innerHTML = `
+        <div class="emojiHeader">
+          <div class="emojiTitle" style="display:none;"></div>
+          <button class="emojiClose" type="button" aria-label="Close">✕</button>
+        </div>
+        <div id="${IDS.grid}" class="emojiGrid" role="list"></div>
+      `;
+      document.body.appendChild(modal);
+    }
+  }
+
+  function initEmojiPicker() {
+    if (window[FLAG]) return;
+    window[FLAG] = true;
+
+    const emojiModal = document.getElementById(IDS.modal);
+    const emojiGrid  = document.getElementById(IDS.grid);
+    const emojiIcon  = document.getElementById(IDS.btn);
+    const emojiClose = emojiModal?.querySelector(".emojiClose");
+
+    if (!emojiModal || !emojiGrid || !emojiIcon || !emojiClose) return;
+
+    const isOpen = () => emojiModal.classList.contains("open");
+
+    const openEmoji = () => {
+      emojiModal.classList.add("open");
+      emojiModal.setAttribute("aria-hidden", "false");
+    };
+
+    const closeEmoji = () => {
+      emojiModal.classList.remove("open");
+      emojiModal.setAttribute("aria-hidden", "true");
+    };
+
+    const toggleEmoji = () => (isOpen() ? closeEmoji() : openEmoji());
+
+    // Render once
+    emojiGrid.innerHTML = EMOJI_DATA.map(e =>
+      `<button class="emojiBtn" type="button" title="${e.name}" aria-label="${e.name}" data-emoji="${e.symbol}">${e.symbol}</button>`
+    ).join("");
+
+    // EVENTS
+    emojiIcon.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleEmoji();
+    });
+
+    emojiClose.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeEmoji();
+    });
+
+    emojiGrid.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".emojiBtn");
+      if (!btn) return;
+
+      const emoji = btn.getAttribute("data-emoji") || btn.textContent || "";
+      if (!emoji) return;
+
+      try {
+        await navigator.clipboard.writeText(emoji);
+        // micro feedback (minimal)
+        btn.style.transform = "scale(1.06)";
+        setTimeout(() => (btn.style.transform = ""), 120);
+      } catch {
+        window.prompt("Copy:", emoji);
+      }
+    });
+
+    // Click outside closes (only when open)
+    document.addEventListener("click", (e) => {
+      if (!isOpen()) return;
+      if (emojiModal.contains(e.target)) return;
+      if (emojiIcon.contains(e.target)) return;
+      closeEmoji();
+    });
+
+    // Escape closes emoji ONLY (doesn't touch your vitals popup)
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (!isOpen()) return;
+      closeEmoji();
+    });
+  }
+
+  function boot() {
+    ensureEmojiUI();
+    initEmojiPicker();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
+  } else {
+    boot();
+  }
+})();        <button class="emojiClose" type="button" aria-label="Close">✕</button>
       </div>
       <div id="emojiGrid" class="emojiGrid" role="list"></div>
     `;
