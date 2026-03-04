@@ -589,6 +589,373 @@ footer {
   border-radius: 4px;
 }
 
+/* ✅ QUICK CALC (left shortcut panel) */
+/* =========================
+   QUICK CALC (FULL CSS)
+   Smaller + clear selection + inline calc/results
+========================= */
+
+.qc{
+  position: fixed;
+  top: 20px;
+  left: 14px;
+
+  width: 248px;                      /* smaller */
+  max-width: calc(100vw - 28px);
+  z-index: 1400;
+
+  border-radius: 16px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+
+  overflow: hidden;
+  transition: width 180ms ease, left 180ms ease;
+  font-family: Tahoma, sans-serif;
+}
+
+/* collapsed state — arrow only */
+.qc.collapsed{
+  width: 40px;
+  left: 8px;
+}
+
+/* hide calculator content */
+.qc.collapsed .qc-body{ display:none; }
+
+/* hide title */
+.qc.collapsed .qc-title{ display:none; }
+
+/* center arrow */
+.qc.collapsed .qc-head{
+  justify-content: center;
+  padding: 8px;
+  border-bottom: none;
+}
+
+/* make arrow button fill container */
+.qc.collapsed .qc-toggle{
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.qc-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 6px 6px 6px 10px;        /* tighter */
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+}
+
+.qc-title{
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  opacity: 0.95;
+}
+
+.qc-toggle{
+  width: 34px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.14);
+  color: #111;
+  cursor: pointer;
+}
+
+/* body spacing (smaller) */
+.qc-body{
+  padding: 8px 10px 10px;
+}
+
+/* tabs */
+.qc-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:8px;
+  width:100%;
+}
+
+.qc-tab{
+   border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+  cursor: pointer;
+  color: #111;
+  flex:1;
+  padding:5px 4px;
+  border-radius:10px;
+  font-size:12px;   /* slightly smaller */
+  white-space:nowrap;
+
+  font-size: 11px;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+/* ACTIVE MEDICINE (white + glow) */
+.qc-tab.active{
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.95);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.55),
+    0 10px 20px rgba(0,0,0,0.12);
+  font-weight: 500; /* normal weight */
+}
+
+.qc-label{
+  display:block;
+  font-size: 11px;
+  margin: 6px 0 4px;
+  opacity: 0.9;
+}
+
+/* Weight input: centered */
+.qc-input{
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.26);
+  background: rgba(255,255,255,0.10);
+  outline: none;
+
+  font-size: 11.5px;
+  font-family: 'fors', sans-serif;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Center placeholder too */
+.qc-input::placeholder{
+  text-align: center;
+  opacity: 0.6;
+}
+
+/* Remove number input arrows (spinners) */
+.qc-input::-webkit-outer-spin-button,
+.qc-input::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.qc-input[type="number"]{
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Strength selector (dropdown) */
+.qc-select{
+  width: 100%;
+  padding: 9px 36px 9px 12px;
+  border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.26);
+
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  font-size: 12px;
+  font-family: 'fors', sans-serif;
+  color: #111;
+
+  outline: none;
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* custom arrow */
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.6) 50%),
+    linear-gradient(135deg, rgba(0,0,0,0.6) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+
+  transition: box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.qc-select:focus{
+  background: rgba(255,255,255,0.18);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
+}
+
+/* strength toggle buttons */
+.qc-strength{
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.qc-strength-btn{
+  flex: 1;
+  padding: 6px 6px;
+  border-radius: 11px;
+
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  font-size: 11px;
+  font-family: 'fors', sans-serif;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  opacity: 0.88;
+}
+
+.qc-strength-btn:hover{
+  background: rgba(255,255,255,0.18);
+}
+
+/* SELECTED STRENGTH (white + glowy border) */
+.qc-strength-btn.active{
+  opacity: 1;
+  background: rgba(255,255,255,0.26);
+  border-color: rgba(255,255,255,0.98);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.60),
+    0 0 18px rgba(255,255,255,0.30);
+  color: #0b1a2b;
+  font-weight: 900;
+}
+
+/* rows */
+.qc-row{
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* pills / notes */
+.qc-pill{
+  padding: 6px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.10);
+  font-size: 10px;
+}
+
+.qc-note{
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* =========================
+   Calculate + Results BESIDE
+   Put BOTH inside: <div class="qc-row qc-actions"> ... </div>
+========================= */
+
+.qc-row.qc-actions{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;           /* keep side-by-side */
+  margin-top: 10px;
+}
+
+/* Calculate button: half size */
+.qc-btn{
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.20);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'fors', sans-serif;
+  transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.qc-row.qc-actions .qc-btn{
+  width: auto;                /* override full width */
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-top: 0;              /* remove vertical spacing */
+  min-height: 30px;
+}
+
+.qc-btn:hover{
+  background: rgba(255,255,255,0.24);
+}
+
+.qc-btn:active{
+  transform: translateY(1px);
+}
+
+/* results box beside */
+.qc-results{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.10);
+}
+
+.qc-row.qc-actions .qc-results{
+  margin-top: 0;
+  padding: 8px 10px;
+  border-radius: 14px;
+  flex: 1 1 auto;
+  min-height: 30px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* result typography */
+.qc-big{
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.qc-row.qc-actions .qc-big{
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.qc-sub{
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.35;
+}
+
+.qc-row.qc-actions .qc-sub{
+  margin-top: 0;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+/* highlight chip (optional, now matches white-glow theme) */
+.qc-highlight{
+  display: inline-block;
+  background: rgba(255,255,255,0.30);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow: 0 0 12px rgba(255,255,255,0.22);
+}
+
+/* Mobile handling */
+@media (max-width: 520px){
+  .qc{ width: 92vw; left: 4vw; }
+  .qc.collapsed{ transform: translateX(calc(-92vw + 46px)); }
+}
+
 /* Responsive Adjustments */
 @media (max-width: 992px) {
   .card-group {
@@ -757,6 +1124,79 @@ footer {
     <button class="emojiClose" type="button" aria-label="Close">✕</button>
   </div>
   <div id="emojiGrid" class="emojiGrid" role="list"></div>
+</div>
+
+<!-- ✅ Quick Calculator (Left Shortcut Panel) -->
+<div id="quickCalc" class="qc collapsed">
+  <div class="qc-head">
+    <div class="qc-title">Quick Calc</div>
+    <button class="qc-toggle" type="button" aria-label="Toggle Quick Calc">❮</button>
+  </div>
+
+  <div class="qc-body">
+    <div class="qc-tabs" role="tablist" aria-label="Medication shortcuts">
+      <button class="qc-tab active" type="button" data-med="para" role="tab" aria-selected="true">Paracetamol</button>
+      <button class="qc-tab" type="button" data-med="ibu" role="tab" aria-selected="false">Ibuprofen</button>
+      <button class="qc-tab" type="button" data-med="adren" role="tab" aria-selected="false">Adrenaline IM</button>
+    </div>
+
+    <label class="qc-label" for="qcWeight">Weight (kg)</label>
+    <input id="qcWeight" class="qc-input" type="number" inputmode="decimal" min="0" step="0.1" placeholder="e.g., 12.5" />
+
+    <!-- Paracetamol -->
+    <div class="qc-section" data-section="para">
+      <label class="qc-label">Strength</label>
+      <div class="qc-strength" id="qcParaStrength">
+        <button class="qc-strength-btn active" type="button" data-value="24">120 / 5</button>
+        <button class="qc-strength-btn" type="button" data-value="50">250 / 5</button>
+      </div>
+
+      <div class="qc-row">
+        <div class="qc-pill">Dose: <b>15 mg/kg</b></div>
+        <div class="qc-pill">Max: <b>1 g</b> (single dose)</div>
+      </div>
+    </div>
+
+    <!-- Ibuprofen -->
+    <div class="qc-section" data-section="ibu" style="display:none;">
+      <label class="qc-label">Strength</label>
+      <div class="qc-strength" id="qcIbuStrength">
+        <button class="qc-strength-btn active" type="button" data-value="20">100 / 5</button>
+        <button class="qc-strength-btn" type="button" data-value="40">200 / 5</button>
+      </div>
+
+      <div class="qc-row">
+        <div class="qc-pill">Dose: <b>6 mg/kg</b></div>
+        <div class="qc-pill">Max: <b>400 mg</b> (single dose)</div>
+      </div>
+    </div>
+
+    <!-- Adrenaline IM (Anaphylaxis) -->
+    <div class="qc-section" data-section="adren" style="display:none;">
+      <div class="qc-row">
+        <div class="qc-pill">IM: <b>1:1000 (1 mg/mL)</b></div>
+        <div class="qc-pill">Dose: <b>0.01 mg/kg</b> (max 0.5 mg)</div>
+      </div>
+      <div class="qc-row" style="margin-top:8px;">
+        <div class="qc-pill">Volume: <b>0.01 mL/kg</b> (max 0.5 mL)</div>
+      </div>
+      <div class="qc-note">
+        Autoinjector dosing is device-based. Confirm local anaphylaxis guideline.
+      </div>
+    </div>
+
+    <!-- ✅ Calculate + Results BESIDE each other -->
+    <div class="qc-row qc-actions">
+      <button id="qcCalcBtn" class="qc-btn" type="button">Calculate</button>
+
+      <div class="qc-results" aria-live="polite">
+        <div class="qc-big" id="qcMain">—</div>
+        <div class="qc-sub" id="qcSub"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
 </div>
 
   <div class="moving-text">💡 Reminder: Stay organized and check your calendar!</div>
@@ -986,6 +1426,174 @@ function closeTable() {
       closeTable();
     }
   });
+  
+  // ===== QUICK CALC (Left Shortcut Panel) =====
+(() => {
+  const qc = document.getElementById('quickCalc');
+  if (!qc) return;
+
+  const weightEl = qc.querySelector('#qcWeight');
+  const calcBtn  = qc.querySelector('#qcCalcBtn');
+
+  const mainEl = qc.querySelector('#qcMain');
+  const subEl  = qc.querySelector('#qcSub');
+
+  const toggleBtn = qc.querySelector('.qc-toggle');
+  const tabs = [...qc.querySelectorAll('.qc-tab')];
+
+  const paraStrengthWrap = qc.querySelector('#qcParaStrength'); // div container
+  const ibuStrengthWrap  = qc.querySelector('#qcIbuStrength');  // div container
+
+  const sections = {
+    para: qc.querySelector('[data-section="para"]'),
+    ibu: qc.querySelector('[data-section="ibu"]'),
+    adren: qc.querySelector('[data-section="adren"]'),
+  };
+
+  // ---- guards ----
+  const missing = [];
+  if (!weightEl) missing.push('#qcWeight');
+  if (!calcBtn) missing.push('#qcCalcBtn');
+  if (!mainEl) missing.push('#qcMain');
+  if (!subEl) missing.push('#qcSub');
+  if (!toggleBtn) missing.push('.qc-toggle');
+  if (!tabs.length) missing.push('.qc-tab (none found)');
+  if (!paraStrengthWrap) missing.push('#qcParaStrength (container)');
+  if (!ibuStrengthWrap) missing.push('#qcIbuStrength (container)');
+
+  if (missing.length) {
+    console.error('QuickCalc missing elements:', missing.join(', '));
+    return;
+  }
+
+  // ---- state ----
+  let activeMed = 'para';
+
+  // read defaults from the UI (active button), fall back safely
+  const getActiveStrength = (wrap, fallback) => {
+    const btn = wrap.querySelector('.qc-strength-btn.active') || wrap.querySelector('.qc-strength-btn');
+    const v = btn ? Number(btn.dataset.value) : NaN;
+    return Number.isFinite(v) && v > 0 ? v : fallback;
+  };
+
+  let paraStrength = getActiveStrength(paraStrengthWrap, 24); // mg/mL
+  let ibuStrength  = getActiveStrength(ibuStrengthWrap, 20);  // mg/mL
+
+  const highlight = (txt) => `<span class="qc-highlight">${txt}</span>`;
+  const r1 = (x) => (Math.round(x * 10) / 10).toFixed(1); // 0.1 mL
+  const rA = (x) => (Math.round(x * 10) / 10).toFixed(1); // adrenaline rounded to 0.1 mL (as you wanted)
+
+  function setMed(med){
+    activeMed = med;
+
+    tabs.forEach(b => {
+      const on = b.dataset.med === med;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+
+    Object.entries(sections).forEach(([k, el]) => {
+      if (!el) return;
+      el.style.display = (k === med) ? '' : 'none';
+    });
+
+    // keep weight, just refresh output
+    calc();
+  }
+
+  tabs.forEach(b => b.addEventListener('click', () => setMed(b.dataset.med)));
+
+  function resetOutput(){
+    mainEl.textContent = '—';
+    subEl.textContent = '';
+  }
+
+  function calc(){
+    const kg = Number(weightEl.value);
+
+    if (!kg || kg <= 0){
+      resetOutput();
+      return;
+    }
+
+    // Paracetamol
+    if (activeMed === 'para'){
+      // 15 mg/kg; strength is mg/mL (24 = 120/5, 50 = 250/5)
+      const ml = (kg * 15) / paraStrength;
+      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      subEl.textContent = '';
+      return;
+    }
+
+    // Ibuprofen
+    if (activeMed === 'ibu'){
+      // 6 mg/kg capped at 400 mg (matches your reference)
+      let mg = kg * 6;
+      const capped = mg > 400;
+      if (capped) mg = 400;
+
+      const ml = mg / ibuStrength;
+      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      subEl.textContent = capped ? 'Max 400 mg reached' : '';
+      return;
+    }
+
+    // Adrenaline IM (1:1000, 1 mg/mL)
+    if (activeMed === 'adren'){
+      // 0.01 mL/kg, max 0.5 mL
+      const rawMl = 0.01 * kg;
+      const capped = rawMl > 0.5;
+      const ml = Math.min(rawMl, 0.5);
+      const mg = ml; // 1 mg/mL
+
+      mainEl.innerHTML = `${highlight(`${rA(ml)} mL`)} IM`;
+      subEl.textContent = capped ? 'Max 0.5 mL reached' : `${rA(mg)} mg`;
+      return;
+    }
+  }
+
+  function bindStrengthButtons(wrap, onPick){
+    wrap.querySelectorAll('.qc-strength-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        wrap.querySelectorAll('.qc-strength-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        onPick(Number(btn.dataset.value));
+        calc();
+      });
+    });
+  }
+
+  bindStrengthButtons(paraStrengthWrap, (v) => { paraStrength = v; });
+  bindStrengthButtons(ibuStrengthWrap,  (v) => { ibuStrength  = v; });
+
+  // events
+  calcBtn.addEventListener('click', calc);
+
+  // auto-calc + auto-clear
+  weightEl.addEventListener('input', calc);
+
+  // fast overwrite
+  weightEl.addEventListener('focus', () => weightEl.select());
+
+  // keyboard helpers
+  weightEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') calc();
+    if (e.key === 'Escape') {
+      weightEl.value = '';
+      resetOutput();
+      weightEl.blur();
+    }
+  });
+
+  toggleBtn.addEventListener('click', () => {
+    qc.classList.toggle('collapsed');
+    toggleBtn.textContent = qc.classList.contains('collapsed') ? '❯' : '❮';
+  });
+
+  // init
+  resetOutput();
+  setMed('para');
+})();
 </script>
 
 </body>
