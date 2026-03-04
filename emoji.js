@@ -19,6 +19,8 @@
     { name: 'male',   symbol: '♂️' },
     { name: 'email',  symbol: '🌐' },
     { name: 'phone',  symbol: '☎️' },
+    { name: 'pin',  symbol: '📌' },
+    { name: 'point',  symbol: '◉' },
   ];
 
   const IDS  = { btn: "emojiSearchIcon", modal: "emojiModal", grid: "emojiGrid" };
