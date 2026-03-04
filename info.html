@@ -906,19 +906,9 @@ function renderNotes(arr) {
       imgEl.style.cursor = 'zoom-in';
       card.appendChild(imgEl);
 
-      // Zoom modal
-      const modal = document.getElementById("imgModal");
-      const modalImg = document.getElementById("modalImg");
       imgEl.addEventListener("click", () => {
-        if (modal && modalImg) { modal.style.display = "flex"; modalImg.src = imgEl.src; }
+        if (window.__imgZoom?.open) window.__imgZoom.open(imgEl.src);
       });
-     const closeModalBtn = document.getElementById('closeModalBtn');
-
-closeModalBtn.addEventListener('click', () => {
-  modal.style.display = 'none';
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-});
-
     }
 
     // Timestamp
@@ -1002,7 +992,6 @@ async function saveEdit(card){
   if(!newTitle||!newText) return alert("Title and explanation cannot be empty.");
   await updateDoc(doc(db,"informationNotes",id),{title:newTitle,text:newText});
   toggleEdit(card,false);
-  // Reapply search
   const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
   const filtered = searchVal ? notes.filter(n=>(n.title||'').toLowerCase().includes(searchVal)||(String(n.text||'')).toLowerCase().includes(searchVal)) : notes;
   renderNotes(filtered);
@@ -1068,65 +1057,331 @@ toggleIcon.addEventListener("click",()=>{
 function hideAllRays(){ raysContainer.querySelectorAll(".ray").forEach(ray=>{ ray.style.opacity="0"; ray.style.pointerEvents="none"; ray.style.transform=`rotate(${ray.style.getPropertyValue("--angle")}) translate(0px)`; }); toggleIcon.classList.remove("active"); }
 document.addEventListener("click",(e)=>{ if(!centerToggle.contains(e.target)) hideAllRays(); });
 
-const modal = document.getElementById("imgModal");
-const modalImg = document.getElementById("modalImg");
-const canvas = document.getElementById("rulerCanvas");
-const ctx = canvas.getContext('2d');
+/* =========================================================
+   ✅ MODAL ZOOM / PAN / RULER (init after DOM exists)
+   Fixes: button not clickable (script ran before modal HTML)
+   Also avoids multiple close listeners.
+========================================================= */
+function initImageZoomModal(){
+  const modal = document.getElementById("imgModal");
+  const modalImg = document.getElementById("modalImg");
+  const stage = document.getElementById("imgStage");
+  const zoomWrap = document.getElementById("zoomWrap");
+  const canvas = document.getElementById("rulerCanvas");
+  const ctx = canvas.getContext("2d");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const rulerToggleBtn = document.getElementById("rulerToggleBtn");
 
-let isDrawing = false;
-let startX = 0, startY = 0;
+  if (!modal || !modalImg || !stage || !zoomWrap || !canvas || !closeModalBtn) {
+    console.warn("Zoom modal elements not found. Make sure modal HTML exists.");
+    return;
+  }
 
-// Update canvas size whenever image loads
-modalImg.addEventListener('load', () => {
-  canvas.width = modalImg.clientWidth;
-  canvas.height = modalImg.clientHeight;
-  canvas.style.width = modalImg.clientWidth + 'px';
-  canvas.style.height = modalImg.clientHeight + 'px';
-  canvas.style.pointerEvents = 'auto';
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-});
+  const ZOOM_MIN = 1;
+  const ZOOM_MAX = 8;
+  const ZOOM_STEP = 1.12;
 
-// Mouse events
-canvas.addEventListener('mousedown', (e) => {
-  e.stopPropagation(); // <--- add this
-  isDrawing = true;
-  const rect = canvas.getBoundingClientRect();
-  startX = e.clientX - rect.left;
-  startY = e.clientY - rect.top;
-});
+  let scale = 1;
+  let tx = 0, ty = 0;
 
-canvas.addEventListener('mousemove', (e) => {
-  e.stopPropagation(); // <--- add this
-  if (!isDrawing) return;
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  let isPanning = false;
+  let panStartX = 0, panStartY = 0;
+  let panOriginX = 0, panOriginY = 0;
 
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.strokeStyle = 'rgba(187, 0, 255, 0.5)'; // f2bcc4 with transparency
-  ctx.lineWidth = 16;
-   ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(startX, startY);
-  ctx.lineTo(x, startY);
-  ctx.moveTo(startX, startY);
-  ctx.lineTo(startX, y);
-  ctx.stroke();
-});
+  let isDrawing = false;
+  let startX = 0, startY = 0;
 
-canvas.addEventListener('mouseup', (e) => {
-  e.stopPropagation(); // <--- add this
-  isDrawing = false;
-});
+  let isPinching = false;
+  let pinchStartDist = 0;
+  let pinchStartScale = 1;
+  let pinchMid = { x: 0, y: 0 };
 
-canvas.addEventListener('mouseleave', (e) => {
-  e.stopPropagation(); // <--- add this
-  isDrawing = false;
-});
+  let rulerMode = false;
 
+  // prevent double-tap zoom from firing when user clicks the toggle button
+  let lastTap = 0;
 
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+  function setRulerMode(on){
+    rulerMode = !!on;
+    canvas.style.pointerEvents = rulerMode ? "auto" : "none";
+    if (rulerToggleBtn) rulerToggleBtn.textContent = `Ruler: ${rulerMode ? "ON" : "OFF"}`;
+  }
+
+  function applyTransform(){
+    zoomWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
+  }
+
+  function stagePointFromEvent(evt){
+    const rect = stage.getBoundingClientRect();
+    const x = (evt.clientX ?? (evt.touches && evt.touches[0].clientX)) - rect.left;
+    const y = (evt.clientY ?? (evt.touches && evt.touches[0].clientY)) - rect.top;
+    return { x, y };
+  }
+
+  function toImageSpace(stageX, stageY){
+    return { x: (stageX - tx) / scale, y: (stageY - ty) / scale };
+  }
+
+  function clampPan(){
+    const w = stage.clientWidth;
+    const h = stage.clientHeight;
+
+    const maxX = 0, maxY = 0;
+    const minX = w - w * scale;
+    const minY = h - h * scale;
+
+    if (scale <= 1){ tx = 0; ty = 0; return; }
+
+    tx = clamp(tx, minX, maxX);
+    ty = clamp(ty, minY, maxY);
+  }
+
+  function zoomAt(stageX, stageY, newScale){
+    newScale = clamp(newScale, ZOOM_MIN, ZOOM_MAX);
+    const before = toImageSpace(stageX, stageY);
+    scale = newScale;
+    tx = stageX - before.x * scale;
+    ty = stageY - before.y * scale;
+    clampPan();
+    applyTransform();
+  }
+
+  function resizeCanvas(){
+    canvas.width = stage.clientWidth;
+    canvas.height = stage.clientHeight;
+    canvas.style.width = stage.clientWidth + "px";
+    canvas.style.height = stage.clientHeight + "px";
+  }
+
+  function resetZoom(){
+    scale = 1;
+    tx = 0; ty = 0;
+    applyTransform();
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    setRulerMode(false);
+  }
+
+  // Expose an opener used by note images
+  window.__imgZoom = window.__imgZoom || {};
+  window.__imgZoom.open = (src) => {
+    modal.style.display = "flex";
+    modalImg.src = src;
+  };
+
+  // Toggle button
+  if (rulerToggleBtn) {
+    rulerToggleBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setRulerMode(!rulerMode);
+    });
+  }
+
+  // Close
+  closeModalBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    modal.style.display = "none";
+    resetZoom();
+  });
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+      resetZoom();
+    }
+  });
+
+  modalImg.addEventListener("load", () => {
+    requestAnimationFrame(() => {
+      resizeCanvas();
+      resetZoom();
+    });
+  });
+
+  window.addEventListener("resize", () => {
+    if (modal.style.display === "flex") {
+      resizeCanvas();
+      clampPan();
+      applyTransform();
+    }
+  });
+
+  // Wheel zoom
+  stage.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const rect = stage.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const direction = e.deltaY > 0 ? 1 / ZOOM_STEP : ZOOM_STEP;
+    zoomAt(sx, sy, scale * direction);
+  }, { passive: false });
+
+  // Double tap / double click zoom (ignore if clicking on buttons)
+  stage.addEventListener("pointerdown", (e) => {
+    // If user taps the toggle/close buttons, don't treat it as zoom gesture
+    if (e.target === rulerToggleBtn || e.target === closeModalBtn) return;
+
+    const now = Date.now();
+    const dt = now - lastTap;
+    lastTap = now;
+    if (dt < 280) {
+      const p = stagePointFromEvent(e);
+      const target = (scale < 2) ? 2.5 : 1;
+      zoomAt(p.x, p.y, target);
+    }
+  });
+
+  // Pan + Draw
+  stage.addEventListener("pointerdown", (e) => {
+    // Don't start gestures when clicking UI buttons
+    if (e.target === rulerToggleBtn || e.target === closeModalBtn) return;
+
+    stage.setPointerCapture(e.pointerId);
+
+    const onCanvas = (e.target === canvas);
+
+    if (rulerMode && onCanvas) {
+      isDrawing = true;
+      const p = stagePointFromEvent(e);
+      const imgP = toImageSpace(p.x, p.y);
+      startX = imgP.x;
+      startY = imgP.y;
+      return;
+    }
+
+    if (scale > 1.001) {
+      isPanning = true;
+      panStartX = e.clientX;
+      panStartY = e.clientY;
+      panOriginX = tx;
+      panOriginY = ty;
+    }
+  });
+
+function getAverageLumaAt(imgX, imgY, sample = 18){
+  // sample a small square around the point
+  const sx = Math.max(0, Math.floor(imgX - sample/2));
+  const sy = Math.max(0, Math.floor(imgY - sample/2));
+  const sw = Math.max(1, Math.floor(sample));
+  const sh = Math.max(1, Math.floor(sample));
+
+  const tmp = document.createElement("canvas");
+  tmp.width = sw;
+  tmp.height = sh;
+  const tctx = tmp.getContext("2d", { willReadFrequently: true });
+
+  // draw the CURRENT displayed image into tmp (scaled to its natural pixels)
+  // Use modalImg because it has the image loaded.
+  // We map img-space (stage/zoom space) to modalImg displayed pixels via contain math:
+  // Easiest robust trick: draw the whole image into tmp using the DOM image directly.
+  // We'll sample by converting our img-space to the displayed image pixel.
+  // For your setup (img fills zoomWrap with object-fit: contain), the "img-space"
+  // matches stage space. We'll sample from a full-stage raster of the image.
+  const raster = document.createElement("canvas");
+  raster.width = stage.clientWidth;
+  raster.height = stage.clientHeight;
+  const rctx = raster.getContext("2d", { willReadFrequently: true });
+  rctx.clearRect(0,0,raster.width,raster.height);
+  rctx.drawImage(modalImg, 0, 0, raster.width, raster.height);
+
+  const imageData = rctx.getImageData(sx, sy, Math.min(sw, raster.width - sx), Math.min(sh, raster.height - sy)).data;
+
+  let sum = 0;
+  const n = imageData.length / 4;
+  for (let i=0;i<imageData.length;i+=4){
+    const r = imageData[i], g = imageData[i+1], b = imageData[i+2];
+    // perceived luminance
+    sum += 0.2126*r + 0.7152*g + 0.0722*b;
+  }
+  return sum / Math.max(1,n);
+}
+
+  stage.addEventListener("pointermove", (e) => {
+  if (isDrawing) {
+    const rect = stage.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const imgP = toImageSpace(sx, sy);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // === REAL MARKER HIGHLIGHT ===
+    // Multiply blend keeps text visible underneath
+    ctx.save();
+    ctx.globalCompositeOperation = "multiply";
+
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    // Marker color
+    ctx.strokeStyle = "rgba(255, 230, 0, 0.30)"; // classic yellow highlighter
+    ctx.lineWidth = 26;
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(imgP.x, startY);
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(startX, imgP.y);
+    ctx.stroke();
+
+    ctx.restore();
+
+    return;
+  }
+
+    if (isPanning) {
+      const dx = e.clientX - panStartX;
+      const dy = e.clientY - panStartY;
+      tx = panOriginX + dx;
+      ty = panOriginY + dy;
+      clampPan();
+      applyTransform();
+    }
+  });
+
+  stage.addEventListener("pointerup", () => { isPanning = false; isDrawing = false; });
+  stage.addEventListener("pointercancel", () => { isPanning = false; isDrawing = false; });
+
+  // Pinch zoom (touch)
+  function dist(a,b){
+    const dx = a.clientX - b.clientX;
+    const dy = a.clientY - b.clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  stage.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      isPinching = true;
+      pinchStartDist = dist(e.touches[0], e.touches[1]);
+      pinchStartScale = scale;
+
+      const rect = stage.getBoundingClientRect();
+      pinchMid.x = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+      pinchMid.y = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+    }
+  }, { passive: false });
+
+  stage.addEventListener("touchmove", (e) => {
+    if (!isPinching || e.touches.length !== 2) return;
+    e.preventDefault();
+    const newDist = dist(e.touches[0], e.touches[1]);
+    const factor = newDist / pinchStartDist;
+    zoomAt(pinchMid.x, pinchMid.y, pinchStartScale * factor);
+  }, { passive: false });
+
+  stage.addEventListener("touchend", (e) => {
+    if (e.touches.length < 2) isPinching = false;
+  });
+}
+
+// ✅ init AFTER modal HTML exists (because your modal is below this script tag)
+window.addEventListener("DOMContentLoaded", initImageZoomModal);
 </script>
 <!-- Image Zoom Modal -->
+<!-- Image Zoom Modal (upgraded: pinch/drag/zoom) -->
 <div id="imgModal" style="
   display:none;
   position:fixed;
@@ -1136,17 +1391,41 @@ canvas.addEventListener('mouseleave', (e) => {
   align-items:center;
   z-index:2000;
 ">
-  <div style="position:relative;">
-    <img id="modalImg" src="" style="max-width:90vw; max-height:90vh; display:block; border-radius:6px;">
-    <canvas id="rulerCanvas" style="
+  <div id="imgStage" style="
+    position: relative;
+    width: min(92vw, 1100px);
+    height: min(92vh, 820px);
+    overflow: hidden;
+    border-radius: 10px;
+    touch-action: none; /* important for pinch/drag */
+  ">
+    <!-- Transform wrapper -->
+    <div id="zoomWrap" style="
       position:absolute;
-      top:0; left:0;
-      width:100%; height:100%;
-      pointer-events:auto;
-    "></canvas>
+      inset:0;
+      transform: translate3d(0px,0px,0px) scale(1);
+      transform-origin: 0 0;
+      will-change: transform;
+    ">
+      <img id="modalImg" src="" style="
+        display:block;
+        width:100%;
+        height:100%;
+        object-fit: contain;
+        user-select: none;
+        -webkit-user-drag: none;
+        pointer-events: none; /* stage handles gestures */
+      ">
+      <canvas id="rulerCanvas" style="
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  pointer-events:none;
+"></canvas>
+    </div>
 
     <!-- Close Button -->
-    <button id="closeModalBtn" style="
+    <button id="closeModalBtn" type="button" style="
       position:absolute;
       top:10px; right:10px;
       font-size:24px;
@@ -1156,11 +1435,32 @@ canvas.addEventListener('mouseleave', (e) => {
       cursor:pointer;
       z-index:10;
     ">×</button>
+	
+	<button id="rulerToggleBtn" type="button" style="
+  position:absolute;
+  top:10px; left:10px;
+  font-size:12px;
+  background: rgba(255,255,255,0.5);
+  border:none; border-radius:10px;
+  padding:6px 10px;
+  cursor:pointer;
+  z-index:10;
+">Ruler: OFF</button>
+
+    <!-- Optional mini hint -->
+    <div style="
+      position:absolute;
+      left:12px; bottom:10px;
+      font-size:12px;
+      color: rgba(255,255,255,0.85);
+      z-index:10;
+      user-select:none;
+      pointer-events:none;
+    ">Pinch / scroll to zoom • Drag to pan • Double tap</div>
   </div>
 </div>
 <script src="https://xlyneve.github.io/CEP/emoji.js?v=3" defer></script>
 </body>
 </html>
-
 
 
