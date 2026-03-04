@@ -33,6 +33,35 @@ body::before {
   filter: blur(10px) brightness(0.9);
   z-index: -1;
 }
+/* ✅ Sticky glass header */
+.header{
+  position: fixed;      /* stays visible always */
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  z-index: 3000;
+
+  display: flex;
+  align-items: center;
+
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+
+  border-bottom: 1px solid rgba(255,255,255,0.30);
+}
+/* hide header when zoom modal is open */
+.header.hidden{
+  opacity: 0;
+  pointer-events: none;
+}
+/* optional: if you want the bg div to fill the header */
+.header-bg{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
 
 .header-title {
   position: absolute;
@@ -1072,6 +1101,13 @@ function initImageZoomModal(){
   const closeModalBtn = document.getElementById("closeModalBtn");
   const rulerToggleBtn = document.getElementById("rulerToggleBtn");
 
+ const header = document.querySelector(".header");
+
+  function setHeaderHidden(hidden){
+    if (!header) return;
+    header.classList.toggle("hidden", !!hidden);
+  }
+
   if (!modal || !modalImg || !stage || !zoomWrap || !canvas || !closeModalBtn) {
     console.warn("Zoom modal elements not found. Make sure modal HTML exists.");
     return;
@@ -1168,6 +1204,11 @@ function initImageZoomModal(){
   window.__imgZoom.open = (src) => {
     modal.style.display = "flex";
     modalImg.src = src;
+	 modal.style.display = "flex";
+    setHeaderHidden(true);          // ✅ hide header
+    document.body.style.overflow = "hidden"; // ✅ optional: stop page scroll behind modal
+    modalImg.src = src;
+
   };
 
   // Toggle button
@@ -1183,12 +1224,16 @@ function initImageZoomModal(){
   closeModalBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     modal.style.display = "none";
+	setHeaderHidden(false);         // ✅ show header
+    document.body.style.overflow = ""; // ✅ optional restore
     resetZoom();
   });
 
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
       modal.style.display = "none";
+	  setHeaderHidden(false);       // ✅ show header
+      document.body.style.overflow = ""; // ✅ optional restore
       resetZoom();
     }
   });
