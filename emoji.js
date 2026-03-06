@@ -19,6 +19,7 @@
     { name: 'male',   symbol: '♂️' },
     { name: 'email',  symbol: '🌐' },
     { name: 'phone',  symbol: '☎️' },
+    { name: 'yellow',  symbol: '🟡' },
   ];
 
   const IDS  = { btn: "emojiSearchIcon", modal: "emojiModal", grid: "emojiGrid" };
