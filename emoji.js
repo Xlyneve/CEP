@@ -1,4 +1,4 @@
-// emoji.js (complete, auto-inject, minimalist, NO close button)
+// emoji.js (insert at cursor instead of copy/paste)
 (() => {
   const EMOJI_DATA = [
     { name: 'arrowR', symbol: '↪' },
@@ -19,12 +19,13 @@
     { name: 'male',   symbol: '♂️' },
     { name: 'email',  symbol: '🌐' },
     { name: 'phone',  symbol: '☎️' },
-    { name: 'pin',  symbol: '📌' },
-    { name: 'point',  symbol: '◉' },
   ];
 
   const IDS  = { btn: "emojiSearchIcon", modal: "emojiModal", grid: "emojiGrid" };
   const FLAG = "__emojiPickerInitialized__";
+
+  let lastRange = null;
+  let lastInput = null;
 
   function nukeOldCloseUI() {
     document
@@ -35,7 +36,6 @@
   function ensureEmojiUI() {
     nukeOldCloseUI();
 
-    // Button
     let btn = document.getElementById(IDS.btn);
     if (!btn) {
       btn = document.createElement("button");
@@ -46,7 +46,6 @@
       document.body.appendChild(btn);
     }
 
-    // Modal
     let modal = document.getElementById(IDS.modal);
     if (!modal) {
       modal = document.createElement("div");
@@ -54,10 +53,7 @@
       document.body.appendChild(modal);
     }
 
-    // Force modal to ONLY grid (wipes any leftover X/header inside modal)
     modal.innerHTML = `<div id="${IDS.grid}" class="emojiGrid" role="list"></div>`;
-
-    // Accessibility defaults (closed)
     modal.setAttribute("aria-hidden", "true");
     modal.inert = true;
 
@@ -74,6 +70,121 @@
     ).join("");
   }
 
+  function isEditable(el) {
+    if (!el) return false;
+    return (
+      el.isContentEditable ||
+      el.tagName === "TEXTAREA" ||
+      (el.tagName === "INPUT" &&
+        /^(text|search|url|tel|password|email)$/i.test(el.type || "text"))
+    );
+  }
+
+  function saveSelection() {
+    const active = document.activeElement;
+
+    if (isEditable(active)) {
+      lastInput = active;
+    }
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+
+    const range = sel.getRangeAt(0);
+    if (!range) return;
+
+    let node = range.commonAncestorContainer;
+    if (node.nodeType === 3) node = node.parentNode;
+
+    if (node && node.closest) {
+      const editableParent = node.closest('[contenteditable="true"]');
+      if (editableParent) {
+        lastRange = range.cloneRange();
+      }
+    }
+  }
+
+  function insertIntoContenteditable(emoji, target) {
+    target.focus();
+
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+
+    if (lastRange) {
+      sel.addRange(lastRange);
+    }
+
+    if (!sel.rangeCount) return false;
+
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+
+    const textNode = document.createTextNode(emoji);
+    range.insertNode(textNode);
+
+    range.setStartAfter(textNode);
+    range.collapse(true);
+
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    lastRange = range.cloneRange();
+
+    target.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  }
+
+  function insertIntoInputOrTextarea(emoji, target) {
+    const start = target.selectionStart ?? target.value.length;
+    const end = target.selectionEnd ?? target.value.length;
+    const value = target.value ?? "";
+
+    target.value = value.slice(0, start) + emoji + value.slice(end);
+
+    const newPos = start + emoji.length;
+    target.focus();
+    target.setSelectionRange(newPos, newPos);
+
+    target.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  }
+
+  function insertEmojiAtCursor(emoji) {
+    // 1. Prefer your app's activeEditable if it exists
+    const preferred =
+      window.activeEditable ||
+      lastInput ||
+      document.activeElement;
+
+    if (preferred && preferred.isContentEditable) {
+      return insertIntoContenteditable(emoji, preferred);
+    }
+
+    if (preferred && (
+      preferred.tagName === "TEXTAREA" ||
+      (preferred.tagName === "INPUT" &&
+       /^(text|search|url|tel|password|email)$/i.test(preferred.type || "text"))
+    )) {
+      return insertIntoInputOrTextarea(emoji, preferred);
+    }
+
+    // 2. Fallback: try saved contenteditable range
+    if (lastRange) {
+      let node = lastRange.commonAncestorContainer;
+      if (node.nodeType === 3) node = node.parentNode;
+
+      const editableParent = node && node.closest
+        ? node.closest('[contenteditable="true"]')
+        : null;
+
+      if (editableParent) {
+        return insertIntoContenteditable(emoji, editableParent);
+      }
+    }
+
+    return false;
+  }
+
   function initEmojiPicker() {
     const emojiModal = document.getElementById(IDS.modal);
     const emojiIcon  = document.getElementById(IDS.btn);
@@ -81,10 +192,8 @@
 
     if (!emojiModal || !emojiGrid || !emojiIcon) return;
 
-    // Always re-render so new emojis appear immediately
     renderEmojiGrid(emojiGrid);
 
-    // Only attach listeners once
     if (window[FLAG]) return;
     window[FLAG] = true;
 
@@ -92,17 +201,13 @@
 
     const openEmoji = () => {
       nukeOldCloseUI();
+      saveSelection(); // save caret before picker steals focus
       emojiModal.classList.add("open");
       emojiModal.setAttribute("aria-hidden", "false");
       emojiModal.inert = false;
     };
 
     const closeEmoji = () => {
-      // IMPORTANT: move focus OUT before hiding from AT (fixes the console warning)
-      if (emojiModal.contains(document.activeElement)) {
-        emojiIcon.focus({ preventScroll: true });
-      }
-
       emojiModal.classList.remove("open");
       emojiModal.setAttribute("aria-hidden", "true");
       emojiModal.inert = true;
@@ -110,31 +215,49 @@
 
     const toggleEmoji = () => (isOpen() ? closeEmoji() : openEmoji());
 
+    // Keep track of caret while user types/clicks
+    document.addEventListener("selectionchange", () => {
+      saveSelection();
+    });
+
+    document.addEventListener("focusin", () => {
+      saveSelection();
+    });
+
+    emojiIcon.addEventListener("mousedown", (e) => {
+      // prevent button from stealing caret before we save/use it
+      e.preventDefault();
+    });
+
     emojiIcon.addEventListener("click", (e) => {
       e.stopPropagation();
       toggleEmoji();
     });
 
-    emojiGrid.addEventListener("click", async (e) => {
+    emojiGrid.addEventListener("mousedown", (e) => {
+      e.preventDefault(); // keep existing caret
+    });
+
+    emojiGrid.addEventListener("click", (e) => {
       const btn = e.target.closest(".emojiBtn");
       if (!btn) return;
 
       const emoji = btn.getAttribute("data-emoji") || btn.textContent || "";
       if (!emoji) return;
 
-      try {
-        await navigator.clipboard.writeText(emoji);
-        btn.style.transform = "scale(1.06)";
-        setTimeout(() => (btn.style.transform = ""), 120);
-      } catch {
-        window.prompt("Copy:", emoji);
+      const inserted = insertEmojiAtCursor(emoji);
+
+      btn.style.transform = "scale(1.06)";
+      setTimeout(() => (btn.style.transform = ""), 120);
+
+      if (!inserted) {
+        console.warn("No editable field/cursor found for emoji insertion.");
       }
 
-      // optional auto-close after selecting:
+      // optional auto-close
       // closeEmoji();
     });
 
-    // Click outside closes
     document.addEventListener("click", (e) => {
       if (!isOpen()) return;
       if (emojiModal.contains(e.target)) return;
@@ -142,7 +265,6 @@
       closeEmoji();
     });
 
-    // Escape closes
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
       if (!isOpen()) return;
@@ -151,7 +273,6 @@
   }
 
   function boot() {
-    // CHANGED: nuke first, then build UI
     nukeOldCloseUI();
     ensureEmojiUI();
     initEmojiPicker();
