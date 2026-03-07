@@ -2806,39 +2806,87 @@ function extractTagsFromHtml(html) {
 function parseFindQuery(raw) {
   const s = raw.replace(/^\/find\s+/i, '').trim();
 
-  const phrases = [];
+  const terms = [];
+  const seen = new Set();
+
   const quoteRegex = /"([^"]+)"/g;
   let m;
+
   while ((m = quoteRegex.exec(s)) !== null) {
-    const p = m[1].trim();
-    if (p) phrases.push(p);
+    const phraseRaw = (m[1] || '').trim();
+    const phraseNorm = normalizeText(phraseRaw);
+    if (!phraseNorm) continue;
+
+    const key = `phrase:${phraseNorm}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    terms.push({
+      raw: phraseRaw,
+      norm: phraseNorm,
+      type: 'phrase'
+    });
   }
 
-  const remainder = s.replace(quoteRegex, ' ').split(',')
+  const remainder = s.replace(quoteRegex, ' ');
+  remainder
+    .split(/[\s,]+/)
     .map(t => t.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .forEach(tokenRaw => {
+      const type = tokenRaw.startsWith('#') ? 'tag' : 'word';
+      const tokenBase = tokenRaw.startsWith('#') ? tokenRaw.slice(1) : tokenRaw;
+      const tokenNorm = normalizeText(tokenBase);
+      if (!tokenNorm) return;
 
-  const terms = [...phrases, ...remainder].filter(Boolean);
+      const key = `${type}:${tokenNorm}`;
+      if (seen.has(key)) return;
+      seen.add(key);
 
-  return { raw: s, terms: terms.map(normalizeText).filter(Boolean) };
+      terms.push({
+        raw: tokenRaw,
+        norm: tokenNorm,
+        type
+      });
+    });
+
+  return { raw: s, terms };
 }
 
-function scoreDoc(textNorm, termsNorm) {
+function scoreDoc(plainText, textNorm, terms) {
   let score = 0;
-  for (const t of termsNorm) {
-    if (!t) continue;
-    if (textNorm.startsWith(t)) score += 6;
 
-    const wholeWord = new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-    if (wholeWord.test(textNorm)) score += 3;
+  for (const term of terms) {
+    if (!term?.norm) continue;
 
-    if (textNorm.includes(t)) score += 1;
+    if (term.type === 'tag') continue;
+
+    if (term.type === 'phrase') {
+      const esc = term.raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const phraseRx = new RegExp(esc, 'i');
+
+      if (textNorm.startsWith(term.norm)) score += 14;
+      if (phraseRx.test(plainText)) score += 12;
+      else if (textNorm.includes(term.norm)) score += 5;
+
+      continue;
+    }
+
+    const esc = term.norm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const wholeWord = new RegExp(`\\b${esc}\\b`, 'i');
+    const prefixWord = new RegExp(`\\b${esc}[a-zA-Z0-9_-]*`, 'i');
+
+    if (textNorm.startsWith(term.norm)) score += 10;
+    if (wholeWord.test(plainText)) score += 8;
+    else if (prefixWord.test(plainText)) score += 5;
+    else if (textNorm.includes(term.norm)) score += 2;
   }
+
   return score;
 }
 
-function highlightHTML(html, termsNorm) {
-  if (!termsNorm?.length) return html;
+function highlightHTML(html, terms) {
+  if (!terms?.length) return html;
 
   const container = document.createElement('div');
   container.innerHTML = html;
@@ -2847,20 +2895,31 @@ function highlightHTML(html, termsNorm) {
   const nodes = [];
   while (walker.nextNode()) nodes.push(walker.currentNode);
 
-  const escaped = termsNorm
-    .filter(Boolean)
-    .sort((a, b) => b.length - a.length)
-    .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const patterns = [];
 
-  if (!escaped.length) return html;
-  const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
+  for (const term of terms) {
+    if (!term?.norm) continue;
+    if (term.type === 'tag') continue;
+
+    if (term.type === 'phrase') {
+      patterns.push(term.raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    } else {
+      patterns.push(`${term.norm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[a-zA-Z0-9_-]*`);
+    }
+  }
+
+  if (!patterns.length) return html;
+
+  patterns.sort((a, b) => b.length - a.length);
+  const regex = new RegExp(`(${patterns.join('|')})`, 'gi');
 
   nodes.forEach(node => {
     const parent = node.parentElement;
     if (parent && parent.closest('a.conceptLink')) return;
 
-    const text = node.nodeValue;
+    const text = node.nodeValue || '';
     if (!regex.test(text)) return;
+    regex.lastIndex = 0;
 
     const span = document.createElement('span');
     span.innerHTML = text.replace(regex, `<mark class="underlineMatch">$1</mark>`);
@@ -2885,21 +2944,26 @@ function queryNotesSync(rawQuery) {
     const originalHtml = data.content || '';
     const cleanedHtml = stripLegacyTableControls(originalHtml);
 
-    const textNorm = normalizeText(htmlToText(cleanedHtml));
+    const plainText = htmlToText(cleanedHtml);
+    const textNorm = normalizeText(plainText);
     const tags = extractTagsFromHtml(cleanedHtml);
 
-    const ok = terms.every(t => {
-      if (!t) return true;
+    const ok = terms.every(term => {
+      if (!term?.norm) return true;
 
-      if (t.startsWith('#')) {
-        const tagTerm = normalizeTag(t.slice(1));
-        if (!tagTerm) return true;
-        return tags.some(tag => tag === tagTerm || tag.startsWith(tagTerm));
+      if (term.type === 'tag') {
+        return tags.some(tag => tag === term.norm || tag.startsWith(term.norm));
       }
 
-      const esc = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const whole = new RegExp(`\\b${esc}\\b`, 'i');
-      return whole.test(htmlToText(cleanedHtml));
+      if (term.type === 'phrase') {
+        const esc = term.raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const phraseRx = new RegExp(esc, 'i');
+        return phraseRx.test(plainText);
+      }
+
+      const esc = term.norm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const prefixWord = new RegExp(`\\b${esc}[a-zA-Z0-9_-]*`, 'i');
+      return prefixWord.test(plainText);
     });
 
     if (!ok) continue;
@@ -2911,7 +2975,7 @@ function queryNotesSync(rawQuery) {
       id: data.id,
       createdAt: data.createdAt,
       content: withHighlights,
-      score: scoreDoc(textNorm, terms)
+      score: scoreDoc(plainText, textNorm, terms)
     });
   }
 
