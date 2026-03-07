@@ -600,6 +600,20 @@ a.conceptLink:visited {
     transform 0.12s ease;
 }
 
+
+/* tiny visual cue that this concept has an image */
+a.conceptLink.hasKbImage::after{
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 5px;
+  border-radius: 999px;
+  vertical-align: middle;
+  background: rgba(170, 150, 210, 0.9);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.7);
+}
+
 /* Add a super subtle “link cue” without blue underline */
 .chatBubble a.conceptLink,
 .editableNote a.conceptLink,
@@ -792,6 +806,17 @@ mark.underlineMatch{
   font-family: 'Tahoma', sans-serif;
 }
 
+#defTip {
+  pointer-events: auto;
+}
+
+#defTip .kbHoverImage {
+  pointer-events: auto;
+}
+
+#defTip .kbHoverImage {
+  pointer-events: auto;
+}
 a.conceptLink { 
   position: relative; 
   overflow: visible; 
@@ -875,6 +900,12 @@ a.conceptLink.hasDef::before{
 
   outline: none;
   font-size: 12px;
+  
+}
+#defBox,
+#whyBox {
+  box-sizing: border-box;
+  caret-color: rgba(255,255,255,0.95);
 }
 
 #defPanel { overflow-x: hidden; }
@@ -927,8 +958,18 @@ a.conceptLink.hasDef::before{
   font-size: 13px;
   line-height: 1.35;
   color: #222;
-  pointer-events: none; /* important: don't steal hover/click */
+  pointer-events: auto; 
   white-space: normal;
+}
+#defTip .kbHoverImage{
+  display: block;
+  width: 100%;
+  max-height: 170px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: zoom-in;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 #defTip .defLabel{
@@ -1004,13 +1045,31 @@ a.conceptLink.hasDef::before{
 #imgZoomOverlay {
   position: fixed;
   inset: 0;
-  z-index: 10080;
+  z-index: 1000001;
   display: none;
   align-items: center;
   justify-content: center;
   background: rgba(0,0,0,0.65);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
+}
+
+#imgZoomControls {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 1000002;
+  display: none;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  font-size: 12px;
 }
 
 #imgZoomStage {
@@ -1205,12 +1264,36 @@ a.conceptLink.hasDef::before{
 
   <div id="whyBox" contenteditable="true" data-placeholder="Why / memory hook…"></div>
 
-  <div class="btnRow">
-    <button class="miniBtn" id="defSearchBtn" title="Search this concept">🔎</button>
-    <button class="miniBtn danger" id="defDeleteBtn" title="Delete definition">🗑️</button>
-    <button class="miniBtn" id="defSaveBtn" title="Save definition">💾</button>
-    <button class="miniBtn" id="defMergeBtn" title="Merge this concept">🧬</button>
+ <div id="kbMediaSection" style="margin-top:10px;">
+  <div id="kbPreviewWrap" style="display:none; margin-bottom:10px;">
+    <img id="kbPreviewImg" alt="" style="display:block; width:100%; max-height:180px; object-fit:contain; border-radius:12px; border:1px solid rgba(255,255,255,0.5);" />
   </div>
+
+  <input id="kbCaptionInput" type="text" placeholder="Image caption…" style="
+    width:100%;
+    box-sizing:border-box;
+    margin-bottom:10px;
+    padding:10px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.55);
+    background:rgba(255,255,255,0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    outline:none;
+    font-size:12px;
+  " />
+
+  <input id="kbUploadInput" type="file" accept="image/*" style="display:none;" />
+</div>
+
+<div class="btnRow">
+  <button class="miniBtn" id="defSearchBtn" title="Search this concept">🔎</button>
+  <button class="miniBtn" id="kbUploadBtn" title="Upload concept image">🖼️</button>
+  <button class="miniBtn danger" id="kbRemoveBtn" title="Remove concept image">🧹</button>
+  <button class="miniBtn danger" id="defDeleteBtn" title="Delete definition">🗑️</button>
+  <button class="miniBtn" id="defSaveBtn" title="Save definition">💾</button>
+  <button class="miniBtn" id="defMergeBtn" title="Merge this concept">🧬</button>
+</div>
 </div>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -1225,7 +1308,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
   authDomain: "notes-chat-c5ff3.firebaseapp.com",
   projectId: "notes-chat-c5ff3",
-  storageBucket: "notes-chat-c5ff3.appspot.com",
+  storageBucket: "notes-chat-c5ff3.firebasestorage.app",
   messagingSenderId: "597780727252",
   appId: "1:597780727252:web:8407eb4096dbe301d74241",
   measurementId: "G-YQD63H7L5T"
@@ -1267,6 +1350,10 @@ let unsubscribeNotes = null;
 
 let unsubscribeDefs = null;         // defs listener
 let defsCache = {}; // { normalizedKey: { value: "", why: "", concept: "" } }  (legacy-safe)
+
+let unsubscribeConceptMedia = null;
+let conceptMediaCache = {};
+// { normalizedKey: { concept, imageUrl, caption, storagePath } }
 
 let liveTimer = null;
 let lastLiveQuery = '';
@@ -1997,9 +2084,10 @@ function zoomBy(factor, centerClientX, centerClientY) {
 }
 
 function openZoom(src) {
+  if (!src) return;
+
   zoomOpen = true;
 
-  imgZoomImg.src = src;
   imgZoomOverlay.style.display = 'flex';
   imgZoomControls.style.display = 'flex';
 
@@ -2010,6 +2098,13 @@ function openZoom(src) {
   imgZoomImg.onload = () => {
     requestAnimationFrame(() => requestAnimationFrame(fitZoomToStage));
   };
+
+  imgZoomImg.onerror = () => {
+    console.error('Zoom image failed to load:', src);
+  };
+
+  imgZoomImg.src = '';
+  imgZoomImg.src = src;
 
   requestAnimationFrame(applyZoomTransform);
 }
@@ -2103,7 +2198,8 @@ function updateUIForLockState() {
     notePanel.style.display = 'none';
 
     startNotesListener();
-    startDefsListener(); // ✅ defs listener STARTS here
+    startDefsListener();
+    startConceptMediaListener();
 
   } else {
     lockInfo.textContent = "Locked";
@@ -2119,7 +2215,8 @@ function updateUIForLockState() {
     notePanel.style.display = 'none';
 
     stopNotesListener();
-    stopDefsListener(); // ✅ defs listener STOPS here
+    stopDefsListener();
+    stopConceptMediaListener();
   }
 }
 
@@ -2357,6 +2454,44 @@ function stopDefsListener() {
   defsCache = {};
 }
 
+function startConceptMediaListener() {
+  if (!isUnlocked) return;
+  if (unsubscribeConceptMedia) unsubscribeConceptMedia();
+
+  ensureSignedIn().then(() => {
+    if (!isUnlocked) return;
+
+    unsubscribeConceptMedia = db.collection('concept_media')
+      .onSnapshot((snap) => {
+        const next = {};
+
+        snap.forEach(doc => {
+          const d = doc.data() || {};
+          next[doc.id] = {
+            concept: typeof d.concept === 'string' ? d.concept : '',
+            imageUrl: typeof d.imageUrl === 'string' ? d.imageUrl : '',
+            caption: typeof d.caption === 'string' ? d.caption : '',
+            storagePath: typeof d.storagePath === 'string' ? d.storagePath : ''
+          };
+        });
+		
+		console.log('concept media loaded', next);
+
+        conceptMediaCache = next;
+        refreshConceptMediaBadges(liveResults);
+      }, (err) => {
+        console.error('Concept media listener error:', err);
+      });
+  });
+}
+
+function stopConceptMediaListener() {
+  if (unsubscribeConceptMedia) {
+    unsubscribeConceptMedia();
+    unsubscribeConceptMedia = null;
+  }
+  conceptMediaCache = {};
+}
 
 
 /* =========================
@@ -2409,7 +2544,7 @@ addNoteToggle.onclick = () => {
 ========================= */
 const floatingEmojiPanel = document.getElementById('floatingEmojiPanel');
 // Keep EMOJIS as "big icon" items only (no arrows / inequalities here)
-const EMOJIS = ['°','🔴','🟠','🟡','🟢','🔵','🟣','⚫️','⚪️','✅','❌','⭐','🔥','🦠','◼️','❤️','🧠','🌡️','📝','📌','📍','💊','⚠️','🚨','⏳','💥','💪🏻'];
+const EMOJIS = ['°','🔴','🟠','🟡','🟢','🔵','🟣','⚫️','⚪️','✅','❌','⭐','🔥','🦠','◼️','❤️','🧠','🌡️','📝','📌','📍','💊','⚠️','🚨','⏳','💥','💪🏻','🌐','🔍'];
 
 // New: arrows / math symbols (inserted at normal text size)
 const ARROWS = ['±','⤷','⤶','⤹','⤵','↳','⤴︎','≥','≤','➜','⬇︎','⬅','⬆'];
@@ -2604,21 +2739,12 @@ addNoteBtn.onclick = async () => {
 async function ensureSignedIn() {
   if (auth.currentUser) return auth.currentUser;
 
-  await new Promise((resolve) => {
-    const unsub = auth.onAuthStateChanged(() => {
-      unsub();
-      resolve();
-    });
-  });
-
-  if (auth.currentUser) return auth.currentUser;
-
   try {
-    await auth.signInAnonymously();
-    console.log("Signed in uid:", auth.currentUser?.uid);
-    return auth.currentUser;
+    const cred = await auth.signInAnonymously();
+    console.log('Signed in uid:', cred.user?.uid);
+    return cred.user;
   } catch (e) {
-    console.error("Anonymous sign-in failed:", e);
+    console.error('Anonymous sign-in failed:', e);
     throw e;
   }
 }
@@ -2887,6 +3013,152 @@ function defKeyForConcept(concept) {
   return normalizeText(concept || '');
 }
 
+function mediaKeyForConcept(concept) {
+  return normalizeText(concept || '');
+}
+
+function getConceptMedia(concept) {
+  const k = mediaKeyForConcept(concept);
+  return conceptMediaCache[k] || null;
+}
+
+function safeStorageName(s) {
+  return (s || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'concept';
+}
+
+function setKbPreview(imageUrl = '', caption = '') {
+  if (imageUrl) {
+    kbPreviewImg.src = imageUrl;
+    kbPreviewWrap.style.display = 'block';
+  } else {
+    kbPreviewImg.src = '';
+    kbPreviewWrap.style.display = 'none';
+  }
+
+  kbCaptionInput.value = caption || '';
+}
+
+function clearPendingKbImage() {
+  pendingKbImageBlob = null;
+  pendingKbOriginalExt = 'jpg';
+
+  if (pendingKbImagePreviewUrl) {
+    URL.revokeObjectURL(pendingKbImagePreviewUrl);
+    pendingKbImagePreviewUrl = '';
+  }
+}
+
+async function compressImageFile(file, {
+  maxW = 900,
+  maxH = 900,
+  quality = 0.72,
+  mimeType = 'image/jpeg'
+} = {}) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = reject;
+    el.src = dataUrl;
+  });
+
+  let { width, height } = img;
+  const scale = Math.min(1, maxW / width, maxH / height);
+  width = Math.round(width * scale);
+  height = Math.round(height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(img, 0, 0, width, height);
+
+  const blob = await new Promise((resolve) => {
+    canvas.toBlob(resolve, mimeType, quality);
+  });
+
+  if (!blob) throw new Error('Image compression failed');
+  return blob;
+}
+
+async function uploadConceptMedia(concept, fileOrBlob, caption = '') {
+  const key = mediaKeyForConcept(concept);
+  if (!key) throw new Error('Missing concept key');
+
+  await ensureSignedIn();
+
+  const safeName = safeStorageName(concept);
+  const fileName = `${Date.now()}-${safeName}.jpg`;
+  const storagePath = `concept_media/${safeName}/${fileName}`;
+
+  console.log('upload path', storagePath);
+
+  const ref = storage.ref().child(storagePath);
+  const task = ref.put(fileOrBlob, { contentType: 'image/jpeg' });
+
+  task.on(
+    'state_changed',
+    (snap) => {
+      const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+      console.log('upload progress', pct + '%');
+    },
+    (err) => {
+      console.error('upload task error', err);
+    }
+  );
+
+  await task;
+  console.log('storage upload complete');
+
+  const imageUrl = await ref.getDownloadURL();
+  console.log('download url ready', imageUrl);
+
+  await db.collection('concept_media').doc(key).set({
+    concept: (concept || '').trim(),
+    imageUrl,
+    caption: (caption || '').trim(),
+    storagePath,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+
+  console.log('firestore media doc saved');
+
+  return { imageUrl, storagePath };
+}
+
+async function removeConceptMedia(concept) {
+  const key = mediaKeyForConcept(concept);
+  if (!key) return;
+
+  await ensureSignedIn();
+
+  const existing = getConceptMedia(concept);
+  const storagePath = existing?.storagePath || '';
+
+  if (storagePath) {
+    try {
+      await storage.ref().child(storagePath).delete();
+    } catch (err) {
+      console.warn('Storage delete skipped/failed:', err);
+    }
+  }
+
+  await db.collection('concept_media').doc(key).delete();
+}
+
 // legacy-safe getters: handle both {value,why} objects and old string cache entries
 function getDefinition(concept) {
   const k = defKeyForConcept(concept);
@@ -2944,6 +3216,8 @@ function refreshConceptDefBadges(root = document) {
     if (why) a.setAttribute('data-why', why);
     else a.removeAttribute('data-why');
   });
+  
+    refreshConceptMediaBadges(root);
 }
 
 /* =========================
@@ -2960,6 +3234,33 @@ const defSaveBtn = document.getElementById('defSaveBtn');
 const defDeleteBtn = document.getElementById('defDeleteBtn');
 const defSearchBtn = document.getElementById('defSearchBtn');
 const defMergeBtn = document.getElementById('defMergeBtn');
+const kbUploadBtn = document.getElementById('kbUploadBtn');
+const kbRemoveBtn = document.getElementById('kbRemoveBtn');
+const kbUploadInput = document.getElementById('kbUploadInput');
+const kbCaptionInput = document.getElementById('kbCaptionInput');
+const kbPreviewWrap = document.getElementById('kbPreviewWrap');
+const kbPreviewImg = document.getElementById('kbPreviewImg');
+
+function refreshConceptMediaBadges(root = document) {
+  const links = root.querySelectorAll('a.conceptLink');
+
+  links.forEach(a => {
+    const concept = (a.getAttribute('data-concept') || a.textContent || '').trim();
+    const media = getConceptMedia(concept);
+
+    if (media?.imageUrl) {
+      a.classList.add('hasKbImage');
+      a.setAttribute('data-kb-image', media.imageUrl);
+
+      if (media.caption) a.setAttribute('data-kb-caption', media.caption);
+      else a.removeAttribute('data-kb-caption');
+    } else {
+      a.classList.remove('hasKbImage');
+      a.removeAttribute('data-kb-image');
+      a.removeAttribute('data-kb-caption');
+    }
+  });
+}
 
 function enableSoftLineBreaks(el){
   if (!el) return;
@@ -2980,6 +3281,9 @@ enableSoftLineBreaks(defBox);
 enableSoftLineBreaks(whyBox);
 
 let currentDefConcept = '';
+let pendingKbImageBlob = null;
+let pendingKbImagePreviewUrl = '';
+let pendingKbOriginalExt = 'jpg';
 
 /* =========================
    Floating definition tooltip (always above tables)
@@ -2990,11 +3294,13 @@ defTip.style.display = 'none';
 document.body.appendChild(defTip);
 
 let tipOpen = false;
+let defTipPinned = false;
+let defTipHideTimer = null;
 
-function showDefTip(defText, whyText, x, y) {
-  if (!defText && !whyText) return;
+function showDefTip(defText, whyText, imageUrl, caption, x, y) {
+  if (!defText && !whyText && !imageUrl) return;
 
-  defTip.innerHTML = renderTip(defText, whyText);
+  defTip.innerHTML = renderTip(defText, whyText, imageUrl, caption);
   defTip.style.display = 'block';
   tipOpen = true;
 
@@ -3017,14 +3323,20 @@ function escapeHtml(s) {
   }[ch]));
 }
 
-function renderTip(defText, whyText) {
+function renderTip(defText, whyText, imageUrl = '', caption = '') {
   const defSafe = escapeHtml(defText);
   const whySafe = escapeHtml(whyText);
+  const capSafe = escapeHtml(caption);
 
-  // Only show Why block if it exists
   return `
+    ${imageUrl ? `
+      <img class="kbHoverImage" src="${imageUrl}" alt="">
+      ${capSafe ? `<div class="defLabel" style="margin-bottom:8px;">${capSafe}</div>` : ''}
+    ` : ''}
+
     <div class="defLabel">DEFINITION</div>
     <div class="defText">${defSafe || '<span style="opacity:.6">(none)</span>'}</div>
+
     ${whySafe ? `
       <div class="whyWrap">
         <div class="defLabel">WHY IT MATTERS</div>
@@ -3041,7 +3353,7 @@ function hideDefTip() {
 }
 
 document.addEventListener('mousemove', (e) => {
-  if (!tipOpen) return;
+  if (!tipOpen || defTipPinned) return;
 
   const pad = 12;
   const r = defTip.getBoundingClientRect();
@@ -3055,28 +3367,59 @@ document.addEventListener('mousemove', (e) => {
   defTip.style.top = Math.max(10, top) + 'px';
 }, true);
 
-// Use capture so tables/cells don’t swallow hover
 document.addEventListener('mouseover', (e) => {
-  const a = e.target.closest?.('a.conceptLink.hasDef');
+  const a = e.target.closest?.('a.conceptLink');
   if (!a) return;
+
+  cancelHideDefTip();
 
   const def = (a.getAttribute('data-def') || '').trim();
   const why = (a.getAttribute('data-why') || '').trim();
+  const imageUrl = (a.getAttribute('data-kb-image') || '').trim();
+  const caption = (a.getAttribute('data-kb-caption') || '').trim();
 
-  if (!def && !why) return;
-  showDefTip(def, why, e.clientX, e.clientY);
+  if (!def && !why && !imageUrl) return;
+  showDefTip(def, why, imageUrl, caption, e.clientX, e.clientY);
 }, true);
+
+// Use capture so tables/cells don’t swallow hover
+
 
 document.addEventListener('mouseout', (e) => {
-  const from = e.target.closest?.('a.conceptLink.hasDef');
+  const from = e.target.closest?.('a.conceptLink');
   if (!from) return;
 
-  // if moving to another link, don’t hide
-  const to = e.relatedTarget?.closest?.('a.conceptLink.hasDef');
-  if (to) return;
+  const toConcept = e.relatedTarget?.closest?.('a.conceptLink');
+  const intoTip = defTip.contains(e.relatedTarget);
 
-  hideDefTip();
+  if (toConcept || intoTip) return;
+
+  scheduleHideDefTip(220);
 }, true);
+
+defTip.addEventListener('mouseenter', () => {
+  defTipPinned = true;
+  cancelHideDefTip();
+});
+
+defTip.addEventListener('mouseleave', (e) => {
+  defTipPinned = false;
+  const toConcept = e.relatedTarget?.closest?.('a.conceptLink');
+  if (toConcept) return;
+  scheduleHideDefTip(120);
+});
+
+
+function scheduleHideDefTip(delay = 120) {
+  clearTimeout(defTipHideTimer);
+  defTipHideTimer = setTimeout(() => {
+    hideDefTip();
+  }, delay);
+}
+
+function cancelHideDefTip() {
+  clearTimeout(defTipHideTimer);
+}
 
 document.addEventListener('scroll', hideDefTip, true);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideDefTip(); }, true);
@@ -3100,9 +3443,10 @@ function openDefPanel(concept, clientX, clientY) {
 
   if (defBox) defBox.textContent = getDefinition(currentDefConcept);
   if (whyBox) whyBox.textContent = getWhy(currentDefConcept);
+  clearPendingKbImage();
 
-  autoGrowBox(defBox);
-  autoGrowBox(whyBox);
+  const existingMedia = getConceptMedia(currentDefConcept);
+  setKbPreview(existingMedia?.imageUrl || '', existingMedia?.caption || '');
 
   if (!defPanel) return;
 
@@ -3120,14 +3464,33 @@ function openDefPanel(concept, clientX, clientY) {
   defPanel.style.left = Math.max(10, left) + 'px';
   defPanel.style.top = Math.max(10, top) + 'px';
 
-  setTimeout(() => defBox?.focus?.({ preventScroll: true }), 0);
+  requestAnimationFrame(() => {
+    autoGrowBox(defBox);
+    autoGrowBox(whyBox);
+    defBox?.focus?.({ preventScroll: true });
+  });
 }
+
+defTip.addEventListener('mousedown', (e) => {
+  const img = e.target.closest?.('.kbHoverImage');
+  if (!img) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const src = img.getAttribute('src') || '';
+  if (!src) return;
+
+  hideDefTip();
+  openZoom(src);
+}, true);
 
 function closeDefPanel() {
   if (!defPanel) return;
   defPanel.style.display = 'none';
   defPanel.setAttribute('aria-hidden', 'true');
   currentDefConcept = '';
+  clearPendingKbImage();
 }
 
 defCloseBtn?.addEventListener('click', (e) => {
@@ -3147,11 +3510,42 @@ defSaveBtn?.addEventListener('click', async (e) => {
   defSaveBtn.textContent = 'Saving…';
 
   try {
+    console.log('SAVE START', currentDefConcept);
+
     await setDefinition(
       currentDefConcept,
       defBox?.textContent || '',
       whyBox?.textContent || ''
     );
+    console.log('definition saved');
+
+    if (pendingKbImageBlob) {
+      const caption = kbCaptionInput?.value || '';
+      console.log('uploading image...', {
+        sizeKB: Math.round((pendingKbImageBlob.size || 0) / 1024),
+        caption
+      });
+
+      const result = await uploadConceptMedia(currentDefConcept, pendingKbImageBlob, caption);
+      console.log('image uploaded', result);
+
+      clearPendingKbImage();
+      setKbPreview(result.imageUrl, caption);
+    } else {
+      const existing = getConceptMedia(currentDefConcept);
+      if (existing?.imageUrl) {
+        console.log('updating caption only');
+
+        await db.collection('concept_media').doc(mediaKeyForConcept(currentDefConcept)).set({
+          concept: currentDefConcept.trim(),
+          caption: (kbCaptionInput?.value || '').trim(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        console.log('caption updated');
+      }
+    }
+
     refreshConceptDefBadges(document.getElementById('chat'));
 
     defSaveBtn.textContent = 'Saved ✓';
@@ -3161,7 +3555,8 @@ defSaveBtn?.addEventListener('click', async (e) => {
     }, 450);
 
   } catch (err) {
-    console.error(err);
+    console.error('SAVE ERROR', err);
+    alert('Save failed: ' + (err?.message || err));
     defSaveBtn.textContent = 'Error';
     setTimeout(() => (defSaveBtn.textContent = prev), 900);
   } finally {
@@ -3203,6 +3598,64 @@ defSearchBtn?.addEventListener('click', (e) => {
   userInput.value = `"${currentDefConcept}"`;
   userInput.focus();
   runLiveSearch(userInput.value.trim(), true);
+});
+
+kbUploadBtn?.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  kbUploadInput?.click();
+});
+
+kbUploadInput?.addEventListener('change', async () => {
+  const file = kbUploadInput.files?.[0];
+  if (!file || !currentDefConcept) return;
+
+  try {
+    clearPendingKbImage();
+
+    const compressed = await compressImageFile(file, {
+      maxW: 900,
+      maxH: 900,
+      quality: 0.72,
+      mimeType: 'image/jpeg'
+    });
+
+    pendingKbImageBlob = compressed;
+    pendingKbOriginalExt = 'jpg';
+
+    pendingKbImagePreviewUrl = URL.createObjectURL(compressed);
+    setKbPreview(pendingKbImagePreviewUrl, kbCaptionInput.value || '');
+  } catch (err) {
+    console.error(err);
+    alert('Image preparation failed: ' + (err?.message || err));
+  } finally {
+    kbUploadInput.value = '';
+  }
+});
+
+kbRemoveBtn?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (!currentDefConcept) return;
+
+  const existing = getConceptMedia(currentDefConcept);
+  if (!existing?.imageUrl && !pendingKbImageBlob) {
+    setKbPreview('', '');
+    return;
+  }
+
+  if (!confirm('Remove this concept image?')) return;
+
+  try {
+    clearPendingKbImage();
+    await removeConceptMedia(currentDefConcept);
+    setKbPreview('', '');
+    refreshConceptMediaBadges(document.getElementById('chat'));
+  } catch (err) {
+    console.error(err);
+    alert('Failed to remove image: ' + (err?.message || err));
+  }
 });
 
 /* =========================
@@ -3405,6 +3858,13 @@ function conceptLinkifyHTML(html) {
       if (def) {
         a.classList.add('hasDef');
         a.setAttribute('data-def', def);
+      }
+
+      const media = getConceptMedia(concept);
+      if (media?.imageUrl) {
+        a.classList.add('hasKbImage');
+        a.setAttribute('data-kb-image', media.imageUrl);
+        if (media.caption) a.setAttribute('data-kb-caption', media.caption);
       }
 
       if (count > 0) {
@@ -3983,7 +4443,7 @@ function bindToolbarBtn(id, cmd, value = null) {
 bindToolbarBtn('boldBtn', 'bold');
 bindToolbarBtn('italicBtn', 'italic');
 bindToolbarBtn('underlineBtn', 'underline');
-bindToolbarBtn('highlightBtn', 'foreColor', '#5c6ac4');
+bindToolbarBtn('highlightBtn', 'hiliteColor', '#e8dcff');
 bindToolbarBtn('redFontBtn', 'foreColor', 'red');
 bindToolbarBtn('blueFontBtn', 'foreColor', 'blue');
 
@@ -4086,7 +4546,6 @@ updateUIForLockState();
 
 </body>
 </html>
-
 
 
 
