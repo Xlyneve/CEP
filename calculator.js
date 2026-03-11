@@ -30,79 +30,114 @@
       }
     },
 
-    flucloxacillin: {
-      label: "Flucloxacillin",
-      age: { minMonths: 1, maxYears: 18 },
-      strengths: [
-        { value: 125, label: "125 mg / 5 mL" },
-        { value: 250, label: "250 mg / 5 mL" }
-      ],
-      options: [
-        {
-          id: "doseLevel",
-          label: "Dose Level",
-          type: "select",
-          choices: [
-            { value: "range", label: "Show low + high dose" },
-            { value: "low", label: "Low dose (12.5 mg/kg)" },
-            { value: "high", label: "High dose (25 mg/kg)" }
-          ]
-        }
-      ],
-      note: `
-        <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
-        12.5–25 mg/kg four times daily.<br>
-        Use 25 mg/kg for severe infections.<br>
-        Maximum single dose: 1 g.
-      `,
-      calc: ({ weightKg, selections }) => {
-        const mode = selections.doseLevel || "range";
-        const lowRaw = weightKg * 12.5;
-        const highRaw = weightKg * 25;
-        const lowDose = Math.min(lowRaw, 1000);
-        const highDose = Math.min(highRaw, 1000);
-        const warnings = [];
-
-        if (lowRaw > 1000 || highRaw > 1000) {
-          warnings.push("Dose capped at max single dose of 1000 mg.");
-        }
-
-        if (mode === "low") {
-          return {
-            mode: "single",
-            frequency: "4 times daily",
-            doseMg: lowDose,
-            maxDailyMg: lowDose * 4,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(lowDose * 4)}`]
-          };
-        }
-
-        if (mode === "high") {
-          return {
-            mode: "single",
-            frequency: "4 times daily",
-            doseMg: highDose,
-            maxDailyMg: highDose * 4,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(highDose * 4)}`]
-          };
-        }
-
-        return {
-          mode: "range",
-          frequency: "4 times daily",
-          lowDoseMg: lowDose,
-          highDoseMg: highDose,
-          maxDailyMg: highDose * 4,
-          warnings,
-          extra: [
-            `Daily total (low): ${formatMg(lowDose * 4)}`,
-            `Daily total (high): ${formatMg(highDose * 4)}`
-          ]
-        };
-      }
+   flucloxacillin: {
+  label: "Flucloxacillin",
+  age: { minMonths: 1, maxYears: 18 },
+  strengths: [
+    { value: 125, label: "125 mg / 5 mL" },
+    { value: 250, label: "250 mg / 5 mL" }
+  ],
+  options: [
+    {
+      id: "dosingType",
+      label: "Indication",
+      type: "select",
+      choices: [
+        { value: "general", label: "General" },
+        { value: "impetigo", label: "Impetigo" }
+      ]
     },
+    {
+      id: "doseLevel",
+      label: "Dose Level",
+      type: "select",
+      choices: [
+        { value: "range", label: "Show low + high dose" },
+        { value: "low", label: "Low dose" },
+        { value: "high", label: "High dose" }
+      ]
+    }
+  ],
+  note: ({ selections }) => {
+    if (selections.dosingType === "impetigo") {
+      return `
+        <strong>Note:</strong> Impetigo dosing.<br><br>
+        12.5 mg/kg/dose four times a day (maximum 500 mg per dose), for 7 to 10 days.<br><br>
+        Use if able to take capsules. The suspension is unpalatable, children often dislike the taste, and it must be given on an empty stomach.
+      `;
+    }
+
+    return `
+      <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+      12.5–25 mg/kg four times daily.<br>
+      Use 25 mg/kg for severe infections.<br>
+      Maximum single dose: 1 g.
+    `;
+  },
+  calc: ({ weightKg, selections }) => {
+    const type = selections.dosingType || "general";
+
+    if (type === "impetigo") {
+      const rawDose = weightKg * 12.5;
+      const doseMg = Math.min(rawDose, 500);
+
+      return {
+        mode: "single",
+        frequency: "4 times daily for 7 to 10 days",
+        doseMg,
+        maxDailyMg: doseMg * 4,
+        warnings: rawDose > 500 ? ["Dose capped at max single dose of 500 mg."] : [],
+        extra: [`Daily total: ${formatMg(doseMg * 4)}`]
+      };
+    }
+
+    const mode = selections.doseLevel || "range";
+    const lowRaw = weightKg * 12.5;
+    const highRaw = weightKg * 25;
+    const lowDose = Math.min(lowRaw, 1000);
+    const highDose = Math.min(highRaw, 1000);
+    const warnings = [];
+
+    if (lowRaw > 1000 || highRaw > 1000) {
+      warnings.push("Dose capped at max single dose of 1000 mg.");
+    }
+
+    if (mode === "low") {
+      return {
+        mode: "single",
+        frequency: "4 times daily",
+        doseMg: lowDose,
+        maxDailyMg: lowDose * 4,
+        warnings,
+        extra: [`Daily total at this dose: ${formatMg(lowDose * 4)}`]
+      };
+    }
+
+    if (mode === "high") {
+      return {
+        mode: "single",
+        frequency: "4 times daily",
+        doseMg: highDose,
+        maxDailyMg: highDose * 4,
+        warnings,
+        extra: [`Daily total at this dose: ${formatMg(highDose * 4)}`]
+      };
+    }
+
+    return {
+      mode: "range",
+      frequency: "4 times daily",
+      lowDoseMg: lowDose,
+      highDoseMg: highDose,
+      maxDailyMg: highDose * 4,
+      warnings,
+      extra: [
+        `Daily total (low): ${formatMg(lowDose * 4)}`,
+        `Daily total (high): ${formatMg(highDose * 4)}`
+      ]
+    };
+  }
+},
 
     amoxicillin: {
       label: "Amoxicillin",
@@ -216,93 +251,145 @@
       }
     },
 
-    cefalexin: {
-      label: "Cefalexin",
-      age: { minMonths: 1, maxYears: 18 },
-      strengths: [
-        { value: 125, label: "125 mg / 5 mL" },
-        { value: 250, label: "250 mg / 5 mL" }
-      ],
-      options: [
-        {
-          id: "dosingType",
-          label: "Indication",
-          type: "select",
-          choices: [
-            { value: "impetigo", label: "Impetigo" },
-            { value: "generalInfection", label: "General Infection" }
-          ]
-        },
-        {
-          id: "doseLevel",
-          label: "Dose Level",
-          type: "select",
-          choices: [
-            { value: "range", label: "Show low + high dose" },
-            { value: "low", label: "Low dose (12.5 mg/kg)" },
-            { value: "high", label: "High dose (25 mg/kg)" }
-          ]
-        }
-      ],
-      note: `
-        <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
-        <strong>Impetigo:</strong> 12.5–25 mg/kg twice daily (usual max 500 mg)<br>
-        <strong>General Infection:</strong> 12.5–25 mg/kg four times daily (usual max 500 mg; up to 1 g may be used)
-      `,
-      calc: ({ weightKg, selections }) => {
-        const type = selections.dosingType || "impetigo";
-        const doseLevel = selections.doseLevel || "range";
+   cefalexin: {
+  label: "Cefalexin",
+  age: { minMonths: 1, maxYears: 18 },
+  strengths: [
+    { value: 125, label: "125 mg / 5 mL" },
+    { value: 250, label: "250 mg / 5 mL" }
+  ],
+  options: [
+    {
+      id: "dosingType",
+      label: "Indication",
+      type: "select",
+      choices: [
+        { value: "impetigo", label: "Impetigo" },
+        { value: "generalInfection", label: "General Infection" }
+      ]
+    },
+    {
+      id: "doseLevel",
+      label: "Dose Level",
+      type: "select",
+      choices: [
+        { value: "range", label: "Show low + high dose" },
+        { value: "low", label: "Low dose (12.5 mg/kg)" },
+        { value: "high", label: "High dose (25 mg/kg)" }
+      ]
+    }
+  ],
+  note: ({ selections }) => {
+    if (selections.dosingType === "impetigo") {
+      return `
+        <strong>Note:</strong> Impetigo dosing.<br><br>
+        12.5 to 25 mg/kg twice a day (maximum 1 g per dose) for five to seven days.<br><br>
+        Palatable suspension, well tolerated, funded.
+      `;
+    }
 
-        const lowRaw = weightKg * 12.5;
-        const highRaw = weightKg * 25;
+    return `
+      <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+      <strong>General Infection:</strong> 12.5–25 mg/kg four times daily (usual max 500 mg; up to 1 g may be used)
+    `;
+  },
+  calc: ({ weightKg, selections }) => {
+    const type = selections.dosingType || "impetigo";
+    const doseLevel = selections.doseLevel || "range";
 
-        const singleDoseCap = type === "generalInfection" ? 1000 : 500;
-        const lowDose = Math.min(lowRaw, singleDoseCap);
-        const highDose = Math.min(highRaw, singleDoseCap);
-        const frequency = type === "impetigo" ? "Twice daily" : "Four times daily";
-        const dosesPerDay = type === "impetigo" ? 2 : 4;
+    if (type === "impetigo") {
+      const lowRaw = weightKg * 12.5;
+      const highRaw = weightKg * 25;
+      const lowDose = Math.min(lowRaw, 1000);
+      const highDose = Math.min(highRaw, 1000);
+      const warnings = [];
 
-        const warnings = [];
-        if (lowRaw > singleDoseCap || highRaw > singleDoseCap) {
-          warnings.push(`Dose capped at max single dose of ${singleDoseCap} mg for selected indication.`);
-        }
+      if (lowRaw > 1000 || highRaw > 1000) {
+        warnings.push("Dose capped at max single dose of 1000 mg.");
+      }
 
-        if (doseLevel === "low") {
-          return {
-            mode: "single",
-            frequency,
-            doseMg: lowDose,
-            maxDailyMg: lowDose * dosesPerDay,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(lowDose * dosesPerDay)}`]
-          };
-        }
-
-        if (doseLevel === "high") {
-          return {
-            mode: "single",
-            frequency,
-            doseMg: highDose,
-            maxDailyMg: highDose * dosesPerDay,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(highDose * dosesPerDay)}`]
-          };
-        }
-
+      if (doseLevel === "low") {
         return {
-          mode: "range",
-          frequency,
-          lowDoseMg: lowDose,
-          highDoseMg: highDose,
-          maxDailyMg: highDose * dosesPerDay,
+          mode: "single",
+          frequency: "Twice daily for 5 to 7 days",
+          doseMg: lowDose,
+          maxDailyMg: lowDose * 2,
           warnings,
-          extra: [
-            `Daily total (low): ${formatMg(lowDose * dosesPerDay)}`,
-            `Daily total (high): ${formatMg(highDose * dosesPerDay)}`
-          ]
+          extra: [`Daily total at this dose: ${formatMg(lowDose * 2)}`]
         };
       }
-    },
+
+      if (doseLevel === "high") {
+        return {
+          mode: "single",
+          frequency: "Twice daily for 5 to 7 days",
+          doseMg: highDose,
+          maxDailyMg: highDose * 2,
+          warnings,
+          extra: [`Daily total at this dose: ${formatMg(highDose * 2)}`]
+        };
+      }
+
+      return {
+        mode: "range",
+        frequency: "Twice daily for 5 to 7 days",
+        lowDoseMg: lowDose,
+        highDoseMg: highDose,
+        maxDailyMg: highDose * 2,
+        warnings,
+        extra: [
+          `Daily total (low): ${formatMg(lowDose * 2)}`,
+          `Daily total (high): ${formatMg(highDose * 2)}`
+        ]
+      };
+    }
+
+    const lowRaw = weightKg * 12.5;
+    const highRaw = weightKg * 25;
+    const lowDose = Math.min(lowRaw, 1000);
+    const highDose = Math.min(highRaw, 1000);
+    const warnings = [];
+
+    if (lowRaw > 1000 || highRaw > 1000) {
+      warnings.push("Dose capped at max single dose of 1000 mg.");
+    }
+
+    if (doseLevel === "low") {
+      return {
+        mode: "single",
+        frequency: "Four times daily",
+        doseMg: lowDose,
+        maxDailyMg: lowDose * 4,
+        warnings,
+        extra: [`Daily total at this dose: ${formatMg(lowDose * 4)}`]
+      };
+    }
+
+    if (doseLevel === "high") {
+      return {
+        mode: "single",
+        frequency: "Four times daily",
+        doseMg: highDose,
+        maxDailyMg: highDose * 4,
+        warnings,
+        extra: [`Daily total at this dose: ${formatMg(highDose * 4)}`]
+      };
+    }
+
+    return {
+      mode: "range",
+      frequency: "Four times daily",
+      lowDoseMg: lowDose,
+      highDoseMg: highDose,
+      maxDailyMg: highDose * 4,
+      warnings,
+      extra: [
+        `Daily total (low): ${formatMg(lowDose * 4)}`,
+        `Daily total (high): ${formatMg(highDose * 4)}`
+      ]
+    };
+  }
+},
 
     cefaclor: {
       label: "Cefaclor",
@@ -328,140 +415,224 @@
       }
     },
 
-    erythromycin: {
-      label: "Erythromycin Ethylsuccinate",
-      age: { minMonths: 1, maxYears: 120 },
-      strengths: [
-        { value: 200, label: "200 mg / 5 mL" },
-        { value: 400, label: "400 mg / 5 mL" }
-      ],
-      options: [
-        {
-          id: "dosingType",
-          label: "Dosing Type",
-          type: "select",
-          choices: [
-            { value: "general", label: "General" },
-            { value: "strepA", label: "Strep A" }
-          ]
-        },
-        {
-          id: "doseLevel",
-          label: "Dose Level",
-          type: "select",
-          choices: [
-            { value: "range", label: "Show low + high dose" },
-            { value: "low", label: "Low dose (10 mg/kg)" },
-            { value: "high", label: "High dose (12.5 mg/kg)" }
-          ]
-        },
-        {
-          id: "eryStrepFreq",
-          label: "Strep A Frequency",
-          type: "select",
-          choices: [
-            { value: "bid", label: "2 divided doses" },
-            { value: "tid", label: "3 divided doses" }
-          ]
-        }
-      ],
-      note: ({ selections }) => {
-        if (selections.dosingType === "strepA") {
-          return `
-            <strong>Note:</strong> Strep A first-line alternative if concern about IgE mediated or anaphylactic beta-lactam allergy.<br><br>
-            Children: 40 mg/kg/day in 2 to 3 divided doses (maximum daily dose 1600 mg) for 10 days.<br>
-            Adults: 800 mg twice daily for 10 days.
-          `;
-        }
+   erythromycin: {
+  label: "Erythromycin Ethylsuccinate",
+  age: { minMonths: 1, maxYears: 120 },
+  strengths: [
+    { value: 200, label: "200 mg / 5 mL" },
+    { value: 400, label: "400 mg / 5 mL" }
+  ],
+  options: [
+    {
+      id: "dosingType",
+      label: "Dosing Type",
+      type: "select",
+      choices: [
+        { value: "general", label: "General" },
+        { value: "strepA", label: "Strep A" },
+        { value: "impetigo", label: "Impetigo" }
+      ]
+    },
+    {
+      id: "doseLevel",
+      label: "Dose Level",
+      type: "select",
+      choices: [
+        { value: "range", label: "Show low + high dose" },
+        { value: "low", label: "Low dose" },
+        { value: "high", label: "High dose" }
+      ]
+    },
+    {
+      id: "eryStrepFreq",
+      label: "Strep A Frequency",
+      type: "select",
+      choices: [
+        { value: "bid", label: "2 divided doses" },
+        { value: "tid", label: "3 divided doses" }
+      ]
+    },
+    {
+      id: "eryImpFreq",
+      label: "Impetigo Schedule",
+      type: "select",
+      choices: [
+        { value: "qid", label: "4 times daily" },
+        { value: "bid", label: "2 divided doses" }
+      ]
+    }
+  ],
+  note: ({ selections }) => {
+    if (selections.dosingType === "strepA") {
+      return `
+        <strong>Note:</strong> Strep A first-line alternative if concern about IgE mediated or anaphylactic beta-lactam allergy.<br><br>
+        Children: 40 mg/kg/day in 2 to 3 divided doses (maximum daily dose 1600 mg) for 10 days.<br>
+        Adults: 800 mg twice daily for 10 days.
+      `;
+    }
 
-        return `
-          <strong>Note:</strong> For ages 1 month to 18 years only.<br>
-          This calculator is for erythromycin ethylsuccinate.<br><br>
-          <strong>General Dosing:</strong><br>
-          10–12.5 mg/kg every 6 hours
-        `;
-      },
-      calc: ({ weightKg, ageMonths, selections }) => {
-        const type = selections.dosingType || "general";
+    if (selections.dosingType === "impetigo") {
+      return `
+        <strong>Note:</strong> Penicillin allergy option for impetigo.<br><br>
+        10 to 12.5 mg/kg/dose four times a day (maximum 400 mg per dose).<br>
+        Total daily dose may be given in 2 divided doses.
+      `;
+    }
 
-        if (type === "strepA") {
-          const warnings = [];
-          const ageYears = isFinite(ageMonths) ? ageMonths / 12 : null;
+    return `
+      <strong>Note:</strong> For ages 1 month to 18 years only.<br>
+      This calculator is for erythromycin ethylsuccinate.<br><br>
+      <strong>General Dosing:</strong><br>
+      10–12.5 mg/kg every 6 hours
+    `;
+  },
+  calc: ({ weightKg, ageMonths, selections }) => {
+    const type = selections.dosingType || "general";
 
-          if (ageYears !== null && ageYears >= 18) {
-            const doseMg = 800;
-            return {
-              mode: "single",
-              frequency: "Twice daily for 10 days",
-              doseMg,
-              maxDailyMg: 1600,
-              warnings,
-              extra: [`Daily total: ${formatMg(1600)}`]
-            };
-          }
+    if (type === "strepA") {
+      const warnings = [];
+      const ageYears = isFinite(ageMonths) ? ageMonths / 12 : null;
 
-          const dailyRaw = weightKg * 40;
-          const dailyDose = Math.min(dailyRaw, 1600);
-          const divided = selections.eryStrepFreq === "tid" ? 3 : 2;
-          const perDose = dailyDose / divided;
-
-          if (dailyRaw > 1600) {
-            warnings.push("Total daily dose capped at 1600 mg/day.");
-          }
-
-          return {
-            mode: "single",
-            frequency: `${divided} divided doses daily for 10 days`,
-            doseMg: perDose,
-            maxDailyMg: dailyDose,
-            warnings,
-            extra: [
-              `Total daily dose: ${formatMg(dailyDose)}`,
-              `Divided into ${divided} doses`
-            ]
-          };
-        }
-
-        const doseLevel = selections.doseLevel || "range";
-        const lowRaw = weightKg * 10;
-        const highRaw = weightKg * 12.5;
-
-        if (doseLevel === "low") {
-          return {
-            mode: "single",
-            frequency: "Every 6 hours",
-            doseMg: lowRaw,
-            maxDailyMg: lowRaw * 4,
-            warnings: [],
-            extra: [`Daily total at this dose: ${formatMg(lowRaw * 4)}`]
-          };
-        }
-
-        if (doseLevel === "high") {
-          return {
-            mode: "single",
-            frequency: "Every 6 hours",
-            doseMg: highRaw,
-            maxDailyMg: highRaw * 4,
-            warnings: [],
-            extra: [`Daily total at this dose: ${formatMg(highRaw * 4)}`]
-          };
-        }
-
+      if (ageYears !== null && ageYears >= 18) {
+        const doseMg = 800;
         return {
-          mode: "range",
-          frequency: "Every 6 hours",
-          lowDoseMg: lowRaw,
-          highDoseMg: highRaw,
-          maxDailyMg: highRaw * 4,
-          warnings: [],
-          extra: [
-            `Daily total (low): ${formatMg(lowRaw * 4)}`,
-            `Daily total (high): ${formatMg(highRaw * 4)}`
-          ]
+          mode: "single",
+          frequency: "Twice daily for 10 days",
+          doseMg,
+          maxDailyMg: 1600,
+          warnings,
+          extra: [`Daily total: ${formatMg(1600)}`]
         };
       }
-    },
+
+      const dailyRaw = weightKg * 40;
+      const dailyDose = Math.min(dailyRaw, 1600);
+      const divided = selections.eryStrepFreq === "tid" ? 3 : 2;
+      const perDose = dailyDose / divided;
+
+      if (dailyRaw > 1600) {
+        warnings.push("Total daily dose capped at 1600 mg/day.");
+      }
+
+      return {
+        mode: "single",
+        frequency: `${divided} divided doses daily for 10 days`,
+        doseMg: perDose,
+        maxDailyMg: dailyDose,
+        warnings,
+        extra: [
+          `Total daily dose: ${formatMg(dailyDose)}`,
+          `Divided into ${divided} doses`
+        ]
+      };
+    }
+
+    if (type === "impetigo") {
+      const doseLevel = selections.doseLevel || "range";
+      const impFreq = selections.eryImpFreq || "qid";
+      
+
+      const lowRaw = weightKg * 10;
+      const highRaw = weightKg * 12.5;
+      const lowDose = Math.min(lowRaw, 400);
+      const highDose = Math.min(highRaw, 400);
+      const warnings = [];
+
+      if (lowRaw > 400 || highRaw > 400) {
+        warnings.push("Dose capped at max single dose of 400 mg.");
+      }
+
+      const frequency = impFreq === "bid"
+        ? "Twice daily (using total daily dose split into 2 doses)"
+        : "Four times daily";
+
+      if (doseLevel === "low") {
+        const totalDaily = lowDose * 4;
+        const shownDose = impFreq === "bid" ? totalDaily / 2 : lowDose;
+
+        return {
+          mode: "single",
+          frequency,
+          doseMg: shownDose,
+          maxDailyMg: totalDaily,
+          warnings,
+          extra: [`Daily total: ${formatMg(totalDaily)}`]
+        };
+      }
+
+      if (doseLevel === "high") {
+        const totalDaily = highDose * 4;
+        const shownDose = impFreq === "bid" ? totalDaily / 2 : highDose;
+
+        return {
+          mode: "single",
+          frequency,
+          doseMg: shownDose,
+          maxDailyMg: totalDaily,
+          warnings,
+          extra: [`Daily total: ${formatMg(totalDaily)}`]
+        };
+      }
+
+      const lowTotalDaily = lowDose * 4;
+      const highTotalDaily = highDose * 4;
+      const lowShownDose = impFreq === "bid" ? lowTotalDaily / 2 : lowDose;
+      const highShownDose = impFreq === "bid" ? highTotalDaily / 2 : highDose;
+
+      return {
+        mode: "range",
+        frequency,
+        lowDoseMg: lowShownDose,
+        highDoseMg: highShownDose,
+        maxDailyMg: highTotalDaily,
+        warnings,
+        extra: [
+          `Daily total (low): ${formatMg(lowTotalDaily)}`,
+          `Daily total (high): ${formatMg(highTotalDaily)}`
+        ]
+      };
+    }
+
+    const doseLevel = selections.doseLevel || "range";
+    const lowRaw = weightKg * 10;
+    const highRaw = weightKg * 12.5;
+
+    if (doseLevel === "low") {
+      return {
+        mode: "single",
+        frequency: "Every 6 hours",
+        doseMg: lowRaw,
+        maxDailyMg: lowRaw * 4,
+        warnings: [],
+        extra: [`Daily total at this dose: ${formatMg(lowRaw * 4)}`]
+      };
+    }
+
+    if (doseLevel === "high") {
+      return {
+        mode: "single",
+        frequency: "Every 6 hours",
+        doseMg: highRaw,
+        maxDailyMg: highRaw * 4,
+        warnings: [],
+        extra: [`Daily total at this dose: ${formatMg(highRaw * 4)}`]
+      };
+    }
+
+    return {
+      mode: "range",
+      frequency: "Every 6 hours",
+      lowDoseMg: lowRaw,
+      highDoseMg: highRaw,
+      maxDailyMg: highRaw * 4,
+      warnings: [],
+      extra: [
+        `Daily total (low): ${formatMg(lowRaw * 4)}`,
+        `Daily total (high): ${formatMg(highRaw * 4)}`
+      ]
+    };
+  }
+},
 
     amoxClav: {
       label: "Amoxicillin + Clavulanic Acid",
@@ -564,189 +735,308 @@
       }
     },
 
-    roxithromycin: {
-      label: "Roxithromycin",
-      age: { minMonths: 1, maxYears: 120 },
-      strengths: [],
-      options: [
-        {
-          id: "roxAdultMode",
-          label: "Adult Regimen",
-          type: "select",
-          choices: [
-            { value: "300od", label: "300 mg once daily" },
-            { value: "150bd", label: "150 mg twice daily" }
-          ]
-        }
-      ],
-      note: `
-        <strong>Note:</strong> Strep A alternative if concern about IgE mediated or anaphylactic beta-lactam allergy.<br><br>
-        <strong>Children:</strong> 2.5 mg/kg per dose twice daily for 10 days.<br>
-        Only use in children who can be prescribed a full 150 mg tablet due to discontinuation of roxithromycin 50 mg dispersible tablets.<br><br>
-        <strong>Adults:</strong> 300 mg once daily or 150 mg twice daily for 10 days.
-      `,
-      calc: ({ weightKg, ageMonths, selections }) => {
-        const warnings = [];
-        const ageYears = isFinite(ageMonths) ? ageMonths / 12 : null;
-
-        if (ageYears !== null && ageYears >= 18) {
-          const mode = selections.roxAdultMode || "300od";
-          const doseMg = mode === "300od" ? 300 : 150;
-          const dosesPerDay = mode === "300od" ? 1 : 2;
-          const frequency = mode === "300od" ? "Once daily for 10 days" : "Twice daily for 10 days";
-
-          return {
-            mode: "single",
-            frequency,
-            doseMg,
-            maxDailyMg: doseMg * dosesPerDay,
-            warnings,
-            extra: [`Daily total: ${formatMg(doseMg * dosesPerDay)}`]
-          };
-        }
-
-        const rawDose = weightKg * 2.5;
-        const doseMg = rawDose;
-        const canUseTablet = doseMg >= 150;
-
-        if (!canUseTablet) {
-          warnings.push("Calculated child dose is below 150 mg. Guideline says only use in children who can take a full 150 mg tablet.");
-        }
-
-        return {
-          mode: "single",
-          frequency: "Twice daily for 10 days",
-          doseMg,
-          maxDailyMg: doseMg * 2,
-          warnings,
-          extra: [
-            `Daily total: ${formatMg(doseMg * 2)}`,
-            `Practical tablet check: ${canUseTablet ? "Can use full 150 mg tablet" : "Cannot use full 150 mg tablet"}`
-          ]
-        };
-      }
+   roxithromycin: {
+  label: "Roxithromycin",
+  age: { minMonths: 1, maxYears: 120 },
+  strengths: [],
+  options: [
+    {
+      id: "roxMode",
+      label: "Dosing Type",
+      type: "select",
+      choices: [
+        { value: "strepA", label: "Strep A" },
+        { value: "impetigo", label: "Impetigo" }
+      ]
+    },
+    {
+      id: "roxAdultMode",
+      label: "Adult Regimen",
+      type: "select",
+      choices: [
+        { value: "300od", label: "300 mg once daily" },
+        { value: "150bd", label: "150 mg twice daily" }
+      ]
+    },
+    {
+      id: "roxDoseLevel",
+      label: "Dose Level",
+      type: "select",
+      choices: [
+        { value: "range", label: "Show low + high dose" },
+        { value: "low", label: "Low dose" },
+        { value: "high", label: "High dose" }
+      ]
     }
-  };
-
-  function buildCalculatorUI() {
-    if (document.getElementById("doseCalculator")) return;
-
-    const toggleBtn = document.createElement("button");
-    toggleBtn.id = "calcToggleBtn";
-    toggleBtn.type = "button";
-    toggleBtn.innerHTML = "🧮";
-    toggleBtn.setAttribute("aria-label", "Open dose calculator");
-
-    const panel = document.createElement("div");
-    panel.id = "doseCalculator";
-    panel.className = "hidden";
-
-    panel.innerHTML = `
-      <h3>Dose Calculator</h3>
-
-      <label>Medication:
-        <select id="medicationSelect">
-          <option value="">-- Select Medication --</option>
-          ${Object.entries(MEDS)
-            .map(([key, med]) => `<option value="${key}">${med.label}</option>`)
-            .join("")}
-        </select>
-      </label>
-
-      <label>Age (months):
-        <input type="number" id="ageMonths" min="0" step="1" />
-      </label>
-
-      <label>Weight (kg):
-        <input type="number" id="weight" min="0" step="any" />
-      </label>
-
-      <div id="extraOptions" class="hidden"></div>
-      <div id="medicationNote"></div>
-      <div id="result"></div>
-    `;
-
-    document.body.appendChild(toggleBtn);
-    document.body.appendChild(panel);
-
-    toggleBtn.addEventListener("click", () => {
-      panel.classList.toggle("hidden");
-    });
-
-    panel.addEventListener("change", (e) => {
-      if (e.target.id === "medicationSelect") {
-        renderMedicationOptions();
-      }
-      calculateDose();
-    });
-
-    panel.addEventListener("input", () => {
-      calculateDose();
-    });
-  }
-
-  function renderMedicationOptions() {
-    const medKey = document.getElementById("medicationSelect")?.value;
-    const extraDiv = document.getElementById("extraOptions");
-    const noteDiv = document.getElementById("medicationNote");
-    const resultBox = document.getElementById("result");
-
-    if (!extraDiv || !noteDiv || !resultBox) return;
-
-    extraDiv.innerHTML = "";
-    noteDiv.innerHTML = "";
-    resultBox.innerHTML = "";
-    extraDiv.classList.add("hidden");
-
-    if (!medKey || !MEDS[medKey]) return;
-
-    const med = MEDS[medKey];
-    const selections = getMedicationSelections(medKey);
-
-    let html = "";
-
-    if (med.strengths?.length) {
-      html += `
-        <label>Strength:
-          <select id="strengthSelect">
-            ${med.strengths
-              .map((s) => `<option value="${s.value}">${s.label}</option>`)
-              .join("")}
-          </select>
-        </label>
+  ],
+  note: ({ selections }) => {
+    if (selections.roxMode === "impetigo") {
+      return `
+        <strong>Note:</strong> Impetigo alternative.<br><br>
+        Only if aged older than 12 years and able to swallow tablets.<br>
+        2.5 to 4 mg/kg/dose, twice a day.<br>
+        Round dose to nearest 75 mg (half tablet).<br>
+        Tablets 150 mg (maximum 150 mg per dose).
       `;
     }
 
-    if (med.options?.length) {
-      med.options.forEach((opt) => {
-        if (opt.type === "hidden") return;
+    return `
+      <strong>Note:</strong> Strep A alternative if concern about IgE mediated or anaphylactic beta-lactam allergy.<br><br>
+      <strong>Children:</strong> 2.5 mg/kg per dose twice daily for 10 days.<br>
+      Only use in children who can be prescribed a full 150 mg tablet due to discontinuation of roxithromycin 50 mg dispersible tablets.<br><br>
+      <strong>Adults:</strong> 300 mg once daily or 150 mg twice daily for 10 days.
+    `;
+  },
+  calc: ({ weightKg, ageMonths, selections }) => {
+    const warnings = [];
+    const ageYears = isFinite(ageMonths) ? ageMonths / 12 : null;
+    const mode = selections.roxMode || "strepA";
 
-        // Hide general-only dose range for strepA where it does not apply
-        if (medKey === "amoxicillin" && opt.id === "doseLevel" && selections.dosingType === "strepA") return;
-        if (medKey === "erythromycin" && opt.id === "doseLevel" && selections.dosingType === "strepA") return;
-        if (medKey === "erythromycin" && opt.id === "eryStrepFreq" && selections.dosingType !== "strepA") return;
+    if (mode === "impetigo") {
+      if (ageYears !== null && ageYears <= 12) {
+        warnings.push("Impetigo roxithromycin is only for age older than 12 years and able to swallow tablets.");
+      }
 
-        if (opt.type === "select") {
-          html += `
-            <label>${opt.label}:
-              <select id="${opt.id}">
-                ${opt.choices
-                  .map((choice) => `<option value="${choice.value}">${choice.label}</option>`)
-                  .join("")}
-              </select>
-            </label>
-          `;
-        }
-      });
+      const doseLevel = selections.roxDoseLevel || "range";
+      const lowRaw = weightKg * 2.5;
+      const highRaw = weightKg * 4;
+
+      const lowRounded = Math.min(roundToNearest75(lowRaw), 150);
+      const highRounded = Math.min(roundToNearest75(highRaw), 150);
+
+      if (lowRaw > 150 || highRaw > 150) {
+        warnings.push("Dose capped at max single dose of 150 mg.");
+      }
+
+      if (doseLevel === "low") {
+        return {
+          mode: "single",
+          frequency: "Twice daily",
+          doseMg: lowRounded,
+          maxDailyMg: lowRounded * 2,
+          warnings,
+          extra: [`Daily total: ${formatMg(lowRounded * 2)}`]
+        };
+      }
+
+      if (doseLevel === "high") {
+        return {
+          mode: "single",
+          frequency: "Twice daily",
+          doseMg: highRounded,
+          maxDailyMg: highRounded * 2,
+          warnings,
+          extra: [`Daily total: ${formatMg(highRounded * 2)}`]
+        };
+      }
+
+      return {
+        mode: "range",
+        frequency: "Twice daily",
+        lowDoseMg: lowRounded,
+        highDoseMg: highRounded,
+        maxDailyMg: highRounded * 2,
+        warnings,
+        extra: [
+          `Daily total (low): ${formatMg(lowRounded * 2)}`,
+          `Daily total (high): ${formatMg(highRounded * 2)}`
+        ]
+      };
     }
 
-    if (html) {
-      extraDiv.innerHTML = html;
-      extraDiv.classList.remove("hidden");
+    if (ageYears !== null && ageYears >= 18) {
+      const adultMode = selections.roxAdultMode || "300od";
+      const doseMg = adultMode === "300od" ? 300 : 150;
+      const dosesPerDay = adultMode === "300od" ? 1 : 2;
+      const frequency = adultMode === "300od" ? "Once daily for 10 days" : "Twice daily for 10 days";
+
+      return {
+        mode: "single",
+        frequency,
+        doseMg,
+        maxDailyMg: doseMg * dosesPerDay,
+        warnings,
+        extra: [`Daily total: ${formatMg(doseMg * dosesPerDay)}`]
+      };
     }
 
-    noteDiv.innerHTML = getMedicationNote(medKey);
+    const rawDose = weightKg * 2.5;
+    const doseMg = rawDose;
+    const canUseTablet = doseMg >= 150;
+
+    if (!canUseTablet) {
+      warnings.push("Calculated child dose is below 150 mg. Guideline says only use in children who can take a full 150 mg tablet.");
+    }
+
+    return {
+      mode: "single",
+      frequency: "Twice daily for 10 days",
+      doseMg,
+      maxDailyMg: doseMg * 2,
+      warnings,
+      extra: [
+        `Daily total: ${formatMg(doseMg * 2)}`,
+        `Practical tablet check: ${canUseTablet ? "Can use full 150 mg tablet" : "Cannot use full 150 mg tablet"}`
+      ]
+    };
   }
+}
+  };
+
+ function buildCalculatorUI() {
+  if (document.getElementById("doseCalculator")) return;
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.id = "calcToggleBtn";
+  toggleBtn.type = "button";
+  toggleBtn.innerHTML = "🧮";
+  toggleBtn.setAttribute("aria-label", "Open dose calculator");
+
+  const panel = document.createElement("div");
+  panel.id = "doseCalculator";
+  panel.className = "hidden";
+
+  panel.innerHTML = `
+    <h3>Dose Calculator</h3>
+
+    <label>Medication:
+      <select id="medicationSelect">
+        <option value="">-- Select Medication --</option>
+        ${Object.entries(MEDS)
+          .map(([key, med]) => `<option value="${key}">${med.label}</option>`)
+          .join("")}
+      </select>
+    </label>
+
+    <label>Age (months):
+      <input type="number" id="ageMonths" min="0" step="1" />
+    </label>
+
+    <label>Weight (kg):
+      <input type="number" id="weight" min="0" step="any" />
+    </label>
+
+    <div id="extraOptions" class="hidden"></div>
+    <div id="medicationNote"></div>
+    <div id="result"></div>
+  `;
+
+  document.body.appendChild(toggleBtn);
+  document.body.appendChild(panel);
+
+  toggleBtn.addEventListener("click", () => {
+    panel.classList.toggle("hidden");
+  });
+
+  panel.addEventListener("change", (e) => {
+    if (
+      e.target.id === "medicationSelect" ||
+      e.target.id === "dosingType" ||
+      e.target.id === "roxMode"
+    ) {
+      renderMedicationOptions();
+    }
+    calculateDose();
+  });
+
+  panel.addEventListener("input", () => {
+    calculateDose();
+  });
+}
+
+  function renderMedicationOptions() {
+  const medKey = document.getElementById("medicationSelect")?.value;
+  const extraDiv = document.getElementById("extraOptions");
+  const noteDiv = document.getElementById("medicationNote");
+  const resultBox = document.getElementById("result");
+
+  if (!extraDiv || !noteDiv || !resultBox) return;
+
+  const previousSelections = {};
+  extraDiv.querySelectorAll("select").forEach((el) => {
+    previousSelections[el.id] = el.value;
+  });
+
+  extraDiv.innerHTML = "";
+  noteDiv.innerHTML = "";
+  resultBox.innerHTML = "";
+  extraDiv.classList.add("hidden");
+
+  if (!medKey || !MEDS[medKey]) return;
+
+  const med = MEDS[medKey];
+
+  const selections = {
+    ...previousSelections
+  };
+
+  let html = "";
+
+  if (med.strengths?.length) {
+    const prevStrength = previousSelections.strengthSelect ?? med.strengths[0].value;
+    html += `
+      <label>Strength:
+        <select id="strengthSelect">
+          ${med.strengths
+            .map((s) => `
+              <option value="${s.value}" ${String(s.value) === String(prevStrength) ? "selected" : ""}>
+                ${s.label}
+              </option>
+            `)
+            .join("")}
+        </select>
+      </label>
+    `;
+  }
+
+  if (med.options?.length) {
+    med.options.forEach((opt) => {
+      if (opt.type === "hidden") return;
+
+      const currentValue =
+        selections[opt.id] ??
+        (opt.choices?.length ? opt.choices[0].value : "");
+
+      if (medKey === "amoxicillin" && opt.id === "doseLevel" && selections.dosingType === "strepA") {
+        return;
+      }
+
+      if (medKey === "erythromycin") {
+        if (opt.id === "doseLevel" && selections.dosingType === "strepA") return;
+        if (opt.id === "eryStrepFreq" && selections.dosingType !== "strepA") return;
+        if (opt.id === "eryImpFreq" && selections.dosingType !== "impetigo") return;
+      }
+
+      if (medKey === "roxithromycin") {
+        if (opt.id === "roxAdultMode" && selections.roxMode === "impetigo") return;
+        if (opt.id === "roxDoseLevel" && selections.roxMode !== "impetigo") return;
+      }
+
+      if (opt.type === "select") {
+        html += `
+          <label>${opt.label}:
+            <select id="${opt.id}">
+              ${opt.choices
+                .map((choice) => `
+                  <option value="${choice.value}" ${choice.value === currentValue ? "selected" : ""}>
+                    ${choice.label}
+                  </option>
+                `)
+                .join("")}
+            </select>
+          </label>
+        `;
+      }
+    });
+  }
+
+  if (html) {
+    extraDiv.innerHTML = html;
+    extraDiv.classList.remove("hidden");
+  }
+
+  noteDiv.innerHTML = getMedicationNote(medKey);
+}
 
   function getMedicationSelections(medKey) {
     const med = MEDS[medKey];
@@ -884,6 +1174,11 @@
     if (value < 1) return `${value.toFixed(2)} mL`;
     return `${value.toFixed(1)} mL`;
   }
+
+function roundToNearest75(value) {
+  if (!isFinite(value)) return 0;
+  return Math.round(value / 75) * 75;
+}
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", buildCalculatorUI);
