@@ -2779,7 +2779,18 @@ function normalizeText(s) {
 function htmlToText(html) {
   const div = document.createElement('div');
   div.innerHTML = html || '';
-  return div.textContent || div.innerText || '';
+
+  div.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+
+  div.querySelectorAll('div, p, li').forEach(el => {
+    if (el.lastChild?.nodeType === Node.TEXT_NODE) {
+      el.appendChild(document.createTextNode('\n'));
+    } else {
+      el.insertAdjacentText('beforeend', '\n');
+    }
+  });
+
+  return div.textContent || '';
 }
 
 function normalizeTag(s) {
@@ -2792,12 +2803,12 @@ function normalizeTag(s) {
 
 function extractTagsFromHtml(html) {
   const text = htmlToText(html || '');
-  const re = /(^|[\s(>])#([a-zA-Z0-9_][a-zA-Z0-9_-]*)/g;
+  const re = /(?:^|\s)#([a-zA-Z0-9_][a-zA-Z0-9_-]*)/g;
   const tags = [];
   let m;
 
   while ((m = re.exec(text)) !== null) {
-    const tag = normalizeTag(m[2]);
+    const tag = normalizeTag(m[1]);
     if (tag && !tags.includes(tag)) tags.push(tag);
   }
   return tags;
@@ -2951,9 +2962,13 @@ function queryNotesSync(rawQuery) {
     const ok = terms.every(term => {
       if (!term?.norm) return true;
 
-      if (term.type === 'tag') {
-        return tags.some(tag => tag === term.norm || tag.startsWith(term.norm));
-      }
+     if (term.type === 'tag') {
+  return tags.some(tag =>
+    tag === term.norm ||
+    tag.startsWith(term.norm) ||
+    term.norm.startsWith(tag)
+  );
+}
 
       if (term.type === 'phrase') {
         const esc = term.raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -4610,6 +4625,5 @@ updateUIForLockState();
 
 </body>
 </html>
-
 
 
