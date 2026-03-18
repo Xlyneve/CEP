@@ -621,23 +621,43 @@
 
   let currentSearchTerm = "";
   let searchDebounceTimer = null;
+  
+  let editSnapshots = {};
+
+  function cloneMedicationRow(row) {
+  return {
+    medication: row.medication || "",
+    subtitle: row.subtitle || "",
+    mechanism: row.mechanism || "",
+    firstLine: row.firstLine || "",
+    secondLine: row.secondLine || "",
+    allergyFirstLine: row.allergyFirstLine || "",
+    allergySecondLine: row.allergySecondLine || "",
+    notes: row.notes || "",
+    isEditing: !!row.isEditing
+  };
+}
 
   function addRow() {
-    medicationRows.unshift({
-      medication: "New Medication",
-      subtitle: "",
-      mechanism: "",
-      firstLine: "",
-      secondLine: "",
-      allergyFirstLine: "",
-      allergySecondLine: "",
-      notes: "",
-      isEditing: true
-    });
+  const newRow = {
+    medication: "New Medication",
+    subtitle: "",
+    mechanism: "",
+    firstLine: "",
+    secondLine: "",
+    allergyFirstLine: "",
+    allergySecondLine: "",
+    notes: "",
+    isEditing: true,
+    isNew: true
+  };
 
-    selectedCardIndex = 0;
-    renderCards(medicationRows);
-  }
+  medicationRows.unshift(newRow);
+  editSnapshots[0] = cloneMedicationRow(newRow);
+
+  selectedCardIndex = 0;
+  renderCards(medicationRows);
+}
 
  async function saveTableToFirebase() {
   try {
@@ -808,6 +828,14 @@ function deleteCard(index) {
 
   medicationRows.splice(index, 1);
 
+  const shiftedSnapshots = {};
+  Object.keys(editSnapshots).forEach(key => {
+    const oldIndex = Number(key);
+    if (oldIndex === index) return;
+    shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] = editSnapshots[key];
+  });
+  editSnapshots = shiftedSnapshots;
+
   if (selectedCardIndex === index) {
     selectedCardIndex = null;
   } else if (selectedCardIndex !== null && selectedCardIndex > index) {
@@ -818,21 +846,64 @@ function deleteCard(index) {
 }
 
   function editSingleCard(index) {
-    medicationRows[index].isEditing = true;
-    selectedCardIndex = index;
-    renderCards(medicationRows);
+  if (!medicationRows[index]) return;
+
+  if (!editSnapshots[index]) {
+    editSnapshots[index] = cloneMedicationRow(medicationRows[index]);
   }
+
+  medicationRows[index].isEditing = true;
+  selectedCardIndex = index;
+  renderCards(medicationRows);
+}
 
   function saveSingleCard(index) {
-    medicationRows[index].isEditing = false;
-    saveTableToFirebase();
-    renderCards(medicationRows);
-  }
+  if (!medicationRows[index]) return;
+
+  medicationRows[index].isEditing = false;
+  delete editSnapshots[index];
+  saveTableToFirebase();
+  renderCards(medicationRows);
+}
 
   function cancelSingleCardEdit(index) {
-    medicationRows[index].isEditing = false;
+  if (!medicationRows[index]) return;
+
+  if (medicationRows[index].isNew) {
+    medicationRows.splice(index, 1);
+    delete editSnapshots[index];
+
+    const shiftedSnapshots = {};
+    Object.keys(editSnapshots).forEach(key => {
+      const oldIndex = Number(key);
+      shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] = editSnapshots[key];
+    });
+    editSnapshots = shiftedSnapshots;
+
+    if (selectedCardIndex === index) {
+      selectedCardIndex = null;
+    } else if (selectedCardIndex !== null && selectedCardIndex > index) {
+      selectedCardIndex -= 1;
+    }
+
     renderCards(medicationRows);
+    return;
   }
+
+  const snapshot = editSnapshots[index];
+
+  if (snapshot) {
+    medicationRows[index] = {
+      ...cloneMedicationRow(snapshot),
+      isEditing: false
+    };
+    delete editSnapshots[index];
+  } else {
+    medicationRows[index].isEditing = false;
+  }
+
+  renderCards(medicationRows);
+}
 
  function attachCardEditors() {
   const editableFields = document.querySelectorAll('.med-card [contenteditable="true"]');
@@ -1070,14 +1141,34 @@ function deleteCard(index) {
   }
 
   function deleteTreatmentTable(index, fieldName) {
-    if (!medicationRows[index]) return;
+  if (!medicationRows[index]) return;
 
-    const existing = medicationRows[index][fieldName] || "";
-    if (!existing.includes("mini-treatment-table")) return;
+  const existing = medicationRows[index][fieldName] || "";
+  if (!existing.includes("mini-treatment-table")) return;
 
-    medicationRows[index][fieldName] = "";
-    renderCards(medicationRows);
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = existing;
+
+  const table = wrapper.querySelector(".mini-treatment-table");
+  if (!table) return;
+
+  const bodyRows = Array.from(table.querySelectorAll("tr")).filter(row => {
+    return !row.classList.contains("table-section-title-row") &&
+           !row.classList.contains("table-column-headings");
+  });
+
+  if (bodyRows.length > 1) {
+    bodyRows[bodyRows.length - 1].remove();
+  } else if (bodyRows.length === 1) {
+    const cells = bodyRows[0].querySelectorAll("td");
+    cells.forEach(cell => {
+      cell.innerHTML = "&nbsp;";
+    });
   }
+
+  medicationRows[index][fieldName] = wrapper.innerHTML;
+  renderCards(medicationRows);
+}
 
 function insertLineBreakAtCursor() {
   const sel = window.getSelection();
