@@ -1567,8 +1567,8 @@ function displayNotesInto(container, notes) {
     bubble.dataset.noteId = note.id;
 
     const cleaned = stripLegacyTableControls(note.content || '');
-    const text = htmlToText(cleaned);
-    bubble.innerHTML = buildConceptHtmlFromText(text).replace(/\n/g, '<br>');
+bubble.innerHTML = cleaned;
+hydrateConceptLinksInElement(bubble);
 
     msg.appendChild(bubble);
 
@@ -1592,6 +1592,68 @@ function displayNotesInto(container, notes) {
     }
 
     container.appendChild(msg);
+  });
+
+  refreshConceptDefBadges(container);
+  refreshConceptMediaBadges(container);
+}
+
+function hydrateConceptLinksInElement(root) {
+  if (!root) return;
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  const textNodes = [];
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (!node.nodeValue || !node.nodeValue.includes('[[')) continue;
+
+    const parentEl = node.parentElement;
+    if (!parentEl) continue;
+    if (parentEl.closest('a.conceptLink')) continue;
+    if (parentEl.closest('script, style')) continue;
+
+    textNodes.push(node);
+  }
+
+  textNodes.forEach(node => {
+    const text = node.nodeValue || '';
+    if (!/\[\[([^[\]]+?)\]\]/.test(text)) return;
+
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+    const re = /\[\[([^[\]]+?)\]\]/g;
+    let m;
+
+    while ((m = re.exec(text)) !== null) {
+      frag.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+
+      const clean = (m[1] || '').trim();
+      const norm = normalizeText(clean);
+      const count = conceptCountMap.get(norm) || 0;
+
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'conceptLink';
+      if (defsCache[norm]) a.classList.add('hasDef');
+      if (conceptMediaCache[norm]?.imageUrl) a.classList.add('hasKbImage');
+      a.setAttribute('data-concept', clean);
+      a.textContent = `[[${clean}]]`;
+
+      frag.appendChild(a);
+
+      if (count) {
+        const badge = document.createElement('span');
+        badge.className = 'conceptCount';
+        badge.textContent = count;
+        frag.appendChild(badge);
+      }
+
+      lastIndex = re.lastIndex;
+    }
+
+    frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    if (node.parentNode) node.parentNode.replaceChild(frag, node);
   });
 }
 
@@ -1713,10 +1775,13 @@ googleLogoutBtn?.addEventListener('click', async () => {
 });
 
 auth.onAuthStateChanged((user) => {
+  console.log('auth state changed:', user);
+
   if (user) {
     authStatusText.textContent = `Signed in: ${user.email || user.displayName || 'User'}`;
-    googleLoginBtn.style.display = 'none';
-    googleLogoutBtn.style.display = 'inline-block';
+
+    if (googleLoginBtn) googleLoginBtn.style.display = 'none';
+    if (googleLogoutBtn) googleLogoutBtn.style.display = 'inline-block';
 
     startNotesListener();
     startDefsListener();
@@ -1727,8 +1792,9 @@ auth.onAuthStateChanged((user) => {
     else renderLiveResults(notesCache.slice(0, 30), 'Latest notes');
   } else {
     authStatusText.textContent = 'Not signed in';
-    googleLoginBtn.style.display = 'inline-block';
-    googleLogoutBtn.style.display = 'none';
+
+    if (googleLoginBtn) googleLoginBtn.style.display = 'inline-block';
+    if (googleLogoutBtn) googleLogoutBtn.style.display = 'none';
 
     stopNotesListener();
     stopDefsListener();
