@@ -2328,7 +2328,7 @@ if (recallBtn) {
 }
 
 document.addEventListener('keydown', (e) => {
-  if (!isUnlocked) return;
+  if (!auth.currentUser) return alert('Please sign in with Google first.');
   if (e.altKey && (e.key === 'r' || e.key === 'R')) {
     e.preventDefault();
     runSmartRecall({ count: 3, includePinned: e.shiftKey });
@@ -2390,7 +2390,7 @@ function deLinkifyConceptAnchors(html) {
    Notes listener (FIXED: no defs listener here)
 ========================= */
 function startNotesListener() {
-  if (!isUnlocked) return;
+ if (!auth.currentUser) return alert('Please sign in with Google first.');
   if (unsubscribeNotes) unsubscribeNotes();
 
   unsubscribeNotes = db.collection('notes')
@@ -2430,11 +2430,11 @@ function stopNotesListener() {
    Definitions listener (FIXED: loads {value, why, concept})
 ========================= */
 function startDefsListener() {
-  if (!isUnlocked) return;
+  if (!auth.currentUser) return alert('Please sign in with Google first.');
   if (unsubscribeDefs) unsubscribeDefs();
 
   ensureSignedIn().then(() => {
-    if (!isUnlocked) return;
+    if (!auth.currentUser) return alert('Please sign in with Google first.');
 
     unsubscribeDefs = db.collection('concept_defs')
       .onSnapshot((snap) => {
@@ -2468,11 +2468,11 @@ function stopDefsListener() {
 }
 
 function startConceptMediaListener() {
-  if (!isUnlocked) return;
+  if (!auth.currentUser) return alert('Please sign in with Google first.');
   if (unsubscribeConceptMedia) unsubscribeConceptMedia();
 
   ensureSignedIn().then(() => {
-    if (!isUnlocked) return;
+    if (!auth.currentUser) return alert('Please sign in with Google first.');
 
     unsubscribeConceptMedia = db.collection('concept_media')
       .onSnapshot((snap) => {
@@ -2716,7 +2716,7 @@ function linkify(html) {
    Add note
 ========================= */
 addNoteBtn.onclick = async () => {
-  if (!isUnlocked) return alert('Locked.');
+ if (!auth.currentUser) return alert('Please sign in with Google first.');
 
   const raw = noteInput.innerHTML.trim();
   const noteContent = deLinkifyConceptAnchors(linkify(raw));
@@ -2751,6 +2751,8 @@ addNoteBtn.onclick = async () => {
 
 async function ensureSignedIn() {
   if (auth.currentUser) return auth.currentUser;
+  throw new Error('Please sign in with Google first.');
+}
 
   try {
     const cred = await auth.signInAnonymously();
