@@ -1567,8 +1567,8 @@ function displayNotesInto(container, notes) {
     bubble.dataset.noteId = note.id;
 
     const cleaned = stripLegacyTableControls(note.content || '');
-bubble.innerHTML = cleaned;
-hydrateConceptLinksInElement(bubble);
+    bubble.innerHTML = cleaned;
+    hydrateConceptLinksInElement(bubble);
 
     msg.appendChild(bubble);
 
@@ -1606,23 +1606,27 @@ function hydrateConceptLinksInElement(root) {
 
   while (walker.nextNode()) {
     const node = walker.currentNode;
-    if (!node.nodeValue || !node.nodeValue.includes('[[')) continue;
+    const text = node.nodeValue || '';
+    if (!text.includes('[[')) continue;
 
-    const parentEl = node.parentElement;
-    if (!parentEl) continue;
-    if (parentEl.closest('a.conceptLink')) continue;
-    if (parentEl.closest('script, style')) continue;
+    const parent = node.parentElement;
+    if (!parent) continue;
+    if (parent.closest('a.conceptLink')) continue;
+    if (parent.closest('script,style')) continue;
 
     textNodes.push(node);
   }
 
+  const re = /\[\[([^[\]]+?)\]\]/g;
+
   textNodes.forEach(node => {
     const text = node.nodeValue || '';
-    if (!/\[\[([^[\]]+?)\]\]/.test(text)) return;
+    re.lastIndex = 0;
+    if (!re.test(text)) return;
 
+    re.lastIndex = 0;
     const frag = document.createDocumentFragment();
     let lastIndex = 0;
-    const re = /\[\[([^[\]]+?)\]\]/g;
     let m;
 
     while ((m = re.exec(text)) !== null) {
@@ -1639,7 +1643,6 @@ function hydrateConceptLinksInElement(root) {
       if (conceptMediaCache[norm]?.imageUrl) a.classList.add('hasKbImage');
       a.setAttribute('data-concept', clean);
       a.textContent = `[[${clean}]]`;
-
       frag.appendChild(a);
 
       if (count) {
@@ -1653,7 +1656,7 @@ function hydrateConceptLinksInElement(root) {
     }
 
     frag.appendChild(document.createTextNode(text.slice(lastIndex)));
-    if (node.parentNode) node.parentNode.replaceChild(frag, node);
+    node.parentNode.replaceChild(frag, node);
   });
 }
 
@@ -1778,8 +1781,7 @@ auth.onAuthStateChanged((user) => {
   console.log('auth state changed:', user);
 
   if (user) {
-    authStatusText.textContent = `Signed in: ${user.email || user.displayName || 'User'}`;
-
+    if (authStatusText) authStatusText.style.display = 'none';
     if (googleLoginBtn) googleLoginBtn.style.display = 'none';
     if (googleLogoutBtn) googleLogoutBtn.style.display = 'inline-block';
 
@@ -1791,8 +1793,10 @@ auth.onAuthStateChanged((user) => {
     if (q) runLiveSearch(q, true);
     else renderLiveResults(notesCache.slice(0, 30), 'Latest notes');
   } else {
-    authStatusText.textContent = 'Not signed in';
-
+    if (authStatusText) {
+      authStatusText.style.display = 'block';
+      authStatusText.textContent = 'Not signed in';
+    }
     if (googleLoginBtn) googleLoginBtn.style.display = 'inline-block';
     if (googleLogoutBtn) googleLogoutBtn.style.display = 'none';
 
