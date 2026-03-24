@@ -3,1034 +3,1516 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://xlyneve.github.io/CEP/calculator.css?v=2">
-  <title>Prescribable Medications</title>
- 
- <style>
-  @font-face {
-    font-family: 'Adelicia';
-    src: url('AdeliciaRegular.ttf');
-  }
-
-  @font-face {
-    font-family: 'Simplicity';
-    src: url('Simplicity.ttf');
-  }
-
-  :root {
-    --text: #333;
-    --text-soft: rgba(60, 60, 60, 0.72);
-    --text-faint: rgba(70, 70, 70, 0.66);
-
-    --glass: rgba(255, 255, 255, 0.14);
-    --glass-strong: rgba(255, 255, 255, 0.2);
-    --glass-border: rgba(255, 255, 255, 0.28);
-
-    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.06);
-
-    --radius-lg: 22px;
-    --radius-md: 16px;
-    --radius-sm: 12px;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    padding: 30px;
-    font-family: 'Tahoma', sans-serif;
-    font-size: 12px;
-    color: var(--text);
-    background: linear-gradient(to bottom right, #fefefe, #f8f8f8);
-  }
-
-  h1 {
-    margin: 0 0 20px;
-    text-align: center;
-    font-family: 'Adelicia', serif;
-    font-size: 2.6em;
-    font-weight: 600;
-    color: #d94f71;
-    background-image: linear-gradient(90deg, #d94f71, #f8718f, #fbc1cc);
-    background-size: 300% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: roseGlow 4s ease-in-out infinite;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  }
-
-  .controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 12px;
-    background: transparent;
-    border: none;
-    padding: 0;
-    box-shadow: none;
-  }
-
-  .controls input,
-  .controls button {
-    margin: 0;
-    padding: 8px 14px;
-    font-size: 1em;
-    color: var(--text);
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
-  }
-
-  .controls input::placeholder {
-    color: rgba(51, 51, 51, 0.5);
-  }
-
-  .controls button {
-    cursor: pointer;
-  }
-
-  .controls button:hover,
-  .controls input:hover {
-    background-color: var(--glass-strong);
-    border-color: rgba(255, 255, 255, 0.42);
-  }
-
-  .controls button:active {
-    transform: translateY(1px);
-  }
-
-  .hidden,
-  .hidden-card {
-    display: none !important;
-  }
-
-  .icon-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 15px;
-    padding: 10px 16px;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    box-shadow: var(--shadow-soft);
-  }
-
-  .icon-buttons button {
-    padding: 6px 10px;
-    font-size: 12px;
-    line-height: 1;
-    color: var(--text);
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 12px;
-    cursor: pointer;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    transition: background 0.2s ease, transform 0.2s ease;
-  }
-
-  .icon-buttons button:hover {
-    background: rgba(255, 255, 255, 0.22);
-  }
-
-  .icon-buttons button:active {
-    transform: translateY(1px);
-  }
-
-  .card-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 16px;
-    margin-top: 18px;
-  }
-
- .med-card {
-  padding: 12px 12px 10px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: var(--radius-lg);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: var(--shadow-soft);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
-}
-
-.med-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-hover);
-}
-
-.med-card.selected {
-  border-color: rgba(170, 170, 170, 0.24);
-  box-shadow: 0 0 0 2px rgba(170, 170, 170, 0.07);
-}
-
-.med-name {
-  margin-bottom: 1px;
-  font-size: 1.32rem;
-  font-weight: 700;
-  line-height: 1.18;
-  color: #111;
-}
-
-.med-subtitle {
-  margin-bottom: 1px;
-  font-size: 0.8rem;
-  line-height: 1.28;
-  font-style: italic;
-  color: var(--text-soft);
-}
-
-.med-mechanism {
-  margin-bottom: 6px;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: var(--text-faint);
-}
-
-.med-section {
-  margin-bottom: 7px;
-  padding: 5px 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-md);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.09);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.notes-section {
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.med-section-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 2px;
-  min-height: 0;
-}
-
-.med-section-title {
-  display: none !important;
-}
-
-.med-section-content {
-  min-height: 16px;
-  padding: 1px 0;
-  font-size: 0.88rem;
-  line-height: 1.3;
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.med-name[contenteditable="true"],
-.med-subtitle[contenteditable="true"],
-.med-mechanism[contenteditable="true"],
-.med-section-content[contenteditable="true"] {
-  padding: 4px 6px;
-  background: rgba(255, 255, 255, 0.13);
-  border-radius: 9px;
-  outline: none;
-}
-
-.med-name[contenteditable="true"]:focus,
-.med-subtitle[contenteditable="true"]:focus,
-.med-mechanism[contenteditable="true"]:focus,
-.med-section-content[contenteditable="true"]:focus {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.med-card-bottom-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.card-edit-btn,
-.card-save-btn,
-.card-cancel-btn,
-.mini-table-btn {
-  padding: 5px 9px;
-  font-size: 0.78rem;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.13);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: 9px;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.card-edit-btn:hover,
-.card-save-btn:hover,
-.card-cancel-btn:hover,
-.mini-table-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.card-edit-btn:active,
-.card-save-btn:active,
-.card-cancel-btn:active,
-.mini-table-btn:active {
-  transform: translateY(1px);
-}
-
-.mini-treatment-table {
-  width: 100%;
-  margin-top: 2px;
-  font-size: 0.86rem;
-  color: #000;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 11px;
-  overflow: hidden;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 2px 8px rgba(0, 0, 0, 0.025);
-}
-
-.mini-treatment-table th,
-.mini-treatment-table td {
-  padding: 6px 8px;
-  text-align: left;
-  vertical-align: top;
-  color: #000;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.mini-treatment-table th:last-child,
-.mini-treatment-table td:last-child {
-  border-right: none;
-}
-
-.mini-treatment-table tr:last-child td {
-  border-bottom: none;
-}
-
-.mini-treatment-table td {
-  background: rgba(255, 255, 255, 0.10);
-  color: #000;
-}
-
-.mini-treatment-table th {
-  font-weight: 700;
-  color: #000;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.table-section-title-row th {
-  font-size: 0.85rem;
-  letter-spacing: 0.01em;
-  text-align: left;
-}
-
-.table-column-headings th {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-/* neutral body for all tables */
-.first-line-section .mini-treatment-table,
-.second-line-section .mini-treatment-table,
-.allergy-first-section .mini-treatment-table,
-.allergy-second-section .mini-treatment-table {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.first-line-section .mini-treatment-table td,
-.second-line-section .mini-treatment-table td,
-.allergy-first-section .mini-treatment-table td,
-.allergy-second-section .mini-treatment-table td {
-  background: rgba(255, 255, 255, 0.10);
-}
-
-/* only the top title row carries the section color */
-.first-line-section .table-section-title-row th {
-  background: rgba(143, 132, 118, 0.42);
-}
-
-.second-line-section .table-section-title-row th {
-  background: rgba(201, 188, 173, 0.42);
-}
-
-.allergy-first-section .table-section-title-row th {
-  background: rgba(94, 108, 116, 0.40);
-}
-
-.allergy-second-section .table-section-title-row th {
-  background: rgba(203, 213, 219, 0.46);
-}
-
-.mini-treatment-table td[contenteditable="true"] {
-  outline: none;
-}
-
-.mini-treatment-table td[contenteditable="true"]:focus {
-  background: rgba(255, 255, 255, 0.16);
-  color: #000;
-}
-
-.med-section-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 2px;
-  min-height: 0;
-}
-
-.icon-btn {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  line-height: 1;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: rgba(40, 40, 40, 0.8);
-}
-
-.icon-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #000;
-}
-
-.delete-table-btn {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.delete-table-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-  #emojiCopyMenu {
-    position: fixed;
-    top: 6px;
-    right: -4px;
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    font-size: 10px;
-    font-family: 'Tahoma', sans-serif;
-    line-height: 1;
-  }
-
-  .emojiLine {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    margin: 1px;
-    padding: 1px;
-  }
-
-  #emojiCopyMenu button {
-    margin: 0;
-    padding: 0;
-    font-size: 12px;
-    line-height: 1;
-    color: var(--text);
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-
-  #emojiCopyMenu button:hover {
-    background: rgba(0, 0, 0, 0.05);
-  }
-
-  #emojiCopyMenu span {
-    margin: 0;
-    padding: 0;
-    font-size: 10px;
-    line-height: 1;
-    color: #555;
-  }
-
-  .copiedMsg {
-    font-size: 10px;
-    color: green;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-
-  .copiedMsg.show {
-    opacity: 1;
-  }
-
-
-
-  @keyframes roseGlow {
-    0% {
-      background-position: 0% center;
+  <title>Consultation Templates</title>
+
+  <style>
+    @font-face {
+      font-family: 'Adelicia';
+      src: url('AdeliciaRegular.ttf');
     }
-    50% {
-      background-position: 100% center;
-    }
-    100% {
-      background-position: 0% center;
-    }
-  }
 
-  @media (max-width: 768px) {
+    @font-face {
+      font-family: 'Fors';
+      src: url('fors.ttf');
+    }
+
+    :root {
+      --bg1: rgba(255,255,255,0.14);
+      --bg2: rgba(255,255,255,0.08);
+      --stroke: rgba(255,255,255,0.22);
+      --text: #f8fbff;
+      --soft: rgba(248,251,255,0.78);
+      --faint: rgba(248,251,255,0.58);
+      --shadow: 0 10px 35px rgba(0,0,0,0.22);
+      --pink: rgba(255, 163, 196, 0.35);
+      --blue: rgba(134, 197, 255, 0.32);
+      --green: rgba(173, 255, 210, 0.28);
+      --warn: rgba(255, 202, 130, 0.28);
+      --danger: rgba(255, 120, 120, 0.28);
+      --radius: 24px;
+      --radius-sm: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      color: var(--text);
+      min-height: 100%;
+      background:
+        linear-gradient(135deg, rgba(39, 63, 107, 0.72), rgba(63, 45, 91, 0.72)),
+        url('2b.png') center/cover fixed no-repeat;
+    }
+
     body {
-      padding: 16px;
+      padding: 18px;
     }
 
-    h1 {
-      font-size: 2.1em;
+    .page-shell {
+      max-width: 1450px;
+      margin: 0 auto;
     }
 
-    .controls {
-      flex-direction: column;
-      align-items: stretch;
+    .topbar {
+      position: sticky;
+      top: 12px;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      border: 1px solid var(--stroke);
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
     }
 
-    .controls input,
-    .controls button {
-      width: 100%;
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
     }
 
-    .icon-buttons {
-      justify-content: flex-start;
+    .brand-dot {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.12));
+      border: 1px solid rgba(255,255,255,0.28);
+      box-shadow: 0 0 20px rgba(255,255,255,0.16);
+      flex-shrink: 0;
     }
 
-    .card-container {
-      grid-template-columns: 1fr;
+    .title-block {
+      min-width: 0;
     }
 
-    #emojiCopyMenu {
-      position: static;
-      flex-direction: row;
+    .page-title {
+      margin: 0;
+      font-family: 'Adelicia', 'Segoe Script', cursive;
+      font-size: clamp(1.9rem, 3vw, 2.8rem);
+      line-height: 1;
+      letter-spacing: 0.4px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.24);
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--soft);
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-actions {
+      display: flex;
       flex-wrap: wrap;
-      margin-top: 8px;
+      gap: 10px;
+      justify-content: flex-end;
     }
-  }
-</style>
-  
+
+    .glass-btn,
+    .chip,
+    select,
+    input,
+    textarea,
+    button {
+      font: inherit;
+    }
+
+    .glass-btn {
+      border: 1px solid rgba(255,255,255,0.24);
+      background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.10));
+      color: var(--text);
+      border-radius: 16px;
+      padding: 10px 14px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.16);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .glass-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+    }
+
+    .panel,
+    .card,
+    .template-card,
+    .info-box {
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      border-radius: 28px;
+      padding: 18px;
+      position: sticky;
+      top: 94px;
+      height: fit-content;
+    }
+
+    .panel h2,
+    .section-heading,
+    .template-card h3,
+    .info-box h3 {
+      margin: 0 0 12px;
+      font-family: 'Fors', Tahoma, sans-serif;
+      letter-spacing: 0.3px;
+      font-weight: 600;
+    }
+
+    .search-wrap {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .search-wrap input,
+    .search-wrap select,
+    .note-area textarea,
+    .section-fields textarea,
+    .section-fields input {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.12);
+      color: var(--text);
+      padding: 12px 14px;
+      outline: none;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: rgba(255,255,255,0.56);
+    }
+
+    select option {
+      color: #111;
+    }
+
+    .template-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .template-card {
+      border-radius: 20px;
+      padding: 14px;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .template-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .template-card.active {
+      border-color: rgba(255,255,255,0.42);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.14), 0 0 24px rgba(194, 226, 255, 0.18);
+    }
+
+    .template-card p {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .template-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color: var(--soft);
+      font-size: 0.8rem;
+    }
+
+    .main {
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      padding: 18px;
+      border-radius: 28px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-top {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .hero-title {
+      font-family: 'Fors', Tahoma, sans-serif;
+      font-size: clamp(1.2rem, 2vw, 1.65rem);
+      margin: 0;
+    }
+
+    .hero-sub {
+      color: var(--soft);
+      margin: 6px 0 0;
+      line-height: 1.45;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .info-box {
+      border-radius: 22px;
+      padding: 14px;
+    }
+
+    .info-box h3 {
+      margin-bottom: 8px;
+      font-size: 0.98rem;
+    }
+
+    .info-box p,
+    .info-box ul {
+      margin: 0;
+      color: var(--soft);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .info-box ul {
+      padding-left: 18px;
+    }
+
+    .consultation-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      border-radius: 26px;
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .card.full {
+      grid-column: 1 / -1;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-heading {
+      font-size: 1.08rem;
+    }
+
+    .hint {
+      color: var(--faint);
+      font-size: 0.86rem;
+      line-height: 1.4;
+    }
+
+    .section-fields {
+      display: grid;
+      gap: 12px;
+    }
+
+    .section-fields.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .section-fields.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-size: 0.88rem;
+      color: var(--soft);
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .mini-checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .mini-checks label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+    }
+
+    .mini-checks input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #d6ecff;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .badge {
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.10);
+    }
+
+    .pink { background: var(--pink); }
+    .blue { background: var(--blue); }
+    .green { background: var(--green); }
+    .warn { background: var(--warn); }
+    .danger { background: var(--danger); }
+
+    .note-area {
+      display: grid;
+      gap: 12px;
+    }
+
+    .footer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .footer-left,
+    .footer-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .small-note {
+      color: var(--faint);
+      font-size: 0.84rem;
+    }
+
+    .preview-box {
+      white-space: pre-wrap;
+      line-height: 1.55;
+      color: var(--text);
+      background: rgba(5,12,24,0.22);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      padding: 16px;
+      min-height: 180px;
+      max-height: 560px;
+      overflow: auto;
+    }
+
+    .preview-box:empty::before {
+      content: 'Your generated consultation summary will appear here.';
+      color: rgba(255,255,255,0.48);
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.22), rgba(255,255,255,0));
+      margin: 4px 0;
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(174,214,255,0.55), rgba(206,173,255,0.42));
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(174,214,255,0.55) rgba(255,255,255,0.06);
+    }
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        position: static;
+      }
+
+      .quick-grid,
+      .consultation-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 12px;
+      }
+
+      .topbar {
+        top: 8px;
+        padding: 14px;
+        border-radius: 22px;
+      }
+
+      .brand-wrap {
+        width: 100%;
+      }
+
+      .top-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .top-actions .glass-btn {
+        flex: 1 1 calc(50% - 8px);
+        justify-content: center;
+      }
+
+      .quick-grid,
+      .consultation-grid,
+      .section-fields.two,
+      .section-fields.three {
+        grid-template-columns: 1fr;
+      }
+
+      .card,
+      .hero,
+      .panel {
+        padding: 15px;
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+    }
+  </style>
 </head>
 <body>
-
-  <h1>Medications Lists</h1>
-
-  <div class="controls">
-    <input type="text" id="searchInput" placeholder="Search medications..." onkeyup="filterTable()" />
-   <div class="icon-buttons">
-  <button onclick="toggleEditMode()" title="Toggle Edit/View">✏️</button>
-  <button onclick="addRow()" title="Add Row">➕</button>
-  <button onclick="deleteSelectedRow()" title="Delete Row">❌</button>
-  <button onclick="saveTableToFirebase()" title="Save Table">💾</button>
-
-
-</div>
- 
-<div id="emojiCopyMenu">
- <div class="emojiLine">
-  <button title="First-line treatment" onclick="copyEmoji(this, '🔴')">🔴</button>
-  <span>1st</span>
-  <span class="copiedMsg">✅</span>
-</div>
-
-<div class="emojiLine">
-  <button title="Second-line treatment" onclick="copyEmoji(this, '🟡')">🟡</button>
-  <span>2nd</span>
-  <span class="copiedMsg">✅</span>
-</div>
-
-<div class="emojiLine">
-  <button title="1st line if allergic to first-line group" onclick="copyEmoji(this, '🔵')">🔵</button>
-  <span>1stX</span>
-  <span class="copiedMsg">✅</span>
-</div>
-
-<div class="emojiLine">
-  <button title="2nd in line/ or no improvement to first line group " onclick="copyEmoji(this, '🟢')">🟢</button>
-  <span>2ndX</span>
-  <span class="copiedMsg">✅</span>
-</div>
-
-</div>
-
-
-
-  </div>
-<div id="modeStatus" style="text-align:center; margin-bottom: 12px; font-weight: bold; color: #5a5a5a;">
-  Currently: <span id="modeText">Edit Mode</span>
-</div>
-
-<div id="cardContainer" class="card-container"></div>
-
-
- <script type="module">
-  // Firebase core + Firestore
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-  // Your config
-  const firebaseConfig = {
-    apiKey: "AIzaSyC1a4YDhJ3LAlqxIs9u5LrZ64Dp--jbIYM",
-    authDomain: "nurse-prescribing-notes.firebaseapp.com",
-    projectId: "nurse-prescribing-notes",
-    storageBucket: "nurse-prescribing-notes.firebasestorage.app",
-    messagingSenderId: "12133511320",
-    appId: "1:12133511320:web:114f6eb1c28ea2813b20ed",
-    measurementId: "G-540TZ8HK1G"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  window.firebaseDB = db;
-  window.firebaseCollection = collection(db, "medications"); // collection name
-  window.firebaseDoc = doc;
-  window.firebaseSetDoc = setDoc;
-  window.firebaseGetDocs = getDocs;
-
-  let isEditMode = false;
-  let selectedRow = null;  // Declare selectedRow here to avoid globals
-
-let medicationRows = [];
-let selectedCardIndex = null;
-let longPressTimer = null;
-const LONG_PRESS_MS = 500;
-
-function addRow() {
-  medicationRows.unshift({
-    medication: "New Medication",
-    subtitle: "",
-    mechanism: "",
-    firstLine: "",
-    secondLine: "",
-    allergyFirstLine: "",
-    allergySecondLine: "",
-    notes: "",
-    isEditing: true
-  });
-
-  selectedCardIndex = 0;
-  renderCards(medicationRows);
-}
-
-function toggleEditMode() {
-  isEditMode = !isEditMode;
-
-  if (!isEditMode) {
-    medicationRows.forEach(row => row.isEditing = false);
-  }
-
-  document.getElementById("modeText").textContent = isEditMode ? "Edit Mode" : "View Mode";
-  renderCards(medicationRows);
-}
- 
-async function saveTableToFirebase() {
-  try {
-    await setDoc(doc(db, "medications", "medTable"), { rows: medicationRows });
-    alert("Saved to Firebase!");
-  } catch (error) {
-    console.error("Save failed:", error);
-    alert("Save failed! See console.");
-  }
-}
-
-function renderCards(rowsData) {
-  const container = document.getElementById("cardContainer");
-  container.innerHTML = "";
-
-  rowsData.forEach((rowData, index) => {
-    const card = document.createElement("div");
-    card.className = "med-card";
-    card.dataset.index = index;
-
-    const subtitle = rowData.subtitle || rowData.typeCategory || "";
-    const mechanism = rowData.mechanism || rowData.restrictions || "";
-    const firstLine = rowData.firstLine || rowData.dosage || "";
-    const secondLine = rowData.secondLine || "";
-    const allergyFirstLine = rowData.allergyFirstLine || "";
-    const allergySecondLine = rowData.allergySecondLine || "";
-    const extraNotes = rowData.notes || "";
-
-    const cardEditable = isEditMode || !!rowData.isEditing;
-
-    const tableControls = (fieldName) => cardEditable ? `
-      <button
-        class="mini-table-btn icon-btn"
-        type="button"
-        title="Add table"
-        onclick="insertTreatmentTable(${index}, '${fieldName}')"
-      >＋</button>
-      <button
-        class="mini-table-btn icon-btn delete-table-btn"
-        type="button"
-        title="Remove table"
-        onclick="deleteTreatmentTable(${index}, '${fieldName}')"
-      >－</button>
-    ` : "";
-
-    card.innerHTML = `
-      <div class="med-card-main">
-        <div class="med-name" contenteditable="${cardEditable}" data-field="medication">${rowData.medication || "Untitled Medication"}</div>
-
-        <div class="med-subtitle" contenteditable="${cardEditable}" data-field="subtitle">${subtitle}</div>
-
-        <div class="med-mechanism" contenteditable="${cardEditable}" data-field="mechanism">${mechanism}</div>
-
-        <div class="med-section first-line-section">
-          <div class="med-section-header">
-            ${tableControls("firstLine")}
-          </div>
-          <div class="med-section-content" contenteditable="${cardEditable}" data-field="firstLine">${firstLine}</div>
-        </div>
-
-        <div class="med-section second-line-section">
-          <div class="med-section-header">
-            ${tableControls("secondLine")}
-          </div>
-          <div class="med-section-content" contenteditable="${cardEditable}" data-field="secondLine">${secondLine}</div>
-        </div>
-
-        <div class="med-section allergy-first-section">
-          <div class="med-section-header">
-            ${tableControls("allergyFirstLine")}
-          </div>
-          <div class="med-section-content" contenteditable="${cardEditable}" data-field="allergyFirstLine">${allergyFirstLine}</div>
-        </div>
-
-        <div class="med-section allergy-second-section">
-          <div class="med-section-header">
-            ${tableControls("allergySecondLine")}
-          </div>
-          <div class="med-section-content" contenteditable="${cardEditable}" data-field="allergySecondLine">${allergySecondLine}</div>
-        </div>
-
-        <div class="med-section notes-section">
-          <div class="med-section-content" contenteditable="${cardEditable}" data-field="notes">${extraNotes}</div>
-        </div>
-
-        <div class="med-card-bottom-actions">
-          ${!isEditMode && !rowData.isEditing ? `<button class="card-edit-btn" onclick="editSingleCard(${index})">✏️ Edit</button>` : ""}
-          ${rowData.isEditing ? `<button class="card-save-btn" onclick="saveSingleCard(${index})">💾 Save</button>` : ""}
-          ${rowData.isEditing ? `<button class="card-cancel-btn" onclick="cancelSingleCardEdit(${index})">Close</button>` : ""}
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-dot"></div>
+        <div class="title-block">
+          <h1 class="page-title">Consultation Templates</h1>
+          <div class="subtitle">Structured consult flow for urgent care, prescribing, and documentation</div>
         </div>
       </div>
-    `;
 
-    if (selectedCardIndex === index) {
-      card.classList.add("selected");
-    }
+      <div class="top-actions">
+        <a class="glass-btn" href="home.html">🏠 Home</a>
+        <a class="glass-btn" href="Calculator.html">🧮 Calculator</a>
+        <a class="glass-btn" href="Notes.html">📝 Notes</a>
+        <button class="glass-btn" id="printBtn">🖨️ Print</button>
+      </div>
+    </header>
 
-    setupCardLongPress(card, index);
-    container.appendChild(card);
-  });
+    <div class="layout">
+      <aside class="panel">
+        <h2>Templates</h2>
 
-  attachCardEditors();
-}
+        <div class="search-wrap">
+          <input type="text" id="searchInput" placeholder="Search template or symptom..." />
+          <select id="categoryFilter">
+            <option value="all">All categories</option>
+            <option value="respiratory">Respiratory / ENT</option>
+            <option value="skin">Skin / Soft tissue</option>
+            <option value="viral">Viral / General</option>
+            <option value="urinary">Urinary</option>
+            <option value="msk">MSK / Injury</option>
+          </select>
+        </div>
 
-function setupCardLongPress(card, index) {
-  const start = (e) => {
-    if (e.target.closest("button")) return;
+        <div class="template-list" id="templateList"></div>
+      </aside>
 
-    longPressTimer = setTimeout(() => {
-      editSingleCard(index);
-    }, LONG_PRESS_MS);
+      <main class="main">
+        <section class="hero">
+          <div class="hero-top">
+            <div>
+              <h2 class="hero-title" id="activeTemplateTitle">General Consultation</h2>
+              <p class="hero-sub" id="activeTemplateDesc">
+                Use this page to guide assessment, decision-making, prescribing checks, patient advice, and clean documentation.
+              </p>
+            </div>
+
+            <div class="hero-actions">
+              <button class="glass-btn" id="fillTemplateBtn">✨ Load template prompts</button>
+              <button class="glass-btn" id="clearBtn">🧼 Clear form</button>
+              <button class="glass-btn" id="generateBtn">📋 Generate summary</button>
+            </div>
+          </div>
+
+          <div class="quick-grid">
+            <div class="info-box">
+              <h3>Problem focus</h3>
+              <p>Start with the reason for presentation, timing, severity, and what diagnosis you are trying to rule in or rule out.</p>
+            </div>
+            <div class="info-box">
+              <h3>Red flags</h3>
+              <p>Document the dangerous things asked about or checked for, especially if absent.</p>
+            </div>
+            <div class="info-box">
+              <h3>Antibiotic decision</h3>
+              <p>State whether antibiotics are indicated, why, and whether watchful waiting or supportive care is more appropriate.</p>
+            </div>
+            <div class="info-box">
+              <h3>Safety net</h3>
+              <p>Always include return advice, worsening advice, and when urgent reassessment is needed.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="consultation-grid">
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">1. Presentation</div>
+                <div class="hint">What is the main problem and why today?</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge blue">Core</span>
+              </div>
+            </div>
+
+            <div class="section-fields">
+              <label>
+                Presenting complaint
+                <input id="presentingComplaint" placeholder="e.g. sore throat for 2 days, painful swallowing" />
+              </label>
+              <label>
+                History of presenting complaint
+                <textarea id="hpc" placeholder="Onset, duration, progression, severity, associated symptoms, relevant exposures, treatment tried..."></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">2. Red flags</div>
+                <div class="hint">Important negatives and escalation concerns</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge danger">High value</span>
+              </div>
+            </div>
+
+            <div class="section-fields">
+              <label>
+                Red flags checked
+                <textarea id="redFlags" placeholder="e.g. no stridor, no drooling, no respiratory distress, no trismus, no dehydration..."></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">3. Background / patient factors</div>
+                <div class="hint">The things that change risk or management</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge pink">Decision-making</span>
+              </div>
+            </div>
+
+            <div class="section-fields two">
+              <label>
+                PMHx / relevant history
+                <textarea id="pmhx" placeholder="Asthma, diabetes, recurrent infections, eczema, prior cellulitis, renal disease..."></textarea>
+              </label>
+              <label>
+                Medications / allergies
+                <textarea id="medsAllergies" placeholder="Current meds, allergies, previous reactions, recent antibiotics..."></textarea>
+              </label>
+              <label>
+                Special patient factors
+                <textarea id="patientFactors" placeholder="Pregnancy, breastfeeding, immunocompromised, age extremes, occupation, smoking, social factors..."></textarea>
+              </label>
+              <label>
+                Weight / age / key measurements
+                <textarea id="measurements" placeholder="Age, weight, BSL, temp, BP, HR, RR, sats, pain score..."></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">4. Examination</div>
+                <div class="hint">Objective findings only</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge green">Exam</span>
+              </div>
+            </div>
+
+            <div class="section-fields">
+              <label>
+                Examination findings
+                <textarea id="exam" placeholder="General appearance, hydration, ENT / chest / skin / abdo / limb findings, ROM, wound findings..."></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">5. Assessment / diagnosis</div>
+                <div class="hint">Working diagnosis and differentials</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge warn">Clinical reasoning</span>
+              </div>
+            </div>
+
+            <div class="section-fields two">
+              <label>
+                Working diagnosis
+                <textarea id="diagnosis" placeholder="Most likely diagnosis"></textarea>
+              </label>
+              <label>
+                Differentials / ruled out concerns
+                <textarea id="differentials" placeholder="Important alternatives considered and why less likely"></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">6. Antibiotic / treatment decision</div>
+                <div class="hint">Make the why explicit</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge pink">Prescribing</span>
+              </div>
+            </div>
+
+            <div class="mini-checks">
+              <label><input type="checkbox" id="abxNotIndicated" /> Antibiotics not indicated</label>
+              <label><input type="checkbox" id="abxDelayed" /> Delayed / back-pocket approach</label>
+              <label><input type="checkbox" id="abxPrescribed" /> Antibiotics prescribed</label>
+              <label><input type="checkbox" id="supportiveCareOnly" /> Supportive care only</label>
+            </div>
+
+            <div class="section-fields two">
+              <label>
+                Treatment rationale
+                <textarea id="treatmentRationale" placeholder="Why antibiotics are or are not indicated, severity, likely organism or viral picture, watchful waiting reasoning..."></textarea>
+              </label>
+              <label>
+                Prescription / management details
+                <textarea id="managementPlan" placeholder="Drug, dose, route, frequency, duration, wound care, dressings, analgesia, investigations, review plan..."></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="card full">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">7. Advice / safety net / documentation</div>
+                <div class="hint">What the patient was told and what needs to be recorded</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge blue">Close the loop</span>
+              </div>
+            </div>
+
+            <div class="section-fields three">
+              <label>
+                Patient advice
+                <textarea id="patientAdvice" placeholder="Hydration, analgesia, rest, wound care, expected course, infection control advice..."></textarea>
+              </label>
+              <label>
+                Safety net / return advice
+                <textarea id="safetyNet" placeholder="Return if worsening pain, swelling, fever, SOB, poor oral intake, spreading redness, reduced urine output, not improving..."></textarea>
+              </label>
+              <label>
+                Documentation notes
+                <textarea id="documentation" placeholder="Consent, chaperone, discussion with senior, photos, swabs, forms completed, fit note, ACC, etc."></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="card full">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">8. Generated consultation summary</div>
+                <div class="hint">Auto-build a clean note from what you entered</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge green">Copy-ready</span>
+              </div>
+            </div>
+
+            <div class="note-area">
+              <div class="preview-box" id="output"></div>
+
+              <div class="divider"></div>
+
+              <div class="footer-actions">
+                <div class="footer-left">
+                  <button class="glass-btn" id="copyBtn">📎 Copy summary</button>
+                  <button class="glass-btn" id="copyPlainBtn">🧾 Copy plain text</button>
+                </div>
+                <div class="footer-right">
+                  <span class="small-note">Built for structured consults and cleaner prescribing logic.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+ <script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signOut,
+    onAuthStateChanged
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    doc,
+    updateDoc,
+    deleteDoc,
+    serverTimestamp,
+    query,
+    orderBy
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
+    authDomain: "notes-chat-c5ff3.firebaseapp.com",
+    projectId: "notes-chat-c5ff3",
+    storageBucket: "notes-chat-c5ff3.firebasestorage.app",
+    messagingSenderId: "597780727252",
+    appId: "1:597780727252:web:8407eb4096dbe301d74241",
+    measurementId: "G-YQD63H7L5T"
   };
 
-  const cancel = () => {
-    clearTimeout(longPressTimer);
-  };
+  let app = null;
+  let auth = null;
+  let db = null;
+  let templatesRef = null;
+  let provider = null;
 
-  card.addEventListener("mousedown", start);
-  card.addEventListener("touchstart", start, { passive: true });
+  let firebaseReady = false;
+  let currentUser = null;
 
-  card.addEventListener("mouseup", cancel);
-  card.addEventListener("mouseleave", cancel);
-  card.addEventListener("touchend", cancel);
-  card.addEventListener("touchcancel", cancel);
-
-  card.addEventListener("click", () => {
-    selectCard(index);
-  });
-}
-
-function editSingleCard(index) {
-  medicationRows[index].isEditing = true;
-  selectedCardIndex = index;
-  renderCards(medicationRows);
-}
-
-function saveSingleCard(index) {
-  medicationRows[index].isEditing = false;
-  saveTableToFirebase();
-  renderCards(medicationRows);
-}
-
-function cancelSingleCardEdit(index) {
-  medicationRows[index].isEditing = false;
-  renderCards(medicationRows);
-}
-
-function attachCardEditors() {
-  const editableFields = document.querySelectorAll('.med-card [contenteditable="true"]');
-
-  editableFields.forEach(field => {
-    field.addEventListener("input", function () {
-      const card = this.closest(".med-card");
-      if (!card) return;
-
-      const index = parseInt(card.dataset.index, 10);
-      const key = this.dataset.field;
-
-      if (!medicationRows[index] || !key) return;
-      medicationRows[index][key] = this.innerHTML.trim();
-    });
-
-    field.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && !this.closest(".mini-treatment-table")) {
-        e.preventDefault();
-        document.execCommand("insertHTML", false, "<br>");
-      }
-    });
-  });
-
-  const tableCells = document.querySelectorAll(".mini-treatment-table td");
-
-  tableCells.forEach(cell => {
-    cell.setAttribute("contenteditable", "true");
-
-    cell.addEventListener("input", function () {
-      const card = this.closest(".med-card");
-      if (!card) return;
-
-      const index = parseInt(card.dataset.index, 10);
-      const sectionContent = this.closest(".med-section")?.querySelector(".med-section-content");
-      const key = sectionContent?.dataset.field;
-
-      if (!medicationRows[index] || !sectionContent || !key) return;
-      medicationRows[index][key] = sectionContent.innerHTML.trim();
-    });
-
-    cell.addEventListener("keydown", function (e) {
-      if (e.key === "Tab") return;
-
-      if (e.key === "Enter") {
-        e.preventDefault();
-        document.execCommand("insertHTML", false, "<br>");
-      }
-    });
-  });
-}
-
-async function loadTableFromFirebase() {
   try {
-    const snapshot = await getDocs(firebaseCollection);
-    medicationRows = [];
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    templatesRef = collection(db, 'consultationTemplates');
+    provider = new GoogleAuthProvider();
+    firebaseReady = true;
+  } catch (err) {
+    console.warn('Firebase failed to initialise. Built-in templates will still load.', err);
+  }
 
-    let found = false;
-
-    snapshot.forEach(docSnap => {
-      if (docSnap.id === "medTable") {
-        found = true;
-        const data = docSnap.data();
-
-        if (data.rows && Array.isArray(data.rows)) {
-          medicationRows = data.rows.map(row => ({
-            medication: row.medication || "",
-            subtitle: row.subtitle || row.typeCategory || "",
-            mechanism: row.mechanism || row.restrictions || "",
-            firstLine: row.firstLine || row.dosage || "",
-            secondLine: row.secondLine || "",
-            allergyFirstLine: row.allergyFirstLine || "",
-            allergySecondLine: row.allergySecondLine || "",
-            notes: row.notes || "",
-            isEditing: false
-          }));
-        }
+  const defaultTemplates = [
+    {
+      id: 'general',
+      title: 'General Consultation',
+      category: 'viral',
+      desc: 'Flexible all-purpose assessment structure for common acute presentations.',
+      tags: ['general', 'assessment', 'documentation'],
+      isBuiltIn: true,
+      prompts: {
+        presentingComplaint: 'Acute presentation requiring assessment',
+        hpc: 'Clarify onset, duration, progression, severity, associated symptoms, exposure history, treatment tried, and why presenting today.',
+        redFlags: 'Document relevant dangerous symptoms absent or present.',
+        pmhx: 'Relevant background conditions only.',
+        medsAllergies: 'Current medicines, allergies, prior reactions, recent antibiotics.',
+        patientFactors: 'Pregnancy, breastfeeding, immunocompromised state, social/functional factors.',
+        measurements: 'Age, weight, obs, pain score, relevant bedside tests.',
+        exam: 'Focused exam with pertinent positives and negatives.',
+        diagnosis: 'Working diagnosis.',
+        differentials: 'Key alternative diagnoses considered.',
+        treatmentRationale: 'Why this is likely the correct management pathway.',
+        managementPlan: 'Immediate treatment, investigations, review timing.',
+        patientAdvice: 'Supportive care and home advice.',
+        safetyNet: 'Return if worsening, not improving, or red flag symptoms develop.',
+        documentation: 'Record anything medico-legally important.'
       }
+    },
+    {
+      id: 'sore-throat',
+      title: 'Sore Throat / Pharyngitis',
+      category: 'respiratory',
+      desc: 'Assessment for viral sore throat, strep, peritonsillar infection, and airway concerns.',
+      tags: ['ENT', 'throat', 'strep'],
+      isBuiltIn: true,
+      prompts: {
+        presentingComplaint: 'Sore throat / odynophagia',
+        hpc: 'Duration, fever, swallowing difficulty, cough/coryza, voice change, unilateral pain, sick contacts, prior strep, analgesia tried.',
+        redFlags: 'No stridor, no drooling, no trismus, no hot potato voice, no significant respiratory distress, no dehydration unless present.',
+        pmhx: 'Recurrent tonsillitis, immunocompromise, rheumatic fever risk, recent antibiotics.',
+        medsAllergies: 'Penicillin allergy? prior antibiotic reactions?',
+        patientFactors: 'Age, pregnancy, oral intake, ability to swallow, household strep exposure.',
+        measurements: 'Temp, HR, sats, hydration status, weight if prescribing child dose.',
+        exam: 'Tonsils/pharynx appearance, exudate, erythema, uvula position, cervical nodes, hydration, voice, respiratory effort.',
+        diagnosis: 'Likely viral pharyngitis / streptococcal pharyngitis / tonsillitis / consider PTA if concerning.',
+        differentials: 'Peritonsillar abscess, epiglottitis, infectious mononucleosis, oral thrush.',
+        treatmentRationale: 'State whether clinical picture supports supportive care vs testing vs antibiotic treatment.',
+        managementPlan: 'Analgesia, fluids, swab if applicable, antibiotic plan if indicated, review/escalation plan.',
+        patientAdvice: 'Hydration, analgesia, rest, infection control, avoid sharing utensils.',
+        safetyNet: 'Return urgently if drooling, worsening unilateral swelling, muffled voice, SOB, inability to swallow fluids, or dehydration.',
+        documentation: 'Document airway assessment and safety net clearly.'
+      }
+    },
+    {
+      id: 'cellulitis',
+      title: 'Cellulitis / Skin Infection',
+      category: 'skin',
+      desc: 'Guide for cellulitis, wound infection, localised skin infection, and escalation concerns.',
+      tags: ['skin', 'infection', 'antibiotics'],
+      isBuiltIn: true,
+      prompts: {
+        presentingComplaint: 'Red, painful, warm skin / wound infection concern',
+        hpc: 'Onset, spread, pain, fever, discharge, trauma, bite, wound, prior cellulitis, treatment already tried.',
+        redFlags: 'No rapidly progressive pain, no crepitus, no systemic toxicity, no hypotension, no severe swelling, no lymphangitis unless present.',
+        pmhx: 'Diabetes, oedema, eczema, vascular disease, immunosuppression, prior MRSA or recurrent cellulitis.',
+        medsAllergies: 'Recent antibiotics? penicillin allergy?',
+        patientFactors: 'Weight, frailty, pregnancy, adherence concerns, home support.',
+        measurements: 'Temp, HR, BP, lesion size, margins, photos if used.',
+        exam: 'Site, erythema, warmth, swelling, tenderness, fluctuance, discharge, streaking, ROM if near joint.',
+        diagnosis: 'Likely cellulitis / infected wound / abscess / superficial skin infection.',
+        differentials: 'DVT, gout, septic arthritis, contact dermatitis, necrotising infection.',
+        treatmentRationale: 'Explain why oral antibiotics are or are not appropriate and whether drainage, swab, or escalation is needed.',
+        managementPlan: 'Antibiotics, analgesia, elevation, wound care, mark borders, review timeframe.',
+        patientAdvice: 'Keep limb elevated, monitor spread, wound care instructions, complete course if prescribed.',
+        safetyNet: 'Return urgently if spreading redness, fevers, severe pain, systemic symptoms, reduced movement, or no improvement.',
+        documentation: 'Include size/location, whether borders marked, and whether abscess was excluded.'
+      }
+    },
+    {
+      id: 'viral-uri',
+      title: 'Viral URTI / Supportive Care',
+      category: 'viral',
+      desc: 'Useful when the key decision is why antibiotics are not needed.',
+      tags: ['viral', 'supportive', 'no antibiotics'],
+      isBuiltIn: true,
+      prompts: {
+        presentingComplaint: 'Upper respiratory symptoms',
+        hpc: 'Fever, cough, coryza, sore throat, duration, sick contacts, breathing difficulty, hydration, appetite.',
+        redFlags: 'No respiratory distress, no chest pain, no dehydration, no altered mental status unless present.',
+        pmhx: 'Asthma/COPD, immunosuppression, recurrent chest infection.',
+        medsAllergies: 'Current symptomatic treatments used.',
+        patientFactors: 'Smoking, pregnancy, age extremes, exposure risk.',
+        measurements: 'Obs including temp, RR, sats.',
+        exam: 'General appearance, ENT/chest findings, hydration status.',
+        diagnosis: 'Likely viral URTI / self-limiting viral illness.',
+        differentials: 'Bacterial sinusitis, pneumonia, strep pharyngitis, influenza, COVID if relevant.',
+        treatmentRationale: 'Symptoms and exam do not support bacterial infection requiring antibiotics at present.',
+        managementPlan: 'Symptomatic treatment, rest, fluids, analgesia, work/school advice.',
+        patientAdvice: 'Hydration, nasal saline, analgesia, rest, expected timeframe.',
+        safetyNet: 'Return if SOB, chest pain, dehydration, persistent fever, worsening symptoms, or failure to improve.',
+        documentation: 'Clearly document rationale for no antibiotics.'
+      }
+    },
+    {
+      id: 'uti',
+      title: 'UTI / Dysuria',
+      category: 'urinary',
+      desc: 'Focused urinary assessment with red flags for upper UTI and alternative causes.',
+      tags: ['urine', 'dysuria', 'infection'],
+      isBuiltIn: true,
+      prompts: {
+        presentingComplaint: 'Dysuria / urinary symptoms',
+        hpc: 'Frequency, urgency, dysuria, haematuria, fever, flank pain, nausea, vaginal symptoms, pregnancy possibility, STI risk.',
+        redFlags: 'No flank pain, no vomiting, no sepsis features, no pregnancy concerns, no urinary retention unless present.',
+        pmhx: 'Recurrent UTI, renal issues, diabetes, catheter, kidney stones.',
+        medsAllergies: 'Antibiotic allergies, recent urine culture results if known.',
+        patientFactors: 'Pregnancy, age, sexual history relevance, hydration, ability to take oral treatment.',
+        measurements: 'Temp, obs, dipstick result, pregnancy test if relevant.',
+        exam: 'Suprapubic tenderness, CVA tenderness, abdominal exam if needed.',
+        diagnosis: 'Likely lower UTI / consider pyelonephritis / STI / vaginitis depending on findings.',
+        differentials: 'Vaginitis, STI, stone, interstitial cystitis.',
+        treatmentRationale: 'Explain whether empirical treatment is appropriate and whether culture/testing required.',
+        managementPlan: 'Urine testing, antibiotics if indicated, hydration advice, analgesia, review if worsening.',
+        patientAdvice: 'Hydration, monitor fever/flank pain, complete treatment if prescribed.',
+        safetyNet: 'Return urgently if flank pain, vomiting, fever, rigors, pregnancy concerns, or no improvement.',
+        documentation: 'Include urine findings and pregnancy considerations if relevant.'
+      }
+    },
+    {
+      id: 'msk-injury',
+      title: 'MSK Injury / Pain',
+      category: 'msk',
+      desc: 'Acute limb pain, sprain, strain, injury, ROM, swelling, and imaging reasoning.',
+      tags: ['injury', 'pain', 'exam'],
+      isBuiltIn: true,
+      prompts: {
+        presentingComplaint: 'Injury / musculoskeletal pain',
+        hpc: 'Mechanism, onset, pop/click, swelling, ability to weight bear/use limb, numbness, weakness, treatment tried.',
+        redFlags: 'No neurovascular compromise, no open injury, no gross deformity, no compartment-type pain unless present.',
+        pmhx: 'Previous injury/surgery, osteoporosis, anticoagulation.',
+        medsAllergies: 'Analgesia taken, anticoagulants.',
+        patientFactors: 'Dominant hand, occupation, sports, baseline mobility.',
+        measurements: 'Pain score, swelling, ROM, neurovascular status.',
+        exam: 'Inspection, palpation, ROM, strength, weight bearing, neurovascular findings.',
+        diagnosis: 'Likely sprain / strain / contusion / fracture not excluded if applicable.',
+        differentials: 'Fracture, tendon rupture, dislocation, septic joint if clinically relevant.',
+        treatmentRationale: 'Explain conservative treatment vs imaging vs referral decision.',
+        managementPlan: 'RICE, analgesia, support, x-ray if indicated, activity modification, follow-up.',
+        patientAdvice: 'Rest, mobilisation advice, signs of worsening, expected recovery.',
+        safetyNet: 'Return if increasing pain, numbness, colour change, worsening swelling, inability to weight bear, or persistent symptoms.',
+        documentation: 'Document neurovascular status and mechanism clearly.'
+      }
+    }
+  ];
+
+  const templateList = document.getElementById('templateList');
+  const searchInput = document.getElementById('searchInput');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const activeTemplateTitle = document.getElementById('activeTemplateTitle');
+  const activeTemplateDesc = document.getElementById('activeTemplateDesc');
+  const fillTemplateBtn = document.getElementById('fillTemplateBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const generateBtn = document.getElementById('generateBtn');
+  const output = document.getElementById('output');
+  const printBtn = document.getElementById('printBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const copyPlainBtn = document.getElementById('copyPlainBtn');
+
+  const topActions = document.querySelector('.top-actions');
+
+  const authWrap = document.createElement('div');
+  authWrap.style.display = 'inline-flex';
+  authWrap.style.alignItems = 'center';
+  authWrap.style.gap = '8px';
+  authWrap.style.flexWrap = 'wrap';
+
+  const loginBtn = document.createElement('button');
+  loginBtn.className = 'glass-btn';
+  loginBtn.id = 'loginBtn';
+  loginBtn.textContent = '🔐 Sign in';
+
+  const logoutBtn = document.createElement('button');
+  logoutBtn.className = 'glass-btn';
+  logoutBtn.id = 'logoutBtn';
+  logoutBtn.textContent = '🚪 Sign out';
+  logoutBtn.style.display = 'none';
+
+  const authStatus = document.createElement('span');
+  authStatus.className = 'chip';
+  authStatus.id = 'authStatus';
+  authStatus.textContent = firebaseReady ? 'Checking sign-in...' : 'Firebase unavailable';
+
+  authWrap.appendChild(loginBtn);
+  authWrap.appendChild(logoutBtn);
+  authWrap.appendChild(authStatus);
+  topActions.appendChild(authWrap);
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'glass-btn';
+  saveBtn.id = 'saveTemplateBtn';
+  saveBtn.textContent = '💾 Save template';
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'glass-btn';
+  editBtn.id = 'editTemplateBtn';
+  editBtn.textContent = '✏️ Update template';
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'glass-btn';
+  deleteBtn.id = 'deleteTemplateBtn';
+  deleteBtn.textContent = '🗑️ Delete template';
+
+  topActions.appendChild(saveBtn);
+  topActions.appendChild(editBtn);
+  topActions.appendChild(deleteBtn);
+
+  let activeTemplateId = 'general';
+  let userTemplates = [];
+
+  const fieldIds = [
+    'presentingComplaint', 'hpc', 'redFlags', 'pmhx', 'medsAllergies',
+    'patientFactors', 'measurements', 'exam', 'diagnosis', 'differentials',
+    'treatmentRationale', 'managementPlan', 'patientAdvice', 'safetyNet', 'documentation'
+  ];
+
+  function allTemplates() {
+    return [...defaultTemplates, ...userTemplates];
+  }
+
+  function getActiveTemplate() {
+    return allTemplates().find(t => t.id === activeTemplateId) || allTemplates()[0];
+  }
+
+  function getField(id) {
+    return document.getElementById(id);
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function updateAuthUI() {
+    if (!firebaseReady) {
+      authStatus.textContent = 'Firebase unavailable';
+      loginBtn.style.display = 'none';
+      logoutBtn.style.display = 'none';
+      saveBtn.style.opacity = '0.6';
+      editBtn.style.opacity = '0.6';
+      deleteBtn.style.opacity = '0.6';
+      return;
+    }
+
+    if (currentUser) {
+      authStatus.textContent = currentUser.email || currentUser.displayName || 'Signed in';
+      loginBtn.style.display = 'none';
+      logoutBtn.style.display = 'inline-flex';
+      saveBtn.style.opacity = '1';
+      editBtn.style.opacity = '1';
+      deleteBtn.style.opacity = '1';
+    } else {
+      authStatus.textContent = 'Not signed in';
+      loginBtn.style.display = 'inline-flex';
+      logoutBtn.style.display = 'none';
+      saveBtn.style.opacity = '0.6';
+      editBtn.style.opacity = '0.6';
+      deleteBtn.style.opacity = '0.6';
+    }
+  }
+
+  async function signInUser() {
+    if (!firebaseReady) return;
+
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error('Google sign-in failed:', err);
+      alert('Google sign-in failed.');
+    }
+  }
+
+  async function signOutUser() {
+    if (!firebaseReady) return;
+
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error('Sign out failed:', err);
+      alert('Sign out failed.');
+    }
+  }
+
+  function promptForTemplateMeta(existing = null) {
+    const title = prompt('Template title:', existing?.title || '');
+    if (title === null) return null;
+    const category = prompt('Category (respiratory / skin / viral / urinary / msk):', existing?.category || 'viral');
+    if (category === null) return null;
+    const desc = prompt('Short description:', existing?.desc || '');
+    if (desc === null) return null;
+    const tagsRaw = prompt('Tags separated by commas:', existing?.tags?.join(', ') || '');
+    if (tagsRaw === null) return null;
+
+    return {
+      title: title.trim() || 'Untitled Template',
+      category: (category.trim() || 'viral').toLowerCase(),
+      desc: desc.trim() || 'Custom consultation template.',
+      tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+    };
+  }
+
+  function collectPromptFields() {
+    const prompts = {};
+    fieldIds.forEach(id => {
+      prompts[id] = getField(id)?.value.trim() || '';
+    });
+    return prompts;
+  }
+
+  async function loadUserTemplates() {
+    if (!firebaseReady || !currentUser) {
+      userTemplates = [];
+      if (!allTemplates().some(t => t.id === activeTemplateId)) {
+        activeTemplateId = defaultTemplates[0].id;
+      }
+      renderTemplates();
+      syncHero();
+      return;
+    }
+
+    try {
+      const q = query(templatesRef, orderBy('updatedAt', 'desc'));
+      const snap = await getDocs(q);
+      userTemplates = snap.docs.map(d => ({
+        id: d.id,
+        firebaseId: d.id,
+        isBuiltIn: false,
+        ...d.data()
+      }));
+    } catch (err) {
+      console.warn('Firestore load failed, retrying without orderBy:', err);
+      try {
+        const snap = await getDocs(templatesRef);
+        userTemplates = snap.docs.map(d => ({
+          id: d.id,
+          firebaseId: d.id,
+          isBuiltIn: false,
+          ...d.data()
+        }));
+      } catch (innerErr) {
+        console.warn('Firestore fallback load also failed. Showing built-in templates only.', innerErr);
+        userTemplates = [];
+      }
+    }
+
+    if (!allTemplates().some(t => t.id === activeTemplateId)) {
+      activeTemplateId = defaultTemplates[0].id;
+    }
+
+    renderTemplates();
+    syncHero();
+  }
+
+  function renderTemplates() {
+    const term = searchInput.value.trim().toLowerCase();
+    const category = categoryFilter.value;
+
+    const filtered = allTemplates().filter(t => {
+      const matchesCategory = category === 'all' || t.category === category;
+      const haystack = [t.title, t.desc, ...(t.tags || [])].join(' ').toLowerCase();
+      const matchesTerm = !term || haystack.includes(term);
+      return matchesCategory && matchesTerm;
     });
 
-    if (!found) {
-      console.log("No saved data found");
-    }
+    templateList.innerHTML = '';
 
-    renderCards(medicationRows);
-  } catch (error) {
-    console.error("Load failed:", error);
-  }
-}
-
-
- function filterTable() {
-  const input = document.getElementById("searchInput").value.toLowerCase();
-  const cards = document.querySelectorAll(".med-card");
-
-  cards.forEach(card => {
-    const cardText = card.innerText.toLowerCase();
-    card.classList.toggle("hidden-card", !cardText.includes(input));
-  });
-}
-
-function selectCard(index) {
-  selectedCardIndex = index;
-
-  document.querySelectorAll(".med-card").forEach(card => {
-    card.classList.remove("selected");
-  });
-
-  const selected = document.querySelector(`.med-card[data-index="${index}"]`);
-  if (selected) selected.classList.add("selected");
-}
-
-
-
- function deleteSelectedRow() {
-  if (selectedCardIndex === null) {
-    alert("Select a card first.");
-    return;
+    filtered.forEach(template => {
+      const card = document.createElement('div');
+      card.className = 'template-card' + (template.id === activeTemplateId ? ' active' : '');
+      card.innerHTML = `
+        <h3>${escapeHtml(template.title)} ${template.isBuiltIn ? '⭐' : '📝'}</h3>
+        <p>${escapeHtml(template.desc)}</p>
+        <div class="template-tags">
+          ${(template.tags || []).map(tag => `<span class="chip">${escapeHtml(tag)}</span>`).join('')}
+        </div>
+      `;
+      card.addEventListener('click', () => setActiveTemplate(template.id));
+      templateList.appendChild(card);
+    });
   }
 
-  medicationRows.splice(selectedCardIndex, 1);
-  selectedCardIndex = null;
-  renderCards(medicationRows);
-}
-
- function insertTreatmentTable(index, fieldName) {
-  const labelMap = {
-    firstLine: "1st line treatment",
-    secondLine: "2nd line treatment",
-    allergyFirstLine: "1st line if allergic to 1st line group",
-    allergySecondLine: "2nd line if allergic to 1st line group"
-  };
-
-  const existing = medicationRows[index][fieldName] || "";
-  const sectionLabel = labelMap[fieldName] || "Treatment";
-
-  if (existing.includes("mini-treatment-table")) {
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = existing;
-
-    const table = wrapper.querySelector(".mini-treatment-table");
-    if (table) {
-      const hasTitleRow = table.querySelector(".table-section-title-row");
-
-      if (!hasTitleRow) {
-        const titleRow = table.insertRow(0);
-        titleRow.className = "table-section-title-row";
-        titleRow.innerHTML = `<th colspan="2">${sectionLabel}</th>`;
-      }
-
-      const hasColumnHeadings = table.querySelector(".table-column-headings");
-      if (!hasColumnHeadings) {
-        const headingRow = table.insertRow(1);
-        headingRow.className = "table-column-headings";
-        headingRow.innerHTML = `
-          <th>Used for</th>
-          <th>Dose</th>
-        `;
-      } else {
-        const newRow = table.insertRow();
-        newRow.innerHTML = `
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-        `;
-      }
-
-      medicationRows[index][fieldName] = wrapper.innerHTML;
-    }
-  } else {
-    medicationRows[index][fieldName] = `
-      <table class="mini-treatment-table">
-        <tr class="table-section-title-row">
-          <th colspan="2">${sectionLabel}</th>
-        </tr>
-        <tr class="table-column-headings">
-          <th>Used for</th>
-          <th>Dose</th>
-        </tr>
-        <tr>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-        </tr>
-      </table>
-    `;
+  function setActiveTemplate(id) {
+    activeTemplateId = id;
+    syncHero();
+    renderTemplates();
   }
 
-  renderCards(medicationRows);
-}
-  
-function deleteTreatmentTable(index, fieldName) {
-  if (!medicationRows[index]) return;
+  function syncHero() {
+    const template = getActiveTemplate();
+    activeTemplateTitle.textContent = template.title;
+    activeTemplateDesc.textContent = template.desc;
+    deleteBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
+    editBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
+  }
 
-  const existing = medicationRows[index][fieldName] || "";
-  if (!existing.includes("mini-treatment-table")) return;
+  function fillTemplatePrompts() {
+    const template = getActiveTemplate();
+    if (!template) return;
 
-  medicationRows[index][fieldName] = "";
-  renderCards(medicationRows);
-}
+    fieldIds.forEach(id => {
+      const field = getField(id);
+      if (!field) return;
+      field.value = template.prompts?.[id] || '';
+    });
+  }
 
-  // Load table data on page load
- window.onload = function () {
-  loadTableFromFirebase();
-  document.getElementById("modeText").textContent = "View Mode";
-};
+  function clearForm() {
+    fieldIds.forEach(id => {
+      const field = getField(id);
+      if (field) field.value = '';
+    });
 
-window.selectCard = selectCard;
-  // Expose functions globally for HTML button onclicks
-  window.toggleEditMode = toggleEditMode;
-  window.addRow = addRow;
-  window.deleteSelectedRow = deleteSelectedRow;
-  window.saveTableToFirebase = saveTableToFirebase;
-  window.filterTable = filterTable;
-  window.insertTreatmentTable = insertTreatmentTable;
-  window.editSingleCard = editSingleCard;
-window.saveSingleCard = saveSingleCard;
-window.cancelSingleCardEdit = cancelSingleCardEdit;
-window.insertTreatmentTable = insertTreatmentTable;
-window.deleteTreatmentTable = deleteTreatmentTable;
-  
-window.copyEmoji = function(button, emoji) {
-  navigator.clipboard.writeText(emoji).then(() => {
-    const copiedSpan = button.parentElement.querySelector('.copiedMsg');
-    if (copiedSpan) {
-      copiedSpan.classList.add('show');
-      setTimeout(() => {
-        copiedSpan.classList.remove('show');
-      }, 1000); // show for 1 second
+    ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly'].forEach(id => {
+      const box = document.getElementById(id);
+      if (box) box.checked = false;
+    });
+
+    output.innerHTML = '';
+  }
+
+  function getCheckedTreatmentFlags() {
+    const flags = [];
+    if (document.getElementById('abxNotIndicated').checked) flags.push('Antibiotics not indicated');
+    if (document.getElementById('abxDelayed').checked) flags.push('Delayed antibiotic approach considered / provided');
+    if (document.getElementById('abxPrescribed').checked) flags.push('Antibiotics prescribed');
+    if (document.getElementById('supportiveCareOnly').checked) flags.push('Supportive care only');
+    return flags;
+  }
+
+  function buildSummaryText() {
+    const data = Object.fromEntries(fieldIds.map(id => [id, getField(id)?.value.trim() || '']));
+    const flags = getCheckedTreatmentFlags();
+    const template = getActiveTemplate();
+
+    const sections = [
+      ['Template', template?.title || 'General Consultation'],
+      ['Presenting complaint', data.presentingComplaint],
+      ['History', data.hpc],
+      ['Red flags', data.redFlags],
+      ['PMHx / relevant history', data.pmhx],
+      ['Medications / allergies', data.medsAllergies],
+      ['Patient factors', data.patientFactors],
+      ['Measurements / observations', data.measurements],
+      ['Examination', data.exam],
+      ['Working diagnosis', data.diagnosis],
+      ['Differentials / concerns considered', data.differentials],
+      ['Treatment decision', flags.join('; ')],
+      ['Treatment rationale', data.treatmentRationale],
+      ['Management plan', data.managementPlan],
+      ['Patient advice', data.patientAdvice],
+      ['Safety net', data.safetyNet],
+      ['Documentation notes', data.documentation]
+    ];
+
+    return sections
+      .filter(([, value]) => value && value.trim())
+      .map(([label, value]) => `${label}:\n${value}`)
+      .join('\n\n');
+  }
+
+  function generateSummary() {
+    const summary = buildSummaryText();
+    output.innerHTML = escapeHtml(summary).replace(/\n/g, '<br>');
+  }
+
+  async function copyOutput(asPlainText = false) {
+    const text = buildSummaryText();
+    if (!text.trim()) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      const original = asPlainText ? copyPlainBtn.textContent : copyBtn.textContent;
+      const target = asPlainText ? copyPlainBtn : copyBtn;
+      target.textContent = '✅ Copied';
+      setTimeout(() => target.textContent = original, 1400);
+    } catch (err) {
+      alert('Copy failed on this browser. You can still highlight and copy manually.');
     }
-  }).catch(err => {
-    console.error("Failed to copy emoji:", err);
-  });
-};
+  }
 
+  async function saveCurrentTemplate() {
+    if (!firebaseReady) {
+      alert('Firebase is not connected.');
+      return;
+    }
 
+    if (!currentUser) {
+      alert('Please sign in first.');
+      return;
+    }
+
+    const meta = promptForTemplateMeta();
+    if (!meta) return;
+
+    const payload = {
+      title: meta.title,
+      category: meta.category,
+      desc: meta.desc,
+      tags: meta.tags,
+      prompts: collectPromptFields(),
+      ownerUid: currentUser.uid,
+      ownerEmail: currentUser.email || '',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    const docRef = await addDoc(templatesRef, payload);
+    activeTemplateId = docRef.id;
+    await loadUserTemplates();
+    alert('Template saved.');
+  }
+
+  async function updateCurrentTemplate() {
+    if (!firebaseReady) {
+      alert('Firebase is not connected.');
+      return;
+    }
+
+    if (!currentUser) {
+      alert('Please sign in first.');
+      return;
+    }
+
+    const template = getActiveTemplate();
+    if (!template || template.isBuiltIn) {
+      alert('Built-in templates cannot be overwritten. Save as a new template instead.');
+      return;
+    }
+
+    const meta = promptForTemplateMeta(template);
+    if (!meta) return;
+
+    await updateDoc(doc(db, 'consultationTemplates', template.id), {
+      title: meta.title,
+      category: meta.category,
+      desc: meta.desc,
+      tags: meta.tags,
+      prompts: collectPromptFields(),
+      updatedAt: serverTimestamp()
+    });
+
+    await loadUserTemplates();
+    activeTemplateId = template.id;
+    syncHero();
+    renderTemplates();
+    alert('Template updated.');
+  }
+
+  async function deleteCurrentTemplate() {
+    if (!firebaseReady) {
+      alert('Firebase is not connected.');
+      return;
+    }
+
+    if (!currentUser) {
+      alert('Please sign in first.');
+      return;
+    }
+
+    const template = getActiveTemplate();
+    if (!template || template.isBuiltIn) {
+      alert('Built-in templates cannot be deleted.');
+      return;
+    }
+
+    const ok = confirm(`Delete template: ${template.title}?`);
+    if (!ok) return;
+
+    await deleteDoc(doc(db, 'consultationTemplates', template.id));
+    activeTemplateId = defaultTemplates[0].id;
+    await loadUserTemplates();
+    syncHero();
+    alert('Template deleted.');
+  }
+
+  searchInput.addEventListener('input', renderTemplates);
+  categoryFilter.addEventListener('change', renderTemplates);
+  fillTemplateBtn.addEventListener('click', fillTemplatePrompts);
+  clearBtn.addEventListener('click', clearForm);
+  generateBtn.addEventListener('click', generateSummary);
+  copyBtn.addEventListener('click', () => copyOutput(false));
+  copyPlainBtn.addEventListener('click', () => copyOutput(true));
+  printBtn.addEventListener('click', () => window.print());
+  saveBtn.addEventListener('click', saveCurrentTemplate);
+  editBtn.addEventListener('click', updateCurrentTemplate);
+  deleteBtn.addEventListener('click', deleteCurrentTemplate);
+  loginBtn.addEventListener('click', signInUser);
+  logoutBtn.addEventListener('click', signOutUser);
+
+  renderTemplates();
+  syncHero();
+  updateAuthUI();
+
+  if (firebaseReady) {
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user || null;
+      updateAuthUI();
+      await loadUserTemplates();
+      syncHero();
+    });
+  }
 </script>
-<script src="https://xlyneve.github.io/CEP/calculator.js?v=3" defer></script>
-
 </body>
 </html>
