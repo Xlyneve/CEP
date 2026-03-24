@@ -1200,6 +1200,10 @@ a.conceptLink.hasDef::before{
   <button id="unlockBtn">Unlock</button>
   <button id="lockBtn" style="display:none;" title="Lock">🔒</button>
   <div id="lockInfo">Locked</div>
+
+  <button id="googleLoginBtn" type="button">Sign in with Google</button>
+  <button id="googleLogoutBtn" type="button" style="display:none;">Sign out</button>
+  <div id="authStatusText">Not signed in</div>
 </div>
 
 
@@ -1319,7 +1323,40 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
 const auth = firebase.auth();
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .catch(err => console.error('Persistence error:', err));
+  
+  googleLoginBtn?.addEventListener('click', async () => {
+  try {
+    await auth.signInWithPopup(googleProvider);
+  } catch (e) {
+    console.error('Google sign-in failed:', e);
+    alert('Google sign-in failed: ' + (e?.message || e));
+  }
+});
+
+googleLogoutBtn?.addEventListener('click', async () => {
+  try {
+    await auth.signOut();
+  } catch (e) {
+    console.error('Sign out failed:', e);
+    alert('Sign out failed: ' + (e?.message || e));
+  }
+});
+
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    authStatusText.textContent = `Signed in: ${user.email || user.displayName || 'User'}`;
+    googleLoginBtn.style.display = 'none';
+    googleLogoutBtn.style.display = 'inline-block';
+  } else {
+    authStatusText.textContent = 'Not signed in';
+    googleLoginBtn.style.display = 'inline-block';
+    googleLogoutBtn.style.display = 'none';
+  }
+});
 
 /* =========================
    DOM refs
@@ -1341,6 +1378,10 @@ const lockInfo = document.getElementById('lockInfo');
 
 const inputArea = document.getElementById('inputArea');
 const userInput = document.getElementById('userInput');
+
+const googleLoginBtn = document.getElementById('googleLoginBtn');
+const googleLogoutBtn = document.getElementById('googleLogoutBtn');
+const authStatusText = document.getElementById('authStatusText');
 
 /* =========================
    Live search cache state
@@ -4625,5 +4666,4 @@ updateUIForLockState();
 
 </body>
 </html>
-
 
