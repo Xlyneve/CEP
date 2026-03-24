@@ -1145,7 +1145,7 @@ a.conceptLink.hasDef::before{
   position: fixed;
   top: 60px;
   right: 12px;
-  display: none;
+  display: flex;
   flex-direction: column;
   align-items: flex-end;
   background: rgba(255, 255, 255, 0.95);
@@ -1305,9 +1305,6 @@ a.conceptLink.hasDef::before{
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 
 <script type="module">
-/* =========================
-   Firebase init
-========================= */
 const firebaseConfig = {
   apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
   authDomain: "notes-chat-c5ff3.firebaseapp.com",
@@ -1325,11 +1322,30 @@ const storage = firebase.storage();
 const auth = firebase.auth();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-/* DOM refs FIRST */
+/* DOM refs MUST come before using them */
+const chat = document.getElementById('chat');
+const liveResults = document.getElementById('liveResults');
+
+const noteInput = document.getElementById('noteInput');
+const addNoteBtn = document.getElementById('addNoteBtn');
+const addNoteToggle = document.getElementById('addNoteToggle');
+const notePanel = document.getElementById('notePanel');
+
+const lockToggle = document.getElementById('lockToggle');
+const lockSection = document.getElementById('lockSection');
+const accessCodeInput = document.getElementById('accessCode');
+const unlockBtn = document.getElementById('unlockBtn');
+const lockBtn = document.getElementById('lockBtn');
+const lockInfo = document.getElementById('lockInfo');
+
+const inputArea = document.getElementById('inputArea');
+const userInput = document.getElementById('userInput');
+
 const googleLoginBtn = document.getElementById('googleLoginBtn');
 const googleLogoutBtn = document.getElementById('googleLogoutBtn');
 const authStatusText = document.getElementById('authStatusText');
 
+/* auth setup */
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .catch(err => console.error('Persistence error:', err));
 
@@ -1362,6 +1378,8 @@ auth.onAuthStateChanged((user) => {
     googleLogoutBtn.style.display = 'none';
   }
 });
+
+/* keep the rest of your script below this */
 
 /* =========================
    DOM refs
