@@ -910,7 +910,7 @@ select option {
     <label>
       Patient type
       <select id="patientType">
-        <option value="">Select patient type</option>
+        <option value="">Patient type</option>
         <option value="adult">Adult</option>
         <option value="child">Child</option>
       </select>
@@ -1588,41 +1588,40 @@ managementPlan: 'Immediate treatment, investigations, review timing.',
   }
 
   function buildSummaryText() {
-    const data = Object.fromEntries(fieldIds.map(id => [id, getField(id)?.value.trim() || '']));
-    const flags = getCheckedTreatmentFlags();
-    
+  const data = Object.fromEntries(fieldIds.map(id => [id, getField(id)?.value.trim() || '']));
+  const flags = getCheckedTreatmentFlags();
 
-    const sections = [
-  ['Presenting complaint', data.presentingComplaint],
-  ['History', data.hpc],
-  ['Red flags', data.redFlags],
-  ['PMHx / relevant history', data.pmhx],
-  ['Medications / allergies', data.medsAllergies],
-  ['Patient factors', data.patientFactors],
-  ['Measurements / observations', data.measurements],
-  ['Examination', data.exam],
-  ['Working diagnosis', data.diagnosis],
-  ['Differentials / concerns considered', data.differentials],
-  ['Treatment decision', flags.join('; ')],
-  ['Patient type', data.patientType],
-  ['Child weight (kg)', data.patientType === 'child' ? data.childWeight : ''],
-  ['Antibiotic', data.antibioticName],
-  ['Directions', data.abxDirections],
-  ['Duration (days)', data.abxDays],
-  ['1st choice ABX', data.firstChoiceAbx],
-  ['2nd choice ABX', data.secondChoiceAbx],
-  ['Treatment rationale', data.treatmentRationale],
-  ['Management plan', data.managementPlan],
-  ['Patient advice', data.patientAdvice],
-  ['Safety net', data.safetyNet],
-  ['Documentation notes', data.documentation]
-];
+  const abxSummary =
+    [data.antibioticName, data.abxDirections].filter(Boolean).join(' ') +
+    (data.abxDays ? ` for ${data.abxDays} days` : '');
 
-    return sections
-      .filter(([, value]) => value && value.trim())
-      .map(([label, value]) => `${label}:\n${value}`)
-      .join('\n\n');
-  }
+  const sections = [
+    ['Presenting complaint', data.presentingComplaint],
+    ['History', data.hpc],
+    ['Red flags', data.redFlags],
+    ['PMHx / relevant history', data.pmhx],
+    ['Medications / allergies', data.medsAllergies],
+    ['Patient factors', data.patientFactors],
+    ['Measurements / observations', data.measurements],
+    ['Examination', data.exam],
+    ['Working diagnosis', data.diagnosis],
+    ['Differentials / concerns considered', data.differentials],
+    ['Treatment decision', flags.join('; ')],
+    ['Antibiotic prescribed', abxSummary],
+    ['1st choice ABX', data.firstChoiceAbx],
+    ['2nd choice ABX', data.secondChoiceAbx],
+    ['Treatment rationale', data.treatmentRationale],
+    ['Management plan', data.managementPlan],
+    ['Patient advice', data.patientAdvice],
+    ['Safety net', data.safetyNet],
+    ['Documentation notes', data.documentation]
+  ];
+
+  return sections
+    .filter(([, value]) => value && value.trim())
+    .map(([label, value]) => `${label}:\n${value}`)
+    .join('\n\n');
+}
 
   function generateSummary() {
     const summary = buildSummaryText();
