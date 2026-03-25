@@ -852,35 +852,77 @@ textarea::placeholder {
             </div>
           </div>
 
-          <div class="card">
-            <div class="section-header">
-              <div>
-                <div class="section-heading">6. Antibiotic / treatment decision</div>
-                <div class="hint">Make the why explicit</div>
-              </div>
-              <div class="badge-row">
-                <span class="badge pink">Prescribing</span>
-              </div>
-            </div>
+         <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">6. Prescribing / antibiotic decision</div>
+      <div class="hint">Structured prescribing details, child/adult option, and antibiotic choices</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge pink">Prescribing</span>
+    </div>
+  </div>
 
-            <div class="mini-checks">
-              <label><input type="checkbox" id="abxNotIndicated" /> Antibiotics not indicated</label>
-              <label><input type="checkbox" id="abxDelayed" /> Delayed / back-pocket approach</label>
-              <label><input type="checkbox" id="abxPrescribed" /> Antibiotics prescribed</label>
-              <label><input type="checkbox" id="supportiveCareOnly" /> Supportive care only</label>
-            </div>
+  <div class="mini-checks">
+    <label><input type="checkbox" id="abxNotIndicated" /> Antibiotics not indicated</label>
+    <label><input type="checkbox" id="abxDelayed" /> Delayed / back-pocket approach</label>
+    <label><input type="checkbox" id="abxPrescribed" /> Antibiotics prescribed</label>
+    <label><input type="checkbox" id="supportiveCareOnly" /> Supportive care only</label>
+  </div>
 
-            <div class="section-fields two">
-              <label>
-                Treatment rationale
-                <textarea id="treatmentRationale" placeholder="Why antibiotics are or are not indicated, severity, likely organism or viral picture, watchful waiting reasoning..."></textarea>
-              </label>
-              <label>
-                Prescription / management details
-                <textarea id="managementPlan" placeholder="Drug, dose, route, frequency, duration, wound care, dressings, analgesia, investigations, review plan..."></textarea>
-              </label>
-            </div>
-          </div>
+  <div class="section-fields three">
+    <label>
+      Patient type
+      <select id="patientType">
+        <option value="">Select patient type</option>
+        <option value="adult">Adult</option>
+        <option value="child">Child</option>
+      </select>
+    </label>
+
+    <label id="childWeightWrap" style="display:none;">
+      Weight (kg)
+      <input id="childWeight" type="number" min="0" step="0.1" placeholder="e.g. 18.5" />
+    </label>
+
+    <label>
+      Antibiotic
+      <input id="antibioticName" placeholder="e.g. amoxicillin" />
+    </label>
+
+    <label>
+      Directions for use
+      <input id="abxDirections" placeholder="e.g. 500 mg TDS" />
+    </label>
+
+    <label>
+      Duration (days)
+      <input id="abxDays" type="number" min="1" step="1" placeholder="e.g. 5" />
+    </label>
+
+    <label>
+      1st choice ABX
+      <input id="firstChoiceAbx" placeholder="e.g. flucloxacillin" />
+    </label>
+
+    <label>
+      2nd choice ABX
+      <input id="secondChoiceAbx" placeholder="e.g. cefalexin" />
+    </label>
+  </div>
+
+  <div class="section-fields two">
+    <label>
+      Treatment rationale
+      <textarea id="treatmentRationale" placeholder="Why antibiotics are or are not indicated, severity, likely organism, viral picture, watchful waiting reasoning..."></textarea>
+    </label>
+
+    <label>
+      General management plan
+      <textarea id="managementPlan" placeholder="Wound care, dressings, analgesia, investigations, review plan, supportive measures..."></textarea>
+    </label>
+  </div>
+</div>
 
           <div class="card full">
             <div class="section-header">
@@ -1014,8 +1056,15 @@ textarea::placeholder {
         exam: 'Focused exam with pertinent positives and negatives.',
         diagnosis: 'Working diagnosis.',
         differentials: 'Key alternative diagnoses considered.',
-        treatmentRationale: 'Why this is likely the correct management pathway.',
-        managementPlan: 'Immediate treatment, investigations, review timing.',
+patientType: '',
+childWeight: '',
+antibioticName: '',
+abxDirections: '',
+abxDays: '',
+firstChoiceAbx: '',
+secondChoiceAbx: '',
+treatmentRationale: 'Why this is likely the correct management pathway.',
+managementPlan: 'Immediate treatment, investigations, review timing.',
         patientAdvice: 'Supportive care and home advice.',
         safetyNet: 'Return if worsening, not improving, or red flag symptoms develop.',
         documentation: 'Record anything medico-legally important.'
@@ -1038,9 +1087,16 @@ textarea::placeholder {
         measurements: 'Temp, HR, sats, hydration status, weight if prescribing child dose.',
         exam: 'Tonsils/pharynx appearance, exudate, erythema, uvula position, cervical nodes, hydration, voice, respiratory effort.',
         diagnosis: 'Likely viral pharyngitis / streptococcal pharyngitis / tonsillitis / consider PTA if concerning.',
-        differentials: 'Peritonsillar abscess, epiglottitis, infectious mononucleosis, oral thrush.',
-        treatmentRationale: 'State whether clinical picture supports supportive care vs testing vs antibiotic treatment.',
-        managementPlan: 'Analgesia, fluids, swab if applicable, antibiotic plan if indicated, review/escalation plan.',
+        differentials: 'Key alternative diagnoses considered.',
+patientType: '',
+childWeight: '',
+antibioticName: '',
+abxDirections: '',
+abxDays: '',
+firstChoiceAbx: '',
+secondChoiceAbx: '',
+treatmentRationale: 'Why this is likely the correct management pathway.',
+managementPlan: 'Immediate treatment, investigations, review timing.',
         patientAdvice: 'Hydration, analgesia, rest, infection control, avoid sharing utensils.',
         safetyNet: 'Return urgently if drooling, worsening unilateral swelling, muffled voice, SOB, inability to swallow fluids, or dehydration.',
         documentation: 'Document airway assessment and safety net clearly.'
@@ -1062,10 +1118,16 @@ textarea::placeholder {
         patientFactors: 'Weight, frailty, pregnancy, adherence concerns, home support.',
         measurements: 'Temp, HR, BP, lesion size, margins, photos if used.',
         exam: 'Site, erythema, warmth, swelling, tenderness, fluctuance, discharge, streaking, ROM if near joint.',
-        diagnosis: 'Likely cellulitis / infected wound / abscess / superficial skin infection.',
-        differentials: 'DVT, gout, septic arthritis, contact dermatitis, necrotising infection.',
-        treatmentRationale: 'Explain why oral antibiotics are or are not appropriate and whether drainage, swab, or escalation is needed.',
-        managementPlan: 'Antibiotics, analgesia, elevation, wound care, mark borders, review timeframe.',
+        differentials: 'Key alternative diagnoses considered.',
+patientType: '',
+childWeight: '',
+antibioticName: '',
+abxDirections: '',
+abxDays: '',
+firstChoiceAbx: '',
+secondChoiceAbx: '',
+treatmentRationale: 'Why this is likely the correct management pathway.',
+managementPlan: 'Immediate treatment, investigations, review timing.',
         patientAdvice: 'Keep limb elevated, monitor spread, wound care instructions, complete course if prescribed.',
         safetyNet: 'Return urgently if spreading redness, fevers, severe pain, systemic symptoms, reduced movement, or no improvement.',
         documentation: 'Include size/location, whether borders marked, and whether abscess was excluded.'
@@ -1088,9 +1150,16 @@ textarea::placeholder {
         measurements: 'Obs including temp, RR, sats.',
         exam: 'General appearance, ENT/chest findings, hydration status.',
         diagnosis: 'Likely viral URTI / self-limiting viral illness.',
-        differentials: 'Bacterial sinusitis, pneumonia, strep pharyngitis, influenza, COVID if relevant.',
-        treatmentRationale: 'Symptoms and exam do not support bacterial infection requiring antibiotics at present.',
-        managementPlan: 'Symptomatic treatment, rest, fluids, analgesia, work/school advice.',
+        differentials: 'Key alternative diagnoses considered.',
+patientType: '',
+childWeight: '',
+antibioticName: '',
+abxDirections: '',
+abxDays: '',
+firstChoiceAbx: '',
+secondChoiceAbx: '',
+treatmentRationale: 'Why this is likely the correct management pathway.',
+managementPlan: 'Immediate treatment, investigations, review timing.',
         patientAdvice: 'Hydration, nasal saline, analgesia, rest, expected timeframe.',
         safetyNet: 'Return if SOB, chest pain, dehydration, persistent fever, worsening symptoms, or failure to improve.',
         documentation: 'Clearly document rationale for no antibiotics.'
@@ -1113,9 +1182,16 @@ textarea::placeholder {
         measurements: 'Temp, obs, dipstick result, pregnancy test if relevant.',
         exam: 'Suprapubic tenderness, CVA tenderness, abdominal exam if needed.',
         diagnosis: 'Likely lower UTI / consider pyelonephritis / STI / vaginitis depending on findings.',
-        differentials: 'Vaginitis, STI, stone, interstitial cystitis.',
-        treatmentRationale: 'Explain whether empirical treatment is appropriate and whether culture/testing required.',
-        managementPlan: 'Urine testing, antibiotics if indicated, hydration advice, analgesia, review if worsening.',
+        differentials: 'Key alternative diagnoses considered.',
+patientType: '',
+childWeight: '',
+antibioticName: '',
+abxDirections: '',
+abxDays: '',
+firstChoiceAbx: '',
+secondChoiceAbx: '',
+treatmentRationale: 'Why this is likely the correct management pathway.',
+managementPlan: 'Immediate treatment, investigations, review timing.',
         patientAdvice: 'Hydration, monitor fever/flank pain, complete treatment if prescribed.',
         safetyNet: 'Return urgently if flank pain, vomiting, fever, rigors, pregnancy concerns, or no improvement.',
         documentation: 'Include urine findings and pregnancy considerations if relevant.'
@@ -1216,10 +1292,29 @@ textarea::placeholder {
   let userTemplates = [];
 
   const fieldIds = [
-    'presentingComplaint', 'hpc', 'redFlags', 'pmhx', 'medsAllergies',
-    'patientFactors', 'measurements', 'exam', 'diagnosis', 'differentials',
-    'treatmentRationale', 'managementPlan', 'patientAdvice', 'safetyNet', 'documentation'
-  ];
+  'presentingComplaint',
+  'hpc',
+  'redFlags',
+  'pmhx',
+  'medsAllergies',
+  'patientFactors',
+  'measurements',
+  'exam',
+  'diagnosis',
+  'differentials',
+  'patientType',
+  'childWeight',
+  'antibioticName',
+  'abxDirections',
+  'abxDays',
+  'firstChoiceAbx',
+  'secondChoiceAbx',
+  'treatmentRationale',
+  'managementPlan',
+  'patientAdvice',
+  'safetyNet',
+  'documentation'
+];
 
   function allTemplates() {
     return [...defaultTemplates, ...userTemplates];
@@ -1405,29 +1500,47 @@ textarea::placeholder {
   }
 
   function fillTemplatePrompts() {
-    const template = getActiveTemplate();
-    if (!template) return;
+  const template = getActiveTemplate();
+  if (!template) return;
 
-    fieldIds.forEach(id => {
-      const field = getField(id);
-      if (!field) return;
-      field.value = template.prompts?.[id] || '';
-    });
-  }
+  fieldIds.forEach(id => {
+    const field = getField(id);
+    if (!field) return;
+    field.value = template.prompts?.[id] || '';
+  });
+
+  toggleChildWeight();
+}
 
   function clearForm() {
-    fieldIds.forEach(id => {
-      const field = getField(id);
-      if (field) field.value = '';
-    });
+  fieldIds.forEach(id => {
+    const field = getField(id);
+    if (field) field.value = '';
+  });
 
-    ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly'].forEach(id => {
-      const box = document.getElementById(id);
-      if (box) box.checked = false;
-    });
+  ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly'].forEach(id => {
+    const box = document.getElementById(id);
+    if (box) box.checked = false;
+  });
 
-    output.innerHTML = '';
+  toggleChildWeight();
+  output.innerHTML = '';
+}
+  
+  function toggleChildWeight() {
+  const patientType = document.getElementById('patientType');
+  const childWeightWrap = document.getElementById('childWeightWrap');
+  const childWeight = document.getElementById('childWeight');
+
+  if (!patientType || !childWeightWrap || !childWeight) return;
+
+  if (patientType.value === 'child') {
+    childWeightWrap.style.display = 'grid';
+  } else {
+    childWeightWrap.style.display = 'none';
+    childWeight.value = '';
   }
+}
 
   function getCheckedTreatmentFlags() {
     const flags = [];
@@ -1441,27 +1554,33 @@ textarea::placeholder {
   function buildSummaryText() {
     const data = Object.fromEntries(fieldIds.map(id => [id, getField(id)?.value.trim() || '']));
     const flags = getCheckedTreatmentFlags();
-    const template = getActiveTemplate();
+    
 
     const sections = [
-      ['Template', template?.title || 'General Consultation'],
-      ['Presenting complaint', data.presentingComplaint],
-      ['History', data.hpc],
-      ['Red flags', data.redFlags],
-      ['PMHx / relevant history', data.pmhx],
-      ['Medications / allergies', data.medsAllergies],
-      ['Patient factors', data.patientFactors],
-      ['Measurements / observations', data.measurements],
-      ['Examination', data.exam],
-      ['Working diagnosis', data.diagnosis],
-      ['Differentials / concerns considered', data.differentials],
-      ['Treatment decision', flags.join('; ')],
-      ['Treatment rationale', data.treatmentRationale],
-      ['Management plan', data.managementPlan],
-      ['Patient advice', data.patientAdvice],
-      ['Safety net', data.safetyNet],
-      ['Documentation notes', data.documentation]
-    ];
+  ['Presenting complaint', data.presentingComplaint],
+  ['History', data.hpc],
+  ['Red flags', data.redFlags],
+  ['PMHx / relevant history', data.pmhx],
+  ['Medications / allergies', data.medsAllergies],
+  ['Patient factors', data.patientFactors],
+  ['Measurements / observations', data.measurements],
+  ['Examination', data.exam],
+  ['Working diagnosis', data.diagnosis],
+  ['Differentials / concerns considered', data.differentials],
+  ['Treatment decision', flags.join('; ')],
+  ['Patient type', data.patientType],
+  ['Child weight (kg)', data.patientType === 'child' ? data.childWeight : ''],
+  ['Antibiotic', data.antibioticName],
+  ['Directions', data.abxDirections],
+  ['Duration (days)', data.abxDays],
+  ['1st choice ABX', data.firstChoiceAbx],
+  ['2nd choice ABX', data.secondChoiceAbx],
+  ['Treatment rationale', data.treatmentRationale],
+  ['Management plan', data.managementPlan],
+  ['Patient advice', data.patientAdvice],
+  ['Safety net', data.safetyNet],
+  ['Documentation notes', data.documentation]
+];
 
     return sections
       .filter(([, value]) => value && value.trim())
@@ -1685,6 +1804,7 @@ function setupDesktopHeaderMinimize() {
   categoryFilter.addEventListener('change', renderTemplates);
   fillTemplateBtn.addEventListener('click', fillTemplatePrompts);
   clearBtn.addEventListener('click', clearForm);
+  document.getElementById('patientType')?.addEventListener('change', toggleChildWeight);
   generateBtn.addEventListener('click', generateSummary);
   floatingGenerateBtn.addEventListener('click', generateSummary);
   copyBtn.addEventListener('click', () => copyOutput(false));
@@ -1697,10 +1817,11 @@ function setupDesktopHeaderMinimize() {
   logoutBtn.addEventListener('click', signOutUser);
 
   renderTemplates();
-syncHero();
-updateAuthUI();
-setupMobileTopbar();
-setupDesktopHeaderMinimize();
+  syncHero();
+  updateAuthUI();
+  setupMobileTopbar();
+  setupDesktopHeaderMinimize();
+  toggleChildWeight();
 
   if (firebaseReady) {
     onAuthStateChanged(auth, async (user) => {
