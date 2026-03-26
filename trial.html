@@ -982,6 +982,11 @@ select option {
   </div>
 </div>
 
+<div class="card">
+  <h3>Vital Signs</h3>
+  <div id="vitalsList" data-placeholder="Add vital sign..."></div>
+</div>
+
       <div class="card">
   <div class="section-header">
     <div>
@@ -1162,6 +1167,13 @@ const defaultTemplates = [
         'Relevant dangerous symptoms asked about',
         'Relevant dangerous symptoms absent unless present'
       ],
+	   vitals: [
+    'Temperature',
+    'Heart rate',
+    'Blood pressure',
+    'Respiratory rate',
+    'SpO2'
+  ],
       allergies: ['NKDA if relevant'],
       medicalHistory: ['Relevant background conditions only'],
       currentMeds: ['Current medicines'],
@@ -1552,6 +1564,7 @@ const textFieldIds = ['patientDemo', 'presentingComplaint', 'examFreeText'];
 const checklistIds = [
   'hpcList',
   'redFlagsList',
+  'vitalsList',
   'allergiesList',
   'medicalHistoryList',
   'currentMedsList',
@@ -1789,6 +1802,7 @@ function collectPromptFields() {
     examFreeText: getField('examFreeText')?.value.trim() || '',
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlags: getChecklistItems('redFlagsList').map(i => i.text),
+	vitals: getChecklistItems('vitalsList').map(i => i.text),
     allergies: getChecklistItems('allergiesList').map(i => i.text),
     medicalHistory: getChecklistItems('medicalHistoryList').map(i => i.text),
     currentMeds: getChecklistItems('currentMedsList').map(i => i.text),
@@ -1904,6 +1918,7 @@ function fillTemplatePrompts() {
 
   setChecklistItems('hpcList', template.prompts?.hpc);
   setChecklistItems('redFlagsList', template.prompts?.redFlags);
+  setChecklistItems('vitalsList', template.prompts?.vitals);
   setChecklistItems('allergiesList', template.prompts?.allergies || template.prompts?.medsAllergies);
   setChecklistItems('medicalHistoryList', template.prompts?.medicalHistory || template.prompts?.pmhx);
   setChecklistItems('currentMedsList', template.prompts?.currentMeds);
@@ -1952,6 +1967,7 @@ function buildSummaryText() {
 
   const hpc = getCheckedChecklistTexts('hpcList');
   const redFlags = getCheckedChecklistTexts('redFlagsList');
+  const vitals = getCheckedChecklistTexts('vitalsList');
   const allergies = getCheckedChecklistTexts('allergiesList');
   const medicalHistory = getCheckedChecklistTexts('medicalHistoryList');
   const currentMeds = getCheckedChecklistTexts('currentMedsList');
@@ -1977,6 +1993,7 @@ function buildSummaryText() {
 
   if (hpc.length) lines.push(sentence(`History of presenting complaint: ${joinList(hpc)}`));
   if (redFlags.length) lines.push(sentence(`Red flags checked: ${joinList(redFlags)}`));
+  if (vitals.length) lines.push(sentence(`Vital signs: ${joinList(vitals)}`));
   if (allergies.length) lines.push(sentence(`Allergies: ${joinList(allergies)}`));
   if (medicalHistory.length) lines.push(sentence(`Medical history: ${joinList(medicalHistory)}`));
   if (currentMeds.length) lines.push(sentence(`Current medications: ${joinList(currentMeds)}`));
