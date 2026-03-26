@@ -1,0 +1,2425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consultation Templates</title>
+
+  <link rel="stylesheet" href="calculator.css" />
+
+  <style>
+    @font-face {
+      font-family: 'Adelicia';
+      src: url('AdeliciaRegular.ttf');
+    }
+
+    @font-face {
+      font-family: 'Fors';
+      src: url('fors.ttf');
+    }
+
+    :root {
+  --bg1: rgba(255,255,255,0.68);
+  --bg2: rgba(255,255,255,0.52);
+  --stroke: rgba(40,40,40,0.22);
+  --text: #111;
+  --soft: rgba(20,20,20,0.78);
+  --faint: rgba(20,20,20,0.58);
+  --shadow: 0 10px 30px rgba(0,0,0,0.10);
+  --pink: rgba(255, 163, 196, 0.22);
+  --blue: rgba(134, 197, 255, 0.20);
+  --green: rgba(173, 255, 210, 0.18);
+  --warn: rgba(255, 202, 130, 0.22);
+  --danger: rgba(255, 120, 120, 0.18);
+  --radius: 24px;
+  --radius-sm: 16px;
+}
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Tahoma, Arial, sans-serif;
+  color: var(--text);
+  min-height: 100%;
+  background: linear-gradient(135deg, #f8fbff, #edf3f8);
+}
+
+   body {
+  padding: 6px 18px 18px;
+}
+
+    .page-shell {
+      max-width: 1450px;
+      margin: 0 auto;
+    }
+
+  .topbar {
+  position: sticky;
+  top: 4px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+  border: 1px solid rgba(30,30,30,0.16);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,255,255,0.56));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+    
+
+    .topbar-toggle {
+  display: none;
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  z-index: 60;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,20,20,0.16);
+  background: rgba(255,255,255,0.78);
+  color: #111;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+      .topbar.minimized {
+  padding: 6px 10px;
+  border-radius: 16px;
+}
+
+.topbar.minimized .brand-dot {
+  width: 24px;
+  height: 24px;
+}
+
+.topbar.minimized .glass-btn {
+  padding: 7px 9px;
+  font-size: 0.85rem;
+}
+
+.topbar.minimized .subtitle {
+  display: none;
+}
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-dot {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.12));
+      border: 1px solid rgba(255,255,255,0.28);
+      box-shadow: 0 0 20px rgba(255,255,255,0.16);
+      flex-shrink: 0;
+    }
+
+    .title-block {
+      min-width: 0;
+    }
+
+    .page-title {
+      margin: 0;
+      font-family: 'Adelicia', 'Segoe Script', cursive;
+      font-size: clamp(1.35rem, 2.2vw, 2rem);
+      line-height: 1;
+      letter-spacing: 0.4px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.24);
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--soft);
+      font-size: 0.82rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+   .top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-left: auto;
+  align-items: center;
+}
+
+    .glass-btn,
+    .chip,
+    select,
+    input,
+    textarea,
+    button {
+      font: inherit;
+    }
+
+    .glass-btn {
+  border: 1px solid rgba(20,20,20,0.14);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.58));
+  color: #111;
+  border-radius: 16px;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+    .glass-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+    }
+
+    .layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+    .panel,
+.card,
+.template-card,
+.info-box {
+  border: 1px solid rgba(30,30,30,0.18);
+  background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.54));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+}
+
+.prescribing-split {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.prescribing-left,
+.prescribing-right {
+  display: grid;
+  gap: 12px;
+}
+
+.prescribing-right label {
+  display: grid;
+  gap: 8px;
+}
+
+.prescribing-right .editable-checklist {
+  min-height: 100%;
+}
+
+.prescribing-layout {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.prescribing-decisions {
+  display: grid;
+  gap: 12px;
+}
+
+.prescribing-treatment-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.treatment-column {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.treatment-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #222;
+  padding-bottom: 2px;
+}
+
+.mini-checks {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.mini-checks label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
+  cursor: pointer;
+}
+
+.minimalist-checklist .checklist-add-row {
+  display: none;
+}
+
+.minimalist-checklist.is-active .checklist-add-row {
+  display: grid;
+}
+
+.minimalist-checklist .checklist-list:empty::before {
+  content: "Click to add";
+  display: block;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px dashed rgba(20,20,20,0.14);
+  background: rgba(255,255,255,0.35);
+  color: rgba(0,0,0,0.45);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .prescribing-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .prescribing-treatment-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+    .panel {
+  border-radius: 28px;
+  padding: 18px;
+  position: sticky;
+  top: 56px;
+  height: fit-content;
+}
+
+    .panel h2,
+    .section-heading,
+    .template-card h3,
+    .info-box h3 {
+      margin: 0 0 12px;
+      font-family: 'Fors', Tahoma, sans-serif;
+      letter-spacing: 0.3px;
+      font-weight: 600;
+    }
+
+    .search-wrap {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .search-wrap input,
+.search-wrap select,
+.note-area textarea,
+.section-fields textarea,
+.section-fields input,
+.section-fields select {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.68));
+  color: #111;
+  padding: 12px 14px;
+  outline: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 16px rgba(0,0,0,0.08);
+}
+
+    input::placeholder,
+textarea::placeholder {
+  color: rgba(0,0,0,0.45);
+}
+
+.search-wrap select,
+.section-fields select {
+  color: #111;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 42px;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.6) 50%),
+    linear-gradient(135deg, rgba(0,0,0,0.6) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.search-wrap select:hover,
+.section-fields select:hover {
+  border-color: rgba(20,20,20,0.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 8px 18px rgba(0,0,0,0.1);
+}
+
+.search-wrap select:focus,
+.section-fields select:focus,
+.search-wrap input:focus,
+.section-fields input:focus,
+.section-fields textarea:focus,
+.note-area textarea:focus {
+  border-color: rgba(60,60,60,0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    0 0 0 3px rgba(255,255,255,0.45),
+    0 8px 20px rgba(0,0,0,0.1);
+}
+
+select option {
+  color: #111;
+  background: #fff;
+}
+
+    .template-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .template-card {
+      border-radius: 20px;
+      padding: 14px;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .template-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .template-card.active {
+      border-color: rgba(255,255,255,0.42);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.14), 0 0 24px rgba(194, 226, 255, 0.18);
+    }
+
+    .template-card p {
+  margin: 0;
+  color: #333;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+    .template-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color: var(--soft);
+      font-size: 0.8rem;
+    }
+
+    .main {
+  display: grid;
+  gap: 10px;
+}
+
+     .hero {
+      padding: 12px 14px 10px;
+      border-radius: 28px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-top {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+    .hero-title {
+      font-family: 'Fors', Tahoma, sans-serif;
+      font-size: clamp(1.2rem, 2vw, 1.65rem);
+      margin: 0;
+    }
+
+    .hero-sub {
+  color: #333;
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .info-box {
+      border-radius: 22px;
+      padding: 14px;
+    }
+
+    .info-box h3 {
+      margin-bottom: 8px;
+      font-size: 0.98rem;
+    }
+
+    .info-box p,
+.info-box ul {
+  margin: 0;
+  color: #333;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+    .info-box ul {
+      padding-left: 18px;
+    }
+
+    .consultation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+    .card {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  padding: 18px 18px 16px;
+  border-radius: 26px;
+  background: rgba(255,255,255,0.42);
+  border: 1px solid rgba(30,30,30,0.10);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  align-content: start;
+}
+
+
+#exam {
+  min-height: 210px;
+}
+
+#diagnosis,
+#differentials {
+  min-height: 170px;
+}
+.private-note-wrap {
+  margin-top: 2px;
+}
+
+.private-note-label {
+  color: #6b5a7a;
+}
+
+#privateConsultNote {
+  min-height: 150px;
+  color: #6b5a7a;
+  background: linear-gradient(180deg, rgba(255, 246, 252, 0.82), rgba(248, 242, 255, 0.72));
+  border: 1px solid rgba(145, 120, 170, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 16px rgba(0,0,0,0.06);
+}
+
+#privateConsultNote::placeholder {
+  color: rgba(107, 90, 122, 0.52);
+}
+    .card.full {
+      grid-column: 1 / -1;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-heading {
+      font-size: 1.08rem;
+    }
+
+    .hint {
+  color: #555;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+    .section-fields {
+      display: grid;
+      gap: 12px;
+    }
+
+    .section-fields.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .section-fields.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    label {
+  display: grid;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #222;
+}
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+     .mini-checks {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.mini-checks label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
+  cursor: pointer;
+}
+	 
+    .mini-checks input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #d6ecff;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .badge {
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.10);
+    }
+
+    .pink { background: var(--pink); }
+    .blue { background: var(--blue); }
+    .green { background: var(--green); }
+    .warn { background: var(--warn); }
+    .danger { background: var(--danger); }
+
+    .note-area {
+      display: grid;
+      gap: 12px;
+    }
+
+    .footer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .footer-left,
+    .footer-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .small-note {
+  color: #555;
+  font-size: 0.84rem;
+}
+    
+
+    .preview-box {
+  white-space: pre-wrap;
+  line-height: 1.55;
+  color: #111;
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(20,20,20,0.14);
+  border-radius: 18px;
+  padding: 16px;
+  min-height: 180px;
+  max-height: 560px;
+  overflow: auto;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+}
+
+    .preview-box:empty::before {
+  content: 'Your generated consultation summary will appear here.';
+  color: rgba(0,0,0,0.38);
+}
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.22), rgba(255,255,255,0));
+      margin: 4px 0;
+    }
+
+.editable-checklist {
+  display: grid;
+  gap: 10px;
+}
+
+.checklist-list {
+  display: grid;
+  gap: 8px;
+}
+
+.checklist-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.check-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  accent-color: #d6ecff;
+}
+
+.check-item input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  color: #111;
+}
+
+.check-item input[type="text"]:focus {
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.checklist-add-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.checklist-new-input {
+  width: 100%;
+}
+
+.checklist-delete {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.58));
+  color: #111;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.checklist-delete:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 760px) {
+  .checklist-add-row,
+  .checklist-row {
+    grid-template-columns: 1fr;
+  }
+
+  .checklist-delete {
+    width: 100%;
+  }
+}
+
+    .floating-generate {
+  position: fixed;
+  right: 18px;
+  bottom: 110px;
+  z-index: 70;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,20,20,0.16);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62));
+  color: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+  font-size: 1.2rem;
+}
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(174,214,255,0.55), rgba(206,173,255,0.42));
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(174,214,255,0.55) rgba(255,255,255,0.06);
+    }
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        position: static;
+      }
+
+      .quick-grid,
+      .consultation-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 10px;
+        padding-top: 64px;
+      }
+
+      .topbar {
+        position: fixed;
+        top: 8px;
+        left: 10px;
+        right: 10px;
+        padding: 10px 12px;
+        border-radius: 18px;
+        margin-bottom: 0;
+      }
+
+      .topbar-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+	  
+	    .topbar {
+    transform: translateY(-120%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .topbar.show-mobile {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+      .brand-wrap {
+        width: 100%;
+      }
+
+      .top-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .top-actions .glass-btn {
+        flex: 1 1 calc(50% - 8px);
+        justify-content: center;
+      }
+
+      .quick-grid,
+      .consultation-grid,
+      .section-fields.two,
+      .section-fields.three {
+        grid-template-columns: 1fr;
+      }
+    
+	   .floating-generate {
+  width: 54px;
+  height: 54px;
+  right: 14px;
+  bottom: 85px;
+}
+      .card,
+      .hero,
+      .panel {
+        padding: 15px;
+      }
+
+      .page-title {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="topbar-toggle" id="topbarToggle" title="Show header">☰</button>
+  <div class="page-shell">
+    <header class="topbar" id="topbar">
+      <div class="brand-wrap" style="display:none;"></div>
+
+      <div class="top-actions">
+       <a class="glass-btn header-btn" href="home.html" data-full="🏠 Home" data-mini="🏠">🏠 Home</a>
+<a class="glass-btn header-btn" href="https://xlyneve.github.io/CEP/chatgptx.html" data-full="📝 Notes" data-mini="📝">📝 Notes</a>
+<button class="glass-btn header-btn" id="printBtn" data-full="🖨️ Print summary" data-mini="🖨️">🖨️ Print summary</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="panel">
+        <h2>Templates</h2>
+
+        <div class="search-wrap">
+          <input type="text" id="searchInput" placeholder="Search template or symptom..." />
+          <select id="categoryFilter">
+            <option value="all">All categories</option>
+            <option value="respiratory">Respiratory / ENT</option>
+            <option value="skin">Skin / Soft tissue</option>
+            <option value="viral">Viral / General</option>
+            <option value="urinary">Urinary</option>
+            <option value="msk">MSK / Injury</option>
+          </select>
+        </div>
+
+        <div class="template-list" id="templateList"></div>
+      </aside>
+
+      <main class="main">
+        <section class="hero">
+          <div class="hero-top">
+            <div>
+              <h2 class="hero-title" id="activeTemplateTitle">General Consultation</h2>
+              <p class="hero-sub" id="activeTemplateDesc">
+                Use this page to guide assessment, decision-making, prescribing checks, patient advice, and clean documentation.
+              </p>
+            </div>
+
+            <div class="hero-actions">
+              <button class="glass-btn" id="fillTemplateBtn">✨ Load template prompts</button>
+              <button class="glass-btn" id="clearBtn">🧼 Clear form</button>
+              <button class="glass-btn" id="generateBtn">📋 Generate summary</button>
+            </div>
+          </div>
+
+        
+        </section>
+
+        <section class="consultation-grid">
+         <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">1. Presentation</div>
+      <div class="hint">Main complaint plus editable HPC tick boxes</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">Core</span>
+    </div>
+  </div>
+
+  <div class="section-fields two">
+    <label>
+      Patient label
+      <input id="patientDemo" placeholder="e.g. 24F" />
+    </label>
+
+    <label>
+      Presenting complaint
+      <input id="presentingComplaint" placeholder="e.g. dysuria for 2 days" />
+    </label>
+  </div>
+
+  <div class="section-fields">
+    <label>History of presenting complaint</label>
+    <div class="editable-checklist" id="hpcList" data-placeholder="Add HPC item..."></div>
+  </div>
+</div>
+
+          <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">2. Red flags checked</div>
+      <div class="hint">Editable tick boxes</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge danger">High value</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <div class="editable-checklist" id="redFlagsList" data-placeholder="Add red flag item..."></div>
+  </div>
+</div>
+
+          <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">3. Background / patient factors</div>
+      <div class="hint">Editable tick boxes</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge pink">Decision-making</span>
+    </div>
+  </div>
+
+  <div class="section-fields two">
+    <label>
+      Allergies
+      <div class="editable-checklist" id="allergiesList" data-placeholder="Add allergy..."></div>
+    </label>
+
+    <label>
+      Medical History
+      <div class="editable-checklist" id="medicalHistoryList" data-placeholder="Add medical history item..."></div>
+    </label>
+
+    <label>
+      Current Medications
+      <div class="editable-checklist" id="currentMedsList" data-placeholder="Add medication..."></div>
+    </label>
+
+    <label>
+      Special patient factors
+      <div class="editable-checklist" id="patientFactorsList" data-placeholder="Add patient factor..."></div>
+    </label>
+  </div>
+</div>
+
+          <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">4. Examination</div>
+      <div class="hint">Tick boxes plus free-write findings</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge green">Exam</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Examination checklist
+      <div class="editable-checklist" id="examList" data-placeholder="Add examination item..."></div>
+    </label>
+
+    <label>
+      Additional findings
+      <textarea id="examFreeText" placeholder="Free write any positive findings here..."></textarea>
+    </label>
+  </div>
+</div>
+<div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">3. Vital Signs</div>
+      <div class="hint">Editable tick boxes</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">Observations</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <div class="editable-checklist" id="vitalsList" data-placeholder="Add vital sign..."></div>
+  </div>
+</div>
+
+      <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">5. Diagnosis</div>
+      <div class="hint">Editable tick boxes</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge warn">Clinical reasoning</span>
+    </div>
+  </div>
+
+  <div class="section-fields two">
+    <label>
+      Diagnosis
+      <div class="editable-checklist" id="diagnosisList" data-placeholder="Add diagnosis item..."></div>
+    </label>
+
+    <label>
+      Differential / ruled out concerns
+      <div class="editable-checklist" id="differentialsList" data-placeholder="Add differential item..."></div>
+    </label>
+  </div>
+
+  <div class="section-fields private-note-wrap">
+    <label class="private-note-label">
+      Private consult note
+      <textarea id="privateConsultNote" placeholder="Quick note to self while consulting - not part of summary"></textarea>
+    </label>
+  </div>
+</div>
+
+<div class="card full">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">7. Prescribing</div>
+      <div class="hint">Decision tick boxes plus first-line and second-line treatment options</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge pink">Prescribing</span>
+    </div>
+  </div>
+
+  <div class="prescribing-layout">
+    <div class="prescribing-decisions">
+      <div class="mini-checks">
+        <label><input type="checkbox" id="abxNotIndicated" /> Antibiotics not indicated</label>
+        <label><input type="checkbox" id="abxDelayed" /> Delayed / back-pocket approach</label>
+        <label><input type="checkbox" id="abxPrescribed" /> Antibiotics prescribed</label>
+        <label><input type="checkbox" id="supportiveCareOnly" /> Supportive care only</label>
+      </div>
+    </div>
+
+    <div class="prescribing-treatment-columns">
+      <div class="treatment-column">
+        <div class="treatment-title">First-line treatment</div>
+        <div class="editable-checklist minimalist-checklist" id="prescribingFirstLineList" data-placeholder="Add first-line medication..."></div>
+      </div>
+
+      <div class="treatment-column">
+        <div class="treatment-title">Second-line treatment</div>
+        <div class="editable-checklist minimalist-checklist" id="prescribingSecondLineList" data-placeholder="Add second-line medication..."></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+         <div class="card full">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">7. Advice / safety net / documentation notes</div>
+      <div class="hint">Editable tick boxes only</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">Close the loop</span>
+    </div>
+  </div>
+
+  <div class="section-fields three">
+    <label>
+      Advice
+      <div class="editable-checklist" id="adviceList" data-placeholder="Add advice item..."></div>
+    </label>
+
+    <label>
+      Safety net
+      <div class="editable-checklist" id="safetyNetList" data-placeholder="Add safety-net item..."></div>
+    </label>
+
+    <label>
+      Documentation notes
+      <div class="editable-checklist" id="documentationList" data-placeholder="Add documentation item..."></div>
+    </label>
+  </div>
+</div>
+
+          <div class="card full">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">8. Generated consultation summary</div>
+                <div class="hint">Auto-build a clean note from what you entered</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge green">Copy-ready</span>
+              </div>
+            </div>
+
+            <div class="note-area">
+              <div class="preview-box" id="output"></div>
+
+              <div class="divider"></div>
+
+              <div class="footer-actions">
+                <div class="footer-left">
+                  <button class="glass-btn" id="copyBtn">📎 Copy summary</button>
+                  <button class="glass-btn" id="copyPlainBtn">🧾 Copy plain text</button>
+                </div>
+                <div class="footer-right">
+                  <span class="small-note">Built for structured consults and cleaner prescribing logic.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <button class="floating-generate" id="floatingGenerateBtn" title="Generate summary">📋</button>
+
+  <script src="calculator.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
+  authDomain: "notes-chat-c5ff3.firebaseapp.com",
+  projectId: "notes-chat-c5ff3",
+  storageBucket: "notes-chat-c5ff3.firebasestorage.app",
+  messagingSenderId: "597780727252",
+  appId: "1:597780727252:web:8407eb4096dbe301d74241",
+  measurementId: "G-YQD63H7L5T"
+};
+
+let app = null;
+let auth = null;
+let db = null;
+let templatesRef = null;
+let provider = null;
+let firebaseReady = false;
+let currentUser = null;
+let userTemplates = [];
+let activeTemplateId = 'general';
+
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  templatesRef = collection(db, 'consultationTemplates');
+  provider = new GoogleAuthProvider();
+  firebaseReady = true;
+} catch (err) {
+  console.warn('Firebase failed to initialise. Built-in templates will still load.', err);
+}
+
+const defaultTemplates = [
+  {
+    id: 'general',
+    title: 'General Consultation',
+    category: 'viral',
+    desc: 'Flexible all-purpose assessment structure for common acute presentations.',
+    tags: ['general', 'assessment', 'documentation'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Acute presentation requiring assessment',
+      hpc: [
+        'Clarify onset',
+        'Duration',
+        'Progression',
+        'Severity',
+        'Associated symptoms',
+        'Exposure history',
+        'Treatment tried',
+        'Why presenting today'
+      ],
+      redFlags: [
+        'Relevant dangerous symptoms asked about',
+        'Relevant dangerous symptoms absent unless present'
+      ],
+	   vitals: [
+    'Temp',
+    'HR',
+    'BP',
+    'RR',
+    'SpO2',
+	'WE'
+     ],
+      allergies: ['NKDA if relevant'],
+      medicalHistory: ['Relevant background conditions only'],
+      currentMeds: ['Current medicines'],
+      patientFactors: [
+        'Pregnancy / breastfeeding if relevant',
+        'Immunocompromised state if relevant',
+        'Social / functional factors if relevant'
+      ],
+      exam: ['Focused examination completed', 'Pertinent negatives documented'],
+      examFreeText: '',
+      diagnosis: ['Working diagnosis'],
+      differentials: ['Key alternative diagnoses considered'],
+      prescribing: ['Medication / dose / duration if prescribed'],
+      patientAdvice: ['Supportive care and home advice'],
+      safetyNet: [
+        'Return if worsening',
+        'Return if not improving',
+        'Return if red flags develop'
+      ],
+      documentation: ['Record anything medico-legally important']
+    }
+  },
+  {
+    id: 'sore-throat',
+    title: 'Sore Throat / Pharyngitis',
+    category: 'respiratory',
+    desc: 'Assessment for viral sore throat, strep, peritonsillar infection, and airway concerns.',
+    tags: ['ENT', 'throat', 'strep'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Sore throat / odynophagia',
+      hpc: [
+        'Duration',
+        'Fever',
+        'Swallowing difficulty',
+        'Cough / coryza',
+        'Voice change',
+        'Unilateral pain',
+        'Sick contacts',
+        'Prior strep',
+        'Analgesia tried'
+      ],
+      redFlags: [
+        'No stridor',
+        'No drooling',
+        'No trismus',
+        'No hot potato voice',
+        'No significant respiratory distress',
+        'No dehydration unless present'
+      ],
+      allergies: ['Penicillin allergy if relevant'],
+      medicalHistory: [
+        'Recurrent tonsillitis',
+        'Immunocompromise',
+        'Rheumatic fever risk',
+        'Recent antibiotics'
+      ],
+      currentMeds: ['Current analgesia or recent medicines'],
+      patientFactors: [
+        'Age',
+        'Pregnancy if relevant',
+        'Oral intake',
+        'Ability to swallow',
+        'Household strep exposure'
+      ],
+      exam: [
+        'Tonsils / pharynx assessed',
+        'Exudate / erythema documented',
+        'Uvula position assessed',
+        'Cervical nodes assessed',
+        'Hydration assessed',
+        'Respiratory effort assessed'
+      ],
+      examFreeText: '',
+      diagnosis: ['Likely viral pharyngitis / tonsillitis / streptococcal pharyngitis'],
+      differentials: ['Peritonsillar abscess if clinically concerning'],
+      prescribing: ['Antibiotic / dose / duration if indicated'],
+      patientAdvice: ['Hydration', 'Analgesia', 'Rest', 'Infection control advice'],
+      safetyNet: [
+        'Return urgently if drooling',
+        'Return urgently if worsening unilateral swelling',
+        'Return urgently if muffled voice',
+        'Return urgently if SOB',
+        'Return urgently if unable to swallow fluids'
+      ],
+      documentation: ['Airway assessment documented clearly']
+    }
+  },
+  {
+    id: 'cellulitis',
+    title: 'Cellulitis / Skin Infection',
+    category: 'skin',
+    desc: 'Guide for cellulitis, wound infection, localised skin infection, and escalation concerns.',
+    tags: ['skin', 'infection', 'antibiotics'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Red, painful, warm skin / wound infection concern',
+      hpc: [
+        'Onset',
+        'Spread',
+        'Pain',
+        'Fever',
+        'Discharge',
+        'Trauma / bite / wound',
+        'Prior cellulitis',
+        'Treatment already tried'
+      ],
+      redFlags: [
+        'No rapidly progressive pain',
+        'No crepitus',
+        'No systemic toxicity',
+        'No hypotension',
+        'No severe swelling',
+        'No lymphangitis unless present'
+      ],
+      allergies: ['Relevant antibiotic allergy'],
+      medicalHistory: [
+        'Diabetes',
+        'Oedema',
+        'Eczema',
+        'Vascular disease',
+        'Immunosuppression',
+        'Prior MRSA',
+        'Recurrent cellulitis'
+      ],
+      currentMeds: ['Recent antibiotics if any'],
+      patientFactors: ['Weight', 'Frailty', 'Pregnancy if relevant', 'Adherence concerns', 'Home support'],
+      exam: [
+        'Site documented',
+        'Erythema documented',
+        'Warmth documented',
+        'Swelling documented',
+        'Tenderness documented',
+        'Fluctuance assessed',
+        'Discharge assessed',
+        'Streaking assessed',
+        'ROM assessed if near joint'
+      ],
+      examFreeText: '',
+      diagnosis: ['Likely cellulitis / local skin infection'],
+      differentials: ['Abscess', 'Necrotising infection', 'DVT if relevant'],
+      prescribing: ['Antibiotic / dose / duration if indicated'],
+      patientAdvice: [
+        'Keep limb elevated',
+        'Monitor spread',
+        'Wound care instructions',
+        'Complete course if prescribed'
+      ],
+      safetyNet: [
+        'Return urgently if spreading redness',
+        'Return urgently if fevers',
+        'Return urgently if severe pain',
+        'Return urgently if systemic symptoms',
+        'Return urgently if reduced movement',
+        'Return if no improvement'
+      ],
+      documentation: ['Size / location documented', 'Borders marked if relevant', 'Abscess excluded if relevant']
+    }
+  },
+  {
+    id: 'viral-uri',
+    title: 'Viral URTI / Supportive Care',
+    category: 'viral',
+    desc: 'Useful when the key decision is why antibiotics are not needed.',
+    tags: ['viral', 'supportive', 'no antibiotics'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Upper respiratory symptoms',
+      hpc: [
+        'Fever',
+        'Cough',
+        'Coryza',
+        'Sore throat',
+        'Duration',
+        'Sick contacts',
+        'Breathing difficulty',
+        'Hydration',
+        'Appetite'
+      ],
+      redFlags: [
+        'No respiratory distress',
+        'No chest pain',
+        'No dehydration',
+        'No altered mental status unless present'
+      ],
+      allergies: ['Relevant medicine allergy'],
+      medicalHistory: ['Asthma / COPD', 'Immunosuppression', 'Recurrent chest infection'],
+      currentMeds: ['Current symptomatic treatment used'],
+      patientFactors: ['Smoking', 'Pregnancy if relevant', 'Age extremes', 'Exposure risk'],
+      exam: [
+        'General appearance assessed',
+        'ENT findings documented',
+        'Chest findings documented',
+        'Hydration status assessed'
+      ],
+      examFreeText: '',
+      diagnosis: ['Likely viral URTI / self-limiting viral illness'],
+      differentials: ['Pneumonia if clinically concerning'],
+      prescribing: ['Symptomatic treatment only if appropriate'],
+      patientAdvice: ['Hydration', 'Nasal saline', 'Analgesia', 'Rest', 'Expected timeframe discussed'],
+      safetyNet: [
+        'Return if SOB',
+        'Return if chest pain',
+        'Return if dehydration',
+        'Return if persistent fever',
+        'Return if worsening symptoms',
+        'Return if not improving'
+      ],
+      documentation: ['Rationale for no antibiotics documented clearly']
+    }
+  },
+  {
+    id: 'uti',
+    title: 'UTI / Dysuria',
+    category: 'urinary',
+    desc: 'Focused urinary assessment with red flags for upper UTI and alternative causes.',
+    tags: ['urine', 'dysuria', 'infection'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Dysuria / urinary symptoms',
+      hpc: [
+        'Frequency',
+        'Urgency',
+        'Dysuria',
+        'Haematuria',
+        'Fever',
+        'Flank pain',
+        'Nausea',
+        'Vaginal symptoms',
+        'Pregnancy possibility',
+        'STI risk'
+      ],
+      redFlags: [
+        'No flank pain',
+        'No vomiting',
+        'No sepsis features',
+        'No pregnancy concerns',
+        'No urinary retention unless present'
+      ],
+      allergies: ['Relevant antibiotic allergy'],
+      medicalHistory: ['Recurrent UTI', 'Renal issues', 'Diabetes', 'Catheter', 'Kidney stones'],
+      currentMeds: ['Recent antibiotics', 'Relevant current medicines'],
+      patientFactors: ['Pregnancy', 'Age', 'Sexual history relevance', 'Hydration', 'Ability to take oral treatment'],
+      exam: ['Suprapubic tenderness assessed', 'CVA tenderness assessed', 'Abdominal exam if needed'],
+      examFreeText: '',
+      diagnosis: ['Likely lower UTI'],
+      differentials: ['Pyelonephritis', 'STI', 'Vaginitis', 'Renal colic if relevant'],
+      prescribing: ['Antibiotic / dose / duration if indicated'],
+      patientAdvice: ['Hydration', 'Monitor fever / flank pain', 'Complete treatment if prescribed'],
+      safetyNet: [
+        'Return urgently if flank pain',
+        'Return urgently if vomiting',
+        'Return urgently if fever',
+        'Return urgently if rigors',
+        'Return urgently if pregnancy concerns',
+        'Return if no improvement'
+      ],
+      documentation: ['Urine findings documented', 'Pregnancy considerations documented if relevant']
+    }
+  },
+  {
+    id: 'msk-injury',
+    title: 'MSK Injury / Pain',
+    category: 'msk',
+    desc: 'Acute limb pain, sprain, strain, injury, ROM, swelling, and imaging reasoning.',
+    tags: ['injury', 'pain', 'exam'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Injury / musculoskeletal pain',
+      hpc: [
+        'Mechanism',
+        'Onset',
+        'Pop / click',
+        'Swelling',
+        'Ability to weight bear / use limb',
+        'Numbness',
+        'Weakness',
+        'Treatment tried'
+      ],
+      redFlags: [
+        'No neurovascular compromise',
+        'No open injury',
+        'No gross deformity',
+        'No compartment-type pain unless present'
+      ],
+      allergies: ['Relevant medicine allergy'],
+      medicalHistory: ['Previous injury / surgery', 'Osteoporosis', 'Anticoagulation'],
+      currentMeds: ['Analgesia taken', 'Anticoagulants'],
+      patientFactors: ['Dominant hand', 'Occupation', 'Sports', 'Baseline mobility'],
+      exam: [
+        'Inspection completed',
+        'Palpation completed',
+        'ROM assessed',
+        'Strength assessed',
+        'Weight bearing assessed if relevant',
+        'Neurovascular status documented'
+      ],
+      examFreeText: '',
+      diagnosis: ['Likely sprain / strain / contusion'],
+      differentials: ['Fracture', 'Tendon rupture', 'Dislocation', 'Septic joint if clinically relevant'],
+      prescribing: ['Analgesia / support / management plan'],
+      patientAdvice: ['Rest', 'Mobilisation advice', 'Expected recovery explained'],
+      safetyNet: [
+        'Return if increasing pain',
+        'Return if numbness',
+        'Return if colour change',
+        'Return if worsening swelling',
+        'Return if inability to weight bear',
+        'Return if persistent symptoms'
+      ],
+      documentation: ['Mechanism documented clearly', 'Neurovascular status documented clearly']
+    }
+  }
+];
+
+const templateList = document.getElementById('templateList');
+const searchInput = document.getElementById('searchInput');
+const categoryFilter = document.getElementById('categoryFilter');
+const activeTemplateTitle = document.getElementById('activeTemplateTitle');
+const activeTemplateDesc = document.getElementById('activeTemplateDesc');
+const fillTemplateBtn = document.getElementById('fillTemplateBtn');
+const clearBtn = document.getElementById('clearBtn');
+const generateBtn = document.getElementById('generateBtn');
+const output = document.getElementById('output');
+const printBtn = document.getElementById('printBtn');
+const copyBtn = document.getElementById('copyBtn');
+const copyPlainBtn = document.getElementById('copyPlainBtn');
+const floatingGenerateBtn = document.getElementById('floatingGenerateBtn');
+const topbar = document.getElementById('topbar');
+const topbarToggle = document.getElementById('topbarToggle');
+const topActions = document.querySelector('.top-actions');
+
+const authWrap = document.createElement('div');
+authWrap.style.display = 'inline-flex';
+authWrap.style.alignItems = 'center';
+authWrap.style.gap = '8px';
+authWrap.style.flexWrap = 'wrap';
+
+const loginBtn = document.createElement('button');
+loginBtn.className = 'glass-btn';
+loginBtn.id = 'loginBtn';
+loginBtn.textContent = '🔐 Sign in';
+
+const logoutBtn = document.createElement('button');
+logoutBtn.className = 'glass-btn';
+logoutBtn.id = 'logoutBtn';
+logoutBtn.textContent = '🚪 Sign out';
+logoutBtn.style.display = 'none';
+
+const authStatus = document.createElement('span');
+authStatus.className = 'chip';
+authStatus.id = 'authStatus';
+authStatus.textContent = firebaseReady ? 'Checking sign-in...' : 'Firebase unavailable';
+
+authWrap.appendChild(loginBtn);
+authWrap.appendChild(logoutBtn);
+authWrap.appendChild(authStatus);
+
+const saveBtn = document.createElement('button');
+saveBtn.className = 'glass-btn';
+saveBtn.id = 'saveTemplateBtn';
+saveBtn.textContent = '💾 Save template';
+
+const editBtn = document.createElement('button');
+editBtn.className = 'glass-btn';
+editBtn.id = 'editTemplateBtn';
+editBtn.textContent = '✏️ Update template';
+
+const deleteBtn = document.createElement('button');
+deleteBtn.className = 'glass-btn';
+deleteBtn.id = 'deleteTemplateBtn';
+deleteBtn.textContent = '🗑️ Delete template';
+
+if (topActions) {
+  topActions.appendChild(authWrap);
+  topActions.appendChild(saveBtn);
+  topActions.appendChild(editBtn);
+  topActions.appendChild(deleteBtn);
+}
+
+const textFieldIds = ['patientDemo', 'presentingComplaint', 'examFreeText'];
+
+const checklistIds = [
+  'hpcList',
+  'redFlagsList',
+  'vitalsList',
+  'allergiesList',
+  'medicalHistoryList',
+  'currentMedsList',
+  'patientFactorsList',
+  'examList',
+  'diagnosisList',
+  'differentialsList',
+  'prescribingFirstLineList',
+  'prescribingSecondLineList',
+  'adviceList',
+  'safetyNetList',
+  'documentationList'
+];
+
+function getField(id) {
+  return document.getElementById(id);
+}
+
+function safeAddListener(el, eventName, handler) {
+  if (el) el.addEventListener(eventName, handler);
+}
+
+function allTemplates() {
+  return [...defaultTemplates, ...userTemplates];
+}
+
+function getActiveTemplate() {
+  return allTemplates().find(t => t.id === activeTemplateId) || allTemplates()[0] || null;
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function splitPromptToItems(value) {
+  if (Array.isArray(value)) {
+    return value.map(v => String(v).trim()).filter(Boolean);
+  }
+  return String(value || '')
+    .split(/\n|,/)
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+
+function joinList(items) {
+  return items.filter(Boolean).join('; ');
+}
+
+function sentence(text) {
+  const clean = String(text || '').trim();
+  if (!clean) return '';
+  return /[.!?]$/.test(clean) ? clean : `${clean}.`;
+}
+
+function createChecklistRow(container, text = '', checked = false) {
+  const list = container.querySelector('.checklist-list');
+  if (!list) return;
+
+  const row = document.createElement('div');
+  row.className = 'checklist-row';
+
+  const label = document.createElement('label');
+  label.className = 'check-item';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = checked;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = text;
+  input.placeholder = 'Edit item';
+
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'checklist-delete';
+  delBtn.textContent = '✕';
+  delBtn.title = 'Delete item';
+  delBtn.addEventListener('click', () => row.remove());
+
+  label.appendChild(checkbox);
+  label.appendChild(input);
+  row.appendChild(label);
+  row.appendChild(delBtn);
+  list.appendChild(row);
+}
+
+function initEditableChecklist(id, seedItems = []) {
+  const container = getField(id);
+  if (!container) return;
+
+  const placeholder = container.dataset.placeholder || 'Add item...';
+
+  container.innerHTML = `
+    <div class="checklist-list"></div>
+    <div class="checklist-add-row">
+      <input type="text" class="checklist-new-input" placeholder="${escapeHtml(placeholder)}">
+      <button type="button" class="glass-btn checklist-add-btn">＋ Add</button>
+    </div>
+  `;
+
+  const addInput = container.querySelector('.checklist-new-input');
+  const addBtn = container.querySelector('.checklist-add-btn');
+
+  const addFromInput = () => {
+    const value = addInput?.value.trim() || '';
+    if (!value) return;
+    createChecklistRow(container, value, false);
+    addInput.value = '';
+    addInput.focus();
+  };
+
+  safeAddListener(addBtn, 'click', addFromInput);
+  safeAddListener(addInput, 'keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addFromInput();
+    }
+  });
+
+  seedItems.forEach(item => createChecklistRow(container, item, false));
+}
+
+function setChecklistItems(id, items = []) {
+  initEditableChecklist(id, splitPromptToItems(items));
+}
+
+function clearChecklist(id) {
+  initEditableChecklist(id, []);
+}
+
+function getChecklistItems(id) {
+  const container = getField(id);
+  if (!container) return [];
+
+  return [...container.querySelectorAll('.checklist-row')]
+    .map(row => {
+      const checkbox = row.querySelector('input[type="checkbox"]');
+      const input = row.querySelector('input[type="text"]');
+      return {
+        text: input?.value.trim() || '',
+        checked: !!checkbox?.checked
+      };
+    })
+    .filter(item => item.text);
+}
+
+function getCheckedChecklistTexts(id) {
+  return getChecklistItems(id)
+    .filter(item => item.checked)
+    .map(item => item.text);
+}
+
+function initAllChecklists() {
+  checklistIds.forEach(id => initEditableChecklist(id, []));
+}
+
+function setupMinimalistChecklistToggle() {
+  document.querySelectorAll('.minimalist-checklist').forEach(container => {
+    container.addEventListener('click', () => {
+      container.classList.add('is-active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) {
+        const hasRows = container.querySelectorAll('.checklist-row').length > 0;
+        if (!hasRows) container.classList.remove('is-active');
+      }
+    });
+  });
+}
+
+function updateAuthUI() {
+  if (!firebaseReady) {
+    authStatus.textContent = 'Firebase unavailable';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    saveBtn.style.opacity = '0.6';
+    editBtn.style.opacity = '0.6';
+    deleteBtn.style.opacity = '0.6';
+    return;
+  }
+
+  if (currentUser) {
+    authStatus.textContent = currentUser.email || currentUser.displayName || 'Signed in';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+    saveBtn.style.opacity = '1';
+    editBtn.style.opacity = '1';
+    deleteBtn.style.opacity = '1';
+  } else {
+    authStatus.textContent = 'Not signed in';
+    loginBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'none';
+    saveBtn.style.opacity = '0.6';
+    editBtn.style.opacity = '0.6';
+    deleteBtn.style.opacity = '0.6';
+  }
+}
+
+async function signInUser() {
+  if (!firebaseReady) return;
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    console.error('Google sign-in failed:', err);
+    alert('Google sign-in failed.');
+  }
+}
+
+async function signOutUser() {
+  if (!firebaseReady) return;
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error('Sign out failed:', err);
+    alert('Sign out failed.');
+  }
+}
+
+function promptForTemplateMeta(existing = null) {
+  const title = prompt('Template title:', existing?.title || '');
+  if (title === null) return null;
+
+  const category = prompt('Category (respiratory / skin / viral / urinary / msk):', existing?.category || 'viral');
+  if (category === null) return null;
+
+  const desc = prompt('Short description:', existing?.desc || '');
+  if (desc === null) return null;
+
+  const tagsRaw = prompt('Tags separated by commas:', existing?.tags?.join(', ') || '');
+  if (tagsRaw === null) return null;
+
+  return {
+    title: title.trim() || 'Untitled Template',
+    category: (category.trim() || 'viral').toLowerCase(),
+    desc: desc.trim() || 'Custom consultation template.',
+    tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+  };
+}
+
+function collectPromptFields() {
+  return {
+    patientDemo: getField('patientDemo')?.value.trim() || '',
+    presentingComplaint: getField('presentingComplaint')?.value.trim() || '',
+    examFreeText: getField('examFreeText')?.value.trim() || '',
+    hpc: getChecklistItems('hpcList').map(i => i.text),
+    redFlags: getChecklistItems('redFlagsList').map(i => i.text),
+	vitals: getChecklistItems('vitalsList').map(i => i.text),
+    allergies: getChecklistItems('allergiesList').map(i => i.text),
+    medicalHistory: getChecklistItems('medicalHistoryList').map(i => i.text),
+    currentMeds: getChecklistItems('currentMedsList').map(i => i.text),
+    patientFactors: getChecklistItems('patientFactorsList').map(i => i.text),
+    exam: getChecklistItems('examList').map(i => i.text),
+    diagnosis: getChecklistItems('diagnosisList').map(i => i.text),
+    differentials: getChecklistItems('differentialsList').map(i => i.text),
+    prescribingFirstLine: getChecklistItems('prescribingFirstLineList').map(i => i.text),
+prescribingSecondLine: getChecklistItems('prescribingSecondLineList').map(i => i.text),
+    patientAdvice: getChecklistItems('adviceList').map(i => i.text),
+    safetyNet: getChecklistItems('safetyNetList').map(i => i.text),
+    documentation: getChecklistItems('documentationList').map(i => i.text)
+  };
+}
+
+async function loadUserTemplates() {
+  if (!firebaseReady || !currentUser) {
+    userTemplates = [];
+    if (!allTemplates().some(t => t.id === activeTemplateId)) {
+      activeTemplateId = defaultTemplates[0].id;
+    }
+    renderTemplates();
+    syncHero();
+    return;
+  }
+
+  try {
+    const q = query(templatesRef, orderBy('updatedAt', 'desc'));
+    const snap = await getDocs(q);
+    userTemplates = snap.docs.map(d => ({
+      id: d.id,
+      firebaseId: d.id,
+      isBuiltIn: false,
+      ...d.data()
+    }));
+  } catch (err) {
+    console.warn('Firestore load failed, retrying without orderBy:', err);
+    try {
+      const snap = await getDocs(templatesRef);
+      userTemplates = snap.docs.map(d => ({
+        id: d.id,
+        firebaseId: d.id,
+        isBuiltIn: false,
+        ...d.data()
+      }));
+    } catch (innerErr) {
+      console.warn('Firestore fallback load also failed. Showing built-in templates only.', innerErr);
+      userTemplates = [];
+    }
+  }
+
+  if (!allTemplates().some(t => t.id === activeTemplateId)) {
+    activeTemplateId = defaultTemplates[0].id;
+  }
+
+  renderTemplates();
+  syncHero();
+}
+
+function renderTemplates() {
+  if (!templateList) return;
+
+  const term = (searchInput?.value || '').trim().toLowerCase();
+  const category = categoryFilter?.value || 'all';
+
+  const filtered = allTemplates().filter(t => {
+    const matchesCategory = category === 'all' || t.category === category;
+    const haystack = [t.title, t.desc, ...(t.tags || [])].join(' ').toLowerCase();
+    const matchesTerm = !term || haystack.includes(term);
+    return matchesCategory && matchesTerm;
+  });
+
+  templateList.innerHTML = '';
+
+  filtered.forEach(template => {
+    const card = document.createElement('div');
+    card.className = 'template-card' + (template.id === activeTemplateId ? ' active' : '');
+    card.innerHTML = `
+      <h3>${escapeHtml(template.title)} ${template.isBuiltIn ? '⭐' : '📝'}</h3>
+      <p>${escapeHtml(template.desc)}</p>
+      <div class="template-tags">
+        ${(template.tags || []).map(tag => `<span class="chip">${escapeHtml(tag)}</span>`).join('')}
+      </div>
+    `;
+    card.addEventListener('click', () => setActiveTemplate(template.id));
+    templateList.appendChild(card);
+  });
+}
+
+function setActiveTemplate(id) {
+  activeTemplateId = id;
+  syncHero();
+  renderTemplates();
+}
+
+function syncHero() {
+  const template = getActiveTemplate();
+  if (!template) return;
+
+  if (activeTemplateTitle) activeTemplateTitle.textContent = template.title;
+  if (activeTemplateDesc) activeTemplateDesc.textContent = template.desc;
+
+  deleteBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
+  editBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
+}
+
+function fillTemplatePrompts() {
+  const template = getActiveTemplate();
+  if (!template) return;
+
+  if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
+  if (getField('presentingComplaint')) getField('presentingComplaint').value = template.prompts?.presentingComplaint || '';
+  if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
+
+  setChecklistItems('hpcList', template.prompts?.hpc);
+  setChecklistItems('redFlagsList', template.prompts?.redFlags);
+  setChecklistItems('vitalsList', template.prompts?.vitals);
+  setChecklistItems('allergiesList', template.prompts?.allergies || template.prompts?.medsAllergies);
+  setChecklistItems('medicalHistoryList', template.prompts?.medicalHistory || template.prompts?.pmhx);
+  setChecklistItems('currentMedsList', template.prompts?.currentMeds);
+  setChecklistItems('patientFactorsList', template.prompts?.patientFactors);
+  setChecklistItems('examList', template.prompts?.exam);
+  setChecklistItems('diagnosisList', template.prompts?.diagnosis);
+  setChecklistItems('differentialsList', template.prompts?.differentials);
+  setChecklistItems('prescribingFirstLineList', template.prompts?.prescribingFirstLine || template.prompts?.prescribing);
+setChecklistItems('prescribingSecondLineList', template.prompts?.prescribingSecondLine);
+  setChecklistItems('adviceList', template.prompts?.patientAdvice);
+  setChecklistItems('safetyNetList', template.prompts?.safetyNet);
+  setChecklistItems('documentationList', template.prompts?.documentation);
+}
+
+function clearForm() {
+  textFieldIds.forEach(id => {
+    const field = getField(id);
+    if (field) field.value = '';
+  });
+
+  checklistIds.forEach(clearChecklist);
+
+  ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly'].forEach(id => {
+    const box = getField(id);
+    if (box) box.checked = false;
+  });
+
+  const privateNote = getField('privateConsultNote');
+  if (privateNote) privateNote.value = '';
+
+  if (output) output.innerHTML = '';
+}
+
+function getCheckedTreatmentFlags() {
+  const flags = [];
+  if (getField('abxNotIndicated')?.checked) flags.push('Antibiotics not indicated');
+  if (getField('abxDelayed')?.checked) flags.push('Delayed antibiotic approach considered / provided');
+  if (getField('abxPrescribed')?.checked) flags.push('Antibiotics prescribed');
+  if (getField('supportiveCareOnly')?.checked) flags.push('Supportive care only');
+  return flags;
+}
+
+function buildSummaryText() {
+  const patientDemo = getField('patientDemo')?.value.trim() || '';
+  const presentingComplaint = getField('presentingComplaint')?.value.trim() || '';
+  const examFreeText = getField('examFreeText')?.value.trim() || '';
+
+  const hpc = getCheckedChecklistTexts('hpcList');
+  const redFlags = getCheckedChecklistTexts('redFlagsList');
+  const vitals = getCheckedChecklistTexts('vitalsList');
+  const allergies = getCheckedChecklistTexts('allergiesList');
+  const medicalHistory = getCheckedChecklistTexts('medicalHistoryList');
+  const currentMeds = getCheckedChecklistTexts('currentMedsList');
+  const patientFactors = getCheckedChecklistTexts('patientFactorsList');
+  const exam = getCheckedChecklistTexts('examList');
+  const diagnosis = getCheckedChecklistTexts('diagnosisList');
+  const differentials = getCheckedChecklistTexts('differentialsList');
+  const prescribingFirstLine = getCheckedChecklistTexts('prescribingFirstLineList');
+const prescribingSecondLine = getCheckedChecklistTexts('prescribingSecondLineList');
+  const advice = getCheckedChecklistTexts('adviceList');
+  const safetyNet = getCheckedChecklistTexts('safetyNetList');
+  const documentation = getCheckedChecklistTexts('documentationList');
+  const treatmentFlags = getCheckedTreatmentFlags();
+
+  const lines = [];
+
+  if (patientDemo && presentingComplaint) {
+    lines.push(sentence(`${patientDemo} presenting with ${presentingComplaint}`));
+  } else if (presentingComplaint) {
+    lines.push(sentence(`Presenting with ${presentingComplaint}`));
+  } else if (patientDemo) {
+    lines.push(sentence(patientDemo));
+  }
+
+  if (hpc.length) lines.push(sentence(`History of presenting complaint: ${joinList(hpc)}`));
+  if (redFlags.length) lines.push(sentence(`Red flags checked: ${joinList(redFlags)}`));
+  if (vitals.length) lines.push(sentence(`Vital signs: ${joinList(vitals)}`));
+  if (allergies.length) lines.push(sentence(`Allergies: ${joinList(allergies)}`));
+  if (medicalHistory.length) lines.push(sentence(`Medical history: ${joinList(medicalHistory)}`));
+  if (currentMeds.length) lines.push(sentence(`Current medications: ${joinList(currentMeds)}`));
+  if (patientFactors.length) lines.push(sentence(`Special patient factors: ${joinList(patientFactors)}`));
+
+  const examBits = [];
+  if (exam.length) examBits.push(joinList(exam));
+  if (examFreeText) examBits.push(examFreeText);
+  if (examBits.length) lines.push(sentence(`Examination: ${examBits.join('; ')}`));
+
+  if (diagnosis.length) lines.push(sentence(`Diagnosis: ${joinList(diagnosis)}`));
+  if (differentials.length) lines.push(sentence(`Differential / ruled out concerns: ${joinList(differentials)}`));
+
+  const prescribingBits = [];
+if (treatmentFlags.length) prescribingBits.push(treatmentFlags.join('; '));
+if (prescribingFirstLine.length) prescribingBits.push(`First-line: ${joinList(prescribingFirstLine)}`);
+if (prescribingSecondLine.length) prescribingBits.push(`Second-line: ${joinList(prescribingSecondLine)}`);
+if (prescribingBits.length) lines.push(sentence(`Prescribing: ${prescribingBits.join('. ')}`));
+
+  if (advice.length) lines.push(sentence(`Advice: ${joinList(advice)}`));
+  if (safetyNet.length) lines.push(sentence(`Safety net: ${joinList(safetyNet)}`));
+  if (documentation.length) lines.push(sentence(`Documentation notes: ${joinList(documentation)}`));
+
+  return lines.join('\n\n');
+}
+
+function generateSummary() {
+  const summary = buildSummaryText();
+  if (!output) return;
+  output.innerHTML = escapeHtml(summary).replace(/\n/g, '<br>');
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function printSummaryOnly() {
+  const summary = buildSummaryText().trim();
+  if (!summary) {
+    alert('No generated summary to print yet.');
+    return;
+  }
+
+  const printWindow = window.open('', '_blank', 'width=900,height=700');
+  if (!printWindow) {
+    alert('Pop-up blocked. Please allow pop-ups for printing.');
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Consultation Summary</title>
+      <style>
+        body {
+          font-family: Tahoma, Arial, sans-serif;
+          margin: 28px;
+          color: #111;
+          white-space: pre-wrap;
+          line-height: 1.5;
+        }
+        h1 {
+          margin: 0 0 18px;
+          font-size: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Consultation Summary</h1>
+      <div>${escapeHtml(summary).replace(/\n/g, '<br>')}</div>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 250);
+}
+
+async function copyOutput(asPlainText = false) {
+  const text = buildSummaryText();
+  if (!text.trim()) return;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    const target = asPlainText ? copyPlainBtn : copyBtn;
+    if (!target) return;
+
+    const original = target.textContent;
+    target.textContent = '✅ Copied';
+    setTimeout(() => {
+      target.textContent = original;
+    }, 1400);
+  } catch (err) {
+    alert('Copy failed on this browser. You can still highlight and copy manually.');
+  }
+}
+
+async function saveCurrentTemplate() {
+  if (!firebaseReady) {
+    alert('Firebase is not connected.');
+    return;
+  }
+  if (!currentUser) {
+    alert('Please sign in first.');
+    return;
+  }
+
+  const meta = promptForTemplateMeta();
+  if (!meta) return;
+
+  const payload = {
+    title: meta.title,
+    category: meta.category,
+    desc: meta.desc,
+    tags: meta.tags,
+    prompts: collectPromptFields(),
+    ownerUid: currentUser.uid,
+    ownerEmail: currentUser.email || '',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  const docRef = await addDoc(templatesRef, payload);
+  activeTemplateId = docRef.id;
+  await loadUserTemplates();
+  alert('Template saved.');
+}
+
+async function updateCurrentTemplate() {
+  if (!firebaseReady) {
+    alert('Firebase is not connected.');
+    return;
+  }
+  if (!currentUser) {
+    alert('Please sign in first.');
+    return;
+  }
+
+  const template = getActiveTemplate();
+  if (!template || template.isBuiltIn) {
+    alert('Built-in templates cannot be overwritten. Save as a new template instead.');
+    return;
+  }
+
+  const meta = promptForTemplateMeta(template);
+  if (!meta) return;
+
+  await updateDoc(doc(db, 'consultationTemplates', template.id), {
+    title: meta.title,
+    category: meta.category,
+    desc: meta.desc,
+    tags: meta.tags,
+    prompts: collectPromptFields(),
+    updatedAt: serverTimestamp()
+  });
+
+  await loadUserTemplates();
+  activeTemplateId = template.id;
+  syncHero();
+  renderTemplates();
+  alert('Template updated.');
+}
+
+async function deleteCurrentTemplate() {
+  if (!firebaseReady) {
+    alert('Firebase is not connected.');
+    return;
+  }
+  if (!currentUser) {
+    alert('Please sign in first.');
+    return;
+  }
+
+  const template = getActiveTemplate();
+  if (!template || template.isBuiltIn) {
+    alert('Built-in templates cannot be deleted.');
+    return;
+  }
+
+  const ok = confirm(`Delete template: ${template.title}?`);
+  if (!ok) return;
+
+  await deleteDoc(doc(db, 'consultationTemplates', template.id));
+  activeTemplateId = defaultTemplates[0].id;
+  await loadUserTemplates();
+  syncHero();
+  alert('Template deleted.');
+}
+
+function setupDesktopHeaderMinimize() {
+  if (!topbar) return;
+
+  const headerBtns = document.querySelectorAll('.header-btn');
+
+  function applyHeaderState() {
+    if (window.innerWidth <= 760) {
+      topbar.classList.remove('minimized');
+      headerBtns.forEach(btn => {
+        btn.textContent = btn.dataset.full || btn.textContent;
+      });
+      return;
+    }
+
+    if (window.scrollY > 80) {
+      topbar.classList.add('minimized');
+      headerBtns.forEach(btn => {
+        btn.textContent = btn.dataset.mini || btn.textContent;
+      });
+    } else {
+      topbar.classList.remove('minimized');
+      headerBtns.forEach(btn => {
+        btn.textContent = btn.dataset.full || btn.textContent;
+      });
+    }
+  }
+
+  window.addEventListener('scroll', applyHeaderState, { passive: true });
+  window.addEventListener('resize', applyHeaderState);
+  applyHeaderState();
+}
+
+
+function setupMobileTopbar() {
+  if (!topbar || !topbarToggle) return;
+
+  function resetForDesktop() {
+    if (window.innerWidth > 760) {
+      topbar.classList.remove('mobile-hidden');
+      topbar.classList.remove('show-mobile');
+    } else {
+      topbar.classList.remove('show-mobile');
+    }
+  }
+
+  topbarToggle.addEventListener('click', () => {
+    if (window.innerWidth <= 760) {
+      topbar.classList.toggle('show-mobile');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth > 760) return;
+    const clickedInsideTopbar = topbar.contains(e.target);
+    const clickedToggle = topbarToggle.contains(e.target);
+    if (!clickedInsideTopbar && !clickedToggle) {
+      topbar.classList.remove('show-mobile');
+    }
+  });
+
+  window.addEventListener('resize', resetForDesktop);
+  resetForDesktop();
+}
+
+safeAddListener(searchInput, 'input', renderTemplates);
+safeAddListener(categoryFilter, 'change', renderTemplates);
+safeAddListener(fillTemplateBtn, 'click', fillTemplatePrompts);
+safeAddListener(clearBtn, 'click', clearForm);
+safeAddListener(generateBtn, 'click', generateSummary);
+safeAddListener(floatingGenerateBtn, 'click', generateSummary);
+safeAddListener(copyBtn, 'click', () => copyOutput(false));
+safeAddListener(copyPlainBtn, 'click', () => copyOutput(true));
+safeAddListener(printBtn, 'click', printSummaryOnly);
+safeAddListener(saveBtn, 'click', saveCurrentTemplate);
+safeAddListener(editBtn, 'click', updateCurrentTemplate);
+safeAddListener(deleteBtn, 'click', deleteCurrentTemplate);
+safeAddListener(loginBtn, 'click', signInUser);
+safeAddListener(logoutBtn, 'click', signOutUser);
+
+renderTemplates();
+syncHero();
+updateAuthUI();
+initAllChecklists();
+setupMinimalistChecklistToggle();
+setupMobileTopbar();
+setupDesktopHeaderMinimize();
+
+if (firebaseReady) {
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user || null;
+    updateAuthUI();
+    await loadUserTemplates();
+    syncHero();
+  });
+}
+</script>
+
+</body>
+</html>
