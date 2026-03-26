@@ -532,6 +532,102 @@ select option {
       accent-color: #d6ecff;
     }
 
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .check-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(20,20,20,0.10);
+      background: rgba(255,255,255,0.48);
+      cursor: pointer;
+      min-height: 44px;
+    }
+
+    .check-pill input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #b7d7ff;
+      flex-shrink: 0;
+    }
+
+    .builder-block {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(20,20,20,0.08);
+      background: rgba(255,255,255,0.34);
+    }
+
+    .builder-title {
+      font-size: 0.84rem;
+      color: #555;
+    }
+
+    .mini-add-btn {
+      border: 1px solid rgba(20,20,20,0.12);
+      background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.64));
+      color: #111;
+      border-radius: 14px;
+      padding: 9px 12px;
+      cursor: pointer;
+      width: fit-content;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+
+    .vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .dynamic-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .vital-row,
+    .med-row {
+      display: grid;
+      gap: 10px;
+      align-items: end;
+      padding: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(20,20,20,0.08);
+      background: rgba(255,255,255,0.40);
+    }
+
+    .vital-row {
+      grid-template-columns: 1.1fr 1fr auto;
+    }
+
+    .med-row {
+      grid-template-columns: auto 1.2fr 1fr 1fr 0.9fr auto;
+    }
+
+    .remove-row-btn {
+      border: 1px solid rgba(20,20,20,0.12);
+      background: rgba(255,255,255,0.72);
+      color: #111;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      min-width: 44px;
+    }
+
+    .section-subtle {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: -2px;
+    }
+
     .badge-row {
       display: flex;
       flex-wrap: wrap;
@@ -714,7 +810,11 @@ select option {
       .quick-grid,
       .consultation-grid,
       .section-fields.two,
-      .section-fields.three {
+      .section-fields.three,
+      .check-grid,
+      .vitals-grid,
+      .vital-row,
+      .med-row {
         grid-template-columns: 1fr;
       }
     
@@ -760,55 +860,7 @@ select option {
           <input type="text" id="searchInput" placeholder="Search template or symptom..." />
           <select id="categoryFilter">
             <option value="all">All categories</option>
-            <option value="respiratory">Respiratory / ENT</option>
-            <option value="skin">Skin / Soft tissue</option>
-            <option value="viral">Viral / General</option>
-            <option value="urinary">Urinary</option>
-            <option value="msk">MSK / Injury</option>
-          </select>
-        </div>
-
-        <div class="template-list" id="templateList"></div>
-      </aside>
-
-      <main class="main">
-        <section class="hero">
-          <div class="hero-top">
-            <div>
-              <h2 class="hero-title" id="activeTemplateTitle">General Consultation</h2>
-              <p class="hero-sub" id="activeTemplateDesc">
-                Use this page to guide assessment, decision-making, prescribing checks, patient advice, and clean documentation.
-              </p>
-            </div>
-
-            <div class="hero-actions">
-              <button class="glass-btn" id="fillTemplateBtn">✨ Load template prompts</button>
-              <button class="glass-btn" id="clearBtn">🧼 Clear form</button>
-              <button class="glass-btn" id="generateBtn">📋 Generate summary</button>
-            </div>
-          </div>
-
-          <div class="quick-grid">
-            <div class="info-box">
-              <h3>Problem focus</h3>
-              <p>Start with the reason for presentation, timing, severity, and what diagnosis you are trying to rule in or rule out.</p>
-            </div>
-            <div class="info-box">
-              <h3>Red flags</h3>
-              <p>Document the dangerous things asked about or checked for, especially if absent.</p>
-            </div>
-            <div class="info-box">
-              <h3>Antibiotic decision</h3>
-              <p>State whether antibiotics are indicated, why, and whether watchful waiting or supportive care is more appropriate.</p>
-            </div>
-            <div class="info-box">
-              <h3>Safety net</h3>
-              <p>Always include return advice, worsening advice, and when urgent reassessment is needed.</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="consultation-grid">
+   
           <div class="card">
             <div class="section-header">
               <div>
@@ -825,6 +877,22 @@ select option {
                 Presenting complaint
                 <input id="presentingComplaint" placeholder="e.g. sore throat for 2 days, painful swallowing" />
               </label>
+
+              <div class="builder-block">
+                <div class="builder-title">Tick common presenting complaints to drop into the note</div>
+                <div class="check-grid" id="presentationChecks">
+                  <label class="check-pill"><input type="checkbox" value="fever" /> Fever</label>
+                  <label class="check-pill"><input type="checkbox" value="cough" /> Cough</label>
+                  <label class="check-pill"><input type="checkbox" value="sore throat" /> Sore throat</label>
+                  <label class="check-pill"><input type="checkbox" value="ear pain" /> Ear pain</label>
+                  <label class="check-pill"><input type="checkbox" value="dysuria" /> Dysuria</label>
+                  <label class="check-pill"><input type="checkbox" value="rash" /> Rash</label>
+                  <label class="check-pill"><input type="checkbox" value="wound concern" /> Wound concern</label>
+                  <label class="check-pill"><input type="checkbox" value="injury / pain" /> Injury / pain</label>
+                </div>
+                <input id="presentationCustom" placeholder="Extra presenting complaint items (comma separated)" />
+              </div>
+
               <label>
                 History of presenting complaint
                 <textarea id="hpc" placeholder="Onset, duration, progression, severity, associated symptoms, relevant exposures, treatment tried..."></textarea>
@@ -844,6 +912,21 @@ select option {
             </div>
 
             <div class="section-fields">
+              <div class="builder-block">
+                <div class="builder-title">Tick red flags checked or documented as absent</div>
+                <div class="check-grid" id="redFlagChecks">
+                  <label class="check-pill"><input type="checkbox" value="no shortness of breath" /> No SOB</label>
+                  <label class="check-pill"><input type="checkbox" value="no chest pain" /> No chest pain</label>
+                  <label class="check-pill"><input type="checkbox" value="no dehydration" /> No dehydration</label>
+                  <label class="check-pill"><input type="checkbox" value="no vomiting" /> No vomiting</label>
+                  <label class="check-pill"><input type="checkbox" value="no drooling" /> No drooling</label>
+                  <label class="check-pill"><input type="checkbox" value="no trismus" /> No trismus</label>
+                  <label class="check-pill"><input type="checkbox" value="no respiratory distress" /> No respiratory distress</label>
+                  <label class="check-pill"><input type="checkbox" value="no systemic toxicity" /> No systemic toxicity</label>
+                </div>
+                <input id="redFlagsCustom" placeholder="Extra red flags / negatives (comma separated)" />
+              </div>
+
               <label>
                 Red flags checked
                 <textarea id="redFlags" placeholder="e.g. no stridor, no drooling, no respiratory distress, no trismus, no dehydration..."></textarea>
@@ -880,20 +963,53 @@ select option {
                 <textarea id="measurements" placeholder="Age, weight, BSL, temp, BP, HR, RR, sats, pain score..."></textarea>
               </label>
             </div>
+
+            <div class="builder-block">
+              <div class="builder-title">Vitals / observations</div>
+              <div class="vitals-grid">
+                <label>Temp<input id="vitalTemp" placeholder="e.g. 38.2" /></label>
+                <label>HR<input id="vitalHr" placeholder="e.g. 96" /></label>
+                <label>BP<input id="vitalBp" placeholder="e.g. 118/72" /></label>
+                <label>RR<input id="vitalRr" placeholder="e.g. 18" /></label>
+                <label>SpO₂<input id="vitalSpo2" placeholder="e.g. 99% RA" /></label>
+                <label>Pain<input id="vitalPain" placeholder="e.g. 4/10" /></label>
+                <label>Weight<input id="vitalWeight" placeholder="e.g. 18.5 kg" /></label>
+                <label>BSL<input id="vitalBsl" placeholder="e.g. 5.4 mmol/L" /></label>
+              </div>
+
+              <div class="section-subtle">Add extra vitals or observations when needed</div>
+              <div class="dynamic-list" id="extraVitals"></div>
+              <button type="button" class="mini-add-btn" id="addVitalBtn">＋ Add vital / observation</button>
+            </div>
           </div>
 
           <div class="card">
             <div class="section-header">
               <div>
-                <div class="section-heading">4. Examination</div>
-                <div class="hint">Objective findings only</div>
+                <div class="section-heading">4. Assessment</div>
+                <div class="hint">Objective findings and quick assessment ticks</div>
               </div>
               <div class="badge-row">
-                <span class="badge green">Exam</span>
+                <span class="badge green">Assessment</span>
               </div>
             </div>
 
             <div class="section-fields">
+              <div class="builder-block">
+                <div class="builder-title">Tick common assessment findings</div>
+                <div class="check-grid" id="assessmentChecks">
+                  <label class="check-pill"><input type="checkbox" value="well appearing" /> Well appearing</label>
+                  <label class="check-pill"><input type="checkbox" value="alert" /> Alert</label>
+                  <label class="check-pill"><input type="checkbox" value="hydrated" /> Hydrated</label>
+                  <label class="check-pill"><input type="checkbox" value="no respiratory distress" /> No respiratory distress</label>
+                  <label class="check-pill"><input type="checkbox" value="afebrile on assessment" /> Afebrile on assessment</label>
+                  <label class="check-pill"><input type="checkbox" value="ambulant" /> Ambulatory</label>
+                  <label class="check-pill"><input type="checkbox" value="localised tenderness present" /> Localised tenderness</label>
+                  <label class="check-pill"><input type="checkbox" value="reduced range of motion" /> Reduced ROM</label>
+                </div>
+                <input id="assessmentCustom" placeholder="Extra assessment findings (comma separated)" />
+              </div>
+
               <label>
                 Examination findings
                 <textarea id="exam" placeholder="General appearance, hydration, ENT / chest / skin / abdo / limb findings, ROM, wound findings..."></textarea>
@@ -904,7 +1020,7 @@ select option {
          <div class="card">
   <div class="section-header">
     <div>
-      <div class="section-heading">5. Assessment / diagnosis</div>
+      <div class="section-heading">5. Diagnosis</div>
       <div class="hint">Working diagnosis and differentials</div>
     </div>
     <div class="badge-row">
@@ -913,29 +1029,46 @@ select option {
   </div>
 
   <div class="section-fields two">
+    <div class="builder-block">
+      <div class="builder-title">Tick common diagnoses to add into the note</div>
+      <div class="check-grid" id="diagnosisChecks">
+        <label class="check-pill"><input type="checkbox" value="viral URTI" /> Viral URTI</label>
+        <label class="check-pill"><input type="checkbox" value="tonsillitis / pharyngitis" /> Tonsillitis / pharyngitis</label>
+        <label class="check-pill"><input type="checkbox" value="otitis media" /> Otitis media</label>
+        <label class="check-pill"><input type="checkbox" value="otitis externa" /> Otitis externa</label>
+        <label class="check-pill"><input type="checkbox" value="cellulitis" /> Cellulitis</label>
+        <label class="check-pill"><input type="checkbox" value="cystitis" /> Cystitis</label>
+        <label class="check-pill"><input type="checkbox" value="sprain / strain" /> Sprain / strain</label>
+        <label class="check-pill"><input type="checkbox" value="viral illness" /> Viral illness</label>
+      </div>
+      <input id="diagnosisCustom" placeholder="Extra diagnosis items (comma separated)" />
+    </div>
+
     <label>
       Working diagnosis
       <textarea id="diagnosis" placeholder="Most likely diagnosis"></textarea>
     </label>
+  </div>
+
+  <div class="section-fields two">
     <label>
       Differentials / ruled out concerns
       <textarea id="differentials" placeholder="Important alternatives considered and why less likely"></textarea>
     </label>
-  </div>
-
-  <div class="section-fields private-note-wrap">
-    <label class="private-note-label">
-      Private consult note
-      <textarea id="privateConsultNote" placeholder="Quick note to self while consulting - not part of summary"></textarea>
-    </label>
+    <div class="section-fields private-note-wrap">
+      <label class="private-note-label">
+        Private consult note
+        <textarea id="privateConsultNote" placeholder="Quick note to self while consulting - not part of summary"></textarea>
+      </label>
+    </div>
   </div>
 </div>
 
 <div class="card">
   <div class="section-header">
     <div>
-      <div class="section-heading">6. Prescribing / antibiotic decision</div>
-      <div class="hint">Structured prescribing details, child/adult option, and antibiotic choices</div>
+      <div class="section-heading">6. Management / prescribing</div>
+      <div class="hint">Tick management points and add medication rows that write directly into the note</div>
     </div>
     <div class="badge-row">
       <span class="badge pink">Prescribing</span>
@@ -949,7 +1082,7 @@ select option {
     <label><input type="checkbox" id="supportiveCareOnly" /> Supportive care only</label>
   </div>
 
-  <div class="section-fields three">
+  <div class="section-fields two">
     <label>
       Patient type
       <select id="patientType">
@@ -963,19 +1096,105 @@ select option {
       Weight (kg)
       <input id="childWeight" type="number" min="0" step="0.1" placeholder="e.g. 18.5" />
     </label>
+  </div>
 
+  <div class="builder-block">
+    <div class="builder-title">Management ticks</div>
+    <div class="check-grid" id="managementChecks">
+      <label class="check-pill"><input type="checkbox" value="supportive care advised" /> Supportive care advised</label>
+      <label class="check-pill"><input type="checkbox" value="fluids encouraged" /> Fluids encouraged</label>
+      <label class="check-pill"><input type="checkbox" value="analgesia advised" /> Analgesia advised</label>
+      <label class="check-pill"><input type="checkbox" value="rest advised" /> Rest advised</label>
+      <label class="check-pill"><input type="checkbox" value="swab taken" /> Swab taken</label>
+      <label class="check-pill"><input type="checkbox" value="x-ray requested" /> X-ray requested</label>
+      <label class="check-pill"><input type="checkbox" value="dressing completed" /> Dressing completed</label>
+      <label class="check-pill"><input type="checkbox" value="review arranged" /> Review arranged</label>
+    </div>
+    <input id="managementCustom" placeholder="Extra management items (comma separated)" />
+  </div>
+
+  <div class="builder-block">
+    <div class="builder-title">Prescribing rows — tick each row you want included in the summary</div>
+    <div class="dynamic-list" id="medicationRows"></div>
+    <button type="button" class="mini-add-btn" id="addMedicationBtn">＋ Add medication</button>
+  </div>
+
+  <div class="section-fields two">
     <label>
-      Antibiotic
-      <input id="antibioticName" placeholder="e.g. amoxicillin" />
+      1st choice ABX
+      <input id="firstChoiceAbx" placeholder="e.g. flucloxacillin" />
     </label>
 
     <label>
-      Directions for use
-      <input id="abxDirections" placeholder="e.g. 500 mg TDS" />
+      2nd choice ABX
+      <input id="secondChoiceAbx" placeholder="e.g. cefalexin" />
     </label>
 
     <label>
-      Duration (days)
+      Treatment rationale
+      <textarea id="treatmentRationale" placeholder="Why antibiotics are or are not indicated, severity, likely organism, viral picture, watchful waiting reasoning..."></textarea>
+    </label>
+
+    <label>
+      General management plan
+      <textarea id="managementPlan" placeholder="Any extra management details not covered by the ticks above..."></textarea>
+    </label>
+  </div>
+</div>
+
+          <div class="card full">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">7. Patient advised / safety net / documentation</div>
+                <div class="hint">Tick what was discussed, then add any extra wording you want</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge blue">Close the loop</span>
+              </div>
+            </div>
+
+            <div class="section-fields three">
+              <div class="builder-block">
+                <div class="builder-title">Patient advised</div>
+                <div class="check-grid" id="adviceChecks">
+                  <label class="check-pill"><input type="checkbox" value="fluids encouraged" /> Fluids encouraged</label>
+                  <label class="check-pill"><input type="checkbox" value="rest advised" /> Rest advised</label>
+                  <label class="check-pill"><input type="checkbox" value="analgesia advised" /> Analgesia advised</label>
+                  <label class="check-pill"><input type="checkbox" value="wound care explained" /> Wound care explained</label>
+                  <label class="check-pill"><input type="checkbox" value="medication use explained" /> Medication use explained</label>
+                  <label class="check-pill"><input type="checkbox" value="potential side effects discussed" /> Side effects discussed</label>
+                </div>
+                <input id="patientAdviceCustom" placeholder="Extra patient advice items (comma separated)" />
+                <label>
+                  Patient advice
+                  <textarea id="patientAdvice" placeholder="Hydration, analgesia, rest, wound care, expected course, infection control advice..."></textarea>
+                </label>
+              </div>
+
+              <div class="builder-block">
+                <div class="builder-title">Safety netting</div>
+                <div class="check-grid" id="safetyNetChecks">
+                  <label class="check-pill"><input type="checkbox" value="return if worsening symptoms" /> Return if worsening</label>
+                  <label class="check-pill"><input type="checkbox" value="return if fever persists" /> Return if fever persists</label>
+                  <label class="check-pill"><input type="checkbox" value="return if shortness of breath develops" /> Return if SOB</label>
+                  <label class="check-pill"><input type="checkbox" value="return if reduced oral intake" /> Return if reduced intake</label>
+                  <label class="check-pill"><input type="checkbox" value="return if vomiting / unable to tolerate fluids" /> Return if vomiting</label>
+                  <label class="check-pill"><input type="checkbox" value="return if increasing pain / swelling / redness" /> Return if increasing pain/swelling</label>
+                </div>
+                <input id="safetyNetCustom" placeholder="Extra safety netting items (comma separated)" />
+                <label>
+                  Safety net / return advice
+                  <textarea id="safetyNet" placeholder="Return if worsening pain, swelling, fever, SOB, poor oral intake, spreading redness, reduced urine output, not improving..."></textarea>
+                </label>
+              </div>
+
+              <label>
+                Documentation notes
+                <textarea id="documentation" placeholder="Consent, chaperone, discussion with senior, photos, swabs, forms completed, fit note, ACC, etc."></textarea>
+              </label>
+            </div>
+          </div>
+ion (days)
       <input id="abxDays" type="number" min="1" step="1" placeholder="e.g. 5" />
     </label>
 
@@ -1385,14 +1604,26 @@ managementPlan: 'Immediate treatment, investigations, review timing.',
   'medsAllergies',
   'patientFactors',
   'measurements',
+  'vitalTemp',
+  'vitalHr',
+  'vitalBp',
+  'vitalRr',
+  'vitalSpo2',
+  'vitalPain',
+  'vitalWeight',
+  'vitalBsl',
+  'presentationCustom',
+  'redFlagsCustom',
+  'assessmentCustom',
+  'diagnosisCustom',
+  'managementCustom',
+  'patientAdviceCustom',
+  'safetyNetCustom',
   'exam',
   'diagnosis',
   'differentials',
   'patientType',
   'childWeight',
-  'antibioticName',
-  'abxDirections',
-  'abxDays',
   'firstChoiceAbx',
   'secondChoiceAbx',
   'treatmentRationale',
@@ -1585,6 +1816,7 @@ managementPlan: 'Immediate treatment, investigations, review timing.',
     editBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
   }
 
+
   function fillTemplatePrompts() {
   const template = getActiveTemplate();
   if (!template) return;
@@ -1595,6 +1827,11 @@ managementPlan: 'Immediate treatment, investigations, review timing.',
     field.value = template.prompts?.[id] || '';
   });
 
+  document.querySelectorAll('.check-grid input[type="checkbox"], .mini-checks input[type="checkbox"]').forEach(box => {
+    box.checked = false;
+  });
+
+  resetDynamicSections();
   toggleChildWeight();
 }
 
@@ -1604,18 +1841,18 @@ managementPlan: 'Immediate treatment, investigations, review timing.',
     if (field) field.value = '';
   });
 
-  ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly'].forEach(id => {
-    const box = document.getElementById(id);
-    if (box) box.checked = false;
+  document.querySelectorAll('.check-grid input[type="checkbox"], .mini-checks input[type="checkbox"]').forEach(box => {
+    box.checked = false;
   });
 
   const privateNote = document.getElementById('privateConsultNote');
   if (privateNote) privateNote.value = '';
 
+  resetDynamicSections();
   toggleChildWeight();
   output.innerHTML = '';
 }
-  
+
   function toggleChildWeight() {
   const patientType = document.getElementById('patientType');
   const childWeightWrap = document.getElementById('childWeightWrap');
@@ -1633,50 +1870,203 @@ managementPlan: 'Immediate treatment, investigations, review timing.',
 
   function getCheckedTreatmentFlags() {
     const flags = [];
-    if (document.getElementById('abxNotIndicated').checked) flags.push('Antibiotics not indicated');
-    if (document.getElementById('abxDelayed').checked) flags.push('Delayed antibiotic approach considered / provided');
-    if (document.getElementById('abxPrescribed').checked) flags.push('Antibiotics prescribed');
-    if (document.getElementById('supportiveCareOnly').checked) flags.push('Supportive care only');
+    if (document.getElementById('abxNotIndicated')?.checked) flags.push('Antibiotics not indicated');
+    if (document.getElementById('abxDelayed')?.checked) flags.push('Delayed antibiotic approach considered / provided');
+    if (document.getElementById('abxPrescribed')?.checked) flags.push('Antibiotics prescribed');
+    if (document.getElementById('supportiveCareOnly')?.checked) flags.push('Supportive care only');
     return flags;
+  }
+
+  function uniqueList(items = []) {
+    return [...new Set(items.map(item => String(item || '').trim()).filter(Boolean))];
+  }
+
+  function getCommaValues(id) {
+    return uniqueList((getField(id)?.value || '').split(','));
+  }
+
+  function getCheckedValues(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    return uniqueList(
+      [...container.querySelectorAll('input[type="checkbox"]:checked')].map(box => box.value || box.dataset.note || '')
+    );
+  }
+
+  function mergeSectionValues(...parts) {
+    return parts
+      .map(part => String(part || '').trim())
+      .filter(Boolean)
+      .join('
+');
+  }
+
+  function joinListAndText(listItems, freeText) {
+    const listText = uniqueList(listItems).join(', ');
+    return mergeSectionValues(listText, freeText);
+  }
+
+  function buildVitalsSummary() {
+    const fixed = [
+      ['Temp', getField('vitalTemp')?.value],
+      ['HR', getField('vitalHr')?.value],
+      ['BP', getField('vitalBp')?.value],
+      ['RR', getField('vitalRr')?.value],
+      ['SpO₂', getField('vitalSpo2')?.value],
+      ['Pain', getField('vitalPain')?.value],
+      ['Weight', getField('vitalWeight')?.value],
+      ['BSL', getField('vitalBsl')?.value]
+    ]
+      .map(([label, value]) => value && String(value).trim() ? `${label} ${String(value).trim()}` : '')
+      .filter(Boolean);
+
+    const extras = [...document.querySelectorAll('#extraVitals .vital-row')].map(row => {
+      const name = row.querySelector('.vital-name')?.value?.trim() || '';
+      const value = row.querySelector('.vital-value')?.value?.trim() || '';
+      if (!name && !value) return '';
+      return [name, value].filter(Boolean).join(': ');
+    }).filter(Boolean);
+
+    return joinListAndText([...fixed, ...extras], getField('measurements')?.value || '');
+  }
+
+  function buildMedicationSummary() {
+    const meds = [...document.querySelectorAll('#medicationRows .med-row')].map(row => {
+      const include = row.querySelector('.med-include')?.checked;
+      if (!include) return '';
+      const name = row.querySelector('.med-name')?.value?.trim() || '';
+      const dose = row.querySelector('.med-dose')?.value?.trim() || '';
+      const freq = row.querySelector('.med-frequency')?.value?.trim() || '';
+      const duration = row.querySelector('.med-duration')?.value?.trim() || '';
+      const main = [name, dose, freq].filter(Boolean).join(' ');
+      if (!main && !duration) return '';
+      return duration ? `${main} for ${duration}`.trim() : main;
+    }).filter(Boolean);
+
+    return meds.join('
+');
+  }
+
+  function addVitalRow(name = '', value = '') {
+    const wrap = document.createElement('div');
+    wrap.className = 'vital-row';
+    wrap.innerHTML = `
+      <label>Vital / observation<input class="vital-name" value="${escapeHtml(name)}" placeholder="e.g. CRT" /></label>
+      <label>Value<input class="vital-value" value="${escapeHtml(value)}" placeholder="e.g. &lt;2 sec" /></label>
+      <button type="button" class="remove-row-btn">✕</button>
+    `;
+    wrap.querySelector('.remove-row-btn').addEventListener('click', () => wrap.remove());
+    document.getElementById('extraVitals')?.appendChild(wrap);
+  }
+
+  function addMedicationRow(data = {}) {
+    const wrap = document.createElement('div');
+    wrap.className = 'med-row';
+    wrap.innerHTML = `
+      <label class="check-pill"><input type="checkbox" class="med-include" ${data.include ? 'checked' : ''} /> Include</label>
+      <label>Medication<input class="med-name" value="${escapeHtml(data.name || '')}" placeholder="e.g. amoxicillin" /></label>
+      <label>Dose<input class="med-dose" value="${escapeHtml(data.dose || '')}" placeholder="e.g. 500 mg" /></label>
+      <label>Frequency<input class="med-frequency" value="${escapeHtml(data.frequency || '')}" placeholder="e.g. TDS" /></label>
+      <label>Duration<input class="med-duration" value="${escapeHtml(data.duration || '')}" placeholder="e.g. 5 days" /></label>
+      <button type="button" class="remove-row-btn">✕</button>
+    `;
+    wrap.querySelector('.remove-row-btn').addEventListener('click', () => {
+      const rows = document.querySelectorAll('#medicationRows .med-row');
+      if (rows.length <= 1) {
+        wrap.querySelectorAll('input').forEach(input => {
+          if (input.type === 'checkbox') input.checked = false;
+          else input.value = '';
+        });
+        return;
+      }
+      wrap.remove();
+    });
+    document.getElementById('medicationRows')?.appendChild(wrap);
+  }
+
+  function resetDynamicSections() {
+    const extraVitals = document.getElementById('extraVitals');
+    const medicationRows = document.getElementById('medicationRows');
+    if (extraVitals) extraVitals.innerHTML = '';
+    if (medicationRows) medicationRows.innerHTML = '';
+    addMedicationRow();
   }
 
   function buildSummaryText() {
   const data = Object.fromEntries(fieldIds.map(id => [id, getField(id)?.value.trim() || '']));
   const flags = getCheckedTreatmentFlags();
 
-  const abxSummary =
-    [data.antibioticName, data.abxDirections].filter(Boolean).join(' ') +
-    (data.abxDays ? ` for ${data.abxDays} days` : '');
+  const presentationSummary = joinListAndText(
+    [...getCheckedValues('presentationChecks'), ...getCommaValues('presentationCustom')],
+    data.presentingComplaint
+  );
+
+  const redFlagsSummary = joinListAndText(
+    [...getCheckedValues('redFlagChecks'), ...getCommaValues('redFlagsCustom')],
+    data.redFlags
+  );
+
+  const assessmentSummary = joinListAndText(
+    [...getCheckedValues('assessmentChecks'), ...getCommaValues('assessmentCustom')],
+    data.exam
+  );
+
+  const diagnosisSummary = joinListAndText(
+    [...getCheckedValues('diagnosisChecks'), ...getCommaValues('diagnosisCustom')],
+    data.diagnosis
+  );
+
+  const managementSummary = joinListAndText(
+    [...getCheckedValues('managementChecks'), ...getCommaValues('managementCustom')],
+    data.managementPlan
+  );
+
+  const patientAdviceSummary = joinListAndText(
+    [...getCheckedValues('adviceChecks'), ...getCommaValues('patientAdviceCustom')],
+    data.patientAdvice
+  );
+
+  const safetyNetSummary = joinListAndText(
+    [...getCheckedValues('safetyNetChecks'), ...getCommaValues('safetyNetCustom')],
+    data.safetyNet
+  );
+
+  const medicationSummary = buildMedicationSummary();
+  const vitalsSummary = buildVitalsSummary();
 
   const sections = [
-    ['Presenting complaint', data.presentingComplaint],
+    ['Presenting complaint', presentationSummary],
     ['History', data.hpc],
-    ['Red flags', data.redFlags],
+    ['Red flags', redFlagsSummary],
     ['PMHx / relevant history', data.pmhx],
     ['Medications / allergies', data.medsAllergies],
     ['Patient factors', data.patientFactors],
-    ['Measurements / observations', data.measurements],
-    ['Examination', data.exam],
-    ['Working diagnosis', data.diagnosis],
+    ['Measurements / observations', vitalsSummary],
+    ['Assessment', assessmentSummary],
+    ['Working diagnosis', diagnosisSummary],
     ['Differentials / concerns considered', data.differentials],
     ['Treatment decision', flags.join('; ')],
-    ['Antibiotic prescribed', abxSummary],
+    ['Medication prescribed', medicationSummary],
     ['1st choice ABX', data.firstChoiceAbx],
     ['2nd choice ABX', data.secondChoiceAbx],
     ['Treatment rationale', data.treatmentRationale],
-    ['Management plan', data.managementPlan],
-    ['Patient advice', data.patientAdvice],
-    ['Safety net', data.safetyNet],
+    ['Management plan', managementSummary],
+    ['Patient advised', patientAdviceSummary],
+    ['Safety net', safetyNetSummary],
     ['Documentation notes', data.documentation]
   ];
 
   return sections
     .filter(([, value]) => value && value.trim())
-    .map(([label, value]) => `${label}:\n${value}`)
-    .join('\n\n');
+    .map(([label, value]) => `${label}:
+${value}`)
+    .join('
+
+');
 }
 
   function generateSummary() {
+
     const summary = buildSummaryText();
     output.innerHTML = escapeHtml(summary).replace(/\n/g, '<br>');
     output.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1892,6 +2282,8 @@ function setupDesktopHeaderMinimize() {
   categoryFilter.addEventListener('change', renderTemplates);
   fillTemplateBtn.addEventListener('click', fillTemplatePrompts);
   clearBtn.addEventListener('click', clearForm);
+  document.getElementById('addVitalBtn')?.addEventListener('click', () => addVitalRow());
+  document.getElementById('addMedicationBtn')?.addEventListener('click', () => addMedicationRow());
   document.getElementById('patientType')?.addEventListener('change', toggleChildWeight);
   generateBtn.addEventListener('click', generateSummary);
   floatingGenerateBtn.addEventListener('click', generateSummary);
@@ -1909,6 +2301,7 @@ function setupDesktopHeaderMinimize() {
   updateAuthUI();
   setupMobileTopbar();
   setupDesktopHeaderMinimize();
+  resetDynamicSections();
   toggleChildWeight();
 
   if (firebaseReady) {
