@@ -925,60 +925,68 @@ select option {
 </div>
 
           <div class="card">
-            <div class="section-header">
-              <div>
-                <div class="section-heading">3. Background / patient factors</div>
-                <div class="hint">The things that change risk or management</div>
-              </div>
-              <div class="badge-row">
-                <span class="badge pink">Decision-making</span>
-              </div>
-            </div>
-
-            <div class="section-fields two">
-              <label>
-                PMHx / relevant history
-                <textarea id="pmhx" placeholder="Asthma, diabetes, recurrent infections, eczema, prior cellulitis, renal disease..."></textarea>
-              </label>
-              <label>
-                Medications / allergies
-                <textarea id="medsAllergies" placeholder="Current meds, allergies, previous reactions, recent antibiotics..."></textarea>
-              </label>
-              <label>
-                Special patient factors
-                <textarea id="patientFactors" placeholder="Pregnancy, breastfeeding, immunocompromised, age extremes, occupation, smoking, social factors..."></textarea>
-              </label>
-              <label>
-                Weight / age / key measurements
-                <textarea id="measurements" placeholder="Age, weight, BSL, temp, BP, HR, RR, sats, pain score..."></textarea>
-              </label>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="section-header">
-              <div>
-                <div class="section-heading">4. Examination</div>
-                <div class="hint">Objective findings only</div>
-              </div>
-              <div class="badge-row">
-                <span class="badge green">Exam</span>
-              </div>
-            </div>
-
-            <div class="section-fields">
-              <label>
-                Examination findings
-                <textarea id="exam" placeholder="General appearance, hydration, ENT / chest / skin / abdo / limb findings, ROM, wound findings..."></textarea>
-              </label>
-            </div>
-          </div>
-
-         <div class="card">
   <div class="section-header">
     <div>
-      <div class="section-heading">5. Assessment / diagnosis</div>
-      <div class="hint">Working diagnosis and differentials</div>
+      <div class="section-heading">3. Background / patient factors</div>
+      <div class="hint">Editable tick boxes</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge pink">Decision-making</span>
+    </div>
+  </div>
+
+  <div class="section-fields two">
+    <label>
+      Allergies
+      <div class="editable-checklist" id="allergiesList" data-placeholder="Add allergy..."></div>
+    </label>
+
+    <label>
+      Medical History
+      <div class="editable-checklist" id="medicalHistoryList" data-placeholder="Add medical history item..."></div>
+    </label>
+
+    <label>
+      Current Medications
+      <div class="editable-checklist" id="currentMedsList" data-placeholder="Add medication..."></div>
+    </label>
+
+    <label>
+      Special patient factors
+      <div class="editable-checklist" id="patientFactorsList" data-placeholder="Add patient factor..."></div>
+    </label>
+  </div>
+</div>
+
+          <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">4. Examination</div>
+      <div class="hint">Tick boxes plus free-write findings</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge green">Exam</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Examination checklist
+      <div class="editable-checklist" id="examList" data-placeholder="Add examination item..."></div>
+    </label>
+
+    <label>
+      Additional findings
+      <textarea id="examFreeText" placeholder="Free write any positive findings here..."></textarea>
+    </label>
+  </div>
+</div>
+
+      <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">5. Diagnosis</div>
+      <div class="hint">Editable tick boxes</div>
     </div>
     <div class="badge-row">
       <span class="badge warn">Clinical reasoning</span>
@@ -987,12 +995,13 @@ select option {
 
   <div class="section-fields two">
     <label>
-      Working diagnosis
-      <textarea id="diagnosis" placeholder="Most likely diagnosis"></textarea>
+      Diagnosis
+      <div class="editable-checklist" id="diagnosisList" data-placeholder="Add diagnosis item..."></div>
     </label>
+
     <label>
-      Differentials / ruled out concerns
-      <textarea id="differentials" placeholder="Important alternatives considered and why less likely"></textarea>
+      Differential / ruled out concerns
+      <div class="editable-checklist" id="differentialsList" data-placeholder="Add differential item..."></div>
     </label>
   </div>
 
@@ -1007,8 +1016,8 @@ select option {
 <div class="card">
   <div class="section-header">
     <div>
-      <div class="section-heading">6. Prescribing / antibiotic decision</div>
-      <div class="hint">Structured prescribing details, child/adult option, and antibiotic choices</div>
+      <div class="section-heading">6. Prescribing</div>
+      <div class="hint">Keep the decision tick boxes, then add editable prescribing tick boxes</div>
     </div>
     <div class="badge-row">
       <span class="badge pink">Prescribing</span>
@@ -1022,86 +1031,42 @@ select option {
     <label><input type="checkbox" id="supportiveCareOnly" /> Supportive care only</label>
   </div>
 
-  <div class="section-fields three">
+  <div class="section-fields">
     <label>
-      Patient type
-      <select id="patientType">
-        <option value="" selected disabled>Patient type</option>
-        <option value="adult">Adult</option>
-        <option value="child">Child</option>
-      </select>
-    </label>
-
-    <label id="childWeightWrap" style="display:none;">
-      Weight (kg)
-      <input id="childWeight" type="number" min="0" step="0.1" placeholder="e.g. 18.5" />
-    </label>
-
-    <label>
-      Antibiotic
-      <input id="antibioticName" placeholder="e.g. amoxicillin" />
-    </label>
-
-    <label>
-      Directions for use
-      <input id="abxDirections" placeholder="e.g. 500 mg TDS" />
-    </label>
-
-    <label>
-      Duration (days)
-      <input id="abxDays" type="number" min="1" step="1" placeholder="e.g. 5" />
-    </label>
-
-    <label>
-      1st choice ABX
-      <input id="firstChoiceAbx" placeholder="e.g. flucloxacillin" />
-    </label>
-
-    <label>
-      2nd choice ABX
-      <input id="secondChoiceAbx" placeholder="e.g. cefalexin" />
-    </label>
-  </div>
-
-  <div class="section-fields two">
-    <label>
-      Treatment rationale
-      <textarea id="treatmentRationale" placeholder="Why antibiotics are or are not indicated, severity, likely organism, viral picture, watchful waiting reasoning..."></textarea>
-    </label>
-
-    <label>
-      General management plan
-      <textarea id="managementPlan" placeholder="Wound care, dressings, analgesia, investigations, review plan, supportive measures..."></textarea>
+      Medications / dose / duration
+      <div class="editable-checklist" id="prescribingList" data-placeholder="Add medication, dose, duration..."></div>
     </label>
   </div>
 </div>
 
-          <div class="card full">
-            <div class="section-header">
-              <div>
-                <div class="section-heading">7. Advice / safety net / documentation</div>
-                <div class="hint">What the patient was told and what needs to be recorded</div>
-              </div>
-              <div class="badge-row">
-                <span class="badge blue">Close the loop</span>
-              </div>
-            </div>
+         <div class="card full">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">7. Advice / safety net / documentation notes</div>
+      <div class="hint">Editable tick boxes only</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">Close the loop</span>
+    </div>
+  </div>
 
-            <div class="section-fields three">
-              <label>
-                Patient advice
-                <textarea id="patientAdvice" placeholder="Hydration, analgesia, rest, wound care, expected course, infection control advice..."></textarea>
-              </label>
-              <label>
-                Safety net / return advice
-                <textarea id="safetyNet" placeholder="Return if worsening pain, swelling, fever, SOB, poor oral intake, spreading redness, reduced urine output, not improving..."></textarea>
-              </label>
-              <label>
-                Documentation notes
-                <textarea id="documentation" placeholder="Consent, chaperone, discussion with senior, photos, swabs, forms completed, fit note, ACC, etc."></textarea>
-              </label>
-            </div>
-          </div>
+  <div class="section-fields three">
+    <label>
+      Advice
+      <div class="editable-checklist" id="adviceList" data-placeholder="Add advice item..."></div>
+    </label>
+
+    <label>
+      Safety net
+      <div class="editable-checklist" id="safetyNetList" data-placeholder="Add safety-net item..."></div>
+    </label>
+
+    <label>
+      Documentation notes
+      <div class="editable-checklist" id="documentationList" data-placeholder="Add documentation item..."></div>
+    </label>
+  </div>
+</div>
 
           <div class="card full">
             <div class="section-header">
@@ -1136,325 +1101,453 @@ select option {
     <button class="floating-generate" id="floatingGenerateBtn" title="Generate summary">📋</button>
 
   <script src="calculator.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
- <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup,
-    signOut,
-    onAuthStateChanged
-  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    getDocs,
-    doc,
-    updateDoc,
-    deleteDoc,
-    serverTimestamp,
-    query,
-    orderBy
-  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+const firebaseConfig = {
+  apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
+  authDomain: "notes-chat-c5ff3.firebaseapp.com",
+  projectId: "notes-chat-c5ff3",
+  storageBucket: "notes-chat-c5ff3.firebasestorage.app",
+  messagingSenderId: "597780727252",
+  appId: "1:597780727252:web:8407eb4096dbe301d74241",
+  measurementId: "G-YQD63H7L5T"
+};
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
-    authDomain: "notes-chat-c5ff3.firebaseapp.com",
-    projectId: "notes-chat-c5ff3",
-    storageBucket: "notes-chat-c5ff3.firebasestorage.app",
-    messagingSenderId: "597780727252",
-    appId: "1:597780727252:web:8407eb4096dbe301d74241",
-    measurementId: "G-YQD63H7L5T"
-  };
+let app = null;
+let auth = null;
+let db = null;
+let templatesRef = null;
+let provider = null;
+let firebaseReady = false;
+let currentUser = null;
+let userTemplates = [];
+let activeTemplateId = 'general';
 
-  let app = null;
-  let auth = null;
-  let db = null;
-  let templatesRef = null;
-  let provider = null;
-
-  let firebaseReady = false;
-  let currentUser = null;
-
-  try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    templatesRef = collection(db, 'consultationTemplates');
-    provider = new GoogleAuthProvider();
-    firebaseReady = true;
-  } catch (err) {
-    console.warn('Firebase failed to initialise. Built-in templates will still load.', err);
-  }
-
-  const defaultTemplates = [
-    {
-      id: 'general',
-      title: 'General Consultation',
-      category: 'viral',
-      desc: 'Flexible all-purpose assessment structure for common acute presentations.',
-      tags: ['general', 'assessment', 'documentation'],
-      isBuiltIn: true,
-      prompts: {
-        presentingComplaint: 'Acute presentation requiring assessment',
-        hpc: 'Clarify onset, duration, progression, severity, associated symptoms, exposure history, treatment tried, and why presenting today.',
-        redFlags: 'Document relevant dangerous symptoms absent or present.',
-        pmhx: 'Relevant background conditions only.',
-        medsAllergies: 'Current medicines, allergies, prior reactions, recent antibiotics.',
-        patientFactors: 'Pregnancy, breastfeeding, immunocompromised state, social/functional factors.',
-        measurements: 'Age, weight, obs, pain score, relevant bedside tests.',
-        exam: 'Focused exam with pertinent positives and negatives.',
-        diagnosis: 'Working diagnosis.',
-        differentials: 'Key alternative diagnoses considered.',
-patientType: '',
-childWeight: '',
-antibioticName: '',
-abxDirections: '',
-abxDays: '',
-firstChoiceAbx: '',
-secondChoiceAbx: '',
-treatmentRationale: 'Why this is likely the correct management pathway.',
-managementPlan: 'Immediate treatment, investigations, review timing.',
-        patientAdvice: 'Supportive care and home advice.',
-        safetyNet: 'Return if worsening, not improving, or red flag symptoms develop.',
-        documentation: 'Record anything medico-legally important.'
-      }
-    },
-    {
-      id: 'sore-throat',
-      title: 'Sore Throat / Pharyngitis',
-      category: 'respiratory',
-      desc: 'Assessment for viral sore throat, strep, peritonsillar infection, and airway concerns.',
-      tags: ['ENT', 'throat', 'strep'],
-      isBuiltIn: true,
-      prompts: {
-        presentingComplaint: 'Sore throat / odynophagia',
-        hpc: 'Duration, fever, swallowing difficulty, cough/coryza, voice change, unilateral pain, sick contacts, prior strep, analgesia tried.',
-        redFlags: 'No stridor, no drooling, no trismus, no hot potato voice, no significant respiratory distress, no dehydration unless present.',
-        pmhx: 'Recurrent tonsillitis, immunocompromise, rheumatic fever risk, recent antibiotics.',
-        medsAllergies: 'Penicillin allergy? prior antibiotic reactions?',
-        patientFactors: 'Age, pregnancy, oral intake, ability to swallow, household strep exposure.',
-        measurements: 'Temp, HR, sats, hydration status, weight if prescribing child dose.',
-        exam: 'Tonsils/pharynx appearance, exudate, erythema, uvula position, cervical nodes, hydration, voice, respiratory effort.',
-        diagnosis: 'Likely viral pharyngitis / streptococcal pharyngitis / tonsillitis / consider PTA if concerning.',
-        differentials: 'Key alternative diagnoses considered.',
-patientType: '',
-childWeight: '',
-antibioticName: '',
-abxDirections: '',
-abxDays: '',
-firstChoiceAbx: '',
-secondChoiceAbx: '',
-treatmentRationale: 'Why this is likely the correct management pathway.',
-managementPlan: 'Immediate treatment, investigations, review timing.',
-        patientAdvice: 'Hydration, analgesia, rest, infection control, avoid sharing utensils.',
-        safetyNet: 'Return urgently if drooling, worsening unilateral swelling, muffled voice, SOB, inability to swallow fluids, or dehydration.',
-        documentation: 'Document airway assessment and safety net clearly.'
-      }
-    },
-    {
-      id: 'cellulitis',
-      title: 'Cellulitis / Skin Infection',
-      category: 'skin',
-      desc: 'Guide for cellulitis, wound infection, localised skin infection, and escalation concerns.',
-      tags: ['skin', 'infection', 'antibiotics'],
-      isBuiltIn: true,
-      prompts: {
-        presentingComplaint: 'Red, painful, warm skin / wound infection concern',
-        hpc: 'Onset, spread, pain, fever, discharge, trauma, bite, wound, prior cellulitis, treatment already tried.',
-        redFlags: 'No rapidly progressive pain, no crepitus, no systemic toxicity, no hypotension, no severe swelling, no lymphangitis unless present.',
-        pmhx: 'Diabetes, oedema, eczema, vascular disease, immunosuppression, prior MRSA or recurrent cellulitis.',
-        medsAllergies: 'Recent antibiotics? penicillin allergy?',
-        patientFactors: 'Weight, frailty, pregnancy, adherence concerns, home support.',
-        measurements: 'Temp, HR, BP, lesion size, margins, photos if used.',
-        exam: 'Site, erythema, warmth, swelling, tenderness, fluctuance, discharge, streaking, ROM if near joint.',
-        differentials: 'Key alternative diagnoses considered.',
-patientType: '',
-childWeight: '',
-antibioticName: '',
-abxDirections: '',
-abxDays: '',
-firstChoiceAbx: '',
-secondChoiceAbx: '',
-treatmentRationale: 'Why this is likely the correct management pathway.',
-managementPlan: 'Immediate treatment, investigations, review timing.',
-        patientAdvice: 'Keep limb elevated, monitor spread, wound care instructions, complete course if prescribed.',
-        safetyNet: 'Return urgently if spreading redness, fevers, severe pain, systemic symptoms, reduced movement, or no improvement.',
-        documentation: 'Include size/location, whether borders marked, and whether abscess was excluded.'
-      }
-    },
-    {
-      id: 'viral-uri',
-      title: 'Viral URTI / Supportive Care',
-      category: 'viral',
-      desc: 'Useful when the key decision is why antibiotics are not needed.',
-      tags: ['viral', 'supportive', 'no antibiotics'],
-      isBuiltIn: true,
-      prompts: {
-        presentingComplaint: 'Upper respiratory symptoms',
-        hpc: 'Fever, cough, coryza, sore throat, duration, sick contacts, breathing difficulty, hydration, appetite.',
-        redFlags: 'No respiratory distress, no chest pain, no dehydration, no altered mental status unless present.',
-        pmhx: 'Asthma/COPD, immunosuppression, recurrent chest infection.',
-        medsAllergies: 'Current symptomatic treatments used.',
-        patientFactors: 'Smoking, pregnancy, age extremes, exposure risk.',
-        measurements: 'Obs including temp, RR, sats.',
-        exam: 'General appearance, ENT/chest findings, hydration status.',
-        diagnosis: 'Likely viral URTI / self-limiting viral illness.',
-        differentials: 'Key alternative diagnoses considered.',
-patientType: '',
-childWeight: '',
-antibioticName: '',
-abxDirections: '',
-abxDays: '',
-firstChoiceAbx: '',
-secondChoiceAbx: '',
-treatmentRationale: 'Why this is likely the correct management pathway.',
-managementPlan: 'Immediate treatment, investigations, review timing.',
-        patientAdvice: 'Hydration, nasal saline, analgesia, rest, expected timeframe.',
-        safetyNet: 'Return if SOB, chest pain, dehydration, persistent fever, worsening symptoms, or failure to improve.',
-        documentation: 'Clearly document rationale for no antibiotics.'
-      }
-    },
-    {
-      id: 'uti',
-      title: 'UTI / Dysuria',
-      category: 'urinary',
-      desc: 'Focused urinary assessment with red flags for upper UTI and alternative causes.',
-      tags: ['urine', 'dysuria', 'infection'],
-      isBuiltIn: true,
-      prompts: {
-        presentingComplaint: 'Dysuria / urinary symptoms',
-        hpc: 'Frequency, urgency, dysuria, haematuria, fever, flank pain, nausea, vaginal symptoms, pregnancy possibility, STI risk.',
-        redFlags: 'No flank pain, no vomiting, no sepsis features, no pregnancy concerns, no urinary retention unless present.',
-        pmhx: 'Recurrent UTI, renal issues, diabetes, catheter, kidney stones.',
-        medsAllergies: 'Antibiotic allergies, recent urine culture results if known.',
-        patientFactors: 'Pregnancy, age, sexual history relevance, hydration, ability to take oral treatment.',
-        measurements: 'Temp, obs, dipstick result, pregnancy test if relevant.',
-        exam: 'Suprapubic tenderness, CVA tenderness, abdominal exam if needed.',
-        diagnosis: 'Likely lower UTI / consider pyelonephritis / STI / vaginitis depending on findings.',
-        differentials: 'Key alternative diagnoses considered.',
-patientType: '',
-childWeight: '',
-antibioticName: '',
-abxDirections: '',
-abxDays: '',
-firstChoiceAbx: '',
-secondChoiceAbx: '',
-treatmentRationale: 'Why this is likely the correct management pathway.',
-managementPlan: 'Immediate treatment, investigations, review timing.',
-        patientAdvice: 'Hydration, monitor fever/flank pain, complete treatment if prescribed.',
-        safetyNet: 'Return urgently if flank pain, vomiting, fever, rigors, pregnancy concerns, or no improvement.',
-        documentation: 'Include urine findings and pregnancy considerations if relevant.'
-      }
-    },
-    {
-      id: 'msk-injury',
-      title: 'MSK Injury / Pain',
-      category: 'msk',
-      desc: 'Acute limb pain, sprain, strain, injury, ROM, swelling, and imaging reasoning.',
-      tags: ['injury', 'pain', 'exam'],
-      isBuiltIn: true,
-      prompts: {
-  presentingComplaint: 'Injury / musculoskeletal pain',
-  hpc: 'Mechanism, onset, pop/click, swelling, ability to weight bear/use limb, numbness, weakness, treatment tried.',
-  redFlags: 'No neurovascular compromise, no open injury, no gross deformity, no compartment-type pain unless present.',
-  pmhx: 'Previous injury/surgery, osteoporosis, anticoagulation.',
-  medsAllergies: 'Analgesia taken, anticoagulants.',
-  patientFactors: 'Dominant hand, occupation, sports, baseline mobility.',
-  measurements: 'Pain score, swelling, ROM, neurovascular status.',
-  exam: 'Inspection, palpation, ROM, strength, weight bearing, neurovascular findings.',
-  diagnosis: 'Likely sprain / strain / contusion / fracture not excluded if applicable.',
-  differentials: 'Fracture, tendon rupture, dislocation, septic joint if clinically relevant.',
-  patientType: '',
-  childWeight: '',
-  antibioticName: '',
-  abxDirections: '',
-  abxDays: '',
-  firstChoiceAbx: '',
-  secondChoiceAbx: '',
-  treatmentRationale: 'Explain conservative treatment vs imaging vs referral decision.',
-  managementPlan: 'RICE, analgesia, support, x-ray if indicated, activity modification, follow-up.',
-  patientAdvice: 'Rest, mobilisation advice, signs of worsening, expected recovery.',
-  safetyNet: 'Return if increasing pain, numbness, colour change, worsening swelling, inability to weight bear, or persistent symptoms.',
-  documentation: 'Document neurovascular status and mechanism clearly.'
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  templatesRef = collection(db, 'consultationTemplates');
+  provider = new GoogleAuthProvider();
+  firebaseReady = true;
+} catch (err) {
+  console.warn('Firebase failed to initialise. Built-in templates will still load.', err);
 }
+
+const defaultTemplates = [
+  {
+    id: 'general',
+    title: 'General Consultation',
+    category: 'viral',
+    desc: 'Flexible all-purpose assessment structure for common acute presentations.',
+    tags: ['general', 'assessment', 'documentation'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Acute presentation requiring assessment',
+      hpc: [
+        'Clarify onset',
+        'Duration',
+        'Progression',
+        'Severity',
+        'Associated symptoms',
+        'Exposure history',
+        'Treatment tried',
+        'Why presenting today'
+      ],
+      redFlags: [
+        'Relevant dangerous symptoms asked about',
+        'Relevant dangerous symptoms absent unless present'
+      ],
+      allergies: ['NKDA if relevant'],
+      medicalHistory: ['Relevant background conditions only'],
+      currentMeds: ['Current medicines'],
+      patientFactors: [
+        'Pregnancy / breastfeeding if relevant',
+        'Immunocompromised state if relevant',
+        'Social / functional factors if relevant'
+      ],
+      exam: ['Focused examination completed', 'Pertinent negatives documented'],
+      examFreeText: '',
+      diagnosis: ['Working diagnosis'],
+      differentials: ['Key alternative diagnoses considered'],
+      prescribing: ['Medication / dose / duration if prescribed'],
+      patientAdvice: ['Supportive care and home advice'],
+      safetyNet: [
+        'Return if worsening',
+        'Return if not improving',
+        'Return if red flags develop'
+      ],
+      documentation: ['Record anything medico-legally important']
     }
-  ];
+  },
+  {
+    id: 'sore-throat',
+    title: 'Sore Throat / Pharyngitis',
+    category: 'respiratory',
+    desc: 'Assessment for viral sore throat, strep, peritonsillar infection, and airway concerns.',
+    tags: ['ENT', 'throat', 'strep'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Sore throat / odynophagia',
+      hpc: [
+        'Duration',
+        'Fever',
+        'Swallowing difficulty',
+        'Cough / coryza',
+        'Voice change',
+        'Unilateral pain',
+        'Sick contacts',
+        'Prior strep',
+        'Analgesia tried'
+      ],
+      redFlags: [
+        'No stridor',
+        'No drooling',
+        'No trismus',
+        'No hot potato voice',
+        'No significant respiratory distress',
+        'No dehydration unless present'
+      ],
+      allergies: ['Penicillin allergy if relevant'],
+      medicalHistory: [
+        'Recurrent tonsillitis',
+        'Immunocompromise',
+        'Rheumatic fever risk',
+        'Recent antibiotics'
+      ],
+      currentMeds: ['Current analgesia or recent medicines'],
+      patientFactors: [
+        'Age',
+        'Pregnancy if relevant',
+        'Oral intake',
+        'Ability to swallow',
+        'Household strep exposure'
+      ],
+      exam: [
+        'Tonsils / pharynx assessed',
+        'Exudate / erythema documented',
+        'Uvula position assessed',
+        'Cervical nodes assessed',
+        'Hydration assessed',
+        'Respiratory effort assessed'
+      ],
+      examFreeText: '',
+      diagnosis: ['Likely viral pharyngitis / tonsillitis / streptococcal pharyngitis'],
+      differentials: ['Peritonsillar abscess if clinically concerning'],
+      prescribing: ['Antibiotic / dose / duration if indicated'],
+      patientAdvice: ['Hydration', 'Analgesia', 'Rest', 'Infection control advice'],
+      safetyNet: [
+        'Return urgently if drooling',
+        'Return urgently if worsening unilateral swelling',
+        'Return urgently if muffled voice',
+        'Return urgently if SOB',
+        'Return urgently if unable to swallow fluids'
+      ],
+      documentation: ['Airway assessment documented clearly']
+    }
+  },
+  {
+    id: 'cellulitis',
+    title: 'Cellulitis / Skin Infection',
+    category: 'skin',
+    desc: 'Guide for cellulitis, wound infection, localised skin infection, and escalation concerns.',
+    tags: ['skin', 'infection', 'antibiotics'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Red, painful, warm skin / wound infection concern',
+      hpc: [
+        'Onset',
+        'Spread',
+        'Pain',
+        'Fever',
+        'Discharge',
+        'Trauma / bite / wound',
+        'Prior cellulitis',
+        'Treatment already tried'
+      ],
+      redFlags: [
+        'No rapidly progressive pain',
+        'No crepitus',
+        'No systemic toxicity',
+        'No hypotension',
+        'No severe swelling',
+        'No lymphangitis unless present'
+      ],
+      allergies: ['Relevant antibiotic allergy'],
+      medicalHistory: [
+        'Diabetes',
+        'Oedema',
+        'Eczema',
+        'Vascular disease',
+        'Immunosuppression',
+        'Prior MRSA',
+        'Recurrent cellulitis'
+      ],
+      currentMeds: ['Recent antibiotics if any'],
+      patientFactors: ['Weight', 'Frailty', 'Pregnancy if relevant', 'Adherence concerns', 'Home support'],
+      exam: [
+        'Site documented',
+        'Erythema documented',
+        'Warmth documented',
+        'Swelling documented',
+        'Tenderness documented',
+        'Fluctuance assessed',
+        'Discharge assessed',
+        'Streaking assessed',
+        'ROM assessed if near joint'
+      ],
+      examFreeText: '',
+      diagnosis: ['Likely cellulitis / local skin infection'],
+      differentials: ['Abscess', 'Necrotising infection', 'DVT if relevant'],
+      prescribing: ['Antibiotic / dose / duration if indicated'],
+      patientAdvice: [
+        'Keep limb elevated',
+        'Monitor spread',
+        'Wound care instructions',
+        'Complete course if prescribed'
+      ],
+      safetyNet: [
+        'Return urgently if spreading redness',
+        'Return urgently if fevers',
+        'Return urgently if severe pain',
+        'Return urgently if systemic symptoms',
+        'Return urgently if reduced movement',
+        'Return if no improvement'
+      ],
+      documentation: ['Size / location documented', 'Borders marked if relevant', 'Abscess excluded if relevant']
+    }
+  },
+  {
+    id: 'viral-uri',
+    title: 'Viral URTI / Supportive Care',
+    category: 'viral',
+    desc: 'Useful when the key decision is why antibiotics are not needed.',
+    tags: ['viral', 'supportive', 'no antibiotics'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Upper respiratory symptoms',
+      hpc: [
+        'Fever',
+        'Cough',
+        'Coryza',
+        'Sore throat',
+        'Duration',
+        'Sick contacts',
+        'Breathing difficulty',
+        'Hydration',
+        'Appetite'
+      ],
+      redFlags: [
+        'No respiratory distress',
+        'No chest pain',
+        'No dehydration',
+        'No altered mental status unless present'
+      ],
+      allergies: ['Relevant medicine allergy'],
+      medicalHistory: ['Asthma / COPD', 'Immunosuppression', 'Recurrent chest infection'],
+      currentMeds: ['Current symptomatic treatment used'],
+      patientFactors: ['Smoking', 'Pregnancy if relevant', 'Age extremes', 'Exposure risk'],
+      exam: [
+        'General appearance assessed',
+        'ENT findings documented',
+        'Chest findings documented',
+        'Hydration status assessed'
+      ],
+      examFreeText: '',
+      diagnosis: ['Likely viral URTI / self-limiting viral illness'],
+      differentials: ['Pneumonia if clinically concerning'],
+      prescribing: ['Symptomatic treatment only if appropriate'],
+      patientAdvice: ['Hydration', 'Nasal saline', 'Analgesia', 'Rest', 'Expected timeframe discussed'],
+      safetyNet: [
+        'Return if SOB',
+        'Return if chest pain',
+        'Return if dehydration',
+        'Return if persistent fever',
+        'Return if worsening symptoms',
+        'Return if not improving'
+      ],
+      documentation: ['Rationale for no antibiotics documented clearly']
+    }
+  },
+  {
+    id: 'uti',
+    title: 'UTI / Dysuria',
+    category: 'urinary',
+    desc: 'Focused urinary assessment with red flags for upper UTI and alternative causes.',
+    tags: ['urine', 'dysuria', 'infection'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Dysuria / urinary symptoms',
+      hpc: [
+        'Frequency',
+        'Urgency',
+        'Dysuria',
+        'Haematuria',
+        'Fever',
+        'Flank pain',
+        'Nausea',
+        'Vaginal symptoms',
+        'Pregnancy possibility',
+        'STI risk'
+      ],
+      redFlags: [
+        'No flank pain',
+        'No vomiting',
+        'No sepsis features',
+        'No pregnancy concerns',
+        'No urinary retention unless present'
+      ],
+      allergies: ['Relevant antibiotic allergy'],
+      medicalHistory: ['Recurrent UTI', 'Renal issues', 'Diabetes', 'Catheter', 'Kidney stones'],
+      currentMeds: ['Recent antibiotics', 'Relevant current medicines'],
+      patientFactors: ['Pregnancy', 'Age', 'Sexual history relevance', 'Hydration', 'Ability to take oral treatment'],
+      exam: ['Suprapubic tenderness assessed', 'CVA tenderness assessed', 'Abdominal exam if needed'],
+      examFreeText: '',
+      diagnosis: ['Likely lower UTI'],
+      differentials: ['Pyelonephritis', 'STI', 'Vaginitis', 'Renal colic if relevant'],
+      prescribing: ['Antibiotic / dose / duration if indicated'],
+      patientAdvice: ['Hydration', 'Monitor fever / flank pain', 'Complete treatment if prescribed'],
+      safetyNet: [
+        'Return urgently if flank pain',
+        'Return urgently if vomiting',
+        'Return urgently if fever',
+        'Return urgently if rigors',
+        'Return urgently if pregnancy concerns',
+        'Return if no improvement'
+      ],
+      documentation: ['Urine findings documented', 'Pregnancy considerations documented if relevant']
+    }
+  },
+  {
+    id: 'msk-injury',
+    title: 'MSK Injury / Pain',
+    category: 'msk',
+    desc: 'Acute limb pain, sprain, strain, injury, ROM, swelling, and imaging reasoning.',
+    tags: ['injury', 'pain', 'exam'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      presentingComplaint: 'Injury / musculoskeletal pain',
+      hpc: [
+        'Mechanism',
+        'Onset',
+        'Pop / click',
+        'Swelling',
+        'Ability to weight bear / use limb',
+        'Numbness',
+        'Weakness',
+        'Treatment tried'
+      ],
+      redFlags: [
+        'No neurovascular compromise',
+        'No open injury',
+        'No gross deformity',
+        'No compartment-type pain unless present'
+      ],
+      allergies: ['Relevant medicine allergy'],
+      medicalHistory: ['Previous injury / surgery', 'Osteoporosis', 'Anticoagulation'],
+      currentMeds: ['Analgesia taken', 'Anticoagulants'],
+      patientFactors: ['Dominant hand', 'Occupation', 'Sports', 'Baseline mobility'],
+      exam: [
+        'Inspection completed',
+        'Palpation completed',
+        'ROM assessed',
+        'Strength assessed',
+        'Weight bearing assessed if relevant',
+        'Neurovascular status documented'
+      ],
+      examFreeText: '',
+      diagnosis: ['Likely sprain / strain / contusion'],
+      differentials: ['Fracture', 'Tendon rupture', 'Dislocation', 'Septic joint if clinically relevant'],
+      prescribing: ['Analgesia / support / management plan'],
+      patientAdvice: ['Rest', 'Mobilisation advice', 'Expected recovery explained'],
+      safetyNet: [
+        'Return if increasing pain',
+        'Return if numbness',
+        'Return if colour change',
+        'Return if worsening swelling',
+        'Return if inability to weight bear',
+        'Return if persistent symptoms'
+      ],
+      documentation: ['Mechanism documented clearly', 'Neurovascular status documented clearly']
+    }
+  }
+];
 
-  const templateList = document.getElementById('templateList');
-  const searchInput = document.getElementById('searchInput');
-  const categoryFilter = document.getElementById('categoryFilter');
-  const activeTemplateTitle = document.getElementById('activeTemplateTitle');
-  const activeTemplateDesc = document.getElementById('activeTemplateDesc');
-  const fillTemplateBtn = document.getElementById('fillTemplateBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const generateBtn = document.getElementById('generateBtn');
-  const output = document.getElementById('output');
-  const printBtn = document.getElementById('printBtn');
-  const copyBtn = document.getElementById('copyBtn');
-  const copyPlainBtn = document.getElementById('copyPlainBtn');
-  const floatingGenerateBtn = document.getElementById('floatingGenerateBtn');
-  const topbar = document.getElementById('topbar');
-  const topbarToggle = document.getElementById('topbarToggle');
+const templateList = document.getElementById('templateList');
+const searchInput = document.getElementById('searchInput');
+const categoryFilter = document.getElementById('categoryFilter');
+const activeTemplateTitle = document.getElementById('activeTemplateTitle');
+const activeTemplateDesc = document.getElementById('activeTemplateDesc');
+const fillTemplateBtn = document.getElementById('fillTemplateBtn');
+const clearBtn = document.getElementById('clearBtn');
+const generateBtn = document.getElementById('generateBtn');
+const output = document.getElementById('output');
+const printBtn = document.getElementById('printBtn');
+const copyBtn = document.getElementById('copyBtn');
+const copyPlainBtn = document.getElementById('copyPlainBtn');
+const floatingGenerateBtn = document.getElementById('floatingGenerateBtn');
+const topbar = document.getElementById('topbar');
+const topbarToggle = document.getElementById('topbarToggle');
+const topActions = document.querySelector('.top-actions');
 
-  const topActions = document.querySelector('.top-actions');
+const authWrap = document.createElement('div');
+authWrap.style.display = 'inline-flex';
+authWrap.style.alignItems = 'center';
+authWrap.style.gap = '8px';
+authWrap.style.flexWrap = 'wrap';
 
-  const authWrap = document.createElement('div');
-  authWrap.style.display = 'inline-flex';
-  authWrap.style.alignItems = 'center';
-  authWrap.style.gap = '8px';
-  authWrap.style.flexWrap = 'wrap';
+const loginBtn = document.createElement('button');
+loginBtn.className = 'glass-btn';
+loginBtn.id = 'loginBtn';
+loginBtn.textContent = '🔐 Sign in';
 
-  const loginBtn = document.createElement('button');
-  loginBtn.className = 'glass-btn';
-  loginBtn.id = 'loginBtn';
-  loginBtn.textContent = '🔐 Sign in';
+const logoutBtn = document.createElement('button');
+logoutBtn.className = 'glass-btn';
+logoutBtn.id = 'logoutBtn';
+logoutBtn.textContent = '🚪 Sign out';
+logoutBtn.style.display = 'none';
 
-  const logoutBtn = document.createElement('button');
-  logoutBtn.className = 'glass-btn';
-  logoutBtn.id = 'logoutBtn';
-  logoutBtn.textContent = '🚪 Sign out';
-  logoutBtn.style.display = 'none';
+const authStatus = document.createElement('span');
+authStatus.className = 'chip';
+authStatus.id = 'authStatus';
+authStatus.textContent = firebaseReady ? 'Checking sign-in...' : 'Firebase unavailable';
 
-  const authStatus = document.createElement('span');
-  authStatus.className = 'chip';
-  authStatus.id = 'authStatus';
-  authStatus.textContent = firebaseReady ? 'Checking sign-in...' : 'Firebase unavailable';
+authWrap.appendChild(loginBtn);
+authWrap.appendChild(logoutBtn);
+authWrap.appendChild(authStatus);
 
-  authWrap.appendChild(loginBtn);
-  authWrap.appendChild(logoutBtn);
-  authWrap.appendChild(authStatus);
+const saveBtn = document.createElement('button');
+saveBtn.className = 'glass-btn';
+saveBtn.id = 'saveTemplateBtn';
+saveBtn.textContent = '💾 Save template';
+
+const editBtn = document.createElement('button');
+editBtn.className = 'glass-btn';
+editBtn.id = 'editTemplateBtn';
+editBtn.textContent = '✏️ Update template';
+
+const deleteBtn = document.createElement('button');
+deleteBtn.className = 'glass-btn';
+deleteBtn.id = 'deleteTemplateBtn';
+deleteBtn.textContent = '🗑️ Delete template';
+
+if (topActions) {
   topActions.appendChild(authWrap);
-
-  const saveBtn = document.createElement('button');
-  saveBtn.className = 'glass-btn';
-  saveBtn.id = 'saveTemplateBtn';
-  saveBtn.textContent = '💾 Save template';
-
-  const editBtn = document.createElement('button');
-  editBtn.className = 'glass-btn';
-  editBtn.id = 'editTemplateBtn';
-  editBtn.textContent = '✏️ Update template';
-
-  const deleteBtn = document.createElement('button');
-  deleteBtn.className = 'glass-btn';
-  deleteBtn.id = 'deleteTemplateBtn';
-  deleteBtn.textContent = '🗑️ Delete template';
-
   topActions.appendChild(saveBtn);
   topActions.appendChild(editBtn);
   topActions.appendChild(deleteBtn);
+}
 
-  let activeTemplateId = 'general';
-  let userTemplates = [];
-
- const textFieldIds = [
-  'patientDemo',
-  'presentingComplaint',
-  'examFreeText'
-];
+const textFieldIds = ['patientDemo', 'presentingComplaint', 'examFreeText'];
 
 const checklistIds = [
   'hpcList',
@@ -1472,19 +1565,55 @@ const checklistIds = [
   'documentationList'
 ];
 
+function getField(id) {
+  return document.getElementById(id);
+}
+
+function safeAddListener(el, eventName, handler) {
+  if (el) el.addEventListener(eventName, handler);
+}
+
+function allTemplates() {
+  return [...defaultTemplates, ...userTemplates];
+}
+
+function getActiveTemplate() {
+  return allTemplates().find(t => t.id === activeTemplateId) || allTemplates()[0] || null;
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function splitPromptToItems(value) {
   if (Array.isArray(value)) {
     return value.map(v => String(v).trim()).filter(Boolean);
   }
-
   return String(value || '')
     .split(/\n|,/)
     .map(v => v.trim())
     .filter(Boolean);
 }
 
+function joinList(items) {
+  return items.filter(Boolean).join('; ');
+}
+
+function sentence(text) {
+  const clean = String(text || '').trim();
+  if (!clean) return '';
+  return /[.!?]$/.test(clean) ? clean : `${clean}.`;
+}
+
 function createChecklistRow(container, text = '', checked = false) {
   const list = container.querySelector('.checklist-list');
+  if (!list) return;
+
   const row = document.createElement('div');
   row.className = 'checklist-row';
 
@@ -1515,7 +1644,7 @@ function createChecklistRow(container, text = '', checked = false) {
 }
 
 function initEditableChecklist(id, seedItems = []) {
-  const container = document.getElementById(id);
+  const container = getField(id);
   if (!container) return;
 
   const placeholder = container.dataset.placeholder || 'Add item...';
@@ -1523,7 +1652,7 @@ function initEditableChecklist(id, seedItems = []) {
   container.innerHTML = `
     <div class="checklist-list"></div>
     <div class="checklist-add-row">
-      <input type="text" class="checklist-new-input" placeholder="${placeholder}">
+      <input type="text" class="checklist-new-input" placeholder="${escapeHtml(placeholder)}">
       <button type="button" class="glass-btn checklist-add-btn">＋ Add</button>
     </div>
   `;
@@ -1532,16 +1661,15 @@ function initEditableChecklist(id, seedItems = []) {
   const addBtn = container.querySelector('.checklist-add-btn');
 
   const addFromInput = () => {
-    const value = addInput.value.trim();
+    const value = addInput?.value.trim() || '';
     if (!value) return;
     createChecklistRow(container, value, false);
     addInput.value = '';
     addInput.focus();
   };
 
-  addBtn.addEventListener('click', addFromInput);
-
-  addInput.addEventListener('keydown', (e) => {
+  safeAddListener(addBtn, 'click', addFromInput);
+  safeAddListener(addInput, 'keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addFromInput();
@@ -1560,7 +1688,7 @@ function clearChecklist(id) {
 }
 
 function getChecklistItems(id) {
-  const container = document.getElementById(id);
+  const container = getField(id);
   if (!container) return [];
 
   return [...container.querySelectorAll('.checklist-row')]
@@ -1585,115 +1713,84 @@ function initAllChecklists() {
   checklistIds.forEach(id => initEditableChecklist(id, []));
 }
 
-function joinList(items) {
-  return items.filter(Boolean).join('; ');
+function updateAuthUI() {
+  if (!firebaseReady) {
+    authStatus.textContent = 'Firebase unavailable';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    saveBtn.style.opacity = '0.6';
+    editBtn.style.opacity = '0.6';
+    deleteBtn.style.opacity = '0.6';
+    return;
+  }
+
+  if (currentUser) {
+    authStatus.textContent = currentUser.email || currentUser.displayName || 'Signed in';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+    saveBtn.style.opacity = '1';
+    editBtn.style.opacity = '1';
+    deleteBtn.style.opacity = '1';
+  } else {
+    authStatus.textContent = 'Not signed in';
+    loginBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'none';
+    saveBtn.style.opacity = '0.6';
+    editBtn.style.opacity = '0.6';
+    deleteBtn.style.opacity = '0.6';
+  }
 }
 
-function sentence(text) {
-  const clean = String(text || '').trim();
-  if (!clean) return '';
-  return /[.!?]$/.test(clean) ? clean : `${clean}.`;
+async function signInUser() {
+  if (!firebaseReady) return;
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    console.error('Google sign-in failed:', err);
+    alert('Google sign-in failed.');
+  }
 }
 
-  function allTemplates() {
-    return [...defaultTemplates, ...userTemplates];
+async function signOutUser() {
+  if (!firebaseReady) return;
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error('Sign out failed:', err);
+    alert('Sign out failed.');
   }
+}
 
-  function getActiveTemplate() {
-    return allTemplates().find(t => t.id === activeTemplateId) || allTemplates()[0];
-  }
+function promptForTemplateMeta(existing = null) {
+  const title = prompt('Template title:', existing?.title || '');
+  if (title === null) return null;
 
-  function getField(id) {
-    return document.getElementById(id);
-  }
+  const category = prompt('Category (respiratory / skin / viral / urinary / msk):', existing?.category || 'viral');
+  if (category === null) return null;
 
-  function escapeHtml(str) {
-    return String(str || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
+  const desc = prompt('Short description:', existing?.desc || '');
+  if (desc === null) return null;
 
-  function updateAuthUI() {
-    if (!firebaseReady) {
-      authStatus.textContent = 'Firebase unavailable';
-      loginBtn.style.display = 'none';
-      logoutBtn.style.display = 'none';
-      saveBtn.style.opacity = '0.6';
-      editBtn.style.opacity = '0.6';
-      deleteBtn.style.opacity = '0.6';
-      return;
-    }
+  const tagsRaw = prompt('Tags separated by commas:', existing?.tags?.join(', ') || '');
+  if (tagsRaw === null) return null;
 
-    if (currentUser) {
-      authStatus.textContent = currentUser.email || currentUser.displayName || 'Signed in';
-      loginBtn.style.display = 'none';
-      logoutBtn.style.display = 'inline-flex';
-      saveBtn.style.opacity = '1';
-      editBtn.style.opacity = '1';
-      deleteBtn.style.opacity = '1';
-    } else {
-      authStatus.textContent = 'Not signed in';
-      loginBtn.style.display = 'inline-flex';
-      logoutBtn.style.display = 'none';
-      saveBtn.style.opacity = '0.6';
-      editBtn.style.opacity = '0.6';
-      deleteBtn.style.opacity = '0.6';
-    }
-  }
+  return {
+    title: title.trim() || 'Untitled Template',
+    category: (category.trim() || 'viral').toLowerCase(),
+    desc: desc.trim() || 'Custom consultation template.',
+    tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+  };
+}
 
-  async function signInUser() {
-    if (!firebaseReady) return;
-
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err) {
-      console.error('Google sign-in failed:', err);
-      alert('Google sign-in failed.');
-    }
-  }
-
-  async function signOutUser() {
-    if (!firebaseReady) return;
-
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.error('Sign out failed:', err);
-      alert('Sign out failed.');
-    }
-  }
-
-  function promptForTemplateMeta(existing = null) {
-    const title = prompt('Template title:', existing?.title || '');
-    if (title === null) return null;
-    const category = prompt('Category (respiratory / skin / viral / urinary / msk):', existing?.category || 'viral');
-    if (category === null) return null;
-    const desc = prompt('Short description:', existing?.desc || '');
-    if (desc === null) return null;
-    const tagsRaw = prompt('Tags separated by commas:', existing?.tags?.join(', ') || '');
-    if (tagsRaw === null) return null;
-
-    return {
-      title: title.trim() || 'Untitled Template',
-      category: (category.trim() || 'viral').toLowerCase(),
-      desc: desc.trim() || 'Custom consultation template.',
-      tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
-    };
-  }
-
-  function collectPromptFields() {
+function collectPromptFields() {
   return {
     patientDemo: getField('patientDemo')?.value.trim() || '',
     presentingComplaint: getField('presentingComplaint')?.value.trim() || '',
     examFreeText: getField('examFreeText')?.value.trim() || '',
-
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlags: getChecklistItems('redFlagsList').map(i => i.text),
     allergies: getChecklistItems('allergiesList').map(i => i.text),
-    pmhx: getChecklistItems('medicalHistoryList').map(i => i.text),
+    medicalHistory: getChecklistItems('medicalHistoryList').map(i => i.text),
     currentMeds: getChecklistItems('currentMedsList').map(i => i.text),
     patientFactors: getChecklistItems('patientFactorsList').map(i => i.text),
     exam: getChecklistItems('examList').map(i => i.text),
@@ -1706,104 +1803,109 @@ function sentence(text) {
   };
 }
 
-  async function loadUserTemplates() {
-    if (!firebaseReady || !currentUser) {
-      userTemplates = [];
-      if (!allTemplates().some(t => t.id === activeTemplateId)) {
-        activeTemplateId = defaultTemplates[0].id;
-      }
-      renderTemplates();
-      syncHero();
-      return;
+async function loadUserTemplates() {
+  if (!firebaseReady || !currentUser) {
+    userTemplates = [];
+    if (!allTemplates().some(t => t.id === activeTemplateId)) {
+      activeTemplateId = defaultTemplates[0].id;
     }
+    renderTemplates();
+    syncHero();
+    return;
+  }
 
+  try {
+    const q = query(templatesRef, orderBy('updatedAt', 'desc'));
+    const snap = await getDocs(q);
+    userTemplates = snap.docs.map(d => ({
+      id: d.id,
+      firebaseId: d.id,
+      isBuiltIn: false,
+      ...d.data()
+    }));
+  } catch (err) {
+    console.warn('Firestore load failed, retrying without orderBy:', err);
     try {
-      const q = query(templatesRef, orderBy('updatedAt', 'desc'));
-      const snap = await getDocs(q);
+      const snap = await getDocs(templatesRef);
       userTemplates = snap.docs.map(d => ({
         id: d.id,
         firebaseId: d.id,
         isBuiltIn: false,
         ...d.data()
       }));
-    } catch (err) {
-      console.warn('Firestore load failed, retrying without orderBy:', err);
-      try {
-        const snap = await getDocs(templatesRef);
-        userTemplates = snap.docs.map(d => ({
-          id: d.id,
-          firebaseId: d.id,
-          isBuiltIn: false,
-          ...d.data()
-        }));
-      } catch (innerErr) {
-        console.warn('Firestore fallback load also failed. Showing built-in templates only.', innerErr);
-        userTemplates = [];
-      }
+    } catch (innerErr) {
+      console.warn('Firestore fallback load also failed. Showing built-in templates only.', innerErr);
+      userTemplates = [];
     }
-
-    if (!allTemplates().some(t => t.id === activeTemplateId)) {
-      activeTemplateId = defaultTemplates[0].id;
-    }
-
-    renderTemplates();
-    syncHero();
   }
 
-  function renderTemplates() {
-    const term = searchInput.value.trim().toLowerCase();
-    const category = categoryFilter.value;
-
-    const filtered = allTemplates().filter(t => {
-      const matchesCategory = category === 'all' || t.category === category;
-      const haystack = [t.title, t.desc, ...(t.tags || [])].join(' ').toLowerCase();
-      const matchesTerm = !term || haystack.includes(term);
-      return matchesCategory && matchesTerm;
-    });
-
-    templateList.innerHTML = '';
-
-    filtered.forEach(template => {
-      const card = document.createElement('div');
-      card.className = 'template-card' + (template.id === activeTemplateId ? ' active' : '');
-      card.innerHTML = `
-        <h3>${escapeHtml(template.title)} ${template.isBuiltIn ? '⭐' : '📝'}</h3>
-        <p>${escapeHtml(template.desc)}</p>
-        <div class="template-tags">
-          ${(template.tags || []).map(tag => `<span class="chip">${escapeHtml(tag)}</span>`).join('')}
-        </div>
-      `;
-      card.addEventListener('click', () => setActiveTemplate(template.id));
-      templateList.appendChild(card);
-    });
+  if (!allTemplates().some(t => t.id === activeTemplateId)) {
+    activeTemplateId = defaultTemplates[0].id;
   }
 
-  function setActiveTemplate(id) {
-    activeTemplateId = id;
-    syncHero();
-    renderTemplates();
-  }
+  renderTemplates();
+  syncHero();
+}
 
-  function syncHero() {
-    const template = getActiveTemplate();
-    activeTemplateTitle.textContent = template.title;
-    activeTemplateDesc.textContent = template.desc;
-    deleteBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
-    editBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
-  }
+function renderTemplates() {
+  if (!templateList) return;
 
- function fillTemplatePrompts() {
+  const term = (searchInput?.value || '').trim().toLowerCase();
+  const category = categoryFilter?.value || 'all';
+
+  const filtered = allTemplates().filter(t => {
+    const matchesCategory = category === 'all' || t.category === category;
+    const haystack = [t.title, t.desc, ...(t.tags || [])].join(' ').toLowerCase();
+    const matchesTerm = !term || haystack.includes(term);
+    return matchesCategory && matchesTerm;
+  });
+
+  templateList.innerHTML = '';
+
+  filtered.forEach(template => {
+    const card = document.createElement('div');
+    card.className = 'template-card' + (template.id === activeTemplateId ? ' active' : '');
+    card.innerHTML = `
+      <h3>${escapeHtml(template.title)} ${template.isBuiltIn ? '⭐' : '📝'}</h3>
+      <p>${escapeHtml(template.desc)}</p>
+      <div class="template-tags">
+        ${(template.tags || []).map(tag => `<span class="chip">${escapeHtml(tag)}</span>`).join('')}
+      </div>
+    `;
+    card.addEventListener('click', () => setActiveTemplate(template.id));
+    templateList.appendChild(card);
+  });
+}
+
+function setActiveTemplate(id) {
+  activeTemplateId = id;
+  syncHero();
+  renderTemplates();
+}
+
+function syncHero() {
   const template = getActiveTemplate();
   if (!template) return;
 
-  getField('patientDemo').value = template.prompts?.patientDemo || '';
-  getField('presentingComplaint').value = template.prompts?.presentingComplaint || '';
-  getField('examFreeText').value = template.prompts?.examFreeText || '';
+  if (activeTemplateTitle) activeTemplateTitle.textContent = template.title;
+  if (activeTemplateDesc) activeTemplateDesc.textContent = template.desc;
+
+  deleteBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
+  editBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
+}
+
+function fillTemplatePrompts() {
+  const template = getActiveTemplate();
+  if (!template) return;
+
+  if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
+  if (getField('presentingComplaint')) getField('presentingComplaint').value = template.prompts?.presentingComplaint || '';
+  if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
 
   setChecklistItems('hpcList', template.prompts?.hpc);
   setChecklistItems('redFlagsList', template.prompts?.redFlags);
   setChecklistItems('allergiesList', template.prompts?.allergies || template.prompts?.medsAllergies);
-  setChecklistItems('medicalHistoryList', template.prompts?.pmhx || template.prompts?.medicalHistory);
+  setChecklistItems('medicalHistoryList', template.prompts?.medicalHistory || template.prompts?.pmhx);
   setChecklistItems('currentMedsList', template.prompts?.currentMeds);
   setChecklistItems('patientFactorsList', template.prompts?.patientFactors);
   setChecklistItems('examList', template.prompts?.exam);
@@ -1815,7 +1917,7 @@ function sentence(text) {
   setChecklistItems('documentationList', template.prompts?.documentation);
 }
 
- function clearForm() {
+function clearForm() {
   textFieldIds.forEach(id => {
     const field = getField(id);
     if (field) field.value = '';
@@ -1824,27 +1926,26 @@ function sentence(text) {
   checklistIds.forEach(clearChecklist);
 
   ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly'].forEach(id => {
-    const box = document.getElementById(id);
+    const box = getField(id);
     if (box) box.checked = false;
   });
 
-  const privateNote = document.getElementById('privateConsultNote');
+  const privateNote = getField('privateConsultNote');
   if (privateNote) privateNote.value = '';
 
-  output.innerHTML = '';
+  if (output) output.innerHTML = '';
 }
-  
 
-  function getCheckedTreatmentFlags() {
-    const flags = [];
-    if (document.getElementById('abxNotIndicated').checked) flags.push('Antibiotics not indicated');
-    if (document.getElementById('abxDelayed').checked) flags.push('Delayed antibiotic approach considered / provided');
-    if (document.getElementById('abxPrescribed').checked) flags.push('Antibiotics prescribed');
-    if (document.getElementById('supportiveCareOnly').checked) flags.push('Supportive care only');
-    return flags;
-  }
+function getCheckedTreatmentFlags() {
+  const flags = [];
+  if (getField('abxNotIndicated')?.checked) flags.push('Antibiotics not indicated');
+  if (getField('abxDelayed')?.checked) flags.push('Delayed antibiotic approach considered / provided');
+  if (getField('abxPrescribed')?.checked) flags.push('Antibiotics prescribed');
+  if (getField('supportiveCareOnly')?.checked) flags.push('Supportive care only');
+  return flags;
+}
 
-  function buildSummaryText() {
+function buildSummaryText() {
   const patientDemo = getField('patientDemo')?.value.trim() || '';
   const presentingComplaint = getField('presentingComplaint')?.value.trim() || '';
   const examFreeText = getField('examFreeText')?.value.trim() || '';
@@ -1900,159 +2001,173 @@ function sentence(text) {
 
   return lines.join('\n\n');
 }
-  
-  function generateSummary() {
-    const summary = buildSummaryText();
-    output.innerHTML = escapeHtml(summary).replace(/\n/g, '<br>');
-    output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+function generateSummary() {
+  const summary = buildSummaryText();
+  if (!output) return;
+  output.innerHTML = escapeHtml(summary).replace(/\n/g, '<br>');
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function printSummaryOnly() {
+  const summary = buildSummaryText().trim();
+  if (!summary) {
+    alert('No generated summary to print yet.');
+    return;
   }
 
-  function printSummaryOnly() {
-    const summary = buildSummaryText().trim();
-    if (!summary) {
-      alert('No generated summary to print yet.');
-      return;
-    }
-
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    if (!printWindow) {
-      alert('Pop-up blocked. Please allow pop-ups for printing.');
-      return;
-    }
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <title>Consultation Summary</title>
-        <style>
-          body { font-family: Tahoma, Arial, sans-serif; margin: 28px; color: #111; white-space: pre-wrap; line-height: 1.5; }
-          h1 { margin: 0 0 18px; font-size: 20px; }
-        </style>
-      </head>
-      <body>
-        <h1>Consultation Summary</h1>
-        <div>${escapeHtml(summary).replace(/\n/g, '<br>')}</div>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => printWindow.print(), 250);
+  const printWindow = window.open('', '_blank', 'width=900,height=700');
+  if (!printWindow) {
+    alert('Pop-up blocked. Please allow pop-ups for printing.');
+    return;
   }
 
-  async function copyOutput(asPlainText = false) {
-    const text = buildSummaryText();
-    if (!text.trim()) return;
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Consultation Summary</title>
+      <style>
+        body {
+          font-family: Tahoma, Arial, sans-serif;
+          margin: 28px;
+          color: #111;
+          white-space: pre-wrap;
+          line-height: 1.5;
+        }
+        h1 {
+          margin: 0 0 18px;
+          font-size: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Consultation Summary</h1>
+      <div>${escapeHtml(summary).replace(/\n/g, '<br>')}</div>
+    </body>
+    </html>
+  `);
 
-    try {
-      await navigator.clipboard.writeText(text);
-      const original = asPlainText ? copyPlainBtn.textContent : copyBtn.textContent;
-      const target = asPlainText ? copyPlainBtn : copyBtn;
-      target.textContent = '✅ Copied';
-      setTimeout(() => target.textContent = original, 1400);
-    } catch (err) {
-      alert('Copy failed on this browser. You can still highlight and copy manually.');
-    }
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 250);
+}
+
+async function copyOutput(asPlainText = false) {
+  const text = buildSummaryText();
+  if (!text.trim()) return;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    const target = asPlainText ? copyPlainBtn : copyBtn;
+    if (!target) return;
+
+    const original = target.textContent;
+    target.textContent = '✅ Copied';
+    setTimeout(() => {
+      target.textContent = original;
+    }, 1400);
+  } catch (err) {
+    alert('Copy failed on this browser. You can still highlight and copy manually.');
+  }
+}
+
+async function saveCurrentTemplate() {
+  if (!firebaseReady) {
+    alert('Firebase is not connected.');
+    return;
+  }
+  if (!currentUser) {
+    alert('Please sign in first.');
+    return;
   }
 
-  async function saveCurrentTemplate() {
-    if (!firebaseReady) {
-      alert('Firebase is not connected.');
-      return;
-    }
+  const meta = promptForTemplateMeta();
+  if (!meta) return;
 
-    if (!currentUser) {
-      alert('Please sign in first.');
-      return;
-    }
+  const payload = {
+    title: meta.title,
+    category: meta.category,
+    desc: meta.desc,
+    tags: meta.tags,
+    prompts: collectPromptFields(),
+    ownerUid: currentUser.uid,
+    ownerEmail: currentUser.email || '',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
 
-    const meta = promptForTemplateMeta();
-    if (!meta) return;
+  const docRef = await addDoc(templatesRef, payload);
+  activeTemplateId = docRef.id;
+  await loadUserTemplates();
+  alert('Template saved.');
+}
 
-    const payload = {
-      title: meta.title,
-      category: meta.category,
-      desc: meta.desc,
-      tags: meta.tags,
-      prompts: collectPromptFields(),
-      ownerUid: currentUser.uid,
-      ownerEmail: currentUser.email || '',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
-
-    const docRef = await addDoc(templatesRef, payload);
-    activeTemplateId = docRef.id;
-    await loadUserTemplates();
-    alert('Template saved.');
+async function updateCurrentTemplate() {
+  if (!firebaseReady) {
+    alert('Firebase is not connected.');
+    return;
+  }
+  if (!currentUser) {
+    alert('Please sign in first.');
+    return;
   }
 
-  async function updateCurrentTemplate() {
-    if (!firebaseReady) {
-      alert('Firebase is not connected.');
-      return;
-    }
-
-    if (!currentUser) {
-      alert('Please sign in first.');
-      return;
-    }
-
-    const template = getActiveTemplate();
-    if (!template || template.isBuiltIn) {
-      alert('Built-in templates cannot be overwritten. Save as a new template instead.');
-      return;
-    }
-
-    const meta = promptForTemplateMeta(template);
-    if (!meta) return;
-
-    await updateDoc(doc(db, 'consultationTemplates', template.id), {
-      title: meta.title,
-      category: meta.category,
-      desc: meta.desc,
-      tags: meta.tags,
-      prompts: collectPromptFields(),
-      updatedAt: serverTimestamp()
-    });
-
-    await loadUserTemplates();
-    activeTemplateId = template.id;
-    syncHero();
-    renderTemplates();
-    alert('Template updated.');
+  const template = getActiveTemplate();
+  if (!template || template.isBuiltIn) {
+    alert('Built-in templates cannot be overwritten. Save as a new template instead.');
+    return;
   }
 
-  async function deleteCurrentTemplate() {
-    if (!firebaseReady) {
-      alert('Firebase is not connected.');
-      return;
-    }
+  const meta = promptForTemplateMeta(template);
+  if (!meta) return;
 
-    if (!currentUser) {
-      alert('Please sign in first.');
-      return;
-    }
+  await updateDoc(doc(db, 'consultationTemplates', template.id), {
+    title: meta.title,
+    category: meta.category,
+    desc: meta.desc,
+    tags: meta.tags,
+    prompts: collectPromptFields(),
+    updatedAt: serverTimestamp()
+  });
 
-    const template = getActiveTemplate();
-    if (!template || template.isBuiltIn) {
-      alert('Built-in templates cannot be deleted.');
-      return;
-    }
+  await loadUserTemplates();
+  activeTemplateId = template.id;
+  syncHero();
+  renderTemplates();
+  alert('Template updated.');
+}
 
-    const ok = confirm(`Delete template: ${template.title}?`);
-    if (!ok) return;
-
-    await deleteDoc(doc(db, 'consultationTemplates', template.id));
-    activeTemplateId = defaultTemplates[0].id;
-    await loadUserTemplates();
-    syncHero();
-    alert('Template deleted.');
+async function deleteCurrentTemplate() {
+  if (!firebaseReady) {
+    alert('Firebase is not connected.');
+    return;
   }
+  if (!currentUser) {
+    alert('Please sign in first.');
+    return;
+  }
+
+  const template = getActiveTemplate();
+  if (!template || template.isBuiltIn) {
+    alert('Built-in templates cannot be deleted.');
+    return;
+  }
+
+  const ok = confirm(`Delete template: ${template.title}?`);
+  if (!ok) return;
+
+  await deleteDoc(doc(db, 'consultationTemplates', template.id));
+  activeTemplateId = defaultTemplates[0].id;
+  await loadUserTemplates();
+  syncHero();
+  alert('Template deleted.');
+}
 
 function setupDesktopHeaderMinimize() {
+  if (!topbar) return;
+
   const headerBtns = document.querySelectorAll('.header-btn');
 
   function applyHeaderState() {
@@ -2082,7 +2197,9 @@ function setupDesktopHeaderMinimize() {
   applyHeaderState();
 }
 
-  function setupMobileTopbar() {
+function setupMobileTopbar() {
+  if (!topbar || !topbarToggle) return;
+
   function resetForDesktop() {
     if (window.innerWidth > 760) {
       topbar.classList.remove('mobile-hidden');
@@ -2100,10 +2217,8 @@ function setupDesktopHeaderMinimize() {
 
   document.addEventListener('click', (e) => {
     if (window.innerWidth > 760) return;
-
     const clickedInsideTopbar = topbar.contains(e.target);
     const clickedToggle = topbarToggle.contains(e.target);
-
     if (!clickedInsideTopbar && !clickedToggle) {
       topbar.classList.remove('show-mobile');
     }
@@ -2113,37 +2228,37 @@ function setupDesktopHeaderMinimize() {
   resetForDesktop();
 }
 
-  searchInput.addEventListener('input', renderTemplates);
-  categoryFilter.addEventListener('change', renderTemplates);
-  fillTemplateBtn.addEventListener('click', fillTemplatePrompts);
-  clearBtn.addEventListener('click', clearForm);
-  generateBtn.addEventListener('click', generateSummary);
-  floatingGenerateBtn.addEventListener('click', generateSummary);
-  copyBtn.addEventListener('click', () => copyOutput(false));
-  copyPlainBtn.addEventListener('click', () => copyOutput(true));
-  printBtn.addEventListener('click', printSummaryOnly);
-  saveBtn.addEventListener('click', saveCurrentTemplate);
-  editBtn.addEventListener('click', updateCurrentTemplate);
-  deleteBtn.addEventListener('click', deleteCurrentTemplate);
-  loginBtn.addEventListener('click', signInUser);
-  logoutBtn.addEventListener('click', signOutUser);
+safeAddListener(searchInput, 'input', renderTemplates);
+safeAddListener(categoryFilter, 'change', renderTemplates);
+safeAddListener(fillTemplateBtn, 'click', fillTemplatePrompts);
+safeAddListener(clearBtn, 'click', clearForm);
+safeAddListener(generateBtn, 'click', generateSummary);
+safeAddListener(floatingGenerateBtn, 'click', generateSummary);
+safeAddListener(copyBtn, 'click', () => copyOutput(false));
+safeAddListener(copyPlainBtn, 'click', () => copyOutput(true));
+safeAddListener(printBtn, 'click', printSummaryOnly);
+safeAddListener(saveBtn, 'click', saveCurrentTemplate);
+safeAddListener(editBtn, 'click', updateCurrentTemplate);
+safeAddListener(deleteBtn, 'click', deleteCurrentTemplate);
+safeAddListener(loginBtn, 'click', signInUser);
+safeAddListener(logoutBtn, 'click', signOutUser);
 
-  renderTemplates();
-  syncHero();
-  updateAuthUI();
-  initAllChecklists();
-  setupMobileTopbar();
-  setupDesktopHeaderMinimize();
-  
+renderTemplates();
+syncHero();
+updateAuthUI();
+initAllChecklists();
+setupMobileTopbar();
+setupDesktopHeaderMinimize();
 
-  if (firebaseReady) {
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user || null;
-      updateAuthUI();
-      await loadUserTemplates();
-      syncHero();
-    });
-  }
+if (firebaseReady) {
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user || null;
+    updateAuthUI();
+    await loadUserTemplates();
+    syncHero();
+  });
+}
 </script>
+
 </body>
 </html>
