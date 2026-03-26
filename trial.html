@@ -235,6 +235,38 @@
   min-height: 100%;
 }
 
+.prescribing-layout {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.prescribing-decisions {
+  display: grid;
+  gap: 12px;
+}
+
+.prescribing-treatment-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.treatment-column {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.treatment-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #222;
+  padding-bottom: 2px;
+}
+
 .mini-checks {
   display: grid;
   gap: 10px;
@@ -253,11 +285,35 @@
   cursor: pointer;
 }
 
-@media (max-width: 760px) {
-  .prescribing-split {
+.minimalist-checklist .checklist-add-row {
+  display: none;
+}
+
+.minimalist-checklist.is-active .checklist-add-row {
+  display: grid;
+}
+
+.minimalist-checklist .checklist-list:empty::before {
+  content: "Click to add";
+  display: block;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px dashed rgba(20,20,20,0.14);
+  background: rgba(255,255,255,0.35);
+  color: rgba(0,0,0,0.45);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .prescribing-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .prescribing-treatment-columns {
     grid-template-columns: 1fr;
   }
 }
+
     .panel {
   border-radius: 28px;
   padding: 18px;
@@ -1074,19 +1130,19 @@ select option {
   </div>
 </div>
 
-<div class="card">
+<div class="card full">
   <div class="section-header">
     <div>
-      <div class="section-heading">6. Prescribing</div>
-      <div class="hint">Keep the decision tick boxes, then add editable prescribing tick boxes</div>
+      <div class="section-heading">7. Prescribing</div>
+      <div class="hint">Decision tick boxes plus first-line and second-line treatment options</div>
     </div>
     <div class="badge-row">
       <span class="badge pink">Prescribing</span>
     </div>
   </div>
 
-  <div class="prescribing-split">
-    <div class="prescribing-left">
+  <div class="prescribing-layout">
+    <div class="prescribing-decisions">
       <div class="mini-checks">
         <label><input type="checkbox" id="abxNotIndicated" /> Antibiotics not indicated</label>
         <label><input type="checkbox" id="abxDelayed" /> Delayed / back-pocket approach</label>
@@ -1095,11 +1151,16 @@ select option {
       </div>
     </div>
 
-    <div class="prescribing-right">
-      <label>
-        Medications / dose / duration
-        <div class="editable-checklist" id="prescribingList" data-placeholder="Add medication, dose, duration..."></div>
-      </label>
+    <div class="prescribing-treatment-columns">
+      <div class="treatment-column">
+        <div class="treatment-title">First-line treatment</div>
+        <div class="editable-checklist minimalist-checklist" id="prescribingFirstLineList" data-placeholder="Add first-line medication..."></div>
+      </div>
+
+      <div class="treatment-column">
+        <div class="treatment-title">Second-line treatment</div>
+        <div class="editable-checklist minimalist-checklist" id="prescribingSecondLineList" data-placeholder="Add second-line medication..."></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1633,7 +1694,8 @@ const checklistIds = [
   'examList',
   'diagnosisList',
   'differentialsList',
-  'prescribingList',
+  'prescribingFirstLineList',
+  'prescribingSecondLineList',
   'adviceList',
   'safetyNetList',
   'documentationList'
@@ -1787,6 +1849,21 @@ function initAllChecklists() {
   checklistIds.forEach(id => initEditableChecklist(id, []));
 }
 
+function setupMinimalistChecklistToggle() {
+  document.querySelectorAll('.minimalist-checklist').forEach(container => {
+    container.addEventListener('click', () => {
+      container.classList.add('is-active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) {
+        const hasRows = container.querySelectorAll('.checklist-row').length > 0;
+        if (!hasRows) container.classList.remove('is-active');
+      }
+    });
+  });
+}
+
 function updateAuthUI() {
   if (!firebaseReady) {
     authStatus.textContent = 'Firebase unavailable';
@@ -1871,7 +1948,8 @@ function collectPromptFields() {
     exam: getChecklistItems('examList').map(i => i.text),
     diagnosis: getChecklistItems('diagnosisList').map(i => i.text),
     differentials: getChecklistItems('differentialsList').map(i => i.text),
-    prescribing: getChecklistItems('prescribingList').map(i => i.text),
+    prescribingFirstLine: getChecklistItems('prescribingFirstLineList').map(i => i.text),
+prescribingSecondLine: getChecklistItems('prescribingSecondLineList').map(i => i.text),
     patientAdvice: getChecklistItems('adviceList').map(i => i.text),
     safetyNet: getChecklistItems('safetyNetList').map(i => i.text),
     documentation: getChecklistItems('documentationList').map(i => i.text)
@@ -1987,7 +2065,8 @@ function fillTemplatePrompts() {
   setChecklistItems('examList', template.prompts?.exam);
   setChecklistItems('diagnosisList', template.prompts?.diagnosis);
   setChecklistItems('differentialsList', template.prompts?.differentials);
-  setChecklistItems('prescribingList', template.prompts?.prescribing);
+  setChecklistItems('prescribingFirstLineList', template.prompts?.prescribingFirstLine || template.prompts?.prescribing);
+setChecklistItems('prescribingSecondLineList', template.prompts?.prescribingSecondLine);
   setChecklistItems('adviceList', template.prompts?.patientAdvice);
   setChecklistItems('safetyNetList', template.prompts?.safetyNet);
   setChecklistItems('documentationList', template.prompts?.documentation);
@@ -2036,7 +2115,8 @@ function buildSummaryText() {
   const exam = getCheckedChecklistTexts('examList');
   const diagnosis = getCheckedChecklistTexts('diagnosisList');
   const differentials = getCheckedChecklistTexts('differentialsList');
-  const prescribing = getCheckedChecklistTexts('prescribingList');
+  const prescribingFirstLine = getCheckedChecklistTexts('prescribingFirstLineList');
+const prescribingSecondLine = getCheckedChecklistTexts('prescribingSecondLineList');
   const advice = getCheckedChecklistTexts('adviceList');
   const safetyNet = getCheckedChecklistTexts('safetyNetList');
   const documentation = getCheckedChecklistTexts('documentationList');
@@ -2069,9 +2149,10 @@ function buildSummaryText() {
   if (differentials.length) lines.push(sentence(`Differential / ruled out concerns: ${joinList(differentials)}`));
 
   const prescribingBits = [];
-  if (treatmentFlags.length) prescribingBits.push(treatmentFlags.join('; '));
-  if (prescribing.length) prescribingBits.push(`Medications: ${joinList(prescribing)}`);
-  if (prescribingBits.length) lines.push(sentence(`Prescribing: ${prescribingBits.join('. ')}`));
+if (treatmentFlags.length) prescribingBits.push(treatmentFlags.join('; '));
+if (prescribingFirstLine.length) prescribingBits.push(`First-line: ${joinList(prescribingFirstLine)}`);
+if (prescribingSecondLine.length) prescribingBits.push(`Second-line: ${joinList(prescribingSecondLine)}`);
+if (prescribingBits.length) lines.push(sentence(`Prescribing: ${prescribingBits.join('. ')}`));
 
   if (advice.length) lines.push(sentence(`Advice: ${joinList(advice)}`));
   if (safetyNet.length) lines.push(sentence(`Safety net: ${joinList(safetyNet)}`));
@@ -2275,6 +2356,7 @@ function setupDesktopHeaderMinimize() {
   applyHeaderState();
 }
 
+
 function setupMobileTopbar() {
   if (!topbar || !topbarToggle) return;
 
@@ -2325,6 +2407,7 @@ renderTemplates();
 syncHero();
 updateAuthUI();
 initAllChecklists();
+setupMinimalistChecklistToggle();
 setupMobileTopbar();
 setupDesktopHeaderMinimize();
 
