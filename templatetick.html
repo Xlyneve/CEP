@@ -937,7 +937,7 @@ select option {
       <div class="top-actions">
        <a class="glass-btn header-btn" href="home.html" data-full="🏠 Home" data-mini="🏠">🏠 Home</a>
 <a class="glass-btn header-btn" href="https://xlyneve.github.io/CEP/chatgptx.html" data-full="📝 Notes" data-mini="📝">📝 Notes</a>
-<button class="glass-btn header-btn" id="printBtn" data-full="🖨️ Print summary" data-mini="🖨️">🖨️ Print summary</button>
+<button class="glass-btn header-btn" id="printBtn" data-full="🖨️ Print template" data-mini="🖨️">🖨️ Print template</button>
       </div>
     </header>
 
@@ -2168,14 +2168,59 @@ function generateSummary() {
   output.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function printSummaryOnly() {
-  const summary = buildSummaryText().trim();
-  if (!summary) {
-    alert('No generated summary to print yet.');
+function formatChecklistForPrint(id) {
+  const items = getChecklistItems(id);
+  if (!items.length) return '<div class="empty-line">None</div>';
+
+  return items.map(item => `
+    <div class="print-check-item">
+      <span class="print-check-icon">${item.checked ? '☑' : '☐'}</span>
+      <span>${escapeHtml(item.text)}</span>
+    </div>
+  `).join('');
+}
+
+function formatTextValue(value) {
+  const clean = String(value || '').trim();
+  return clean ? escapeHtml(clean).replace(/\n/g, '<br>') : '<span class="empty-line">None</span>';
+}
+
+function formatTreatmentFlagsForPrint() {
+  const flags = [
+    { id: 'abxNotIndicated', label: 'Antibiotics not indicated' },
+    { id: 'abxDelayed', label: 'Delayed / back-pocket approach' },
+    { id: 'abxPrescribed', label: 'Antibiotics prescribed' },
+    { id: 'supportiveCareOnly', label: 'Supportive care only' }
+  ];
+
+  return flags.map(flag => `
+    <div class="print-check-item">
+      <span class="print-check-icon">${getField(flag.id)?.checked ? '☑' : '☐'}</span>
+      <span>${escapeHtml(flag.label)}</span>
+    </div>
+  `).join('');
+}
+
+function printFilledTemplate() {
+  const patientDemo = getField('patientDemo')?.value || '';
+  const presentingComplaint = getField('presentingComplaint')?.value || '';
+  const examFreeText = getField('examFreeText')?.value || '';
+  const privateConsultNote = getField('privateConsultNote')?.value || '';
+
+  const hasContent =
+    patientDemo.trim() ||
+    presentingComplaint.trim() ||
+    examFreeText.trim() ||
+    privateConsultNote.trim() ||
+    checklistIds.some(id => getChecklistItems(id).length) ||
+    ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly'].some(id => getField(id)?.checked);
+
+  if (!hasContent) {
+    alert('Nothing added to the template yet.');
     return;
   }
 
-  const printWindow = window.open('', '_blank', 'width=900,height=700');
+  const printWindow = window.open('', '_blank', 'width=1000,height=800');
   if (!printWindow) {
     alert('Pop-up blocked. Please allow pop-ups for printing.');
     return;
@@ -2186,24 +2231,182 @@ function printSummaryOnly() {
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <title>Consultation Summary</title>
-      <style>
-        body {
-          font-family: Tahoma, Arial, sans-serif;
-          margin: 28px;
-          color: #111;
-          white-space: pre-wrap;
-          line-height: 1.5;
-        }
-        h1 {
-          margin: 0 0 18px;
-          font-size: 20px;
-        }
-      </style>
+      <title>Consultation Template</title>
+     <style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  body {
+    font-family: Tahoma, Arial, sans-serif;
+    margin: 0;
+    color: #111;
+    line-height: 1.2;
+    font-size: 10px;
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 18px;
+  }
+
+  .print-section {
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    break-inside: avoid;
+  }
+
+  .print-section h2 {
+    margin: 0 0 4px;
+    font-size: 12px;
+  }
+
+  .print-row {
+    margin-bottom: 4px;
+  }
+
+  .print-label {
+    font-weight: 700;
+    display: block;
+    margin-bottom: 2px;
+    font-size: 11px;
+  }
+
+  .print-check-item {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 2px;
+    align-items: flex-start;
+  }
+
+  .print-check-icon {
+    width: 12px;
+    flex: 0 0 12px;
+    font-size: 10px;
+    line-height: 1.1;
+  }
+
+  .empty-line {
+    color: #666;
+    font-style: italic;
+  }
+
+  br {
+    line-height: 1.1;
+  }
+</style>
     </head>
     <body>
-      <h1>Consultation Summary</h1>
-      <div>${escapeHtml(summary).replace(/\n/g, '<br>')}</div>
+      <h1>${escapeHtml(activeTemplateTitle?.textContent || 'Consultation Template')}</h1>
+
+      <div class="print-section">
+        <h2>1. Presentation</h2>
+        <div class="print-row">
+          <span class="print-label">Patient label</span>
+          <div>${formatTextValue(patientDemo)}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Presenting complaint</span>
+          <div>${formatTextValue(presentingComplaint)}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">History of presenting complaint</span>
+          <div>${formatChecklistForPrint('hpcList')}</div>
+        </div>
+      </div>
+
+      <div class="print-section">
+        <h2>2. Red flags checked</h2>
+        <div>${formatChecklistForPrint('redFlagsList')}</div>
+      </div>
+
+      <div class="print-section">
+        <h2>3. Background / patient factors</h2>
+        <div class="print-row">
+          <span class="print-label">Allergies</span>
+          <div>${formatChecklistForPrint('allergiesList')}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Medical History</span>
+          <div>${formatChecklistForPrint('medicalHistoryList')}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Current Medications</span>
+          <div>${formatChecklistForPrint('currentMedsList')}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Special patient factors</span>
+          <div>${formatChecklistForPrint('patientFactorsList')}</div>
+        </div>
+      </div>
+
+      <div class="print-section">
+        <h2>4. Examination</h2>
+        <div class="print-row">
+          <span class="print-label">Examination checklist</span>
+          <div>${formatChecklistForPrint('examList')}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Additional findings</span>
+          <div>${formatTextValue(examFreeText)}</div>
+        </div>
+      </div>
+
+      <div class="print-section">
+        <h2>Vital Signs</h2>
+        <div>${formatChecklistForPrint('vitalsList')}</div>
+      </div>
+
+      <div class="print-section">
+        <h2>5. Diagnosis</h2>
+        <div class="print-row">
+          <span class="print-label">Diagnosis</span>
+          <div>${formatChecklistForPrint('diagnosisList')}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Differential / ruled out concerns</span>
+          <div>${formatChecklistForPrint('differentialsList')}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Private consult note</span>
+          <div>${formatTextValue(privateConsultNote)}</div>
+        </div>
+      </div>
+
+      <div class="print-section">
+        <h2>7. Prescribing</h2>
+        <div class="print-row">
+          <span class="print-label">Prescribing decisions</span>
+          <div>${formatTreatmentFlagsForPrint()}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">First-line treatment</span>
+          <div>${formatChecklistForPrint('prescribingFirstLineList')}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Second-line treatment</span>
+          <div>${formatChecklistForPrint('prescribingSecondLineList')}</div>
+        </div>
+      </div>
+
+      <div class="print-section">
+        <h2>7. Advice / safety net / documentation notes</h2>
+        <div class="print-row">
+          <span class="print-label">Advice</span>
+          <div>${formatChecklistForPrint('adviceList')}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Safety net</span>
+          <div>${formatChecklistForPrint('safetyNetList')}</div>
+        </div>
+        <div class="print-row">
+          <span class="print-label">Documentation notes</span>
+          <div>${formatChecklistForPrint('documentationList')}</div>
+        </div>
+      </div>
     </body>
     </html>
   `);
@@ -2396,7 +2599,7 @@ safeAddListener(generateBtn, 'click', generateSummary);
 safeAddListener(floatingGenerateBtn, 'click', generateSummary);
 safeAddListener(copyBtn, 'click', () => copyOutput(false));
 safeAddListener(copyPlainBtn, 'click', () => copyOutput(true));
-safeAddListener(printBtn, 'click', printSummaryOnly);
+safeAddListener(printBtn, 'click', printFilledTemplate);
 safeAddListener(saveBtn, 'click', saveCurrentTemplate);
 safeAddListener(editBtn, 'click', updateCurrentTemplate);
 safeAddListener(deleteBtn, 'click', deleteCurrentTemplate);
