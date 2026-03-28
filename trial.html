@@ -826,6 +826,17 @@ select option {
 .checklist-delete:hover {
   transform: translateY(-1px);
 }
+.checklist-row.dragging {
+  opacity: 0.55;
+}
+
+.checklist-row {
+  cursor: grab;
+}
+
+.checklist-row:active {
+  cursor: grabbing;
+}
 
 @media (max-width: 760px) {
   .checklist-add-row,
@@ -1520,8 +1531,8 @@ function splitPromptToItems(value) {
     .filter(Boolean);
 }
 
-function joinList(items) {
-  return items.filter(Boolean).join('; ');
+function joinList(items, separator = '\n') {
+  return items.filter(Boolean).join(separator);
 }
 
 function sentence(text) {
@@ -1536,12 +1547,41 @@ function autoGrowChecklistTextarea(el) {
   el.style.height = `${el.scrollHeight}px`;
 }
 
+function setupChecklistRowDrag(row) {
+  row.draggable = true;
+
+  row.addEventListener('dragstart', () => {
+    row.classList.add('dragging');
+  });
+
+  row.addEventListener('dragend', () => {
+    row.classList.remove('dragging');
+  });
+
+  row.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const list = row.parentElement;
+    const draggingRow = list.querySelector('.checklist-row.dragging');
+    if (!draggingRow || draggingRow === row) return;
+
+    const rect = row.getBoundingClientRect();
+    const offset = e.clientY - rect.top;
+
+    if (offset < rect.height / 2) {
+      list.insertBefore(draggingRow, row);
+    } else {
+      list.insertBefore(draggingRow, row.nextSibling);
+    }
+  });
+}
+
 function createChecklistRow(container, text = '', checked = false) {
   const list = container.querySelector('.checklist-list');
   if (!list) return;
 
   const row = document.createElement('div');
   row.className = 'checklist-row';
+  setupChecklistRowDrag(row);
 
   const label = document.createElement('label');
   label.className = 'check-item';
@@ -1976,34 +2016,31 @@ function buildSummaryText() {
   if (durationLabel) openingLine += ` for ${durationLabel}`;
   lines.push(sentence(openingLine));
 
-  if (redFlags.length) lines.push(sentence(`Red flags checked: ${joinList(redFlags)}`));
-  if (vitals.length) lines.push(sentence(`Vital signs: ${joinList(vitals)}`));
-  if (allergies.length) lines.push(sentence(`Allergies: ${joinList(allergies)}`));
-  if (medicalHistory.length) lines.push(sentence(`Medical history: ${joinList(medicalHistory)}`));
-  if (currentMeds.length) lines.push(sentence(`Current medications: ${joinList(currentMeds)}`));
-  if (patientFactors.length) lines.push(sentence(`Special patient factors: ${joinList(patientFactors)}`));
-
+  if (redFlags.length) lines.push(`Red flags checked:\n${joinList(redFlags)}`);
+if (vitals.length) lines.push(`Vital signs:\n${joinList(vitals)}`);
+if (allergies.length) lines.push(`Allergies:\n${joinList(allergies)}`);
+if (medicalHistory.length) lines.push(`Medical history:\n${joinList(medicalHistory)}`);
+if (currentMeds.length) lines.push(`Current medications:\n${joinList(currentMeds)}`);
+if (patientFactors.length) lines.push(`Special patient factors:\n${joinList(patientFactors)}`);
+if (diagnosis.length) lines.push(`Diagnosis:\n${joinList(diagnosis)}`);
+if (differentials.length) lines.push(`Differential / ruled out concerns:\n${joinList(differentials)}`);
+if (planTreatment.length) lines.push(`Plan / treatment:\n${joinList(planTreatment)}`);
+if (advice.length) lines.push(`Advice:\n${joinList(advice)}`);
+if (safetyNet.length) lines.push(`Safety net:\n${joinList(safetyNet)}`);
+if (documentation.length) lines.push(`Documentation notes:\n${joinList(documentation)}`);
+  
   const examBits = [];
   if (exam.length) examBits.push(joinList(exam));
   if (examFreeText) examBits.push(examFreeText);
-  if (examBits.length) lines.push(sentence(`Examination: ${examBits.join('; ')}`));
+  if (examBits.length) lines.push(`Examination:\n${examBits.join('\n')}`);
 
-  if (diagnosis.length) lines.push(sentence(`Diagnosis: ${joinList(diagnosis)}`));
-  if (differentials.length) lines.push(sentence(`Differential / ruled out concerns: ${joinList(differentials)}`));
-
- if (planTreatment.length) {
-  lines.push(sentence(`Plan / treatment: ${joinList(planTreatment)}`));
-}
 
 const prescribingBits = [];
-if (treatmentFlags.length) prescribingBits.push(treatmentFlags.join('; '));
-if (prescribingFirstLine.length) prescribingBits.push(`First-line: ${joinList(prescribingFirstLine)}`);
-if (prescribingSecondLine.length) prescribingBits.push(`Second-line: ${joinList(prescribingSecondLine)}`);
-if (prescribingBits.length) lines.push(sentence(prescribingBits.join('. ')));
+if (treatmentFlags.length) prescribingBits.push(...treatmentFlags);
+if (prescribingFirstLine.length) prescribingBits.push(...prescribingFirstLine);
+if (prescribingSecondLine.length) prescribingBits.push(...prescribingSecondLine);
+if (prescribingBits.length) lines.push(`Prescribing:\n${joinList(prescribingBits)}`);
 
-  if (advice.length) lines.push(sentence(`Advice: ${joinList(advice)}`));
-  if (safetyNet.length) lines.push(sentence(`Safety net: ${joinList(safetyNet)}`));
-  if (documentation.length) lines.push(sentence(`Documentation notes: ${joinList(documentation)}`));
 
   return lines.join('\n\n');
 }
