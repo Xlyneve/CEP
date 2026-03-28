@@ -749,8 +749,31 @@ select option {
 .check-item input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  margin-top: 3px;
+  margin-top: 6px;
   accent-color: #d6ecff;
+}
+
+.check-item textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 24px;
+  resize: none;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  color: #111;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+}
+
+.check-item textarea:focus {
+  border: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .check-item input[type="text"] {
@@ -1500,6 +1523,12 @@ function sentence(text) {
   return /[.!?]$/.test(clean) ? clean : `${clean}.`;
 }
 
+function autoGrowChecklistTextarea(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 function createChecklistRow(container, text = '', checked = false) {
   const list = container.querySelector('.checklist-list');
   if (!list) return;
@@ -1514,10 +1543,10 @@ function createChecklistRow(container, text = '', checked = false) {
   checkbox.type = 'checkbox';
   checkbox.checked = checked;
 
-  const input = document.createElement('input');
-  input.type = 'text';
+  const input = document.createElement('textarea');
   input.value = text;
   input.placeholder = 'Edit item';
+  input.rows = 1;
 
   const delBtn = document.createElement('button');
   delBtn.type = 'button';
@@ -1526,11 +1555,15 @@ function createChecklistRow(container, text = '', checked = false) {
   delBtn.title = 'Delete item';
   delBtn.addEventListener('click', () => row.remove());
 
+  input.addEventListener('input', () => autoGrowChecklistTextarea(input));
+
   label.appendChild(checkbox);
   label.appendChild(input);
   row.appendChild(label);
   row.appendChild(delBtn);
   list.appendChild(row);
+
+  autoGrowChecklistTextarea(input);
 }
 
 function initEditableChecklist(id, seedItems = []) {
@@ -1584,7 +1617,7 @@ function getChecklistItems(id) {
   return [...container.querySelectorAll('.checklist-row')]
     .map(row => {
       const checkbox = row.querySelector('input[type="checkbox"]');
-      const input = row.querySelector('input[type="text"]');
+      const input = row.querySelector('textarea');
       return {
         text: input?.value.trim() || '',
         checked: !!checkbox?.checked
