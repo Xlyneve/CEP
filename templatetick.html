@@ -554,18 +554,24 @@ select option {
 .private-note-label {
   color: #6b5a7a;
 }
-
-#privateConsultNote {
-  min-height: 150px;
+#privateConsultNote,
+#prescribingPrivateNote,
+#prescribingFirstLinePrivateNote,
+#prescribingSecondLinePrivateNote {
+  min-height: 110px;
   color: #6b5a7a;
   background: linear-gradient(180deg, rgba(255, 246, 252, 0.82), rgba(248, 242, 255, 0.72));
   border: 1px solid rgba(145, 120, 170, 0.22);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 16px rgba(0,0,0,0.06);
 }
 
-#privateConsultNote::placeholder {
+#privateConsultNote::placeholder,
+#prescribingPrivateNote::placeholder,
+#prescribingFirstLinePrivateNote::placeholder,
+#prescribingSecondLinePrivateNote::placeholder {
   color: rgba(107, 90, 122, 0.52);
 }
+
     .card.full {
       grid-column: 1 / -1;
     }
@@ -981,32 +987,39 @@ select option {
         </section>
 
         <section class="consultation-grid">
-         <div class="card">
+        <div class="card">
   <div class="section-header">
     <div>
       <div class="section-heading">1. Presentation</div>
-      <div class="hint">Main complaint plus editable HPC tick boxes</div>
+      <div class="hint">Symptoms plus duration for opening line</div>
     </div>
     <div class="badge-row">
       <span class="badge blue">Core</span>
     </div>
   </div>
 
-  <div class="section-fields two">
+  <div class="section-fields three">
     <label>
-      Patient label
+      Age
       <input id="patientDemo" placeholder="e.g. 24F" />
     </label>
 
     <label>
-      Presenting complaint
-      <input id="presentingComplaint" placeholder="e.g. dysuria for 2 days" />
+      Duration
+      <input id="presentationDuration" placeholder="e.g. 2, 24, 3-4" />
+    </label>
+
+    <label>
+      Duration type
+      <div class="mini-checks">
+        <label><input type="checkbox" id="durationDays" /> Days</label>
+        <label><input type="checkbox" id="durationHours" /> Hours</label>
+      </div>
     </label>
   </div>
 
   <div class="section-fields">
-    <label>History of presenting complaint</label>
-    <div class="editable-checklist" id="hpcList" data-placeholder="Add HPC item..."></div>
+    <div class="editable-checklist" id="hpcList" data-placeholder="Add symptom..."></div>
   </div>
 </div>
 
@@ -1134,7 +1147,7 @@ select option {
   <div class="section-header">
     <div>
       <div class="section-heading">7. Prescribing</div>
-      <div class="hint">Decision tick boxes plus first-line and second-line treatment options</div>
+      <div class="hint">Decision tick boxes, private reminders, treatment options, and plan / treatment</div>
     </div>
     <div class="badge-row">
       <span class="badge pink">Prescribing</span>
@@ -1149,15 +1162,33 @@ select option {
         <label><input type="checkbox" id="abxPrescribed" /> Antibiotics prescribed</label>
         <label><input type="checkbox" id="supportiveCareOnly" /> Supportive care only</label>
       </div>
+
+      <label class="private-note-label">
+        Private notes
+        <textarea id="prescribingPrivateNote" placeholder="Reminder to self - not part of summary"></textarea>
+      </label>
+
+      <label>
+        Plan / Treatment
+        <div class="editable-checklist" id="planTreatmentList" data-placeholder="Add plan / treatment item..."></div>
+      </label>
     </div>
 
     <div class="prescribing-treatment-columns">
       <div class="treatment-column">
+        <label class="private-note-label">
+          Private notes
+          <textarea id="prescribingFirstLinePrivateNote" placeholder="Private reminder for first-line - not part of summary"></textarea>
+        </label>
         <div class="treatment-title">First-line treatment</div>
         <div class="editable-checklist minimalist-checklist" id="prescribingFirstLineList" data-placeholder="Add first-line medication..."></div>
       </div>
 
       <div class="treatment-column">
+        <label class="private-note-label">
+          Private notes
+          <textarea id="prescribingSecondLinePrivateNote" placeholder="Private reminder for second-line - not part of summary"></textarea>
+        </label>
         <div class="treatment-title">Second-line treatment</div>
         <div class="editable-checklist minimalist-checklist" id="prescribingSecondLineList" data-placeholder="Add second-line medication..."></div>
       </div>
@@ -1271,56 +1302,58 @@ const defaultTemplates = [
     desc: 'Flexible all-purpose assessment structure for common acute presentations.',
     tags: ['general', 'assessment', 'documentation'],
     isBuiltIn: true,
-    prompts: {
-      patientDemo: '',
-      presentingComplaint: 'Acute presentation requiring assessment',
-      hpc: [
-        'Clarify onset',
-        'Duration',
-        'Progression',
-        'Severity',
-        'Associated symptoms',
-        'Exposure history',
-        'Treatment tried',
-        'Why presenting today'
-      ],
-      redFlags: [
-        'Relevant dangerous symptoms asked about',
-        'Relevant dangerous symptoms absent unless present'
-      ],
-      vitals: [
-        'Temp',
-        'HR',
-        'BP',
-        'RR',
-        'SpO2',
-        'WE'
-      ],
-      allergies: ['NKDA if relevant'],
-      medicalHistory: ['Relevant background conditions only'],
-      currentMeds: ['Current medicines'],
-      patientFactors: [
-        'Pregnancy / breastfeeding if relevant',
-        'Immunocompromised state if relevant',
-        'Social / functional factors if relevant'
-      ],
-      exam: [
-        'Focused examination completed',
-        'Pertinent negatives documented'
-      ],
-      examFreeText: '',
-      diagnosis: ['Working diagnosis'],
-      differentials: ['Key alternative diagnoses considered'],
-      prescribingFirstLine: ['First-line option'],
-      prescribingSecondLine: ['Second-line option'],
-      patientAdvice: ['Supportive care and home advice'],
-      safetyNet: [
-        'Return if worsening',
-        'Return if not improving',
-        'Return if red flags develop'
-      ],
-      documentation: ['Record anything medico-legally important']
-    }
+   prompts: {
+  patientDemo: '',
+  presentationDuration: '',
+  durationDays: true,
+  durationHours: false,
+  hpc: [
+    'cough',
+    'sore throat',
+    'fever'
+  ],
+  redFlags: [
+    'Relevant dangerous symptoms asked about',
+    'Relevant dangerous symptoms absent unless present'
+  ],
+  vitals: [
+    'Temp',
+    'HR',
+    'BP',
+    'RR',
+    'SpO2',
+    'WE'
+  ],
+  allergies: ['NKDA if relevant'],
+  medicalHistory: ['Relevant background conditions only'],
+  currentMeds: ['Current medicines'],
+  patientFactors: [
+    'Pregnancy / breastfeeding if relevant',
+    'Immunocompromised state if relevant',
+    'Social / functional factors if relevant'
+  ],
+  exam: [
+    'Focused examination completed',
+    'Pertinent negatives documented'
+  ],
+  examFreeText: '',
+  diagnosis: ['Working diagnosis'],
+  differentials: ['Key alternative diagnoses considered'],
+  privateConsultNote: '',
+  prescribingPrivateNote: '',
+  prescribingFirstLinePrivateNote: '',
+  prescribingSecondLinePrivateNote: '',
+  planTreatment: ['Supportive measures discussed'],
+  prescribingFirstLine: ['First-line option'],
+  prescribingSecondLine: ['Second-line option'],
+  patientAdvice: ['Supportive care and home advice'],
+  safetyNet: [
+    'Return if worsening',
+    'Return if not improving',
+    'Return if red flags develop'
+  ],
+  documentation: ['Record anything medico-legally important']
+}
   }
 ];
 
@@ -1389,7 +1422,15 @@ if (topActions) {
   topActions.appendChild(deleteBtn);
 }
 
-const textFieldIds = ['patientDemo', 'presentingComplaint', 'examFreeText'];
+const textFieldIds = [
+  'patientDemo',
+  'presentationDuration',
+  'examFreeText',
+  'privateConsultNote',
+  'prescribingPrivateNote',
+  'prescribingFirstLinePrivateNote',
+  'prescribingSecondLinePrivateNote'
+];
 
 const checklistIds = [
   'hpcList',
@@ -1402,6 +1443,7 @@ const checklistIds = [
   'examList',
   'diagnosisList',
   'differentialsList',
+  'planTreatmentList',
   'prescribingFirstLineList',
   'prescribingSecondLineList',
   'adviceList',
@@ -1644,11 +1686,17 @@ function promptForTemplateMeta(existing = null) {
 function collectPromptFields() {
   return {
     patientDemo: getField('patientDemo')?.value.trim() || '',
-    presentingComplaint: getField('presentingComplaint')?.value.trim() || '',
+    presentationDuration: getField('presentationDuration')?.value.trim() || '',
+    durationDays: !!getField('durationDays')?.checked,
+    durationHours: !!getField('durationHours')?.checked,
     examFreeText: getField('examFreeText')?.value.trim() || '',
+    privateConsultNote: getField('privateConsultNote')?.value.trim() || '',
+    prescribingPrivateNote: getField('prescribingPrivateNote')?.value.trim() || '',
+    prescribingFirstLinePrivateNote: getField('prescribingFirstLinePrivateNote')?.value.trim() || '',
+    prescribingSecondLinePrivateNote: getField('prescribingSecondLinePrivateNote')?.value.trim() || '',
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlags: getChecklistItems('redFlagsList').map(i => i.text),
-	vitals: getChecklistItems('vitalsList').map(i => i.text),
+    vitals: getChecklistItems('vitalsList').map(i => i.text),
     allergies: getChecklistItems('allergiesList').map(i => i.text),
     medicalHistory: getChecklistItems('medicalHistoryList').map(i => i.text),
     currentMeds: getChecklistItems('currentMedsList').map(i => i.text),
@@ -1656,12 +1704,21 @@ function collectPromptFields() {
     exam: getChecklistItems('examList').map(i => i.text),
     diagnosis: getChecklistItems('diagnosisList').map(i => i.text),
     differentials: getChecklistItems('differentialsList').map(i => i.text),
+    planTreatment: getChecklistItems('planTreatmentList').map(i => i.text),
     prescribingFirstLine: getChecklistItems('prescribingFirstLineList').map(i => i.text),
-prescribingSecondLine: getChecklistItems('prescribingSecondLineList').map(i => i.text),
+    prescribingSecondLine: getChecklistItems('prescribingSecondLineList').map(i => i.text),
     patientAdvice: getChecklistItems('adviceList').map(i => i.text),
     safetyNet: getChecklistItems('safetyNetList').map(i => i.text),
     documentation: getChecklistItems('documentationList').map(i => i.text)
   };
+}
+
+function joinNaturalList(items) {
+  const clean = items.filter(Boolean);
+  if (!clean.length) return '';
+  if (clean.length === 1) return clean[0];
+  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
+  return `${clean.slice(0, -1).join(', ')} and ${clean[clean.length - 1]}`;
 }
 
 async function loadUserTemplates() {
@@ -1760,8 +1817,14 @@ function fillTemplatePrompts() {
   if (!template) return;
 
   if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
-  if (getField('presentingComplaint')) getField('presentingComplaint').value = template.prompts?.presentingComplaint || '';
+  if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
+  if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
+  if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
   if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
+  if (getField('privateConsultNote')) getField('privateConsultNote').value = template.prompts?.privateConsultNote || '';
+  if (getField('prescribingPrivateNote')) getField('prescribingPrivateNote').value = template.prompts?.prescribingPrivateNote || '';
+  if (getField('prescribingFirstLinePrivateNote')) getField('prescribingFirstLinePrivateNote').value = template.prompts?.prescribingFirstLinePrivateNote || '';
+  if (getField('prescribingSecondLinePrivateNote')) getField('prescribingSecondLinePrivateNote').value = template.prompts?.prescribingSecondLinePrivateNote || '';
 
   setChecklistItems('hpcList', template.prompts?.hpc);
   setChecklistItems('redFlagsList', template.prompts?.redFlags);
@@ -1773,13 +1836,13 @@ function fillTemplatePrompts() {
   setChecklistItems('examList', template.prompts?.exam);
   setChecklistItems('diagnosisList', template.prompts?.diagnosis);
   setChecklistItems('differentialsList', template.prompts?.differentials);
+  setChecklistItems('planTreatmentList', template.prompts?.planTreatment);
   setChecklistItems('prescribingFirstLineList', template.prompts?.prescribingFirstLine || template.prompts?.prescribing);
-setChecklistItems('prescribingSecondLineList', template.prompts?.prescribingSecondLine);
+  setChecklistItems('prescribingSecondLineList', template.prompts?.prescribingSecondLine);
   setChecklistItems('adviceList', template.prompts?.patientAdvice);
   setChecklistItems('safetyNetList', template.prompts?.safetyNet);
   setChecklistItems('documentationList', template.prompts?.documentation);
 }
-
 function clearForm() {
   textFieldIds.forEach(id => {
     const field = getField(id);
@@ -1788,15 +1851,29 @@ function clearForm() {
 
   checklistIds.forEach(clearChecklist);
 
-  ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly'].forEach(id => {
+  ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly', 'durationDays', 'durationHours'].forEach(id => {
     const box = getField(id);
     if (box) box.checked = false;
   });
 
-  const privateNote = getField('privateConsultNote');
-  if (privateNote) privateNote.value = '';
-
   if (output) output.innerHTML = '';
+}
+
+function setupDurationCheckboxes() {
+  const days = getField('durationDays');
+  const hours = getField('durationHours');
+
+  if (days) {
+    days.addEventListener('change', () => {
+      if (days.checked && hours) hours.checked = false;
+    });
+  }
+
+  if (hours) {
+    hours.addEventListener('change', () => {
+      if (hours.checked && days) days.checked = false;
+    });
+  }
 }
 
 function getCheckedTreatmentFlags() {
@@ -1810,7 +1887,9 @@ function getCheckedTreatmentFlags() {
 
 function buildSummaryText() {
   const patientDemo = getField('patientDemo')?.value.trim() || '';
-  const presentingComplaint = getField('presentingComplaint')?.value.trim() || '';
+  const presentationDuration = getField('presentationDuration')?.value.trim() || '';
+  const durationDays = !!getField('durationDays')?.checked;
+  const durationHours = !!getField('durationHours')?.checked;
   const examFreeText = getField('examFreeText')?.value.trim() || '';
 
   const hpc = getCheckedChecklistTexts('hpcList');
@@ -1823,8 +1902,9 @@ function buildSummaryText() {
   const exam = getCheckedChecklistTexts('examList');
   const diagnosis = getCheckedChecklistTexts('diagnosisList');
   const differentials = getCheckedChecklistTexts('differentialsList');
+  const planTreatment = getCheckedChecklistTexts('planTreatmentList');
   const prescribingFirstLine = getCheckedChecklistTexts('prescribingFirstLineList');
-const prescribingSecondLine = getCheckedChecklistTexts('prescribingSecondLineList');
+  const prescribingSecondLine = getCheckedChecklistTexts('prescribingSecondLineList');
   const advice = getCheckedChecklistTexts('adviceList');
   const safetyNet = getCheckedChecklistTexts('safetyNetList');
   const documentation = getCheckedChecklistTexts('documentationList');
@@ -1832,15 +1912,26 @@ const prescribingSecondLine = getCheckedChecklistTexts('prescribingSecondLineLis
 
   const lines = [];
 
-  if (patientDemo && presentingComplaint) {
-    lines.push(sentence(`${patientDemo} presenting with ${presentingComplaint}`));
-  } else if (presentingComplaint) {
-    lines.push(sentence(`Presenting with ${presentingComplaint}`));
-  } else if (patientDemo) {
-    lines.push(sentence(patientDemo));
+  const firstLineBits = [];
+  if (patientDemo) firstLineBits.push(patientDemo);
+  firstLineBits.push('presenting with');
+  if (hpc.length) {
+    firstLineBits.push(joinNaturalList(hpc));
+  } else {
+    firstLineBits.push('symptoms');
   }
 
-  if (hpc.length) lines.push(sentence(`History of presenting complaint: ${joinList(hpc)}`));
+  let durationLabel = '';
+  if (presentationDuration) {
+    if (durationDays) durationLabel = `${presentationDuration} day${presentationDuration === '1' ? '' : 's'}`;
+    else if (durationHours) durationLabel = `${presentationDuration} hour${presentationDuration === '1' ? '' : 's'}`;
+    else durationLabel = presentationDuration;
+  }
+
+  let openingLine = firstLineBits.join(' ');
+  if (durationLabel) openingLine += ` for ${durationLabel}`;
+  lines.push(sentence(openingLine));
+
   if (redFlags.length) lines.push(sentence(`Red flags checked: ${joinList(redFlags)}`));
   if (vitals.length) lines.push(sentence(`Vital signs: ${joinList(vitals)}`));
   if (allergies.length) lines.push(sentence(`Allergies: ${joinList(allergies)}`));
@@ -1856,7 +1947,11 @@ const prescribingSecondLine = getCheckedChecklistTexts('prescribingSecondLineLis
   if (diagnosis.length) lines.push(sentence(`Diagnosis: ${joinList(diagnosis)}`));
   if (differentials.length) lines.push(sentence(`Differential / ruled out concerns: ${joinList(differentials)}`));
 
-  const prescribingBits = [];
+ if (planTreatment.length) {
+  lines.push(sentence(`Plan / treatment: ${joinList(planTreatment)}`));
+}
+
+const prescribingBits = [];
 if (treatmentFlags.length) prescribingBits.push(treatmentFlags.join('; '));
 if (prescribingFirstLine.length) prescribingBits.push(`First-line: ${joinList(prescribingFirstLine)}`);
 if (prescribingSecondLine.length) prescribingBits.push(`Second-line: ${joinList(prescribingSecondLine)}`);
@@ -1911,10 +2006,14 @@ function formatTreatmentFlagsForPrint() {
 
 function printFilledTemplate() {
   const patientDemo = getField('patientDemo')?.value || '';
-  const presentingComplaint = getField('presentingComplaint')?.value || '';
-  const examFreeText = getField('examFreeText')?.value || '';
-  const privateConsultNote = getField('privateConsultNote')?.value || '';
-
+const presentationDuration = getField('presentationDuration')?.value || '';
+const durationDays = !!getField('durationDays')?.checked;
+const durationHours = !!getField('durationHours')?.checked;
+const examFreeText = getField('examFreeText')?.value || '';
+const privateConsultNote = getField('privateConsultNote')?.value || '';
+const prescribingPrivateNote = getField('prescribingPrivateNote')?.value || '';
+const prescribingFirstLinePrivateNote = getField('prescribingFirstLinePrivateNote')?.value || '';
+const prescribingSecondLinePrivateNote = getField('prescribingSecondLinePrivateNote')?.value || '';
   const hasContent =
     patientDemo.trim() ||
     presentingComplaint.trim() ||
@@ -2011,20 +2110,24 @@ function printFilledTemplate() {
       <h1>${escapeHtml(activeTemplateTitle?.textContent || 'Consultation Template')}</h1>
 
       <div class="print-section">
-        <h2>1. Presentation</h2>
-        <div class="print-row">
-          <span class="print-label">Patient label</span>
-          <div>${formatTextValue(patientDemo)}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Presenting complaint</span>
-          <div>${formatTextValue(presentingComplaint)}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">History of presenting complaint</span>
-          <div>${formatChecklistForPrint('hpcList')}</div>
-        </div>
-      </div>
+  <h2>1. Presentation</h2>
+  <div class="print-row">
+    <span class="print-label">Age</span>
+    <div>${formatTextValue(patientDemo)}</div>
+  </div>
+  <div class="print-row">
+    <span class="print-label">Duration</span>
+    <div>${formatTextValue(
+      presentationDuration
+        ? `${presentationDuration} ${durationDays ? 'day(s)' : durationHours ? 'hour(s)' : ''}`.trim()
+        : ''
+    )}</div>
+  </div>
+  <div class="print-row">
+    <span class="print-label">Symptoms</span>
+    <div>${formatChecklistForPrint('hpcList')}</div>
+  </div>
+</div>
 
       <div class="print-section">
         <h2>2. Red flags checked</h2>
@@ -2115,6 +2218,22 @@ function printFilledTemplate() {
           <div>${formatChecklistForPrint('documentationList')}</div>
         </div>
       </div>
+	  <div class="print-row">
+  <span class="print-label">Private notes</span>
+  <div>${formatTextValue(prescribingPrivateNote)}</div>
+</div>
+<div class="print-row">
+  <span class="print-label">Plan / Treatment</span>
+  <div>${formatChecklistForPrint('planTreatmentList')}</div>
+</div>
+<div class="print-row">
+  <span class="print-label">First-line private notes</span>
+  <div>${formatTextValue(prescribingFirstLinePrivateNote)}</div>
+</div>
+<div class="print-row">
+  <span class="print-label">Second-line private notes</span>
+  <div>${formatTextValue(prescribingSecondLinePrivateNote)}</div>
+</div>
     </body>
     </html>
   `);
