@@ -735,7 +735,8 @@ select option {
 }
 
 .check-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -748,18 +749,51 @@ select option {
 .check-item input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  flex: 0 0 16px;
+  margin-top: 7px;
   accent-color: #d6ecff;
 }
 
+.check-item textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 30px;
+  resize: none;
+  overflow: hidden;
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 4px 0 3px !important;
+  margin: 0;
+  color: #111;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.check-item textarea:focus {
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
 .check-item input[type="text"] {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   border: none;
   background: transparent;
   box-shadow: none;
   padding: 0;
   color: #111;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .check-item input[type="text"]:focus {
@@ -1496,6 +1530,12 @@ function sentence(text) {
   return /[.!?]$/.test(clean) ? clean : `${clean}.`;
 }
 
+function autoGrowChecklistTextarea(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 function createChecklistRow(container, text = '', checked = false) {
   const list = container.querySelector('.checklist-list');
   if (!list) return;
@@ -1510,10 +1550,10 @@ function createChecklistRow(container, text = '', checked = false) {
   checkbox.type = 'checkbox';
   checkbox.checked = checked;
 
-  const input = document.createElement('input');
-  input.type = 'text';
+  const input = document.createElement('textarea');
   input.value = text;
   input.placeholder = 'Edit item';
+  input.rows = 1;
 
   const delBtn = document.createElement('button');
   delBtn.type = 'button';
@@ -1522,11 +1562,15 @@ function createChecklistRow(container, text = '', checked = false) {
   delBtn.title = 'Delete item';
   delBtn.addEventListener('click', () => row.remove());
 
+  input.addEventListener('input', () => autoGrowChecklistTextarea(input));
+
   label.appendChild(checkbox);
   label.appendChild(input);
   row.appendChild(label);
   row.appendChild(delBtn);
   list.appendChild(row);
+
+  autoGrowChecklistTextarea(input);
 }
 
 function initEditableChecklist(id, seedItems = []) {
@@ -1580,7 +1624,7 @@ function getChecklistItems(id) {
   return [...container.querySelectorAll('.checklist-row')]
     .map(row => {
       const checkbox = row.querySelector('input[type="checkbox"]');
-      const input = row.querySelector('input[type="text"]');
+      const input = row.querySelector('textarea');
       return {
         text: input?.value.trim() || '',
         checked: !!checkbox?.checked
@@ -1955,7 +1999,7 @@ const prescribingBits = [];
 if (treatmentFlags.length) prescribingBits.push(treatmentFlags.join('; '));
 if (prescribingFirstLine.length) prescribingBits.push(`First-line: ${joinList(prescribingFirstLine)}`);
 if (prescribingSecondLine.length) prescribingBits.push(`Second-line: ${joinList(prescribingSecondLine)}`);
-if (prescribingBits.length) lines.push(sentence(`Prescribing: ${prescribingBits.join('. ')}`));
+if (prescribingBits.length) lines.push(sentence(prescribingBits.join('. ')));
 
   if (advice.length) lines.push(sentence(`Advice: ${joinList(advice)}`));
   if (safetyNet.length) lines.push(sentence(`Safety net: ${joinList(safetyNet)}`));
