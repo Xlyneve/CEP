@@ -15,10 +15,10 @@
       --muted: #60708c;
       --accent: #6d7cff;
       --accent-soft: rgba(109,124,255,0.12);
-      --live: #b44b76;
-      --nonlive: #2b6fb4;
-      --funded: #246b4f;
-      --notfunded: #875b12;
+      --live: #c2185b;
+      --nonlive: #1565c0;
+      --funded: #1b7f3a;
+      --notfunded: #b26a00;
       --warn-bg: rgba(255,247,230,0.95);
       --warn-border: rgba(180,140,55,0.18);
     }
@@ -58,7 +58,16 @@
     .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .field { display: grid; gap: 6px; }
     .field label { font-size: 0.92rem; color: var(--muted); }
-    .field input, .field select { width: 100%; border-radius: 14px; border: 1px solid rgba(51,70,120,0.14); background: rgba(255,255,255,0.92); padding: 12px 13px; color: var(--text); outline: none; }
+     .field input:not([type="checkbox"]):not([type="radio"]),
+.field select {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(51,70,120,0.14);
+  background: rgba(255,255,255,0.92);
+  padding: 12px 13px;
+  color: var(--text);
+  outline: none;
+}
     .full { grid-column: 1 / -1; }
     .pill, .legend span, .helper-chip, .mini-chip {
   display: inline-flex;
@@ -95,6 +104,16 @@
   margin: 0 4px 0 0;
   transform: scale(0.95);
   accent-color: var(--accent);
+}
+.plain-option input[type="checkbox"],
+.plain-option input[type="radio"] {
+  width: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  outline: none;
 }
 
 .field.full .switch-row {
@@ -138,10 +157,23 @@
     .legend .nonlive { color: var(--nonlive); }
     .legend .funded { color: var(--funded); }
     .legend .notfunded { color: var(--notfunded); }
+	.live-chip {
+  color: #c2185b;
+  border-color: rgba(194,24,91,0.28);
+  background: rgba(255,240,246,0.98);
+  font-weight: 700;
+}
+
+.notfunded-chip {
+  color: #b26a00;
+  border-color: rgba(178,106,0,0.28);
+  background: rgba(255,247,230,0.98);
+  font-weight: 700;
+}
     .library-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
     .vaccine-card { border-radius: 18px; border: 1px solid rgba(55,74,124,0.10); background: rgba(248,250,255,0.9); padding: 12px; display: grid; gap: 10px; }
-    .vaccine-card.live-card { border-color: rgba(180,75,118,0.22); }
-    .vaccine-card.nonlive-card { border-color: rgba(43,111,180,0.18); }
+    .vaccine-card.live-card { border-color: rgba(194,24,91,0.38); }
+    .vaccine-card.nonlive-card { border-color: rgba(55,74,124,0.10); }
     .vaccine-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
     .vaccine-name { font-weight: 700; }
     .vaccine-meta { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -159,8 +191,8 @@
     .day-title { font-size: 0.84rem; font-weight: 700; color: #41506e; }
     .vax-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .dose-chip { border-radius: 14px; padding: 8px 9px; background: rgba(244,247,255,0.98); border: 1px solid rgba(70,95,170,0.12); display: grid; gap: 3px; min-height: 74px; align-content: start; font-size: 0.88rem; }
-    .dose-chip.live { border-color: rgba(180,75,118,0.22); background: rgba(255,245,249,0.98); }
-    .dose-chip.nonlive { border-color: rgba(43,111,180,0.20); background: rgba(245,250,255,0.98); }
+    .dose-chip.live { border-color: rgba(194,24,91,0.40); background: rgba(255,240,246,0.98); }
+    .dose-chip.nonlive { border-color: rgba(21,101,192,0.34); background: rgba(240,247,255,0.98); }
     .summary-box { display: grid; gap: 10px; line-height: 1.55; font-size: 0.98rem; }
     .notes-box { background: rgba(245,248,255,0.9); border: 1px dashed rgba(80,98,145,0.24); border-radius: 18px; padding: 14px; color: #45526f; }
     .muted { color: var(--muted); }
@@ -174,11 +206,9 @@
       <h1>Biologics Vaccine Planner</h1>
       <div class="sub">Rule-based planning page for adults preparing to start biologic or other immunosuppressive disease-modifying therapy. It uses built-in vaccine schedules and prioritises live vaccines and longer multi-dose series early so the whole plan can be finished as soon as possible.</div>
       <div class="legend">
-        <span class="live">● Live vaccine</span>
-        <span class="nonlive">● Non-live vaccine</span>
-        <span class="funded">● Funded</span>
-        <span class="notfunded">● Recommended / not funded</span>
-      </div>
+  <span class="live">● Live vaccine</span>
+  <span class="notfunded">● Recommended / not funded</span>
+</div>
       <div class="hero-actions">
         <button class="btn-primary" id="generateBtn">Generate Plan</button>
         <button class="btn-soft" id="resetDefaultsBtn">Reset Defaults</button>
@@ -404,10 +434,10 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
           <div>
             <div class="vaccine-name">${vax.name}</div>
             <div class="vaccine-meta">
-              <span class="mini-chip">${vax.type === 'live' ? 'Live' : 'Non-live'}</span>
-              <span class="mini-chip">${vax.funded}</span>
-              <span class="mini-chip">${vax.doses} dose${vax.doses === 1 ? '' : 's'}</span>
-            </div>
+  ${vax.type === 'live' ? `<span class="mini-chip live-chip">Live</span>` : ''}
+  ${String(vax.funded).toLowerCase().includes('not funded') || String(vax.funded).toLowerCase().includes('recommended') ? `<span class="mini-chip notfunded-chip">${vax.funded}</span>` : ''}
+  <span class="mini-chip">${vax.doses} dose${vax.doses === 1 ? '' : 's'}</span>
+</div>
             ${vax.ruleText ? `<div class="muted" style="font-size:0.82rem; margin-top:6px;">${vax.ruleText}</div>` : ''}
           </div>
           <label class="pill"><input type="checkbox" ${vax.selected ? 'checked' : ''} onchange="toggleSelected(${index}, this.checked)">Use</label>
