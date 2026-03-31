@@ -282,44 +282,92 @@ button:hover {
   }
 
   async function fetchURLs(filter = '') {
-    const snapshot = await db.collection('urlForms').orderBy('createdAt', 'desc').get();
-    const container = document.getElementById('fileList');
-    container.innerHTML = '';
+  const snapshot = await db.collection('urlForms').orderBy('createdAt', 'desc').get();
+  const container = document.getElementById('fileList');
+  container.innerHTML = '';
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.title.toLowerCase().includes(filter.toLowerCase())) {
-        const div = document.createElement('div');
-        div.className = 'file-item';
-        div.innerHTML = `
-          <div>
-            <strong>${data.title}</strong><br>
-            <em>${data.note}</em><br>
-            <small>
-              <button onclick="window.open('${data.url}', '_blank')" style="padding:4px 8px; background:#f8edeb; border:none; border-radius:6px; cursor:pointer;">Visit Link</button>
-            </small>
-          </div>
-          <div class="file-buttons">
-            <button onclick="editURL('${doc.id}', '${data.title.replace(/'/g, "\\'")}', '${data.note.replace(/'/g, "\\'")}')">Edit</button>
-            <button onclick="deleteURL('${doc.id}')">Delete</button>
-          </div>
-        `;
-        container.appendChild(div);
-      }
-    });
-  }
+  snapshot.forEach(doc => {
+    const data = doc.data();
 
-  async function editURL(id, oldTitle, oldNote) {
-    const newTitle = prompt('Edit Title', oldTitle);
-    const newNote = prompt('Edit Note', oldNote);
-    if (newTitle !== null || newNote !== null) {
-      await db.collection('urlForms').doc(id).update({
-        title: newTitle || oldTitle,
-        note: newNote || oldNote
-      });
-      fetchURLs(document.getElementById('searchInput').value);
+    const search = filter.toLowerCase().trim();
+    const titleMatch = (data.title || '').toLowerCase().includes(search);
+    const noteMatch = (data.note || '').toLowerCase().includes(search);
+
+    if (!search || titleMatch || noteMatch) {
+      const safeTitle = (data.title || '').replace(/'/g, "\\'");
+      const safeNote = (data.note || '').replace(/'/g, "\\'");
+      const safeUrl = data.url || '';
+
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.innerHTML = `
+        <div class="view-mode" id="view-${doc.id}">
+          <strong>${data.title || 'Untitled'}</strong><br>
+          <em>${data.note || ''}</em><br>
+          <small>
+            <button onclick="window.open('${safeUrl}', '_blank')" style="padding:4px 8px; background:#f8edeb; border:none; border-radius:6px; cursor:pointer;">Visit Link</button>
+          </small>
+        </div>
+
+        <div class="edit-mode" id="edit-${doc.id}" style="display:none; margin-top:10px;">
+          <input type="text" id="edit-title-${doc.id}" value="${escapeHtmlAttr(data.title || '')}" placeholder="Edit title" style="width:100%; margin-bottom:8px;">
+          <textarea id="edit-note-${doc.id}" rows="4" placeholder="Edit note" style="width:100%; margin-bottom:8px;">${escapeHtmlText(data.note || '')}</textarea>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button onclick="saveInlineEdit('${doc.id}')">Save</button>
+            <button onclick="cancelInlineEdit('${doc.id}')">Cancel</button>
+          </div>
+        </div>
+
+        <div class="file-buttons">
+          <button onclick="startInlineEdit('${doc.id}')">Edit</button>
+          <button onclick="deleteURL('${doc.id}')">Delete</button>
+        </div>
+      `;
+      container.appendChild(div);
     }
-  }
+  });
+}
+
+function escapeHtmlAttr(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function escapeHtmlText(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+  function startInlineEdit(id) {
+  const view = document.getElementById(`view-${id}`);
+  const edit = document.getElementById(`edit-${id}`);
+  if (view) view.style.display = 'none';
+  if (edit) edit.style.display = 'block';
+}
+
+function cancelInlineEdit(id) {
+  const view = document.getElementById(`view-${id}`);
+  const edit = document.getElementById(`edit-${id}`);
+  if (view) view.style.display = 'block';
+  if (edit) edit.style.display = 'none';
+}
+
+async function saveInlineEdit(id) {
+  const newTitle = document.getElementById(`edit-title-${id}`).value.trim() || 'Untitled';
+  const newNote = document.getElementById(`edit-note-${id}`).value.trim();
+
+  await db.collection('urlForms').doc(id).update({
+    title: newTitle,
+    note: newNote
+  });
+
+  fetchURLs(document.getElementById('searchInput').value);
+}
 
   async function deleteURL(id) {
     if (confirm('Delete this URL entry?')) {
