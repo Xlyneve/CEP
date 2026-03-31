@@ -8,499 +8,715 @@
     :root {
       --bg1: #f6f8ff;
       --bg2: #eef4ff;
-      --card: rgba(255,255,255,0.96);
+      --card: rgba(255,255,255,0.94);
       --border: rgba(42,57,99,0.14);
+      --shadow: 0 18px 40px rgba(41,55,100,0.10);
       --text: #1f2940;
       --muted: #60708c;
       --accent: #6d7cff;
+      --accent-soft: rgba(109,124,255,0.12);
       --live: #b44b76;
       --nonlive: #2b6fb4;
+      --funded: #246b4f;
+      --notfunded: #875b12;
+      --warn-bg: rgba(255,247,230,0.95);
+      --warn-border: rgba(180,140,55,0.18);
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      padding: 20px;
+      padding: 0;
       font-family: Tahoma, Arial, sans-serif;
       color: var(--text);
-      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      background: radial-gradient(circle at top left, rgba(109,124,255,0.15), transparent 30%), linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height: 100%;
     }
-    .wrap { max-width: 1400px; margin: 0 auto; display: grid; gap: 18px; }
-    .card {
+    body { padding: 20px; }
+    .wrap { max-width: 1500px; margin: 0 auto; display: grid; gap: 18px; }
+    .hero, .card {
       background: var(--card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 18px;
+      border-radius: 24px;
+      box-shadow: var(--shadow);
     }
-    .hero { display: grid; gap: 10px; }
-    .sub { color: var(--muted); line-height: 1.5; }
-    .row { display: flex; flex-wrap: wrap; gap: 10px; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .hero { padding: 24px; display: grid; gap: 10px; }
+    h1, h2, h3 { margin: 0; }
+    h1 { font-size: clamp(1.8rem, 3vw, 2.5rem); letter-spacing: -0.02em; }
+    .sub { color: var(--muted); line-height: 1.5; max-width: 1080px; }
+    .hero-actions, .legend, .switch-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    button, input, select { font: inherit; }
+    button { border: none; border-radius: 14px; padding: 11px 16px; cursor: pointer; transition: transform 0.16s ease; }
+    button:hover { transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, #6d7cff, #8794ff); color: white; box-shadow: 0 10px 20px rgba(109,124,255,0.22); }
+    .btn-soft { background: var(--accent-soft); color: var(--text); }
+    .grid-2 { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px; }
+    .card { padding: 20px; overflow: hidden; }
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .card-head p { margin: 6px 0 0; color: var(--muted); line-height: 1.45; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .field { display: grid; gap: 6px; }
-    .field label { color: var(--muted); font-size: 0.92rem; }
-    input, select, button {
-      font: inherit;
-      border-radius: 12px;
-      border: 1px solid rgba(51,70,120,0.14);
-      padding: 10px 12px;
-      background: white;
-    }
-    button {
-      cursor: pointer;
-      border: none;
-      background: var(--accent);
-      color: white;
-    }
-    button.secondary {
-      background: rgba(109,124,255,0.12);
-      color: var(--text);
-      border: 1px solid rgba(109,124,255,0.2);
-    }
-    .pill {
+    .field label { font-size: 0.92rem; color: var(--muted); }
+    .field input, .field select { width: 100%; border-radius: 14px; border: 1px solid rgba(51,70,120,0.14); background: rgba(255,255,255,0.92); padding: 12px 13px; color: var(--text); outline: none; }
+    .full { grid-column: 1 / -1; }
+    .pill, .legend span, .helper-chip, .mini-chip {
       display: inline-flex;
-      gap: 8px;
       align-items: center;
+      gap: 8px;
       padding: 8px 12px;
       border-radius: 999px;
       background: rgba(240,244,255,0.95);
       border: 1px solid rgba(60,80,120,0.10);
-      font-size: 0.9rem;
+      font-size: 0.92rem;
     }
-    .pill input { margin: 0; }
-    .vaccine-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 12px;
-    }
-    .vaccine {
-      border: 1px solid rgba(55,74,124,0.12);
-      border-radius: 18px;
-      padding: 12px;
-      display: grid;
-      gap: 8px;
-      background: rgba(248,250,255,0.95);
-    }
-    .vaccine.live { border-color: rgba(180,75,118,0.24); }
-    .vaccine.nonlive { border-color: rgba(43,111,180,0.20); }
-    .meta { color: var(--muted); font-size: 0.85rem; }
-    .dose-row, .date-row { display: flex; flex-wrap: wrap; gap: 8px; }
-    .dose-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: rgba(244,247,255,0.95);
-      border: 1px solid rgba(70,95,170,0.10);
-      font-size: 0.84rem;
-    }
-    .date-box {
-      display: grid;
-      gap: 4px;
-      padding: 8px 10px;
-      border-radius: 14px;
-      background: rgba(244,247,255,0.95);
-      border: 1px solid rgba(70,95,170,0.10);
-      min-width: 150px;
-    }
-    .date-box label { font-size: 0.76rem; color: var(--muted); }
-    .timeline {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .visit {
-      border: 1px solid rgba(55,74,124,0.12);
-      border-radius: 16px;
-      padding: 10px;
-      background: white;
-      display: grid;
-      gap: 8px;
-      min-height: 140px;
-    }
-    .visit-head { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
-    .visit-sub { color: var(--muted); font-size: 0.8rem; }
-    .visit-items { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
-    .item {
-      border-radius: 14px;
-      padding: 8px 9px;
-      background: rgba(244,247,255,0.98);
-      border: 1px solid rgba(70,95,170,0.12);
-      font-size: 0.86rem;
-      display: grid;
-      gap: 3px;
-    }
-    .item.live { border-color: rgba(180,75,118,0.22); background: rgba(255,245,249,0.98); }
-    .item.nonlive { border-color: rgba(43,111,180,0.20); background: rgba(245,250,255,0.98); }
-    .notes {
-      white-space: pre-wrap;
-      background: rgba(245,248,255,0.9);
-      border: 1px dashed rgba(80,98,145,0.24);
-      border-radius: 18px;
-      padding: 14px;
-    }
-    @media (max-width: 1000px) {
-      .grid2, .form-grid, .timeline { grid-template-columns: 1fr; }
-    }
+    .helper-chip { background: var(--warn-bg); border-color: var(--warn-border); color: #6d5b20; }
+    .pill input[type="checkbox"], .pill input[type="radio"] { accent-color: var(--accent); }
+    .legend .live { color: var(--live); }
+    .legend .nonlive { color: var(--nonlive); }
+    .legend .funded { color: var(--funded); }
+    .legend .notfunded { color: var(--notfunded); }
+    .library-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    .vaccine-card { border-radius: 18px; border: 1px solid rgba(55,74,124,0.10); background: rgba(248,250,255,0.9); padding: 12px; display: grid; gap: 10px; }
+    .vaccine-card.live-card { border-color: rgba(180,75,118,0.22); }
+    .vaccine-card.nonlive-card { border-color: rgba(43,111,180,0.18); }
+    .vaccine-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .vaccine-name { font-weight: 700; }
+    .vaccine-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+    .dose-history, .date-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .dose-pill, .date-pill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 14px; background: rgba(244,247,255,0.95); border: 1px solid rgba(70,95,170,0.10); font-size: 0.84rem; }
+    .dose-pill.done { background: rgba(237,250,244,0.98); border-color: rgba(36,107,79,0.20); }
+    .date-pill { flex-direction: column; align-items: flex-start; }
+    .date-pill label { font-size: 0.76rem; color: var(--muted); }
+    .date-pill input { padding: 7px 8px; border-radius: 10px; }
+    .timeline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .week-box { border-radius: 16px; background: rgba(255,255,255,0.86); border: 1px solid rgba(55,74,124,0.10); padding: 10px; min-height: 145px; display: grid; gap: 10px; align-content: start; break-inside: avoid; }
+    .week-title { font-size: 0.9rem; font-weight: 700; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .week-subnote { font-size: 0.76rem; color: var(--muted); margin-top: -4px; }
+    .day-card { border-radius: 16px; background: rgba(246,248,255,0.92); border: 1px solid rgba(70,95,170,0.10); padding: 10px; display: grid; gap: 8px; }
+    .day-title { font-size: 0.84rem; font-weight: 700; color: #41506e; }
+    .vax-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .dose-chip { border-radius: 14px; padding: 8px 9px; background: rgba(244,247,255,0.98); border: 1px solid rgba(70,95,170,0.12); display: grid; gap: 3px; min-height: 74px; align-content: start; font-size: 0.88rem; }
+    .dose-chip.live { border-color: rgba(180,75,118,0.22); background: rgba(255,245,249,0.98); }
+    .dose-chip.nonlive { border-color: rgba(43,111,180,0.20); background: rgba(245,250,255,0.98); }
+    .summary-box { display: grid; gap: 10px; line-height: 1.55; font-size: 0.98rem; }
+    .notes-box { background: rgba(245,248,255,0.9); border: 1px dashed rgba(80,98,145,0.24); border-radius: 18px; padding: 14px; color: #45526f; }
+    .muted { color: var(--muted); }
+    @media (max-width: 1180px) { .grid-2, .form-grid, .timeline { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <section class="card hero">
+    <section class="hero">
       <h1>Biologics Vaccine Planner</h1>
-      <div class="sub">Simple working planner. Visit 1 is the first visit date. Visit 2 is 4 weeks later. Visit 3 is 8 weeks later. Vaccines use built-in schedules and the plan caps each visit at 4 vaccines.</div>
-      <div class="row">
-        <button id="generateBtn">Generate plan</button>
-        <button id="resetBtn" class="secondary">Reset</button>
+      <div class="sub">Rule-based planning page for adults preparing to start biologic or other immunosuppressive disease-modifying therapy. It uses built-in vaccine schedules and prioritises live vaccines and longer multi-dose series early so the whole plan can be finished as soon as possible.</div>
+      <div class="legend">
+        <span class="live">● Live vaccine</span>
+        <span class="nonlive">● Non-live vaccine</span>
+        <span class="funded">● Funded</span>
+        <span class="notfunded">● Recommended / not funded</span>
+      </div>
+      <div class="hero-actions">
+        <button class="btn-primary" id="generateBtn">Generate Plan</button>
+        <button class="btn-soft" id="resetDefaultsBtn">Reset Defaults</button>
       </div>
     </section>
 
-    <section class="grid2">
+    <section class="grid-2">
       <div class="card">
-        <h2>Setup</h2>
-        <div class="form-grid" style="margin-top:12px;">
+        <div class="card-head">
+          <div>
+            <h2>Patient + planning setup</h2>
+           <p>Visits are shown from the first visit date, then in 4-week blocks after that.</p>
+          </div>
+        </div>
+        <div class="form-grid">
           <div class="field">
             <label for="patientName">Patient name</label>
-            <input id="patientName" />
+            <input id="patientName" placeholder="Optional" />
           </div>
           <div class="field">
-            <label for="therapyName">Immunosuppressive therapy</label>
-            <input id="therapyName" />
+            <label for="biologicName">Biologic / immunosuppressive therapy</label>
+            <input id="biologicName" placeholder="e.g. adalimumab" />
           </div>
           <div class="field">
-            <label for="firstVisitDate">First visit date</label>
-            <input id="firstVisitDate" type="date" />
+            <label for="planStartDate">First visit date</label>
+            <input id="planStartDate" type="date" />
           </div>
           <div class="field">
-            <label for="targetVisit">Target therapy start</label>
-            <select id="targetVisit">
+            <label for="targetStartVisit">Target treatment start</label>
+            <select id="targetStartVisit">
               <option value="7">After visit 7</option>
               <option value="6">After visit 6</option>
               <option value="5">After visit 5</option>
               <option value="4">After visit 4</option>
             </select>
           </div>
-        </div>
-        <div class="row" style="margin-top:12px;">
-          <label class="pill"><input type="radio" name="liveRule" value="sameDay" checked> Live vaccines together</label>
-          <label class="pill"><input type="radio" name="liveRule" value="separate"> Live vaccines 4 weeks apart</label>
-          <label class="pill"><input id="showNonFunded" type="checkbox" checked> Include recommended / not funded</label>
+          <div class="field full">
+            <label>Live vaccine rule</label>
+            <div class="switch-row">
+              <label class="pill"><input type="radio" name="liveRule" value="sameDay" checked /> Give live vaccines together at earliest eligible visit</label>
+              <label class="pill"><input type="radio" name="liveRule" value="separate" /> Separate live vaccines by 4 weeks</label>
+            </div>
+          </div>
+          <div class="field full">
+            <label>Extra planning options</label>
+            <div class="switch-row">
+              <label class="pill"><input id="showNonFunded" type="checkbox" checked /> Include recommended / not funded vaccines</label>
+              <label class="pill"><input id="maxFourPerVisit" type="checkbox" checked /> Max 4 vaccines per visit</label>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="card">
-        <h2>Built-in schedules</h2>
-        <div class="notes" style="margin-top:12px;">Varicella: 2 doses, 4 weeks apart
-HPV: 3 doses at 0, 2, 6 months
-Shingrix: 2 doses, dose 2 is 2 months after dose 1
-Hepatitis B: 3 doses with built-in spacing
-Pneumococcal: linked Prevenar 13 then Pneumovax 23 after 8 weeks, with booster reminders at 5 and 10 years</div>
+        <div class="card-head">
+          <div>
+            <h2>How it works</h2>
+            <p>Standard schedules are built into the planner for safer planning.</p>
+          </div>
+        </div>
+        <div class="summary-box">
+          <div class="helper-chip">Ticking Dose 1, Dose 2, or Dose 3 means that dose has already been given.</div>
+          <div class="helper-chip">If you know the real date a dose was given, enter it. Later due doses will then use the real date instead of an assumed date.</div>
+          <div class="notes-box">
+            <strong>Planning logic</strong><br>
+            1. Live vaccines are prioritised early.<br>
+            2. Longer multi-dose series are also pushed earlier so treatment is not delayed unnecessarily.<br>
+            3. Standard vaccine spacing is built into the planner logic.<br>
+            4. The planner tries to bundle vaccines into the fewest visits possible.<br>
+            5. Each visit is capped at 4 vaccines by default.<br>
+            6. Pneumococcal logic is linked: Prevenar 13 first, Pneumovax 23 eight weeks later, then boosters five years apart. If Pneumovax 23 is already recorded first, Prevenar 13 is delayed by one year.
+          </div>
+        </div>
       </div>
     </section>
 
     <section class="card">
-      <h2>Vaccine library</h2>
-      <div id="vaccineGrid" class="vaccine-grid" style="margin-top:12px;"></div>
+      <div class="card-head">
+        <div>
+          <h2>Vaccine library + history</h2>
+          <p>Use the built-in schedules, then record which doses have already been given.</p>
+        </div>
+      </div>
+      <div class="library-grid" id="libraryGrid"></div>
     </section>
 
-    <section class="grid2">
+    <section class="grid-2">
       <div class="card">
-        <h2>Visit plan</h2>
-        <div id="timeline" class="timeline" style="margin-top:12px;"></div>
+        <div class="card-head">
+          <div>
+            <h2>Auto-generated visit plan</h2>
+            <p>Small side-by-side visit cards. Visit 1 = first visit date, visit 2 = 4 weeks later, visit 3 = 8 weeks later, and so on.</p>
+          </div>
+        </div>
+        <div class="timeline" id="timeline"></div>
       </div>
+
       <div class="card">
-        <h2>Summary</h2>
-        <div style="margin-top:12px; margin-bottom:10px;"><button id="copyBtn" class="secondary">Copy note summary</button></div>
-        <div id="summaryText" class="notes"></div>
+        <div class="card-head">
+          <div>
+            <h2>Generated summary</h2>
+            <p>Copy-friendly note summary for patient notes.</p>
+          </div>
+        </div>
+        <div class="summary-box" id="summaryBox"></div>
       </div>
     </section>
   </div>
 
-  <script>
-    const defaults = [
-      { key:'mmr', name:'MMR', type:'live', funded:'Funded', selected:true, doses:2, intervals:[{value:4, unit:'weeks'}], note:'2 doses: dose 2 is 4 weeks after dose 1' },
-      { key:'varicella', name:'Varicella', type:'live', funded:'Funded', selected:true, doses:2, intervals:[{value:4, unit:'weeks'}], note:'2 doses: dose 2 is 4 weeks after dose 1' },
-      { key:'influenza', name:'Influenza', type:'nonlive', funded:'Funded', selected:true, doses:1, intervals:[], note:'Single dose' },
-      { key:'covid19', name:'COVID-19', type:'nonlive', funded:'Funded', selected:true, doses:1, intervals:[], note:'Single dose or current booster schedule' },
-      { key:'bexsero', name:'Bexsero', type:'nonlive', funded:'Funded', selected:true, doses:2, intervals:[{value:8, unit:'weeks'}], note:'2 doses: dose 2 is 8 weeks after dose 1' },
-      { key:'menacwy', name:'MenACWY', type:'nonlive', funded:'Funded', selected:true, doses:1, intervals:[], note:'Single dose' },
-      { key:'hib', name:'Hib', type:'nonlive', funded:'Funded', selected:true, doses:1, intervals:[], note:'Single dose' },
-      { key:'hepB', name:'Hepatitis B', type:'nonlive', funded:'Often funded in special groups', selected:true, doses:3, intervals:[{value:4, unit:'weeks'},{value:4, unit:'weeks'}], note:'3 doses built in' },
-      { key:'shingrix', name:'Shingrix', type:'nonlive', funded:'Recommended / not funded', selected:true, doses:2, intervals:[{value:2, unit:'months'}], note:'2 doses: dose 2 is 2 months after dose 1' },
-      { key:'hpv', name:'HPV', type:'nonlive', funded:'Recommended / depends on eligibility', selected:false, doses:3, intervals:[{value:2, unit:'months'},{value:4, unit:'months'}], note:'3 doses: 0, 2, 6 months' },
-      { key:'prevenar13', name:'Prevenar 13', type:'nonlive', funded:'Funded', selected:true, doses:1, intervals:[], note:'Single dose; if Pneumovax 23 already given first, wait 1 year' },
-      { key:'pneumovax23', name:'Pneumovax 23', type:'nonlive', funded:'Funded', selected:true, doses:3, intervals:[{value:8, unit:'weeks'},{value:60, unit:'months'}], note:'Dose 1 is 8 weeks after Prevenar 13; booster reminders at 5 and 10 years' }
-    ];
+ <script>
+  const vaccineDefaults = [
+    { key: 'mmr', name: 'MMR', type: 'live', funded: 'Funded', doses: 2, intervals: [{ value: 4, unit: 'weeks' }], selected: true, ruleText: '2 doses: dose 2 is 4 weeks after dose 1' },
+    { key: 'varicella', name: 'Varicella', type: 'live', funded: 'Funded', doses: 2, intervals: [{ value: 4, unit: 'weeks' }], selected: true, ruleText: '2 doses: dose 2 is 4 weeks after dose 1' },
+    { key: 'influenza', name: 'Influenza', type: 'non-live', funded: 'Funded', doses: 1, intervals: [], selected: true, ruleText: 'Single dose' },
+    { key: 'covid19', name: 'COVID-19', type: 'non-live', funded: 'Funded', doses: 1, intervals: [], selected: true, ruleText: 'Single dose or current booster schedule' },
+    { key: 'bexsero', name: 'Bexsero', type: 'non-live', funded: 'Funded', doses: 2, intervals: [{ value: 8, unit: 'weeks' }], selected: true, ruleText: '2 doses: dose 2 is 8 weeks after dose 1' },
+    { key: 'menacwy', name: 'MenACWY', type: 'non-live', funded: 'Funded', doses: 1, intervals: [], selected: true, ruleText: 'Single dose' },
+    { key: 'hib', name: 'Hib', type: 'non-live', funded: 'Funded', doses: 1, intervals: [], selected: true, ruleText: 'Single dose' },
+    { key: 'hepB', name: 'Hepatitis B', type: 'non-live', funded: 'Often funded in special groups', doses: 3, intervals: [{ value: 4, unit: 'weeks' }, { value: 6, unit: 'months' }], spacingMode: 'fromDose1', selected: true, ruleText: '3 doses: 0, 1, 6 months' },
+    { key: 'shingrix', name: 'Shingrix', type: 'non-live', funded: 'Recommended / not funded', doses: 2, intervals: [{ value: 2, unit: 'months' }], selected: true, ruleText: '2 doses: dose 2 is 2 months after dose 1' },
+    { key: 'hpv', name: 'HPV', type: 'non-live', funded: 'Recommended / depends on eligibility', doses: 3, intervals: [{ value: 2, unit: 'months' }, { value: 6, unit: 'months' }], spacingMode: 'fromDose1', selected: false, ruleText: '3 doses: 0, 2, 6 months' },
+    { key: 'prevenar13', name: 'Prevenar 13', type: 'non-live', funded: 'Funded', doses: 1, intervals: [], selected: true, linkedGroup: 'pneumo', ruleText: 'Single dose; if Pneumovax 23 already given first, wait 1 year' },
+    { key: 'pneumovax23', name: 'Pneumovax 23', type: 'non-live', funded: 'Funded', doses: 3, intervals: [{ value: 8, unit: 'weeks' }, { value: 60, unit: 'months' }], selected: true, linkedGroup: 'pneumo', ruleText: 'Dose 1 is 8 weeks after Prevenar 13; booster reminders at 5 years and 10 years' }
+  ];
 
-    let vaccines = [];
-    let currentSummary = '';
+  let vaccines = [];
+  const libraryGrid = document.getElementById('libraryGrid');
+  const timeline = document.getElementById('timeline');
+  const summaryBox = document.getElementById('summaryBox');
 
-    const vaccineGrid = document.getElementById('vaccineGrid');
-    const timeline = document.getElementById('timeline');
-    const summaryText = document.getElementById('summaryText');
+  function resetData() {
+    vaccines = JSON.parse(JSON.stringify(vaccineDefaults)).map(v => ({
+      ...v,
+      doseHistory: Array.from({ length: v.doses }, () => false),
+      doseDates: Array.from({ length: v.doses }, () => '')
+    }));
+  }
 
-    function initData() {
-      vaccines = defaults.map(v => ({
-        ...JSON.parse(JSON.stringify(v)),
-        doseHistory: Array.from({ length: v.doses }, () => false),
-        doseDates: Array.from({ length: v.doses }, () => '')
-      }));
+  function setDefaultDate() {
+    const el = document.getElementById('planStartDate');
+    if (!el.value) el.value = new Date().toISOString().slice(0, 10);
+  }
+
+  function firstVisitDate() {
+    const raw = document.getElementById('planStartDate').value;
+    const d = raw ? new Date(raw + 'T00:00:00') : new Date();
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+ function buildVisitDates() {
+  const start = firstVisitDate();
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(d.getDate() + (i * 28));
+    return d;
+  });
+}
+
+  function formatDate(d) {
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  }
+
+  function normalizeVaccines() {
+    vaccines.forEach(v => {
+      while (v.doseHistory.length < v.doses) v.doseHistory.push(false);
+      v.doseHistory = v.doseHistory.slice(0, v.doses);
+      while (v.doseDates.length < v.doses) v.doseDates.push('');
+      v.doseDates = v.doseDates.slice(0, v.doses);
+    });
+  }
+
+  function addIntervalToDate(date, interval) {
+    const d = new Date(date);
+    if ((interval?.unit || 'weeks') === 'months') d.setMonth(d.getMonth() + Number(interval?.value || 0));
+    else d.setDate(d.getDate() + (Number(interval?.value || 0) * 7));
+    return d;
+  }
+
+  function visitIndexForDate(date, visitDates) {
+    for (let i = 0; i < visitDates.length; i++) {
+      if (date <= visitDates[i]) return i;
     }
+    return visitDates.length;
+  }
 
-    function firstVisitDate() {
-      const raw = document.getElementById('firstVisitDate').value;
-      const d = raw ? new Date(raw + 'T00:00:00') : new Date();
-      d.setHours(0,0,0,0);
-      return d;
-    }
+  function seriesWeight(vax) {
+    const totalGapDays = vax.intervals.reduce((sum, item) => {
+      return sum + ((item.unit === 'months' ? item.value * 30 : item.value * 7) || 0);
+    }, 0);
+    const liveBonus = vax.type === 'live' ? 10000 : 0;
+    return liveBonus + (vax.doses * 1000) + totalGapDays;
+  }
 
-    function visitDates() {
-      const start = firstVisitDate();
-      return Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(start);
-        d.setDate(d.getDate() + i * 28);
-        return d;
-      });
-    }
+  function countRemaining(vax) { return vax.doseHistory.filter(x => !x).length; }
+  function countCompleted(vax) { return vax.doseHistory.filter(Boolean).length; }
 
-    function fmt(d) {
-      return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-    }
+  function renderLibrary() {
+    normalizeVaccines();
+    libraryGrid.innerHTML = '';
+    vaccines.sort((a, b) => seriesWeight(b) - seriesWeight(a));
 
-    function addGap(date, gap) {
-      const d = new Date(date);
-      if ((gap?.unit || 'weeks') === 'months') d.setMonth(d.getMonth() + Number(gap.value || 0));
-      else d.setDate(d.getDate() + Number(gap.value || 0) * 7);
-      return d;
-    }
-
-    function visitIndexFor(date, dates) {
-      for (let i = 0; i < dates.length; i++) {
-        if (date <= dates[i]) return i;
-      }
-      return dates.length;
-    }
-
-    function weight(v) {
-      const liveBonus = v.type === 'live' ? 10000 : 0;
-      const series = v.doses * 1000;
-      const gaps = v.intervals.reduce((sum, g) => sum + (g.unit === 'months' ? g.value * 30 : g.value * 7), 0);
-      return liveBonus + series + gaps;
-    }
-
-    function renderVaccines() {
-      vaccineGrid.innerHTML = '';
-      vaccines.sort((a, b) => weight(b) - weight(a));
-      vaccines.forEach((v, index) => {
-        const el = document.createElement('div');
-        el.className = `vaccine ${v.type}`;
-        el.innerHTML = `
-          <div class="vaccine-top">
-            <div>
-              <div class="vaccine-name">${v.name}</div>
-              <div class="vaccine-meta">
-                <span class="mini-chip">${v.type === 'live' ? 'Live' : 'Non-live'}</span>
-                <span class="mini-chip">${v.funded}</span>
-                <span class="mini-chip">${v.doses} dose${v.doses === 1 ? '' : 's'}</span>
-              </div>
-              <div class="meta">${v.note}</div>
+    vaccines.forEach((vax, index) => {
+      const card = document.createElement('div');
+      card.className = `vaccine-card ${vax.type === 'live' ? 'live-card' : 'nonlive-card'}`;
+      card.innerHTML = `
+        <div class="vaccine-top">
+          <div>
+            <div class="vaccine-name">${vax.name}</div>
+            <div class="vaccine-meta">
+              <span class="mini-chip">${vax.type === 'live' ? 'Live' : 'Non-live'}</span>
+              <span class="mini-chip">${vax.funded}</span>
+              <span class="mini-chip">${vax.doses} dose${vax.doses === 1 ? '' : 's'}</span>
             </div>
-            <label class="pill"><input type="checkbox" ${v.selected ? 'checked' : ''} onchange="toggleSelected(${index}, this.checked)">Use</label>
+            ${vax.ruleText ? `<div class="muted" style="font-size:0.82rem; margin-top:6px;">${vax.ruleText}</div>` : ''}
           </div>
-          <div class="dose-row">
-            ${v.doseHistory.map((done, i) => `<label class="dose-chip ${done ? 'done' : ''}"><input type="checkbox" ${done ? 'checked' : ''} onchange="toggleDose(${index}, ${i}, this.checked)">Dose ${i + 1} given</label>`).join('')}
-          </div>
-          <div class="date-row">
-            ${v.doseHistory.map((done, i) => done ? `<div class="date-box"><label>Dose ${i + 1} date given</label><input type="date" value="${v.doseDates[i] || ''}" onchange="setDoseDate(${index}, ${i}, this.value)"></div>` : '').join('')}
-          </div>
-        `;
-        vaccineGrid.appendChild(el);
-      });
-    }
+          <label class="pill"><input type="checkbox" ${vax.selected ? 'checked' : ''} onchange="toggleSelected(${index}, this.checked)">Use</label>
+        </div>
+        <div class="dose-history">
+          ${vax.doseHistory.map((done, doseIndex) => `
+            <label class="dose-pill ${done ? 'done' : ''}">
+              <input type="checkbox" ${done ? 'checked' : ''} onchange="toggleDose(${index}, ${doseIndex}, this.checked)">
+              Dose ${doseIndex + 1} given
+            </label>
+          `).join('')}
+        </div>
+        <div class="date-row">
+          ${vax.doseHistory.map((done, doseIndex) => done ? `
+            <div class="date-pill">
+              <label>Dose ${doseIndex + 1} date given</label>
+              <input type="date" value="${vax.doseDates[doseIndex] || ''}" onchange="updateDoseDate(${index}, ${doseIndex}, this.value)">
+            </div>
+          ` : '').join('')}
+        </div>
+      `;
+      libraryGrid.appendChild(card);
+    });
+  }
 
-    function toggleSelected(index, checked) {
-      vaccines[index].selected = checked;
-      generate();
-    }
+  function toggleSelected(index, checked) {
+    vaccines[index].selected = checked;
+    generatePlan();
+  }
 
-    function toggleDose(index, doseIndex, checked) {
-      vaccines[index].doseHistory[doseIndex] = checked;
-      if (!checked) vaccines[index].doseDates[doseIndex] = '';
-      generate();
-    }
+  function toggleDose(index, doseIndex, checked) {
+    vaccines[index].doseHistory[doseIndex] = checked;
+    if (!checked) vaccines[index].doseDates[doseIndex] = '';
+    generatePlan();
+  }
 
-    function setDoseDate(index, doseIndex, value) {
-      vaccines[index].doseDates[doseIndex] = value;
-      generate();
-    }
+  function updateDoseDate(index, doseIndex, value) {
+    vaccines[index].doseDates[doseIndex] = value;
+    generatePlan();
+  }
 
-    function buildEventsForStandard(v, dates, liveStartIndex) {
-      const events = [];
-      let prevDate = null;
-      for (let i = 0; i < v.doses; i++) {
-        if (v.doseHistory[i]) {
-          if (v.doseDates[i]) prevDate = new Date(v.doseDates[i] + 'T00:00:00');
-          else if (prevDate && i > 0) prevDate = addGap(prevDate, v.intervals[i - 1]);
-          else prevDate = new Date(dates[0]);
-          continue;
-        }
-        let dueDate;
-        if (i === 0) dueDate = new Date(dates[liveStartIndex]);
-        else dueDate = addGap(prevDate || dates[0], v.intervals[i - 1]);
-        events.push({ vaccine: v.name, type: v.type, doseNumber: i + 1, totalDoses: v.doses, dueDate, weight: weight(v) });
-        prevDate = new Date(dueDate);
-      }
-      return events;
-    }
+  function buildStandardEvents(vax, visitDates, liveCursor) {
+  const events = [];
+  let firstDoseDate = null;
+  let prevDate = null;
 
-    function buildEvents() {
-      const dates = visitDates();
-      const selected = vaccines.filter(v => v.selected).filter(v => document.getElementById('showNonFunded').checked ? true : v.funded !== 'Recommended / not funded');
-      const liveRule = document.querySelector('input[name="liveRule"]:checked')?.value || 'sameDay';
-      const events = [];
-      let liveIndex = 0;
+  for (let doseIndex = 0; doseIndex < vax.doses; doseIndex++) {
+    if (vax.doseHistory[doseIndex]) {
+      let actualDate = null;
 
-      const pre13 = selected.find(v => v.key === 'prevenar13');
-      const p23 = selected.find(v => v.key === 'pneumovax23');
-
-      if (pre13) {
-        let pre13Date = null;
-        if (pre13.doseHistory[0]) pre13Date = pre13.doseDates[0] ? new Date(pre13.doseDates[0] + 'T00:00:00') : new Date(dates[0]);
-        else {
-          pre13Date = new Date(dates[0]);
-          if (p23 && p23.doseHistory[0]) pre13Date.setMonth(pre13Date.getMonth() + 12);
-          events.push({ vaccine: pre13.name, type: pre13.type, doseNumber: 1, totalDoses: 1, dueDate: pre13Date, weight: 9000 });
-        }
-        if (p23) {
-          let dose1Date = null;
-          if (p23.doseHistory[0]) dose1Date = p23.doseDates[0] ? new Date(p23.doseDates[0] + 'T00:00:00') : addGap(pre13Date, { value: 8, unit: 'weeks' });
-          else if (pre13Date) {
-            dose1Date = addGap(pre13Date, { value: 8, unit: 'weeks' });
-            events.push({ vaccine: p23.name, type: p23.type, doseNumber: 1, totalDoses: 3, dueDate: dose1Date, weight: 8500 });
-          }
-          if (dose1Date) {
-            const dose2Date = addGap(dose1Date, { value: 60, unit: 'months' });
-            const dose3Date = addGap(dose2Date, { value: 60, unit: 'months' });
-            if (!p23.doseHistory[1]) events.push({ vaccine: p23.name, type: p23.type, doseNumber: 2, totalDoses: 3, dueDate: dose2Date, weight: 8500 });
-            if (!p23.doseHistory[2]) events.push({ vaccine: p23.name, type: p23.type, doseNumber: 3, totalDoses: 3, dueDate: dose3Date, weight: 8500 });
-          }
-        }
+      if (vax.doseDates[doseIndex]) {
+        actualDate = new Date(vax.doseDates[doseIndex] + 'T00:00:00');
+      } else if (doseIndex === 0) {
+        actualDate = new Date(visitDates[0]);
+      } else if (vax.spacingMode === 'fromDose1' && firstDoseDate) {
+        actualDate = addIntervalToDate(firstDoseDate, vax.intervals[doseIndex - 1]);
+      } else if (prevDate) {
+        actualDate = addIntervalToDate(prevDate, vax.intervals[doseIndex - 1]);
+      } else {
+        actualDate = new Date(visitDates[0]);
       }
 
-      selected.filter(v => !['prevenar13','pneumovax23'].includes(v.key)).sort((a, b) => weight(b) - weight(a)).forEach(v => {
-        const startIndex = v.type === 'live' ? liveIndex : 0;
-        events.push(...buildEventsForStandard(v, dates, startIndex));
-        if (v.type === 'live' && liveRule === 'separate' && !v.doseHistory[0]) liveIndex += 1;
-      });
+      if (doseIndex === 0) firstDoseDate = new Date(actualDate);
+      prevDate = new Date(actualDate);
+      continue;
+    }
 
-      return events.sort((a, b) => {
-        if (+a.dueDate !== +b.dueDate) return +a.dueDate - +b.dueDate;
-        if (a.weight !== b.weight) return b.weight - a.weight;
-        if (a.type !== b.type) return a.type === 'live' ? -1 : 1;
-        return a.vaccine.localeCompare(b.vaccine);
+    let dueDate;
+
+    if (doseIndex === 0) {
+      dueDate = vax.type === 'live' ? new Date(liveCursor.date) : new Date(visitDates[0]);
+      firstDoseDate = new Date(dueDate);
+    } else if (vax.spacingMode === 'fromDose1' && firstDoseDate) {
+      dueDate = addIntervalToDate(firstDoseDate, vax.intervals[doseIndex - 1]);
+    } else {
+      dueDate = addIntervalToDate(prevDate || visitDates[0], vax.intervals[doseIndex - 1]);
+    }
+
+    events.push({
+      vaccineName: vax.name,
+      type: vax.type,
+      funded: vax.funded,
+      doseNumber: doseIndex + 1,
+      totalDoses: vax.doses,
+      dueDate,
+      weight: seriesWeight(vax)
+    });
+
+    prevDate = new Date(dueDate);
+  }
+
+  return events;
+}
+
+  function buildPneumoEvents(pre13, p23, visitDates) {
+    const events = [];
+    let pre13Date = null;
+
+    if (pre13.selected) {
+      if (pre13.doseHistory[0]) {
+        pre13Date = pre13.doseDates[0]
+          ? new Date(pre13.doseDates[0] + 'T00:00:00')
+          : new Date(visitDates[0]);
+      } else {
+        pre13Date = new Date(visitDates[0]);
+        if (p23.selected && p23.doseHistory[0]) pre13Date.setMonth(pre13Date.getMonth() + 12);
+
+        events.push({
+          vaccineName: pre13.name,
+          type: pre13.type,
+          funded: pre13.funded,
+          doseNumber: 1,
+          totalDoses: 1,
+          dueDate: pre13Date,
+          weight: 9000
+        });
+      }
+    }
+
+    if (!p23.selected) return events;
+
+    let dose1Date = null;
+    if (p23.doseHistory[0]) {
+      dose1Date = p23.doseDates[0]
+        ? new Date(p23.doseDates[0] + 'T00:00:00')
+        : (pre13Date ? addIntervalToDate(pre13Date, { value: 8, unit: 'weeks' }) : null);
+    } else if (pre13Date) {
+      dose1Date = addIntervalToDate(pre13Date, { value: 8, unit: 'weeks' });
+      events.push({
+        vaccineName: p23.name,
+        type: p23.type,
+        funded: p23.funded,
+        doseNumber: 1,
+        totalDoses: 3,
+        dueDate: dose1Date,
+        weight: 8500
       });
     }
 
-    function createPlan() {
-      const dates = visitDates();
-      const visits = dates.map((d, i) => ({ visit: i + 1, date: d, items: [] }));
-      const maxFour = document.getElementById('maxFourPerVisit').checked;
-      const carryOver = [];
-      buildEvents().forEach(event => {
-        let idx = visitIndexFor(event.dueDate, dates);
-        if (idx >= visits.length) {
-          carryOver.push(`${event.vaccine} dose ${event.doseNumber}: due ${fmt(event.dueDate)} outside current plan`);
+    if (dose1Date) {
+      const dose2Date = addIntervalToDate(dose1Date, { value: 60, unit: 'months' });
+      const dose3Date = addIntervalToDate(dose2Date, { value: 60, unit: 'months' });
+
+      if (!p23.doseHistory[1]) {
+        events.push({
+          vaccineName: p23.name,
+          type: p23.type,
+          funded: p23.funded,
+          doseNumber: 2,
+          totalDoses: 3,
+          dueDate: dose2Date,
+          weight: 8500
+        });
+      }
+
+      if (!p23.doseHistory[2]) {
+        events.push({
+          vaccineName: p23.name,
+          type: p23.type,
+          funded: p23.funded,
+          doseNumber: 3,
+          totalDoses: 3,
+          dueDate: dose3Date,
+          weight: 8500
+        });
+      }
+    }
+
+    return events;
+  }
+
+  function createPlan() {
+    normalizeVaccines();
+
+    const selected = vaccines
+      .filter(v => v.selected)
+      .filter(v => document.getElementById('showNonFunded').checked ? true : v.funded !== 'Recommended / not funded');
+
+    const visitDates = buildVisitDates();
+    const maxFour = document.getElementById('maxFourPerVisit').checked;
+    const liveRule = document.querySelector('input[name="liveRule"]:checked')?.value || 'sameDay';
+
+    const visits = visitDates.map((date, idx) => ({
+      visit: idx + 1,
+      date,
+      items: []
+    }));
+
+    let liveCursor = { index: 0, date: new Date(visitDates[0]) };
+    const events = [];
+    const carryOver = [];
+
+    const pre13 = selected.find(v => v.key === 'prevenar13') || { selected: false, doseHistory: [false], doseDates: [''] };
+    const p23 = selected.find(v => v.key === 'pneumovax23') || { selected: false, doseHistory: [false,false,false], doseDates: ['','',''] };
+
+    if (pre13.selected || p23.selected) {
+      events.push(...buildPneumoEvents(pre13, p23, visitDates));
+    }
+
+    selected
+      .filter(v => !['prevenar13','pneumovax23'].includes(v.key))
+      .sort((a,b) => seriesWeight(b) - seriesWeight(a))
+      .forEach(vax => {
+        const built = buildStandardEvents(vax, visitDates, liveCursor);
+        events.push(...built);
+
+        if (vax.type === 'live' && liveRule === 'separate' && built.some(e => e.doseNumber === 1)) {
+          liveCursor.index += 1;
+          if (visitDates[liveCursor.index]) {
+            liveCursor.date = new Date(visitDates[liveCursor.index]);
+          }
+        }
+      });
+
+    events.sort((a,b) => {
+      if (+a.dueDate !== +b.dueDate) return +a.dueDate - +b.dueDate;
+      if (a.weight !== b.weight) return b.weight - a.weight;
+      if (a.type !== b.type) return a.type === 'live' ? -1 : 1;
+      return a.vaccineName.localeCompare(b.vaccineName);
+    });
+
+    events.forEach(event => {
+      let preferredIndex = visitIndexForDate(event.dueDate, visitDates);
+
+      if (preferredIndex >= visits.length) {
+        carryOver.push(`${event.vaccineName} dose ${event.doseNumber}: due ${formatDate(event.dueDate)} outside current plan`);
+        return;
+      }
+
+      while (preferredIndex < visits.length) {
+        if (!maxFour || visits[preferredIndex].items.length < 4) {
+          visits[preferredIndex].items.push({
+            name: event.vaccineName,
+            doseLabel: `Dose ${event.doseNumber} of ${event.totalDoses}`,
+            type: event.type,
+            funded: event.funded,
+            when: formatDate(event.dueDate)
+          });
           return;
         }
-        while (idx < visits.length) {
-          if (!maxFour || visits[idx].items.length < 4) {
-            visits[idx].items.push({
-              vaccine: event.vaccine,
-              type: event.type,
-              doseLabel: `Dose ${event.doseNumber} of ${event.totalDoses}`,
-              when: fmt(event.dueDate)
-            });
-            return;
-          }
-          idx += 1;
-        }
-        carryOver.push(`${event.vaccine} dose ${event.doseNumber}: due ${fmt(event.dueDate)} but no visit slot left`);
-      });
-      return { visits, carryOver };
-    }
+        preferredIndex += 1;
+      }
 
-    function renderTimeline(visits) {
-      timeline.innerHTML = '';
-      visits.forEach((visit, idx) => {
-        const el = document.createElement('div');
-        el.className = 'visit';
-        el.innerHTML = `
-          <div class="visit-head"><span>Visit ${visit.visit}</span><small>${fmt(visit.date)}</small></div>
-          <div class="visit-sub">${idx * 4} weeks since first visit</div>
-          <div class="day-card">
-            <div class="day-title">Planned vaccine block</div>
-            <div class="visit-items">${visit.items.length ? visit.items.map(item => `<div class="item ${item.type}"><strong>${item.vaccine}</strong><small>${item.doseLabel}</small><small>${item.when}</small></div>`).join('') : '<div class="muted">No vaccine scheduled</div>'}</div>
-          </div>
+      carryOver.push(`${event.vaccineName} dose ${event.doseNumber}: due ${formatDate(event.dueDate)} but no visit slot left inside current plan`);
+    });
+
+    return { visits, carryOver };
+  }
+
+  function renderTimelineTo(target, visits) {
+  target.innerHTML = '';
+
+  visits.forEach((visit, idx) => {
+    const box = document.createElement('div');
+    box.className = 'week-box';
+
+    const weeksFromFirstVisit = idx * 4;
+    const weekLabel = weeksFromFirstVisit === 0
+      ? '0 weeks from visit 1'
+      : `${weeksFromFirstVisit} weeks from visit 1`;
+
+    box.innerHTML = `
+      <div class="week-title">
+        <span>Visit ${visit.visit}</span>
+        <small>${formatDate(visit.date)}</small>
+      </div>
+      <div class="week-subnote">${weekLabel}</div>
+    `;
+
+    const inner = document.createElement('div');
+    inner.className = 'day-card';
+    inner.innerHTML = '<div class="day-title">Planned vaccine block</div>';
+
+    if (!visit.items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'muted';
+      empty.textContent = 'No vaccine scheduled';
+      inner.appendChild(empty);
+    } else {
+      const grid = document.createElement('div');
+      grid.className = 'vax-grid';
+
+      visit.items.forEach(item => {
+        const chip = document.createElement('div');
+        chip.className = `dose-chip ${item.type === 'live' ? 'live' : 'nonlive'}`;
+        chip.innerHTML = `
+          <strong>${item.name}</strong>
+          <small>${item.doseLabel}</small>
+          <small>${item.when}</small>
         `;
-        timeline.appendChild(el);
+        grid.appendChild(chip);
       });
+
+      inner.appendChild(grid);
     }
 
-    function renderSummary(visits, carryOver) {
-      const patient = document.getElementById('patientName').value.trim();
-      const therapy = document.getElementById('therapyName').value.trim();
-      const target = document.getElementById('targetVisit').value;
-      const selected = vaccines.filter(v => v.selected);
-      const due = selected.filter(v => v.doseHistory.filter(Boolean).length < v.doses).map(v => `${v.name} (${v.doses - v.doseHistory.filter(Boolean).length} remaining)`);
-      const complete = selected.filter(v => v.doseHistory.filter(Boolean).length >= v.doses).map(v => v.name);
-      const used = visits.filter(v => v.items.length > 0).length;
-      const lines = [];
-      if (patient) lines.push(`Patient: ${patient}`);
-      if (therapy) lines.push(`Planned immunosuppressive therapy: ${therapy}`);
-      lines.push(`First vaccine planning visit: ${fmt(visitDates()[0])}`);
-      lines.push(`Target therapy start: after visit ${target}`);
-      if (due.length) lines.push(`Vaccines still due: ${due.join('; ')}`);
-      if (complete.length) lines.push(`Already complete: ${complete.join('; ')}`);
-      lines.push(`Visits currently used: ${used}`);
-      visits.filter(v => v.items.length > 0).forEach(v => {
-        const parts = v.items.map(item => `${item.vaccine} ${item.doseLabel} on ${item.when}`);
-        lines.push(`Visit ${v.visit} (${fmt(v.date)}): ${parts.join('; ')}`);
-      });
-      lines.push('Pneumovax 23 booster reminder: booster doses are due at 5 years and 10 years after the first Pneumovax 23 dose when indicated.');
-      if (carryOver.length) lines.push(`Outside current plan: ${carryOver.join('; ')}`);
-      currentSummary = lines.join('
-');
-      summaryText.textContent = currentSummary;
+    box.appendChild(inner);
+    target.appendChild(box);
+  });
+}
+
+  function copySummaryNote() {
+    const text = window.currentSummaryNote || '';
+    if (!text) return;
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+
+  function renderSummary(visits, carryOver) {
+    const patientName = document.getElementById('patientName').value.trim();
+    const biologicName = document.getElementById('biologicName').value.trim();
+    const targetStartVisit = document.getElementById('targetStartVisit').value;
+    const selected = vaccines.filter(v => v.selected);
+    const dueText = selected.filter(v => countRemaining(v) > 0).map(v => `${v.name} (${countRemaining(v)} remaining)`);
+    const doneText = selected.filter(v => countCompleted(v) >= v.doses).map(v => v.name);
+    const used = visits.filter(v => v.items.length > 0).length;
+
+    const noteLines = [];
+    if (patientName) noteLines.push(`Patient: ${patientName}`);
+    if (biologicName) noteLines.push(`Planned immunosuppressive therapy: ${biologicName}`);
+    noteLines.push(`First vaccine planning visit: ${formatDate(buildVisitDates()[0])}`);
+    noteLines.push(`Target therapy start: after visit ${targetStartVisit}`);
+    if (dueText.length) noteLines.push(`Vaccines still due: ${dueText.join('; ')}`);
+    if (doneText.length) noteLines.push(`Already complete: ${doneText.join('; ')}`);
+    noteLines.push(`Visits currently used: ${used}`);
+
+    visits.filter(v => v.items.length > 0).forEach(v => {
+      const parts = v.items.map(item => `${item.name} ${item.doseLabel} on ${item.when}`);
+      noteLines.push(`Visit ${v.visit} (${formatDate(v.date)}): ${parts.join('; ')}`);
+    });
+
+    noteLines.push('Pneumovax 23 booster reminder: booster doses are due at 5 years and 10 years after the first Pneumovax 23 dose when indicated.');
+
+    if (carryOver.length) {
+      noteLines.push(`Outside current plan: ${carryOver.join('; ')}`);
     }
 
-    function generate() {
-      renderVaccines();
-      const plan = createPlan();
-      renderTimeline(plan.visits);
-      renderSummary(plan.visits, plan.carryOver);
-    }
+    const noteText = noteLines.join('\n');
+    window.currentSummaryNote = noteText;
 
-    document.getElementById('generateBtn').addEventListener('click', generate);
-    document.getElementById('resetBtn').addEventListener('click', () => {
-      initData();
-      generate();
-    });
-    document.getElementById('copyBtn').addEventListener('click', () => {
-      navigator.clipboard.writeText(currentSummary || '').catch(() => {});
-    });
-    ['firstVisitDate','patientName','therapyName','targetVisit','showNonFunded','maxFourPerVisit'].forEach(id => {
-      document.getElementById(id).addEventListener('input', generate);
-      document.getElementById(id).addEventListener('change', generate);
-    });
-    document.querySelectorAll('input[name="liveRule"]').forEach(el => el.addEventListener('change', generate));
+    const safeText = noteText
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
 
-    window.toggleSelected = toggleSelected;
-    window.toggleDose = toggleDose;
-    window.setDoseDate = setDoseDate;
+    summaryBox.innerHTML = `
+      <div><strong>Patient:</strong> ${patientName || 'Not entered'}</div>
+      <div><strong>Planned therapy:</strong> ${biologicName || 'Not entered'}</div>
+      <div><strong>First visit:</strong> ${formatDate(buildVisitDates()[0])}</div>
+      <div><strong>Target treatment start:</strong> after visit ${targetStartVisit}</div>
+      <div><strong>Vaccines still due:</strong> ${dueText.length ? dueText.join('; ') : 'None'}</div>
+      <div><strong>Already complete:</strong> ${doneText.length ? doneText.join('; ') : 'None recorded'}</div>
+      <div><strong>Visits currently used:</strong> ${used}</div>
+      <div><strong>Pneumovax reminder:</strong> Booster reminders at 5 years and 10 years after the first Pneumovax 23 dose when indicated.</div>
+      ${carryOver.length ? `<div><strong>Outside current plan:</strong> ${carryOver.join('; ')}</div>` : '<div><strong>Outside current plan:</strong> None</div>'}
+      <div style="margin-top:8px;"><button class="btn-soft" onclick="copySummaryNote()">Copy note summary</button></div>
+      <div class="notes-box" style="white-space:pre-wrap;">${safeText}</div>
+    `;
+  }
 
-    initData();
-    document.getElementById('firstVisitDate').value = new Date().toISOString().slice(0,10);
-    generate();
-  </script>
+  function generatePlan() {
+    normalizeVaccines();
+    renderLibrary();
+    const plan = createPlan();
+    renderTimelineTo(timeline, plan.visits);
+    renderSummary(plan.visits, plan.carryOver);
+  }
+
+  document.getElementById('generateBtn').addEventListener('click', generatePlan);
+  document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
+    resetData();
+    generatePlan();
+  });
+
+  document.querySelectorAll('input[name="liveRule"]').forEach(el => el.addEventListener('change', generatePlan));
+
+  ['showNonFunded', 'maxFourPerVisit', 'planStartDate', 'patientName', 'biologicName', 'targetStartVisit'].forEach(id => {
+    document.getElementById(id).addEventListener('input', generatePlan);
+  });
+
+  window.toggleSelected = toggleSelected;
+  window.toggleDose = toggleDose;
+  window.updateDoseDate = updateDoseDate;
+  window.copySummaryNote = copySummaryNote;
+
+  resetData();
+  setDefaultDate();
+  generatePlan();
+</script>
 </body>
 </html>
