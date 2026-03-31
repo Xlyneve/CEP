@@ -220,6 +220,48 @@
   color: rgba(31, 41, 64, 0.55);
   letter-spacing: 0.04em;
 }
+.capture-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(60,80,120,0.12);
+  background: rgba(240,244,255,0.95);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  padding: 0;
+  box-shadow: 0 8px 18px rgba(41,55,100,0.10);
+}
+
+.capture-btn:hover {
+  transform: translateY(-1px);
+}
+
+.capture-stage {
+  width: 1200px;
+  max-width: 100%;
+  background: linear-gradient(180deg, var(--bg1), var(--bg2));
+  padding: 18px;
+}
+
+.capture-title {
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.capture-signature {
+  margin-top: 14px;
+  text-align: right;
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 0.82rem;
+  color: rgba(31, 41, 64, 0.65);
+  letter-spacing: 0.05em;
+}
     @media (max-width: 1180px) { .grid-2, .form-grid, .timeline { grid-template-columns: 1fr; } }
   </style>
   
@@ -322,11 +364,15 @@
     <section class="grid-2">
       <div class="card">
         <div class="card-head">
-          <div>
-            <h2>Auto-generated visit plan</h2>
-            <p>Small side-by-side visit cards. Visit 1 = first visit date, visit 2 = 4 weeks later, visit 3 = 8 weeks later, and so on.</p>
-          </div>
-        </div>
+  <div>
+    <h2>Auto-generated visit plan</h2>
+    <p>Small side-by-side visit cards. Visit 1 = first visit date, visit 2 = 4 weeks later, visit 3 = 8 weeks later, and so on.</p>
+  </div>
+
+  <button class="capture-btn" id="capturePlanBtn" type="button" title="Save visit plan as JPG" aria-label="Save visit plan as JPG">
+    📷
+  </button>
+</div>
         <div class="timeline" id="timeline"></div>
       </div>
 
@@ -341,7 +387,7 @@
       </div>
     </section>
   </div>
-
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
  <script>
   const vaccineDefaults = [
     { key: 'mmr', name: 'MMR', type: 'live', funded: 'Funded', doses: 2, intervals: [{ value: 4, unit: 'weeks' }], selected: true, ruleText: '2 doses: dose 2 is 4 weeks after dose 1' },
@@ -892,6 +938,50 @@ if (carryOver.length) {
   <div class="notes-box" style="white-space:pre-wrap;">${safeText}</div>
 `;
   }
+  
+  async function captureVisitPlanAsJpg() {
+  const timelineEl = document.getElementById('timeline');
+  if (!timelineEl || !timelineEl.children.length) return;
+
+  const stage = document.createElement('div');
+  stage.className = 'capture-stage';
+
+  const title = document.createElement('div');
+  title.className = 'capture-title';
+  title.textContent = 'Auto-Generated Visit Plan';
+
+  const timelineClone = timelineEl.cloneNode(true);
+
+  const signature = document.createElement('div');
+  signature.className = 'capture-signature';
+  signature.textContent = 'xlyn';
+
+  stage.appendChild(title);
+  stage.appendChild(timelineClone);
+  stage.appendChild(signature);
+
+  stage.style.position = 'fixed';
+  stage.style.left = '-99999px';
+  stage.style.top = '0';
+  stage.style.zIndex = '-1';
+  document.body.appendChild(stage);
+
+  try {
+    const canvas = await html2canvas(stage, {
+      backgroundColor: '#f6f8ff',
+      scale: 2,
+      useCORS: true
+    });
+
+    const jpgUrl = canvas.toDataURL('image/jpeg', 0.95);
+    const link = document.createElement('a');
+    link.href = jpgUrl;
+    link.download = 'vaccine-visit-planbyX.jpg';
+    link.click();
+  } finally {
+    document.body.removeChild(stage);
+  }
+}
 
   function generatePlan() {
     normalizeVaccines();
@@ -906,6 +996,8 @@ if (carryOver.length) {
     resetData();
     generatePlan();
   });
+  
+  document.getElementById('capturePlanBtn').addEventListener('click', captureVisitPlanAsJpg);
 
   document.querySelectorAll('input[name="liveRule"]').forEach(el => el.addEventListener('change', generatePlan));
 
