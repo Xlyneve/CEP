@@ -171,8 +171,7 @@
     if (selections.dosingType === "cellulitis") {
       return `
         <strong>Note:</strong> Cellulitis dosing.<br><br>
-        Adult: 500 mg four times daily for 5 days.<br>
-        Higher-dose option: 1 g four times daily for 5 days in selected adults.<br><br>
+        Adult: 1 g four times daily for 5 days.<br><br>
         ${capsuleNotice}
       `;
     }
@@ -214,22 +213,15 @@
 
     if (type === "cellulitis") {
       return {
-        mode: "range",
+        mode: "single",
         frequency: "4 times daily for 5 days",
         sigFrequency: "four times daily",
         dosesPerDay: 4,
         defaultDurationDays: 5,
-        lowDoseMg: 500,
-        highDoseMg: 1000,
+        doseMg: 1000,
         maxDailyMg: 4000,
-        warnings: [
-          "Use 1 g four times daily only when clinically appropriate."
-        ],
-        extra: [
-          "Adult cellulitis regimen used.",
-          "500 mg QID standard option.",
-          "1 g QID higher-dose option."
-        ]
+        warnings: [],
+        extra: ["Adult cellulitis regimen used."]
       };
     }
 
@@ -384,168 +376,329 @@
 },
 
     amoxicillin: {
-      label: "Amoxicillin",
-      age: { minMonths: 1, maxYears: 18 },
-      strengths: [
-        { id: "liq125", value: 125, label: "125 mg / 5 mL" },
-        { id: "liq250", value: 250, label: "250 mg / 5 mL" },
-        { id: "cap250", value: 250, label: "250 mg capsule" },
-        { id: "cap500", value: 500, label: "500 mg capsule" }
-      ],
-      options: [
-        {
-          id: "dosingType",
-          label: "Dosing Type",
-          type: "select",
-          choices: [
-            { value: "general", label: "General" },
-            { value: "strepA", label: "Strep A" }
-          ]
-        },
-        {
-          id: "doseLevel",
-          label: "Dose Level",
-          type: "select",
-          choices: [
-            { value: "low", label: "Low dose" },
-            { value: "high", label: "High dose" },
-            { value: "range", label: "Show both" }
-          ]
-        }
-      ],
-      note: ({ selections, formulation, patientType }) => {
-        const tabletNotice =
-          formulation?.type === "tablet"
-            ? patientType === "adult"
-              ? `<br><br><strong>Adult capsule note:</strong> Fixed adult dosing can be used without entering weight.`
-              : `<br><br><strong>Child capsule note:</strong> Weight is still required for this medicine even when capsule formulation is selected.`
-            : "";
+  label: "Amoxicillin",
+  age: { minMonths: 1, maxYears: 18 },
+  strengths: [
+    { id: "liq125", value: 125, label: "125 mg / 5 mL" },
+    { id: "liq250", value: 250, label: "250 mg / 5 mL" },
+    { id: "cap250", value: 250, label: "250 mg capsule" },
+    { id: "cap500", value: 500, label: "500 mg capsule" }
+  ],
+  options: [
+    {
+      id: "dosingType",
+      label: "Dosing Type",
+      type: "select",
+      choices: [
+        { value: "general", label: "General" },
+        { value: "otitisMedia", label: "Otitis Media" },
+        { value: "acuteSinusitis", label: "Acute Sinusitis" },
+        { value: "strepA", label: "Strep A" }
+      ]
+    },
+    {
+      id: "doseLevel",
+      label: "Dose Level",
+      type: "select",
+      choices: [
+        { value: "low", label: "Low dose" },
+        { value: "high", label: "High dose" },
+        { value: "range", label: "Show both" }
+      ]
+    }
+  ],
+  note: ({ selections, formulation, patientType }) => {
+    const tabletNotice =
+      formulation?.type === "tablet"
+        ? patientType === "adult"
+          ? `<br><br><strong>Adult capsule note:</strong> Fixed adult dosing can be used without entering weight.`
+          : `<br><br><strong>Child capsule note:</strong> Weight is still required for this medicine even when capsule formulation is selected.`
+        : "";
 
-        if (selections.dosingType === "strepA") {
-          return `
-            <strong>Note:</strong> Strep A dosing.<br><br>
-            50 mg/kg once daily (maximum daily dose 1000 mg), or<br>
-            Weight under 30 kg: 750 mg once daily for 10 days.<br>
-            Weight 30 kg and over: 1000 mg once daily for 10 days.
-            ${tabletNotice}
-          `;
-        }
+    if (selections.dosingType === "otitisMedia") {
+      return `
+        <strong>Note:</strong> Otitis media dosing.<br><br>
+        15 mg/kg/dose three times daily for 5 days.<br>
+        Maximum single dose: 1000 mg.
+        ${tabletNotice}
+      `;
+    }
 
-        return `
-          <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
-          <strong>General Dosing:</strong><br>
-          15–30 mg/kg three times daily.<br>
-          Maximum single dose: 1000 mg.
-          ${tabletNotice}
-        `;
-      },
-      adultCalc: ({ selections }) => {
-        const type = selections.dosingType || "general";
+    if (selections.dosingType === "acuteSinusitis") {
+      return `
+        <strong>Note:</strong> Acute sinusitis dosing.<br><br>
+        Child: 25–30 mg/kg/dose three times daily for 7 days.<br>
+        Adult: 500–1000 mg three times daily for 7 days.<br>
+        Maximum single dose: 1000 mg.
+        ${tabletNotice}
+      `;
+    }
 
-        if (type === "strepA") {
-          return {
-            mode: "single",
-            frequency: "Once daily for 10 days",
-            sigFrequency: "once daily",
-            dosesPerDay: 1,
-            defaultDurationDays: 10,
-            doseMg: 1000,
-            maxDailyMg: 1000,
-            warnings: [],
-            extra: ["Adult fixed-dose regimen used."]
-          };
-        }
+    if (selections.dosingType === "strepA") {
+      return `
+        <strong>Note:</strong> Strep A dosing.<br><br>
+        Children under 20 kg: 250 mg 2 or 3 times daily for 10 days.<br>
+        Children and adults over 20 kg: 500 mg 2 or 3 times daily for 10 days.
+        ${tabletNotice}
+      `;
+    }
 
+    return `
+      <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+      <strong>General Dosing:</strong><br>
+      15–30 mg/kg three times daily.<br>
+      Maximum single dose: 1000 mg.
+      ${tabletNotice}
+    `;
+  },
+  adultCalc: ({ selections }) => {
+    const type = selections.dosingType || "general";
+
+    if (type === "otitisMedia") {
+      return {
+        mode: "single",
+        frequency: "Three times daily for 5 days",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: 5,
+        doseMg: 500,
+        maxDailyMg: 1500,
+        warnings: [],
+        extra: ["Adult fixed-dose regimen used."]
+      };
+    }
+
+    if (type === "acuteSinusitis") {
+      const doseLevel = selections.doseLevel || "low";
+
+      if (doseLevel === "low") {
         return {
           mode: "single",
-          frequency: "Three times daily",
+          frequency: "Three times daily for 7 days",
           sigFrequency: "three times daily",
           dosesPerDay: 3,
-          defaultDurationDays: null,
+          defaultDurationDays: 7,
           doseMg: 500,
           maxDailyMg: 1500,
           warnings: [],
-          extra: ["Adult fixed-dose regimen used."]
-        };
-      },
-      calc: ({ weightKg, selections }) => {
-        const type = selections.dosingType || "general";
-
-        if (type === "strepA") {
-          const doseMg = weightKg < 30 ? 750 : 1000;
-
-          return {
-            mode: "single",
-            frequency: "Once daily for 10 days",
-            sigFrequency: "once daily",
-            dosesPerDay: 1,
-            defaultDurationDays: 10,
-            doseMg,
-            maxDailyMg: doseMg,
-            warnings: [],
-            extra: [
-              `Daily total: ${formatMg(doseMg)}`,
-              `Alternative weight-based statement: 50 mg/kg once daily, max 1000 mg/day`
-            ]
-          };
-        }
-
-        const doseLevel = selections.doseLevel || "low";
-        const lowRaw = weightKg * 15;
-        const highRaw = weightKg * 30;
-        const lowDose = Math.min(lowRaw, 1000);
-        const highDose = Math.min(highRaw, 1000);
-        const warnings = [];
-
-        if (lowRaw > 1000 || highRaw > 1000) {
-          warnings.push("Dose capped at max single dose of 1000 mg.");
-        }
-
-        if (doseLevel === "low") {
-          return {
-            mode: "single",
-            frequency: "Three times daily (every 8 hours)",
-            sigFrequency: "three times daily",
-            dosesPerDay: 3,
-            defaultDurationDays: null,
-            doseMg: lowDose,
-            maxDailyMg: lowDose * 3,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(lowDose * 3)}`]
-          };
-        }
-
-        if (doseLevel === "high") {
-          return {
-            mode: "single",
-            frequency: "Three times daily (every 8 hours)",
-            sigFrequency: "three times daily",
-            dosesPerDay: 3,
-            defaultDurationDays: null,
-            doseMg: highDose,
-            maxDailyMg: highDose * 3,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(highDose * 3)}`]
-          };
-        }
-
-        return {
-          mode: "range",
-          frequency: "Three times daily (every 8 hours)",
-          sigFrequency: "three times daily",
-          dosesPerDay: 3,
-          defaultDurationDays: null,
-          lowDoseMg: lowDose,
-          highDoseMg: highDose,
-          maxDailyMg: highDose * 3,
-          warnings,
-          extra: [
-            `Daily total (low): ${formatMg(lowDose * 3)}`,
-            `Daily total (high): ${formatMg(highDose * 3)}`
-          ]
+          extra: ["Adult acute sinusitis regimen used."]
         };
       }
-    },
+
+      if (doseLevel === "high") {
+        return {
+          mode: "single",
+          frequency: "Three times daily for 7 days",
+          sigFrequency: "three times daily",
+          dosesPerDay: 3,
+          defaultDurationDays: 7,
+          doseMg: 1000,
+          maxDailyMg: 3000,
+          warnings: [],
+          extra: ["Adult acute sinusitis regimen used."]
+        };
+      }
+
+      return {
+        mode: "range",
+        frequency: "Three times daily for 7 days",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: 7,
+        lowDoseMg: 500,
+        highDoseMg: 1000,
+        maxDailyMg: 3000,
+        warnings: [],
+        extra: [
+          "Adult acute sinusitis regimen used.",
+          "500 mg TDS to 1000 mg TDS for 7 days."
+        ]
+      };
+    }
+
+    if (type === "strepA") {
+      const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
+      const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
+
+      return {
+        mode: "single",
+        frequency,
+        sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
+        dosesPerDay,
+        defaultDurationDays: 10,
+        doseMg: 500,
+        maxDailyMg: 500 * dosesPerDay,
+        warnings: [],
+        extra: ["Adult fixed-dose regimen used."]
+      };
+    }
+
+    return {
+      mode: "single",
+      frequency: "Three times daily",
+      sigFrequency: "three times daily",
+      dosesPerDay: 3,
+      defaultDurationDays: null,
+      doseMg: 500,
+      maxDailyMg: 1500,
+      warnings: [],
+      extra: ["Adult fixed-dose regimen used."]
+    };
+  },
+  calc: ({ weightKg, selections }) => {
+    const type = selections.dosingType || "general";
+
+    if (type === "otitisMedia") {
+      const rawDose = weightKg * 15;
+      const doseMg = Math.min(rawDose, 1000);
+      const warnings = [];
+
+      if (rawDose > 1000) warnings.push("Dose capped at max single dose of 1000 mg.");
+
+      return {
+        mode: "single",
+        frequency: "Three times daily for 5 days",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: 5,
+        doseMg,
+        maxDailyMg: doseMg * 3,
+        warnings,
+        extra: [`Daily total: ${formatMg(doseMg * 3)}`]
+      };
+    }
+
+    if (type === "acuteSinusitis") {
+      const doseLevel = selections.doseLevel || "low";
+      const lowRaw = weightKg * 25;
+      const highRaw = weightKg * 30;
+      const lowDose = Math.min(lowRaw, 1000);
+      const highDose = Math.min(highRaw, 1000);
+      const warnings = [];
+
+      if (lowRaw > 1000 || highRaw > 1000) {
+        warnings.push("Dose capped at max single dose of 1000 mg.");
+      }
+
+      if (doseLevel === "low") {
+        return {
+          mode: "single",
+          frequency: "Three times daily for 7 days",
+          sigFrequency: "three times daily",
+          dosesPerDay: 3,
+          defaultDurationDays: 7,
+          doseMg: lowDose,
+          maxDailyMg: lowDose * 3,
+          warnings,
+          extra: [`Daily total at this dose: ${formatMg(lowDose * 3)}`]
+        };
+      }
+
+      if (doseLevel === "high") {
+        return {
+          mode: "single",
+          frequency: "Three times daily for 7 days",
+          sigFrequency: "three times daily",
+          dosesPerDay: 3,
+          defaultDurationDays: 7,
+          doseMg: highDose,
+          maxDailyMg: highDose * 3,
+          warnings,
+          extra: [`Daily total at this dose: ${formatMg(highDose * 3)}`]
+        };
+      }
+
+      return {
+        mode: "range",
+        frequency: "Three times daily for 7 days",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: 7,
+        lowDoseMg: lowDose,
+        highDoseMg: highDose,
+        maxDailyMg: highDose * 3,
+        warnings,
+        extra: [
+          `Daily total (low): ${formatMg(lowDose * 3)}`,
+          `Daily total (high): ${formatMg(highDose * 3)}`
+        ]
+      };
+    }
+
+    if (type === "strepA") {
+      const doseMg = weightKg < 20 ? 250 : 500;
+      const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
+      const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
+
+      return {
+        mode: "single",
+        frequency,
+        sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
+        dosesPerDay,
+        defaultDurationDays: 10,
+        doseMg,
+        maxDailyMg: doseMg * dosesPerDay,
+        warnings: [],
+        extra: [`Daily total: ${formatMg(doseMg * dosesPerDay)}`]
+      };
+    }
+
+    const doseLevel = selections.doseLevel || "low";
+    const lowRaw = weightKg * 15;
+    const highRaw = weightKg * 30;
+    const lowDose = Math.min(lowRaw, 1000);
+    const highDose = Math.min(highRaw, 1000);
+    const warnings = [];
+
+    if (lowRaw > 1000 || highRaw > 1000) {
+      warnings.push("Dose capped at max single dose of 1000 mg.");
+    }
+
+    if (doseLevel === "low") {
+      return {
+        mode: "single",
+        frequency: "Three times daily (every 8 hours)",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: null,
+        doseMg: lowDose,
+        maxDailyMg: lowDose * 3,
+        warnings,
+        extra: [`Daily total at this dose: ${formatMg(lowDose * 3)}`]
+      };
+    }
+
+    if (doseLevel === "high") {
+      return {
+        mode: "single",
+        frequency: "Three times daily (every 8 hours)",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: null,
+        doseMg: highDose,
+        maxDailyMg: highDose * 3,
+        warnings,
+        extra: [`Daily total at this dose: ${formatMg(highDose * 3)}`]
+      };
+    }
+
+    return {
+      mode: "range",
+      frequency: "Three times daily (every 8 hours)",
+      sigFrequency: "three times daily",
+      dosesPerDay: 3,
+      defaultDurationDays: null,
+      lowDoseMg: lowDose,
+      highDoseMg: highDose,
+      maxDailyMg: highDose * 3,
+      warnings,
+      extra: [
+        `Daily total (low): ${formatMg(lowDose * 3)}`,
+        `Daily total (high): ${formatMg(highDose * 3)}`
+      ]
+    };
+  }
+},
 
     cefalexin: {
       label: "Cefalexin",
@@ -1087,164 +1240,235 @@
     },
 
     amoxClav: {
-      label: "Amoxicillin + Clavulanic Acid",
-      age: { minMonths: 1, maxYears: 18 },
-      strengths: [
-        { id: "liq125", value: 125, label: "125 mg / 5 mL + 31.25 mg clavulanic acid" },
-        { id: "liq250", value: 250, label: "250 mg / 5 mL + 62.5 mg clavulanic acid" },
-        { id: "tab500", value: 500, label: "500 mg tablet + 125 mg clavulanic acid" }
-      ],
-      options: [
-        {
-          id: "doseLevel",
-          label: "Dose Level",
-          type: "select",
-          choices: [
-            { value: "low", label: "Low dose" },
-            { value: "high", label: "High dose" },
-            { value: "range", label: "Show both" }
-          ]
-        }
-      ],
-      note: ({ formulation, patientType }) => {
-        const tabletNotice = formulation?.type === "tablet"
-          ? patientType === "adult"
-            ? `<br><br><strong>Tablet note:</strong> This medicine does not yet have an adult fixed-dose pathway in the calculator, so weight is still required.`
-            : `<br><br><strong>Tablet note:</strong> Weight is still required for this medicine even when tablet formulation is selected.`
-          : "";
-
-        return `
-          <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
-          Dose based on the <strong>amoxicillin component</strong>.<br>
-          15–30 mg/kg three times daily.<br>
-          Maximum single dose: 625 mg (amoxicillin component used here as your current max).
-          ${tabletNotice}
-        `;
-      },
-      calc: ({ weightKg, selections }) => {
-        const doseLevel = selections.doseLevel || "low";
-        const lowRaw = weightKg * 15;
-        const highRaw = weightKg * 30;
-        const lowDose = Math.min(lowRaw, 625);
-        const highDose = Math.min(highRaw, 625);
-        const warnings = [];
-
-        if (lowRaw > 625 || highRaw > 625) {
-          warnings.push("Dose capped at max single dose of 625 mg.");
-        }
-
-        if (doseLevel === "low") {
-          return {
-            mode: "single",
-            frequency: "Three times daily",
-            sigFrequency: "three times daily",
-            dosesPerDay: 3,
-            defaultDurationDays: null,
-            doseMg: lowDose,
-            maxDailyMg: lowDose * 3,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(lowDose * 3)}`]
-          };
-        }
-
-        if (doseLevel === "high") {
-          return {
-            mode: "single",
-            frequency: "Three times daily",
-            sigFrequency: "three times daily",
-            dosesPerDay: 3,
-            defaultDurationDays: null,
-            doseMg: highDose,
-            maxDailyMg: highDose * 3,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(highDose * 3)}`]
-          };
-        }
-
-        return {
-          mode: "range",
-          frequency: "Three times daily",
-          sigFrequency: "three times daily",
-          dosesPerDay: 3,
-          defaultDurationDays: null,
-          lowDoseMg: lowDose,
-          highDoseMg: highDose,
-          maxDailyMg: highDose * 3,
-          warnings,
-          extra: [
-            `Daily total (low): ${formatMg(lowDose * 3)}`,
-            `Daily total (high): ${formatMg(highDose * 3)}`
-          ]
-        };
-      }
+  label: "Amoxicillin + Clavulanic Acid",
+  age: { minMonths: 1, maxYears: 18 },
+  strengths: [
+    { id: "liq125", value: 125, label: "125 mg / 5 mL + 31.25 mg clavulanic acid" },
+    { id: "liq250", value: 250, label: "250 mg / 5 mL + 62.5 mg clavulanic acid" },
+    { id: "tab500", value: 500, label: "500 mg tablet + 125 mg clavulanic acid" },
+    { id: "tab625", value: 625, label: "625 mg tablet + 125 mg clavulanic acid" }
+  ],
+  options: [
+    {
+      id: "dosingType",
+      label: "Dosing Type",
+      type: "select",
+      choices: [
+        { value: "general", label: "General" },
+        { value: "cellulitis", label: "Cellulitis" }
+      ]
     },
+    {
+      id: "doseLevel",
+      label: "Dose Level",
+      type: "select",
+      choices: [
+        { value: "low", label: "Low dose" },
+        { value: "high", label: "High dose" },
+        { value: "range", label: "Show both" }
+      ]
+    }
+  ],
+  note: ({ selections, formulation, patientType }) => {
+    const tabletNotice = formulation?.type === "tablet"
+      ? patientType === "adult"
+        ? `<br><br><strong>Tablet note:</strong> Fixed adult dosing can be used for the cellulitis pathway without entering weight.`
+        : `<br><br><strong>Tablet note:</strong> Weight is still required for this medicine even when tablet formulation is selected.`
+      : "";
 
-    penicillinV: {
-      label: "Penicillin V",
-      age: { minMonths: 1, maxYears: 120 },
-      strengths: [
-        { id: "cap250", value: 250, label: "250 mg capsule" },
-        { id: "cap500", value: 500, label: "500 mg capsule" }
-      ],
-      options: [
-        {
-          id: "strepFreq",
-          label: "Frequency",
-          type: "select",
-          choices: [
-            { value: "bid", label: "2 times daily" },
-            { value: "tid", label: "3 times daily" }
-          ]
-        }
-      ],
-      note: ({ formulation, patientType }) => {
-        const tabletNotice = formulation?.type === "tablet"
-          ? patientType === "adult"
-            ? `<br><br><strong>Adult capsule note:</strong> Fixed adult dosing can be used without entering weight.`
-            : `<br><br><strong>Child capsule note:</strong> Weight is still used for this pathway.`
-          : "";
+    if (selections.dosingType === "cellulitis") {
+      return `
+        <strong>Note:</strong> Cellulitis dosing.<br><br>
+        Adult: 625 mg three times daily for 5 days.
+        ${tabletNotice}
+      `;
+    }
 
-        return `
-          <strong>Note:</strong> Strep A dosing for 10 days.<br><br>
-          Children under 20 kg: 250 mg 2 or 3 times daily for 10 days.<br>
-          Children and adults 20 kg and over: 500 mg 2 or 3 times daily for 10 days.
-          ${tabletNotice}
-        `;
-      },
-      adultCalc: ({ selections }) => {
-        const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
-        const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
+    return `
+      <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+      Dose based on the <strong>amoxicillin component</strong>.<br>
+      15–30 mg/kg three times daily.<br>
+      Maximum single dose: 625 mg.
+      ${tabletNotice}
+    `;
+  },
+  adultCalc: ({ selections }) => {
+    const type = selections.dosingType || "general";
 
-        return {
-          mode: "single",
-          frequency,
-          sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
-          dosesPerDay,
-          defaultDurationDays: 10,
-          doseMg: 500,
-          maxDailyMg: 500 * dosesPerDay,
-          warnings: [],
-          extra: ["Adult fixed-dose regimen used."]
-        };
-      },
-      calc: ({ weightKg, selections }) => {
-        const doseMg = weightKg < 20 ? 250 : 500;
-        const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
-        const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
+    if (type === "cellulitis") {
+      return {
+        mode: "single",
+        frequency: "Three times daily for 5 days",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: 5,
+        doseMg: 625,
+        maxDailyMg: 1875,
+        warnings: [],
+        extra: ["Adult cellulitis regimen used."]
+      };
+    }
 
-        return {
-          mode: "single",
-          frequency,
-          sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
-          dosesPerDay,
-          defaultDurationDays: 10,
-          doseMg,
-          maxDailyMg: doseMg * dosesPerDay,
-          warnings: [],
-          extra: [`Daily total: ${formatMg(doseMg * dosesPerDay)}`]
-        };
-      }
+    return {
+      mode: "single",
+      frequency: "Three times daily",
+      sigFrequency: "three times daily",
+      dosesPerDay: 3,
+      defaultDurationDays: null,
+      doseMg: 625,
+      maxDailyMg: 1875,
+      warnings: [],
+      extra: ["Adult fixed-dose regimen used."]
+    };
+  },
+  calc: ({ weightKg, selections }) => {
+    const type = selections.dosingType || "general";
+
+    if (type === "cellulitis") {
+      return {
+        mode: "single",
+        frequency: "Three times daily for 5 days",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: 5,
+        doseMg: 625,
+        maxDailyMg: 1875,
+        warnings: [],
+        extra: ["Adult cellulitis regimen used."]
+      };
+    }
+
+    const doseLevel = selections.doseLevel || "low";
+    const lowRaw = weightKg * 15;
+    const highRaw = weightKg * 30;
+    const lowDose = Math.min(lowRaw, 625);
+    const highDose = Math.min(highRaw, 625);
+    const warnings = [];
+
+    if (lowRaw > 625 || highRaw > 625) {
+      warnings.push("Dose capped at max single dose of 625 mg.");
+    }
+
+    if (doseLevel === "low") {
+      return {
+        mode: "single",
+        frequency: "Three times daily",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: null,
+        doseMg: lowDose,
+        maxDailyMg: lowDose * 3,
+        warnings,
+        extra: [`Daily total at this dose: ${formatMg(lowDose * 3)}`]
+      };
+    }
+
+    if (doseLevel === "high") {
+      return {
+        mode: "single",
+        frequency: "Three times daily",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: null,
+        doseMg: highDose,
+        maxDailyMg: highDose * 3,
+        warnings,
+        extra: [`Daily total at this dose: ${formatMg(highDose * 3)}`]
+      };
+    }
+
+    return {
+      mode: "range",
+      frequency: "Three times daily",
+      sigFrequency: "three times daily",
+      dosesPerDay: 3,
+      defaultDurationDays: null,
+      lowDoseMg: lowDose,
+      highDoseMg: highDose,
+      maxDailyMg: highDose * 3,
+      warnings,
+      extra: [
+        `Daily total (low): ${formatMg(lowDose * 3)}`,
+        `Daily total (high): ${formatMg(highDose * 3)}`
+      ]
+    };
+  }
+},
+
+   penicillinV: {
+  label: "Penicillin V",
+  age: { minMonths: 1, maxYears: 120 },
+  strengths: [
+    { id: "cap250", value: 250, label: "250 mg capsule" },
+    { id: "cap500", value: 500, label: "500 mg capsule" }
+  ],
+  options: [
+    {
+      id: "dosingType",
+      label: "Dosing Type",
+      type: "select",
+      choices: [
+        { value: "strepA", label: "Strep A" }
+      ]
     },
+    {
+      id: "strepFreq",
+      label: "Frequency",
+      type: "select",
+      choices: [
+        { value: "bid", label: "2 times daily" },
+        { value: "tid", label: "3 times daily" }
+      ]
+    }
+  ],
+  note: ({ formulation, patientType }) => {
+    const tabletNotice = formulation?.type === "tablet"
+      ? patientType === "adult"
+        ? `<br><br><strong>Adult capsule note:</strong> Fixed adult dosing can be used without entering weight.`
+        : `<br><br><strong>Child capsule note:</strong> Weight is still used for this pathway.`
+      : "";
+
+    return `
+      <strong>Note:</strong> Strep A dosing for 10 days.<br><br>
+      Children under 20 kg: 250 mg 2 or 3 times daily for 10 days.<br>
+      Children and adults over 20 kg: 500 mg 2 or 3 times daily for 10 days.
+      ${tabletNotice}
+    `;
+  },
+  adultCalc: ({ selections }) => {
+    const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
+    const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
+
+    return {
+      mode: "single",
+      frequency,
+      sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
+      dosesPerDay,
+      defaultDurationDays: 10,
+      doseMg: 500,
+      maxDailyMg: 500 * dosesPerDay,
+      warnings: [],
+      extra: ["Adult fixed-dose regimen used."]
+    };
+  },
+  calc: ({ weightKg, selections }) => {
+    const doseMg = weightKg < 20 ? 250 : 500;
+    const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
+    const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
+
+    return {
+      mode: "single",
+      frequency,
+      sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
+      dosesPerDay,
+      defaultDurationDays: 10,
+      doseMg,
+      maxDailyMg: doseMg * dosesPerDay,
+      warnings: [],
+      extra: [`Daily total: ${formatMg(doseMg * dosesPerDay)}`]
+    };
+  }
+},
 
     benzathinePenicillinIM: {
       label: "Benzathine Penicillin IM",
@@ -1579,9 +1803,13 @@
 
         const currentValue = selections[opt.id] ?? defaultChoice;
 
-        if (medKey === "amoxicillin" && opt.id === "doseLevel" && selections.dosingType === "strepA") {
-          return;
-        }
+        if (
+  medKey === "amoxicillin" &&
+  opt.id === "doseLevel" &&
+  (selections.dosingType === "otitisMedia" || selections.dosingType === "strepA")
+) {
+  return;
+}
 
         if (medKey === "erythromycin") {
           if (opt.id === "doseLevel" && selections.dosingType === "strepA") return;
