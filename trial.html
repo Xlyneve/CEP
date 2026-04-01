@@ -202,6 +202,19 @@
   align-items: start;
 }
 
+.duration-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.duration-small {
+  width: 78px;
+  min-width: 78px;
+  max-width: 78px;
+  text-align: center;
+}
+
     .panel,
 .card,
 .template-card,
@@ -1032,7 +1045,7 @@ select option {
         </section>
 
         <section class="consultation-grid">
-        <div class="card">
+       <div class="card">
   <div class="section-header">
     <div>
       <div class="section-heading">1. Presentation</div>
@@ -1055,25 +1068,28 @@ select option {
     </label>
 
     <label>
-      Duration
-      <input id="presentationDuration" placeholder="e.g. 2, 24, 3-4" />
+      <span style="opacity:0;">Duration</span>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input
+          id="presentationDuration"
+          placeholder="e.g. 2"
+          style="width:78px; min-width:78px; max-width:78px; text-align:center;"
+        />
+
+        <div class="mini-checks" style="display:flex; gap:8px; align-items:center;">
+          <label style="margin:0;"><input type="checkbox" id="durationDays" /> Days</label>
+          <label style="margin:0;"><input type="checkbox" id="durationHours" /> Hours</label>
+        </div>
+      </div>
     </label>
   </div>
 
   <div class="section-fields">
-    <label>
-      Duration type
-      <div class="mini-checks">
-        <label><input type="checkbox" id="durationDays" /> Days</label>
-        <label><input type="checkbox" id="durationHours" /> Hours</label>
-      </div>
-    </label>
-
     <div class="editable-checklist" id="hpcList" data-placeholder="Add symptom..."></div>
 
     <label>
       Additional presentation text
-      <textarea id="presentationExtraText" placeholder="Extra presentation line to appear after symptoms in summary..."></textarea>
+      <textarea id="presentationExtraText" placeholder="Extra line after presenting symptoms..."></textarea>
     </label>
   </div>
 </div>
@@ -1128,11 +1144,11 @@ select option {
   </div>
 </div>
 
-          <div class="card">
+         <div class="card">
   <div class="section-header">
     <div>
       <div class="section-heading">4. Examination</div>
-      <div class="hint">Tick boxes plus free-write findings</div>
+      <div class="hint">First checklist = first examination sentence. Second checklist = next line in summary.</div>
     </div>
     <div class="badge-row">
       <span class="badge green">Exam</span>
@@ -1141,16 +1157,22 @@ select option {
 
   <div class="section-fields">
     <label>
-      Examination checklist
-      <div class="editable-checklist" id="examList" data-placeholder="Add examination item..."></div>
+      Examination - first line
+      <div class="editable-checklist" id="examPrimaryList" data-placeholder="Add main examination item..."></div>
+    </label>
+
+    <label>
+      Examination - next line
+      <div class="editable-checklist" id="examSecondaryList" data-placeholder="Add additional examination item..."></div>
     </label>
 
     <label>
       Additional findings
-      <textarea id="examFreeText" placeholder="Free write any positive findings here..."></textarea>
+      <textarea id="examFreeText" placeholder="Optional extra findings..."></textarea>
     </label>
   </div>
 </div>
+
 <div class="card">
   <div class="section-header">
     <div>
@@ -1348,7 +1370,6 @@ try {
 } catch (err) {
   console.warn('Firebase failed to initialise. Built-in templates will still load.', err);
 }
-
 const defaultTemplates = [
   {
     id: 'general',
@@ -1357,62 +1378,104 @@ const defaultTemplates = [
     desc: 'Flexible all-purpose assessment structure for common acute presentations.',
     tags: ['general', 'assessment', 'documentation'],
     isBuiltIn: true,
-   prompts: {
-  patientDemo: '',
-  patientEthnicity: '',
-  presentationDuration: '',
-  durationDays: true,
-  durationHours: false,
-  presentationExtraText: '',
-  hpc: [
-    'cough',
-    'sore throat',
-    'fever'
-  ],
-  redFlags: [
-    'Relevant dangerous symptoms asked about',
-    'Relevant dangerous symptoms absent unless present'
-  ],
-  vitals: [
-    'Temp',
-    'HR',
-    'BP',
-    'RR',
-    'SpO2',
-    'WE'
-  ],
-  allergies: ['NKDA if relevant'],
-  medicalHistory: ['Relevant background conditions only'],
-  currentMeds: ['Current medicines'],
-  patientFactors: [
-    'Pregnancy / breastfeeding if relevant',
-    'Immunocompromised state if relevant',
-    'Social / functional factors if relevant'
-  ],
-  exam: [
-    'Focused examination completed',
-    'Pertinent negatives documented'
-  ],
-  examFreeText: '',
-  diagnosis: ['Working diagnosis'],
-  differentials: ['Key alternative diagnoses considered'],
-  privateConsultNote: '',
-  prescribingPrivateNote: '',
-  prescribingFirstLinePrivateNote: '',
-  prescribingSecondLinePrivateNote: '',
-  planTreatment: ['Supportive measures discussed'],
-  prescribingFirstLine: ['First-line option'],
-  prescribingSecondLine: ['Second-line option'],
-  patientAdvice: ['Supportive care and home advice'],
-  safetyNet: [
-    'Return if worsening',
-    'Return if not improving',
-    'Return if red flags develop'
-  ],
-  documentation: ['Record anything medico-legally important']
-}
+    prompts: {
+      patientDemo: '',
+      patientEthnicity: '',
+      presentationDuration: '',
+      durationDays: true,
+      durationHours: false,
+      presentationExtraText: '',
+
+      hpc: [
+        'cough',
+        'sore throat',
+        'fever'
+      ],
+
+      redFlags: [
+        'Relevant dangerous symptoms asked about',
+        'Relevant dangerous symptoms absent unless present'
+      ],
+
+      vitals: [
+        'Temp',
+        'HR',
+        'BP',
+        'RR',
+        'SpO2',
+        'WE'
+      ],
+
+      allergies: [
+        'NKDA if relevant'
+      ],
+
+      medicalHistory: [
+        'Relevant background conditions only'
+      ],
+
+      currentMeds: [
+        'Current medicines'
+      ],
+
+      patientFactors: [
+        'Pregnancy / breastfeeding if relevant',
+        'Immunocompromised state if relevant',
+        'Social / functional factors if relevant'
+      ],
+
+      examPrimary: [
+        'Voice normal, no drooling or trismus present'
+      ],
+
+      examSecondary: [
+        'Oropharynx visualised, uvula central and no palatal swelling'
+      ],
+
+      examFreeText: '',
+
+      diagnosis: [
+        'Working diagnosis'
+      ],
+
+      differentials: [
+        'Key alternative diagnoses considered'
+      ],
+
+      privateConsultNote: '',
+      prescribingPrivateNote: '',
+      prescribingFirstLinePrivateNote: '',
+      prescribingSecondLinePrivateNote: '',
+
+      planTreatment: [
+        'Supportive measures discussed'
+      ],
+
+      prescribingFirstLine: [
+        'First-line option'
+      ],
+
+      prescribingSecondLine: [
+        'Second-line option'
+      ],
+
+      patientAdvice: [
+        'Supportive care and home advice'
+      ],
+
+      safetyNet: [
+        'Return if worsening',
+        'Return if not improving',
+        'Return if red flags develop'
+      ],
+
+      documentation: [
+        'Record anything medico-legally important'
+      ]
+    }
   }
 ];
+
 
 const templateList = document.getElementById('templateList');
 const searchInput = document.getElementById('searchInput');
@@ -1499,7 +1562,8 @@ const checklistIds = [
   'medicalHistoryList',
   'currentMedsList',
   'patientFactorsList',
-  'examList',
+  'examPrimaryList',
+  'examSecondaryList',
   'diagnosisList',
   'differentialsList',
   'planTreatmentList',
@@ -1817,7 +1881,22 @@ function collectPromptFields() {
     prescribingPrivateNote: getField('prescribingPrivateNote')?.value.trim() || '',
     prescribingFirstLinePrivateNote: getField('prescribingFirstLinePrivateNote')?.value.trim() || '',
     prescribingSecondLinePrivateNote: getField('prescribingSecondLinePrivateNote')?.value.trim() || '',
-   patientAdvice: getChecklistItems('adviceList').map(i => i.text),
+
+    hpc: getChecklistItems('hpcList').map(i => i.text),
+    redFlags: getChecklistItems('redFlagsList').map(i => i.text),
+    vitals: getChecklistItems('vitalsList').map(i => i.text),
+    allergies: getChecklistItems('allergiesList').map(i => i.text),
+    medicalHistory: getChecklistItems('medicalHistoryList').map(i => i.text),
+    currentMeds: getChecklistItems('currentMedsList').map(i => i.text),
+    patientFactors: getChecklistItems('patientFactorsList').map(i => i.text),
+    examPrimary: getChecklistItems('examPrimaryList').map(i => i.text),
+    examSecondary: getChecklistItems('examSecondaryList').map(i => i.text),
+    diagnosis: getChecklistItems('diagnosisList').map(i => i.text),
+    differentials: getChecklistItems('differentialsList').map(i => i.text),
+    planTreatment: getChecklistItems('planTreatmentList').map(i => i.text),
+    prescribingFirstLine: getChecklistItems('prescribingFirstLineList').map(i => i.text),
+    prescribingSecondLine: getChecklistItems('prescribingSecondLineList').map(i => i.text),
+    patientAdvice: getChecklistItems('adviceList').map(i => i.text),
     safetyNet: getChecklistItems('safetyNetList').map(i => i.text),
     documentation: getChecklistItems('documentationList').map(i => i.text)
   };
@@ -1927,38 +2006,36 @@ function fillTemplatePrompts() {
   if (!template) return;
 
     if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
-  if (getField('patientEthnicity')) getField('patientEthnicity').value = template.prompts?.patientEthnicity || '';
-  if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
-  if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
+if (getField('patientEthnicity')) getField('patientEthnicity').value = template.prompts?.patientEthnicity || '';
+if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
+if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
+if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
+if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
+if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
+if (getField('privateConsultNote')) getField('privateConsultNote').value = template.prompts?.privateConsultNote || '';
+if (getField('prescribingPrivateNote')) getField('prescribingPrivateNote').value = template.prompts?.prescribingPrivateNote || '';
+if (getField('prescribingFirstLinePrivateNote')) getField('prescribingFirstLinePrivateNote').value = template.prompts?.prescribingFirstLinePrivateNote || '';
+if (getField('prescribingSecondLinePrivateNote')) getField('prescribingSecondLinePrivateNote').value = template.prompts?.prescribingSecondLinePrivateNote || '';
 
-  if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
-  if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
-  if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
-  if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
-  if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
-  if (getField('privateConsultNote')) getField('privateConsultNote').value = template.prompts?.privateConsultNote || '';
-  if (getField('prescribingPrivateNote')) getField('prescribingPrivateNote').value = template.prompts?.prescribingPrivateNote || '';
-  if (getField('prescribingFirstLinePrivateNote')) getField('prescribingFirstLinePrivateNote').value = template.prompts?.prescribingFirstLinePrivateNote || '';
-  if (getField('prescribingSecondLinePrivateNote')) getField('prescribingSecondLinePrivateNote').value = template.prompts?.prescribingSecondLinePrivateNote || '';
+setChecklistItems('hpcList', template.prompts?.hpc);
+setChecklistItems('redFlagsList', template.prompts?.redFlags);
+setChecklistItems('vitalsList', template.prompts?.vitals);
+setChecklistItems('allergiesList', template.prompts?.allergies || template.prompts?.medsAllergies);
+setChecklistItems('medicalHistoryList', template.prompts?.medicalHistory || template.prompts?.pmhx);
+setChecklistItems('currentMedsList', template.prompts?.currentMeds);
+setChecklistItems('patientFactorsList', template.prompts?.patientFactors);
+setChecklistItems('examPrimaryList', template.prompts?.examPrimary);
+setChecklistItems('examSecondaryList', template.prompts?.examSecondary);
+setChecklistItems('diagnosisList', template.prompts?.diagnosis);
+setChecklistItems('differentialsList', template.prompts?.differentials);
+setChecklistItems('planTreatmentList', template.prompts?.planTreatment);
+setChecklistItems('prescribingFirstLineList', template.prompts?.prescribingFirstLine || template.prompts?.prescribing);
+setChecklistItems('prescribingSecondLineList', template.prompts?.prescribingSecondLine);
+setChecklistItems('adviceList', template.prompts?.patientAdvice);
+setChecklistItems('safetyNetList', template.prompts?.safetyNet);
+setChecklistItems('documentationList', template.prompts?.documentation);
 
-  setChecklistItems('hpcList', template.prompts?.hpc);
-  setChecklistItems('redFlagsList', template.prompts?.redFlags);
-  setChecklistItems('vitalsList', template.prompts?.vitals);
-  setChecklistItems('allergiesList', template.prompts?.allergies || template.prompts?.medsAllergies);
-  setChecklistItems('medicalHistoryList', template.prompts?.medicalHistory || template.prompts?.pmhx);
-  setChecklistItems('currentMedsList', template.prompts?.currentMeds);
-  setChecklistItems('patientFactorsList', template.prompts?.patientFactors);
-  setChecklistItems('examList', template.prompts?.exam);
-  setChecklistItems('diagnosisList', template.prompts?.diagnosis);
-  setChecklistItems('differentialsList', template.prompts?.differentials);
-  setChecklistItems('planTreatmentList', template.prompts?.planTreatment);
-  setChecklistItems('prescribingFirstLineList', template.prompts?.prescribingFirstLine || template.prompts?.prescribing);
-  setChecklistItems('prescribingSecondLineList', template.prompts?.prescribingSecondLine);
-  setChecklistItems('adviceList', template.prompts?.patientAdvice);
-  setChecklistItems('safetyNetList', template.prompts?.safetyNet);
-  setChecklistItems('documentationList', template.prompts?.documentation);
-  
-  [
+[
   'presentationExtraText',
   'examFreeText',
   'privateConsultNote',
@@ -2035,7 +2112,8 @@ function buildSummaryText() {
   const medicalHistory = getCheckedChecklistTexts('medicalHistoryList');
   const currentMeds = getCheckedChecklistTexts('currentMedsList');
   const patientFactors = getCheckedChecklistTexts('patientFactorsList');
-  const exam = getCheckedChecklistTexts('examList');
+  const examPrimary = getCheckedChecklistTexts('examPrimaryList');
+  const examSecondary = getCheckedChecklistTexts('examSecondaryList');
   const diagnosis = getCheckedChecklistTexts('diagnosisList');
   const differentials = getCheckedChecklistTexts('differentialsList');
   const planTreatment = getCheckedChecklistTexts('planTreatmentList');
@@ -2052,18 +2130,11 @@ function buildSummaryText() {
   if (patientDemo) introBits.push(patientDemo);
   if (patientEthnicity) introBits.push(patientEthnicity);
 
-  let openingLine = '';
-  if (introBits.length) {
-    openingLine = `${introBits.join(', ')}, presenting with`;
-  } else {
-    openingLine = 'Presenting with';
-  }
+  let openingLine = introBits.length
+    ? `${introBits.join(', ')}, presenting with`
+    : 'Presenting with';
 
-  if (hpc.length) {
-    openingLine += ` ${joinNaturalList(hpc)}`;
-  } else {
-    openingLine += ' symptoms';
-  }
+  openingLine += hpc.length ? ` ${joinNaturalList(hpc)}` : ' symptoms';
 
   let durationLabel = '';
   if (presentationDuration) {
@@ -2075,9 +2146,7 @@ function buildSummaryText() {
   if (durationLabel) openingLine += ` for ${durationLabel}`;
   lines.push(sentence(openingLine));
 
-  if (presentationExtraText) {
-    lines.push(sentence(presentationExtraText));
-  }
+  if (presentationExtraText) lines.push(sentence(presentationExtraText));
 
   if (vitals.length) lines.push(`Vital signs:\n${joinList(vitals)}`);
 
@@ -2088,14 +2157,17 @@ function buildSummaryText() {
   if (patientFactors.length) backgroundBits.push(`Special patient factors:\n${joinList(patientFactors)}`);
   if (backgroundBits.length) lines.push(backgroundBits.join('\n\n'));
 
-  if (exam.length) {
-    const examSentenceBlock = exam.map(item => sentence(item)).join(' ');
-    lines.push(`On examination, ${examSentenceBlock}`);
+  if (examPrimary.length) {
+    const examPrimaryText = examPrimary.map(item => sentence(item)).join(' ');
+    lines.push(`On examination, ${examPrimaryText}`);
   }
 
-  if (examFreeText) {
-    lines.push(sentence(examFreeText));
+  if (examSecondary.length) {
+    const examSecondaryText = examSecondary.map(item => sentence(item)).join(' ');
+    lines.push(examSecondaryText);
   }
+
+  if (examFreeText) lines.push(sentence(examFreeText));
 
   if (diagnosis.length) lines.push(`Diagnosis:\n${joinList(diagnosis)}`);
   if (differentials.length) lines.push(`Differential / ruled out concerns:\n${joinList(differentials)}`);
@@ -2115,6 +2187,7 @@ function buildSummaryText() {
 
   return lines.join('\n\n');
 }
+
 function generateSummary() {
   const summary = buildSummaryText();
   if (!output) return;
