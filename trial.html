@@ -2234,19 +2234,25 @@ function formatTreatmentFlagsForPrint() {
 
 function printFilledTemplate() {
   const patientDemo = getField('patientDemo')?.value || '';
-const presentationDuration = getField('presentationDuration')?.value || '';
-const durationDays = !!getField('durationDays')?.checked;
-const durationHours = !!getField('durationHours')?.checked;
-const examFreeText = getField('examFreeText')?.value || '';
-const privateConsultNote = getField('privateConsultNote')?.value || '';
-const prescribingPrivateNote = getField('prescribingPrivateNote')?.value || '';
-const prescribingFirstLinePrivateNote = getField('prescribingFirstLinePrivateNote')?.value || '';
-const prescribingSecondLinePrivateNote = getField('prescribingSecondLinePrivateNote')?.value || '';
+  const patientEthnicity = getField('patientEthnicity')?.value || '';
+  const presentationDuration = getField('presentationDuration')?.value || '';
+  const presentationExtraText = getField('presentationExtraText')?.value || '';
+  const examFreeText = getField('examFreeText')?.value || '';
+  const privateConsultNote = getField('privateConsultNote')?.value || '';
+  const prescribingPrivateNote = getField('prescribingPrivateNote')?.value || '';
+  const prescribingFirstLinePrivateNote = getField('prescribingFirstLinePrivateNote')?.value || '';
+  const prescribingSecondLinePrivateNote = getField('prescribingSecondLinePrivateNote')?.value || '';
+
   const hasContent =
     patientDemo.trim() ||
-    presentingComplaint.trim() ||
+    patientEthnicity.trim() ||
+    presentationDuration.trim() ||
+    presentationExtraText.trim() ||
     examFreeText.trim() ||
     privateConsultNote.trim() ||
+    prescribingPrivateNote.trim() ||
+    prescribingFirstLinePrivateNote.trim() ||
+    prescribingSecondLinePrivateNote.trim() ||
     checklistIds.some(id => getChecklistItems(id).length) ||
     ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly'].some(id => getField(id)?.checked);
 
@@ -2261,214 +2267,235 @@ const prescribingSecondLinePrivateNote = getField('prescribingSecondLinePrivateN
     return;
   }
 
+  const durationParts = [];
+  if (presentationDuration.trim()) {
+    durationParts.push(presentationDuration.trim());
+    if (getField('durationDays')?.checked) durationParts.push('days');
+    if (getField('durationHours')?.checked) durationParts.push('hours');
+  }
+
+  const sections = [
+    {
+      title: '1. Presentation',
+      rows: [
+        { label: 'Age', value: patientDemo },
+        { label: 'Ethnicity', value: patientEthnicity },
+        { label: 'Duration', value: durationParts.join(' ') },
+        { label: 'Symptoms', checklist: getChecklistItems('hpcList') },
+        { label: 'Additional presentation text', value: presentationExtraText }
+      ]
+    },
+    {
+      title: '2. Red flags checked',
+      rows: [
+        { label: 'Red flags', checklist: getChecklistItems('redFlagsList') }
+      ]
+    },
+    {
+      title: '3. Background / patient factors',
+      rows: [
+        { label: 'Allergies', checklist: getChecklistItems('allergiesList') },
+        { label: 'Medical history', checklist: getChecklistItems('medicalHistoryList') },
+        { label: 'Current medications', checklist: getChecklistItems('currentMedsList') },
+        { label: 'Special patient factors', checklist: getChecklistItems('patientFactorsList') }
+      ]
+    },
+    {
+      title: '4. Examination',
+      rows: [
+        { label: 'Examination - first line', checklist: getChecklistItems('examPrimaryList') },
+        { label: 'Examination - next line', checklist: getChecklistItems('examSecondaryList') },
+        { label: 'Additional findings', value: examFreeText }
+      ]
+    },
+    {
+      title: 'Vital signs',
+      rows: [
+        { label: 'Vitals', checklist: getChecklistItems('vitalsList') }
+      ]
+    },
+    {
+      title: '5. Diagnosis',
+      rows: [
+        { label: 'Diagnosis', checklist: getChecklistItems('diagnosisList') },
+        { label: 'Differential / ruled out concerns', checklist: getChecklistItems('differentialsList') },
+        { label: 'Private consult note', value: privateConsultNote }
+      ]
+    },
+    {
+      title: '7. Prescribing',
+      rows: [
+        {
+          label: 'Decision',
+          flags: [
+            { label: 'Antibiotics not indicated', checked: !!getField('abxNotIndicated')?.checked },
+            { label: 'Delayed / back-pocket approach', checked: !!getField('abxDelayed')?.checked },
+            { label: 'Antibiotics prescribed', checked: !!getField('abxPrescribed')?.checked },
+            { label: 'Supportive care only', checked: !!getField('supportiveCareOnly')?.checked }
+          ]
+        },
+        { label: 'Private notes', value: prescribingPrivateNote },
+        { label: 'Plan / Treatment', checklist: getChecklistItems('planTreatmentList') },
+        { label: 'First-line private notes', value: prescribingFirstLinePrivateNote },
+        { label: 'First-line treatment', checklist: getChecklistItems('prescribingFirstLineList') },
+        { label: 'Second-line private notes', value: prescribingSecondLinePrivateNote },
+        { label: 'Second-line treatment', checklist: getChecklistItems('prescribingSecondLineList') }
+      ]
+    },
+    {
+      title: 'Advice / safety net / documentation notes',
+      rows: [
+        { label: 'Advice', checklist: getChecklistItems('adviceList') },
+        { label: 'Safety net', checklist: getChecklistItems('safetyNetList') },
+        { label: 'Documentation notes', checklist: getChecklistItems('documentationList') }
+      ]
+    }
+  ];
+
+  function renderChecklist(items = []) {
+    const validItems = items.filter(item => item.text && item.text.trim());
+    if (!validItems.length) return `<div class="empty-line">None added</div>`;
+
+    return validItems.map(item => `
+      <div class="print-check-item">
+        <span class="print-check-icon">${item.checked ? '☑' : '☐'}</span>
+        <span>${escapeHtml(item.text)}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderFlags(flags = []) {
+    const validFlags = flags.filter(flag => flag.label);
+    if (!validFlags.length) return `<div class="empty-line">None added</div>`;
+
+    return validFlags.map(flag => `
+      <div class="print-check-item">
+        <span class="print-check-icon">${flag.checked ? '☑' : '☐'}</span>
+        <span>${escapeHtml(flag.label)}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderRow(row) {
+    if (row.checklist) {
+      return `
+        <div class="print-row">
+          <div class="print-label">${escapeHtml(row.label)}</div>
+          ${renderChecklist(row.checklist)}
+        </div>
+      `;
+    }
+
+    if (row.flags) {
+      return `
+        <div class="print-row">
+          <div class="print-label">${escapeHtml(row.label)}</div>
+          ${renderFlags(row.flags)}
+        </div>
+      `;
+    }
+
+    return `
+      <div class="print-row">
+        <div class="print-label">${escapeHtml(row.label)}</div>
+        <div>${row.value?.trim() ? escapeHtml(row.value) : '<span class="empty-line">None added</span>'}</div>
+      </div>
+    `;
+  }
+
+  const printableSections = sections.map(section => `
+    <div class="print-section">
+      <h2>${escapeHtml(section.title)}</h2>
+      ${section.rows.map(renderRow).join('')}
+    </div>
+  `).join('');
+
   printWindow.document.write(`
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <title>Consultation Template</title>
-     <style>
-  @page {
-    size: A4 portrait;
-    margin: 8mm;
-  }
+      <style>
+        @page {
+          size: A4 portrait;
+          margin: 8mm;
+        }
 
-  body {
-    font-family: Tahoma, Arial, sans-serif;
-    margin: 0;
-    color: #111;
-    line-height: 1.2;
-    font-size: 10px;
-  }
+        body {
+          font-family: Tahoma, Arial, sans-serif;
+          margin: 0;
+          color: #111;
+          line-height: 1.2;
+          font-size: 10px;
+        }
 
-  h1 {
-    margin: 0 0 8px;
-    font-size: 18px;
-  }
+        h1 {
+          margin: 0 0 8px;
+          font-size: 18px;
+        }
 
-  .print-section {
-    margin-bottom: 8px;
-    padding: 6px 8px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    break-inside: avoid;
-  }
+        .print-section {
+          margin-bottom: 8px;
+          padding: 6px 8px;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          break-inside: avoid;
+        }
 
-  .print-section h2 {
-    margin: 0 0 4px;
-    font-size: 12px;
-  }
+        .print-section h2 {
+          margin: 0 0 4px;
+          font-size: 12px;
+        }
 
-  .print-row {
-    margin-bottom: 4px;
-  }
+        .print-row {
+          margin-bottom: 4px;
+        }
 
-  .print-label {
-    font-weight: 700;
-    display: block;
-    margin-bottom: 2px;
-    font-size: 11px;
-  }
+        .print-label {
+          font-weight: 700;
+          display: block;
+          margin-bottom: 2px;
+          font-size: 11px;
+        }
 
-  .print-check-item {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 2px;
-    align-items: flex-start;
-  }
+        .print-check-item {
+          display: flex;
+          gap: 5px;
+          margin-bottom: 2px;
+          align-items: flex-start;
+        }
 
-  .print-check-icon {
-    width: 12px;
-    flex: 0 0 12px;
-    font-size: 10px;
-    line-height: 1.1;
-  }
+        .print-check-icon {
+          width: 12px;
+          flex: 0 0 12px;
+          font-size: 10px;
+          line-height: 1.1;
+        }
 
-  .empty-line {
-    color: #666;
-    font-style: italic;
-  }
+        .empty-line {
+          color: #666;
+          font-style: italic;
+        }
 
-  br {
-    line-height: 1.1;
-  }
-</style>
+        br {
+          line-height: 1.1;
+        }
+      </style>
     </head>
     <body>
       <h1>${escapeHtml(activeTemplateTitle?.textContent || 'Consultation Template')}</h1>
-
-      <div class="print-section">
-  <h2>1. Presentation</h2>
-  <div class="print-row">
-    <span class="print-label">Age</span>
-    <div>${formatTextValue(patientDemo)}</div>
-  </div>
-  <div class="print-row">
-    <span class="print-label">Duration</span>
-    <div>${formatTextValue(
-      presentationDuration
-        ? `${presentationDuration} ${durationDays ? 'day(s)' : durationHours ? 'hour(s)' : ''}`.trim()
-        : ''
-    )}</div>
-  </div>
-  <div class="print-row">
-    <span class="print-label">Symptoms</span>
-    <div>${formatChecklistForPrint('hpcList')}</div>
-  </div>
-</div>
-
-      <div class="print-section">
-        <h2>2. Red flags checked</h2>
-        <div>${formatChecklistForPrint('redFlagsList')}</div>
-      </div>
-
-      <div class="print-section">
-        <h2>3. Background / patient factors</h2>
-        <div class="print-row">
-          <span class="print-label">Allergies</span>
-          <div>${formatChecklistForPrint('allergiesList')}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Medical History</span>
-          <div>${formatChecklistForPrint('medicalHistoryList')}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Current Medications</span>
-          <div>${formatChecklistForPrint('currentMedsList')}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Special patient factors</span>
-          <div>${formatChecklistForPrint('patientFactorsList')}</div>
-        </div>
-      </div>
-
-      <div class="print-section">
-        <h2>4. Examination</h2>
-        <div class="print-row">
-          <span class="print-label">Examination checklist</span>
-          <div>${formatChecklistForPrint('examList')}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Additional findings</span>
-          <div>${formatTextValue(examFreeText)}</div>
-        </div>
-      </div>
-
-      <div class="print-section">
-        <h2>Vital Signs</h2>
-        <div>${formatChecklistForPrint('vitalsList')}</div>
-      </div>
-
-      <div class="print-section">
-        <h2>5. Diagnosis</h2>
-        <div class="print-row">
-          <span class="print-label">Diagnosis</span>
-          <div>${formatChecklistForPrint('diagnosisList')}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Differential / ruled out concerns</span>
-          <div>${formatChecklistForPrint('differentialsList')}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Private consult note</span>
-          <div>${formatTextValue(privateConsultNote)}</div>
-        </div>
-      </div>
-
-      <div class="print-section">
-        <h2>7. Prescribing</h2>
-        <div class="print-row">
-          <span class="print-label">Prescribing decisions</span>
-          <div>${formatTreatmentFlagsForPrint()}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">First-line treatment</span>
-          <div>${formatChecklistForPrint('prescribingFirstLineList')}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Second-line treatment</span>
-          <div>${formatChecklistForPrint('prescribingSecondLineList')}</div>
-        </div>
-      </div>
-
-      <div class="print-section">
-        <h2>7. Advice / safety net / documentation notes</h2>
-        <div class="print-row">
-          <span class="print-label">Advice</span>
-          <div>${formatChecklistForPrint('adviceList')}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Safety net</span>
-          <div>${formatChecklistForPrint('safetyNetList')}</div>
-        </div>
-        <div class="print-row">
-          <span class="print-label">Documentation notes</span>
-          <div>${formatChecklistForPrint('documentationList')}</div>
-        </div>
-      </div>
-	  <div class="print-row">
-  <span class="print-label">Private notes</span>
-  <div>${formatTextValue(prescribingPrivateNote)}</div>
-</div>
-<div class="print-row">
-  <span class="print-label">Plan / Treatment</span>
-  <div>${formatChecklistForPrint('planTreatmentList')}</div>
-</div>
-<div class="print-row">
-  <span class="print-label">First-line private notes</span>
-  <div>${formatTextValue(prescribingFirstLinePrivateNote)}</div>
-</div>
-<div class="print-row">
-  <span class="print-label">Second-line private notes</span>
-  <div>${formatTextValue(prescribingSecondLinePrivateNote)}</div>
-</div>
+      ${printableSections}
     </body>
     </html>
   `);
 
   printWindow.document.close();
   printWindow.focus();
-  setTimeout(() => printWindow.print(), 250);
+
+  setTimeout(() => {
+    printWindow.print();
+  }, 250);
 }
 
 async function copyOutput(asPlainText = false) {
