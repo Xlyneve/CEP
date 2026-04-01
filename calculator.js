@@ -434,14 +434,15 @@
       `;
     }
 
-    if (selections.dosingType === "strepA") {
-      return `
-        <strong>Note:</strong> Strep A dosing.<br><br>
-        Children under 20 kg: 250 mg 2 or 3 times daily for 10 days.<br>
-        Children and adults over 20 kg: 500 mg 2 or 3 times daily for 10 days.
-        ${tabletNotice}
-      `;
-    }
+   if (selections.dosingType === "strepA") {
+  return `
+    <strong>Note:</strong> Strep A dosing.<br><br>
+    Oral 50 mg/kg once daily (maximum daily dose 1000 mg).<br><br>
+    Weight under 30 kg: 750 mg once daily for 10 days.<br>
+    Weight 30 kg and over: 1000 mg once daily for 10 days.
+    ${tabletNotice}
+  `;
+}
 
     return `
       <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
@@ -517,21 +518,18 @@
     }
 
     if (type === "strepA") {
-      const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
-      const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
-
-      return {
-        mode: "single",
-        frequency,
-        sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
-        dosesPerDay,
-        defaultDurationDays: 10,
-        doseMg: 500,
-        maxDailyMg: 500 * dosesPerDay,
-        warnings: [],
-        extra: ["Adult fixed-dose regimen used."]
-      };
-    }
+  return {
+    mode: "single",
+    frequency: "Once daily for 10 days",
+    sigFrequency: "once daily",
+    dosesPerDay: 1,
+    defaultDurationDays: 10,
+    doseMg: 1000,
+    maxDailyMg: 1000,
+    warnings: [],
+    extra: ["Adult fixed-dose Strep A regimen used."]
+  };
+}
 
     return {
       mode: "single",
@@ -626,22 +624,29 @@
     }
 
     if (type === "strepA") {
-      const doseMg = weightKg < 20 ? 250 : 500;
-      const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
-      const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
+  const rawDose = weightKg * 50;
+  let doseMg = weightKg < 30 ? 750 : 1000;
+  const warnings = [];
 
-      return {
-        mode: "single",
-        frequency,
-        sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
-        dosesPerDay,
-        defaultDurationDays: 10,
-        doseMg,
-        maxDailyMg: doseMg * dosesPerDay,
-        warnings: [],
-        extra: [`Daily total: ${formatMg(doseMg * dosesPerDay)}`]
-      };
-    }
+  if (rawDose > 1000) {
+    warnings.push("Calculated dose exceeds maximum daily dose, so dose capped at 1000 mg once daily.");
+  }
+
+  return {
+    mode: "single",
+    frequency: "Once daily for 10 days",
+    sigFrequency: "once daily",
+    dosesPerDay: 1,
+    defaultDurationDays: 10,
+    doseMg,
+    maxDailyMg: doseMg,
+    warnings,
+    extra: [
+      "50 mg/kg once daily pathway selected.",
+      `Daily total: ${formatMg(doseMg)}`
+    ]
+  };
+}
 
     const doseLevel = selections.doseLevel || "low";
     const lowRaw = weightKg * 15;
