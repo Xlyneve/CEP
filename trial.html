@@ -1201,15 +1201,53 @@ select option {
   <div class="section-header">
     <div>
       <div class="section-heading">3. Vital Signs</div>
-      <div class="hint">Editable tick boxes</div>
+      <div class="hint">Only filled values will appear in summary</div>
     </div>
     <div class="badge-row">
       <span class="badge blue">Observations</span>
     </div>
   </div>
 
-  <div class="section-fields">
-    <div class="editable-checklist" id="vitalsList" data-placeholder="Add vital sign..."></div>
+  <div class="section-fields two">
+    <label>
+      Temp
+      <input id="vitalTemp" placeholder="e.g. 37.2" />
+    </label>
+
+    <label>
+      PR
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <input id="vitalPR" placeholder="e.g. 88" style="flex:1 1 120px;" />
+        <div class="mini-checks" style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap;">
+          <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+            <input type="checkbox" id="prRegular" /> REG
+          </label>
+          <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+            <input type="checkbox" id="prIrregular" /> IRREG
+          </label>
+        </div>
+      </div>
+    </label>
+
+    <label>
+      RR
+      <input id="vitalRR" placeholder="e.g. 16" />
+    </label>
+
+    <label>
+      BP
+      <input id="vitalBP" placeholder="e.g. 128/76" />
+    </label>
+
+    <label>
+      Sats
+      <input id="vitalSats" placeholder="e.g. 99% RA" />
+    </label>
+
+    <label>
+      WE
+      <input id="vitalWE" placeholder="e.g. 72 kg" />
+    </label>
   </div>
 </div>
 
@@ -1421,14 +1459,14 @@ const defaultTemplates = [
         'Relevant dangerous symptoms absent unless present'
       ],
 
-      vitals: [
-        'Temp',
-        'HR',
-        'BP',
-        'RR',
-        'SpO2',
-        'WE'
-      ],
+      vitalTemp: '',
+      vitalPR: '',
+      prRegular: false,
+      prIrregular: false,
+      vitalRR: '',
+      vitalBP: '',
+      vitalSats: '',
+      vitalWE: '',
 
       allergies: [
         'NKDA if relevant'
@@ -1571,6 +1609,12 @@ const textFieldIds = [
   'patientEthnicity',
   'presentationDuration',
   'presentationExtraText',
+  'vitalTemp',
+  'vitalPR',
+  'vitalRR',
+  'vitalBP',
+  'vitalSats',
+  'vitalWE',
   'examFreeText',
   'privateConsultNote',
   'prescribingPrivateNote',
@@ -1581,7 +1625,6 @@ const textFieldIds = [
 const checklistIds = [
   'hpcList',
   'redFlagsList',
-  'vitalsList',
   'allergiesList',
   'medicalHistoryList',
   'currentMedsList',
@@ -1900,6 +1943,14 @@ function collectPromptFields() {
     durationDays: !!getField('durationDays')?.checked,
     durationHours: !!getField('durationHours')?.checked,
     presentationExtraText: getField('presentationExtraText')?.value.trim() || '',
+    vitalTemp: getField('vitalTemp')?.value.trim() || '',
+    vitalPR: getField('vitalPR')?.value.trim() || '',
+    prRegular: !!getField('prRegular')?.checked,
+    prIrregular: !!getField('prIrregular')?.checked,
+    vitalRR: getField('vitalRR')?.value.trim() || '',
+    vitalBP: getField('vitalBP')?.value.trim() || '',
+    vitalSats: getField('vitalSats')?.value.trim() || '',
+    vitalWE: getField('vitalWE')?.value.trim() || '',
     examFreeText: getField('examFreeText')?.value.trim() || '',
     privateConsultNote: getField('privateConsultNote')?.value.trim() || '',
     prescribingPrivateNote: getField('prescribingPrivateNote')?.value.trim() || '',
@@ -1908,7 +1959,6 @@ function collectPromptFields() {
 
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlags: getChecklistItems('redFlagsList').map(i => i.text),
-    vitals: getChecklistItems('vitalsList').map(i => i.text),
     allergies: getChecklistItems('allergiesList').map(i => i.text),
     medicalHistory: getChecklistItems('medicalHistoryList').map(i => i.text),
     currentMeds: getChecklistItems('currentMedsList').map(i => i.text),
@@ -2043,7 +2093,14 @@ if (getField('prescribingSecondLinePrivateNote')) getField('prescribingSecondLin
 
 setChecklistItems('hpcList', template.prompts?.hpc);
 setChecklistItems('redFlagsList', template.prompts?.redFlags);
-setChecklistItems('vitalsList', template.prompts?.vitals);
+if (getField('vitalTemp')) getField('vitalTemp').value = template.prompts?.vitalTemp || '';
+if (getField('vitalPR')) getField('vitalPR').value = template.prompts?.vitalPR || '';
+if (getField('prRegular')) getField('prRegular').checked = !!template.prompts?.prRegular;
+if (getField('prIrregular')) getField('prIrregular').checked = !!template.prompts?.prIrregular;
+if (getField('vitalRR')) getField('vitalRR').value = template.prompts?.vitalRR || '';
+if (getField('vitalBP')) getField('vitalBP').value = template.prompts?.vitalBP || '';
+if (getField('vitalSats')) getField('vitalSats').value = template.prompts?.vitalSats || '';
+if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
 setChecklistItems('allergiesList', template.prompts?.allergies || template.prompts?.medsAllergies);
 setChecklistItems('medicalHistoryList', template.prompts?.medicalHistory || template.prompts?.pmhx);
 setChecklistItems('currentMedsList', template.prompts?.currentMeds);
@@ -2077,10 +2134,10 @@ function clearForm() {
 
   checklistIds.forEach(clearChecklist);
 
-  ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly', 'durationDays', 'durationHours'].forEach(id => {
-    const box = getField(id);
-    if (box) box.checked = false;
-  });
+  ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly', 'durationDays', 'durationHours', 'prRegular', 'prIrregular'].forEach(id => {
+  const box = getField(id);
+  if (box) box.checked = false;
+});
 
   [
   'presentationExtraText',
@@ -2111,6 +2168,23 @@ function setupDurationCheckboxes() {
   }
 }
 
+function setupPRCheckboxes() {
+  const reg = getField('prRegular');
+  const irreg = getField('prIrregular');
+
+  if (reg) {
+    reg.addEventListener('change', () => {
+      if (reg.checked && irreg) irreg.checked = false;
+    });
+  }
+
+  if (irreg) {
+    irreg.addEventListener('change', () => {
+      if (irreg.checked && reg) reg.checked = false;
+    });
+  }
+}
+
 function getCheckedTreatmentFlags() {
   const flags = [];
   if (getField('abxNotIndicated')?.checked) flags.push('Antibiotics not indicated');
@@ -2131,7 +2205,14 @@ function buildSummaryText() {
 
   const hpc = getCheckedChecklistTexts('hpcList');
   const redFlags = getCheckedChecklistTexts('redFlagsList');
-  const vitals = getCheckedChecklistTexts('vitalsList');
+  const vitalTemp = getField('vitalTemp')?.value.trim() || '';
+  const vitalPR = getField('vitalPR')?.value.trim() || '';
+  const prRegular = !!getField('prRegular')?.checked;
+  const prIrregular = !!getField('prIrregular')?.checked;
+  const vitalRR = getField('vitalRR')?.value.trim() || '';
+  const vitalBP = getField('vitalBP')?.value.trim() || '';
+  const vitalSats = getField('vitalSats')?.value.trim() || '';
+  const vitalWE = getField('vitalWE')?.value.trim() || '';
   const allergies = getCheckedChecklistTexts('allergiesList');
   const medicalHistory = getCheckedChecklistTexts('medicalHistoryList');
   const currentMeds = getCheckedChecklistTexts('currentMedsList');
@@ -2172,7 +2253,23 @@ function buildSummaryText() {
 
   if (presentationExtraText) lines.push(sentence(presentationExtraText));
 
-  if (vitals.length) lines.push(`Vital signs:\n${joinList(vitals)}`);
+  const vitals = [];
+
+if (vitalTemp) vitals.push(`Temp: ${vitalTemp}`);
+
+if (vitalPR) {
+  let prLine = `PR: ${vitalPR}`;
+  if (prRegular) prLine += ' REG';
+  else if (prIrregular) prLine += ' IRREG';
+  vitals.push(prLine);
+}
+
+if (vitalRR) vitals.push(`RR: ${vitalRR}`);
+if (vitalBP) vitals.push(`BP: ${vitalBP}`);
+if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
+if (vitalWE) vitals.push(`WE: ${vitalWE}`);
+
+if (vitals.length) lines.push(`Vital signs:\n${joinList(vitals)}`);
 
   const backgroundBits = [];
   if (allergies.length) backgroundBits.push(`Allergies:\n${joinList(allergies)}`);
