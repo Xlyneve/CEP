@@ -298,23 +298,30 @@
   cursor: pointer;
 }
 
-.minimalist-checklist .checklist-add-row {
-  display: none;
-}
-
-.minimalist-checklist.is-active .checklist-add-row {
+#prescribingFirstLineList .checklist-add-row,
+#prescribingSecondLineList .checklist-add-row {
   display: grid;
 }
 
-.minimalist-checklist .checklist-list:empty::before {
-  content: "Click to add";
+#planTreatmentList .checklist-list:empty::before,
+#prescribingFirstLineList .checklist-list:empty::before,
+#prescribingSecondLineList .checklist-list:empty::before {
+  content: "Add item";
   display: block;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 14px;
-  border: 1px dashed rgba(20,20,20,0.14);
-  background: rgba(255,255,255,0.35);
-  color: rgba(0,0,0,0.45);
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  color: rgba(0,0,0,0.55);
   font-size: 0.9rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
+}
+
+
+#planTreatmentList .checklist-add-btn,
+#prescribingFirstLineList .checklist-add-btn,
+#prescribingSecondLineList .checklist-add-btn {
+  border-radius: 14px;
 }
 
 @media (max-width: 900px) {
@@ -550,7 +557,73 @@ select option {
   -webkit-backdrop-filter: blur(14px);
   align-content: start;
 }
+.vitals-grid {
+  display: grid;
+  gap: 10px;
+}
 
+.vital-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  color: #222;
+}
+
+.vital-inline > span:first-child {
+  min-width: 52px;
+  font-weight: 500;
+}
+
+.vital-inline input[type="text"],
+.vital-inline input:not([type]),
+.vital-inline input[type="input"],
+.vital-inline input {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.08) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.62)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 3px 10px rgba(0,0,0,0.04) !important;
+}
+
+#vitalBP,
+#vitalSats {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+}
+
+.vital-pr-row {
+  gap: 8px;
+}
+
+
+.pr-toggle {
+  border: 1px solid rgba(20,20,20,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.62));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 3px 10px rgba(0,0,0,0.04);
+  color: #222;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.pr-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.pr-toggle.active {
+  border-color: rgba(90, 140, 210, 0.28);
+  background: linear-gradient(180deg, rgba(214,236,255,0.95), rgba(196,223,255,0.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.62), 0 4px 12px rgba(80,120,180,0.10);
+}
 
 #exam {
   min-height: 210px;
@@ -754,9 +827,19 @@ select option {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(20,20,20,0.12);
+ border: 1px solid rgba(20,20,20,0.12);
   background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
+}
+#planTreatmentList .checklist-new-input,
+#prescribingFirstLineList .checklist-new-input,
+#prescribingSecondLineList .checklist-new-input {
+  border-radius: 14px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.68));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 16px rgba(0,0,0,0.08);
+  color: #111;
+  padding: 12px 14px;
 }
 
 .check-item input[type="checkbox"] {
@@ -1181,15 +1264,46 @@ select option {
   <div class="section-header">
     <div>
       <div class="section-heading">3. Vital Signs</div>
-      <div class="hint">Editable tick boxes</div>
+      <div class="hint">Only filled values will appear in summary</div>
     </div>
     <div class="badge-row">
       <span class="badge blue">Observations</span>
     </div>
   </div>
 
-  <div class="section-fields">
-    <div class="editable-checklist" id="vitalsList" data-placeholder="Add vital sign..."></div>
+  <div class="vitals-grid">
+    <label class="vital-inline">
+      <span>Temp:</span>
+      <input id="vitalTemp" placeholder="" />
+    </label>
+
+    <label class="vital-inline vital-pr-row">
+  <span>PR:</span>
+  <input id="vitalPR" placeholder="" />
+
+  <button type="button" class="pr-toggle" id="prRegular">REG</button>
+  <button type="button" class="pr-toggle" id="prIrregular">IRREG</button>
+</label>
+
+    <label class="vital-inline">
+      <span>RR:</span>
+      <input id="vitalRR" placeholder="" />
+    </label>
+
+    <label class="vital-inline">
+      <span>BP:</span>
+      <input id="vitalBP" placeholder="" />
+    </label>
+
+    <label class="vital-inline">
+      <span>Sats:</span>
+      <input id="vitalSats" placeholder="" />
+    </label>
+
+    <label class="vital-inline">
+      <span>WE:</span>
+      <input id="vitalWE" placeholder="" />
+    </label>
   </div>
 </div>
 
@@ -1262,7 +1376,7 @@ select option {
           <textarea id="prescribingFirstLinePrivateNote" placeholder="Private reminder for first-line - not part of summary"></textarea>
         </label>
         <div class="treatment-title">First-line treatment</div>
-        <div class="editable-checklist minimalist-checklist" id="prescribingFirstLineList" data-placeholder="Add first-line medication..."></div>
+        <div class="editable-checklist" id="prescribingFirstLineList" data-placeholder="Add first-line medication..."></div>
       </div>
 
       <div class="treatment-column">
@@ -1271,7 +1385,7 @@ select option {
           <textarea id="prescribingSecondLinePrivateNote" placeholder="Private reminder for second-line - not part of summary"></textarea>
         </label>
         <div class="treatment-title">Second-line treatment</div>
-        <div class="editable-checklist minimalist-checklist" id="prescribingSecondLineList" data-placeholder="Add second-line medication..."></div>
+        <div class="editable-checklist" id="prescribingSecondLineList" data-placeholder="Add second-line medication..."></div>
       </div>
     </div>
   </div>
@@ -1401,14 +1515,14 @@ const defaultTemplates = [
         'Relevant dangerous symptoms absent unless present'
       ],
 
-      vitals: [
-        'Temp',
-        'HR',
-        'BP',
-        'RR',
-        'SpO2',
-        'WE'
-      ],
+      vitalTemp: '',
+      vitalPR: '',
+      prRegular: false,
+      prIrregular: false,
+      vitalRR: '',
+      vitalBP: '',
+      vitalSats: '',
+      vitalWE: '',
 
       allergies: [
         'NKDA if relevant'
@@ -1551,6 +1665,12 @@ const textFieldIds = [
   'patientEthnicity',
   'presentationDuration',
   'presentationExtraText',
+  'vitalTemp',
+  'vitalPR',
+  'vitalRR',
+  'vitalBP',
+  'vitalSats',
+  'vitalWE',
   'examFreeText',
   'privateConsultNote',
   'prescribingPrivateNote',
@@ -1561,7 +1681,6 @@ const textFieldIds = [
 const checklistIds = [
   'hpcList',
   'redFlagsList',
-  'vitalsList',
   'allergiesList',
   'medicalHistoryList',
   'currentMedsList',
@@ -1880,6 +1999,14 @@ function collectPromptFields() {
     durationDays: !!getField('durationDays')?.checked,
     durationHours: !!getField('durationHours')?.checked,
     presentationExtraText: getField('presentationExtraText')?.value.trim() || '',
+    vitalTemp: getField('vitalTemp')?.value.trim() || '',
+    vitalPR: getField('vitalPR')?.value.trim() || '',
+    prRegular: getField('prRegular')?.classList.contains('active') || false,
+    prIrregular: getField('prIrregular')?.classList.contains('active') || false,
+    vitalRR: getField('vitalRR')?.value.trim() || '',
+    vitalBP: getField('vitalBP')?.value.trim() || '',
+    vitalSats: getField('vitalSats')?.value.trim() || '',
+    vitalWE: getField('vitalWE')?.value.trim() || '',
     examFreeText: getField('examFreeText')?.value.trim() || '',
     privateConsultNote: getField('privateConsultNote')?.value.trim() || '',
     prescribingPrivateNote: getField('prescribingPrivateNote')?.value.trim() || '',
@@ -1888,7 +2015,6 @@ function collectPromptFields() {
 
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlags: getChecklistItems('redFlagsList').map(i => i.text),
-    vitals: getChecklistItems('vitalsList').map(i => i.text),
     allergies: getChecklistItems('allergiesList').map(i => i.text),
     medicalHistory: getChecklistItems('medicalHistoryList').map(i => i.text),
     currentMeds: getChecklistItems('currentMedsList').map(i => i.text),
@@ -2023,7 +2149,18 @@ if (getField('prescribingSecondLinePrivateNote')) getField('prescribingSecondLin
 
 setChecklistItems('hpcList', template.prompts?.hpc);
 setChecklistItems('redFlagsList', template.prompts?.redFlags);
-setChecklistItems('vitalsList', template.prompts?.vitals);
+if (getField('vitalTemp')) getField('vitalTemp').value = template.prompts?.vitalTemp || '';
+if (getField('vitalPR')) getField('vitalPR').value = template.prompts?.vitalPR || '';
+if (getField('prRegular')) {
+  getField('prRegular').classList.toggle('active', !!template.prompts?.prRegular);
+}
+if (getField('prIrregular')) {
+  getField('prIrregular').classList.toggle('active', !!template.prompts?.prIrregular);
+}
+if (getField('vitalRR')) getField('vitalRR').value = template.prompts?.vitalRR || '';
+if (getField('vitalBP')) getField('vitalBP').value = template.prompts?.vitalBP || '';
+if (getField('vitalSats')) getField('vitalSats').value = template.prompts?.vitalSats || '';
+if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
 setChecklistItems('allergiesList', template.prompts?.allergies || template.prompts?.medsAllergies);
 setChecklistItems('medicalHistoryList', template.prompts?.medicalHistory || template.prompts?.pmhx);
 setChecklistItems('currentMedsList', template.prompts?.currentMeds);
@@ -2058,9 +2195,14 @@ function clearForm() {
   checklistIds.forEach(clearChecklist);
 
   ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly', 'durationDays', 'durationHours'].forEach(id => {
-    const box = getField(id);
-    if (box) box.checked = false;
-  });
+  const box = getField(id);
+  if (box) box.checked = false;
+});
+
+['prRegular', 'prIrregular'].forEach(id => {
+  const btn = getField(id);
+  if (btn) btn.classList.remove('active');
+});
 
   [
   'presentationExtraText',
@@ -2091,6 +2233,27 @@ function setupDurationCheckboxes() {
   }
 }
 
+function setupPRToggleButtons() {
+  const reg = getField('prRegular');
+  const irreg = getField('prIrregular');
+
+  if (reg) {
+    reg.addEventListener('click', () => {
+      const isActive = reg.classList.contains('active');
+      reg.classList.toggle('active', !isActive);
+      if (!isActive && irreg) irreg.classList.remove('active');
+    });
+  }
+
+  if (irreg) {
+    irreg.addEventListener('click', () => {
+      const isActive = irreg.classList.contains('active');
+      irreg.classList.toggle('active', !isActive);
+      if (!isActive && reg) reg.classList.remove('active');
+    });
+  }
+}
+
 function getCheckedTreatmentFlags() {
   const flags = [];
   if (getField('abxNotIndicated')?.checked) flags.push('Antibiotics not indicated');
@@ -2111,7 +2274,14 @@ function buildSummaryText() {
 
   const hpc = getCheckedChecklistTexts('hpcList');
   const redFlags = getCheckedChecklistTexts('redFlagsList');
-  const vitals = getCheckedChecklistTexts('vitalsList');
+  const vitalTemp = getField('vitalTemp')?.value.trim() || '';
+  const vitalPR = getField('vitalPR')?.value.trim() || '';
+  const prRegular = getField('prRegular')?.classList.contains('active') || false;
+  const prIrregular = getField('prIrregular')?.classList.contains('active') || false;
+  const vitalRR = getField('vitalRR')?.value.trim() || '';
+  const vitalBP = getField('vitalBP')?.value.trim() || '';
+  const vitalSats = getField('vitalSats')?.value.trim() || '';
+  const vitalWE = getField('vitalWE')?.value.trim() || '';
   const allergies = getCheckedChecklistTexts('allergiesList');
   const medicalHistory = getCheckedChecklistTexts('medicalHistoryList');
   const currentMeds = getCheckedChecklistTexts('currentMedsList');
@@ -2152,7 +2322,23 @@ function buildSummaryText() {
 
   if (presentationExtraText) lines.push(sentence(presentationExtraText));
 
-  if (vitals.length) lines.push(`Vital signs:\n${joinList(vitals)}`);
+  const vitals = [];
+
+if (vitalTemp) vitals.push(`Temp: ${vitalTemp}`);
+
+if (vitalPR) {
+  let prLine = `PR: ${vitalPR}`;
+  if (prRegular) prLine += ' REG';
+  else if (prIrregular) prLine += ' IRREG';
+  vitals.push(prLine);
+}
+
+if (vitalRR) vitals.push(`RR: ${vitalRR}`);
+if (vitalBP) vitals.push(`BP: ${vitalBP}`);
+if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
+if (vitalWE) vitals.push(`WE: ${vitalWE}`);
+
+if (vitals.length) lines.push(`Vital signs:\n${joinList(vitals)}`);
 
   const backgroundBits = [];
   if (allergies.length) backgroundBits.push(`Allergies:\n${joinList(allergies)}`);
@@ -2694,6 +2880,7 @@ updateAuthUI();
 initAllChecklists();
 setupMinimalistChecklistToggle();
 setupMobileTopbar();
+setupPRToggleButtons();
 setupDesktopHeaderMinimize();
 setupPrivateNotesAutoGrow();
 
