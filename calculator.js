@@ -2036,7 +2036,8 @@ if (opt.type === "number") {
   ) {
     return {
       type: "liquid",
-      mgPer5ml: (result.customStrength.mg / result.customStrength.ml) * 5,
+      mgPerMl: result.customStrength.mg / result.customStrength.ml,
+      strengthMg: result.customStrength.mg,
       label: `${result.customStrength.mg} mg / ${result.customStrength.ml} mL`
     };
   }
