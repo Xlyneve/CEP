@@ -640,6 +640,8 @@ select option {
 .private-note-label {
   color: #6b5a7a;
 }
+#presentationPrivateNote,
+#examPrivateNote,
 #privateConsultNote,
 #prescribingPrivateNote,
 #prescribingFirstLinePrivateNote,
@@ -651,6 +653,8 @@ select option {
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 16px rgba(0,0,0,0.06);
 }
 
+#presentationPrivateNote::placeholder,
+#examPrivateNote::placeholder,
 #privateConsultNote::placeholder,
 #prescribingPrivateNote::placeholder,
 #prescribingFirstLinePrivateNote::placeholder,
@@ -701,9 +705,10 @@ select option {
 }
 
     textarea {
-      min-height: 110px;
-      resize: vertical;
-    }
+  min-height: 110px;
+  resize: none;
+  overflow: hidden;
+}
 
      .mini-checks {
   display: grid;
@@ -1171,12 +1176,17 @@ select option {
 </label>
   </div>
 
-  <div class="section-fields">
+   <div class="section-fields">
     <div class="editable-checklist" id="hpcList" data-placeholder="Add symptom..."></div>
 
     <label>
       Additional presentation text
       <textarea id="presentationExtraText" placeholder="Extra line after presenting symptoms..."></textarea>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+      <textarea id="presentationPrivateNote" placeholder="Quick note to self - not part of summary"></textarea>
     </label>
   </div>
 </div>
@@ -1242,7 +1252,7 @@ select option {
     </div>
   </div>
 
-  <div class="section-fields">
+    <div class="section-fields">
     <label>
       Examination - first line
       <div class="editable-checklist" id="examPrimaryList" data-placeholder="Add main examination item..."></div>
@@ -1256,6 +1266,11 @@ select option {
     <label>
       Additional findings
       <textarea id="examFreeText" placeholder="Optional extra findings..."></textarea>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+      <textarea id="examPrivateNote" placeholder="Quick note to self during exam - not part of summary"></textarea>
     </label>
   </div>
 </div>
@@ -1503,6 +1518,7 @@ const defaultTemplates = [
       durationDays: true,
       durationHours: false,
       presentationExtraText: '',
+      presentationPrivateNote: '',
 
       hpc: [
         'cough',
@@ -1551,6 +1567,7 @@ const defaultTemplates = [
       ],
 
       examFreeText: '',
+      examPrivateNote: '',
 
       diagnosis: [
         'Working diagnosis'
@@ -1665,6 +1682,7 @@ const textFieldIds = [
   'patientEthnicity',
   'presentationDuration',
   'presentationExtraText',
+  'presentationPrivateNote',
   'vitalTemp',
   'vitalPR',
   'vitalRR',
@@ -1672,6 +1690,7 @@ const textFieldIds = [
   'vitalSats',
   'vitalWE',
   'examFreeText',
+  'examPrivateNote',
   'privateConsultNote',
   'prescribingPrivateNote',
   'prescribingFirstLinePrivateNote',
@@ -1757,11 +1776,13 @@ function autoGrowTextarea(el) {
 function setupPrivateNotesAutoGrow() {
   [
     'presentationExtraText',
+    'presentationPrivateNote',
+    'examFreeText',
+    'examPrivateNote',
     'privateConsultNote',
     'prescribingPrivateNote',
     'prescribingFirstLinePrivateNote',
-    'prescribingSecondLinePrivateNote',
-    'examFreeText'
+    'prescribingSecondLinePrivateNote'
   ].forEach(id => {
     const field = getField(id);
     if (!field) return;
@@ -1999,6 +2020,7 @@ function collectPromptFields() {
     durationDays: !!getField('durationDays')?.checked,
     durationHours: !!getField('durationHours')?.checked,
     presentationExtraText: getField('presentationExtraText')?.value.trim() || '',
+	presentationPrivateNote: getField('presentationPrivateNote')?.value.trim() || '',
     vitalTemp: getField('vitalTemp')?.value.trim() || '',
     vitalPR: getField('vitalPR')?.value.trim() || '',
     prRegular: getField('prRegular')?.classList.contains('active') || false,
@@ -2008,6 +2030,7 @@ function collectPromptFields() {
     vitalSats: getField('vitalSats')?.value.trim() || '',
     vitalWE: getField('vitalWE')?.value.trim() || '',
     examFreeText: getField('examFreeText')?.value.trim() || '',
+	examPrivateNote: getField('examPrivateNote')?.value.trim() || '',
     privateConsultNote: getField('privateConsultNote')?.value.trim() || '',
     prescribingPrivateNote: getField('prescribingPrivateNote')?.value.trim() || '',
     prescribingFirstLinePrivateNote: getField('prescribingFirstLinePrivateNote')?.value.trim() || '',
@@ -2139,9 +2162,11 @@ function fillTemplatePrompts() {
 if (getField('patientEthnicity')) getField('patientEthnicity').value = template.prompts?.patientEthnicity || '';
 if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
 if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
+if (getField('presentationPrivateNote')) getField('presentationPrivateNote').value = template.prompts?.presentationPrivateNote || '';
 if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
 if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
 if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
+if (getField('examPrivateNote')) getField('examPrivateNote').value = template.prompts?.examPrivateNote || '';
 if (getField('privateConsultNote')) getField('privateConsultNote').value = template.prompts?.privateConsultNote || '';
 if (getField('prescribingPrivateNote')) getField('prescribingPrivateNote').value = template.prompts?.prescribingPrivateNote || '';
 if (getField('prescribingFirstLinePrivateNote')) getField('prescribingFirstLinePrivateNote').value = template.prompts?.prescribingFirstLinePrivateNote || '';
@@ -2178,7 +2203,9 @@ setChecklistItems('documentationList', template.prompts?.documentation);
 
 [
   'presentationExtraText',
+  'presentationPrivateNote',
   'examFreeText',
+  'examPrivateNote',
   'privateConsultNote',
   'prescribingPrivateNote',
   'prescribingFirstLinePrivateNote',
