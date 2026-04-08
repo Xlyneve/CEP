@@ -1,5 +1,126 @@
 (function () {
   const MEDS = {
+	  customMgKg: {
+  label: "Custom mg/kg calculator",
+  age: { minMonths: 0, maxYears: 120 },
+  strengths: [
+    { id: "customLiq", value: 1, label: "Custom suspension" }
+  ],
+  options: [
+    {
+      id: "customMgPerKg",
+      label: "mg/kg per dose",
+      type: "number"
+    },
+    {
+      id: "customFreq",
+      label: "Frequency",
+      type: "select",
+      choices: [
+        { value: "od", label: "Once daily" },
+        { value: "bd", label: "Twice daily" },
+        { value: "tds", label: "Three times daily" },
+        { value: "qid", label: "Four times daily" }
+      ]
+    },
+    {
+      id: "customDays",
+      label: "Duration (days)",
+      type: "number"
+    },
+    {
+      id: "customStrengthMg",
+      label: "Suspension mg",
+      type: "number"
+    },
+    {
+      id: "customStrengthMl",
+      label: "Suspension mL",
+      type: "number"
+    },
+    {
+      id: "customMaxDose",
+      label: "Max single dose (mg)",
+      type: "number"
+    }
+  ],
+  note: () => `
+    <strong>Note:</strong> Custom weight-based calculator.<br><br>
+    Enter mg/kg/dose, frequency, duration, and your own suspension strength.
+  `,
+  calc: ({ weightKg, selections }) => {
+    const mgPerKg = parseFloat(selections.customMgPerKg);
+    const strengthMg = parseFloat(selections.customStrengthMg);
+    const strengthMl = parseFloat(selections.customStrengthMl);
+    const maxDose = parseFloat(selections.customMaxDose);
+
+    if (!isFinite(weightKg) || weightKg <= 0 || !isFinite(mgPerKg) || mgPerKg <= 0) {
+      return {
+        mode: "single",
+        frequency: "",
+        sigFrequency: "",
+        dosesPerDay: null,
+        defaultDurationDays: null,
+        doseMg: null,
+        maxDailyMg: null,
+        warnings: ["Enter weight and mg/kg per dose."],
+        extra: []
+      };
+    }
+
+    const rawDose = weightKg * mgPerKg;
+    const doseMg = isFinite(maxDose) && maxDose > 0 ? Math.min(rawDose, maxDose) : rawDose;
+
+    let dosesPerDay = 1;
+    let frequency = "Once daily";
+    let sigFrequency = "once daily";
+
+    if (selections.customFreq === "bd") {
+      dosesPerDay = 2;
+      frequency = "Twice daily";
+      sigFrequency = "twice daily";
+    } else if (selections.customFreq === "tds") {
+      dosesPerDay = 3;
+      frequency = "Three times daily";
+      sigFrequency = "three times daily";
+    } else if (selections.customFreq === "qid") {
+      dosesPerDay = 4;
+      frequency = "Four times daily";
+      sigFrequency = "four times daily";
+    }
+
+    const warnings = [];
+    if (isFinite(maxDose) && maxDose > 0 && rawDose > maxDose) {
+      warnings.push(`Dose capped at max single dose of ${formatMg(maxDose)}.`);
+    }
+
+    return {
+      mode: "single",
+      frequency: selections.customDays
+        ? `${frequency} for ${selections.customDays} days`
+        : frequency,
+      sigFrequency,
+      dosesPerDay,
+      defaultDurationDays: isFinite(parseFloat(selections.customDays))
+        ? parseFloat(selections.customDays)
+        : null,
+      doseMg,
+      maxDailyMg: doseMg * dosesPerDay,
+      warnings,
+      extra: [
+        `Calculated from ${mgPerKg} mg/kg/dose`,
+        `Daily total: ${formatMg(doseMg * dosesPerDay)}`,
+        isFinite(strengthMg) && isFinite(strengthMl) && strengthMg > 0 && strengthMl > 0
+          ? `Suspension entered: ${strengthMg} mg / ${strengthMl} mL`
+          : ""
+      ].filter(Boolean),
+      customStrength: {
+        mg: strengthMg,
+        ml: strengthMl
+      }
+    };
+  }
+},
     paracetamol: {
       label: "Paracetamol",
       age: { minMonths: 1, maxYears: 18 },
@@ -129,7 +250,7 @@
       }
     },
 
-   flucloxacillin: {
+  flucloxacillin: {
   label: "Flucloxacillin",
   age: { minMonths: 1, maxYears: 18 },
   strengths: [
@@ -172,6 +293,7 @@
       return `
         <strong>Note:</strong> Cellulitis dosing.<br><br>
         Adult: 1 g four times daily for 5 days.<br><br>
+        <strong>Source:</strong> tewhatakura.nz
         ${capsuleNotice}
       `;
     }
@@ -179,8 +301,9 @@
     if (selections.dosingType === "impetigo") {
       return `
         <strong>Note:</strong> Impetigo dosing.<br><br>
-        12.5 mg/kg/dose four times a day (maximum 500 mg per dose), for 7 to 10 days.<br><br>
-        Use if able to take capsules. The suspension is unpalatable, children often dislike the taste, and it must be given on an empty stomach.
+        25 mg/kg/dose four times daily (maximum 1 g per dose) for 5 days.<br><br>
+        Can be taken with fruit juice.<br><br>
+        <strong>Source:</strong> tewhatakura.nz
         ${capsuleNotice}
       `;
     }
@@ -189,7 +312,8 @@
       <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
       12.5–25 mg/kg four times daily.<br>
       Use 25 mg/kg for severe infections.<br>
-      Maximum single dose: 1 g.
+      Maximum single dose: 1 g.<br><br>
+      <strong>Source:</strong> tewhatakura.nz
       ${capsuleNotice}
     `;
   },
@@ -199,15 +323,14 @@
     if (type === "impetigo") {
       return {
         mode: "single",
-        frequency: "4 times daily for 7 to 10 days",
+        frequency: "4 times daily for 5 days",
         sigFrequency: "four times daily",
         dosesPerDay: 4,
-        durationRangeDays: [7, 10],
-        defaultDurationDays: null,
-        doseMg: 500,
-        maxDailyMg: 2000,
+        defaultDurationDays: 5,
+        doseMg: 1000,
+        maxDailyMg: 4000,
         warnings: [],
-        extra: ["Adult fixed-dose regimen used."]
+        extra: ["Adult fixed-dose regimen used.", "Source: tewhatakura.nz"]
       };
     }
 
@@ -221,7 +344,7 @@
         doseMg: 1000,
         maxDailyMg: 4000,
         warnings: [],
-        extra: ["Adult cellulitis regimen used."]
+        extra: ["Adult cellulitis regimen used.", "Source: tewhatakura.nz"]
       };
     }
 
@@ -234,7 +357,7 @@
       doseMg: 500,
       maxDailyMg: 2000,
       warnings: [],
-      extra: ["Adult fixed-dose regimen used."]
+      extra: ["Adult fixed-dose regimen used.", "Source: tewhatakura.nz"]
     };
   },
   calc: ({ weightKg, selections }) => {
@@ -262,7 +385,10 @@
           doseMg: lowDose,
           maxDailyMg: lowDose * 4,
           warnings,
-          extra: [`Daily total at this dose: ${formatMg(lowDose * 4)}`]
+          extra: [
+            `Daily total at this dose: ${formatMg(lowDose * 4)}`,
+            "Source: tewhatakura.nz"
+          ]
         };
       }
 
@@ -276,7 +402,10 @@
           doseMg: highDose,
           maxDailyMg: highDose * 4,
           warnings,
-          extra: [`Daily total at this dose: ${formatMg(highDose * 4)}`]
+          extra: [
+            `Daily total at this dose: ${formatMg(highDose * 4)}`,
+            "Source: tewhatakura.nz"
+          ]
         };
       }
 
@@ -292,29 +421,32 @@
         warnings,
         extra: [
           `Daily total (low): ${formatMg(lowDose * 4)}`,
-          `Daily total (high): ${formatMg(highDose * 4)}`
+          `Daily total (high): ${formatMg(highDose * 4)}`,
+          "Source: tewhatakura.nz"
         ]
       };
     }
 
     if (type === "impetigo") {
-      const rawDose = weightKg * 12.5;
-      const doseMg = Math.min(rawDose, 500);
+      const rawDose = weightKg * 25;
+      const doseMg = Math.min(rawDose, 1000);
       const warnings = [];
 
-      if (rawDose > 500) warnings.push("Dose capped at max single dose of 500 mg.");
+      if (rawDose > 1000) warnings.push("Dose capped at max single dose of 1000 mg.");
 
       return {
         mode: "single",
-        frequency: "4 times daily for 7 to 10 days",
+        frequency: "4 times daily for 5 days",
         sigFrequency: "four times daily",
         dosesPerDay: 4,
-        durationRangeDays: [7, 10],
-        defaultDurationDays: null,
+        defaultDurationDays: 5,
         doseMg,
         maxDailyMg: doseMg * 4,
         warnings,
-        extra: [`Daily total: ${formatMg(doseMg * 4)}`]
+        extra: [
+          `Daily total: ${formatMg(doseMg * 4)}`,
+          "Source: tewhatakura.nz"
+        ]
       };
     }
 
@@ -339,7 +471,10 @@
         doseMg: lowDose,
         maxDailyMg: lowDose * 4,
         warnings,
-        extra: [`Daily total at this dose: ${formatMg(lowDose * 4)}`]
+        extra: [
+          `Daily total at this dose: ${formatMg(lowDose * 4)}`,
+          "Source: tewhatakura.nz"
+        ]
       };
     }
 
@@ -353,7 +488,10 @@
         doseMg: highDose,
         maxDailyMg: highDose * 4,
         warnings,
-        extra: [`Daily total at this dose: ${formatMg(highDose * 4)}`]
+        extra: [
+          `Daily total at this dose: ${formatMg(highDose * 4)}`,
+          "Source: tewhatakura.nz"
+        ]
       };
     }
 
@@ -369,12 +507,12 @@
       warnings,
       extra: [
         `Daily total (low): ${formatMg(lowDose * 4)}`,
-        `Daily total (high): ${formatMg(highDose * 4)}`
+        `Daily total (high): ${formatMg(highDose * 4)}`,
+        "Source: tewhatakura.nz"
       ]
     };
   }
 },
-
     amoxicillin: {
   label: "Amoxicillin",
   age: { minMonths: 1, maxYears: 18 },
@@ -706,205 +844,179 @@
 },
 
     cefalexin: {
-      label: "Cefalexin",
-      age: { minMonths: 1, maxYears: 18 },
-      strengths: [
-        { id: "liq125", value: 125, label: "125 mg / 5 mL" },
-        { id: "liq250", value: 250, label: "250 mg / 5 mL" },
-        { id: "cap250", value: 250, label: "250 mg capsule" },
-        { id: "cap500", value: 500, label: "500 mg capsule" }
-      ],
-      options: [
-        {
-          id: "dosingType",
-          label: "Indication",
-          type: "select",
-          choices: [
-            { value: "impetigo", label: "Impetigo" },
-            { value: "generalInfection", label: "General Infection" }
-          ]
-        },
-        {
-          id: "doseLevel",
-          label: "Dose Level",
-          type: "select",
-          choices: [
-            { value: "low", label: "Low dose" },
-            { value: "high", label: "High dose" },
-            { value: "range", label: "Show both" }
-          ]
-        }
-      ],
-      note: ({ selections, formulation, patientType }) => {
-        const tabletNotice = formulation?.type === "tablet"
-          ? patientType === "adult"
-            ? `<br><br><strong>Adult capsule note:</strong> Fixed adult dosing can be used without entering weight.`
-            : `<br><br><strong>Capsule note:</strong> Weight is still required for this medicine in children even when capsule formulation is selected.`
-          : "";
-
-        if (selections.dosingType === "impetigo") {
-          return `
-            <strong>Note:</strong> Impetigo dosing.<br><br>
-            12.5 to 25 mg/kg twice a day (maximum 1 g per dose) for five to seven days.<br><br>
-            Palatable suspension, well tolerated, funded.
-            ${tabletNotice}
-          `;
-        }
-
-        return `
-          <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
-          <strong>General Infection:</strong> 12.5–25 mg/kg four times daily (usual max 500 mg; up to 1 g may be used)
-          ${tabletNotice}
-        `;
-      },
-      adultCalc: ({ selections }) => {
-        const type = selections.dosingType || "impetigo";
-
-        if (type === "impetigo") {
-          return {
-            mode: "single",
-            frequency: "Twice daily for 5 to 7 days",
-            sigFrequency: "twice daily",
-            dosesPerDay: 2,
-            durationRangeDays: [5, 7],
-            defaultDurationDays: null,
-            doseMg: 500,
-            maxDailyMg: 1000,
-            warnings: [],
-            extra: ["Adult fixed-dose regimen used."]
-          };
-        }
-
-        return {
-          mode: "single",
-          frequency: "Four times daily",
-          sigFrequency: "four times daily",
-          dosesPerDay: 4,
-          defaultDurationDays: null,
-          doseMg: 500,
-          maxDailyMg: 2000,
-          warnings: [],
-          extra: ["Adult fixed-dose regimen used."]
-        };
-      },
-      calc: ({ weightKg, selections }) => {
-        const type = selections.dosingType || "impetigo";
-        const doseLevel = selections.doseLevel || "low";
-
-        if (type === "impetigo") {
-          const lowRaw = weightKg * 12.5;
-          const highRaw = weightKg * 25;
-          const lowDose = Math.min(lowRaw, 1000);
-          const highDose = Math.min(highRaw, 1000);
-          const warnings = [];
-
-          if (lowRaw > 1000 || highRaw > 1000) {
-            warnings.push("Dose capped at max single dose of 1000 mg.");
-          }
-
-          if (doseLevel === "low") {
-            return {
-              mode: "single",
-              frequency: "Twice daily for 5 to 7 days",
-              sigFrequency: "twice daily",
-              dosesPerDay: 2,
-              durationRangeDays: [5, 7],
-              defaultDurationDays: null,
-              doseMg: lowDose,
-              maxDailyMg: lowDose * 2,
-              warnings,
-              extra: [`Daily total at this dose: ${formatMg(lowDose * 2)}`]
-            };
-          }
-
-          if (doseLevel === "high") {
-            return {
-              mode: "single",
-              frequency: "Twice daily for 5 to 7 days",
-              sigFrequency: "twice daily",
-              dosesPerDay: 2,
-              durationRangeDays: [5, 7],
-              defaultDurationDays: null,
-              doseMg: highDose,
-              maxDailyMg: highDose * 2,
-              warnings,
-              extra: [`Daily total at this dose: ${formatMg(highDose * 2)}`]
-            };
-          }
-
-          return {
-            mode: "range",
-            frequency: "Twice daily for 5 to 7 days",
-            sigFrequency: "twice daily",
-            dosesPerDay: 2,
-            durationRangeDays: [5, 7],
-            defaultDurationDays: null,
-            lowDoseMg: lowDose,
-            highDoseMg: highDose,
-            maxDailyMg: highDose * 2,
-            warnings,
-            extra: [
-              `Daily total (low): ${formatMg(lowDose * 2)}`,
-              `Daily total (high): ${formatMg(highDose * 2)}`
-            ]
-          };
-        }
-
-        const lowRaw = weightKg * 12.5;
-        const highRaw = weightKg * 25;
-        const lowDose = Math.min(lowRaw, 1000);
-        const highDose = Math.min(highRaw, 1000);
-        const warnings = [];
-
-        if (lowRaw > 1000 || highRaw > 1000) {
-          warnings.push("Dose capped at max single dose of 1000 mg.");
-        }
-
-        if (doseLevel === "low") {
-          return {
-            mode: "single",
-            frequency: "Four times daily",
-            sigFrequency: "four times daily",
-            dosesPerDay: 4,
-            defaultDurationDays: null,
-            doseMg: lowDose,
-            maxDailyMg: lowDose * 4,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(lowDose * 4)}`]
-          };
-        }
-
-        if (doseLevel === "high") {
-          return {
-            mode: "single",
-            frequency: "Four times daily",
-            sigFrequency: "four times daily",
-            dosesPerDay: 4,
-            defaultDurationDays: null,
-            doseMg: highDose,
-            maxDailyMg: highDose * 4,
-            warnings,
-            extra: [`Daily total at this dose: ${formatMg(highDose * 4)}`]
-          };
-        }
-
-        return {
-          mode: "range",
-          frequency: "Four times daily",
-          sigFrequency: "four times daily",
-          dosesPerDay: 4,
-          defaultDurationDays: null,
-          lowDoseMg: lowDose,
-          highDoseMg: highDose,
-          maxDailyMg: highDose * 4,
-          warnings,
-          extra: [
-            `Daily total (low): ${formatMg(lowDose * 4)}`,
-            `Daily total (high): ${formatMg(highDose * 4)}`
-          ]
-        };
-      }
+  label: "Cefalexin",
+  age: { minMonths: 1, maxYears: 18 },
+  strengths: [
+    { id: "liq125", value: 125, label: "125 mg / 5 mL" },
+    { id: "liq250", value: 250, label: "250 mg / 5 mL" },
+    { id: "cap250", value: 250, label: "250 mg capsule" },
+    { id: "cap500", value: 500, label: "500 mg capsule" }
+  ],
+  options: [
+    {
+      id: "dosingType",
+      label: "Indication",
+      type: "select",
+      choices: [
+        { value: "impetigo", label: "Impetigo" },
+        { value: "generalInfection", label: "General Infection" }
+      ]
     },
+    {
+      id: "doseLevel",
+      label: "Dose Level",
+      type: "select",
+      choices: [
+        { value: "low", label: "Low dose" },
+        { value: "high", label: "High dose" },
+        { value: "range", label: "Show both" }
+      ]
+    }
+  ],
+  note: ({ selections, formulation, patientType }) => {
+    const tabletNotice = formulation?.type === "tablet"
+      ? patientType === "adult"
+        ? `<br><br><strong>Adult capsule note:</strong> Fixed adult dosing can be used without entering weight.`
+        : `<br><br><strong>Capsule note:</strong> Weight is still required for this medicine in children even when capsule formulation is selected.`
+      : "";
+
+    if (selections.dosingType === "impetigo") {
+      return `
+        <strong>Note:</strong> Impetigo dosing.<br><br>
+        25 mg/kg twice daily (maximum 1 g per dose) for 5 days.<br><br>
+        Palatable suspension, well tolerated, funded.<br><br>
+        <strong>Source:</strong> tewhatakura.nz
+        ${tabletNotice}
+      `;
+    }
+
+    return `
+      <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
+      <strong>General Infection:</strong> 12.5–25 mg/kg four times daily (usual max 500 mg; up to 1 g may be used)<br><br>
+      <strong>Source:</strong> tewhatakura.nz
+      ${tabletNotice}
+    `;
+  },
+  adultCalc: ({ selections }) => {
+    const type = selections.dosingType || "impetigo";
+
+    if (type === "impetigo") {
+      return {
+        mode: "single",
+        frequency: "Twice daily for 5 days",
+        sigFrequency: "twice daily",
+        dosesPerDay: 2,
+        defaultDurationDays: 5,
+        doseMg: 500,
+        maxDailyMg: 1000,
+        warnings: [],
+        extra: ["Adult fixed-dose regimen used.", "Source: tewhatakura.nz"]
+      };
+    }
+
+    return {
+      mode: "single",
+      frequency: "Four times daily",
+      sigFrequency: "four times daily",
+      dosesPerDay: 4,
+      defaultDurationDays: null,
+      doseMg: 500,
+      maxDailyMg: 2000,
+      warnings: [],
+      extra: ["Adult fixed-dose regimen used.", "Source: tewhatakura.nz"]
+    };
+  },
+  calc: ({ weightKg, selections }) => {
+    const type = selections.dosingType || "impetigo";
+    const doseLevel = selections.doseLevel || "low";
+
+    if (type === "impetigo") {
+      const rawDose = weightKg * 25;
+      const doseMg = Math.min(rawDose, 1000);
+      const warnings = [];
+
+      if (rawDose > 1000) {
+        warnings.push("Dose capped at max single dose of 1000 mg.");
+      }
+
+      return {
+        mode: "single",
+        frequency: "Twice daily for 5 days",
+        sigFrequency: "twice daily",
+        dosesPerDay: 2,
+        defaultDurationDays: 5,
+        doseMg,
+        maxDailyMg: doseMg * 2,
+        warnings,
+        extra: [
+          `Daily total: ${formatMg(doseMg * 2)}`,
+          "Source: tewhatakura.nz"
+        ]
+      };
+    }
+
+    const lowRaw = weightKg * 12.5;
+    const highRaw = weightKg * 25;
+    const lowDose = Math.min(lowRaw, 1000);
+    const highDose = Math.min(highRaw, 1000);
+    const warnings = [];
+
+    if (lowRaw > 1000 || highRaw > 1000) {
+      warnings.push("Dose capped at max single dose of 1000 mg.");
+    }
+
+    if (doseLevel === "low") {
+      return {
+        mode: "single",
+        frequency: "Four times daily",
+        sigFrequency: "four times daily",
+        dosesPerDay: 4,
+        defaultDurationDays: null,
+        doseMg: lowDose,
+        maxDailyMg: lowDose * 4,
+        warnings,
+        extra: [
+          `Daily total at this dose: ${formatMg(lowDose * 4)}`,
+          "Source: tewhatakura.nz"
+        ]
+      };
+    }
+
+    if (doseLevel === "high") {
+      return {
+        mode: "single",
+        frequency: "Four times daily",
+        sigFrequency: "four times daily",
+        dosesPerDay: 4,
+        defaultDurationDays: null,
+        doseMg: highDose,
+        maxDailyMg: highDose * 4,
+        warnings,
+        extra: [
+          `Daily total at this dose: ${formatMg(highDose * 4)}`,
+          "Source: tewhatakura.nz"
+        ]
+      };
+    }
+
+    return {
+      mode: "range",
+      frequency: "Four times daily",
+      sigFrequency: "four times daily",
+      dosesPerDay: 4,
+      defaultDurationDays: null,
+      lowDoseMg: lowDose,
+      highDoseMg: highDose,
+      maxDailyMg: highDose * 4,
+      warnings,
+      extra: [
+        `Daily total (low): ${formatMg(lowDose * 4)}`,
+        `Daily total (high): ${formatMg(highDose * 4)}`,
+        "Source: tewhatakura.nz"
+      ]
+    };
+  }
+},
 
     cefaclor: {
       label: "Cefaclor",
@@ -1764,9 +1876,9 @@
     if (!extraDiv || !noteDiv || !resultBox) return;
 
     const previousSelections = {};
-    extraDiv.querySelectorAll("select").forEach((el) => {
-      previousSelections[el.id] = el.value;
-    });
+   extraDiv.querySelectorAll("select, input").forEach((el) => {
+  previousSelections[el.id] = el.value;
+});
 
     extraDiv.innerHTML = "";
     noteDiv.innerHTML = "";
@@ -1832,20 +1944,29 @@
         }
 
         if (opt.type === "select") {
-          html += `
-            <label>${opt.label}:
-              <select id="${opt.id}">
-                ${opt.choices
-                  .map((choice) => `
-                    <option value="${choice.value}" ${choice.value === currentValue ? "selected" : ""}>
-                      ${choice.label}
-                    </option>
-                  `)
-                  .join("")}
-              </select>
-            </label>
-          `;
-        }
+  html += `
+    <label>${opt.label}:
+      <select id="${opt.id}">
+        ${opt.choices
+          .map((choice) => `
+            <option value="${choice.value}" ${choice.value === currentValue ? "selected" : ""}>
+              ${choice.label}
+            </option>
+          `)
+          .join("")}
+      </select>
+    </label>
+  `;
+}
+
+if (opt.type === "number") {
+  const currentNumber = selections[opt.id] ?? "";
+  html += `
+    <label>${opt.label}:
+      <input type="number" id="${opt.id}" min="0" step="any" value="${currentNumber}">
+    </label>
+  `;
+}
       });
     }
 
@@ -1864,10 +1985,10 @@
     if (!med) return selections;
 
     if (med.options?.length) {
-      med.options.forEach((opt) => {
-        const el = document.getElementById(opt.id);
-        if (el) selections[opt.id] = el.value;
-      });
+      med.options?.forEach((opt) => {
+  const el = document.getElementById(opt.id);
+  if (el) selections[opt.id] = el.value;
+});
     }
 
     return selections;
@@ -1903,6 +2024,25 @@
 
     return med.note || "";
   }
+  
+  function getEffectiveFormulation(medKey, result, selectedStrength) {
+  if (
+    medKey === "customMgKg" &&
+    result?.customStrength &&
+    isFinite(result.customStrength.mg) &&
+    isFinite(result.customStrength.ml) &&
+    result.customStrength.mg > 0 &&
+    result.customStrength.ml > 0
+  ) {
+    return {
+      type: "liquid",
+      mgPer5ml: (result.customStrength.mg / result.customStrength.ml) * 5,
+      label: `${result.customStrength.mg} mg / ${result.customStrength.ml} mL`
+    };
+  }
+
+  return getFormulationInfo(selectedStrength);
+}
 
   function calculateDose() {
     const medKey = document.getElementById("medicationSelect")?.value;
@@ -1988,11 +2128,11 @@
     }
 
     if (result?.warnings?.length) {
-      warnings.push(...result.warnings);
-    }
+  warnings.push(...result.warnings);
+}
 
-    resultBox.innerHTML = renderResult(result, formulation, warnings, durationDaysInput);
-  }
+const effectiveFormulation = getEffectiveFormulation(medKey, result, selectedStrength);
+resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, durationDaysInput);
 
   function renderResult(result, formulation, warnings, enteredDurationDays) {
     let html = "";
