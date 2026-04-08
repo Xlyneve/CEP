@@ -2126,14 +2126,13 @@ if (opt.type === "number") {
         : "";
       return;
     }
-
-    if (result?.warnings?.length) {
+if (result?.warnings?.length) {
   warnings.push(...result.warnings);
 }
 
 const effectiveFormulation = getEffectiveFormulation(medKey, result, selectedStrength);
 resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, durationDaysInput);
-
+}
   function renderResult(result, formulation, warnings, enteredDurationDays) {
     let html = "";
 
