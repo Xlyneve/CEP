@@ -70,6 +70,7 @@ body::after {
 
 /* Header with logo */
 .main-header {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -141,6 +142,81 @@ body::after {
   margin-top: 6px;
   font-size: 0.8em;
   color: #444;
+}
+.auth-toggle-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 999px;
+  width: 42px;
+  height: 42px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.auth-toggle-btn:hover {
+  background: rgba(255,255,255,0.42);
+}
+
+.auth-modal.hidden {
+  display: none;
+}
+
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+}
+
+.auth-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.28);
+}
+
+.auth-modal-content {
+  position: absolute;
+  top: 90px;
+  right: 16px;
+  width: min(92vw, 340px);
+  z-index: 2;
+}
+
+.modal-auth-section {
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.close-auth-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #444;
+  z-index: 3;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ===== Layout: Desktop side-by-side ===== */
@@ -658,6 +734,23 @@ footer {
   .day {
     background: rgba(255,255,255,0.85);
   }
+  .auth-toggle-btn {
+  right: 10px;
+  width: 40px;
+  height: 40px;
+}
+
+.auth-modal-content {
+  top: 72px;
+  right: 10px;
+  width: calc(100vw - 20px);
+  max-width: 340px;
+}
+
+.modal-auth-section {
+  width: 100%;
+  max-width: 100%;
+}
 
   footer {
     padding: 14px 10px 24px;
@@ -672,24 +765,36 @@ footer {
 <div id="zoomRoot">
   <!-- Header with Logo -->
   <header class="main-header">
-    <img src="onehealth-logo.png" alt="Onehealth Logo" class="logo">
-  </header>
+  <img src="onehealth-logo.png" alt="Onehealth Logo" class="logo">
+
+  <button id="authToggleBtn" class="auth-toggle-btn" aria-label="Open sign in">
+    👤
+  </button>
+</header>
 
   <!-- Auth Section (minimal under logo) -->
-  <div id="authSection" class="auth-section">
-    <label for="emailInput" class="sr-only">Email</label>
-    <input type="email" id="emailInput" placeholder="Email" />
+  <div id="authModal" class="auth-modal hidden">
+  <div class="auth-modal-backdrop" id="authModalBackdrop"></div>
 
-    <label for="passwordInput" class="sr-only">Password</label>
-    <input type="password" id="passwordInput" placeholder="Password" />
+  <div class="auth-modal-content">
+    <button id="closeAuthModalBtn" class="close-auth-btn" aria-label="Close sign in">×</button>
 
-    <div class="auth-buttons">
-      <button id="loginBtn" class="btn">Login</button>
-      <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
+    <div id="authSection" class="auth-section modal-auth-section">
+      <label for="emailInput" class="sr-only">Email</label>
+      <input type="email" id="emailInput" placeholder="Email" />
+
+      <label for="passwordInput" class="sr-only">Password</label>
+      <input type="password" id="passwordInput" placeholder="Password" />
+
+      <div class="auth-buttons">
+        <button id="loginBtn" class="btn">Login</button>
+        <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
+      </div>
+
+      <p id="userStatus">Not signed in</p>
     </div>
-
-    <p id="userStatus">Not signed in</p>
   </div>
+</div>
 
   <div class="container">
     <!-- Nurse List Section -->
@@ -771,6 +876,10 @@ footer {
   const loginBtn = document.getElementById('loginBtn');
   const logoutBtn = document.getElementById('logoutBtn');
   const userStatus = document.getElementById('userStatus');
+  const authToggleBtn = document.getElementById('authToggleBtn');
+const authModal = document.getElementById('authModal');
+const authModalBackdrop = document.getElementById('authModalBackdrop');
+const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
 
   const calendarGrid = document.getElementById('calendarGrid');
   const monthYear = document.getElementById('monthYear');
@@ -808,9 +917,10 @@ footer {
       return;
     }
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      currentUser = userCredential.user;
-      updateUIOnAuth();
+     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+currentUser = userCredential.user;
+updateUIOnAuth();
+closeAuthModal();
     } catch (error) {
       alert('Login failed: ' + error.message);
     }
@@ -818,15 +928,16 @@ footer {
 
   logoutBtn.addEventListener('click', async () => {
     await signOut(auth);
-    currentUser = null;
-    updateUIOnAuth();
+currentUser = null;
+updateUIOnAuth();
+closeAuthModal();
   });
 
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
     updateUIOnAuth();
   });
-
+ 
   function updateUIOnAuth() {
     if (currentUser) {
       userStatus.textContent = `Signed in as ${currentUser.email}`;
@@ -841,6 +952,10 @@ footer {
       passwordInput.style.display = 'inline-block';
       logoutBtn.style.display = 'none';
     }
+	
+	 authToggleBtn.textContent = currentUser ? '✅' : '👤';
+authToggleBtn.setAttribute('aria-label', currentUser ? 'Open account menu' : 'Open sign in');
+
     checkEditPermission();
     loadData();
   }
@@ -849,6 +964,13 @@ footer {
     canEdit = currentUser && authorizedUIDs.includes(currentUser.uid);
     toggleEditUI();
   }
+  function openAuthModal() {
+  authModal.classList.remove('hidden');
+}
+
+function closeAuthModal() {
+  authModal.classList.add('hidden');
+}
 
   function toggleEditUI() {
     addNurseBtn.disabled = !canEdit;
@@ -1533,6 +1655,23 @@ function handleDayDrop(dayCell) {
     }
   });
 }
+authToggleBtn.addEventListener('click', () => {
+  openAuthModal();
+});
+
+closeAuthModalBtn.addEventListener('click', () => {
+  closeAuthModal();
+});
+
+authModalBackdrop.addEventListener('click', () => {
+  closeAuthModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeAuthModal();
+  }
+});
 
 document.querySelectorAll('.day').forEach(cell => handleDayDrop(cell));
 </script>
