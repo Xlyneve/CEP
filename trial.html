@@ -876,9 +876,9 @@ footer {
       <h2 id="monthYear" class="month-label"></h2>
     </div>
 
-    <div class="calendar-scroll-wrapper">
-      <div class="calendar-inner">
-        <div class="weekdays">
+    <div class="calendar-scroll-wrapper" id="weekdaysScroll">
+  <div class="calendar-inner">
+    <div class="weekdays">
           <div>Mon</div><div>Tue</div><div>Wed</div>
           <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
         </div>
@@ -886,9 +886,9 @@ footer {
     </div>
   </div>
 
-  <div class="calendar-scroll-wrapper calendar-grid-scroll">
-    <div class="calendar-inner">
-      <div class="calendar-grid" id="calendarGrid"></div>
+  <div class="calendar-scroll-wrapper calendar-grid-scroll" id="gridScroll">
+  <div class="calendar-inner">
+    <div class="calendar-grid" id="calendarGrid"></div>
     </div>
   </div>
 </div>
@@ -942,6 +942,8 @@ const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
   const nurseContainer = document.getElementById('nurseContainer');
   const newNurseName = document.getElementById('newNurseName');
   const addNurseBtn = document.getElementById('addNurseBtn');
+  const weekdaysScroll = document.getElementById('weekdaysScroll');
+const gridScroll = document.getElementById('gridScroll');
 
   let currentUser = null;
   let canEdit = false;  // controls if editing is allowed
@@ -961,6 +963,25 @@ const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
   let selectedNurseIndex = null;
   let currentDate = new Date();
 
+let syncingScroll = false;
+
+function syncCalendarScroll() {
+  if (!weekdaysScroll || !gridScroll) return;
+
+  weekdaysScroll.addEventListener('scroll', () => {
+    if (syncingScroll) return;
+    syncingScroll = true;
+    gridScroll.scrollLeft = weekdaysScroll.scrollLeft;
+    syncingScroll = false;
+  });
+
+  gridScroll.addEventListener('scroll', () => {
+    if (syncingScroll) return;
+    syncingScroll = true;
+    weekdaysScroll.scrollLeft = gridScroll.scrollLeft;
+    syncingScroll = false;
+  });
+}
   /** ---------- Authentication ---------- **/
   loginBtn.addEventListener('click', async () => {
     const email = emailInput.value.trim();
@@ -1665,6 +1686,7 @@ function setupTemplateDragDrop() {
 
 setupTemplateDragDrop();
 loadTemplate();
+syncCalendarScroll();
 
 // ---------------- Day Cell Drop ----------------
 function handleDayDrop(dayCell) {
