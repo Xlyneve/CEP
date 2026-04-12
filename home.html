@@ -27,7 +27,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Palm background image fixed behind all content */
 body::before {
   content: "";
   position: fixed;
@@ -39,6 +38,7 @@ body::before {
   background-size: cover;
   opacity: 0.8;
   z-index: -1;
+  pointer-events: none;
 }
 
 header {
@@ -52,6 +52,7 @@ header {
 }
 header h1 {
   font-size: 20px;
+  margin: 0;
 }
 
 .pageTitle {
@@ -273,14 +274,15 @@ body.vitals-open .circle{
 
 
 .top-links {
-  margin-top: 10px;
-  display: flex;
+  margin: 14px auto 0;
+  display: grid;
+  grid-template-columns: repeat(5, max-content);
   justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 10px 12px;
   position: relative;
   z-index: 2;
   top: 8px;
+  max-width: calc(100% - 140px); /* leaves room for right circles */
 }
 
 
@@ -300,6 +302,7 @@ body.vitals-open .circle{
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
 }
 .top-links a:hover {
   background: rgba(255, 255, 255, 0.25);
@@ -382,8 +385,8 @@ h2 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 16px;
-  margin-top: 40px;     /* Base spacing to avoid overlapping top-circles */
-  margin-right: 80px;   /* Adjust spacing to avoid right-aligned vitals */
+  margin-top: 12px;
+  margin-right: 80px;
 }
 
 .card {
@@ -411,10 +414,13 @@ h2 {
 
 
 footer {
+  width: 100%;
   text-align: center;
   font-size: 12px;
   color: #888;
-  margin: 40px 0;
+  margin: 40px 0 20px;
+  display: block;
+  clear: both;
 }
 
 .moving-text {
@@ -961,95 +967,156 @@ footer {
     0 0 0 1px rgba(255,255,255,0.35),
     0 4px 10px rgba(0,0,0,0.08);
 }
-
 /* Mobile handling */
 @media (max-width: 520px){
-  .qc{ width: 92vw; left: 4vw; }
-  .qc.collapsed{ transform: translateX(calc(-92vw + 46px)); }
+  .qc{
+    width: 248px;
+    max-width: 248px;
+    left: 14px;
+    top: 20px;
+  }
+
+  .qc.collapsed{
+    width: 40px;
+    left: 8px;
+    transform: none;
+  }
 }
 
 /* Responsive Adjustments */
 @media (max-width: 992px) {
   .card-group {
-    margin-top: 60px;
+    margin-top: 12px;
     margin-right: 100px;
   }
 }
 
 @media (max-width: 768px) {
+  html,
   body {
-    font-size: 18px;
+    min-height: 100dvh;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    font-size: 22px;
+  }
+
+  body::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-width: 1180px;
+    height: 100%;
+    min-height: 100dvh;
+    background: url('2b.png') no-repeat center center;
+    background-size: cover;
+    opacity: 0.8;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  header {
+    padding: 12px 10px 20px;
+  }
+
+  header h1 {
+    margin: 0;
+    line-height: 1;
   }
 
   .layout {
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    min-width: 1180px;
+  }
+
+  .main-content {
+    flex: 0 0 auto;
+    width: 1000px;
+    max-width: none;
   }
 
   .pageTitle {
-    font-size: 50px;
+    font-size: 120px;
     text-align: center;
+    line-height: 1;
   }
 
   .title {
-    font-size: 48px;
+    font-size: 90px;
     text-align: center;
   }
 
   .icon-stack {
-    right: 5px;
-    top: 5px;
+    right: 10px;
+    top: 10px;
   }
 
   .icon-stack img {
-    width: 36px;
-    height: 36px;
+    width: 50px;
+    height: 50px;
   }
 
   .top-circles {
-    top: 10px;
-    right: 5px;
+    top: 20px;
+    right: 10px;
   }
 
   .circle, .vitals-circle {
-    width: 50px;
-    height: 50px;
-    font-size: 10px;
-  }
-
-  .top-box {
-    min-width: 100px;
+    width: 70px;
+    height: 70px;
     font-size: 11px;
   }
 
- 
+  .top-box {
+    min-width: 120px;
+    font-size: 12px;
+  }
+
+  .top-links {
+    grid-template-columns: repeat(5, max-content);
+    justify-content: center;
+    gap: 10px 12px;
+    max-width: calc(100% - 140px);
+    padding: 0;
+  }
+
+  .top-links a {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
 
   .card-group {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    margin-top: 100px;
-    margin-right: 110px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    margin-top: 12px;
+    margin-right: 80px;
   }
 
-@keyframes emojiFade {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.96);
+  @keyframes emojiFade {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
 
-#emojiSearchInput {
-  width: 100%;
-  padding: 6px;
-  border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.1);
-  background: rgba(255,255,255,0.6);
-  font-family: 'fors', sans-serif;
-}
+  #emojiSearchInput {
+    width: 100%;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.6);
+    font-family: 'fors', sans-serif;
+  }
 }
 
 </style>
@@ -1257,10 +1324,10 @@ footer {
   </table>
 </div>
   
-      <footer>© 2025 Xlyn Notes Board</footer>
     </div>
   </div>
 
+      <footer>© 2025 Xlyn Notes Board</footer>
  <script>
   // ===== VITALS POPUP =====
  function showTable() {
@@ -1618,4 +1685,3 @@ function closeTable() {
 
 </body>
 </html>
-
