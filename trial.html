@@ -3,1685 +3,1098 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Xlyn</title>
-
-<style>
-  /* Custom Fonts */
-@font-face {
-  font-family: 'AdeliciaRegular';
-  src: url('AdeliciaRegular.ttf') format('truetype');
-}
+<link rel="stylesheet" href="https://xlyneve.github.io/CEP/emoji.css?v=2">
+  <title>Nurse Notes</title>
+  <style>
 @font-face {
   font-family: 'fors';
   src: url('fors.ttf') format('truetype');
 }
 
-/* General Styles */
-body {
+html, body {
+  height: 100%;
   margin: 0;
-  font-family: 'fors', sans-serif;
-  background: #fafbf4;
-  color: black;
-  font-size: 22px;
+  padding: 0;
+  font-family: 'Tahoma', sans-serif;
+  overflow-x: auto;
   position: relative;
-  overflow-x: hidden;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
-
+/* Background image with full-page blur overlay */
 body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: url('2b.png') no-repeat center center;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('2b.png') no-repeat center center fixed;
   background-size: cover;
-  opacity: 0.8;
+  filter: blur(10px) brightness(0.9);
   z-index: -1;
-  pointer-events: none;
 }
 
-header {
-  padding: 30px 10px 20px;
-  text-align: center;
-  background: transparent;
-  border-bottom: 1px solid transparent;
-  position: relative;
-  overflow: visible !important;
-  z-index: 0;
-}
-header h1 {
-  font-size: 20px;
-  margin: 0;
+.note-content {
+  font-family: 'Tahoma', sans-serif;
+  font-size: 12px;
 }
 
-.pageTitle {
-  font-family: 'AdeliciaRegular', cursive, sans-serif;
-  font-size: 120px;
-  letter-spacing: 6px;
-  font-weight: 900;
-  color: black;
-  position: relative;
-  z-index: 2;
-  -webkit-text-stroke: 0.8px black;
-  text-shadow:
-    0 0 1px black,
-    1px 1px 0 rgba(255, 255, 255, 0.9),
-    2px 2px 0 rgba(245, 245, 245, 0.8),
-    3px 3px 0 rgba(230, 230, 230, 0.7);
-  transform: scaleX(1.05);
-
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  padding: 12px 24px;
-  border-radius: 12px;
-  display: inline-block;
-}
-
-
-.title {
-  font-family: 'Clicker Script', cursive;
-  font-size: 90px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  color: black;
-  margin: 0;
-  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.top-circles {
+.header {
   position: fixed;
-  top: 20px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 1000;
-}
-
-.circle {
-  border-radius: 70%;
-  width: 70px;
+  top: 0;
+  width: 100%;
   height: 70px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 11px; /* from .vitals-circle */
-  font-weight: normal; /* from .vitals-circle */
-  cursor: pointer;
-  padding: 8px;
+  justify-content: space-between;
+  padding: 0 20px;
   box-sizing: border-box;
-  color: #333;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background-color: transparent;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.15),
-    inset 0 0 8px rgba(255, 255, 255, 0.2);
-  transition:
-    transform 0.3s ease,
-    backdrop-filter 0.4s ease,
-    -webkit-backdrop-filter 0.4s ease,
-    box-shadow 0.4s ease;
-  position: relative;
-
-  will-change: transform;
-  transform: translateZ(0);
-  animation: pulseGlow 2.2s ease-in-out infinite;
-}
-
-.circle:hover {
-  transform: scale(1.08);
+  background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.2),
-    inset 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-.circle span {
-  text-align: center;
-  color: #333;
-}
-
-.circle::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 70%;
-  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.2), transparent);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.circle:hover::after {
-  opacity: 1;
-}
-
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.15),
-      inset 0 0 8px rgba(255, 255, 255, 0.2);
-  }
-  50% {
-    box-shadow:
-      0 6px 18px rgba(0, 0, 0, 0.18),
-      inset 0 0 12px rgba(255, 255, 255, 0.28);
-  }
-}
-
-#vital-signs-table {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-
-  /* animate open/close */
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.98);
-  transition: opacity 140ms ease, transform 180ms ease;
-
-  /* Glassy but NOT transparent */
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,0.97),
-    rgba(248,249,252,0.95)
-  );
-
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
-
-  border: 1px solid rgba(255,255,255,0.6);
-  border-radius: 16px;
-  padding: 22px;
-
-  box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255,255,255,0.85);
-
-  max-width: 95vw;
-  max-height: none;
-  overflow-x: hidden;
-
-  font-family: 'fors', sans-serif;
-  font-size: 14px;
-  z-index: 5000;
-
-  contain: layout paint;
-}
-
-#vital-signs-table.open {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-#vital-signs-table table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-#vital-signs-table th,
-#vital-signs-table td {
-  padding: 10px;
-  text-align: left;
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-
-  border: 1px solid rgba(230, 235, 240, 0.8);
-  background-color: rgba(255,255,255,0.75);
-  color: #111;
-
-  transition: background-color 40ms linear;
-}
-
-#vital-signs-table tbody tr:hover td {
-  background-color: rgba(140, 150, 200, 0.18);
-}
-
-/* When vitals is open, stop expensive animations behind it */
-body.vitals-open .moving-text{
-  animation: none !important;
-}
-
-body.vitals-open .circle{
-  animation: none !important;   /* stops pulseGlow */
-}
-
-/* Optional: reduce blur work on the circles while open */
-body.vitals-open .circle{
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-#close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: rgba(147, 176, 172, 0.8);
-  color: white;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 8px;
-  backdrop-filter: blur(5px);
-}
-
-
-.top-links {
-  margin: 14px auto 0;
-  display: grid;
-  grid-template-columns: repeat(5, max-content);
-  justify-content: center;
-  gap: 10px 12px;
-  position: relative;
-  z-index: 2;
-  top: 8px;
-  max-width: calc(100% - 140px); /* leaves room for right circles */
-}
-
-
-.top-links a {
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.15);
-  color: black;
-  font-size: 12px;
-  font-family: 'fors', sans-serif;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
-  text-decoration: none;
-  transition: background-color 0.3s, transform 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  white-space: nowrap;
-}
-.top-links a:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.15);
-}
-
-
-.icon-stack {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  z-index: 1;
-}
-.icon-stack img {
-  width: 50px;
-  height: 50px;
-  transition: transform 0.3s ease;
-}
-.icon-stack a:hover img {
-  transform: scale(1.1);
-  background-color: #ebebeb;
-}
-
-.top-boxes {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 1000;
-}
-.top-box {
-  background-color: #eae0da;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: bold;
-  text-align: center;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  min-width: 120px;
-}
-.top-box:hover {
-  background-color: #aca37e;
-}
-
-.content {
-  padding: 100px 20px 20px 20px;
-}
-
-.layout {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 20px;
-}
-.main-content {
-  flex: 1;
-  max-width: 1000px;
-}
-
-h2 {
-  font-size: 20px;
-  font-weight: 400;
-  color: black;
-  margin-bottom: 16px;
-  border-bottom: 2px solid #e5d6cd;
-  display: inline-block;
-  padding-bottom: 4px;
-}
-
-.card-group {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
-  margin-top: 12px;
-  margin-right: 80px;
-}
-
-.card {
-  padding: 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  text-align: center;
-  font-size: 14px;
-  font-weight: 400;
-  color: black;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-.card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  background: rgba(255, 255, 255, 0.25);
-}
-
-
-footer {
-  width: 100%;
-  text-align: center;
-  font-size: 12px;
-  color: #888;
-  margin: 40px 0 20px;
-  display: block;
-  clear: both;
-}
-
-.moving-text {
-  position: fixed;
-  top: 0;
-  left: 100%;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: normal;
-  font-family: 'fors', sans-serif;
-  padding: 8px 16px;
-  border: none;
-  animation: moveText 20s linear infinite;
-  z-index: 1000;
-  color: black;
-}
-@keyframes moveText {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-
-/* === Emoji Picker: sleek slide-out glass === */
-#emojiModal{
-  position: fixed;
-  bottom: 70px;
-  right: 20px;
-  width: 300px;
-  max-width: calc(100vw - 40px);
-  height: 340px;
-  max-height: calc(100vh - 140px);
-  padding: 12px;
-  border-radius: 18px;
-
-  background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.38);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
-
-  z-index: 1200;
-
-  /* hidden state (slide out) */
-  opacity: 0;
-  transform: translateX(18px) translateY(10px);
-  pointer-events: none;
-  transition: opacity 160ms ease, transform 220ms ease;
-}
-
-#emojiModal.open{
-  opacity: 1;
-  transform: translateX(0) translateY(0);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  z-index: 50;
   pointer-events: auto;
 }
 
-.emojiHeader{
+.header-left {
+  position: absolute;
+  top: 18px;
+  left: 10px;
+  z-index: 1001;
+}
+
+.header-left a.header-link,
+.header a.header-link {
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: rgba(189, 191, 218, 0.6);
+  border-radius: 6px;
+  border: 1px solid rgba(204, 186, 181, 0.6);
+  color: black;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.3s ease;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1000;
+}
+
+.header-left a.header-link {
+  padding: 4px 10px;
+  font-size: 13px;
+  background-color: rgba(189, 191, 218, 0.7);
+  border: 1px solid rgba(204, 186, 181, 0.6);
+  position: absolute;
+  top: 3px;
+  left: 10px;
+  z-index: 1001;
+}
+
+.header a:hover,
+.header-left a.header-link:hover {
+  background-color: #b88eaa;
+  color: #000;
+}
+
+.header-title {
+  position: absolute;
+  top: 10px;
+  left: 80px;
+  transform: none;
+  font-size: 22px;
+  font-weight: bold;
+  color: #000;
+  text-align: left;
+  z-index: 60;
+  pointer-events: auto;
+  opacity: 0;
+  animation: fadeIn 1.5s ease forwards;
+  margin: 0;
+}
+
+/* Add keyframes for fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+a.header-link {
+  position: relative;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.search-box {
+  z-index: 50;
+  pointer-events: auto;
+}
+
+.search-box input {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 150px; /* fixed width */
+}
+
+.container {
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 100px 20px 20px 20px;
+  position: relative;
+  z-index: 40;
+}
+
+h2 {
+  text-align: center;
+  font-size: 20px;
+}
+
+.form-section {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 40;
+  align-items: flex-start;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
-.emojiTitle{
+.form-section input[type="file"],
+.form-section textarea {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #222;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+  box-sizing: border-box;
   font-family: 'fors', sans-serif;
-  font-size: 14px;
-  letter-spacing: 0.4px;
-  color: #111;
-  opacity: 0.9;
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
 }
 
-.emojiClose{
+#nurseTitle,
+#nurseURL {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: none;
-  background: rgba(255,255,255,0.30);
-  border: 1px solid rgba(255,255,255,0.35);
-  border-radius: 10px;
-  width: 30px;
-  height: 30px;
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.15);
+  color: #222;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: 'fors', sans-serif;
+  transition: all 0.3s ease;
+}
+
+#nurseTitle:focus,
+#nurseURL:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+#nurseTitle {
+  flex: 1 1 180px;
+  height: 60px;
+  min-width: 150px;
+}
+
+#nurseNote {
+  flex: 2 1 280px;
+  min-height: 60px;
+  resize: vertical;
+}
+
+#nurseURL {
+  flex: 1 1 180px;
+  height: 60px;
+  min-width: 150px;
+}
+
+#nurseImage {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 4px 10px;
   cursor: pointer;
-  font-size: 14px;
-  line-height: 28px;
-  color: #111;
+}
+
+.cards-container {
+  column-count: 4;
+  column-gap: 15px;
+  width: 100%;
+  padding: 10px 0;
+}
+
+.note-card {
+  display: inline-block;
+  width: 90%;
+  margin-bottom: 15px;
+  break-inside: avoid;
+  padding: 15px;
+  border-radius: 12px;
+  position: relative;
+  word-wrap: break-word;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15),
+              0 0 10px rgba(255, 255, 255, 0.2);
 }
 
-.emojiGrid{
-  height: calc(100% - 46px);
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  padding-right: 4px;
+.note-card .note-content,
+.note-card .note-title {
+  color: #000;
 }
 
-.emojiBtn{
-  border: none;
-  background: rgba(255,255,255,0.22);
-  border: 1px solid rgba(255,255,255,0.28);
-  border-radius: 14px;
-  cursor: pointer;
-  padding: 8px 0;
-  font-size: 20px;
-  line-height: 1;
+.note-card:hover {
+  box-shadow:
+    inset 0 3px 8px rgba(220 240 255 / 0.6),
+    0 0 14px 5px rgba(220 240 255 / 0.45),
+    0 8px 24px rgba(190 210 240 / 0.15);
+  transform: translateY(-10px);
+}
+
+.edit-title {
+  width: 93%;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: transform 120ms ease, background 120ms ease;
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+  color: #222;
+  transition: all 0.3s ease;
 }
 
-.emojiBtn:hover{
-  background: rgba(255,255,255,0.35);
-  transform: translateY(-1px);
+.note-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 6px;
 }
 
-.emojiGrid::-webkit-scrollbar { width: 8px; }
-.emojiGrid::-webkit-scrollbar-track { background: transparent; }
-.emojiGrid::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.30);
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.22);
+.note-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
 }
-.emojiFab{
+
+.highlight {
+  background-color: #f67a66;
+}
+
+.editor-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+button,
+.note-actions button,
+.editor-buttons button,
+.header a.header-link {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #111;
+  padding: 6px 12px;
+  font-size: 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3),
+              inset 0 0 10px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+  text-align: center;
+}
+
+button:hover,
+.note-actions button:hover,
+.editor-buttons button:hover,
+.header a.header-link:hover {
+  background: rgba(255, 255, 255, 0.35);
+  color: #000;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.5),
+              inset 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+button:active,
+.note-actions button:active,
+.editor-buttons button:active,
+.header a.header-link:active,
+button:focus,
+.note-actions button:focus,
+.editor-buttons button:focus,
+.header a.header-link:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6),
+              inset 0 0 14px rgba(255, 255, 255, 0.4);
+  color: #000;
+}
+
+.note-url {
+  margin-top: 10px;
+}
+
+.note-url a {
+  background-color: #FFF1F5;
+  color: #333;
+  text-decoration: none;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  display: inline-block;
+  transition: background-color 0.3s ease;
+}
+
+.note-url a:hover {
+  background-color: #ddc6b2;
+}
+
+.note-url a .icon {
+  margin-right: 6px;
+}
+
+.custom-file-btn {
+  display: inline-block;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'fors', sans-serif;
+  font-size: 13px;
+  color: #222;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+  user-select: none;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.custom-file-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  color: #000;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.add-btn {
+  height: 34px;
+  min-width: 100px;
+  align-self: flex-start;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  color: #111;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.add-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.hidden {
+  display: none;
+}
+
+#toggleFormBtn {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-
-  border: 1px solid rgba(255,255,255,0.40);
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-
-  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(90px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 28px;
+  font-weight: bold;
+  color: #000;
   cursor: pointer;
-
-  display: inline-flex;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  display: flex;
   align-items: center;
   justify-content: center;
-
-  z-index: 1300;
-  transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
+  transition: background 0.3s ease, transform 0.2s ease;
+  z-index: 1000;
 }
 
-.emojiFab:hover{
-  transform: translateY(-1px);
-  background: rgba(255,255,255,0.24);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.16);
+#toggleFormBtn:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
 }
 
-.emojiFab:active{
-  transform: translateY(0);
-}
-
-.emojiFabIcon{
-  font-family: 'fors', sans-serif;
-  font-size: 18px;
-  letter-spacing: 0.5px;
-  color: rgba(0,0,0,0.72);
-  line-height: 1;
-}
-.emojiFabDots{
+#nurseFormWrapper {
   position: fixed;
-}
-.emojiFabDots::before{
-  content:"";
-  width: 16px;
-  height: 16px;
-  background:
-    radial-gradient(circle, rgba(0,0,0,0.55) 2px, transparent 3px) 0 0/8px 8px;
-  opacity: 0.55;
-  border-radius: 4px;
+  bottom: -100%;
+  right: 20px;
+  width: 300px;
+  padding: 15px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  transition: bottom 0.4s ease, opacity 0.4s ease;
+  opacity: 0;
+  z-index: 999;
 }
 
-/* ✅ QUICK CALC (left shortcut panel) */
-/* =========================
-   QUICK CALC (FULL CSS)
-   Smaller + clear selection + inline calc/results
-========================= */
+#nurseFormWrapper.show {
+  bottom: 80px;
+  opacity: 1;
+}
 
-.qc{
+/* 🌸 Toggle + Rays (updated) */
+.center-toggle {
   position: fixed;
   top: 20px;
-  left: 14px;
-
-  width: 248px;                      /* smaller */
-  max-width: calc(100vw - 28px);
-  z-index: 1400;
-
-  border-radius: 16px;
-  background: rgba(255,255,255,0.16);
-  border: 1px solid rgba(255,255,255,0.28);
-  box-shadow: 0 14px 40px rgba(0,0,0,0.18);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-
-  overflow: hidden;
-  transition: width 180ms ease, left 180ms ease;
-  font-family: Tahoma, sans-serif;
-}
-
-/* collapsed state — arrow only */
-.qc.collapsed{
-  width: 40px;
-  left: 8px;
-}
-
-/* hide calculator content */
-.qc.collapsed .qc-body{ display:none; }
-
-/* hide title */
-.qc.collapsed .qc-title{ display:none; }
-
-/* center arrow */
-.qc.collapsed .qc-head{
-  justify-content: center;
-  padding: 8px;
-  border-bottom: none;
-}
-
-/* make arrow button fill container */
-.qc.collapsed .qc-toggle{
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
-  font-size: 14px;
-}
-
-.qc-head{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 6px 6px 6px 10px;        /* tighter */
-  border-bottom: 1px solid rgba(255,255,255,0.18);
-}
-
-.qc-title{
-  font-size: 11px;
-  letter-spacing: 0.2px;
-  opacity: 0.95;
-}
-
-.qc-toggle{
-  width: 34px;
+  left: 800px;
+  width: 30px;
   height: 30px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.22);
-  background: rgba(255,255,255,0.14);
-  color: #111;
-  cursor: pointer;
+  z-index: 1002;
 }
-
-/* body spacing (smaller) */
-.qc-body{
-  padding: 8px 10px 10px;
-}
-
-/* tabs */
-.qc-tabs{
-  display:flex;
-  gap:6px;
-  margin-bottom:8px;
-  width:100%;
-}
-
-.qc-tab{
-   border: 1px solid rgba(255,255,255,0.22);
-  background: rgba(255,255,255,0.12);
-  cursor: pointer;
-  color: #111;
-  flex:1;
-  padding:5px 4px;
-  border-radius:10px;
-  font-size:12px;   /* slightly smaller */
-  white-space:nowrap;
-
-  font-size: 11px;
-  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
-}
-
-/* ACTIVE MEDICINE (white + glow) */
-.qc-tab.active{
-  background: rgba(255,255,255,0.22);
-  border-color: rgba(255,255,255,0.95);
-  box-shadow:
-    0 0 0 2px rgba(255,255,255,0.55),
-    0 10px 20px rgba(0,0,0,0.12);
-  font-weight: 500; /* normal weight */
-}
-
-.qc-label{
-  display:block;
-  font-size: 11px;
-  margin: 6px 0 4px;
-  opacity: 0.9;
-}
-
-/* Weight input: centered */
-.qc-input{
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.26);
-  background: rgba(255,255,255,0.10);
-  outline: none;
-
-  font-size: 11.5px;
-  font-family: 'fors', sans-serif;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-/* Center placeholder too */
-.qc-input::placeholder{
-  text-align: center;
-  opacity: 0.6;
-}
-
-/* Remove number input arrows (spinners) */
-.qc-input::-webkit-outer-spin-button,
-.qc-input::-webkit-inner-spin-button{
-  -webkit-appearance: none;
-  margin: 0;
-}
-.qc-input[type="number"]{
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-/* Strength selector (dropdown) */
-.qc-select{
-  width: 100%;
-  padding: 9px 36px 9px 12px;
-  border-radius: 11px;
-  border: 1px solid rgba(255,255,255,0.26);
-
-  background: rgba(255,255,255,0.12);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  font-size: 12px;
-  font-family: 'fors', sans-serif;
-  color: #111;
-
-  outline: none;
-  cursor: pointer;
-
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  /* custom arrow */
-  background-image:
-    linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.6) 50%),
-    linear-gradient(135deg, rgba(0,0,0,0.6) 50%, transparent 50%);
-  background-position:
-    calc(100% - 18px) calc(50% - 3px),
-    calc(100% - 12px) calc(50% - 3px);
-  background-size: 6px 6px;
-  background-repeat: no-repeat;
-
-  transition: box-shadow .18s ease, border-color .18s ease, background .18s ease;
-}
-
-.qc-select:focus{
-  background: rgba(255,255,255,0.18);
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
-}
-
-/* strength toggle buttons */
-.qc-strength{
-  display: flex;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.qc-strength-btn{
-  flex: 1;
-  padding: 6px 6px;
-  border-radius: 11px;
-
-  border: 1px solid rgba(255,255,255,0.22);
-  background: rgba(255,255,255,0.12);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  font-size: 11px;
-  font-family: 'fors', sans-serif;
-  cursor: pointer;
-  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-  opacity: 0.88;
-}
-
-.qc-strength-btn:hover{
-  background: rgba(255,255,255,0.18);
-}
-
-/* SELECTED STRENGTH (white + glowy border) */
-.qc-strength-btn.active{
-  opacity: 1;
-  background: rgba(255,255,255,0.26);
-  border-color: rgba(255,255,255,0.98);
-  box-shadow:
-    0 0 0 2px rgba(255,255,255,0.60),
-    0 0 18px rgba(255,255,255,0.30);
-  color: #0b1a2b;
-  font-weight: 900;
-}
-
-/* rows */
-.qc-row{
-  display: flex;
-  gap: 6px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-
-/* pills / notes */
-.qc-pill{
-  padding: 6px 9px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.20);
-  background: rgba(255,255,255,0.10);
-  font-size: 10px;
-}
-
-.qc-note{
-  margin-top: 10px;
-  font-size: 12px;
-  opacity: 0.85;
-}
-
-/* =========================
-   Calculate + Results BESIDE
-   Put BOTH inside: <div class="qc-row qc-actions"> ... </div>
-========================= */
-
-.qc-row.qc-actions{
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;           /* keep side-by-side */
-  margin-top: 10px;
-}
-
-/* Calculate button: half size */
-.qc-btn{
-  width: 100%;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.28);
-  background: rgba(255,255,255,0.20);
-  cursor: pointer;
-  font-size: 14px;
-  font-family: 'fors', sans-serif;
-  transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
-}
-
-.qc-row.qc-actions .qc-btn{
-  width: auto;                /* override full width */
-  flex: 0 0 auto;
-  padding: 6px 10px;
+/* 🌸 Glassmorphism style for rays */
+.center-toggle .ray {
+  background: rgba(255, 255, 255, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
-  font-size: 12px;
-  margin-top: 0;              /* remove vertical spacing */
-  min-height: 30px;
+  padding: 6px 12px;
+  color: #000;
+  text-decoration: none !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transform: rotate(var(--angle)) translate(0px);
+  transition: 
+    opacity 0.4s ease, 
+    transform 0.4s ease; /* smooth transition */
 }
 
-.qc-btn:hover{
-  background: rgba(255,255,255,0.24);
+/* Show rays when active */
+.center-toggle.active .ray {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-.qc-btn:active{
-  transform: translateY(1px);
+/* Ray hover effect — change box color */
+.center-toggle .ray:hover {
+  background: #ededed;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
 
-/* results box beside */
-.qc-results{
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.20);
-  background: rgba(255,255,255,0.10);
-}
-
-.qc-row.qc-actions .qc-results{
-  margin-top: 0;
-  padding: 8px 10px;
-  border-radius: 14px;
-  flex: 1 1 auto;
-  min-height: 30px;
-
+.toggle-icon {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  font-size: 28px;
+  color: #2d4d2d;
+  cursor: pointer;
+  transition: transform 0.4s ease;
 }
 
-/* result typography */
-.qc-big{
-  font-size: 16px;
+.toggle-icon.active {
+  transform: rotate(45deg);
+}
+
+.rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  z-index: 1003;
+}
+
+.ray {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 14px;
   font-weight: 400;
+  color: #2f4f2f;
+  opacity: 0;
+  transform-origin: 0 0;
+  white-space: nowrap;
+  transform: rotate(var(--angle)) translate(40px);
+  transition: opacity 0.5s ease;
+  pointer-events: none;
 }
 
-.qc-row.qc-actions .qc-big{
-  font-size: 13px;
-  font-weight: 800;
+.ray span {
+  display: inline-block;
+  transform: rotate(calc(-1 * var(--angle)));
+  transition: color 0.3s ease;
 }
 
-.qc-sub{
-  margin-top: 6px;
-  font-size: 12px;
-  opacity: 0.9;
-  line-height: 1.35;
+/* Text color hover effect */
+.ray:hover span {
+  color: #F0EEEA;
 }
-
-.qc-row.qc-actions .qc-sub{
-  margin-top: 0;
-  font-size: 11px;
-  line-height: 1.25;
-}
-
-/* highlight chip (optional, now matches white-glow theme) */
-/* Result highlight (pink + green medical tone) */
-.qc-highlight{
-  display:inline-block;
-
-  background: linear-gradient(
-    135deg,
-    rgba(255, 205, 220, 0.95),   /* soft pink */
-    rgba(205, 240, 210, 0.95)    /* soft green */
-  );
-
-  padding: 2px 7px;
-  border-radius: 10px;
-
-  font-weight: 800;
-  line-height: 1.2;
-
-  border: 1px solid rgba(255,255,255,0.65);
-
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.35),
-    0 4px 10px rgba(0,0,0,0.08);
-}
-/* Mobile handling */
-@media (max-width: 520px){
-  .qc{
-    width: 248px;
-    max-width: 248px;
-    left: 14px;
-    top: 20px;
-  }
-
-  .qc.collapsed{
-    width: 40px;
-    left: 8px;
-    transform: none;
-  }
-}
-
-/* Responsive Adjustments */
-@media (max-width: 992px) {
-  .card-group {
-    margin-top: 12px;
-    margin-right: 100px;
-  }
-}
-
 @media (max-width: 768px) {
-  html,
-  body {
-    min-height: 100dvh;
+  html, body {
     overflow-x: auto;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   body {
-    font-size: 22px;
+    min-width: 1280px;
   }
 
   body::before {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    min-width: 1180px;
-    height: 100%;
-    min-height: 100dvh;
+    width: 1280px;
+    min-width: 1280px;
+    min-height: 100%;
     background: url('2b.png') no-repeat center center;
     background-size: cover;
-    opacity: 0.8;
-    z-index: -1;
-    pointer-events: none;
+    background-attachment: scroll;
   }
 
-  header {
-    padding: 12px 10px 20px;
+  .header {
+    width: 1280px;
+    min-width: 1280px;
+    padding: 0 20px;
   }
 
-  header h1 {
-    margin: 0;
-    line-height: 1;
+  .container {
+    width: 1280px;
+    min-width: 1280px;
+    padding: 100px 20px 20px 20px;
+    box-sizing: border-box;
   }
 
-  .layout {
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px;
-    min-width: 1180px;
-  }
-
-  .main-content {
-    flex: 0 0 auto;
-    width: 1000px;
-    max-width: none;
-  }
-
-  .pageTitle {
-    font-size: 120px;
-    text-align: center;
-    line-height: 1;
-  }
-
-  .title {
-    font-size: 90px;
-    text-align: center;
-  }
-
-  .icon-stack {
-    right: 10px;
-    top: 10px;
-  }
-
-  .icon-stack img {
-    width: 50px;
-    height: 50px;
-  }
-
-  .top-circles {
-    top: 20px;
-    right: 10px;
-  }
-
-  .circle, .vitals-circle {
-    width: 70px;
-    height: 70px;
-    font-size: 11px;
-  }
-
-  .top-box {
-    min-width: 120px;
-    font-size: 12px;
-  }
-
-  .top-links {
-    grid-template-columns: repeat(5, max-content);
-    justify-content: center;
-    gap: 10px 12px;
-    max-width: calc(100% - 140px);
-    padding: 0;
-  }
-
-  .top-links a {
-    font-size: 12px;
-    padding: 6px 12px;
-  }
-
-  .card-group {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    margin-top: 12px;
-    margin-right: 80px;
-  }
-
-  @keyframes emojiFade {
-    from {
-      opacity: 0;
-      transform: translateY(10px) scale(0.96);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  #emojiSearchInput {
+  .cards-container {
+    column-count: 4;
+    column-gap: 15px;
     width: 100%;
-    padding: 6px;
-    border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.1);
-    background: rgba(255,255,255,0.6);
-    font-family: 'fors', sans-serif;
+  }
+
+  .note-card {
+    width: 90%;
+  }
+
+  .center-toggle {
+    position: fixed;
+    top: 20px;
+    left: 800px;
+    width: 30px;
+    height: 30px;
+    z-index: 1002;
+  }
+
+  .header-title {
+    top: 10px;
+    left: 80px;
+    font-size: 22px;
+  }
+
+  .search-box {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    z-index: 1001;
+  }
+
+  .search-box input {
+    width: 150px;
+  }
+
+  #toggleFormBtn {
+    right: 20px;
+    bottom: 20px;
+    z-index: 1003;
+  }
+
+  #nurseFormWrapper {
+    right: 20px;
+    width: 300px;
+    z-index: 1002;
+  }
+
+  #nurseFormWrapper.show {
+    bottom: 80px;
+  }
+
+  .ray {
+    white-space: nowrap;
   }
 }
+
+
+
 
 </style>
-
 </head>
-
 <body>
 
-<header>
-  <h1><span class="pageTitle">XlynEve</span></h1>
-  <div class="top-links">
-    <a href="chatgptx.html" target="_blank">🤖 Questions?</a>
-    <a href="https://www.health.govt.nz/" target="_blank">🏥 Ministry of Health</a>
-    <a href="https://www.health.govt.nz/search?query=cold+chain" target="_blank">❄️ Cold Chain</a>
-    <a href="https://www.medsafe.govt.nz/medicines/infoSearch.asp" target="_blank">💊 Medsafe</a>
-    <a href="https://www.mymedicines.nz/" target="_blank">📋 My Medicines</a>
-    <a href="https://nzf.org.nz/" target="_blank">📚 NZ Formulary</a>
-    <a href="https://healthify.nz/" target="_blank">📙 Healthify</a>
-    <a href="https://www.immune.org.nz/" target="_blank">💉 IMAC</a>
-    <a href="https://aucklandregion.communityhealthpathways.org/" target="_blank">🧭 HealthPathways</a>
-	  <a href="https://tewhatakura.nz/guidelines" target="_blank">📜National ABX guideline</a>
-  </div>
-</header>
+<div class="header">
+  <div class="header-bg"></div>
 
-
- <div class="top-circles">
-    <div class="circle calendar" onclick="window.open('homecal.html', '_blank')">Calendar<br>To Do</div>
-<div class="circle patient" onclick="window.open('forms.html', '_blank')">Information<br>Links</div>
-<div class="circle notes" onclick="window.open('Notes.html', '_blank')">Notes</div>
-<div class="circle calculator" onclick="window.open('Calculator.html', '_blank')">Calculator</div>
-<div class="circle trial" onclick="window.open('https://xlyneve.github.io/OHNRoster/', '_blank')">Roster</div>
-<div class="circle inr" onclick="window.open('https://onedrive.live.com/?view=0', '_blank')">Documents</div>
-<div class="circle timesheet" onclick="window.open('https://onedrive.live.com/edit.aspx?cid=cd58075507480906&page=view&resid=CD58075507480906!660&parId=CD58075507480906!107&app=Excel', '_blank')">Timesheet</div>
-<div class="circle vitals" onclick="showTable()">Vitals</div>
-</div>
-
-
-   <div class="layout">
-    <div class="main-content">
-      <h2>Home</h2>
-      <div class="card-group">
-        <div class="card" onclick="window.open('OHcalc.html', '_blank')">Drug Calculator</div>
-  <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
-<div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
-<div class="card" onclick="location.href='inteleviewer.html'">Inteleviewer</div>
-	<div class="card" onclick="window.open('CXHPV.html', '_blank')">CX funding</div>
-	<div class="card" onclick="window.open('70cxcalc.html', '_blank')">CX70 Calc</div>
-	<div class="card" onclick="window.open('biosched1.html', '_blank')">Biologics</div>
-        
-	  </div>
-
-       <h2>Notes</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
-  <div class="card" onclick="location.href='info.html'">Infos</div>
-<div class="card" onclick="location.href='explain.html'">Templates</div>
-<div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
-<div class="card" onclick="location.href='recalls.html'">Recalls</div>
-<div class="card" onclick="location.href='ECG.html'">ECG</div>
-  <div class="card" onclick="window.open('Clinicalnotes.html', '_blank')">Clinical Notes</div>
-      </div>
-
-		 <h2>Prescribing</h2>
-		<div class="card-group">
-		<div class="card" onclick="window.open('Npres.html', '_blank')">Meds lists</div>
-		<div class="card" onclick="window.open('RNCNP.html', '_blank')">Consultation</div>
-		<div class="card" onclick="window.open('templatetick.html', '_blank')">ConsTick</div>
-       </div>
-		
-      <h2>Urgent Care</h2>
-      <div class="card-group">
-        <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Planes</div>
-<div class="card" onclick="location.href='face.html'">Head</div>
-<div class="card" onclick="location.href='Hand.html'">Hand.Wrist</div>
-<div class="card" onclick="location.href='Sha.html'">Shoulder.Elbow</div>
-<div class="card" onclick="location.href='Abdo.html'">Thorax.Abdomen</div>
-<div class="card" onclick="location.href='Spine.html'">Back.Spine</div>
-<div class="card" onclick="location.href='LF.html'">Foot.Leg</div>
-<div class="card" onclick="window.open('Urgent_Care.html', '_blank')">Urgent Care</div>
-<div class="card" onclick="location.href='trial.html'">Trial</div>
-
-      </div>
-
-
-      <!-- Emoji Search Icon -->
-     <button id="emojiSearchIcon" class="emojiFab emojiFabDots" type="button" aria-label="Open emoji picker"></button>
-
-      <!-- Emoji Picker (Slide-out) -->
-<div id="emojiModal" aria-hidden="true">
-  <div class="emojiHeader">
-    <div class="emojiTitle">Emojis</div>
-    <button class="emojiClose" type="button" aria-label="Close">✕</button>
-  </div>
-  <div id="emojiGrid" class="emojiGrid" role="list"></div>
-</div>
-
-<!-- ✅ Quick Calculator (Left Shortcut Panel) -->
-<div id="quickCalc" class="qc collapsed">
-  <div class="qc-head">
-    <div class="qc-title">Quick Calc</div>
-    <button class="qc-toggle" type="button" aria-label="Toggle Quick Calc">❮</button>
-  </div>
-
-  <div class="qc-body">
-    <div class="qc-tabs" role="tablist" aria-label="Medication shortcuts">
-      <button class="qc-tab active" type="button" data-med="para" role="tab" aria-selected="true">Paracetamol</button>
-      <button class="qc-tab" type="button" data-med="ibu" role="tab" aria-selected="false">Ibuprofen</button>
-      <button class="qc-tab" type="button" data-med="adren" role="tab" aria-selected="false">Adrenaline IM</button>
-    </div>
-
-    <label class="qc-label" for="qcWeight">Weight (kg)</label>
-    <input id="qcWeight" class="qc-input" type="number" inputmode="decimal" min="0" step="0.1" placeholder="e.g., 12.5" />
-
-    <!-- Paracetamol -->
-    <div class="qc-section" data-section="para">
-      <label class="qc-label">Strength</label>
-      <div class="qc-strength" id="qcParaStrength">
-        <button class="qc-strength-btn active" type="button" data-value="24">120 / 5</button>
-        <button class="qc-strength-btn" type="button" data-value="50">250 / 5</button>
-      </div>
-
-      <div class="qc-row">
-        <div class="qc-pill">Dose: <b>15 mg/kg</b></div>
-        <div class="qc-pill">Max: <b>1 g</b> (single dose)</div>
-      </div>
-    </div>
-
-    <!-- Ibuprofen -->
-    <div class="qc-section" data-section="ibu" style="display:none;">
-      <label class="qc-label">Strength</label>
-      <div class="qc-strength" id="qcIbuStrength">
-        <button class="qc-strength-btn active" type="button" data-value="20">100 / 5</button>
-        <button class="qc-strength-btn" type="button" data-value="40">200 / 5</button>
-      </div>
-
-      <div class="qc-row">
-        <div class="qc-pill">Dose: <b>6 mg/kg</b></div>
-        <div class="qc-pill">Max: <b>400 mg</b> (single dose)</div>
-      </div>
-    </div>
-
-    <!-- Adrenaline IM (Anaphylaxis) -->
-    <div class="qc-section" data-section="adren" style="display:none;">
-      <div class="qc-row">
-        <div class="qc-pill">IM: <b>1:1000 (1 mg/mL)</b></div>
-        <div class="qc-pill">Dose: <b>0.01 mg/kg</b> (max 0.5 mg)</div>
-      </div>
-      <div class="qc-row" style="margin-top:8px;">
-        <div class="qc-pill">Volume: <b>0.01 mL/kg</b> (max 0.5 mL)</div>
-      </div>
-      <div class="qc-note">
-        Autoinjector dosing is device-based. Confirm local anaphylaxis guideline.
-      </div>
-    </div>
-
-    <!-- ✅ Calculate + Results BESIDE each other -->
-    <div class="qc-row qc-actions">
-      <button id="qcCalcBtn" class="qc-btn" type="button">Calculate</button>
-
-      <div class="qc-results" aria-live="polite">
-        <div class="qc-big" id="qcMain">—</div>
-        <div class="qc-sub" id="qcSub"></div>
-      </div>
-    </div>
-
+  <div class="header-left">
+    <!-- 🌸 Home toggle with rays -->
+<div class="center-toggle">
+  <div class="toggle-icon" id="menuToggle">☐</div>
+  <div class="rays">
+    <!-- Rays will be generated dynamically by JS -->
   </div>
 </div>
 </div>
 
-  <div class="moving-text">💡 Reminder: Stay organized and check your calendar!</div>
+  <h1 class="header-title">Nurse Notes</h1>
 
-  
-<!-- Vital Signs Table -->
-<div id="vital-signs-table" role="dialog" aria-modal="true" aria-label="Vital signs">
-  <button id="close-btn" type="button" aria-label="Close">✕</button>
-
-  <h2>Normal Vital Signs by Age Group</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Age</th>
-        <th>WE (kg)</th>
-        <th>Systolic BP</th>
-        <th>HR bpm</th>
-        <th>RR br/min</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td>Term</td><td>3.5</td><td>60 to 95</td><td>120 to 170</td><td>25 to 60</td></tr>
-      <tr><td>3 months</td><td>6</td><td>60 to 105</td><td>115 to 170</td><td>25 to 60</td></tr>
-      <tr><td>6 months</td><td>8</td><td>75 to 105</td><td>110 to 170</td><td>20 to 55</td></tr>
-      <tr><td>1 year</td><td>10</td><td>70 to 105</td><td>105 to 150</td><td>20 to 45</td></tr>
-      <tr><td>2 years</td><td>12</td><td>70 to 105</td><td>95 to 150</td><td>20 to 40</td></tr>
-      <tr><td>4 years</td><td>15</td><td>75 to 110</td><td>80 to 150</td><td>17 to 30</td></tr>
-      <tr><td>6 years</td><td>20</td><td>80 to 115</td><td>75 to 140</td><td>16 to 30</td></tr>
-      <tr><td>8 years</td><td>25</td><td>80 to 115</td><td>70 to 130</td><td>16 to 30</td></tr>
-      <tr><td>10 years</td><td>30</td><td>85 to 120</td><td>60 to 130</td><td>15 to 25</td></tr>
-      <tr><td>12 years</td><td>40</td><td>90 to 120</td><td>65 to 120</td><td>15 to 25</td></tr>
-      <tr><td>14 years</td><td>50</td><td>90 to 125</td><td>60 to 115</td><td>14 to 25</td></tr>
-      <tr><td>16 years</td><td>60</td><td>90 to 130</td><td>60 to 115</td><td>14 to 25</td></tr>
-      <tr><td>17+ years</td><td>65</td><td>90 to 135</td><td>60 to 115</td><td>14 to 25</td></tr>
-      <tr><td>Adult (18+ years)</td><td>70</td><td>90 to 140</td><td>60 to 100</td><td>12 to 20</td></tr>
-    </tbody>
-  </table>
-</div>
-  
+  <div class="header-right">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
     </div>
   </div>
+</div>
 
-      <footer>© 2025 Xlyn Notes Board</footer>
- <script>
-  // ===== VITALS POPUP =====
- function showTable() {
-  const el = document.getElementById('vital-signs-table');
-  if (!el) return;
+<div class="container">
+  <!-- Hidden glassy form -->
+  <div id="nurseFormWrapper" class="form-section">
+    <input id="nurseTitle" placeholder="Title">
+    <textarea id="nurseNote" placeholder="Note..."></textarea>
+    <input id="nurseURL" placeholder="Optional URL (if any)">
+    <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
+    <label for="nurseImage" class="custom-file-btn">Choose File</label>
+    <button class="add-btn" onclick="addNote()">Add</button>
+  </div>
 
-  document.body.classList.add('vitals-open');
+  <!-- Notes container -->
+  <div class="cards-container" id="nurseNotesList"></div>
+</div>
 
-  el.style.display = 'block';
-  requestAnimationFrame(() => el.classList.add('open'));
-}
+<!-- Floating glassy + button -->
+<button id="toggleFormBtn">+</button>
 
-function closeTable() {
-  const el = document.getElementById('vital-signs-table');
-  if (!el) return;
+ 
 
-  el.classList.remove('open');
-  setTimeout(() => {
-    el.style.display = 'none';
-    document.body.classList.remove('vitals-open');
-  }, 200);
-}
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  // close button
-  document.getElementById('close-btn')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    closeTable();
-  });
+/* ---------------- Firebase ---------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+  authDomain: "cepx-f9d2a.firebaseapp.com",
+  projectId: "cepx-f9d2a",
+  storageBucket: "cepx-f9d2a.appspot.com",
+  messagingSenderId: "840696526325",
+  appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+};
 
-  // click outside closes
-  document.addEventListener('click', (e) => {
-    const popup = document.getElementById('vital-signs-table');
-    if (!popup) return;
-    if (popup.style.display !== 'block') return;
-    if (popup.contains(e.target)) return;
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const notesCol = collection(db, "nurseNotes");
 
-    // don't close if clicking the vitals trigger
-    const vitalsTrigger = e.target.closest('.vitals-circle, .circle.vitals');
-    if (vitalsTrigger) return;
+/* ---------------- Global Filter Persistence ---------------- */
+let currentSearchQuery = "";
 
-    closeTable();
-  });
+/* ---------------- CRUD ---------------- */
+async function addNote() {
+  const title = nurseTitle.value.trim();
+  const note = nurseNote.value.trim();
+  const url = nurseURL.value.trim();
+  const fileInput = document.getElementById('nurseImage');
+  const file = fileInput.files[0];
 
-  // ===== EMOJI PICKER =====
-  const emojiData = [
-    { name: 'arrowR', symbol: '↪' },
-    { name: 'arrowL', symbol: '↩' },
-    { name: 'right', symbol: '➜' },
-    { name: 'left', symbol: '←' },
-    { name: 'up', symbol: '⤴' },
-    { name: 'down', symbol: '⤵' },
-    { name: 'dd', symbol: '⤹' },
-    { name: 'll', symbol: '⤶' },
-    { name: 'smile', symbol: '😊' },
-    { name: 'laugh', symbol: '😂' },
-    { name: 'tick', symbol: '✅' },
-    { name: 'heart', symbol: '❤️' },
-    { name: 'star', symbol: '⭐️' },
-    { name: 'fire', symbol: '🔥' },
-    { name: 'man', symbol: '👨🏻' },
-    { name: 'thumbs up', symbol: '👍' },
-    { name: 'check', symbol: '✔️' },
-    { name: 'woman', symbol: '👩🏻' },
-    { name: 'yellow', symbol: '🟡' },
-    { name: 'green', symbol: '🟢' },
-    { name: 'blue', symbol: '🔵' },
-    { name: 'orange', symbol: '🟠' },
-    { name: 'tree', symbol: '🌴' },
-    { name: 'injection', symbol: '💉' },
-    { name: 'money', symbol: '🤑' },
-    { name: 'nurse', symbol: '👩🏻‍⚕️' },
-    { name: 'one', symbol: '1️⃣' },
-    { name: 'two', symbol: '2️⃣' },
-    { name: 'arrow', symbol: '➡️' },
-    { name: 'leaf', symbol: '🍂' },
-    { name: 'loud', symbol: '📢' },
-    { name: 'red', symbol: '🔴' },
-    { name: 'alert', symbol: '⚠️' },
-    { name: 'red2', symbol: '‼️' },
-    { name: 'plane', symbol: '✈️' },
-    { name: 'vacay', symbol: '🏖️' },
-    { name: 'med', symbol: '💊' },
-    { name: 'X', symbol: '❌' },
-    { name: 'no', symbol: '🙅🏻‍♀️' },
-    { name: 'mum', symbol: '🤰🏻' },
-    { name: 'flower1', symbol: '🌸' },
-    { name: 'flower2', symbol: '🌼' },
-    { name: 'flower3', symbol: '🌻' },
-    { name: 'earth', symbol: '🌎' },
-    { name: 'sun', symbol: '☀️' },
-    { name: 'moon', symbol: '🌛' },
-    { name: 'food', symbol: '🍔' },
-    { name: 'puzzle', symbol: '🧩' },
-    { name: 'car', symbol: '🚗' },
-    { name: 'hospital', symbol: '🏥' },
-    { name: 'computer', symbol: '🖥️' },
-    { name: 'time', symbol: '⏰' },
-    { name: 'dollar', symbol: '💰' },
-    { name: 'diamond', symbol: '💎' },
-    { name: 'virus', symbol: '🦠' },
-    { name: 'temp', symbol: '🌡️' },
-    { name: 'blood', symbol: '🩸' },
-    { name: 'stet', symbol: '🩺' },
-    { name: 'pencil', symbol: '✏️' },
-    { name: 'pin', symbol: '📌' },
-    { name: 'pen', symbol: '🖋️' },
-    { name: 'lock', symbol: '🔒' },
-    { name: 'book', symbol: '📙' },
-    { name: 'bullet', symbol: '▪️' },
-    { name: 'bullet2', symbol: '🔸' },
-    { name: 'headset', symbol: '🎧' },
-    { name: 'calendar', symbol: '📅' },
-    { name: 'ambulance', symbol: '🚑' },
-    { name: 'phone', symbol: '☎️' },
-    { name: 'phone1', symbol: '📞' },
-    { name: 'dollar2', symbol: '💵' },
-    { name: 'pin2', symbol: '📍' },
-    { name: 'tickbox', symbol: '☐' },
-    { name: 'okay', symbol: '🆗' },
-    { name: 'dollarsign', symbol: '💲' },
-    { name: 'arrowright', symbol: '🡺' },
-    { name: 'email', symbol: '📧' },
-    { name: 'password', symbol: '🔑' },
-    { name: 'sick', symbol: '🤧' },
-    { name: 'male', symbol: '♂️' },
-    { name: 'female', symbol: '♀️' },
-  ];
+  let imageBase64 = "";
 
-  const emojiModal = document.getElementById("emojiModal");
-  const emojiGrid  = document.getElementById("emojiGrid");
-  const emojiIcon  = document.getElementById("emojiSearchIcon");
-  const emojiClose = document.querySelector(".emojiClose");
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      imageBase64 = reader.result;
 
-  function openEmoji(){
-    emojiModal.classList.add("open");
-    emojiModal.setAttribute("aria-hidden", "false");
-  }
-  function closeEmoji(){
-    emojiModal.classList.remove("open");
-    emojiModal.setAttribute("aria-hidden", "true");
-  }
-  function toggleEmoji(){
-    emojiModal.classList.contains("open") ? closeEmoji() : openEmoji();
-  }
-
-  function renderEmojiGrid(){
-    emojiGrid.innerHTML = emojiData.map(e =>
-      `<button class="emojiBtn" type="button" title="${e.name}" aria-label="${e.name}" data-emoji="${e.symbol}">${e.symbol}</button>`
-    ).join("");
-  }
-  renderEmojiGrid();
-
-  emojiIcon.addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleEmoji();
-  });
-
-  emojiClose.addEventListener("click", (e) => {
-    e.stopPropagation();
-    closeEmoji();
-  });
-
-  emojiGrid.addEventListener("click", (e) => {
-    const btn = e.target.closest(".emojiBtn");
-    if (!btn) return;
-    const emoji = btn.getAttribute("data-emoji") || btn.textContent;
-
-    navigator.clipboard.writeText(emoji).then(() => {
-      btn.style.transform = "scale(1.06)";
-      setTimeout(() => btn.style.transform = "", 120);
-    }).catch(err => console.error("Failed to copy:", err));
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!emojiModal.classList.contains("open")) return;
-    if (emojiModal.contains(e.target)) return;
-    closeEmoji();
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeEmoji();
-      closeTable();
-    }
-  });
-  
-  // ===== QUICK CALC (Left Shortcut Panel) =====
-(() => {
-  const qc = document.getElementById('quickCalc');
-  if (!qc) return;
-
-  const weightEl = qc.querySelector('#qcWeight');
-  const calcBtn  = qc.querySelector('#qcCalcBtn');
-
-  const mainEl = qc.querySelector('#qcMain');
-  const subEl  = qc.querySelector('#qcSub');
-
-  const toggleBtn = qc.querySelector('.qc-toggle');
-  const tabs = [...qc.querySelectorAll('.qc-tab')];
-
-  const paraStrengthWrap = qc.querySelector('#qcParaStrength'); // div container
-  const ibuStrengthWrap  = qc.querySelector('#qcIbuStrength');  // div container
-
-  const sections = {
-    para: qc.querySelector('[data-section="para"]'),
-    ibu: qc.querySelector('[data-section="ibu"]'),
-    adren: qc.querySelector('[data-section="adren"]'),
-  };
-
-  // ---- guards ----
-  const missing = [];
-  if (!weightEl) missing.push('#qcWeight');
-  if (!calcBtn) missing.push('#qcCalcBtn');
-  if (!mainEl) missing.push('#qcMain');
-  if (!subEl) missing.push('#qcSub');
-  if (!toggleBtn) missing.push('.qc-toggle');
-  if (!tabs.length) missing.push('.qc-tab (none found)');
-  if (!paraStrengthWrap) missing.push('#qcParaStrength (container)');
-  if (!ibuStrengthWrap) missing.push('#qcIbuStrength (container)');
-
-  if (missing.length) {
-    console.error('QuickCalc missing elements:', missing.join(', '));
-    return;
-  }
-
-  // ---- state ----
-  let activeMed = 'para';
-
-  // read defaults from the UI (active button), fall back safely
-  const getActiveStrength = (wrap, fallback) => {
-    const btn = wrap.querySelector('.qc-strength-btn.active') || wrap.querySelector('.qc-strength-btn');
-    const v = btn ? Number(btn.dataset.value) : NaN;
-    return Number.isFinite(v) && v > 0 ? v : fallback;
-  };
-
-  let paraStrength = getActiveStrength(paraStrengthWrap, 24); // mg/mL
-  let ibuStrength  = getActiveStrength(ibuStrengthWrap, 20);  // mg/mL
-
-  const highlight = (txt) => `<span class="qc-highlight">${txt}</span>`;
-  const r1 = (x) => (Math.round(x * 10) / 10).toFixed(1); // 0.1 mL
-  const rA = (x) => (Math.round(x * 10) / 10).toFixed(1); // adrenaline rounded to 0.1 mL (as you wanted)
-
-  function setMed(med){
-    activeMed = med;
-
-    tabs.forEach(b => {
-      const on = b.dataset.med === med;
-      b.classList.toggle('active', on);
-      b.setAttribute('aria-selected', on ? 'true' : 'false');
-    });
-
-    Object.entries(sections).forEach(([k, el]) => {
-      if (!el) return;
-      el.style.display = (k === med) ? '' : 'none';
-    });
-
-    // keep weight, just refresh output
-    calc();
-  }
-
-  tabs.forEach(b => b.addEventListener('click', () => setMed(b.dataset.med)));
-
-  function resetOutput(){
-    mainEl.textContent = '—';
-    subEl.textContent = '';
-  }
-
-  function calc(){
-    const kg = Number(weightEl.value);
-
-    if (!kg || kg <= 0){
-      resetOutput();
-      return;
-    }
-
-    // Paracetamol
-    if (activeMed === 'para'){
-      // 15 mg/kg; strength is mg/mL (24 = 120/5, 50 = 250/5)
-      const ml = (kg * 15) / paraStrength;
-      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
-      subEl.textContent = '';
-      return;
-    }
-
-    // Ibuprofen
-    if (activeMed === 'ibu'){
-      // 6 mg/kg capped at 400 mg (matches your reference)
-      let mg = kg * 6;
-      const capped = mg > 400;
-      if (capped) mg = 400;
-
-      const ml = mg / ibuStrength;
-      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
-      subEl.textContent = capped ? 'Max 400 mg reached' : '';
-      return;
-    }
-
-    // Adrenaline IM (1:1000, 1 mg/mL)
-    if (activeMed === 'adren'){
-      // 0.01 mL/kg, max 0.5 mL
-      const rawMl = 0.01 * kg;
-      const capped = rawMl > 0.5;
-      const ml = Math.min(rawMl, 0.5);
-      const mg = ml; // 1 mg/mL
-
-      mainEl.innerHTML = `${highlight(`${rA(ml)} mL`)} IM`;
-      subEl.textContent = capped ? 'Max 0.5 mL reached' : `${rA(mg)} mg`;
-      return;
-    }
-  }
-
-  function bindStrengthButtons(wrap, onPick){
-    wrap.querySelectorAll('.qc-strength-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        wrap.querySelectorAll('.qc-strength-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        onPick(Number(btn.dataset.value));
-        calc();
+      await addDoc(notesCol, {
+        title: title || "Untitled",
+        note,
+        url: url || "",
+        image: imageBase64,
+        time: new Date().toISOString()
       });
+
+      nurseTitle.value = '';
+      nurseNote.value = '';
+      nurseURL.value = '';
+      nurseImage.value = '';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    await addDoc(notesCol, {
+      title: title || "Untitled",
+      note,
+      url: url || "",
+      image: "",
+      time: new Date().toISOString()
     });
+
+    nurseTitle.value = '';
+    nurseNote.value = '';
+    nurseURL.value = '';
+    nurseImage.value = '';
   }
+}
 
-  bindStrengthButtons(paraStrengthWrap, (v) => { paraStrength = v; });
-  bindStrengthButtons(ibuStrengthWrap,  (v) => { ibuStrength  = v; });
+async function deleteNote(id) {
+  if (confirm("Delete this note?")) {
+    await deleteDoc(doc(db, "nurseNotes", id));
+  }
+}
 
-  // events
-  calcBtn.addEventListener('click', calc);
+async function saveEdit(id, updatedTitle, updatedNote) {
+  await updateDoc(doc(db, "nurseNotes", id), {
+    title: updatedTitle || "Untitled",
+    note: updatedNote
+  });
+}
 
-  // auto-calc + auto-clear
-  weightEl.addEventListener('input', calc);
+/* ---------------- Utilities ---------------- */
+function escapeHtml(text) {
+  return text.replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+}
 
-  // fast overwrite
-  weightEl.addEventListener('focus', () => weightEl.select());
+/* ---------------- Editing ---------------- */
+function enableEditing(card, id, title, note) {
+  card.innerHTML = `
+    <input type="text" class="edit-title" value="${escapeHtml(title)}" />
+    <div class="edit-note" contenteditable="true"
+      style="width:95%; min-height:60px; padding:6px; border:1px solid rgba(255, 255, 255, 0.4);
+             border-radius:8px; background:rgba(255,255,255,0.3); backdrop-filter:blur(8px);
+             -webkit-backdrop-filter:blur(8px); font-family:Tahoma,sans-serif; font-size:11px;">
+      ${note.replace(/\n/g, "<br>")}
+    </div>
+    <div class="editor-buttons" style="margin-top:6px;">
+      <button class="btn-save">Save</button>
+      <button class="btn-cancel">Cancel</button>
+      <button class="btn-bold">Bold</button>
+      <button class="btn-highlight">Highlight</button>
+    </div>
+  `;
 
-  // keyboard helpers
-  weightEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') calc();
-    if (e.key === 'Escape') {
-      weightEl.value = '';
-      resetOutput();
-      weightEl.blur();
+  const inputTitle = card.querySelector('.edit-title');
+  const editableDiv = card.querySelector('.edit-note');
+  const btnSave = card.querySelector('.btn-save');
+  const btnCancel = card.querySelector('.btn-cancel');
+  const btnBold = card.querySelector('.btn-bold');
+  const btnHighlight = card.querySelector('.btn-highlight');
+
+  btnSave.addEventListener('click', async () => {
+    const updatedTitle = inputTitle.value.trim() || "Untitled";
+    const updatedNote = editableDiv.innerHTML.trim();
+    await saveEdit(id, updatedTitle, updatedNote);
+    renderNotes();
+  });
+
+  btnCancel.addEventListener('click', () => renderNotes());
+
+  btnBold.addEventListener('click', () => document.execCommand('bold'));
+
+  btnHighlight.addEventListener('click', () => {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = selection.toString();
+      if (!selectedText) return;
+
+      const container = range.commonAncestorContainer;
+      const parent = container.nodeType === 3 ? container.parentNode : container;
+
+      if (parent.tagName === 'SPAN' && parent.style.backgroundColor === 'rgb(251, 224, 210)') {
+        const textNode = document.createTextNode(parent.textContent);
+        parent.replaceWith(textNode);
+      } else {
+        const span = document.createElement('span');
+        span.style.backgroundColor = '#fbe0D2';
+        span.textContent = selectedText;
+        range.deleteContents();
+        range.insertNode(span);
+      }
+
+      selection.removeAllRanges();
     }
   });
+}
 
-  toggleBtn.addEventListener('click', () => {
-    qc.classList.toggle('collapsed');
-    toggleBtn.textContent = qc.classList.contains('collapsed') ? '❯' : '❮';
+/* ---------------- Rendering ---------------- */
+function renderNotes() {
+  const list = document.getElementById('nurseNotesList');
+  onSnapshot(notesCol, snapshot => {
+    list.innerHTML = '';
+    snapshot.forEach(docSnap => {
+      const { title, note, time, url, image } = docSnap.data();
+      const id = docSnap.id;
+
+      const div = document.createElement('div');
+      div.className = 'note-card';
+      div.innerHTML = `
+        <div class="note-title">${title}</div>
+        <div class="note-content">${note.replace(/\n/g, '<br>')}</div>
+        ${image ? `<img src="${image}" class="note-image" style="max-width:100%; margin-top:10px; border-radius:6px; cursor:pointer;" />` : ""}
+        <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
+        ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
+        <div class="note-actions">
+          <button class="edit-btn">Edit</button>
+          <button class="delete-btn">Delete</button>
+        </div>
+      `;
+
+      div.querySelector('.edit-btn').addEventListener('click', () => enableEditing(div, id, title, note));
+      div.querySelector('.delete-btn').addEventListener('click', () => deleteNote(id));
+
+      // 👇 Add zoom function to image
+      const img = div.querySelector('.note-image');
+      if (img) {
+        img.addEventListener('click', () => openImageZoom(img.src));
+      }
+
+      list.appendChild(div);
+    });
+
+    // 👇 Reapply the current search filter after refresh
+    if (currentSearchQuery.trim() !== "") {
+      applySearchFilter(currentSearchQuery);
+    }
   });
+}
 
-  // init
-  resetOutput();
-  setMed('para');
-})();
+/* ---------------- Image Zoom ---------------- */
+function openImageZoom(src) {
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.background = 'rgba(0, 0, 0, 0.8)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '9999';
+  overlay.style.cursor = 'zoom-out';
+  overlay.addEventListener('click', () => document.body.removeChild(overlay));
+
+  // Image
+  const zoomedImg = document.createElement('img');
+  zoomedImg.src = src;
+  zoomedImg.style.maxWidth = '90%';
+  zoomedImg.style.maxHeight = '90%';
+  zoomedImg.style.borderRadius = '10px';
+  zoomedImg.style.boxShadow = '0 0 20px rgba(255,255,255,0.2)';
+  zoomedImg.style.transition = 'transform 0.3s ease';
+  zoomedImg.addEventListener('click', e => e.stopPropagation());
+
+  overlay.appendChild(zoomedImg);
+  document.body.appendChild(overlay);
+}
+
+/* ---------------- Search / Filter ---------------- */
+function applySearchFilter(query) {
+  const cards = document.querySelectorAll('.note-card');
+  query = query.toLowerCase();
+  cards.forEach(card => {
+    const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
+    const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
+    card.style.display = (title.includes(query) || content.includes(query)) ? 'block' : 'none';
+  });
+}
+
+function searchNotes(event) {
+  currentSearchQuery = event.target.value; // remember filter text
+  applySearchFilter(currentSearchQuery);
+}
+
+/* ---------------- Setup ---------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keyup', searchNotes);
+  }
+});
+
+window.addNote = addNote;
+window.deleteNote = deleteNote;
+window.saveEdit = saveEdit;
+window.enableEditing = enableEditing;
+window.renderNotes = renderNotes;
+window.openImageZoom = openImageZoom;
+
+// Initial load
+renderNotes();
+
+/* ---------------- Toggle Form + Rays (unchanged) ---------------- */
+// keep your existing toggle & ray animation code here
+  
+ // Toggle form
+const toggleBtn = document.getElementById('toggleFormBtn');
+const nurseForm = document.getElementById('nurseFormWrapper');
+
+toggleBtn.addEventListener('click', () => {
+  nurseForm.classList.toggle('show');
+
+  // Optional: change + to × when open
+  toggleBtn.textContent = nurseForm.classList.contains('show') ? '×' : '+';
+});
+
+const centerToggle = document.querySelector('.center-toggle');
+const toggleIcon = document.getElementById("menuToggle");
+const raysContainer = centerToggle.querySelector(".rays");
+
+let hoverTimeout;
+let currentSet = 0; // tracks which set to show next
+
+const raySets = [
+  [
+    { text: "Home", link: "https://xlyneve.github.io/CEP/home.html" },
+    { text: "Info", link: "https://xlyneve.github.io/CEP/info.html" },
+    { text: "Template", link: "https://xlyneve.github.io/CEP/explain.html" },
+    { text: "PN", link: "https://xlyneve.github.io/CEP/practiceN.html" },
+	{ text: "Recall", link: "https://xlyneve.github.io/CEP/recalls.html" }
+  ],
+  [
+    { text: "Drug Calculator", link: "https://xlyneve.github.io/CEP/OHcalc.html" },
+    { text: "Vaccine Calc", link: "https://xlyneve.github.io/CEP/vaccine-spacing.html" },
+    { text: "Vaccines", link: "https://xlyneve.github.io/CEP/complete-vaccine-info.html" },
+    { text: "Meds list", link: "https://xlyneve.github.io/CEP/Npres.html" }
+  ]
+];
+
+const angles = ["-20deg","20deg","60deg","100deg","140deg","180deg"];
+
+function showRays() {
+  raysContainer.querySelectorAll('.ray').forEach(ray => {
+    ray.style.opacity = 1;
+    ray.style.pointerEvents = 'auto';
+  });
+}
+
+function hideRays() {
+  raysContainer.querySelectorAll('.ray').forEach(ray => {
+    ray.style.opacity = 0;
+    ray.style.pointerEvents = 'none';
+  });
+}
+
+// Hover (optional) — only show if no set active
+centerToggle.addEventListener('mouseenter', () => {
+  if (!toggleIcon.classList.contains("active")) {
+    clearTimeout(hoverTimeout);
+    showRays();
+  }
+});
+
+centerToggle.addEventListener('mouseleave', () => {
+  if (!toggleIcon.classList.contains("active")) {
+    hoverTimeout = setTimeout(() => {
+      hideRays();
+    }, 1000);
+  }
+});
+
+// Click rotates between sets
+toggleIcon.addEventListener("click", () => {
+  toggleIcon.classList.add("active");
+
+  // Clear old rays
+  raysContainer.innerHTML = "";
+
+  // Add current set of rays
+  const set = raySets[currentSet];
+  set.forEach((rayData, i) => {
+    const ray = document.createElement("a");
+    ray.className = "ray";
+    ray.href = rayData.link;
+    ray.textContent = rayData.text;
+    ray.style.opacity = "0";
+    ray.style.setProperty("--angle", angles[i] || "0deg");
+	ray.style.pointerEvents = "auto"; // Ensure clickable
+    raysContainer.appendChild(ray);
+	
+    // Small timeout to trigger smooth transition
+    setTimeout(() => {
+      ray.style.opacity = "1";
+      ray.style.transform = `rotate(${angles[i] || "0deg"}) translate(60px)`;
+      ray.style.pointerEvents = "auto";
+    }, 50); // 50ms delay triggers CSS transition
+  });
+  // Move to next set for next click
+  currentSet = (currentSet + 1) % raySets.length;
+});
+
+// Function to hide rays
+function hideAllRays() {
+  const allRays = raysContainer.querySelectorAll(".ray");
+  allRays.forEach(ray => {
+    ray.style.opacity = "0";
+    ray.style.pointerEvents = "none";
+    ray.style.transform = `rotate(${ray.style.getPropertyValue("--angle")}) translate(0px)`;
+  });
+  toggleIcon.classList.remove("active");
+}
+
+// Close rays when clicking outside
+document.addEventListener("click", (e) => {
+  if (!centerToggle.contains(e.target)) {
+    hideAllRays();
+  }
+});
+
 </script>
-
+<script src="https://xlyneve.github.io/CEP/emoji.js?v=3" defer></script>
 </body>
 </html>
