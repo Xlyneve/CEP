@@ -2,618 +2,1067 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Calendar and To-Do Page</title>
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Xlyn</title>
+
 <style>
+  /* Custom Fonts */
 @font-face {
-  font-family: 'hellohon';
-  src: url('hellohon.otf') format('opentype');
+  font-family: 'AdeliciaRegular';
+  src: url('AdeliciaRegular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'fors';
+  src: url('fors.ttf') format('truetype');
 }
 
+/* General Styles */
 body {
   margin: 0;
-  font-family: Tahoma, sans-serif;
-  font-size: 10pt;
-  height: 100vh;
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: auto;
-  background: url('2b1.png') center center / cover no-repeat fixed;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
-
-.calendar,
-.calendar * {
-  font-family: Tahoma, sans-serif;
-  font-weight: 300;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
-/* Shared glass container styling (BOTH) */
-.calendar-container,
-.todo-container {
-  position: relative;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(12px) saturate(120%);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  transition: box-shadow 0.3s ease;
-  overflow: hidden;
-  min-width: 0; /* flex overflow safety */
-}
-
-/* Calendar (left) */
-.calendar-container {
-  flex: 1 1 auto;
-  padding: 8px;
-  max-height: 100vh;
-  border-radius: 12px 0 0 12px;
-  overflow-y: auto;
-}
-
-/* Background blur layers */
-.calendar-container::before,
-.todo-container::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: url('2b1ß.png') no-repeat;
-  background-size: cover;
-  filter: blur(10px);
-  transform: scale(1.05);
-  z-index: -1;
-  pointer-events: none;
-}
-
-.calendar-container::before { background-position: left top; }
-
-/* Todo (right) — IMPORTANT: do NOT combine this with calendar styles */
-.todo-container {
-  flex: 0 0 350px;
-  max-width: 350px;
-  min-width: 150px;
-  padding: 3px;
-  border-radius: 0 12px 12px 0;
-  white-space: normal;
-  max-height: 100vh;
-
-  display: flex;          /* ADD */
-  flex-direction: column; /* ADD */
-}
-
-.todo-container::before { background-position: right top; }
-
-.calendar-container:hover,
-.todo-container:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18),
-              0 0 10px rgba(255, 255, 255, 0.35);
-}
-
-.todo-title {
-  font-size: 60px;
-  text-align: center;
-  margin-bottom: 10px;
-  font-family: 'hellohon', cursive;
-  font-weight: 400;
+  font-family: 'fors', sans-serif;
+  background: #fafbf4;
   color: black;
+  font-size: 22px;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* Scroll area ONLY (no big glass box) */
-.todo-list {
-  width: 100%;
-  box-sizing: border-box;
+/* Palm background image fixed behind all content */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url('2b.png') no-repeat center center;
+  background-size: cover;
+  opacity: 0.8;
+  z-index: -1;
+}
 
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  /* remove the big container look */
+header {
+  padding: 30px 10px 20px;
+  text-align: center;
   background: transparent;
-  border: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid transparent;
+  position: relative;
+  overflow: visible !important;
+  z-index: 0;
+}
+header h1 {
+  font-size: 20px;
+}
 
-  /* spacing for items */
-  padding: 6px;
+.pageTitle {
+  font-family: 'AdeliciaRegular', cursive, sans-serif;
+  font-size: 120px;
+  letter-spacing: 6px;
+  font-weight: 900;
+  color: black;
+  position: relative;
+  z-index: 2;
+  -webkit-text-stroke: 0.8px black;
+  text-shadow:
+    0 0 1px black,
+    1px 1px 0 rgba(255, 255, 255, 0.9),
+    2px 2px 0 rgba(245, 245, 245, 0.8),
+    3px 3px 0 rgba(230, 230, 230, 0.7);
+  transform: scaleX(1.05);
+
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 12px 24px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+
+.title {
+  font-family: 'Clicker Script', cursive;
+  font-size: 90px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: black;
+  margin: 0;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.top-circles {
+  position: fixed;
+  top: 20px;
+  right: 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  z-index: 1000;
 }
 
-.todo-item {
+.circle {
+  border-radius: 70%;
+  width: 70px;
+  height: 70px;
   display: flex;
-  align-items: stretch;
-  gap: 8px;               /* slightly tighter */
-  padding: 6px 8px;       /* less padding = more usable space */
-
-  width: 100%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px; /* from .vitals-circle */
+  font-weight: normal; /* from .vitals-circle */
+  cursor: pointer;
+  padding: 8px;
   box-sizing: border-box;
-
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.30);
+  color: #333;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background-color: transparent;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-
-  border-radius: 12px;
-}
-
-.todo-item:hover {
   box-shadow:
-    inset 0 0 6px rgba(255,255,255,0.2),
-    0 2px 6px rgba(0,0,0,0.05);
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 0 8px rgba(255, 255, 255, 0.2);
+  transition:
+    transform 0.3s ease,
+    backdrop-filter 0.4s ease,
+    -webkit-backdrop-filter 0.4s ease,
+    box-shadow 0.4s ease;
+  position: relative;
+
+  will-change: transform;
+  transform: translateZ(0);
+  animation: pulseGlow 2.2s ease-in-out infinite;
 }
 
+.circle:hover {
+  transform: scale(1.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.2),
+    inset 0 0 10px rgba(255, 255, 255, 0.3);
+}
 
-/* Action container hidden by default */
-.todo-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 0 0 auto;
+.circle span {
+  text-align: center;
+  color: #333;
+}
 
+.circle::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 70%;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.2), transparent);
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.4s ease;
 }
 
-/* Show only when hovering the todo item */
-.todo-item:hover .todo-actions {
+.circle:hover::after {
   opacity: 1;
 }
 
-/* Minimal glass buttons */
-.todo-actions button {
-  width: 24px;
-  height: 24px;
-  padding: 0;
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      inset 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.18),
+      inset 0 0 12px rgba(255, 255, 255, 0.28);
+  }
+}
 
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
+#vital-signs-table {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
 
+  /* animate open/close */
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.98);
+  transition: opacity 140ms ease, transform 180ms ease;
+
+  /* Glassy but NOT transparent */
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.97),
+    rgba(248,249,252,0.95)
+  );
+
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 16px;
+  padding: 22px;
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255,255,255,0.85);
+
+  max-width: 95vw;
+  max-height: none;
+  overflow-x: hidden;
+
+  font-family: 'fors', sans-serif;
+  font-size: 14px;
+  z-index: 5000;
+
+  contain: layout paint;
+}
+
+#vital-signs-table.open {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+#vital-signs-table table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+#vital-signs-table th,
+#vital-signs-table td {
+  padding: 10px;
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  border: 1px solid rgba(230, 235, 240, 0.8);
+  background-color: rgba(255,255,255,0.75);
+  color: #111;
+
+  transition: background-color 40ms linear;
+}
+
+#vital-signs-table tbody tr:hover td {
+  background-color: rgba(140, 150, 200, 0.18);
+}
+
+/* When vitals is open, stop expensive animations behind it */
+body.vitals-open .moving-text{
+  animation: none !important;
+}
+
+body.vitals-open .circle{
+  animation: none !important;   /* stops pulseGlow */
+}
+
+/* Optional: reduce blur work on the circles while open */
+body.vitals-open .circle{
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+}
+#close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(147, 176, 172, 0.8);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+}
 
-  color: rgba(0,0,0,0.55);
-  font-size: 13px;
+
+.top-links {
+  margin: 14px auto 0;
+  display: grid;
+  grid-template-columns: repeat(5, max-content);
+  justify-content: center;
+  gap: 10px 12px;
+  position: relative;
+  z-index: 2;
+  top: 8px;
+  max-width: calc(100% - 140px); /* leaves room for right circles */
+}
+
+
+.top-links a {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  color: black;
+  font-size: 12px;
+  font-family: 'fors', sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  text-decoration: none;
+  transition: background-color 0.3s, transform 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+}
+.top-links a:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.15);
+}
+
+
+.icon-stack {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 1;
+}
+.icon-stack img {
+  width: 50px;
+  height: 50px;
+  transition: transform 0.3s ease;
+}
+.icon-stack a:hover img {
+  transform: scale(1.1);
+  background-color: #ebebeb;
+}
+
+.top-boxes {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+.top-box {
+  background-color: #eae0da;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 120px;
+}
+.top-box:hover {
+  background-color: #aca37e;
+}
+
+.content {
+  padding: 100px 20px 20px 20px;
+}
+
+.layout {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+}
+.main-content {
+  flex: 1;
+  max-width: 1000px;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 400;
+  color: black;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #e5d6cd;
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+.card-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 40px;     /* Base spacing to avoid overlapping top-circles */
+  margin-right: 80px;   /* Adjust spacing to avoid right-aligned vitals */
+}
+
+.card {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 400;
+  color: black;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+
+footer {
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  margin: 40px 0;
+}
+
+.moving-text {
+  position: fixed;
+  top: 0;
+  left: 100%;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: normal;
+  font-family: 'fors', sans-serif;
+  padding: 8px 16px;
+  border: none;
+  animation: moveText 20s linear infinite;
+  z-index: 1000;
+  color: black;
+}
+@keyframes moveText {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+
+/* === Emoji Picker: sleek slide-out glass === */
+#emojiModal{
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  width: 300px;
+  max-width: calc(100vw - 40px);
+  height: 340px;
+  max-height: calc(100vh - 140px);
+  padding: 12px;
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+
+  z-index: 1200;
+
+  /* hidden state (slide out) */
+  opacity: 0;
+  transform: translateX(18px) translateY(10px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 220ms ease;
+}
+
+#emojiModal.open{
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+  pointer-events: auto;
+}
+
+.emojiHeader{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.emojiTitle{
+  font-family: 'fors', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  color: #111;
+  opacity: 0.9;
+}
+
+.emojiClose{
+  border: none;
+  background: rgba(255,255,255,0.30);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 28px;
+  color: #111;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.emojiGrid{
+  height: calc(100% - 46px);
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.emojiBtn{
+  border: none;
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+  font-size: 20px;
   line-height: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.emojiBtn:hover{
+  background: rgba(255,255,255,0.35);
+  transform: translateY(-1px);
+}
+
+.emojiGrid::-webkit-scrollbar { width: 8px; }
+.emojiGrid::-webkit-scrollbar-track { background: transparent; }
+.emojiGrid::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.30);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+}
+.emojiFab{
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+
+  border: 1px solid rgba(255,255,255,0.40);
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
   cursor: pointer;
 
-  transition: background .2s ease, border-color .2s ease, transform .15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 1300;
+  transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
 }
 
-.todo-actions button:hover {
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.35);
+.emojiFab:hover{
   transform: translateY(-1px);
+  background: rgba(255,255,255,0.24);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.16);
 }
 
-.todo-actions button:hover{
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.35);
-  transform: translateY(-1px);
-}
-
-.todo-actions button:active{
+.emojiFab:active{
   transform: translateY(0);
 }
 
-.todo-item textarea {
-  font-family: Tahoma, sans-serif;
-  color: #000;
-  opacity: 1;
+.emojiFabIcon{
+  font-family: 'fors', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: rgba(0,0,0,0.72);
+  line-height: 1;
 }
-
-/* keep readOnly looking normal */
-.todo-item textarea[readonly] {
-  cursor: default;
+.emojiFabDots{
+  position: fixed;
 }
-
-/* optional: show subtle focus when editing */
-.todo-item textarea:not([readonly]):focus {
-  outline: none;
-  box-shadow: 0 0 6px rgba(255,255,255,0.6);
-}
-
-.todo-item input[type="text"],
-.todo-item textarea {
-  flex: 1 1 0;
-  min-width: 0;
-
-  padding: 2px 4px;   /* tighter */
-  margin: 0;
-
-  border: none;
-  background: transparent;
-
-  font-family: Tahoma, sans-serif;
-  font-size: 10pt;
-  line-height: 1.4;
-
-  resize: none;
-  overflow-y: hidden;
-
-  box-sizing: border-box;
-}
-
-.todo-item { width: 100%; box-sizing: border-box; }
-
-.todo-item > div:last-child {
-  flex: 0 0 auto;
-}
-
-.todo-item input[type="checkbox"] {
-  margin-right: 10px;
-  width: 20px;
-  height: 20px;
-  accent-color: #ffe700;
-}
-
-
-.add-todo {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.add-todo input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px 0 0 8px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: black;
-}
-
-.add-todo button {
-  padding: 8px;
-  border: none;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  cursor: pointer;
-  border-radius: 0 8px 8px 0;
-  color: #333;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.add-todo button:hover {
-  background: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 8px rgba(170, 200, 255, 0.4);
-}
-
-button,
-.add-todo button,
-.home-button,
-.emoji-button,
-.calendar-header > div > button {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  color: black;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  padding: 6px 12px;
-  font-size: 10pt;
-}
-
-button:hover,
-.add-todo button:hover,
-.home-button:hover,
-.emoji-button:hover,
-.calendar-header > div > button:hover {
-  background: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
-}
-
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.calendar-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.calendar-header h2#monthLabel {
-  font-size: 50pt;
-  margin: 0;
-  color: black;
-  font-family: 'hellohon', cursive, sans-serif;
-}
-
-#monthLabel {
-  font-family: 'hellohon', cursive, sans-serif;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.calendar-header select {
-  padding: 6px 12px;
-  font-size: 10pt;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(193, 182, 163, 0.3);
-  border-radius: 8px;
-  color: black;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.calendar-header select:hover {
-  background: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
-}
-
-.home-button {
-  padding: 4px 8px;
-  background-color: #ddd3d2;
-  border: none;
+.emojiFabDots::before{
+  content:"";
+  width: 16px;
+  height: 16px;
+  background:
+    radial-gradient(circle, rgba(0,0,0,0.55) 2px, transparent 3px) 0 0/8px 8px;
+  opacity: 0.55;
   border-radius: 4px;
-  cursor: pointer;
-  font-size: 8pt;
-  color: white;
 }
 
-.day-headers {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  margin-top: 10px;
-  font-weight: bold;
-  text-align: center;
-  color: black;
+/* ✅ QUICK CALC (left shortcut panel) */
+/* =========================
+   QUICK CALC (FULL CSS)
+   Smaller + clear selection + inline calc/results
+========================= */
+
+.qc{
+  position: fixed;
+  top: 20px;
+  left: 14px;
+
+  width: 248px;                      /* smaller */
+  max-width: calc(100vw - 28px);
+  z-index: 1400;
+
+  border-radius: 16px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+
+  overflow: hidden;
+  transition: width 180ms ease, left 180ms ease;
+  font-family: Tahoma, sans-serif;
 }
 
-.calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  margin-top: 5px;
+/* collapsed state — arrow only */
+.qc.collapsed{
+  width: 40px;
+  left: 8px;
 }
 
-.day {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  padding: 6px;
-  min-height: 150px;
+/* hide calculator content */
+.qc.collapsed .qc-body{ display:none; }
+
+/* hide title */
+.qc.collapsed .qc-title{ display:none; }
+
+/* center arrow */
+.qc.collapsed .qc-head{
+  justify-content: center;
+  padding: 8px;
+  border-bottom: none;
+}
+
+/* make arrow button fill container */
+.qc.collapsed .qc-toggle{
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.qc-head{
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 6px 6px 6px 10px;        /* tighter */
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+}
+
+.qc-title{
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  opacity: 0.95;
+}
+
+.qc-toggle{
+  width: 34px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.14);
+  color: #111;
+  cursor: pointer;
+}
+
+/* body spacing (smaller) */
+.qc-body{
+  padding: 8px 10px 10px;
+}
+
+/* tabs */
+.qc-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:8px;
+  width:100%;
+}
+
+.qc-tab{
+   border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+  cursor: pointer;
+  color: #111;
+  flex:1;
+  padding:5px 4px;
+  border-radius:10px;
+  font-size:12px;   /* slightly smaller */
+  white-space:nowrap;
+
+  font-size: 11px;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+/* ACTIVE MEDICINE (white + glow) */
+.qc-tab.active{
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.95);
   box-shadow:
-    inset 0 0 8px rgba(255, 255, 255, 0.2),
-    0 3px 6px rgba(0, 0, 0, 0.08);
-  position: relative;
-  overflow: hidden;
-  will-change: transform, box-shadow;
+    0 0 0 2px rgba(255,255,255,0.55),
+    0 10px 20px rgba(0,0,0,0.12);
+  font-weight: 500; /* normal weight */
 }
 
-.day:hover {
-  box-shadow:
-    inset 0 0 8px rgba(255, 255, 255, 0.2),
-    0 3px 6px rgba(0, 0, 0, 0.08);
-  transform: none;
-  transition: none;
+.qc-label{
+  display:block;
+  font-size: 11px;
+  margin: 6px 0 4px;
+  opacity: 0.9;
 }
 
-.day.empty {
-  background: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-  border: none !important;
-  padding: 0 !important;
-  min-height: 0 !important;
-  pointer-events: none;
-}
-
-.day textarea {
+/* Weight input: centered */
+.qc-input{
   width: 100%;
-  min-height: 110px;
-  max-height: 600px;
-  height: auto;
-  resize: none;
-  overflow-y: hidden;
-  border-radius: 8px;
-  padding: 4px;
-  font-family: 'champ', sans-serif;
-  font-size: 9.5pt;
-  box-sizing: border-box;
-  transition: height 0.2s ease;
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.day .date-number {
-  font-weight: bold;
-  color: black;
-  margin-bottom: 5px;
-  font-size: 10pt;
-}
-
-.day.today {
-  transform: scale(1.13);
-  z-index: 5;
-  box-shadow:
-    0 0 20px rgba(255, 255, 255, 0.9),
-    0 0 30px rgba(190, 230, 255, 0.6);
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.6),
-    rgba(210, 240, 255, 0.4)
-  );
-}
-
-.day textarea:focus {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.26);
+  background: rgba(255,255,255,0.10);
   outline: none;
-  box-shadow: 0 0 6px rgba(180, 220, 255, 0.8);
-  background: rgba(255, 255, 255, 0.4);
+
+  font-size: 11.5px;
+  font-family: 'fors', sans-serif;
+  text-align: center;
+  box-sizing: border-box;
 }
 
-@media (max-width: 600px) {
-  html,
-body {
+/* Center placeholder too */
+.qc-input::placeholder{
+  text-align: center;
+  opacity: 0.6;
+}
+
+/* Remove number input arrows (spinners) */
+.qc-input::-webkit-outer-spin-button,
+.qc-input::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.qc-input[type="number"]{
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Strength selector (dropdown) */
+.qc-select{
   width: 100%;
-  min-width: 0;
-  height: 100dvh;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
+  padding: 9px 36px 9px 12px;
+  border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.26);
+
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  font-size: 12px;
+  font-family: 'fors', sans-serif;
+  color: #111;
+
+  outline: none;
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* custom arrow */
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.6) 50%),
+    linear-gradient(135deg, rgba(0,0,0,0.6) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+
+  transition: box-shadow .18s ease, border-color .18s ease, background .18s ease;
 }
 
- body {
-  flex-wrap: nowrap;
-  align-items: stretch;
-  min-width: max-content;
-  height: 100dvh;
+.qc-select:focus{
+  background: rgba(255,255,255,0.18);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
 }
 
-  .calendar-container {
-  flex: 0 0 auto;
-  width: 980px;
-  max-width: none !important;
-  min-width: 980px;
-  border-radius: 12px 0 0 12px !important;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow-y: auto;
+/* strength toggle buttons */
+.qc-strength{
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
 }
 
-  .todo-container {
-  flex: 0 0 320px;
-  width: 320px;
-  max-width: none !important;
-  min-width: 320px;
-  border-radius: 0 12px 12px 0 !important;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-}
-.todo-list,
-.calendar-container {
-  -webkit-overflow-scrolling: touch;
-}
+.qc-strength-btn{
+  flex: 1;
+  padding: 6px 6px;
+  border-radius: 11px;
 
-  .calendar {
-    grid-template-columns: repeat(7, minmax(130px, 1fr));
-    gap: 8px;
-    min-width: 938px;
-  }
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 
-  .day-headers {
-    grid-template-columns: repeat(7, minmax(130px, 1fr));
-    gap: 8px;
-    min-width: 938px;
-    font-size: 9pt;
-  }
-
-  .day {
-    min-height: 140px;
-    padding: 6px;
-    font-size: 9pt;
-  }
-
-  .day textarea {
-    font-size: 9pt;
-    min-height: 70px;
-  }
-
-  .calendar-header {
-    flex-wrap: nowrap;
-    gap: 10px;
-  }
-
-  .calendar-header h2#monthLabel {
-    font-size: 24pt;
-    white-space: nowrap;
-  }
+  font-size: 11px;
+  font-family: 'fors', sans-serif;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  opacity: 0.88;
 }
 
-/* Match highlight */
-.day.match {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px) saturate(120%);
-  -webkit-backdrop-filter: blur(8px) saturate(120%);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
+.qc-strength-btn:hover{
+  background: rgba(255,255,255,0.18);
+}
+
+/* SELECTED STRENGTH (white + glowy border) */
+.qc-strength-btn.active{
+  opacity: 1;
+  background: rgba(255,255,255,0.26);
+  border-color: rgba(255,255,255,0.98);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.60),
+    0 0 18px rgba(255,255,255,0.30);
+  color: #0b1a2b;
+  font-weight: 900;
+}
+
+/* rows */
+.qc-row{
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* pills / notes */
+.qc-pill{
+  padding: 6px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.10);
+  font-size: 10px;
+}
+
+.qc-note{
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: 0.85;
 }
 
 /* =========================
-   ULTRA SUBTLE GLASS SCROLLBAR
-   ========================= */
+   Calculate + Results BESIDE
+   Put BOTH inside: <div class="qc-row qc-actions"> ... </div>
+========================= */
 
-/* Firefox */
-.todo-list,
-.calendar-container {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
+.qc-row.qc-actions{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;           /* keep side-by-side */
+  margin-top: 10px;
 }
 
-/* WebKit */
-.todo-list::-webkit-scrollbar,
-.calendar-container::-webkit-scrollbar {
-  width: 6px;   /* thinner = more elegant */
-  height: 6px;
+/* Calculate button: half size */
+.qc-btn{
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.20);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'fors', sans-serif;
+  transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
-/* Invisible track */
-.todo-list::-webkit-scrollbar-track,
-.calendar-container::-webkit-scrollbar-track {
-  background: transparent;
+.qc-row.qc-actions .qc-btn{
+  width: auto;                /* override full width */
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-top: 0;              /* remove vertical spacing */
+  min-height: 30px;
 }
 
-/* Fully hidden by default */
-.todo-list::-webkit-scrollbar-thumb,
-.calendar-container::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 20px;
-  transition: background 0.25s ease, box-shadow 0.25s ease;
+.qc-btn:hover{
+  background: rgba(255,255,255,0.24);
 }
 
-/* Almost transparent frosted glass on hover */
-.todo-list:hover::-webkit-scrollbar-thumb,
-.calendar-container:hover::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.25);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+.qc-btn:active{
+  transform: translateY(1px);
 }
 
-/* Slightly stronger while dragging */
-.todo-list::-webkit-scrollbar-thumb:active,
-.calendar-container::-webkit-scrollbar-thumb:active {
-  background: rgba(255,255,255,0.28);
+/* results box beside */
+.qc-results{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.10);
 }
 
-/* Firefox hover */
-.todo-list:hover,
-.calendar-container:hover {
-  scrollbar-color: rgba(255,255,255,0.25) transparent;
+.qc-row.qc-actions .qc-results{
+  margin-top: 0;
+  padding: 8px 10px;
+  border-radius: 14px;
+  flex: 1 1 auto;
+  min-height: 30px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* result typography */
+.qc-big{
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.qc-row.qc-actions .qc-big{
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.qc-sub{
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.35;
+}
+
+.qc-row.qc-actions .qc-sub{
+  margin-top: 0;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+/* highlight chip (optional, now matches white-glow theme) */
+/* Result highlight (pink + green medical tone) */
+.qc-highlight{
+  display:inline-block;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 205, 220, 0.95),   /* soft pink */
+    rgba(205, 240, 210, 0.95)    /* soft green */
+  );
+
+  padding: 2px 7px;
+  border-radius: 10px;
+
+  font-weight: 800;
+  line-height: 1.2;
+
+  border: 1px solid rgba(255,255,255,0.65);
+
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.35),
+    0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* Mobile handling */
+@media (max-width: 520px){
+  .qc{ width: 92vw; left: 4vw; }
+  .qc.collapsed{ transform: translateX(calc(-92vw + 46px)); }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .card-group {
+    margin-top: 60px;
+    margin-right: 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 18px;
+  }
+
+  .layout {
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+  }
+
+  .pageTitle {
+    font-size: 50px;
+    text-align: center;
+  }
+
+  .title {
+    font-size: 48px;
+    text-align: center;
+  }
+
+  .icon-stack {
+    right: 5px;
+    top: 5px;
+  }
+
+  .icon-stack img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .top-circles {
+    top: 10px;
+    right: 5px;
+  }
+
+  .circle, .vitals-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 10px;
+  }
+
+  .top-box {
+    min-width: 100px;
+    font-size: 11px;
+  }
+.top-links {
+  grid-template-columns: repeat(2, max-content);
+  justify-content: center;
+  gap: 8px 10px;
+  max-width: calc(100% - 70px);
+  padding: 0 6px;
+}
+
+.top-links a {
+  font-size: 11px;
+  padding: 5px 10px;
+}
+ 
+
+  .card-group {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    margin-top: 100px;
+    margin-right: 110px;
+  }
+
+@keyframes emojiFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+#emojiSearchInput {
+  width: 100%;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: rgba(255,255,255,0.6);
+  font-family: 'fors', sans-serif;
+}
 }
 
 </style>
@@ -621,529 +1070,564 @@ body {
 </head>
 
 <body>
-  <div class="calendar-container">
-  <div class="calendar-header">
-    <div class="calendar-header-left">
-    
+
+<header>
+  <h1><span class="pageTitle">XlynEve</span></h1>
+  <div class="top-links">
+    <a href="chatgptx.html" target="_blank">🤖 Questions?</a>
+    <a href="https://www.health.govt.nz/" target="_blank">🏥 Ministry of Health</a>
+    <a href="https://www.health.govt.nz/search?query=cold+chain" target="_blank">❄️ Cold Chain</a>
+    <a href="https://www.medsafe.govt.nz/medicines/infoSearch.asp" target="_blank">💊 Medsafe</a>
+    <a href="https://www.mymedicines.nz/" target="_blank">📋 My Medicines</a>
+    <a href="https://nzf.org.nz/" target="_blank">📚 NZ Formulary</a>
+    <a href="https://healthify.nz/" target="_blank">📙 Healthify</a>
+    <a href="https://www.immune.org.nz/" target="_blank">💉 IMAC</a>
+    <a href="https://aucklandregion.communityhealthpathways.org/" target="_blank">🧭 HealthPathways</a>
+	  <a href="https://tewhatakura.nz/guidelines" target="_blank">📜National ABX guideline</a>
+  </div>
+</header>
+
+
+ <div class="top-circles">
+    <div class="circle calendar" onclick="window.open('homecal.html', '_blank')">Calendar<br>To Do</div>
+<div class="circle patient" onclick="window.open('forms.html', '_blank')">Information<br>Links</div>
+<div class="circle notes" onclick="window.open('Notes.html', '_blank')">Notes</div>
+<div class="circle calculator" onclick="window.open('Calculator.html', '_blank')">Calculator</div>
+<div class="circle trial" onclick="window.open('https://xlyneve.github.io/OHNRoster/', '_blank')">Roster</div>
+<div class="circle inr" onclick="window.open('https://onedrive.live.com/?view=0', '_blank')">Documents</div>
+<div class="circle timesheet" onclick="window.open('https://onedrive.live.com/edit.aspx?cid=cd58075507480906&page=view&resid=CD58075507480906!660&parId=CD58075507480906!107&app=Excel', '_blank')">Timesheet</div>
+<div class="circle vitals" onclick="showTable()">Vitals</div>
+</div>
+
+
+   <div class="layout">
+    <div class="main-content">
+      <h2>Home</h2>
+      <div class="card-group">
+        <div class="card" onclick="window.open('OHcalc.html', '_blank')">Drug Calculator</div>
+  <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
+<div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
+<div class="card" onclick="location.href='inteleviewer.html'">Inteleviewer</div>
+	<div class="card" onclick="window.open('CXHPV.html', '_blank')">CX funding</div>
+	<div class="card" onclick="window.open('70cxcalc.html', '_blank')">CX70 Calc</div>
+	<div class="card" onclick="window.open('biosched1.html', '_blank')">Biologics</div>
+        
+	  </div>
+
+       <h2>Notes</h2>
+      <div class="card-group">
+        <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
+  <div class="card" onclick="location.href='info.html'">Infos</div>
+<div class="card" onclick="location.href='explain.html'">Templates</div>
+<div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
+<div class="card" onclick="location.href='recalls.html'">Recalls</div>
+<div class="card" onclick="location.href='ECG.html'">ECG</div>
+  <div class="card" onclick="window.open('Clinicalnotes.html', '_blank')">Clinical Notes</div>
+      </div>
+
+		 <h2>Prescribing</h2>
+		<div class="card-group">
+		<div class="card" onclick="window.open('Npres.html', '_blank')">Meds lists</div>
+		<div class="card" onclick="window.open('RNCNP.html', '_blank')">Consultation</div>
+		<div class="card" onclick="window.open('templatetick.html', '_blank')">ConsTick</div>
+       </div>
 		
-		<input 
-    type="text" 
-    id="noteFilterInput" 
-    placeholder="search" 
-    oninput="filterNotes()" 
-    class="glass-input"
-/>
+      <h2>Urgent Care</h2>
+      <div class="card-group">
+        <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Planes</div>
+<div class="card" onclick="location.href='face.html'">Head</div>
+<div class="card" onclick="location.href='Hand.html'">Hand.Wrist</div>
+<div class="card" onclick="location.href='Sha.html'">Shoulder.Elbow</div>
+<div class="card" onclick="location.href='Abdo.html'">Thorax.Abdomen</div>
+<div class="card" onclick="location.href='Spine.html'">Back.Spine</div>
+<div class="card" onclick="location.href='LF.html'">Foot.Leg</div>
+<div class="card" onclick="window.open('Urgent_Care.html', '_blank')">Urgent Care</div>
+<div class="card" onclick="location.href='trial.html'">Trial</div>
 
-<style>
-.glass-input {
-    background: transparent;       /* fully see-through */
-    border: none;                  /* no border at all */
-    padding: 4px 0;
-    font-size: 11px;
-    width: 120px;
-    color: black;                  /* typed text is normal */
-    outline: none;
-}
-
-.glass-input::placeholder {
-    color: rgba(0, 0, 0, 0.05);   /* extremely faint placeholder */
-    font-style: italic;            /* optional subtle style */
-}
-
-.glass-input:focus::placeholder {
-    color: rgba(0, 0, 0, 0.03);   /* even fainter on focus */
-}
+      </div>
 
 
-.calendar-header-left {
-    display: flex;
-    align-items: center;   /* vertically align search box */
-    gap: 10px;             /* spacing between search + emoji buttons */
-}
+      <!-- Emoji Search Icon -->
+     <button id="emojiSearchIcon" class="emojiFab emojiFabDots" type="button" aria-label="Open emoji picker"></button>
 
-#newTodoInput {
-  width: 100%;
-  min-height: 32px;
-  resize: none;
-  overflow-y: hidden;
-  font-family: Tahoma, sans-serif;
-  line-height: 1.4;
-}
-.add-todo textarea {
-  flex: 1;
-  min-height: 36px;
-  resize: none;
-  overflow-y: hidden;
-  line-height: 1.4;
-  font-family: Tahoma, sans-serif;
-
-  background: rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(255,255,255,0.4);
-  border-radius: 10px;
-  padding: 10px;
-  color: black;
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.add-todo textarea::placeholder {
-  color: rgba(255,255,255,0.7);
-}
-.emoji-popup {
-  position: fixed;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 8px;
-  border-radius: 10px;
-  display: flex;
-  gap: 8px;
-  z-index: 9999;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-}
-
-.emoji-popup.hidden {
-  display: none;
-}
-
-.emoji-popup button {
-  background: rgba(255,255,255,0.3);
-  border: none;
-  border-radius: 10px;
-  font-size: 10px;
-  padding: 4px 8px;
-  cursor: pointer;
-}
-
-.emoji-popup button:hover {
-  background: rgba(255,255,255,0.5);
-}
-
-
-</style>
-
-    </div>
-	
-    <h2 id="monthLabel">Monthly Calendar</h2>
-    <div>
-		 <button onclick="window.location.href='https://xlyneve.github.io/CEP/home.html'">Home</button>
-      <button onclick="changeMonth(-1)">◀</button>
-      <button onclick="goToToday()">Today</button>
-      <select id="monthSelect"></select>
-      <select id="yearSelect"></select>
-      <button onclick="changeMonth(1)">▶</button>
-    </div>
+      <!-- Emoji Picker (Slide-out) -->
+<div id="emojiModal" aria-hidden="true">
+  <div class="emojiHeader">
+    <div class="emojiTitle">Emojis</div>
+    <button class="emojiClose" type="button" aria-label="Close">✕</button>
   </div>
-<div class="note-filter-bar" style="
-  width: 50%;
-  max-width: 100px;
-  margin: 10px auto;
-  display: flex;
-  justify-content: center;
-">
-
-</div>
-  <div class="day-headers">
-    <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-  </div>
-
-  <div class="calendar" id="calendar"></div>
-</div> <!-- End of .calendar-container -->
-
-
-
- <div class="todo-container">
-  <div class="todo-title">To-Do List</div>
-
-  <div class="todo-list" id="todoList"></div>
-
-  <div class="add-todo">
-    <textarea id="newTodo" placeholder="Add new task..."></textarea>
-    <button onclick="addTodo()">Add</button>
-  </div>
+  <div id="emojiGrid" class="emojiGrid" role="list"></div>
 </div>
 
+<!-- ✅ Quick Calculator (Left Shortcut Panel) -->
+<div id="quickCalc" class="qc collapsed">
+  <div class="qc-head">
+    <div class="qc-title">Quick Calc</div>
+    <button class="qc-toggle" type="button" aria-label="Toggle Quick Calc">❮</button>
+  </div>
 
+  <div class="qc-body">
+    <div class="qc-tabs" role="tablist" aria-label="Medication shortcuts">
+      <button class="qc-tab active" type="button" data-med="para" role="tab" aria-selected="true">Paracetamol</button>
+      <button class="qc-tab" type="button" data-med="ibu" role="tab" aria-selected="false">Ibuprofen</button>
+      <button class="qc-tab" type="button" data-med="adren" role="tab" aria-selected="false">Adrenaline IM</button>
+    </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {
-  getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, onSnapshot, deleteDoc, addDoc
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <label class="qc-label" for="qcWeight">Weight (kg)</label>
+    <input id="qcWeight" class="qc-input" type="number" inputmode="decimal" min="0" step="0.1" placeholder="e.g., 12.5" />
 
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSy***************",
-  authDomain: "cepx-f9d2a.firebaseapp.com",
-  projectId: "cepx-f9d2a",
-  storageBucket: "cepx-f9d2a.appspot.com",
-  messagingSenderId: "840696526325",
-  appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
-};
+    <!-- Paracetamol -->
+    <div class="qc-section" data-section="para">
+      <label class="qc-label">Strength</label>
+      <div class="qc-strength" id="qcParaStrength">
+        <button class="qc-strength-btn active" type="button" data-value="24">120 / 5</button>
+        <button class="qc-strength-btn" type="button" data-value="50">250 / 5</button>
+      </div>
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+      <div class="qc-row">
+        <div class="qc-pill">Dose: <b>15 mg/kg</b></div>
+        <div class="qc-pill">Max: <b>1 g</b> (single dose)</div>
+      </div>
+    </div>
 
-let currentDate = new Date();
-const calendarEl = document.getElementById('calendar');
-const monthLabel = document.getElementById('monthLabel');
-const monthSelect = document.getElementById('monthSelect');
-const yearSelect = document.getElementById('yearSelect');
-const todoInput = document.getElementById('newTodo');
-const todoListEl = document.getElementById('todoList');
+    <!-- Ibuprofen -->
+    <div class="qc-section" data-section="ibu" style="display:none;">
+      <label class="qc-label">Strength</label>
+      <div class="qc-strength" id="qcIbuStrength">
+        <button class="qc-strength-btn active" type="button" data-value="20">100 / 5</button>
+        <button class="qc-strength-btn" type="button" data-value="40">200 / 5</button>
+      </div>
 
-const months = [...Array(12).keys()].map(i =>
-  new Date(0, i).toLocaleString('default', { month: 'long' })
-);
+      <div class="qc-row">
+        <div class="qc-pill">Dose: <b>6 mg/kg</b></div>
+        <div class="qc-pill">Max: <b>400 mg</b> (single dose)</div>
+      </div>
+    </div>
 
-// Populate month/year selectors
-function populateSelectors() {
-  months.forEach((m, i) => {
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = m;
-    monthSelect.appendChild(option);
-  });
+    <!-- Adrenaline IM (Anaphylaxis) -->
+    <div class="qc-section" data-section="adren" style="display:none;">
+      <div class="qc-row">
+        <div class="qc-pill">IM: <b>1:1000 (1 mg/mL)</b></div>
+        <div class="qc-pill">Dose: <b>0.01 mg/kg</b> (max 0.5 mg)</div>
+      </div>
+      <div class="qc-row" style="margin-top:8px;">
+        <div class="qc-pill">Volume: <b>0.01 mL/kg</b> (max 0.5 mL)</div>
+      </div>
+      <div class="qc-note">
+        Autoinjector dosing is device-based. Confirm local anaphylaxis guideline.
+      </div>
+    </div>
 
-  const thisYear = new Date().getFullYear();
-  for (let y = thisYear - 5; y <= thisYear + 5; y++) {
-    const option = document.createElement('option');
-    option.value = y;
-    option.textContent = y;
-    yearSelect.appendChild(option);
-  }
+    <!-- ✅ Calculate + Results BESIDE each other -->
+    <div class="qc-row qc-actions">
+      <button id="qcCalcBtn" class="qc-btn" type="button">Calculate</button>
 
-  monthSelect.addEventListener('change', () => {
-    currentDate.setMonth(parseInt(monthSelect.value));
-    loadCalendar();
-  });
-  yearSelect.addEventListener('change', () => {
-    currentDate.setFullYear(parseInt(yearSelect.value));
-    loadCalendar();
-  });
-}
+      <div class="qc-results" aria-live="polite">
+        <div class="qc-big" id="qcMain">—</div>
+        <div class="qc-sub" id="qcSub"></div>
+      </div>
+    </div>
 
-// Go to today
-function goToToday() {
-  currentDate = new Date();
-  loadCalendar();
-}
+  </div>
+</div>
+</div>
 
-// Change month
-function changeMonth(offset) {
-  currentDate.setMonth(currentDate.getMonth() + offset);
-  loadCalendar();
-}
+  <div class="moving-text">💡 Reminder: Stay organized and check your calendar!</div>
 
-// Days in month
-function getDaysInMonth(month, year) {
-  return new Date(year, month + 1, 0).getDate();
-}
-
-// Day name
-function getDayName(year, month, day) {
-  return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
-}
-
-// Load calendar for a month
-async function loadCalendar() {
-  const month = currentDate.getMonth();
-  const year = currentDate.getFullYear();
-  calendarEl.innerHTML = '';
-  monthLabel.textContent = `${months[month]} ${year}`;
-  monthSelect.value = month;
-  yearSelect.value = year;
-
-  const daysInMonth = getDaysInMonth(month, year);
-  const firstDay = new Date(year, month, 1).getDay() || 7;
-
-  const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
-  let notes = {};
-  const snap = await getDoc(docRef);
-  if (snap.exists()) notes = snap.data();
-
-  // Blank days before first day
-  for (let i = 1; i < firstDay; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'day empty';
-    calendarEl.appendChild(empty);
-  }
-
-  // Days with notes
-  for (let i = 1; i <= daysInMonth; i++) {
-    const note = notes[i] || "";
-    const day = document.createElement('div');
-    day.className = 'day';
-
-    const today = new Date();
-    if (i === today.getDate() &&
-        month === today.getMonth() &&
-        year === today.getFullYear()) {
-      day.classList.add('today');
-    }
-
-    day.innerHTML = `<div class="date-number">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
-    const textarea = day.querySelector('textarea');
-    textarea.addEventListener('input', e => {
-      autoResizeTextarea(e.target);
-      saveCalendar(year, month + 1, i, e.target.value);
-    });
-
-    calendarEl.appendChild(day);
-    autoResizeTextarea(textarea);
-  }
-  autoResizeAllDayTextareas();
-}
-
-// Save note
-async function saveCalendar(year, month, day, note) {
-  const ref = doc(db, 'calendar', `${year}-${month}`);
-  try {
-    await updateDoc(ref, { [day]: note });
-  } catch {
-    await setDoc(ref, { [day]: note }, { merge: true });
-  }
-}
-
-// Auto resize textareas
-function autoResizeTextarea(textarea) {
-  textarea.style.height = 'auto';
-  textarea.style.height = textarea.scrollHeight + 'px';
-}
-function autoResizeAllDayTextareas() {
-  document.querySelectorAll('.day textarea').forEach(autoResizeTextarea);
-}
-
-const newTodo = document.getElementById('newTodo');
-
-newTodo.addEventListener('input', () => autoResizeTextarea(newTodo));
-
-// ensure fresh reset on load
-autoResizeTextarea(newTodo);
-
-
-// To-do functions
-async function addTodo() {
-  const value = todoInput.value.trim();
-  if (value) {
-    await addDoc(collection(db, 'todos'), { text: value, done: false });
-    todoInput.value = '';
-  }
-}
-function renderTodoItem(id, text, done) {
-  const item = document.createElement('div');
-  item.className = 'todo-item';
-
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.checked = done;
-  checkbox.onchange = () =>
-    updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
-
-  const input = document.createElement('textarea');
-  input.value = text;
-  input.readOnly = true;
-  input.style.flex = '1';
-  input.style.border = 'none';
-  input.style.background = 'transparent';
-  input.style.resize = 'none';
-  input.style.overflow = 'hidden';
-
-  // initial autoresize on render
-  autoResizeTextarea(input);
-
-  // autoresize while typing
-  input.addEventListener('input', () => autoResizeTextarea(input));
-
-  const buttonContainer = document.createElement('div');
-buttonContainer.className = 'todo-actions';
-
-const editBtn = document.createElement('button');
-editBtn.type = 'button';
-editBtn.title = 'Edit';
-editBtn.textContent = '✎';   // minimalist pencil
-
-editBtn.onclick = async () => {
-  if (input.readOnly) {
-    // enter edit mode
-    input.readOnly = false;
-    input.focus();
-
-    setTimeout(() => autoResizeTextarea(input), 20);
-    editBtn.textContent = '💾';
-  } else {
-    // save changes
-    await updateDoc(doc(db, 'todos', id), { text: input.value });
-    input.readOnly = true;
-
-    autoResizeTextarea(input);
-    editBtn.textContent = '✏️';
-  }
-};
-
-const deleteBtn = document.createElement('button');
-deleteBtn.type = 'button';
-deleteBtn.title = 'Delete';
-deleteBtn.textContent = '×';  // minimalist delete
-
-deleteBtn.onclick = async () => {
-  if (confirm("Delete this to-do?"))
-    await deleteDoc(doc(db, 'todos', id));
-};
-
-buttonContainer.append(editBtn, deleteBtn);
-
-  item.append(checkbox, input, buttonContainer);
-  todoListEl.appendChild(item);
-
-  // safe double-pass autoresize for long text loaded from db
-  setTimeout(() => autoResizeTextarea(input), 30);
-}
-
-// Load todos
-function loadTodos() {
-  const ref = collection(db, 'todos');
-  onSnapshot(ref, snap => {
-    todoListEl.innerHTML = '';
-    snap.forEach(doc => renderTodoItem(doc.id, doc.data().text, doc.data().done));
-  });
-}
-
-// --- FILTER FUNCTION: SHOW ALL MATCHING NOTES GROUPED BY MONTH ---
-async function filterNotes() {
-  const term = document.getElementById("noteFilterInput").value.trim(); // Get the filter input and remove leading/trailing spaces
   
-  // If the search term is empty, reload the full calendar (no filtering)
-  if (!term) {
-    loadCalendar();
+<!-- Vital Signs Table -->
+<div id="vital-signs-table" role="dialog" aria-modal="true" aria-label="Vital signs">
+  <button id="close-btn" type="button" aria-label="Close">✕</button>
+
+  <h2>Normal Vital Signs by Age Group</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Age</th>
+        <th>WE (kg)</th>
+        <th>Systolic BP</th>
+        <th>HR bpm</th>
+        <th>RR br/min</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Term</td><td>3.5</td><td>60 to 95</td><td>120 to 170</td><td>25 to 60</td></tr>
+      <tr><td>3 months</td><td>6</td><td>60 to 105</td><td>115 to 170</td><td>25 to 60</td></tr>
+      <tr><td>6 months</td><td>8</td><td>75 to 105</td><td>110 to 170</td><td>20 to 55</td></tr>
+      <tr><td>1 year</td><td>10</td><td>70 to 105</td><td>105 to 150</td><td>20 to 45</td></tr>
+      <tr><td>2 years</td><td>12</td><td>70 to 105</td><td>95 to 150</td><td>20 to 40</td></tr>
+      <tr><td>4 years</td><td>15</td><td>75 to 110</td><td>80 to 150</td><td>17 to 30</td></tr>
+      <tr><td>6 years</td><td>20</td><td>80 to 115</td><td>75 to 140</td><td>16 to 30</td></tr>
+      <tr><td>8 years</td><td>25</td><td>80 to 115</td><td>70 to 130</td><td>16 to 30</td></tr>
+      <tr><td>10 years</td><td>30</td><td>85 to 120</td><td>60 to 130</td><td>15 to 25</td></tr>
+      <tr><td>12 years</td><td>40</td><td>90 to 120</td><td>65 to 120</td><td>15 to 25</td></tr>
+      <tr><td>14 years</td><td>50</td><td>90 to 125</td><td>60 to 115</td><td>14 to 25</td></tr>
+      <tr><td>16 years</td><td>60</td><td>90 to 130</td><td>60 to 115</td><td>14 to 25</td></tr>
+      <tr><td>17+ years</td><td>65</td><td>90 to 135</td><td>60 to 115</td><td>14 to 25</td></tr>
+      <tr><td>Adult (18+ years)</td><td>70</td><td>90 to 140</td><td>60 to 100</td><td>12 to 20</td></tr>
+    </tbody>
+  </table>
+</div>
+  
+      <footer>© 2025 Xlyn Notes Board</footer>
+    </div>
+  </div>
+
+ <script>
+  // ===== VITALS POPUP =====
+ function showTable() {
+  const el = document.getElementById('vital-signs-table');
+  if (!el) return;
+
+  document.body.classList.add('vitals-open');
+
+  el.style.display = 'block';
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
+function closeTable() {
+  const el = document.getElementById('vital-signs-table');
+  if (!el) return;
+
+  el.classList.remove('open');
+  setTimeout(() => {
+    el.style.display = 'none';
+    document.body.classList.remove('vitals-open');
+  }, 200);
+}
+
+  // close button
+  document.getElementById('close-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeTable();
+  });
+
+  // click outside closes
+  document.addEventListener('click', (e) => {
+    const popup = document.getElementById('vital-signs-table');
+    if (!popup) return;
+    if (popup.style.display !== 'block') return;
+    if (popup.contains(e.target)) return;
+
+    // don't close if clicking the vitals trigger
+    const vitalsTrigger = e.target.closest('.vitals-circle, .circle.vitals');
+    if (vitalsTrigger) return;
+
+    closeTable();
+  });
+
+  // ===== EMOJI PICKER =====
+  const emojiData = [
+    { name: 'arrowR', symbol: '↪' },
+    { name: 'arrowL', symbol: '↩' },
+    { name: 'right', symbol: '➜' },
+    { name: 'left', symbol: '←' },
+    { name: 'up', symbol: '⤴' },
+    { name: 'down', symbol: '⤵' },
+    { name: 'dd', symbol: '⤹' },
+    { name: 'll', symbol: '⤶' },
+    { name: 'smile', symbol: '😊' },
+    { name: 'laugh', symbol: '😂' },
+    { name: 'tick', symbol: '✅' },
+    { name: 'heart', symbol: '❤️' },
+    { name: 'star', symbol: '⭐️' },
+    { name: 'fire', symbol: '🔥' },
+    { name: 'man', symbol: '👨🏻' },
+    { name: 'thumbs up', symbol: '👍' },
+    { name: 'check', symbol: '✔️' },
+    { name: 'woman', symbol: '👩🏻' },
+    { name: 'yellow', symbol: '🟡' },
+    { name: 'green', symbol: '🟢' },
+    { name: 'blue', symbol: '🔵' },
+    { name: 'orange', symbol: '🟠' },
+    { name: 'tree', symbol: '🌴' },
+    { name: 'injection', symbol: '💉' },
+    { name: 'money', symbol: '🤑' },
+    { name: 'nurse', symbol: '👩🏻‍⚕️' },
+    { name: 'one', symbol: '1️⃣' },
+    { name: 'two', symbol: '2️⃣' },
+    { name: 'arrow', symbol: '➡️' },
+    { name: 'leaf', symbol: '🍂' },
+    { name: 'loud', symbol: '📢' },
+    { name: 'red', symbol: '🔴' },
+    { name: 'alert', symbol: '⚠️' },
+    { name: 'red2', symbol: '‼️' },
+    { name: 'plane', symbol: '✈️' },
+    { name: 'vacay', symbol: '🏖️' },
+    { name: 'med', symbol: '💊' },
+    { name: 'X', symbol: '❌' },
+    { name: 'no', symbol: '🙅🏻‍♀️' },
+    { name: 'mum', symbol: '🤰🏻' },
+    { name: 'flower1', symbol: '🌸' },
+    { name: 'flower2', symbol: '🌼' },
+    { name: 'flower3', symbol: '🌻' },
+    { name: 'earth', symbol: '🌎' },
+    { name: 'sun', symbol: '☀️' },
+    { name: 'moon', symbol: '🌛' },
+    { name: 'food', symbol: '🍔' },
+    { name: 'puzzle', symbol: '🧩' },
+    { name: 'car', symbol: '🚗' },
+    { name: 'hospital', symbol: '🏥' },
+    { name: 'computer', symbol: '🖥️' },
+    { name: 'time', symbol: '⏰' },
+    { name: 'dollar', symbol: '💰' },
+    { name: 'diamond', symbol: '💎' },
+    { name: 'virus', symbol: '🦠' },
+    { name: 'temp', symbol: '🌡️' },
+    { name: 'blood', symbol: '🩸' },
+    { name: 'stet', symbol: '🩺' },
+    { name: 'pencil', symbol: '✏️' },
+    { name: 'pin', symbol: '📌' },
+    { name: 'pen', symbol: '🖋️' },
+    { name: 'lock', symbol: '🔒' },
+    { name: 'book', symbol: '📙' },
+    { name: 'bullet', symbol: '▪️' },
+    { name: 'bullet2', symbol: '🔸' },
+    { name: 'headset', symbol: '🎧' },
+    { name: 'calendar', symbol: '📅' },
+    { name: 'ambulance', symbol: '🚑' },
+    { name: 'phone', symbol: '☎️' },
+    { name: 'phone1', symbol: '📞' },
+    { name: 'dollar2', symbol: '💵' },
+    { name: 'pin2', symbol: '📍' },
+    { name: 'tickbox', symbol: '☐' },
+    { name: 'okay', symbol: '🆗' },
+    { name: 'dollarsign', symbol: '💲' },
+    { name: 'arrowright', symbol: '🡺' },
+    { name: 'email', symbol: '📧' },
+    { name: 'password', symbol: '🔑' },
+    { name: 'sick', symbol: '🤧' },
+    { name: 'male', symbol: '♂️' },
+    { name: 'female', symbol: '♀️' },
+  ];
+
+  const emojiModal = document.getElementById("emojiModal");
+  const emojiGrid  = document.getElementById("emojiGrid");
+  const emojiIcon  = document.getElementById("emojiSearchIcon");
+  const emojiClose = document.querySelector(".emojiClose");
+
+  function openEmoji(){
+    emojiModal.classList.add("open");
+    emojiModal.setAttribute("aria-hidden", "false");
+  }
+  function closeEmoji(){
+    emojiModal.classList.remove("open");
+    emojiModal.setAttribute("aria-hidden", "true");
+  }
+  function toggleEmoji(){
+    emojiModal.classList.contains("open") ? closeEmoji() : openEmoji();
+  }
+
+  function renderEmojiGrid(){
+    emojiGrid.innerHTML = emojiData.map(e =>
+      `<button class="emojiBtn" type="button" title="${e.name}" aria-label="${e.name}" data-emoji="${e.symbol}">${e.symbol}</button>`
+    ).join("");
+  }
+  renderEmojiGrid();
+
+  emojiIcon.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleEmoji();
+  });
+
+  emojiClose.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeEmoji();
+  });
+
+  emojiGrid.addEventListener("click", (e) => {
+    const btn = e.target.closest(".emojiBtn");
+    if (!btn) return;
+    const emoji = btn.getAttribute("data-emoji") || btn.textContent;
+
+    navigator.clipboard.writeText(emoji).then(() => {
+      btn.style.transform = "scale(1.06)";
+      setTimeout(() => btn.style.transform = "", 120);
+    }).catch(err => console.error("Failed to copy:", err));
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!emojiModal.classList.contains("open")) return;
+    if (emojiModal.contains(e.target)) return;
+    closeEmoji();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeEmoji();
+      closeTable();
+    }
+  });
+  
+  // ===== QUICK CALC (Left Shortcut Panel) =====
+(() => {
+  const qc = document.getElementById('quickCalc');
+  if (!qc) return;
+
+  const weightEl = qc.querySelector('#qcWeight');
+  const calcBtn  = qc.querySelector('#qcCalcBtn');
+
+  const mainEl = qc.querySelector('#qcMain');
+  const subEl  = qc.querySelector('#qcSub');
+
+  const toggleBtn = qc.querySelector('.qc-toggle');
+  const tabs = [...qc.querySelectorAll('.qc-tab')];
+
+  const paraStrengthWrap = qc.querySelector('#qcParaStrength'); // div container
+  const ibuStrengthWrap  = qc.querySelector('#qcIbuStrength');  // div container
+
+  const sections = {
+    para: qc.querySelector('[data-section="para"]'),
+    ibu: qc.querySelector('[data-section="ibu"]'),
+    adren: qc.querySelector('[data-section="adren"]'),
+  };
+
+  // ---- guards ----
+  const missing = [];
+  if (!weightEl) missing.push('#qcWeight');
+  if (!calcBtn) missing.push('#qcCalcBtn');
+  if (!mainEl) missing.push('#qcMain');
+  if (!subEl) missing.push('#qcSub');
+  if (!toggleBtn) missing.push('.qc-toggle');
+  if (!tabs.length) missing.push('.qc-tab (none found)');
+  if (!paraStrengthWrap) missing.push('#qcParaStrength (container)');
+  if (!ibuStrengthWrap) missing.push('#qcIbuStrength (container)');
+
+  if (missing.length) {
+    console.error('QuickCalc missing elements:', missing.join(', '));
     return;
   }
 
-  // Create a regular expression for partial word matching (case-insensitive)
-  const regExp = new RegExp(term, 'i'); // 'i' flag for case-insensitivity
-  
-  // Get all calendar documents (month-year as document ID)
-  const calendarRef = collection(db, 'calendar');
-  const allDocs = await getDocs(calendarRef);
+  // ---- state ----
+  let activeMed = 'para';
 
-  // Clear the existing calendar content
-  calendarEl.innerHTML = '';
+  // read defaults from the UI (active button), fall back safely
+  const getActiveStrength = (wrap, fallback) => {
+    const btn = wrap.querySelector('.qc-strength-btn.active') || wrap.querySelector('.qc-strength-btn');
+    const v = btn ? Number(btn.dataset.value) : NaN;
+    return Number.isFinite(v) && v > 0 ? v : fallback;
+  };
 
-  // Iterate over all documents in the calendar collection
-  allDocs.forEach(docSnap => {
-    const [year, month] = docSnap.id.split('-').map(Number); // Split the document ID into year and month
-    const notes = docSnap.data(); // Get the notes data for that month
-    
-    // Filter the days based on whether the notes contain the search term (using regex for partial matching)
-    const matchingDays = Object.keys(notes).filter(day => {
-      return regExp.test(notes[day]); // Test if the note contains the search term (case-insensitive)
+  let paraStrength = getActiveStrength(paraStrengthWrap, 24); // mg/mL
+  let ibuStrength  = getActiveStrength(ibuStrengthWrap, 20);  // mg/mL
+
+  const highlight = (txt) => `<span class="qc-highlight">${txt}</span>`;
+  const r1 = (x) => (Math.round(x * 10) / 10).toFixed(1); // 0.1 mL
+  const rA = (x) => (Math.round(x * 10) / 10).toFixed(1); // adrenaline rounded to 0.1 mL (as you wanted)
+
+  function setMed(med){
+    activeMed = med;
+
+    tabs.forEach(b => {
+      const on = b.dataset.med === med;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
 
-    // If there are matching days, display them grouped by month
-    if (matchingDays.length > 0) {
-      // Create the month-year header (e.g., "June 2025")
-      const header = document.createElement('div');
-      header.className = 'month-header';
-      header.textContent = `${months[month - 1]} ${year}`;  // Adjust for zero-indexing if necessary
-      calendarEl.appendChild(header);
+    Object.entries(sections).forEach(([k, el]) => {
+      if (!el) return;
+      el.style.display = (k === med) ? '' : 'none';
+    });
 
-      // Create a day element for each day with matching notes
-      matchingDays.forEach(dayNum => {
-        const day = document.createElement('div');
-        day.className = 'day match'; // Add 'match' class for styling of matched days
+    // keep weight, just refresh output
+    calc();
+  }
 
-        // Create the day content with the note for that day
-        day.innerHTML = `
-          <div class="date-number">${getDayName(year, month - 1, dayNum)} ${dayNum}</div>
-          <textarea readonly>${notes[dayNum]}</textarea> <!-- Display the note for the matched day -->
-        `;
+  tabs.forEach(b => b.addEventListener('click', () => setMed(b.dataset.med)));
 
-        // Append the day to the calendar
-        calendarEl.appendChild(day);
-        autoResizeAllDayTextareas(); // Auto-resize all day textareas to fit content
+  function resetOutput(){
+    mainEl.textContent = '—';
+    subEl.textContent = '';
+  }
+
+  function calc(){
+    const kg = Number(weightEl.value);
+
+    if (!kg || kg <= 0){
+      resetOutput();
+      return;
+    }
+
+    // Paracetamol
+    if (activeMed === 'para'){
+      // 15 mg/kg; strength is mg/mL (24 = 120/5, 50 = 250/5)
+      const ml = (kg * 15) / paraStrength;
+      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      subEl.textContent = '';
+      return;
+    }
+
+    // Ibuprofen
+    if (activeMed === 'ibu'){
+      // 6 mg/kg capped at 400 mg (matches your reference)
+      let mg = kg * 6;
+      const capped = mg > 400;
+      if (capped) mg = 400;
+
+      const ml = mg / ibuStrength;
+      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      subEl.textContent = capped ? 'Max 400 mg reached' : '';
+      return;
+    }
+
+    // Adrenaline IM (1:1000, 1 mg/mL)
+    if (activeMed === 'adren'){
+      // 0.01 mL/kg, max 0.5 mL
+      const rawMl = 0.01 * kg;
+      const capped = rawMl > 0.5;
+      const ml = Math.min(rawMl, 0.5);
+      const mg = ml; // 1 mg/mL
+
+      mainEl.innerHTML = `${highlight(`${rA(ml)} mL`)} IM`;
+      subEl.textContent = capped ? 'Max 0.5 mL reached' : `${rA(mg)} mg`;
+      return;
+    }
+  }
+
+  function bindStrengthButtons(wrap, onPick){
+    wrap.querySelectorAll('.qc-strength-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        wrap.querySelectorAll('.qc-strength-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        onPick(Number(btn.dataset.value));
+        calc();
       });
+    });
+  }
+
+  bindStrengthButtons(paraStrengthWrap, (v) => { paraStrength = v; });
+  bindStrengthButtons(ibuStrengthWrap,  (v) => { ibuStrength  = v; });
+
+  // events
+  calcBtn.addEventListener('click', calc);
+
+  // auto-calc + auto-clear
+  weightEl.addEventListener('input', calc);
+
+  // fast overwrite
+  weightEl.addEventListener('focus', () => weightEl.select());
+
+  // keyboard helpers
+  weightEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') calc();
+    if (e.key === 'Escape') {
+      weightEl.value = '';
+      resetOutput();
+      weightEl.blur();
     }
   });
-}
 
+  toggleBtn.addEventListener('click', () => {
+    qc.classList.toggle('collapsed');
+    toggleBtn.textContent = qc.classList.contains('collapsed') ? '❯' : '❮';
+  });
 
-// Expose functions
-window.changeMonth = changeMonth;
-window.goToToday = goToToday;
-window.addTodo = addTodo;
-window.filterNotes = filterNotes;
-
-// Initial load
-populateSelectors();
-loadCalendar();
-loadTodos();
-window.addEventListener('resize', () => {
-  document.querySelectorAll('.todo-item textarea, .day textarea').forEach(autoResizeTextarea);
-  autoResizeAllDayTextareas();
-});
-
-let activeTextarea = null;
-const emojiPopup = document.getElementById("emojiPopup");
-
-// SHOW EMOJI POPUP ON DAY CLICK
-document.addEventListener("click", (e) => {
-    const dayBox = e.target.closest(".day");
-
-    if (dayBox) {
-        const rect = dayBox.getBoundingClientRect();
-
-        // find textarea inside day
-        activeTextarea = dayBox.querySelector("textarea");
-
-        // position popup (centered above the day)
-        emojiPopup.style.left = rect.left + rect.width / 2 + "px";
-        emojiPopup.style.top = rect.top - 55 + "px";
-
-        emojiPopup.classList.remove("hidden");
-        return;
-    }
-
-    // CLICK OUTSIDE → CLOSE POPUP
-    if (!e.target.closest("#emojiPopup")) {
-        emojiPopup.classList.add("hidden");
-    }
-});
-
-// INSERT EMOJI INTO CURRENT DAY NOTE
-window.insertEmoji = function(emoji) {
-    if (!activeTextarea) return;
-
-    const cursorPos = activeTextarea.selectionStart;
-    const text = activeTextarea.value;
-
-    activeTextarea.value =
-        text.slice(0, cursorPos) + emoji + " " + text.slice(cursorPos);
-
-    activeTextarea.focus();
-    activeTextarea.selectionEnd = cursorPos + emoji.length + 1;
-
-    autoResizeTextarea(activeTextarea);
-
-    // keep popup open (optional)
-};
-
+  // init
+  resetOutput();
+  setMed('para');
+})();
 </script>
-
-
-<!-- EMOJI POPUP -->
-<div id="emojiPopup" class="emoji-popup hidden">
-  <button onclick="insertEmoji('☐')">☐</button>
-  <button onclick="insertEmoji('✅')">✅</button>
-  <button onclick="insertEmoji('🟡')">🟡</button>
-	<button onclick="insertEmoji('▪️')">▪️</button>
-  <button onclick="insertEmoji('📌')">📌</button>
-	<button onclick="insertEmoji('⚠️')">⚠️</button>
-	<button onclick="insertEmoji('📊')">📊</button>
-  <button onclick="insertEmoji('🌸')">🌸</button>
-	<button onclick="insertEmoji('✈️')">✈️</button>
-</div>
 
 </body>
 </html>
