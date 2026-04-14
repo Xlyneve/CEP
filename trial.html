@@ -296,6 +296,23 @@ body.logged-in .nurse-list {
   padding: 5px 10px;
   font-size: 0.75rem;
 }
+.roster-status {
+  width: 100%;
+  max-width: var(--cal-w);
+  box-sizing: border-box;
+  margin: 0 0 8px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: #444;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(0,0,0,0.08);
+  display: none;
+}
+
+.roster-status.show {
+  display: block;
+}
 
 /* Nurse items */
 .nurse {
@@ -882,6 +899,7 @@ footer {
 
    <!-- Calendar Section -->
 <div class="calendar">
+  <div id="rosterStatus" class="roster-status" aria-live="polite"></div>
   <div class="calendar-top-sticky">
     <div class="calendar-header">
       <button class="btn" id="prevMonth">◀</button>
@@ -981,6 +999,8 @@ const zoomInBtn = document.getElementById('zoomInBtn');
 const fitMonthBtn = document.getElementById('fitMonthBtn');
 const calendarZoomFrame = document.getElementById('calendarZoomFrame');
 
+const rosterStatus = document.getElementById('rosterStatus');
+
   let currentUser = null;
   let canEdit = false;  // controls if editing is allowed
 
@@ -1065,6 +1085,18 @@ window.addEventListener('resize', () => {
     setMonthScale(1);
   }
 });
+
+function showRosterStatus(message) {
+  if (!rosterStatus) return;
+  rosterStatus.textContent = message;
+  rosterStatus.classList.add('show');
+}
+
+function hideRosterStatus() {
+  if (!rosterStatus) return;
+  rosterStatus.textContent = '';
+  rosterStatus.classList.remove('show');
+}
 
 function syncCalendarScroll() {
   if (!weekdaysScroll || !gridScroll) return;
@@ -1164,22 +1196,33 @@ function closeAuthModal() {
 
   /** ---------- Firebase Data ---------- **/
   async function loadData() {
-    try {
-      const docRef = doc(db, "nursesRoster", "main");
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        roster = data.roster || {};
-        nurses = data.nurses || nurses;
-      }
-      syncShiftColorsWithNurses();  
-      renderNurseList();
-      renderCalendar();
-    } catch (error) {
-      console.error("Failed to load data from Firestore:", error);
-      alert("Failed to load data from Firestore. Check console.");
+  try {
+    hideRosterStatus();
+
+    const docRef = doc(db, "nursesRoster", "main");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      roster = data.roster || {};
+      nurses = data.nurses || nurses;
+    } else {
+      roster = {};
     }
+
+    syncShiftColorsWithNurses();
+    renderNurseList();
+    renderCalendar();
+  } catch (error) {
+    console.error("Failed to load data from Firestore:", error);
+
+    roster = roster || {};
+    renderNurseList();
+    renderCalendar();
+
+    showRosterStatus("Roster could not be loaded from Firestore right now.");
   }
+}
 
   async function saveData() {
   if (!canEdit) {
@@ -1601,9 +1644,6 @@ function syncShiftColorsWithNurses() {
   }
 }
 
-onAuthStateChanged(auth, () => {
-  loadData();
-});
 
 // ------------------- TEMPLATE HANDLING -------------------
 
