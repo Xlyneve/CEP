@@ -433,6 +433,18 @@ body.logged-in .nurse-list {
   font-weight: bold; /* optional: makes it more prominent */
 }
 
+ .calendar-zoom-frame {
+  width: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.calendar-zoom-content {
+  transform: scale(var(--month-scale));
+  transform-origin: top left;
+  width: calc(var(--month-base-width) / var(--month-scale));
+}
+
 .left-buttons {
   display: flex;
   gap: 20px;
@@ -706,17 +718,6 @@ footer {
   position: relative;
 }
 
-   .calendar-zoom-frame {
-  width: 100%;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.calendar-zoom-content {
-  transform: scale(var(--month-scale));
-  transform-origin: top left;
-  width: calc(var(--month-base-width) / var(--month-scale));
-}
 
   .weekdays {
     display: grid;
@@ -1036,7 +1037,10 @@ function fitMonthToScreen() {
   if (!calendarZoomFrame) return;
 
   const availableWidth = calendarZoomFrame.clientWidth;
-  const baseWidth = 820;
+  const baseWidth = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--month-base-width')
+  ) || 820;
+
   const fittedScale = Math.min(1, availableWidth / baseWidth);
 
   setMonthScale(fittedScale);
@@ -1851,7 +1855,6 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-document.querySelectorAll('.day').forEach(cell => handleDayDrop(cell));
 </script>
 
 </body>
