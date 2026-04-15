@@ -519,17 +519,19 @@ body.logged-in .nurse-list {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 5px;
   width: 100%;
 }
 
-/* Day cells */
 .day {
   padding: 10px;
   border: 1px solid rgba(180, 180, 180, 0.6);
   border-radius: 12px;
   min-height: 140px;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(10px) saturate(160%);
   -webkit-backdrop-filter: blur(10px) saturate(160%);
@@ -539,6 +541,12 @@ body.logged-in .nurse-list {
   transition: transform 0.2s, box-shadow 0.2s;
   color: #333;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.day-number,
+.day-note,
+.holiday-badge {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .day.weekend { background: rgba(245, 245, 245, 0.4); }
 
@@ -561,36 +569,27 @@ body.logged-in .nurse-list {
     rgba(255, 244, 232, 0.96),
     rgba(255, 236, 214, 0.94)
   );
-  border: 2px solid rgba(230, 160, 95, 0.42);
-  box-shadow: 0 4px 14px rgba(230, 160, 95, 0.10);
+  border: 1px solid rgba(180, 180, 180, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .day.holiday::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    -45deg,
-    rgba(255,255,255,0.16) 0px,
-    rgba(255,255,255,0.16) 8px,
-    rgba(255,255,255,0.02) 8px,
-    rgba(255,255,255,0.02) 16px
-  );
+  content: none;
 }
 
 .holiday-badge {
   display: inline-block;
-  margin-left: 6px;
-  padding: 2px 8px;
-  font-size: 0.72rem;
+  max-width: 100%;
+  margin-left: 4px;
+  padding: 1px 6px;
+  font-size: 0.68rem;
   font-weight: 700;
   border-radius: 999px;
   background: rgba(230, 160, 95, 0.14);
   color: #9a5a1f;
   border: 1px solid rgba(230, 160, 95, 0.24);
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 
@@ -1255,6 +1254,26 @@ function getNurseHierarchyIndex(nurseName) {
   }
 }
 
+function getLeaveDisplay(shift) {
+  const leaveType = shift.leaveType || '';
+
+  if (leaveType === 'AL') {
+    return { text: '🌴 AL', isLeave: true };
+  }
+
+  if (leaveType === 'SL') {
+    return { text: '🤒 SL', isLeave: true };
+  }
+
+  if (leaveType === 'Study') {
+    return { text: '📘 Study', isLeave: true };
+  }
+
+  return {
+    text: shift.time || 'Shift',
+    isLeave: false
+  };
+}
 
   /** ---------- Nurse List ---------- **/
   function renderNurseList() {
@@ -1447,13 +1466,15 @@ addNurseBtn.addEventListener('click', () => {
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
   shiftDiv.style.color = brightness > 150 ? "#000" : "#fff";
 
-  shiftDiv.innerHTML =
-    `${shift.name}: ${shift.time || "Shift"}` +
-    (shift.leaveType ? `<span class="leave-badge">${shift.leaveType}</span>` : '');
+  const leaveDisplay = getLeaveDisplay(shift);
 
-  if (shift.leaveType) {
-    shiftDiv.classList.add('leave');
-  }
+shiftDiv.innerHTML =
+  `${shift.name}: ${leaveDisplay.text}` +
+  (shift.leaveType ? `<span class="leave-badge">${shift.leaveType}</span>` : '');
+
+if (leaveDisplay.isLeave) {
+  shiftDiv.classList.add('leave');
+}
 
   shiftDiv.draggable = canEdit;
 
@@ -1560,9 +1581,9 @@ function renderDayCell(year, month, day) {
   const dayNumber = document.createElement('div');
   dayNumber.classList.add('day-number');
   dayNumber.innerHTML =
-    day +
-    (roster[key].isHoliday ? `<span class="holiday-badge">Holiday</span>` : '') +
-    (roster[key].notes ? `<span class="day-note">${roster[key].notes}</span>` : '');
+  `<div>${day}</div>` +
+  (roster[key].isHoliday ? `<div><span class="holiday-badge">Holiday</span></div>` : '') +
+  (roster[key].notes ? `<span class="day-note">${roster[key].notes}</span>` : '');
 
   dayNumber.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -1915,10 +1936,13 @@ function renderTemplateDay(templateEl, templateShifts, labelText) {
     const shiftDiv = document.createElement('div');
     shiftDiv.className = 'shift';
     shiftDiv.style.backgroundColor = shift.color;
-    shiftDiv.innerHTML =
-  `${shift.name}: ${shift.time || 'Shift'}` +
+    const leaveDisplay = getLeaveDisplay(shift);
+
+shiftDiv.innerHTML =
+  `${shift.name}: ${leaveDisplay.text}` +
   (shift.leaveType ? `<span class="leave-badge">${shift.leaveType}</span>` : '');
-  if (shift.leaveType) {
+
+if (leaveDisplay.isLeave) {
   shiftDiv.classList.add('leave');
 }
     shiftDiv.draggable = canEdit;
