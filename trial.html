@@ -523,7 +523,43 @@ body.logged-in .nurse-list {
   content: none;
 }
 
+.day.holiday {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 230, 235, 0.95),
+    rgba(255, 240, 243, 0.92)
+  );
+  border: 2px solid rgba(214, 95, 122, 0.45);
+  box-shadow: 0 4px 14px rgba(214, 95, 122, 0.10);
+}
 
+.day.holiday::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255,255,255,0.16) 0px,
+    rgba(255,255,255,0.16) 8px,
+    rgba(255,255,255,0.02) 8px,
+    rgba(255,255,255,0.02) 16px
+  );
+}
+
+.holiday-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  background: rgba(214, 95, 122, 0.16);
+  color: #8f2f46;
+  border: 1px solid rgba(214, 95, 122, 0.25);
+  vertical-align: middle;
+}
 
 
 .day-number {
@@ -863,9 +899,10 @@ footer {
       <div class="nurse-note">
         <p>💡 <b>Tips:</b></p>
         <ul>
-          <li><b>Shift+Click</b> to delete staff</li>
-          <li><b>Long Press</b> to delete shift</li>
-          <li><b>Right Click</b> to edit shift</li>
+          <li><b>Shift+Click nurse</b> to delete staff</li>
+<li><b>Shift+Click date</b> to toggle holiday</li>
+<li><b>Long Press</b> to delete shift</li>
+<li><b>Right Click</b> to edit shift</li>
         </ul>
       </div>
     </div>
@@ -1399,7 +1436,8 @@ shiftDiv.addEventListener('pointerdown', () => {
   }
 function renderDayCell(year, month, day) {
   const key = `${year}-${month}-${day}`;
-  if (!roster[key]) roster[key] = { shifts: [], notes: '' };
+  if (!roster[key]) roster[key] = { shifts: [], notes: '', isHoliday: false };
+if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
 
   const dayCell = document.createElement('div');
   dayCell.classList.add('day');
@@ -1407,6 +1445,9 @@ function renderDayCell(year, month, day) {
 
   const date = new Date(year, month, day);
   dayCell.dataset.date = date.toDateString();
+  if (roster[key].isHoliday) {
+  dayCell.classList.add('holiday');
+}
 
   if (date.getDay() === 0 || date.getDay() === 6) dayCell.classList.add('weekend');
 
@@ -1419,17 +1460,28 @@ function renderDayCell(year, month, day) {
   // Day number + note
   const dayNumber = document.createElement('div');
   dayNumber.classList.add('day-number');
-  dayNumber.innerHTML = day + (roster[key].notes ? `<span class="day-note">${roster[key].notes}</span>` : '');
+  dayNumber.innerHTML =
+  day +
+  (roster[key].isHoliday ? `<span class="holiday-badge">Holiday</span>` : '') +
+  (roster[key].notes ? `<span class="day-note">${roster[key].notes}</span>` : '');
   dayNumber.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!canEdit) return;
-    const note = prompt('Enter notes for this day:', roster[key].notes || '');
-    if (note !== null) {
-      roster[key].notes = note;
-      saveData();
-      renderCalendar();
-    }
-  });
+  e.stopPropagation();
+  if (!canEdit) return;
+
+  if (e.shiftKey) {
+    roster[key].isHoliday = !roster[key].isHoliday;
+    saveData();
+    renderCalendar();
+    return;
+  }
+
+  const note = prompt('Enter notes for this day:', roster[key].notes || '');
+  if (note !== null) {
+    roster[key].notes = note;
+    saveData();
+    renderCalendar();
+  }
+});
 
   // Drag handle for shifting all shifts
   const dragHandle = document.createElement('span');
