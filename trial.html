@@ -2007,9 +2007,14 @@ function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
       const shifts = JSON.parse(dayShiftsData);
 
       shifts.forEach(shift => {
-        if (!templateShifts.some(s => s.name === shift.name && s.time === shift.time)) {
-          templateShifts.push({ ...shift });
-        }
+        if (!templateShifts.some(
+  s =>
+    s.name === shift.name &&
+    s.time === shift.time &&
+    (s.leaveType || '') === (shift.leaveType || '')
+)) {
+  templateShifts.push({ ...shift });
+}
       });
 
       renderTemplateDay(templateEl, templateShifts, labelText);
@@ -2061,47 +2066,7 @@ loadTemplate();
 syncCalendarScroll();
 
 // ---------------- Day Cell Drop ----------------
-function handleDayDrop(dayCell) {
-  dayCell.addEventListener('dragover', e => { e.preventDefault(); dayCell.classList.add('drag-over'); });
-  dayCell.addEventListener('dragleave', () => dayCell.classList.remove('drag-over'));
-  dayCell.addEventListener('drop', e => {
-    e.preventDefault();
-    dayCell.classList.remove('drag-over');
-    if (!canEdit) return;
 
-    const key = dayCell.dataset.dayKey;
-    if (!roster[key]) roster[key] = { shifts: [], notes: '' };
-
-    // Nurse dragged
-    const nurseIndex = e.dataTransfer.getData('nurseIndex');
-    if (nurseIndex !== '') {
-      const nurse = nurses[nurseIndex];
-      roster[key].shifts.push({ name: nurse.name, color: nurse.color, time: 'Shift' });
-      saveData();
-      renderCalendar();
-      return;
-    }
-
-    // Template shift dragged
-    const templateShiftData = e.dataTransfer.getData('text/template-shift');
-    if (templateShiftData) {
-      const shift = JSON.parse(templateShiftData);
-      roster[key].shifts.push({ ...shift });
-      saveData();
-      renderCalendar();
-      return;
-    }
-
-    // All template shifts
-    const allTemplateShiftsData = e.dataTransfer.getData('text/all-template-shifts');
-    if (allTemplateShiftsData) {
-      const shifts = JSON.parse(allTemplateShiftsData);
-      shifts.forEach(s => roster[key].shifts.push({ ...s }));
-      saveData();
-      renderCalendar();
-    }
-  });
-}
 authToggleBtn.addEventListener('click', () => {
   openAuthModal();
 });
