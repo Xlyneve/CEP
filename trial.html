@@ -1201,10 +1201,12 @@ function normalizeNurseRanks() {
       colorPicker.addEventListener('input', (e) => {
         if (!canEdit) return;
         nurse.color = e.target.value;
-        syncShiftColorsWithNurses();
-        saveData();
-        renderNurseList();
-        renderCalendar();
+syncShiftColorsWithNurses();
+saveData();
+renderNurseList();
+renderCalendar();
+renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
       });
 
       infoDiv.appendChild(colorBox);
@@ -1266,9 +1268,10 @@ function normalizeNurseRanks() {
     });
 
     saveData();
-    renderNurseList();
-    renderCalendar();
-  }
+renderNurseList();
+renderCalendar();
+renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
 
   rankInput.addEventListener('keydown', (e) => {
     e.stopPropagation();
@@ -1633,6 +1636,13 @@ function syncShiftColorsWithNurses() {
       if (nurse) shift.color = nurse.color;
     });
   }
+
+  [templateShifts1, templateShifts2].forEach(templateShifts => {
+    templateShifts.forEach(shift => {
+      const nurse = nurses.find(n => n.name === shift.name);
+      if (nurse) shift.color = nurse.color;
+    });
+  });
 }
 
 
