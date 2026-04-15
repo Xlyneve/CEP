@@ -1233,31 +1233,33 @@ function normalizeNurseRanks() {
       div.appendChild(infoDiv);
       div.appendChild(colorPicker);
 	  
-	  if (canEdit) {
+	 if (canEdit) {
   const rankInput = document.createElement('input');
   rankInput.type = 'number';
   rankInput.min = '1';
+  rankInput.step = '1';
   rankInput.value = nurse.rank || idx + 1;
   rankInput.style.width = '52px';
   rankInput.style.marginLeft = '6px';
   rankInput.style.borderRadius = '6px';
   rankInput.style.border = '1px solid #ccc';
   rankInput.style.padding = '2px 4px';
+  rankInput.style.cursor = 'text';
 
-  rankInput.addEventListener('click', (e) => e.stopPropagation());
-  rankInput.addEventListener('mousedown', (e) => e.stopPropagation());
+  ['click', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'dblclick'].forEach(evt => {
+    rankInput.addEventListener(evt, (e) => e.stopPropagation());
+  });
 
-  rankInput.addEventListener('change', () => {
+  function applyRankChange() {
     let newRank = parseInt(rankInput.value, 10);
     if (isNaN(newRank) || newRank < 1) newRank = 1;
+    if (newRank > nurses.length) newRank = nurses.length;
 
-    nurse.rank = newRank;
+    const oldIndex = nurses.findIndex(n => n === nurse);
+    if (oldIndex === -1) return;
 
-    nurses.sort((a, b) => {
-      const rankDiff = (a.rank || 999) - (b.rank || 999);
-      if (rankDiff !== 0) return rankDiff;
-      return a.name.localeCompare(b.name);
-    });
+    const movedNurse = nurses.splice(oldIndex, 1)[0];
+    nurses.splice(newRank - 1, 0, movedNurse);
 
     nurses.forEach((n, i) => {
       n.rank = i + 1;
@@ -1266,7 +1268,17 @@ function normalizeNurseRanks() {
     saveData();
     renderNurseList();
     renderCalendar();
+  }
+
+  rankInput.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') {
+      applyRankChange();
+      rankInput.blur();
+    }
   });
+
+  rankInput.addEventListener('blur', applyRankChange);
 
   div.appendChild(rankInput);
 }
