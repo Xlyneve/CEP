@@ -1469,13 +1469,13 @@ addNurseBtn.addEventListener('click', () => {
 
   const leaveDisplay = getLeaveDisplay(shift);
 
-shiftDiv.innerHTML =
-  `${shift.name}: ${leaveDisplay.text}` +
-  (shift.leaveType ? `<span class="leave-badge">${shift.leaveType}</span>` : '');
-
-if (leaveDisplay.isLeave) {
-  shiftDiv.classList.add('leave');
-}
+  if (leaveDisplay.isLeave) {
+    shiftDiv.innerHTML =
+      `${shift.name} ${leaveDisplay.emoji} <span class="leave-badge">${leaveDisplay.badge}</span>`;
+    shiftDiv.classList.add('leave');
+  } else {
+    shiftDiv.innerHTML = `${shift.name}: ${shift.time || "Shift"}`;
+  }
 
   shiftDiv.draggable = canEdit;
 
@@ -1579,12 +1579,12 @@ function renderDayCell(year, month, day) {
     dayCell.classList.add('today');
   }
 
- const dayNumber = document.createElement('div');
-dayNumber.classList.add('day-number');
-dayNumber.innerHTML =
-  `${day}` +
-  (roster[key].isHoliday ? ` <span class="holiday-badge">Holiday</span>` : '') +
-  (roster[key].notes ? ` <span class="day-note">${roster[key].notes}</span>` : '');
+  const dayNumber = document.createElement('div');
+  dayNumber.classList.add('day-number');
+  dayNumber.innerHTML =
+    `${day}` +
+    (roster[key].isHoliday ? ` <span class="holiday-badge">Holiday</span>` : '') +
+    (roster[key].notes ? ` <span class="day-note">${roster[key].notes}</span>` : '');
 
   dayNumber.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -1715,7 +1715,6 @@ dayNumber.innerHTML =
 
   return dayCell;
 }
- 
 function renderCalendar() {
   calendarGrid.innerHTML = '';
 
