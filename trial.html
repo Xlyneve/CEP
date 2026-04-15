@@ -388,16 +388,7 @@ body.logged-in .nurse-list {
   z-index: 1;
 }
 
-.delete-btn {
-  color: red;
-  font-weight: normal;
-  font-size: 1em;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  user-select: none;
-}
-.nurse:hover .delete-btn { opacity: 1; }
+
 
 .add-nurse {
   margin-top: 10px;
@@ -623,26 +614,42 @@ body.logged-in .nurse-list {
 .shift {
   display: block;
   margin: 2px 0;
-  padding: 3px 6px;
+  padding: 3px 24px 3px 6px;
   border-radius: 6px;
   font-size: 0.85em;
   font-weight: 500;
   text-align: center;
   color: #fff;
   background-clip: padding-box;
+  position: relative;
 }
-.shift .delete-btn {
-  font-size: 1.2em !important;
-  margin-left: 5px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 50%;
-  padding: 0 8px !important;
-  opacity: 1;
-  transition: opacity 0.2s ease;
+.delete-btn {
   user-select: none;
 }
-.shift:hover .delete-btn { opacity: 1; }
+
+.shift .delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  line-height: 16px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 999px;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: background 0.2s ease, transform 0.2s ease;
+  z-index: 2;
+}
+
+.shift .delete-btn:hover {
+  background: rgba(0, 0, 0, 0.45);
+  transform: scale(1.05);
+}
 
 .day.current-week:not(.today):not(.holiday) {
   border: 3px solid rgba(200, 200, 200, 0.85);
@@ -942,9 +949,9 @@ footer {
         <ul>
           <li><b>Shift+Click nurse</b> to delete staff</li>
 <li><b>Shift+Click date</b> to toggle holiday</li>
-<li><b>Shift+Click shift</b> to cycle AL / SL / Study</li>
-<li><b>Click shift text</b> to edit inline</li>
-<li><b>Long Press</b> to delete shift</li>
+<li><b>Click shift</b> to choose AL / SL / Study</li>
+<li><b>Right Click shift</b> to edit time</li>
+<li><b>Click ×</b> to delete shift</li>
         </ul>
       </div>
     </div>
@@ -1451,35 +1458,23 @@ addNurseBtn.addEventListener('click', () => {
   shiftDiv.draggable = canEdit;
 
   if (canEdit) {
-    shiftDiv.contentEditable = "true";
-    shiftDiv.spellcheck = false;
-
-    const updateShiftText = () => {
-      const rawText = shiftDiv.innerText.replace(/\s+(AL|SL|Study)\s*$/, '').trim();
-
-      let updatedTime = rawText;
-      const prefix = `${shift.name}:`;
-      if (rawText.startsWith(prefix)) {
-        updatedTime = rawText.slice(prefix.length).trim();
-      }
-
-      if (!updatedTime) {
-        updatedTime = "Shift";
-      }
-
-      roster[key].shifts[shiftIndex].time = updatedTime;
-      saveData();
-      renderCalendar();
-    };
-
-    shiftDiv.addEventListener('blur', updateShiftText);
-
-    shiftDiv.addEventListener('keydown', (e) => {
+    shiftDiv.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
       e.stopPropagation();
 
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        shiftDiv.blur();
+      const currentShift = roster[key].shifts[shiftIndex];
+      if (!currentShift) return;
+
+      const newTime = prompt(
+        `Edit shift time for ${shift.name}:`,
+        currentShift.time || "Shift"
+      );
+
+      if (newTime !== null) {
+        const trimmed = newTime.trim();
+        currentShift.time = trimmed || "Shift";
+        saveData();
+        renderCalendar();
       }
     });
 
@@ -1492,34 +1487,47 @@ addNurseBtn.addEventListener('click', () => {
     e.stopPropagation();
     if (!canEdit) return;
 
-    if (e.shiftKey) {
-      e.preventDefault();
+    const currentShift = roster[key].shifts[shiftIndex];
+    if (!currentShift) return;
 
-      const leaveOrder = ["", "AL", "SL", "Study"];
-      const current = roster[key].shifts[shiftIndex].leaveType || "";
-      const nextIndex = (leaveOrder.indexOf(current) + 1) % leaveOrder.length;
-      roster[key].shifts[shiftIndex].leaveType = leaveOrder[nextIndex];
+    const currentLeave = currentShift.leaveType || '';
+    const picked = prompt(
+      `Leave type for ${shift.name}\n\nType one of:\nAL\nSL\nStudy\n\nLeave blank to clear`,
+      currentLeave
+    );
 
+    if (picked === null) return;
+
+    const normalized = picked.trim();
+    const valid = ['', 'AL', 'SL', 'Study'];
+
+    if (!valid.includes(normalized)) {
+      alert('Please enter AL, SL, Study, or leave it blank.');
+      return;
+    }
+
+    currentShift.leaveType = normalized;
+    saveData();
+    renderCalendar();
+  });
+
+  if (canEdit) {
+    const deleteBtn = document.createElement('span');
+    deleteBtn.textContent = '×';
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.title = 'Delete shift';
+
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!confirm(`Delete shift for ${shift.name}?`)) return;
+
+      roster[key].shifts.splice(shiftIndex, 1);
       saveData();
       renderCalendar();
-    }
-  });
+    });
 
-  let pressTimer;
-  shiftDiv.addEventListener('pointerdown', () => {
-    if (!canEdit) return;
-    pressTimer = setTimeout(() => {
-      if (confirm(`Delete shift for ${shift.name}?`)) {
-        roster[key].shifts.splice(shiftIndex, 1);
-        saveData();
-        renderCalendar();
-      }
-    }, 800);
-  });
-
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
-    shiftDiv.addEventListener(evt, () => clearTimeout(pressTimer));
-  });
+    shiftDiv.appendChild(deleteBtn);
+  }
 
   return shiftDiv;
 }
@@ -1938,34 +1946,44 @@ function renderTemplateDay(templateEl, templateShifts, labelText) {
   e.stopPropagation();
   if (!canEdit) return;
 
-  if (e.shiftKey) {
-    const leaveOrder = ["", "AL", "SL", "Study"];
-    const current = templateShifts[idx].leaveType || "";
-    const nextIndex = (leaveOrder.indexOf(current) + 1) % leaveOrder.length;
-    templateShifts[idx].leaveType = leaveOrder[nextIndex];
+  const currentLeave = templateShifts[idx].leaveType || '';
+  const picked = prompt(
+    `Leave type for ${shift.name}\n\nType one of:\nAL\nSL\nStudy\n\nLeave blank to clear`,
+    currentLeave
+  );
 
-    saveTemplate();
-    renderTemplateDay(templateEl, templateShifts, labelText);
+  if (picked === null) return;
+
+  const normalized = picked.trim();
+  const valid = ['', 'AL', 'SL', 'Study'];
+
+  if (!valid.includes(normalized)) {
+    alert('Please enter AL, SL, Study, or leave it blank.');
     return;
   }
+
+  templateShifts[idx].leaveType = normalized;
+  saveTemplate();
+  renderTemplateDay(templateEl, templateShifts, labelText);
 });
 
-    // LONG PRESS = DELETE
-    let pressTimer;
-    shiftDiv.addEventListener('pointerdown', () => {
-      if (!canEdit) return;
-      pressTimer = setTimeout(() => {
-        if (confirm(`Delete shift for ${shift.name} from ${labelText}?`)) {
-          templateShifts.splice(idx, 1);
-          renderTemplateDay(templateEl, templateShifts, labelText);
-          saveTemplate();
-        }
-      }, 800);
-    });
+  if (canEdit) {
+  const deleteBtn = document.createElement('span');
+  deleteBtn.textContent = '×';
+  deleteBtn.className = 'delete-btn';
+  deleteBtn.title = `Delete shift for ${shift.name}`;
 
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
-      shiftDiv.addEventListener(evt, () => clearTimeout(pressTimer));
-    });
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!confirm(`Delete shift for ${shift.name} from ${labelText}?`)) return;
+
+    templateShifts.splice(idx, 1);
+    saveTemplate();
+    renderTemplateDay(templateEl, templateShifts, labelText);
+  });
+
+  shiftDiv.appendChild(deleteBtn);
+}
 
     templateEl.appendChild(shiftDiv);
   });
