@@ -1219,12 +1219,20 @@ renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
         if (e.shiftKey) {
           // Shift+click → delete nurse
           if (confirm(`Delete nurse ${nurse.name}?`)) {
-            nurses.splice(idx, 1);
-            if (selectedNurseIndex === idx) selectedNurseIndex = null;
-            saveData();
-            renderNurseList();
-            renderCalendar();
-          }
+  nurses.splice(idx, 1);
+
+  nurses.forEach((n, i) => {
+    n.rank = i + 1;
+  });
+
+  if (selectedNurseIndex === idx) selectedNurseIndex = null;
+
+  saveData();
+  renderNurseList();
+  renderCalendar();
+  renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+  renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+}
         } else {
           // Normal click → select nurse
           selectedNurseIndex = idx;
@@ -1268,10 +1276,11 @@ renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
     });
 
     saveData();
-renderNurseList();
-renderCalendar();
-renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
-renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+    renderNurseList();
+    renderCalendar();
+    renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+    renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+  }
 
   rankInput.addEventListener('keydown', (e) => {
     e.stopPropagation();
@@ -1285,7 +1294,6 @@ renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
 
   div.appendChild(rankInput);
 }
-
       // ✅ Dragstart handler
       div.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('nurseIndex', idx);
