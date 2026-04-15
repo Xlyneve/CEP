@@ -527,7 +527,20 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
           ${vax.doseHistory.map((done, doseIndex) => done ? `
             <div class="date-pill">
               <label>Dose ${doseIndex + 1} date given</label>
-              <input type="date" value="${vax.doseDates[doseIndex] || ''}" onchange="updateDoseDate(${index}, ${doseIndex}, this.value)">
+              <input
+  type="text"
+  inputmode="numeric"
+  placeholder="DD-MM-YYYY"
+  value="${
+    vax.doseDates[doseIndex]
+      ? (() => {
+          const [y, m, d] = vax.doseDates[doseIndex].split('-');
+          return `${d}-${m}-${y}`;
+        })()
+      : ''
+  }"
+  onchange="updateDoseDate(${index}, ${doseIndex}, this.value)"
+>
             </div>
           ` : '').join('')}
         </div>
@@ -537,21 +550,48 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
   }
 
   function toggleSelected(index, checked) {
-    vaccines[index].selected = checked;
+  vaccines[index].selected = checked;
+  generatePlan();
+}
+
+function toggleDose(index, doseIndex, checked) {
+  vaccines[index].doseHistory[doseIndex] = checked;
+  if (!checked) vaccines[index].doseDates[doseIndex] = '';
+  generatePlan();
+}
+
+function updateDoseDate(index, doseIndex, value) {
+  const cleaned = value.trim();
+
+  if (!cleaned) {
+    vaccines[index].doseDates[doseIndex] = '';
     generatePlan();
+    return;
   }
 
-  function toggleDose(index, doseIndex, checked) {
-    vaccines[index].doseHistory[doseIndex] = checked;
-    if (!checked) vaccines[index].doseDates[doseIndex] = '';
-    generatePlan();
+  const match = cleaned.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+
+  if (!match) {
+    alert('Please enter the date as DD-MM-YYYY');
+    return;
   }
 
-  function updateDoseDate(index, doseIndex, value) {
-    vaccines[index].doseDates[doseIndex] = value;
-    generatePlan();
+  const [, day, month, year] = match;
+
+  const testDate = new Date(`${year}-${month}-${day}T00:00:00`);
+  if (
+    Number.isNaN(testDate.getTime()) ||
+    testDate.getFullYear() !== Number(year) ||
+    testDate.getMonth() + 1 !== Number(month) ||
+    testDate.getDate() !== Number(day)
+  ) {
+    alert('Please enter a valid date as DD-MM-YYYY');
+    return;
   }
 
+  vaccines[index].doseDates[doseIndex] = `${year}-${month}-${day}`;
+  generatePlan();
+}
    function buildStandardEvents(vax, visitDates, liveCursor) {
   const events = [];
   let firstDoseDate = null;
