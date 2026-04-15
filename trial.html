@@ -2026,11 +2026,16 @@ function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
     const templateShiftData = e.dataTransfer.getData('text/template-shift');
     if (templateShiftData) {
       const shift = JSON.parse(templateShiftData);
-      if (!templateShifts.some(s => s.name === shift.name && s.time === shift.time)) {
-        templateShifts.push({ ...shift });
-        renderTemplateDay(templateEl, templateShifts, labelText);
-        saveTemplate();
-      }
+      if (!templateShifts.some(
+  s =>
+    s.name === shift.name &&
+    s.time === shift.time &&
+    (s.leaveType || '') === (shift.leaveType || '')
+)) {
+  templateShifts.push({ ...shift });
+  renderTemplateDay(templateEl, templateShifts, labelText);
+  saveTemplate();
+}
       return;
     }
 
@@ -2039,9 +2044,14 @@ function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
     if (allTemplateShiftsData) {
       const shifts = JSON.parse(allTemplateShiftsData);
       shifts.forEach(s => {
-        if (!templateShifts.some(t => t.name === s.name && t.time === s.time)) {
-          templateShifts.push({ ...s });
-        }
+        if (!templateShifts.some(
+  t =>
+    t.name === s.name &&
+    t.time === s.time &&
+    (t.leaveType || '') === (s.leaveType || '')
+)) {
+  templateShifts.push({ ...s });
+}
       });
       renderTemplateDay(templateEl, templateShifts, labelText);
       saveTemplate();
@@ -2052,10 +2062,16 @@ function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
     const singleShiftData = e.dataTransfer.getData('text/plain');
     if (singleShiftData) {
       const shift = JSON.parse(singleShiftData);
-      if (!templateShifts.some(s => s.name === shift.name && s.time === shift.time)) {
-        templateShifts.push({ ...shift });
-        renderTemplateDay(templateEl, templateShifts, labelText);
-        saveTemplate();
+      if (!templateShifts.some(
+  s =>
+    s.name === shift.name &&
+    s.time === shift.time &&
+    (s.leaveType || '') === (shift.leaveType || '')
+)) {
+  templateShifts.push({ ...shift });
+  renderTemplateDay(templateEl, templateShifts, labelText);
+  saveTemplate();
+}
       }
     }
   });
