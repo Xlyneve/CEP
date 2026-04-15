@@ -1195,24 +1195,28 @@ function hideRosterStatus() {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-  const data = docSnap.data();
-  roster = data.roster || {};
-  nurses = data.nurses || nurses;
-} else {
-  roster = {};
-}
+      const data = docSnap.data();
+      roster = data.roster || {};
+      nurses = data.nurses || nurses;
+    } else {
+      roster = {};
+    }
 
-   normalizeNurseRanks();
+    normalizeNurseRanks();
     syncShiftColorsWithNurses();
     renderNurseList();
     renderCalendar();
-	
+    renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+    renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+
   } catch (error) {
     console.error("Failed to load data from Firestore:", error);
 
     roster = roster || {};
     renderNurseList();
     renderCalendar();
+    renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+    renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
 
     showRosterStatus("Roster could not be loaded right now.");
   }
