@@ -1826,17 +1826,39 @@ function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
     templateEl.classList.remove('drag-over');
     if (!canEdit) return;
 
+    // 1. Nurse dragged from nurse list
     const nurseIndex = e.dataTransfer.getData('nurseIndex');
     if (nurseIndex !== '') {
       const nurse = nurses[nurseIndex];
       if (!templateShifts.some(s => s.name === nurse.name)) {
-        templateShifts.push({ name: nurse.name, color: nurse.color, time: "Shift" });
+        templateShifts.push({
+          name: nurse.name,
+          color: nurse.color,
+          time: "Shift"
+        });
         renderTemplateDay(templateEl, templateShifts, labelText);
         saveTemplate();
       }
       return;
     }
 
+    // 2. Full day dragged from calendar/template drag handle
+    const dayShiftsData = e.dataTransfer.getData('text/day-shifts');
+    if (dayShiftsData) {
+      const shifts = JSON.parse(dayShiftsData);
+
+      shifts.forEach(shift => {
+        if (!templateShifts.some(s => s.name === shift.name && s.time === shift.time)) {
+          templateShifts.push({ ...shift });
+        }
+      });
+
+      renderTemplateDay(templateEl, templateShifts, labelText);
+      saveTemplate();
+      return;
+    }
+
+    // 3. Single template shift dragged
     const templateShiftData = e.dataTransfer.getData('text/template-shift');
     if (templateShiftData) {
       const shift = JSON.parse(templateShiftData);
@@ -1848,6 +1870,7 @@ function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
       return;
     }
 
+    // 4. All template shifts dragged
     const allTemplateShiftsData = e.dataTransfer.getData('text/all-template-shifts');
     if (allTemplateShiftsData) {
       const shifts = JSON.parse(allTemplateShiftsData);
@@ -1861,6 +1884,7 @@ function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
       return;
     }
 
+    // 5. Single shift dragged from calendar
     const singleShiftData = e.dataTransfer.getData('text/plain');
     if (singleShiftData) {
       const shift = JSON.parse(singleShiftData);
