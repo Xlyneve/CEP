@@ -13,11 +13,10 @@ html {
 }
 
 :root{
-  --cal-w: 900px;
-  --nurse-w: 250px;
-  --gap: 20px;
-  --month-scale: 1;
-  --month-base-width: 820px;
+  --cal-w: 900px;   /* calendar width (keep same as your design) */
+  --nurse-w: 250px; /* nurse panel width */
+  --gap: 20px;      /* visual gap between nurse panel and calendar */
+
 }
 
 /* ===== Base ===== */
@@ -226,37 +225,41 @@ body::after {
   white-space: nowrap;
   border: 0;
 }
+
+/* ===== Layout: Desktop side-by-side ===== */
 .container {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr var(--cal-w) 1fr;
+  position: relative;          /* add this line */
+  display: flex;
+  justify-content: center;
   align-items: flex-start;
-  max-width: 1600px;
+  gap: 20px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
 }
+
 .nurse-list {
   display: block;
-  position: sticky;
-  top: 110px;
-  left: 10px;
+  position: sticky;    /* fixed so it always stays in place */
+  top: 110px;         /* distance from top of viewport */
+  left: 10px;         /* distance from left of viewport */
+
   width: var(--nurse-w);
   max-width: var(--nurse-w);
-  max-height: 90vh;
+
+  max-height: 90vh;          /* scrollable if list is long */
   overflow-y: auto;
+
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 12px;
   border: 1px solid rgba(200,200,200,0.4);
+
   padding: 10px;
-  z-index: 1000;
-  grid-column: 1;
-  justify-self: start;
+  z-index: 1000;  /* keep above calendar */
 }
-
-
 body.logged-in .nurse-list {
   position: sticky;
   top: 0;
@@ -282,36 +285,6 @@ body.logged-in .nurse-list {
 .nurse-list, .calendar {
   flex-shrink: 0;
   min-width: 0;
-}
-.zoom-controls {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  justify-content: center;
-  margin: 6px 0 8px;
-  flex-wrap: wrap;
-}
-
-.zoom-controls .btn {
-  padding: 5px 10px;
-  font-size: 0.75rem;
-}
-.roster-status {
-  width: 100%;
-  max-width: var(--cal-w);
-  box-sizing: border-box;
-  margin: 0 0 8px 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  color: #444;
-  background: rgba(255,255,255,0.65);
-  border: 1px solid rgba(0,0,0,0.08);
-  display: none;
-}
-
-.roster-status.show {
-  display: block;
 }
 
 /* Nurse items */
@@ -417,25 +390,38 @@ body.logged-in .nurse-list {
   transition: background-color 0.3s ease;
 }
 .add-nurse button:hover { background: #e68900; }
+.roster-status {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 8px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: #444;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.08);
+  display: none;
+}
 
+.roster-status.show {
+  display: block;
+}
 .calendar {
   flex: 0 0 var(--cal-w);
   max-width: var(--cal-w);
   width: var(--cal-w);
   margin: 0 auto;
   padding: 10px;
+
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+
   justify-self: center;
   overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  grid-column: 2;
 }
 
 /* Calendar header + buttons */
@@ -446,20 +432,6 @@ body.logged-in .nurse-list {
   margin-bottom: 10px;
   font-size: 20px; /* increased from 16px */
   font-weight: bold; /* optional: makes it more prominent */
-}
-
- .calendar-zoom-frame {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-}
-
-.calendar-zoom-content {
-  transform: scale(var(--month-scale));
-  transform-origin: top center;
-  width: calc(var(--month-base-width) / var(--month-scale));
-  margin: 0 auto;
 }
 
 .left-buttons {
@@ -731,10 +703,9 @@ footer {
   }
 
   .calendar-inner {
-  min-width: var(--month-base-width);
-  position: relative;
-}
-
+    min-width: 820px;
+    position: relative;
+  }
 
   .weekdays {
     display: grid;
@@ -878,8 +849,11 @@ footer {
     <div class="nurse-list">
       <h3>Nurses / HCA</h3>
       <div id="nurseContainer"></div>
-<h4>Template Day</h4>
-<div id="templateDay" class="day" style="min-height:120px;"></div>
+<h4>Template Day 1</h4>
+<div id="templateDay1" class="day" style="min-height:120px;"></div>
+
+<h4 style="margin-top:12px;">Template Day 2</h4>
+<div id="templateDay2" class="day" style="min-height:120px;"></div>
 
       <div class="add-nurse">
         <input type="text" id="newNurseName" placeholder="Add Nurse">
@@ -897,8 +871,8 @@ footer {
     </div>
 
 
-   <!-- Calendar Section -->
-<div class="calendar">
+    <!-- Calendar Section -->
+   <div class="calendar">
   <div id="rosterStatus" class="roster-status" aria-live="polite"></div>
   <div class="calendar-top-sticky">
     <div class="calendar-header">
@@ -906,42 +880,28 @@ footer {
       <button class="btn" id="todayBtn">Today</button>
       <button class="btn" id="nextMonth">▶</button>
       <h2 id="monthYear" class="month-label" title="Choose date"></h2>
-      <input type="date" id="jumpDatePicker" class="jump-date-picker" />
+<input type="date" id="jumpDatePicker" class="jump-date-picker" />
     </div>
 
-    <div class="zoom-controls">
-      <button class="btn" id="zoomOutBtn">−</button>
-      <button class="btn" id="fitMonthBtn">Fit</button>
-      <button class="btn" id="zoomInBtn">+</button>
-    </div>
-
-    <div class="calendar-zoom-frame" id="calendarZoomFrame">
-      <div class="calendar-zoom-content" id="calendarZoomContent">
-        <div class="calendar-scroll-wrapper" id="weekdaysScroll">
-          <div class="calendar-inner">
-            <div class="weekdays">
-              <div>Mon</div>
-              <div>Tue</div>
-              <div>Wed</div>
-              <div>Thu</div>
-              <div>Fri</div>
-              <div>Sat</div>
-              <div>Sun</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="calendar-scroll-wrapper calendar-grid-scroll" id="gridScroll">
-          <div class="calendar-inner">
-            <div class="calendar-grid" id="calendarGrid"></div>
-          </div>
+    <div class="calendar-scroll-wrapper" id="weekdaysScroll">
+  <div class="calendar-inner">
+    <div class="weekdays">
+          <div>Mon</div><div>Tue</div><div>Wed</div>
+          <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<footer>CEP/C 2025</footer>
+  <div class="calendar-scroll-wrapper calendar-grid-scroll" id="gridScroll">
+  <div class="calendar-inner">
+    <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </div>
+</div>
+  </div>
+
+  <footer>CEP/C 2025</footer>
 </div> <!-- /#zoomRoot -->
 
 
@@ -993,12 +953,6 @@ const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
   const weekdaysScroll = document.getElementById('weekdaysScroll');
 const gridScroll = document.getElementById('gridScroll');
 
-const zoomRootEl = document.documentElement;
-const zoomOutBtn = document.getElementById('zoomOutBtn');
-const zoomInBtn = document.getElementById('zoomInBtn');
-const fitMonthBtn = document.getElementById('fitMonthBtn');
-const calendarZoomFrame = document.getElementById('calendarZoomFrame');
-
 const rosterStatus = document.getElementById('rosterStatus');
 
   let currentUser = null;
@@ -1012,10 +966,10 @@ const rosterStatus = document.getElementById('rosterStatus');
 
   let roster = {};
   let nurses = [
-    { name: "Alice", color: "#ff9800" },
-    { name: "Bob", color: "#e65100" },
-    { name: "Carol", color: "#f57c00" }
-  ];
+  { name: "Alice", color: "#ff9800", rank: 1 },
+  { name: "Bob", color: "#e65100", rank: 2 },
+  { name: "Carol", color: "#f57c00", rank: 3 }
+];
   let selectedNurseIndex = null;
   let currentDate = new Date();
 
@@ -1045,58 +999,6 @@ jumpDatePicker.addEventListener('change', (e) => {
   currentDate = pickedDate;
   renderCalendar();
 });
-
-let monthScale = 1;
-
-function setMonthScale(scale) {
-  monthScale = Math.max(0.6, Math.min(1.2, scale));
-  zoomRootEl.style.setProperty('--month-scale', monthScale);
-}
-
-function fitMonthToScreen() {
-  if (!calendarZoomFrame) return;
-
-  const availableWidth = calendarZoomFrame.clientWidth;
-  const baseWidth = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue('--month-base-width')
-  ) || 820;
-
-  const fittedScale = Math.min(1, availableWidth / baseWidth);
-
-  setMonthScale(fittedScale);
-}
-
-zoomOutBtn?.addEventListener('click', () => {
-  setMonthScale(monthScale - 0.1);
-});
-
-zoomInBtn?.addEventListener('click', () => {
-  setMonthScale(monthScale + 0.1);
-});
-
-fitMonthBtn?.addEventListener('click', () => {
-  fitMonthToScreen();
-});
-
-window.addEventListener('resize', () => {
-  if (window.innerWidth <= 900) {
-    fitMonthToScreen();
-  } else {
-    setMonthScale(1);
-  }
-});
-
-function showRosterStatus(message) {
-  if (!rosterStatus) return;
-  rosterStatus.textContent = message;
-  rosterStatus.classList.add('show');
-}
-
-function hideRosterStatus() {
-  if (!rosterStatus) return;
-  rosterStatus.textContent = '';
-  rosterStatus.classList.remove('show');
-}
 
 function syncCalendarScroll() {
   if (!weekdaysScroll || !gridScroll) return;
@@ -1163,6 +1065,7 @@ closeAuthModal();
 	 authToggleBtn.textContent = currentUser ? '✅' : '👤';
 authToggleBtn.setAttribute('aria-label', currentUser ? 'Open account menu' : 'Open sign in');
 
+
     checkEditPermission();
     loadData();
   }
@@ -1193,7 +1096,17 @@ function closeAuthModal() {
     renderNurseList();
     renderCalendar();
   }
+function showRosterStatus(message) {
+  if (!rosterStatus) return;
+  rosterStatus.textContent = message;
+  rosterStatus.classList.add('show');
+}
 
+function hideRosterStatus() {
+  if (!rosterStatus) return;
+  rosterStatus.textContent = '';
+  rosterStatus.classList.remove('show');
+}
   /** ---------- Firebase Data ---------- **/
   async function loadData() {
   try {
@@ -1203,16 +1116,18 @@ function closeAuthModal() {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      const data = docSnap.data();
-      roster = data.roster || {};
-      nurses = data.nurses || nurses;
-    } else {
-      roster = {};
-    }
+  const data = docSnap.data();
+  roster = data.roster || {};
+  nurses = data.nurses || nurses;
+} else {
+  roster = {};
+}
 
+   normalizeNurseRanks();
     syncShiftColorsWithNurses();
     renderNurseList();
     renderCalendar();
+	
   } catch (error) {
     console.error("Failed to load data from Firestore:", error);
 
@@ -1220,8 +1135,16 @@ function closeAuthModal() {
     renderNurseList();
     renderCalendar();
 
-    showRosterStatus("Roster could not be loaded from Firestore right now.");
+    showRosterStatus("Roster could not be loaded right now.");
   }
+}
+
+function normalizeNurseRanks() {
+  nurses.forEach((nurse, index) => {
+    if (typeof nurse.rank !== 'number' || isNaN(nurse.rank)) {
+      nurse.rank = index + 1;
+    }
+  });
 }
 
   async function saveData() {
@@ -1285,7 +1208,7 @@ function closeAuthModal() {
       });
 
       infoDiv.appendChild(colorBox);
-      infoDiv.appendChild(document.createTextNode(nurse.name));
+      infoDiv.appendChild(document.createTextNode(`${nurse.rank}. ${nurse.name}`));
 
       // ✅ Updated click handler for selection and shift+click deletion
       infoDiv.addEventListener('click', (e) => {
@@ -1309,6 +1232,44 @@ function closeAuthModal() {
 
       div.appendChild(infoDiv);
       div.appendChild(colorPicker);
+	  
+	  if (canEdit) {
+  const rankInput = document.createElement('input');
+  rankInput.type = 'number';
+  rankInput.min = '1';
+  rankInput.value = nurse.rank || idx + 1;
+  rankInput.style.width = '52px';
+  rankInput.style.marginLeft = '6px';
+  rankInput.style.borderRadius = '6px';
+  rankInput.style.border = '1px solid #ccc';
+  rankInput.style.padding = '2px 4px';
+
+  rankInput.addEventListener('click', (e) => e.stopPropagation());
+  rankInput.addEventListener('mousedown', (e) => e.stopPropagation());
+
+  rankInput.addEventListener('change', () => {
+    let newRank = parseInt(rankInput.value, 10);
+    if (isNaN(newRank) || newRank < 1) newRank = 1;
+
+    nurse.rank = newRank;
+
+    nurses.sort((a, b) => {
+      const rankDiff = (a.rank || 999) - (b.rank || 999);
+      if (rankDiff !== 0) return rankDiff;
+      return a.name.localeCompare(b.name);
+    });
+
+    nurses.forEach((n, i) => {
+      n.rank = i + 1;
+    });
+
+    saveData();
+    renderNurseList();
+    renderCalendar();
+  });
+
+  div.appendChild(rankInput);
+}
 
       // ✅ Dragstart handler
       div.addEventListener('dragstart', (e) => {
@@ -1339,11 +1300,15 @@ function closeAuthModal() {
     }
     const name = newNurseName.value.trim();
     if (name) {
-      nurses.push({ name, color: getRandomColor() });
-      newNurseName.value = '';
-      saveData();
-      renderNurseList();
-    }
+  nurses.push({
+    name,
+    color: getRandomColor(),
+    rank: nurses.length + 1
+  });
+  newNurseName.value = '';
+  saveData();
+  renderNurseList();
+}
   });
 
   /** ---------- Calendar ---------- **/
@@ -1535,9 +1500,23 @@ function renderDayCell(year, month, day) {
   }
 
   // Render all shifts for this day
-  roster[key].shifts.forEach((shift, i) => {
-    dayCell.appendChild(createShiftElement(shift, key, i));
-  });
+  const sortedShifts = [...roster[key].shifts].sort((a, b) => {
+  const nurseA = nurses.find(n => n.name === a.name);
+  const nurseB = nurses.find(n => n.name === b.name);
+
+  const rankA = nurseA?.rank ?? 999;
+  const rankB = nurseB?.rank ?? 999;
+
+  if (rankA !== rankB) return rankA - rankB;
+  return a.name.localeCompare(b.name);
+});
+
+sortedShifts.forEach((shift) => {
+  const originalIndex = roster[key].shifts.findIndex(
+    s => s.name === shift.name && s.time === shift.time && s.color === shift.color
+  );
+  dayCell.appendChild(createShiftElement(shift, key, originalIndex));
+});
 
   return dayCell;
 }
@@ -1648,20 +1627,30 @@ function syncShiftColorsWithNurses() {
 // ------------------- TEMPLATE HANDLING -------------------
 
 // ---------------- Template Drag/Drop ----------------
-const templateDay = document.getElementById('templateDay');
-let templateShifts = [];
+const templateDay1 = document.getElementById('templateDay1');
+const templateDay2 = document.getElementById('templateDay2');
+
+let templateShifts1 = [];
+let templateShifts2 = [];
 
 // ---------------- Firestore Template ----------------
 async function loadTemplate() {
   try {
     const docRef = doc(db, "nursesRoster", "main");
     const docSnap = await getDoc(docRef);
+
+    templateShifts1.length = 0;
+    templateShifts2.length = 0;
+
     if (docSnap.exists()) {
-      templateShifts = docSnap.data().templateShifts || [];
-    } else {
-      templateShifts = [];
+      const data = docSnap.data();
+
+      templateShifts1.push(...(data.templateShifts1 || data.templateShifts || []));
+      templateShifts2.push(...(data.templateShifts2 || []));
     }
-    renderTemplateDay();
+
+    renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+    renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
   } catch (err) {
     console.error("Failed to load template:", err);
   }
@@ -1670,7 +1659,8 @@ async function loadTemplate() {
 async function saveTemplate() {
   try {
     await setDoc(doc(db, "nursesRoster", "main"), {
-      templateShifts: templateShifts.map(s => ({ ...s }))
+      templateShifts1: templateShifts1.map(s => ({ ...s })),
+      templateShifts2: templateShifts2.map(s => ({ ...s }))
     }, { merge: true });
   } catch (err) {
     console.error("Failed to save template:", err);
@@ -1678,15 +1668,15 @@ async function saveTemplate() {
 }
 
 // ---------------- Render Template ----------------
-function renderTemplateDay() {
-  templateDay.innerHTML = '';
+function renderTemplateDay(templateEl, templateShifts, labelText) {
+  templateEl.innerHTML = '';
 
   // Make template day draggable like a real day
-  templateDay.draggable = canEdit;
+  templateEl.draggable = canEdit;
 
-  // ✅ NEW: allow dragging the ENTIRE template day (not just ⇅)
+  // allow dragging the ENTIRE template day
   if (canEdit) {
-    templateDay.addEventListener('dragstart', (e) => {
+    templateEl.addEventListener('dragstart', (e) => {
       e.stopPropagation();
       e.dataTransfer.setData(
         'text/day-shifts',
@@ -1703,7 +1693,7 @@ function renderTemplateDay() {
 
   const label = document.createElement('div');
   label.className = 'day-number';
-  label.textContent = 'Template';
+  label.textContent = labelText;
 
   const dragHandle = document.createElement('span');
   dragHandle.textContent = '⇅';
@@ -1722,17 +1712,33 @@ function renderTemplateDay() {
 
   header.appendChild(label);
   header.appendChild(dragHandle);
-  templateDay.appendChild(header);
+  templateEl.appendChild(header);
+
+  // ---------- Sort shifts by nurse rank ----------
+  const sortedTemplateShifts = [...templateShifts].sort((a, b) => {
+    const nurseA = nurses.find(n => n.name === a.name);
+    const nurseB = nurses.find(n => n.name === b.name);
+
+    const rankA = nurseA?.rank ?? 999;
+    const rankB = nurseB?.rank ?? 999;
+
+    if (rankA !== rankB) return rankA - rankB;
+    return a.name.localeCompare(b.name);
+  });
 
   // ---------- Shifts ----------
-  templateShifts.forEach((shift, idx) => {
+  sortedTemplateShifts.forEach((shift) => {
+    const idx = templateShifts.findIndex(
+      s => s.name === shift.name && s.time === shift.time && s.color === shift.color
+    );
+
     const shiftDiv = document.createElement('div');
     shiftDiv.className = 'shift';
     shiftDiv.style.backgroundColor = shift.color;
     shiftDiv.textContent = `${shift.name}: ${shift.time || 'Shift'}`;
     shiftDiv.draggable = canEdit;
 
-    // ---- RIGHT CLICK = EDIT ----
+    // RIGHT CLICK = EDIT
     shiftDiv.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       if (!canEdit) return;
@@ -1746,94 +1752,100 @@ function renderTemplateDay() {
         const trimmed = newTime.trim();
         if (trimmed !== '') {
           templateShifts[idx].time = trimmed;
-          renderTemplateDay();
+          renderTemplateDay(templateEl, templateShifts, labelText);
           saveTemplate();
         }
       }
     });
 
-    // ---- LONG PRESS = DELETE ----
-  
-let pressTimer;
-shiftDiv.addEventListener('pointerdown', () => {
-  if (!canEdit) return;
-  pressTimer = setTimeout(() => {
-    if (confirm(`Delete shift for ${shift.name} from template?`)) {
-      templateShifts.splice(idx, 1);
-      renderTemplateDay();
-      saveTemplate();
-    }
-  }, 800);
-});
+    // LONG PRESS = DELETE
+    let pressTimer;
+    shiftDiv.addEventListener('pointerdown', () => {
+      if (!canEdit) return;
+      pressTimer = setTimeout(() => {
+        if (confirm(`Delete shift for ${shift.name} from ${labelText}?`)) {
+          templateShifts.splice(idx, 1);
+          renderTemplateDay(templateEl, templateShifts, labelText);
+          saveTemplate();
+        }
+      }, 800);
+    });
 
-['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
-  shiftDiv.addEventListener(evt, () => clearTimeout(pressTimer));
-});
-    templateDay.appendChild(shiftDiv);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
+      shiftDiv.addEventListener(evt, () => clearTimeout(pressTimer));
+    });
+
+    templateEl.appendChild(shiftDiv);
   });
 }
 
 
 // ---------------- Template Drag/Drop ----------------
-function setupTemplateDragDrop() {
-  templateDay.addEventListener('dragover', e => {
+function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
+  templateEl.addEventListener('dragover', e => {
     e.preventDefault();
-    templateDay.classList.add('drag-over');
+    templateEl.classList.add('drag-over');
   });
 
-  templateDay.addEventListener('dragleave', () => templateDay.classList.remove('drag-over'));
+  templateEl.addEventListener('dragleave', () => {
+    templateEl.classList.remove('drag-over');
+  });
 
-  templateDay.addEventListener('drop', e => {
+  templateEl.addEventListener('drop', e => {
     e.preventDefault();
-    templateDay.classList.remove('drag-over');
+    templateEl.classList.remove('drag-over');
     if (!canEdit) return;
 
-    // Nurse dragged from left list
     const nurseIndex = e.dataTransfer.getData('nurseIndex');
     if (nurseIndex !== '') {
       const nurse = nurses[nurseIndex];
       if (!templateShifts.some(s => s.name === nurse.name)) {
         templateShifts.push({ name: nurse.name, color: nurse.color, time: "Shift" });
-        renderTemplateDay();
+        renderTemplateDay(templateEl, templateShifts, labelText);
         saveTemplate();
       }
       return;
     }
 
-    // Single shift dragged
     const templateShiftData = e.dataTransfer.getData('text/template-shift');
     if (templateShiftData) {
       const shift = JSON.parse(templateShiftData);
       if (!templateShifts.some(s => s.name === shift.name && s.time === shift.time)) {
         templateShifts.push({ ...shift });
-        renderTemplateDay();
+        renderTemplateDay(templateEl, templateShifts, labelText);
         saveTemplate();
       }
       return;
     }
 
-    // All template shifts dragged
     const allTemplateShiftsData = e.dataTransfer.getData('text/all-template-shifts');
     if (allTemplateShiftsData) {
       const shifts = JSON.parse(allTemplateShiftsData);
       shifts.forEach(s => {
-        if (!templateShifts.some(t => t.name === s.name && t.time === s.time)) templateShifts.push({ ...s });
+        if (!templateShifts.some(t => t.name === s.name && t.time === s.time)) {
+          templateShifts.push({ ...s });
+        }
       });
-      renderTemplateDay();
+      renderTemplateDay(templateEl, templateShifts, labelText);
       saveTemplate();
+      return;
+    }
+
+    const singleShiftData = e.dataTransfer.getData('text/plain');
+    if (singleShiftData) {
+      const shift = JSON.parse(singleShiftData);
+      if (!templateShifts.some(s => s.name === shift.name && s.time === shift.time)) {
+        templateShifts.push({ ...shift });
+        renderTemplateDay(templateEl, templateShifts, labelText);
+        saveTemplate();
+      }
     }
   });
 }
-
-setupTemplateDragDrop();
+setupTemplateDragDrop(templateDay1, templateShifts1, 'Template 1');
+setupTemplateDragDrop(templateDay2, templateShifts2, 'Template 2');
 loadTemplate();
 syncCalendarScroll();
-
-if (window.innerWidth <= 900) {
-  fitMonthToScreen();
-} else {
-  setMonthScale(1);
-}
 
 // ---------------- Day Cell Drop ----------------
 function handleDayDrop(dayCell) {
@@ -1894,6 +1906,7 @@ document.addEventListener('keydown', (e) => {
     closeAuthModal();
   }
 });
+
 
 </script>
 
