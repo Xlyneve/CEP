@@ -347,6 +347,47 @@ body.logged-in .nurse-list {
   display: none;
 }
 
+.shift.leave {
+  position: relative;
+  overflow: hidden;
+}
+
+.shift.leave::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.30),
+      rgba(255,255,255,0.10)
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,0.16) 0px,
+      rgba(255,255,255,0.16) 6px,
+      rgba(255,255,255,0.04) 6px,
+      rgba(255,255,255,0.04) 12px
+    );
+}
+
+.leave-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.72em;
+  font-weight: 700;
+  background: rgba(255,255,255,0.78);
+  color: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.7);
+  vertical-align: middle;
+  position: relative;
+  z-index: 1;
+}
+
 .delete-btn {
   color: red;
   font-weight: normal;
@@ -526,11 +567,11 @@ body.logged-in .nurse-list {
 .day.holiday {
   background: linear-gradient(
     135deg,
-    rgba(255, 230, 235, 0.95),
-    rgba(255, 240, 243, 0.92)
+    rgba(255, 244, 232, 0.96),
+    rgba(255, 236, 214, 0.94)
   );
-  border: 2px solid rgba(214, 95, 122, 0.45);
-  box-shadow: 0 4px 14px rgba(214, 95, 122, 0.10);
+  border: 2px solid rgba(230, 160, 95, 0.42);
+  box-shadow: 0 4px 14px rgba(230, 160, 95, 0.10);
 }
 
 .day.holiday::after {
@@ -555,9 +596,9 @@ body.logged-in .nurse-list {
   font-size: 0.72rem;
   font-weight: 700;
   border-radius: 999px;
-  background: rgba(214, 95, 122, 0.16);
-  color: #8f2f46;
-  border: 1px solid rgba(214, 95, 122, 0.25);
+  background: rgba(230, 160, 95, 0.14);
+  color: #9a5a1f;
+  border: 1px solid rgba(230, 160, 95, 0.24);
   vertical-align: middle;
 }
 
@@ -603,7 +644,7 @@ body.logged-in .nurse-list {
 }
 .shift:hover .delete-btn { opacity: 1; }
 
-.day.current-week:not(.today) {
+.day.current-week:not(.today):not(.holiday) {
   border: 3px solid rgba(200, 200, 200, 0.85);
   background: transparent;
   box-shadow: none;
@@ -901,8 +942,9 @@ footer {
         <ul>
           <li><b>Shift+Click nurse</b> to delete staff</li>
 <li><b>Shift+Click date</b> to toggle holiday</li>
+<li><b>Shift+Click shift</b> to cycle AL / SL / Study</li>
+<li><b>Click shift text</b> to edit inline</li>
 <li><b>Long Press</b> to delete shift</li>
-<li><b>Right Click</b> to edit shift</li>
         </ul>
       </div>
     </div>
@@ -1184,6 +1226,11 @@ function normalizeNurseRanks() {
   });
 }
 
+function getNurseHierarchyIndex(nurseName) {
+  const index = nurses.findIndex(n => n.name === nurseName);
+  return index === -1 ? 999 : index;
+}
+
   async function saveData() {
   if (!canEdit) {
     alert("You do not have permission to edit.");
@@ -1352,92 +1399,131 @@ renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
     const colors = ['#ff9800', '#e65100', '#f57c00', '#ffb74d', '#ef6c00'];
     return colors[Math.floor(Math.random() * colors.length)];
   }
+addNurseBtn.addEventListener('click', () => {
+  if (!canEdit) {
+    alert("You do not have permission to add nurses.");
+    return;
+  }
 
-  addNurseBtn.addEventListener('click', () => {
-    if (!canEdit) {
-      alert("You do not have permission to add nurses.");
-      return;
-    }
-    const name = newNurseName.value.trim();
-    if (name) {
-  nurses.push({
-    name,
-    color: getRandomColor(),
-    rank: nurses.length + 1
-  });
-  newNurseName.value = '';
-  saveData();
-  renderNurseList();
-}
-  });
+  const name = newNurseName.value.trim();
+  if (name) {
+    nurses.push({
+      name,
+      color: getRandomColor(),
+      rank: nurses.length + 1
+    });
+
+    newNurseName.value = '';
+    saveData();
+    renderNurseList();
+    renderCalendar();
+    renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+    renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+  }
+});
+  
 
   /** ---------- Calendar ---------- **/
   function createShiftElement(shift, key, shiftIndex) {
-    const shiftDiv = document.createElement('div');
-    shiftDiv.classList.add('shift');
-    shiftDiv.style.backgroundColor = shift.color;
+  const shiftDiv = document.createElement('div');
+  shiftDiv.classList.add('shift');
+  shiftDiv.style.backgroundColor = shift.color;
 
-    const rgb = parseInt(shift.color.slice(1), 16);
-    const r = (rgb >> 16) & 0xff;
-    const g = (rgb >> 8) & 0xff;
-    const b = rgb & 0xff;
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    shiftDiv.style.color = brightness > 150 ? "#000" : "#fff";
+  const rgb = parseInt(shift.color.slice(1), 16);
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >> 8) & 0xff;
+  const b = rgb & 0xff;
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  shiftDiv.style.color = brightness > 150 ? "#000" : "#fff";
 
-    shiftDiv.textContent = `${shift.name}: ${shift.time}`;
-    shiftDiv.draggable = canEdit;
+  shiftDiv.innerHTML =
+    `${shift.name}: ${shift.time || "Shift"}` +
+    (shift.leaveType ? `<span class="leave-badge">${shift.leaveType}</span>` : '');
 
-    shiftDiv.addEventListener('click', (e) => {
+  if (shift.leaveType) {
+    shiftDiv.classList.add('leave');
+  }
+
+  shiftDiv.draggable = canEdit;
+
+  if (canEdit) {
+    shiftDiv.contentEditable = "true";
+    shiftDiv.spellcheck = false;
+
+    const updateShiftText = () => {
+      const rawText = shiftDiv.innerText.replace(/\s+(AL|SL|Study)\s*$/, '').trim();
+
+      let updatedTime = rawText;
+      const prefix = `${shift.name}:`;
+      if (rawText.startsWith(prefix)) {
+        updatedTime = rawText.slice(prefix.length).trim();
+      }
+
+      if (!updatedTime) {
+        updatedTime = "Shift";
+      }
+
+      roster[key].shifts[shiftIndex].time = updatedTime;
+      saveData();
+      renderCalendar();
+    };
+
+    shiftDiv.addEventListener('blur', updateShiftText);
+
+    shiftDiv.addEventListener('keydown', (e) => {
       e.stopPropagation();
-    });
 
-    // Right-click to edit remains
-    shiftDiv.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!canEdit) return;
-      const newTime = prompt(
-        `Edit shift for ${shift.name} (current: ${shift.time || 'unset'}):`,
-        shift.time || ''
-      );
-      if (newTime !== null) {
-        const trimmed = newTime.trim();
-        if (trimmed !== '') {
-          roster[key].shifts[shiftIndex].time = trimmed;
-          saveData();
-          renderCalendar();
-        }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        shiftDiv.blur();
       }
     });
 
-    if (canEdit) {
-      shiftDiv.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify(shift));
-      });
-    }
+    shiftDiv.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', JSON.stringify(shift));
+    });
+  }
 
-   let pressTimer;
-shiftDiv.addEventListener('pointerdown', () => {
-  if (!canEdit) return;
-  pressTimer = setTimeout(() => {
-    if (confirm(`Delete shift for ${shift.name}?`)) {
-      roster[key].shifts.splice(shiftIndex, 1);
+  shiftDiv.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!canEdit) return;
+
+    if (e.shiftKey) {
+      e.preventDefault();
+
+      const leaveOrder = ["", "AL", "SL", "Study"];
+      const current = roster[key].shifts[shiftIndex].leaveType || "";
+      const nextIndex = (leaveOrder.indexOf(current) + 1) % leaveOrder.length;
+      roster[key].shifts[shiftIndex].leaveType = leaveOrder[nextIndex];
+
       saveData();
       renderCalendar();
     }
-  }, 800);
-});
+  });
 
-['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
-  shiftDiv.addEventListener(evt, () => clearTimeout(pressTimer));
-});
+  let pressTimer;
+  shiftDiv.addEventListener('pointerdown', () => {
+    if (!canEdit) return;
+    pressTimer = setTimeout(() => {
+      if (confirm(`Delete shift for ${shift.name}?`)) {
+        roster[key].shifts.splice(shiftIndex, 1);
+        saveData();
+        renderCalendar();
+      }
+    }, 800);
+  });
 
-    return shiftDiv;
-  }
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
+    shiftDiv.addEventListener(evt, () => clearTimeout(pressTimer));
+  });
+
+  return shiftDiv;
+}
+
 function renderDayCell(year, month, day) {
   const key = `${year}-${month}-${day}`;
   if (!roster[key]) roster[key] = { shifts: [], notes: '', isHoliday: false };
-if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
+  if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
 
   const dayCell = document.createElement('div');
   dayCell.classList.add('day');
@@ -1445,45 +1531,46 @@ if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
 
   const date = new Date(year, month, day);
   dayCell.dataset.date = date.toDateString();
+
   if (roster[key].isHoliday) {
-  dayCell.classList.add('holiday');
-}
+    dayCell.classList.add('holiday');
+  }
 
-  if (date.getDay() === 0 || date.getDay() === 6) dayCell.classList.add('weekend');
+  if (date.getDay() === 0 || date.getDay() === 6) {
+    dayCell.classList.add('weekend');
+  }
 
-  // Highlight today
   const today = new Date();
   if (date.toDateString() === today.toDateString()) {
     dayCell.classList.add('today');
   }
 
-  // Day number + note
   const dayNumber = document.createElement('div');
   dayNumber.classList.add('day-number');
   dayNumber.innerHTML =
-  day +
-  (roster[key].isHoliday ? `<span class="holiday-badge">Holiday</span>` : '') +
-  (roster[key].notes ? `<span class="day-note">${roster[key].notes}</span>` : '');
+    day +
+    (roster[key].isHoliday ? `<span class="holiday-badge">Holiday</span>` : '') +
+    (roster[key].notes ? `<span class="day-note">${roster[key].notes}</span>` : '');
+
   dayNumber.addEventListener('click', (e) => {
-  e.stopPropagation();
-  if (!canEdit) return;
+    e.stopPropagation();
+    if (!canEdit) return;
 
-  if (e.shiftKey) {
-    roster[key].isHoliday = !roster[key].isHoliday;
-    saveData();
-    renderCalendar();
-    return;
-  }
+    if (e.shiftKey) {
+      roster[key].isHoliday = !roster[key].isHoliday;
+      saveData();
+      renderCalendar();
+      return;
+    }
 
-  const note = prompt('Enter notes for this day:', roster[key].notes || '');
-  if (note !== null) {
-    roster[key].notes = note;
-    saveData();
-    renderCalendar();
-  }
-});
+    const note = prompt('Enter notes for this day:', roster[key].notes || '');
+    if (note !== null) {
+      roster[key].notes = note;
+      saveData();
+      renderCalendar();
+    }
+  });
 
-  // Drag handle for shifting all shifts
   const dragHandle = document.createElement('span');
   dragHandle.textContent = '⇅';
   dragHandle.style.cursor = canEdit ? 'grab' : 'default';
@@ -1498,7 +1585,6 @@ if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
     });
   }
 
-  // Header container
   const header = document.createElement('div');
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
@@ -1509,7 +1595,6 @@ if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
   dayCell.appendChild(header);
 
   if (canEdit) {
-    // Allow drops
     dayCell.addEventListener('dragover', (e) => {
       e.preventDefault();
       dayCell.classList.add('drag-over');
@@ -1523,17 +1608,20 @@ if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
       e.preventDefault();
       dayCell.classList.remove('drag-over');
 
-      // 1️⃣ Nurse dropped from nurse list
       const nurseIndex = e.dataTransfer.getData('nurseIndex');
       if (nurseIndex !== '') {
         const nurse = nurses[nurseIndex];
-        roster[key].shifts.push({ name: nurse.name, color: nurse.color, time: "Shift" });
+        roster[key].shifts.push({
+          name: nurse.name,
+          color: nurse.color,
+          time: "Shift",
+          leaveType: ""
+        });
         saveData();
         renderCalendar();
         return;
       }
 
-      // 2️⃣ Day-to-day drag (multiple shifts)
       const dayShiftsData = e.dataTransfer.getData('text/day-shifts');
       if (dayShiftsData) {
         const shifts = JSON.parse(dayShiftsData);
@@ -1543,7 +1631,6 @@ if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
         return;
       }
 
-      // 3️⃣ Single template shift
       const templateShiftData = e.dataTransfer.getData('text/template-shift');
       if (templateShiftData) {
         const shift = JSON.parse(templateShiftData);
@@ -1553,7 +1640,6 @@ if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
         return;
       }
 
-      // 4️⃣ All-template-shifts drag
       const allTemplateShiftsData = e.dataTransfer.getData('text/all-template-shifts');
       if (allTemplateShiftsData) {
         const shifts = JSON.parse(allTemplateShiftsData);
@@ -1563,7 +1649,6 @@ if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
         return;
       }
 
-      // 5️⃣ Fallback single shift drag
       const shiftData = e.dataTransfer.getData('text/plain');
       if (shiftData) {
         const shift = JSON.parse(shiftData);
@@ -1574,28 +1659,28 @@ if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
     });
   }
 
-  // Render all shifts for this day
   const sortedShifts = [...roster[key].shifts].sort((a, b) => {
-  const nurseA = nurses.find(n => n.name === a.name);
-  const nurseB = nurses.find(n => n.name === b.name);
+    const indexA = getNurseHierarchyIndex(a.name);
+    const indexB = getNurseHierarchyIndex(b.name);
 
-  const rankA = nurseA?.rank ?? 999;
-  const rankB = nurseB?.rank ?? 999;
+    if (indexA !== indexB) return indexA - indexB;
+    return a.name.localeCompare(b.name);
+  });
 
-  if (rankA !== rankB) return rankA - rankB;
-  return a.name.localeCompare(b.name);
-});
+  sortedShifts.forEach((shift) => {
+    const originalIndex = roster[key].shifts.findIndex(
+      s =>
+        s.name === shift.name &&
+        s.time === shift.time &&
+        s.color === shift.color &&
+        (s.leaveType || '') === (shift.leaveType || '')
+    );
 
-sortedShifts.forEach((shift) => {
-  const originalIndex = roster[key].shifts.findIndex(
-    s => s.name === shift.name && s.time === shift.time && s.color === shift.color
-  );
-  dayCell.appendChild(createShiftElement(shift, key, originalIndex));
-});
+    dayCell.appendChild(createShiftElement(shift, key, originalIndex));
+  });
 
   return dayCell;
 }
-
  
 function renderCalendar() {
   calendarGrid.innerHTML = '';
@@ -1798,26 +1883,32 @@ function renderTemplateDay(templateEl, templateShifts, labelText) {
 
   // ---------- Sort shifts by nurse rank ----------
   const sortedTemplateShifts = [...templateShifts].sort((a, b) => {
-    const nurseA = nurses.find(n => n.name === a.name);
-    const nurseB = nurses.find(n => n.name === b.name);
+  const indexA = getNurseHierarchyIndex(a.name);
+  const indexB = getNurseHierarchyIndex(b.name);
 
-    const rankA = nurseA?.rank ?? 999;
-    const rankB = nurseB?.rank ?? 999;
-
-    if (rankA !== rankB) return rankA - rankB;
-    return a.name.localeCompare(b.name);
-  });
+  if (indexA !== indexB) return indexA - indexB;
+  return a.name.localeCompare(b.name);
+});
 
   // ---------- Shifts ----------
   sortedTemplateShifts.forEach((shift) => {
     const idx = templateShifts.findIndex(
-      s => s.name === shift.name && s.time === shift.time && s.color === shift.color
-    );
+  s =>
+    s.name === shift.name &&
+    s.time === shift.time &&
+    s.color === shift.color &&
+    (s.leaveType || '') === (shift.leaveType || '')
+);
 
     const shiftDiv = document.createElement('div');
     shiftDiv.className = 'shift';
     shiftDiv.style.backgroundColor = shift.color;
-    shiftDiv.textContent = `${shift.name}: ${shift.time || 'Shift'}`;
+    shiftDiv.innerHTML =
+  `${shift.name}: ${shift.time || 'Shift'}` +
+  (shift.leaveType ? `<span class="leave-badge">${shift.leaveType}</span>` : '');
+  if (shift.leaveType) {
+  shiftDiv.classList.add('leave');
+}
     shiftDiv.draggable = canEdit;
 
     // RIGHT CLICK = EDIT
@@ -1839,6 +1930,21 @@ function renderTemplateDay(templateEl, templateShifts, labelText) {
         }
       }
     });
+	shiftDiv.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!canEdit) return;
+
+  if (e.shiftKey) {
+    const leaveOrder = ["", "AL", "SL", "Study"];
+    const current = templateShifts[idx].leaveType || "";
+    const nextIndex = (leaveOrder.indexOf(current) + 1) % leaveOrder.length;
+    templateShifts[idx].leaveType = leaveOrder[nextIndex];
+
+    saveTemplate();
+    renderTemplateDay(templateEl, templateShifts, labelText);
+    return;
+  }
+});
 
     // LONG PRESS = DELETE
     let pressTimer;
@@ -1884,10 +1990,11 @@ function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
       const nurse = nurses[nurseIndex];
       if (!templateShifts.some(s => s.name === nurse.name)) {
         templateShifts.push({
-          name: nurse.name,
-          color: nurse.color,
-          time: "Shift"
-        });
+  name: nurse.name,
+  color: nurse.color,
+  time: "Shift",
+  leaveType: ""
+});
         renderTemplateDay(templateEl, templateShifts, labelText);
         saveTemplate();
       }
