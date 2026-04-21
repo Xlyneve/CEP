@@ -641,25 +641,23 @@ select option {
   color: #6b5a7a;
 }
 #presentationPrivateNote,
+#redFlagsPrivateNote,
 #examPrivateNote,
 #privateConsultNote,
-#prescribingPrivateNote,
-#prescribingFirstLinePrivateNote,
-#prescribingSecondLinePrivateNote {
+#prescribingPrivateNote {
   min-height: 110px;
-  color: #6b5a7a;
-  background: linear-gradient(180deg, rgba(255, 246, 252, 0.82), rgba(248, 242, 255, 0.72));
-  border: 1px solid rgba(145, 120, 170, 0.22);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 16px rgba(0,0,0,0.06);
+  color: #111;
+  background: linear-gradient(180deg, rgba(255, 253, 232, 0.92), rgba(255, 247, 205, 0.78));
+  border: 1px solid rgba(170, 145, 70, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.72), 0 4px 16px rgba(0,0,0,0.05);
 }
 
 #presentationPrivateNote::placeholder,
+#redFlagsPrivateNote::placeholder,
 #examPrivateNote::placeholder,
 #privateConsultNote::placeholder,
-#prescribingPrivateNote::placeholder,
-#prescribingFirstLinePrivateNote::placeholder,
-#prescribingSecondLinePrivateNote::placeholder {
-  color: rgba(107, 90, 122, 0.52);
+#prescribingPrivateNote::placeholder {
+  color: rgba(0, 0, 0, 0.45);
 }
 
     .card.full {
@@ -1133,21 +1131,33 @@ select option {
         </section>
 
         <section class="consultation-grid">
-       <div class="card">
+      <div class="card">
   <div class="section-header">
     <div>
-      <div class="section-heading">1. Presentation</div>
-      <div class="hint">Symptoms plus duration for opening line</div>
+      <div class="section-heading">1. History of presenting complaint</div>
+      <div class="hint">Opening line, duration, symptoms, and demographics</div>
     </div>
     <div class="badge-row">
       <span class="badge blue">Core</span>
     </div>
   </div>
 
-<div class="section-fields three" style="column-gap:16px; row-gap:1px; margin-bottom:-8px;">
+  <div class="section-fields three" style="column-gap:16px; row-gap:10px; margin-bottom:-2px;">
     <label>
       Age
-      <input id="patientDemo" placeholder="e.g. 18F" />
+      <input id="patientDemo" placeholder="e.g. 37" />
+    </label>
+
+    <label>
+      Sex
+      <div class="mini-checks" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+        <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+          <input type="checkbox" id="sexMale" /> Male
+        </label>
+        <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+          <input type="checkbox" id="sexFemale" /> Female
+        </label>
+      </div>
     </label>
 
     <label>
@@ -1155,29 +1165,32 @@ select option {
       <input id="patientEthnicity" placeholder="e.g. Pakeha" />
     </label>
 
-   <label style="margin-top:-8px;">
-  <span style="opacity:0;">Duration</span>
-  <div style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap;">
-    <input
-      id="presentationDuration"
-      placeholder="e.g. 2"
-      style="width:54px; min-width:54px; max-width:54px; padding:8px 6px; text-align:center;"
-    />
+    <label style="grid-column: 1 / -1;">
+      <span>Duration</span>
+      <div style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap; margin-top:8px;">
+        <input
+          id="presentationDuration"
+          placeholder="e.g. 2"
+          style="width:54px; min-width:54px; max-width:54px; padding:8px 6px; text-align:center;"
+        />
 
-    <div class="mini-checks" style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap;">
-      <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
-        <input type="checkbox" id="durationDays" /> Days
-      </label>
-      <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
-        <input type="checkbox" id="durationHours" /> Hours
-      </label>
-    </div>
-  </div>
-</label>
+        <div class="mini-checks" style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap;">
+          <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+            <input type="checkbox" id="durationDays" /> Days
+          </label>
+          <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+            <input type="checkbox" id="durationHours" /> Hours
+          </label>
+        </div>
+      </div>
+    </label>
   </div>
 
-   <div class="section-fields">
-    <div class="editable-checklist" id="hpcList" data-placeholder="Add symptom..."></div>
+  <div class="section-fields">
+    <label>
+      Presenting symptoms / complaints
+      <div class="editable-checklist" id="hpcList" data-placeholder="Add symptom..."></div>
+    </label>
 
     <label>
       Additional presentation text
@@ -1191,11 +1204,11 @@ select option {
   </div>
 </div>
 
-          <div class="card">
+        <div class="card">
   <div class="section-header">
     <div>
       <div class="section-heading">2. Red flags checked</div>
-      <div class="hint">Editable tick boxes</div>
+      <div class="hint">Use the second checklist if you want a blank line before more red flags</div>
     </div>
     <div class="badge-row">
       <span class="badge danger">High value</span>
@@ -1203,56 +1216,64 @@ select option {
   </div>
 
   <div class="section-fields">
-    <div class="editable-checklist" id="redFlagsList" data-placeholder="Add red flag item..."></div>
+    <label>
+      Red flags - first line
+      <div class="editable-checklist" id="redFlagsPrimaryList" data-placeholder="Add red flag item..."></div>
+    </label>
+
+    <label>
+      Red flags - next line
+      <div class="editable-checklist" id="redFlagsSecondaryList" data-placeholder="Add red flag item for new line..."></div>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+      <textarea id="redFlagsPrivateNote" placeholder="Reminder to self - not part of summary"></textarea>
+    </label>
   </div>
 </div>
 
           <div class="card">
   <div class="section-header">
     <div>
-      <div class="section-heading">3. Background / patient factors</div>
-      <div class="hint">Editable tick boxes</div>
+      <div class="section-heading">3. Investigations</div>
+      <div class="hint">Use the second checklist if you want investigations on the next line</div>
     </div>
     <div class="badge-row">
-      <span class="badge pink">Decision-making</span>
+      <span class="badge pink">Investigations</span>
     </div>
   </div>
 
-  <div class="section-fields two">
+  <div class="section-fields">
     <label>
-      Allergies
-      <div class="editable-checklist" id="allergiesList" data-placeholder="Add allergy..."></div>
+      Investigations - first line
+      <div class="editable-checklist" id="investigationsPrimaryList" data-placeholder="Add investigation..."></div>
     </label>
 
     <label>
-      Medical History
-      <div class="editable-checklist" id="medicalHistoryList" data-placeholder="Add medical history item..."></div>
+      Investigations - next line
+      <div class="editable-checklist" id="investigationsSecondaryList" data-placeholder="Add investigation for new line..."></div>
     </label>
 
     <label>
-      Current Medications
-      <div class="editable-checklist" id="currentMedsList" data-placeholder="Add medication..."></div>
-    </label>
-
-    <label>
-      Special patient factors
-      <div class="editable-checklist" id="patientFactorsList" data-placeholder="Add patient factor..."></div>
+      Additional investigation text
+      <textarea id="investigationsFreeText" placeholder="Optional extra investigation detail..."></textarea>
     </label>
   </div>
 </div>
 
-         <div class="card">
+        <div class="card">
   <div class="section-header">
     <div>
-      <div class="section-heading">4. Examination</div>
-      <div class="hint">First checklist = first examination sentence. Second checklist = next line in summary.</div>
+      <div class="section-heading">4. On Examination</div>
+      <div class="hint">First checklist = first line. Second checklist = next line.</div>
     </div>
     <div class="badge-row">
       <span class="badge green">Exam</span>
     </div>
   </div>
 
-    <div class="section-fields">
+  <div class="section-fields">
     <label>
       Examination - first line
       <div class="editable-checklist" id="examPrimaryList" data-placeholder="Add main examination item..."></div>
@@ -1322,26 +1343,21 @@ select option {
   </div>
 </div>
 
-      <div class="card">
+     <div class="card">
   <div class="section-header">
     <div>
-      <div class="section-heading">5. Diagnosis</div>
-      <div class="hint">Editable tick boxes</div>
+      <div class="section-heading">5. Assessment</div>
+      <div class="hint">Clinical impression / working assessment</div>
     </div>
     <div class="badge-row">
       <span class="badge warn">Clinical reasoning</span>
     </div>
   </div>
 
-  <div class="section-fields two">
+  <div class="section-fields">
     <label>
-      Diagnosis
-      <div class="editable-checklist" id="diagnosisList" data-placeholder="Add diagnosis item..."></div>
-    </label>
-
-    <label>
-      Differential / ruled out concerns
-      <div class="editable-checklist" id="differentialsList" data-placeholder="Add differential item..."></div>
+      Assessment
+      <div class="editable-checklist" id="assessmentList" data-placeholder="Add assessment item..."></div>
     </label>
   </div>
 
@@ -1356,81 +1372,105 @@ select option {
 <div class="card full">
   <div class="section-header">
     <div>
-      <div class="section-heading">7. Prescribing</div>
-      <div class="hint">Decision tick boxes, private reminders, treatment options, and plan / treatment</div>
+      <div class="section-heading">6. Management Plan</div>
+      <div class="hint">Use the second checklist if you want a blank line before more plan items</div>
     </div>
     <div class="badge-row">
-      <span class="badge pink">Prescribing</span>
+      <span class="badge pink">Plan</span>
     </div>
   </div>
 
-  <div class="prescribing-layout">
-    <div class="prescribing-decisions">
-      <div class="mini-checks">
-        <label><input type="checkbox" id="abxNotIndicated" /> Antibiotics not indicated</label>
-        <label><input type="checkbox" id="abxDelayed" /> Delayed / back-pocket approach</label>
-        <label><input type="checkbox" id="abxPrescribed" /> Antibiotics prescribed</label>
-        <label><input type="checkbox" id="supportiveCareOnly" /> Supportive care only</label>
-      </div>
+  <div class="section-fields">
+    <label>
+      Management plan - first line
+      <div class="editable-checklist" id="managementPlanPrimaryList" data-placeholder="Add management item..."></div>
+    </label>
 
-      <label class="private-note-label">
-        Private notes
-        <textarea id="prescribingPrivateNote" placeholder="Reminder to self - not part of summary"></textarea>
-      </label>
+    <label>
+      Management plan - next line
+      <div class="editable-checklist" id="managementPlanSecondaryList" data-placeholder="Add management item for new line..."></div>
+    </label>
 
-      <label>
-        Plan / Treatment
-        <div class="editable-checklist" id="planTreatmentList" data-placeholder="Add plan / treatment item..."></div>
-      </label>
-    </div>
+    <label>
+      Additional management text
+      <textarea id="managementPlanFreeText" placeholder="Optional extra management detail..."></textarea>
+    </label>
 
-    <div class="prescribing-treatment-columns">
-      <div class="treatment-column">
-        <label class="private-note-label">
-          Private notes
-          <textarea id="prescribingFirstLinePrivateNote" placeholder="Private reminder for first-line - not part of summary"></textarea>
-        </label>
-        <div class="treatment-title">First-line treatment</div>
-        <div class="editable-checklist" id="prescribingFirstLineList" data-placeholder="Add first-line medication..."></div>
-      </div>
-
-      <div class="treatment-column">
-        <label class="private-note-label">
-          Private notes
-          <textarea id="prescribingSecondLinePrivateNote" placeholder="Private reminder for second-line - not part of summary"></textarea>
-        </label>
-        <div class="treatment-title">Second-line treatment</div>
-        <div class="editable-checklist" id="prescribingSecondLineList" data-placeholder="Add second-line medication..."></div>
-      </div>
-    </div>
+    <label class="private-note-label">
+      Private notes
+      <textarea id="prescribingPrivateNote" placeholder="Reminder to self - not part of summary"></textarea>
+    </label>
   </div>
 </div>
 
-         <div class="card full">
+<div class="card">
   <div class="section-header">
     <div>
-      <div class="section-heading">7. Advice / safety net / documentation notes</div>
-      <div class="hint">Editable tick boxes only</div>
+      <div class="section-heading">7. Follow up</div>
+      <div class="hint">Use the second checklist if you want a blank line before more follow-up items</div>
     </div>
     <div class="badge-row">
-      <span class="badge blue">Close the loop</span>
+      <span class="badge blue">Follow up</span>
     </div>
   </div>
 
-  <div class="section-fields three">
+  <div class="section-fields">
     <label>
-      Advice
-      <div class="editable-checklist" id="adviceList" data-placeholder="Add advice item..."></div>
+      Follow up - first line
+      <div class="editable-checklist" id="followUpPrimaryList" data-placeholder="Add follow-up item..."></div>
     </label>
 
     <label>
-      Safety net
-      <div class="editable-checklist" id="safetyNetList" data-placeholder="Add safety-net item..."></div>
+      Follow up - next line
+      <div class="editable-checklist" id="followUpSecondaryList" data-placeholder="Add follow-up item for new line..."></div>
+    </label>
+  </div>
+</div>
+
+        <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">8. Advice to parent / patient</div>
+      <div class="hint">Separate the second checklist onto a new line if needed</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">Advice</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Advice - first line
+      <div class="editable-checklist" id="advicePrimaryList" data-placeholder="Add advice item..."></div>
     </label>
 
     <label>
-      Documentation notes
-      <div class="editable-checklist" id="documentationList" data-placeholder="Add documentation item..."></div>
+      Advice - next line
+      <div class="editable-checklist" id="adviceSecondaryList" data-placeholder="Add advice item for new line..."></div>
+    </label>
+  </div>
+</div>
+
+ <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">9. Safety netting provided to patient</div>
+      <div class="hint">Separate the second checklist onto a new line if needed</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge danger">Safety net</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Safety netting - first line
+      <div class="editable-checklist" id="safetyNetPrimaryList" data-placeholder="Add safety-net item..."></div>
+    </label>
+
+    <label>
+      Safety netting - next line
+      <div class="editable-checklist" id="safetyNetSecondaryList" data-placeholder="Add safety-net item for new line..."></div>
     </label>
   </div>
 </div>
@@ -1514,6 +1554,8 @@ const defaultTemplates = [
     prompts: {
       patientDemo: '',
       patientEthnicity: '',
+      sexMale: false,
+      sexFemale: false,
       presentationDuration: '',
       durationDays: true,
       durationHours: false,
@@ -1526,10 +1568,14 @@ const defaultTemplates = [
         'fever'
       ],
 
-      redFlags: [
+      redFlagsPrimary: [
         'Relevant dangerous symptoms asked about',
         'Relevant dangerous symptoms absent unless present'
       ],
+
+      redFlagsSecondary: [],
+	  
+	  redFlagsPrivateNote: '',
 
       vitalTemp: '',
       vitalPR: '',
@@ -1539,24 +1585,6 @@ const defaultTemplates = [
       vitalBP: '',
       vitalSats: '',
       vitalWE: '',
-
-      allergies: [
-        'NKDA if relevant'
-      ],
-
-      medicalHistory: [
-        'Relevant background conditions only'
-      ],
-
-      currentMeds: [
-        'Current medicines'
-      ],
-
-      patientFactors: [
-        'Pregnancy / breastfeeding if relevant',
-        'Immunocompromised state if relevant',
-        'Social / functional factors if relevant'
-      ],
 
       examPrimary: [
         'Voice normal, no drooling or trismus present'
@@ -1569,48 +1597,52 @@ const defaultTemplates = [
       examFreeText: '',
       examPrivateNote: '',
 
-      diagnosis: [
-        'Working diagnosis'
+      investigationsPrimary: [
+        'No investigations indicated'
       ],
 
-      differentials: [
-        'Key alternative diagnoses considered'
+      investigationsSecondary: [],
+
+      investigationsFreeText: '',
+
+      assessment: [
+        'Working assessment'
       ],
 
       privateConsultNote: '',
-      prescribingPrivateNote: '',
-      prescribingFirstLinePrivateNote: '',
-      prescribingSecondLinePrivateNote: '',
 
-      planTreatment: [
+      managementPlanPrimary: [
         'Supportive measures discussed'
       ],
 
-      prescribingFirstLine: [
-        'First-line option'
+      managementPlanSecondary: [],
+
+      managementPlanFreeText: '',
+      prescribingPrivateNote: '',
+
+      followUpPrimary: [
+        'Review if not improving'
       ],
 
-      prescribingSecondLine: [
-        'Second-line option'
-      ],
+      followUpSecondary: [],
 
-      patientAdvice: [
+      advicePrimary: [
         'Supportive care and home advice'
       ],
 
-      safetyNet: [
+      adviceSecondary: [],
+
+      safetyNetPrimary: [
         'Return if worsening',
-        'Return if not improving',
-        'Return if red flags develop'
+        'Return if not improving'
       ],
 
-      documentation: [
-        'Record anything medico-legally important'
+      safetyNetSecondary: [
+        'Return if red flags develop'
       ]
     }
   }
 ];
-
 
 const templateList = document.getElementById('templateList');
 const searchInput = document.getElementById('searchInput');
@@ -1683,6 +1715,7 @@ const textFieldIds = [
   'presentationDuration',
   'presentationExtraText',
   'presentationPrivateNote',
+  'redFlagsPrivateNote',
   'vitalTemp',
   'vitalPR',
   'vitalRR',
@@ -1691,29 +1724,29 @@ const textFieldIds = [
   'vitalWE',
   'examFreeText',
   'examPrivateNote',
+  'investigationsFreeText',
   'privateConsultNote',
-  'prescribingPrivateNote',
-  'prescribingFirstLinePrivateNote',
-  'prescribingSecondLinePrivateNote'
+  'managementPlanFreeText',
+  'prescribingPrivateNote'
 ];
 
 const checklistIds = [
   'hpcList',
-  'redFlagsList',
-  'allergiesList',
-  'medicalHistoryList',
-  'currentMedsList',
-  'patientFactorsList',
+  'redFlagsPrimaryList',
+  'redFlagsSecondaryList',
   'examPrimaryList',
   'examSecondaryList',
-  'diagnosisList',
-  'differentialsList',
-  'planTreatmentList',
-  'prescribingFirstLineList',
-  'prescribingSecondLineList',
-  'adviceList',
-  'safetyNetList',
-  'documentationList'
+  'investigationsPrimaryList',
+  'investigationsSecondaryList',
+  'assessmentList',
+  'managementPlanPrimaryList',
+  'managementPlanSecondaryList',
+  'followUpPrimaryList',
+  'followUpSecondaryList',
+  'advicePrimaryList',
+  'adviceSecondaryList',
+  'safetyNetPrimaryList',
+  'safetyNetSecondaryList'
 ];
 
 function getField(id) {
@@ -1777,12 +1810,13 @@ function setupPrivateNotesAutoGrow() {
   [
     'presentationExtraText',
     'presentationPrivateNote',
+    'redFlagsPrivateNote',
     'examFreeText',
     'examPrivateNote',
+    'investigationsFreeText',
     'privateConsultNote',
-    'prescribingPrivateNote',
-    'prescribingFirstLinePrivateNote',
-    'prescribingSecondLinePrivateNote'
+    'managementPlanFreeText',
+    'prescribingPrivateNote'
   ].forEach(id => {
     const field = getField(id);
     if (!field) return;
@@ -1792,6 +1826,29 @@ function setupPrivateNotesAutoGrow() {
   });
 }
 
+function setupSexCheckboxes() {
+  const male = getField('sexMale');
+  const female = getField('sexFemale');
+
+  if (male) {
+    male.addEventListener('change', () => {
+      if (male.checked && female) female.checked = false;
+    });
+  }
+
+  if (female) {
+    female.addEventListener('change', () => {
+      if (female.checked && male) male.checked = false;
+    });
+  }
+}
+
+function buildSplitChecklist(primary = [], secondary = []) {
+  const parts = [];
+  if (primary.length) parts.push(joinList(primary));
+  if (secondary.length) parts.push(joinList(secondary));
+  return parts.join('\n\n');
+}
 function setupChecklistRowDrag(row) {
   row.draggable = true;
 
@@ -2016,12 +2073,14 @@ function collectPromptFields() {
   return {
     patientDemo: getField('patientDemo')?.value.trim() || '',
     patientEthnicity: getField('patientEthnicity')?.value.trim() || '',
+    sexMale: !!getField('sexMale')?.checked,
+    sexFemale: !!getField('sexFemale')?.checked,
     presentationDuration: getField('presentationDuration')?.value.trim() || '',
     durationDays: !!getField('durationDays')?.checked,
     durationHours: !!getField('durationHours')?.checked,
     presentationExtraText: getField('presentationExtraText')?.value.trim() || '',
-	presentationPrivateNote: getField('presentationPrivateNote')?.value.trim() || '',
-    vitalTemp: getField('vitalTemp')?.value.trim() || '',
+    presentationPrivateNote: getField('presentationPrivateNote')?.value.trim() || '',
+    redFlagsPrivateNote: getField('redFlagsPrivateNote')?.value.trim() || '',    vitalTemp: getField('vitalTemp')?.value.trim() || '',
     vitalPR: getField('vitalPR')?.value.trim() || '',
     prRegular: getField('prRegular')?.classList.contains('active') || false,
     prIrregular: getField('prIrregular')?.classList.contains('active') || false,
@@ -2030,28 +2089,28 @@ function collectPromptFields() {
     vitalSats: getField('vitalSats')?.value.trim() || '',
     vitalWE: getField('vitalWE')?.value.trim() || '',
     examFreeText: getField('examFreeText')?.value.trim() || '',
-	examPrivateNote: getField('examPrivateNote')?.value.trim() || '',
+    examPrivateNote: getField('examPrivateNote')?.value.trim() || '',
+    investigationsFreeText: getField('investigationsFreeText')?.value.trim() || '',
     privateConsultNote: getField('privateConsultNote')?.value.trim() || '',
+    managementPlanFreeText: getField('managementPlanFreeText')?.value.trim() || '',
     prescribingPrivateNote: getField('prescribingPrivateNote')?.value.trim() || '',
-    prescribingFirstLinePrivateNote: getField('prescribingFirstLinePrivateNote')?.value.trim() || '',
-    prescribingSecondLinePrivateNote: getField('prescribingSecondLinePrivateNote')?.value.trim() || '',
 
     hpc: getChecklistItems('hpcList').map(i => i.text),
-    redFlags: getChecklistItems('redFlagsList').map(i => i.text),
-    allergies: getChecklistItems('allergiesList').map(i => i.text),
-    medicalHistory: getChecklistItems('medicalHistoryList').map(i => i.text),
-    currentMeds: getChecklistItems('currentMedsList').map(i => i.text),
-    patientFactors: getChecklistItems('patientFactorsList').map(i => i.text),
+    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
+    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
     examPrimary: getChecklistItems('examPrimaryList').map(i => i.text),
     examSecondary: getChecklistItems('examSecondaryList').map(i => i.text),
-    diagnosis: getChecklistItems('diagnosisList').map(i => i.text),
-    differentials: getChecklistItems('differentialsList').map(i => i.text),
-    planTreatment: getChecklistItems('planTreatmentList').map(i => i.text),
-    prescribingFirstLine: getChecklistItems('prescribingFirstLineList').map(i => i.text),
-    prescribingSecondLine: getChecklistItems('prescribingSecondLineList').map(i => i.text),
-    patientAdvice: getChecklistItems('adviceList').map(i => i.text),
-    safetyNet: getChecklistItems('safetyNetList').map(i => i.text),
-    documentation: getChecklistItems('documentationList').map(i => i.text)
+    investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
+    investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
+    assessment: getChecklistItems('assessmentList').map(i => i.text),
+    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList').map(i => i.text),
+    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList').map(i => i.text),
+    followUpPrimary: getChecklistItems('followUpPrimaryList').map(i => i.text),
+    followUpSecondary: getChecklistItems('followUpSecondaryList').map(i => i.text),
+    advicePrimary: getChecklistItems('advicePrimaryList').map(i => i.text),
+    adviceSecondary: getChecklistItems('adviceSecondaryList').map(i => i.text),
+    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList').map(i => i.text),
+    safetyNetSecondary: getChecklistItems('safetyNetSecondaryList').map(i => i.text)
   };
 }
 
@@ -2158,59 +2217,76 @@ function fillTemplatePrompts() {
   const template = getActiveTemplate();
   if (!template) return;
 
-    if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
-if (getField('patientEthnicity')) getField('patientEthnicity').value = template.prompts?.patientEthnicity || '';
-if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
-if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
-if (getField('presentationPrivateNote')) getField('presentationPrivateNote').value = template.prompts?.presentationPrivateNote || '';
-if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
-if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
-if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
-if (getField('examPrivateNote')) getField('examPrivateNote').value = template.prompts?.examPrivateNote || '';
-if (getField('privateConsultNote')) getField('privateConsultNote').value = template.prompts?.privateConsultNote || '';
-if (getField('prescribingPrivateNote')) getField('prescribingPrivateNote').value = template.prompts?.prescribingPrivateNote || '';
-if (getField('prescribingFirstLinePrivateNote')) getField('prescribingFirstLinePrivateNote').value = template.prompts?.prescribingFirstLinePrivateNote || '';
-if (getField('prescribingSecondLinePrivateNote')) getField('prescribingSecondLinePrivateNote').value = template.prompts?.prescribingSecondLinePrivateNote || '';
+  if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
+  if (getField('patientEthnicity')) getField('patientEthnicity').value = template.prompts?.patientEthnicity || '';
+  if (getField('sexMale')) getField('sexMale').checked = !!template.prompts?.sexMale;
+  if (getField('sexFemale')) getField('sexFemale').checked = !!template.prompts?.sexFemale;
 
-setChecklistItems('hpcList', template.prompts?.hpc);
-setChecklistItems('redFlagsList', template.prompts?.redFlags);
-if (getField('vitalTemp')) getField('vitalTemp').value = template.prompts?.vitalTemp || '';
-if (getField('vitalPR')) getField('vitalPR').value = template.prompts?.vitalPR || '';
-if (getField('prRegular')) {
-  getField('prRegular').classList.toggle('active', !!template.prompts?.prRegular);
-}
-if (getField('prIrregular')) {
-  getField('prIrregular').classList.toggle('active', !!template.prompts?.prIrregular);
-}
-if (getField('vitalRR')) getField('vitalRR').value = template.prompts?.vitalRR || '';
-if (getField('vitalBP')) getField('vitalBP').value = template.prompts?.vitalBP || '';
-if (getField('vitalSats')) getField('vitalSats').value = template.prompts?.vitalSats || '';
-if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
-setChecklistItems('allergiesList', template.prompts?.allergies || template.prompts?.medsAllergies);
-setChecklistItems('medicalHistoryList', template.prompts?.medicalHistory || template.prompts?.pmhx);
-setChecklistItems('currentMedsList', template.prompts?.currentMeds);
-setChecklistItems('patientFactorsList', template.prompts?.patientFactors);
-setChecklistItems('examPrimaryList', template.prompts?.examPrimary);
-setChecklistItems('examSecondaryList', template.prompts?.examSecondary);
-setChecklistItems('diagnosisList', template.prompts?.diagnosis);
-setChecklistItems('differentialsList', template.prompts?.differentials);
-setChecklistItems('planTreatmentList', template.prompts?.planTreatment);
-setChecklistItems('prescribingFirstLineList', template.prompts?.prescribingFirstLine || template.prompts?.prescribing);
-setChecklistItems('prescribingSecondLineList', template.prompts?.prescribingSecondLine);
-setChecklistItems('adviceList', template.prompts?.patientAdvice);
-setChecklistItems('safetyNetList', template.prompts?.safetyNet);
-setChecklistItems('documentationList', template.prompts?.documentation);
+  if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
+  if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
+  if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
+  if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
+  if (getField('presentationPrivateNote')) getField('presentationPrivateNote').value = template.prompts?.presentationPrivateNote || '';
 
-[
-  'presentationExtraText',
-  'presentationPrivateNote',
-  'examFreeText',
-  'examPrivateNote',
-  'privateConsultNote',
-  'prescribingPrivateNote',
-  'prescribingFirstLinePrivateNote',
-  'prescribingSecondLinePrivateNote'
-].forEach(id => autoGrowTextarea(getField(id)));
+  setChecklistItems('hpcList', template.prompts?.hpc);
+
+  setChecklistItems('redFlagsPrimaryList', template.prompts?.redFlagsPrimary || template.prompts?.redFlags);
+  setChecklistItems('redFlagsSecondaryList', template.prompts?.redFlagsSecondary);
+
+  if (getField('redFlagsPrivateNote')) {
+  getField('redFlagsPrivateNote').value = template.prompts?.redFlagsPrivateNote || '';
+}
+  if (getField('vitalTemp')) getField('vitalTemp').value = template.prompts?.vitalTemp || '';
+  if (getField('vitalPR')) getField('vitalPR').value = template.prompts?.vitalPR || '';
+
+  if (getField('prRegular')) {
+    getField('prRegular').classList.toggle('active', !!template.prompts?.prRegular);
+  }
+
+  if (getField('prIrregular')) {
+    getField('prIrregular').classList.toggle('active', !!template.prompts?.prIrregular);
+  }
+
+  if (getField('vitalRR')) getField('vitalRR').value = template.prompts?.vitalRR || '';
+  if (getField('vitalBP')) getField('vitalBP').value = template.prompts?.vitalBP || '';
+  if (getField('vitalSats')) getField('vitalSats').value = template.prompts?.vitalSats || '';
+  if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
+
+  setChecklistItems('examPrimaryList', template.prompts?.examPrimary);
+  setChecklistItems('examSecondaryList', template.prompts?.examSecondary);
+
+  setChecklistItems('investigationsPrimaryList', template.prompts?.investigationsPrimary);
+  setChecklistItems('investigationsSecondaryList', template.prompts?.investigationsSecondary);
+  if (getField('investigationsFreeText')) getField('investigationsFreeText').value = template.prompts?.investigationsFreeText || '';
+
+  setChecklistItems('assessmentList', template.prompts?.assessment || template.prompts?.diagnosis);
+
+  if (getField('privateConsultNote')) getField('privateConsultNote').value = template.prompts?.privateConsultNote || '';
+
+  setChecklistItems('managementPlanPrimaryList', template.prompts?.managementPlanPrimary || template.prompts?.planTreatment);
+  setChecklistItems('managementPlanSecondaryList', template.prompts?.managementPlanSecondary);
+  if (getField('managementPlanFreeText')) getField('managementPlanFreeText').value = template.prompts?.managementPlanFreeText || '';
+  if (getField('prescribingPrivateNote')) getField('prescribingPrivateNote').value = template.prompts?.prescribingPrivateNote || '';
+
+  setChecklistItems('followUpPrimaryList', template.prompts?.followUpPrimary);
+  setChecklistItems('followUpSecondaryList', template.prompts?.followUpSecondary);
+
+  setChecklistItems('advicePrimaryList', template.prompts?.advicePrimary || template.prompts?.patientAdvice);
+  setChecklistItems('adviceSecondaryList', template.prompts?.adviceSecondary);
+
+  setChecklistItems('safetyNetPrimaryList', template.prompts?.safetyNetPrimary || template.prompts?.safetyNet);
+  setChecklistItems('safetyNetSecondaryList', template.prompts?.safetyNetSecondary);
+
+  [
+    'presentationExtraText',
+    'presentationPrivateNote',
+    'examFreeText',
+    'examPrivateNote',
+    'investigationsFreeText',
+    'privateConsultNote',
+    'managementPlanFreeText',
+    'prescribingPrivateNote'
+  ].forEach(id => autoGrowTextarea(getField(id)));
 }
 
 function clearForm() {
@@ -2221,28 +2297,18 @@ function clearForm() {
 
   checklistIds.forEach(clearChecklist);
 
-  ['abxNotIndicated', 'abxDelayed', 'abxPrescribed', 'supportiveCareOnly', 'durationDays', 'durationHours'].forEach(id => {
-  const box = getField(id);
-  if (box) box.checked = false;
-});
+  ['sexMale', 'sexFemale', 'durationDays', 'durationHours'].forEach(id => {
+    const box = getField(id);
+    if (box) box.checked = false;
+  });
 
-['prRegular', 'prIrregular'].forEach(id => {
-  const btn = getField(id);
-  if (btn) btn.classList.remove('active');
-});
-
-  [
-  'presentationExtraText',
-  'examFreeText',
-  'privateConsultNote',
-  'prescribingPrivateNote',
-  'prescribingFirstLinePrivateNote',
-  'prescribingSecondLinePrivateNote'
-].forEach(id => autoGrowTextarea(getField(id)));
+  ['prRegular', 'prIrregular'].forEach(id => {
+    const btn = getField(id);
+    if (btn) btn.classList.remove('active');
+  });
 
   if (output) output.innerHTML = '';
 }
-
 function setupDurationCheckboxes() {
   const days = getField('durationDays');
   const hours = getField('durationHours');
@@ -2291,16 +2357,45 @@ function getCheckedTreatmentFlags() {
 }
 
 function buildSummaryText() {
-  const patientDemo = getField('patientDemo')?.value.trim() || '';
-  const patientEthnicity = getField('patientEthnicity')?.value.trim() || '';
+  const age = getField('patientDemo')?.value.trim() || '';
+  const ethnicity = getField('patientEthnicity')?.value.trim() || '';
+  const sexMale = !!getField('sexMale')?.checked;
+  const sexFemale = !!getField('sexFemale')?.checked;
+
   const presentationDuration = getField('presentationDuration')?.value.trim() || '';
   const durationDays = !!getField('durationDays')?.checked;
   const durationHours = !!getField('durationHours')?.checked;
+
   const presentationExtraText = getField('presentationExtraText')?.value.trim() || '';
   const examFreeText = getField('examFreeText')?.value.trim() || '';
+  const investigationsFreeText = getField('investigationsFreeText')?.value.trim() || '';
+  const managementPlanFreeText = getField('managementPlanFreeText')?.value.trim() || '';
 
   const hpc = getCheckedChecklistTexts('hpcList');
-  const redFlags = getCheckedChecklistTexts('redFlagsList');
+
+  const redFlagsPrimary = getCheckedChecklistTexts('redFlagsPrimaryList');
+  const redFlagsSecondary = getCheckedChecklistTexts('redFlagsSecondaryList');
+
+  const examPrimary = getCheckedChecklistTexts('examPrimaryList');
+  const examSecondary = getCheckedChecklistTexts('examSecondaryList');
+
+  const investigationsPrimary = getCheckedChecklistTexts('investigationsPrimaryList');
+  const investigationsSecondary = getCheckedChecklistTexts('investigationsSecondaryList');
+
+  const assessment = getCheckedChecklistTexts('assessmentList');
+
+  const managementPlanPrimary = getCheckedChecklistTexts('managementPlanPrimaryList');
+  const managementPlanSecondary = getCheckedChecklistTexts('managementPlanSecondaryList');
+
+  const followUpPrimary = getCheckedChecklistTexts('followUpPrimaryList');
+  const followUpSecondary = getCheckedChecklistTexts('followUpSecondaryList');
+
+  const advicePrimary = getCheckedChecklistTexts('advicePrimaryList');
+  const adviceSecondary = getCheckedChecklistTexts('adviceSecondaryList');
+
+  const safetyNetPrimary = getCheckedChecklistTexts('safetyNetPrimaryList');
+  const safetyNetSecondary = getCheckedChecklistTexts('safetyNetSecondaryList');
+
   const vitalTemp = getField('vitalTemp')?.value.trim() || '';
   const vitalPR = getField('vitalPR')?.value.trim() || '';
   const prRegular = getField('prRegular')?.classList.contains('active') || false;
@@ -2309,32 +2404,21 @@ function buildSummaryText() {
   const vitalBP = getField('vitalBP')?.value.trim() || '';
   const vitalSats = getField('vitalSats')?.value.trim() || '';
   const vitalWE = getField('vitalWE')?.value.trim() || '';
-  const allergies = getCheckedChecklistTexts('allergiesList');
-  const medicalHistory = getCheckedChecklistTexts('medicalHistoryList');
-  const currentMeds = getCheckedChecklistTexts('currentMedsList');
-  const patientFactors = getCheckedChecklistTexts('patientFactorsList');
-  const examPrimary = getCheckedChecklistTexts('examPrimaryList');
-  const examSecondary = getCheckedChecklistTexts('examSecondaryList');
-  const diagnosis = getCheckedChecklistTexts('diagnosisList');
-  const differentials = getCheckedChecklistTexts('differentialsList');
-  const planTreatment = getCheckedChecklistTexts('planTreatmentList');
-  const prescribingFirstLine = getCheckedChecklistTexts('prescribingFirstLineList');
-  const prescribingSecondLine = getCheckedChecklistTexts('prescribingSecondLineList');
-  const advice = getCheckedChecklistTexts('adviceList');
-  const safetyNet = getCheckedChecklistTexts('safetyNetList');
-  const documentation = getCheckedChecklistTexts('documentationList');
-  const treatmentFlags = getCheckedTreatmentFlags();
 
-  const lines = [];
+  const sections = [];
+
+  const sexLabel = sexFemale ? 'female' : (sexMale ? 'male' : '');
 
   const introBits = [];
-  if (patientDemo) introBits.push(patientDemo);
-  if (patientEthnicity) introBits.push(patientEthnicity);
+  if (age) introBits.push(`${age} years old`);
+  if (sexLabel) introBits.push(sexLabel);
 
-  let openingLine = introBits.length
-    ? `${introBits.join(', ')}, presenting with`
-    : 'Presenting with';
+  let openingLine = introBits.join(' ');
+  if (ethnicity) {
+    openingLine += openingLine ? `, ${ethnicity}` : ethnicity;
+  }
 
+  openingLine += openingLine ? ' presenting with' : 'Presenting with';
   openingLine += hpc.length ? ` ${joinNaturalList(hpc)}` : ' symptoms';
 
   let durationLabel = '';
@@ -2345,64 +2429,77 @@ function buildSummaryText() {
   }
 
   if (durationLabel) openingLine += ` for ${durationLabel}`;
-  lines.push(sentence(openingLine));
 
-  if (presentationExtraText) lines.push(sentence(presentationExtraText));
+  const historyParts = [sentence(openingLine)];
+  if (presentationExtraText) historyParts.push(sentence(presentationExtraText));
+
+  const redFlagsBlock = buildSplitChecklist(redFlagsPrimary, redFlagsSecondary);
+  if (redFlagsBlock) historyParts.push(redFlagsBlock);
+
+  sections.push(`History of presenting complaint:\n${historyParts.join('\n\n')}`);
+
+  const examParts = [];
+  const examBlock = buildSplitChecklist(examPrimary, examSecondary);
+  if (examBlock) examParts.push(examBlock);
 
   const vitals = [];
+  if (vitalTemp) vitals.push(`Temp: ${vitalTemp}`);
+  if (vitalPR) {
+    let prLine = `PR: ${vitalPR}`;
+    if (prRegular) prLine += ' REG';
+    else if (prIrregular) prLine += ' IRREG';
+    vitals.push(prLine);
+  }
+  if (vitalRR) vitals.push(`RR: ${vitalRR}`);
+  if (vitalBP) vitals.push(`BP: ${vitalBP}`);
+  if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
+  if (vitalWE) vitals.push(`WE: ${vitalWE}`);
 
-if (vitalTemp) vitals.push(`Temp: ${vitalTemp}`);
+  if (vitals.length) examParts.push(`Vital signs:\n${joinList(vitals)}`);
+  if (examFreeText) examParts.push(sentence(examFreeText));
 
-if (vitalPR) {
-  let prLine = `PR: ${vitalPR}`;
-  if (prRegular) prLine += ' REG';
-  else if (prIrregular) prLine += ' IRREG';
-  vitals.push(prLine);
-}
-
-if (vitalRR) vitals.push(`RR: ${vitalRR}`);
-if (vitalBP) vitals.push(`BP: ${vitalBP}`);
-if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
-if (vitalWE) vitals.push(`WE: ${vitalWE}`);
-
-if (vitals.length) lines.push(`Vital signs:\n${joinList(vitals)}`);
-
-  const backgroundBits = [];
-  if (allergies.length) backgroundBits.push(`Allergies:\n${joinList(allergies)}`);
-  if (medicalHistory.length) backgroundBits.push(`Medical history:\n${joinList(medicalHistory)}`);
-  if (currentMeds.length) backgroundBits.push(`Current medications:\n${joinList(currentMeds)}`);
-  if (patientFactors.length) backgroundBits.push(`Special patient factors:\n${joinList(patientFactors)}`);
-  if (backgroundBits.length) lines.push(backgroundBits.join('\n\n'));
-
-  if (examPrimary.length) {
-    const examPrimaryText = examPrimary.map(item => sentence(item)).join(' ');
-    lines.push(`On examination, ${examPrimaryText}`);
+  if (examParts.length) {
+    sections.push(`On examination:\n${examParts.join('\n\n')}`);
   }
 
-  if (examSecondary.length) {
-    const examSecondaryText = examSecondary.map(item => sentence(item)).join(' ');
-    lines.push(examSecondaryText);
+  const investigationsParts = [];
+  const investigationsBlock = buildSplitChecklist(investigationsPrimary, investigationsSecondary);
+  if (investigationsBlock) investigationsParts.push(investigationsBlock);
+  if (investigationsFreeText) investigationsParts.push(sentence(investigationsFreeText));
+
+  if (investigationsParts.length) {
+    sections.push(`Investigations:\n${investigationsParts.join('\n\n')}`);
   }
 
-  if (examFreeText) lines.push(sentence(examFreeText));
+  if (assessment.length) {
+    sections.push(`Assessment:\n${joinList(assessment)}`);
+  }
 
-  if (diagnosis.length) lines.push(`Diagnosis:\n${joinList(diagnosis)}`);
-  if (differentials.length) lines.push(`Differential / ruled out concerns:\n${joinList(differentials)}`);
+  const managementParts = [];
+  const managementBlock = buildSplitChecklist(managementPlanPrimary, managementPlanSecondary);
+  if (managementBlock) managementParts.push(managementBlock);
+  if (managementPlanFreeText) managementParts.push(sentence(managementPlanFreeText));
 
-  if (redFlags.length) lines.push(`Red flags checked:\n${joinList(redFlags)}`);
+  if (managementParts.length) {
+    sections.push(`Management Plan:\n${managementParts.join('\n\n')}`);
+  }
 
-  const prescribingBits = [];
-  if (treatmentFlags.length) prescribingBits.push(...treatmentFlags);
-  if (planTreatment.length) prescribingBits.push(...planTreatment);
-  if (prescribingFirstLine.length) prescribingBits.push(...prescribingFirstLine);
-  if (prescribingSecondLine.length) prescribingBits.push(...prescribingSecondLine);
-  if (prescribingBits.length) lines.push(`Management Plan:\n${joinList(prescribingBits)}`);
+  const followUpBlock = buildSplitChecklist(followUpPrimary, followUpSecondary);
+  if (followUpBlock) {
+    sections.push(`Follow up:\n${followUpBlock}`);
+  }
 
-  if (documentation.length) lines.push(`Documentation notes:\n${joinList(documentation)}`);
-  if (advice.length) lines.push(`Advice:\n${joinList(advice)}`);
-  if (safetyNet.length) lines.push(`Safety net:\n${joinList(safetyNet)}`);
+  const adviceBlock = buildSplitChecklist(advicePrimary, adviceSecondary);
+  if (adviceBlock) {
+    sections.push(`Advice to parent / patient:\n${adviceBlock}`);
+  }
 
-  return lines.join('\n\n');
+  const safetyNetBlock = buildSplitChecklist(safetyNetPrimary, safetyNetSecondary);
+  if (safetyNetBlock) {
+    sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
+  }
+
+  return sections.join('\n\n');
 }
 
 function generateSummary() {
@@ -2910,6 +3007,8 @@ setupMobileTopbar();
 setupPRToggleButtons();
 setupDesktopHeaderMinimize();
 setupPrivateNotesAutoGrow();
+setupDurationCheckboxes();
+setupSexCheckboxes();
 
 if (firebaseReady) {
   onAuthStateChanged(auth, async (user) => {
