@@ -687,7 +687,7 @@ function renderNotes(notesToRender = allNotes) {
 
     // Click-to-copy note text only
     card.addEventListener('click', (e) => {
-      if (e.target.closest('button, input, textarea')) return;
+     if (e.target.closest('button, input, textarea, [contenteditable="true"]')) return;
       copyNoteHTML(note, card);
     });
 
@@ -755,6 +755,14 @@ function plainTextToHTML(text = '') {
     .replace(/\n/g, '<br>');
 }
 
+function getFilteredNotes(){
+  if (!currentFilter) return allNotes;
+
+  return allNotes.filter(n =>
+    (n.title || '').toLowerCase().includes(currentFilter) ||
+    (stripHTML(n.text || '').toLowerCase().includes(currentFilter))
+  );
+}
 // Toggle edit
 window.toggleEdit = (id) => {
   const note = allNotes.find(n => n.id === id);
