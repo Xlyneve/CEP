@@ -878,6 +878,39 @@ select option {
   }
 }
 
+.patient-link-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.patient-link-toggle {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62));
+  color: #111;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.patient-link-editor {
+  display: none;
+  gap: 10px;
+}
+
+.patient-link-editor.show {
+  display: grid;
+}
+
+.patient-link-preview:empty::before {
+  content: "No patient links added";
+  color: rgba(0,0,0,0.45);
+  font-size: 0.88rem;
+}
 .checklist-list {
   display: grid;
   gap: 8px;
@@ -1590,16 +1623,24 @@ select option {
   </div>
 
   <div class="section-fields">
-    <div class="patient-links-box">
+  <div class="patient-links-box">
+    <div class="patient-link-top">
+      <div class="patient-link-preview" id="patientLinksPreview"></div>
+
+      <button type="button" class="patient-link-toggle" id="patientLinkToggleBtn" title="Add/edit patient links">
+        🔗
+      </button>
+    </div>
+
+    <div class="patient-link-editor" id="patientLinkEditor">
       <div id="patientLinksList"></div>
 
       <button type="button" class="glass-btn" id="addPatientLinkBtn">
         ＋ Add patient link
       </button>
-
-      <div class="patient-link-preview" id="patientLinksPreview"></div>
     </div>
   </div>
+</div>
 </div>
 
           <div class="card full">
@@ -1778,6 +1819,8 @@ const floatingGenerateBtn = document.getElementById('floatingGenerateBtn');
 const patientLinksList = document.getElementById('patientLinksList');
 const addPatientLinkBtn = document.getElementById('addPatientLinkBtn');
 const patientLinksPreview = document.getElementById('patientLinksPreview');
+const patientLinkToggleBtn = document.getElementById('patientLinkToggleBtn');
+const patientLinkEditor = document.getElementById('patientLinkEditor');
 const topbar = document.getElementById('topbar');
 const topbarToggle = document.getElementById('topbarToggle');
 const topActions = document.querySelector('.top-actions');
@@ -2350,11 +2393,7 @@ function renderPatientLinks(links = []) {
 
   const cleanLinks = Array.isArray(links) ? links : [];
 
-  if (cleanLinks.length) {
-    cleanLinks.forEach(link => createPatientLinkRow(link));
-  } else {
-    createPatientLinkRow();
-  }
+  cleanLinks.forEach(link => createPatientLinkRow(link));
 
   renderPatientLinksPreview();
 }
@@ -3369,7 +3408,20 @@ safeAddListener(editBtn, 'click', updateCurrentTemplate);
 safeAddListener(deleteBtn, 'click', deleteCurrentTemplate);
 safeAddListener(loginBtn, 'click', signInUser);
 safeAddListener(logoutBtn, 'click', signOutUser);
+safeAddListener(patientLinkToggleBtn, 'click', () => {
+  patientLinkEditor?.classList.toggle('show');
+
+  if (
+    patientLinkEditor?.classList.contains('show') &&
+    patientLinksList &&
+    patientLinksList.querySelectorAll('.patient-link-row').length === 0
+  ) {
+    createPatientLinkRow();
+  }
+});
+
 safeAddListener(addPatientLinkBtn, 'click', () => createPatientLinkRow());
+
 renderPatientLinks([]);
 
 renderTemplates();
