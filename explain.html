@@ -630,8 +630,11 @@ let currentFilter = "";
 // --- Add new note ---
 document.querySelector('.add-btn').addEventListener('click', async () => {
   const title = document.getElementById('noteTitle').value.trim();
-  const text = document.getElementById('noteText').value.trim();
-  if (!title && !text) return;
+  const rawText = document.getElementById('noteText').value.trim();
+
+  if (!title && !rawText) return;
+
+  const text = plainTextToHTML(rawText);
 
   await addDoc(collection(db, 'explainNotes'), {
     title: title || 'Untitled',
@@ -730,16 +733,26 @@ document.getElementById('notesContainer').addEventListener('click', (e) => {
   }
 });
 
-// --- Helpers ---
 function formatTS(ts){ try { return new Date(ts).toLocaleString(); } catch { return ''; } }
-function escapeHTML(s=''){ return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function escapeAttr(s=''){ return escapeHTML(s); }
-function getFilteredNotes(){
-  if (!currentFilter) return allNotes;
-  return allNotes.filter(n =>
-    (n.title||'').toLowerCase().includes(currentFilter) ||
-    (n.text||'').toLowerCase().includes(currentFilter)
-  );
+
+function escapeHTML(s=''){
+  return s.replace(/[&<>"']/g, m => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[m]));
+}
+
+function escapeAttr(s=''){ 
+  return escapeHTML(s); 
+}
+
+function plainTextToHTML(text = '') {
+  return escapeHTML(text)
+    .replace(/\r\n/g, '\n')
+    .replace(/\n/g, '<br>');
 }
 
 // Toggle edit
@@ -799,13 +812,22 @@ async function copyNoteHTML(note, cardEl){
   if (!html) return;
 
   const normalizedHTML = normalizeHighlightWrappers(html);
+
+  const fullHTML = `
+    <div style="font-family: Tahoma, sans-serif; font-size: 12px; white-space: pre-wrap;">
+      ${normalizedHTML}
+    </div>
+  `;
+
   const plain = stripHTML(normalizedHTML);
 
   const showTick = () => {
     const indicator = cardEl.querySelector('.copied-indicator');
     if (!indicator) return;
+
     indicator.style.opacity = '1';
     indicator.style.transform = 'scale(1.2)';
+
     setTimeout(() => {
       indicator.style.opacity = '0';
       indicator.style.transform = 'scale(0.8)';
@@ -815,9 +837,10 @@ async function copyNoteHTML(note, cardEl){
   try {
     if (navigator.clipboard && window.ClipboardItem) {
       const data = {
-        'text/html': new Blob([normalizedHTML], { type: 'text/html' }),
+        'text/html': new Blob([fullHTML], { type: 'text/html' }),
         'text/plain': new Blob([plain], { type: 'text/plain' })
       };
+
       await navigator.clipboard.write([new ClipboardItem(data)]);
       showTick();
       return;
@@ -826,9 +849,10 @@ async function copyNoteHTML(note, cardEl){
 
   const onCopy = (e) => {
     e.preventDefault();
-    e.clipboardData.setData('text/html', normalizedHTML);
+    e.clipboardData.setData('text/html', fullHTML);
     e.clipboardData.setData('text/plain', plain);
   };
+
   document.addEventListener('copy', onCopy, { once: true });
   document.execCommand('copy');
   showTick();
@@ -853,7 +877,21 @@ function normalizeHighlightWrappers(html){
   });
   return tmp.innerHTML;
 }
-function stripHTML(html){ const tmp = document.createElement('div'); tmp.innerHTML = html; return tmp.textContent||tmp.innerText||''; }
+
+function stripHTML(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  tmp.querySelectorAll('br').forEach(br => {
+    br.replaceWith('\n');
+  });
+
+  tmp.querySelectorAll('div, p').forEach(block => {
+    if (block.nextSibling) block.append('\n');
+  });
+
+  return tmp.textContent || tmp.innerText || '';
+}
 
 // Format buttons
 const HIGHLIGHT_COLOR = '#F3F5A9';
