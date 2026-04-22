@@ -643,6 +643,7 @@ select option {
 #presentationPrivateNote,
 #redFlagsPrivateNote,
 #examPrivateNote,
+#investigationsPrivateNote,
 #privateConsultNote,
 #prescribingPrivateNote {
   min-height: 110px;
@@ -828,6 +829,53 @@ select option {
 .editable-checklist {
   display: grid;
   gap: 10px;
+}
+
+.patient-links-box {
+  display: grid;
+  gap: 10px;
+}
+
+.patient-link-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.patient-link-row input {
+  width: 100%;
+}
+
+.patient-link-delete {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.58));
+  color: #111;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.patient-link-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.patient-link-preview a {
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .patient-link-row {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-link-delete {
+    width: 100%;
+  }
 }
 
 .checklist-list {
@@ -1263,7 +1311,7 @@ select option {
   </div>
 </div>
 
-          <div class="card">
+         <div class="card">
   <div class="section-header">
     <div>
       <div class="section-heading">3. Investigations</div>
@@ -1288,6 +1336,16 @@ select option {
     <label>
       Additional investigation text
       <textarea id="investigationsFreeText" placeholder="Optional extra investigation detail..."></textarea>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+      <div
+        id="investigationsPrivateNote"
+        class="private-note-editor"
+        contenteditable="true"
+        data-placeholder="Reminder to self - not part of summary"
+      ></div>
     </label>
   </div>
 </div>
@@ -1520,10 +1578,34 @@ select option {
   </div>
 </div>
 
+<div class="card full">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">10. Patient information links</div>
+      <div class="hint">Useful links to give to patient after consult</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge green">Patient info</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <div class="patient-links-box">
+      <div id="patientLinksList"></div>
+
+      <button type="button" class="glass-btn" id="addPatientLinkBtn">
+        ＋ Add patient link
+      </button>
+
+      <div class="patient-link-preview" id="patientLinksPreview"></div>
+    </div>
+  </div>
+</div>
+
           <div class="card full">
             <div class="section-header">
               <div>
-                <div class="section-heading">8. Generated consultation summary</div>
+                <div class="section-heading">11. Generated consultation summary</div>
                 <div class="hint">Auto-build a clean note from what you entered</div>
               </div>
               <div class="badge-row">
@@ -1644,6 +1726,7 @@ const defaultTemplates = [
       ],
       investigationsSecondary: [],
       investigationsFreeText: '',
+	  investigationsPrivateNote: '',
 
       assessment: [
         'Working assessment'
@@ -1668,16 +1751,17 @@ const defaultTemplates = [
       adviceSecondary: [],
 
       safetyNetPrimary: [
-        'Return if worsening',
-        'Return if not improving'
-      ],
-      safetyNetSecondary: [
-        'Return if red flags develop'
-      ]
+  'Return if worsening',
+  'Return if not improving'
+],
+safetyNetSecondary: [
+  'Return if red flags develop'
+],
+
+patientLinks: []
     }
   }
 ];
-
 const templateList = document.getElementById('templateList');
 const searchInput = document.getElementById('searchInput');
 const categoryFilter = document.getElementById('categoryFilter');
@@ -1691,6 +1775,9 @@ const printBtn = document.getElementById('printBtn');
 const copyBtn = document.getElementById('copyBtn');
 const copyPlainBtn = document.getElementById('copyPlainBtn');
 const floatingGenerateBtn = document.getElementById('floatingGenerateBtn');
+const patientLinksList = document.getElementById('patientLinksList');
+const addPatientLinkBtn = document.getElementById('addPatientLinkBtn');
+const patientLinksPreview = document.getElementById('patientLinksPreview');
 const topbar = document.getElementById('topbar');
 const topbarToggle = document.getElementById('topbarToggle');
 const topActions = document.querySelector('.top-actions');
@@ -1787,6 +1874,7 @@ const privateNoteIds = [
   'presentationPrivateNote',
   'redFlagsPrivateNote',
   'examPrivateNote',
+  'investigationsPrivateNote',
   'privateConsultNote',
   'prescribingPrivateNote'
 ];
@@ -2166,6 +2254,111 @@ function setupMinimalistChecklistToggle() {
   });
 }
 
+function normaliseUrl(url) {
+  const clean = String(url || '').trim();
+  if (!clean) return '';
+
+  if (/^https?:\/\//i.test(clean)) return clean;
+
+  return `https://${clean}`;
+}
+
+function isUsableUrl(url) {
+  try {
+    const checked = new URL(normaliseUrl(url));
+    return checked.protocol === 'http:' || checked.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function getPatientLinks() {
+  if (!patientLinksList) return [];
+
+  return [...patientLinksList.querySelectorAll('.patient-link-row')]
+    .map(row => {
+      const title = row.querySelector('.patient-link-title')?.value.trim() || '';
+      const urlRaw = row.querySelector('.patient-link-url')?.value.trim() || '';
+      const url = normaliseUrl(urlRaw);
+
+      return {
+        title: title || url,
+        url
+      };
+    })
+    .filter(link => link.url && isUsableUrl(link.url));
+}
+
+function renderPatientLinksPreview() {
+  if (!patientLinksPreview) return;
+
+  const links = getPatientLinks();
+
+  patientLinksPreview.innerHTML = links.map(link => `
+    <a
+      class="glass-btn"
+      href="${escapeHtml(link.url)}"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      🔗 ${escapeHtml(link.title)}
+    </a>
+  `).join('');
+}
+
+function createPatientLinkRow(link = {}) {
+  if (!patientLinksList) return;
+
+  const row = document.createElement('div');
+  row.className = 'patient-link-row';
+
+  row.innerHTML = `
+    <input
+      type="text"
+      class="patient-link-title"
+      placeholder="Name e.g. Healthify cystitis"
+      value="${escapeHtml(link.title || '')}"
+    />
+
+    <input
+      type="url"
+      class="patient-link-url"
+      placeholder="URL e.g. https://healthify.nz/..."
+      value="${escapeHtml(link.url || '')}"
+    />
+
+    <button type="button" class="patient-link-delete" title="Delete link">✕</button>
+  `;
+
+  row.querySelector('.patient-link-delete')?.addEventListener('click', () => {
+    row.remove();
+    renderPatientLinksPreview();
+  });
+
+  row.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', renderPatientLinksPreview);
+  });
+
+  patientLinksList.appendChild(row);
+  renderPatientLinksPreview();
+}
+
+function renderPatientLinks(links = []) {
+  if (!patientLinksList) return;
+
+  patientLinksList.innerHTML = '';
+
+  const cleanLinks = Array.isArray(links) ? links : [];
+
+  if (cleanLinks.length) {
+    cleanLinks.forEach(link => createPatientLinkRow(link));
+  } else {
+    createPatientLinkRow();
+  }
+
+  renderPatientLinksPreview();
+}
+
 function collectPromptFields() {
   return {
     patientDemo: getField('patientDemo')?.value.trim() || '',
@@ -2192,6 +2385,8 @@ function collectPromptFields() {
     examPrivateNote: getPrivateNoteHtml('examPrivateNote'),
 
     investigationsFreeText: getField('investigationsFreeText')?.value.trim() || '',
+	investigationsPrivateNote: getPrivateNoteHtml('investigationsPrivateNote'),
+	investigationsPrivateNote: getPrivateNoteHtml('investigationsPrivateNote'),
 
     privateConsultNote: getPrivateNoteHtml('privateConsultNote'),
 
@@ -2214,6 +2409,7 @@ function collectPromptFields() {
     adviceSecondary: getChecklistItems('adviceSecondaryList').map(i => i.text),
     safetyNetPrimary: getChecklistItems('safetyNetPrimaryList').map(i => i.text),
     safetyNetSecondary: getChecklistItems('safetyNetSecondaryList').map(i => i.text)
+	patientLinks: getPatientLinks()
   };
 }
 
@@ -2248,7 +2444,7 @@ function clearForm() {
     'investigationsFreeText',
     'managementPlanFreeText'
   ].forEach(id => autoGrowTextarea(getField(id)));
-
+  renderPatientLinks([]);
   if (output) output.innerHTML = '';
 }
 
@@ -2298,6 +2494,7 @@ function fillTemplatePrompts() {
   setChecklistItems('investigationsPrimaryList', template.prompts?.investigationsPrimary);
   setChecklistItems('investigationsSecondaryList', template.prompts?.investigationsSecondary);
   if (getField('investigationsFreeText')) getField('investigationsFreeText').value = template.prompts?.investigationsFreeText || '';
+  setPrivateNoteHtml('investigationsPrivateNote', template.prompts?.investigationsPrivateNote);
 
   setChecklistItems('assessmentList', template.prompts?.assessment || template.prompts?.diagnosis);
   setPrivateNoteHtml('privateConsultNote', template.prompts?.privateConsultNote);
@@ -2315,6 +2512,7 @@ function fillTemplatePrompts() {
 
   setChecklistItems('safetyNetPrimaryList', template.prompts?.safetyNetPrimary || template.prompts?.safetyNet);
   setChecklistItems('safetyNetSecondaryList', template.prompts?.safetyNetSecondary);
+  renderPatientLinks(template.prompts?.patientLinks || []);
 
   [
     'presentationExtraText',
@@ -2612,16 +2810,37 @@ function buildSummaryText() {
   const adviceBlock = buildSplitChecklist(advicePrimary, adviceSecondary);
   if (adviceBlock) sections.push(`Advice to parent / patient:\n${adviceBlock}`);
 
-  const safetyNetBlock = buildSplitChecklist(safetyNetPrimary, safetyNetSecondary);
-  if (safetyNetBlock) sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
+const safetyNetBlock = buildSplitChecklist(safetyNetPrimary, safetyNetSecondary);
+if (safetyNetBlock) sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
 
-  return sections.join('\n\n');
+const patientLinks = getPatientLinks();
+
+if (patientLinks.length) {
+  sections.push(
+    `Patient information provided:\n${patientLinks
+      .map(link => `${link.title}: ${link.url}`)
+      .join('\n')}`
+  );
+}
+
+return sections.join('\n\n');
+}
+
+function renderSummaryHtml(text) {
+  const escaped = escapeHtml(text);
+
+  return escaped
+    .replace(
+      /(https?:\/\/[^\s<]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    )
+    .replace(/\n/g, '<br>');
 }
 
 function generateSummary() {
   const summary = buildSummaryText();
   if (!output) return;
-  output.innerHTML = escapeHtml(summary).replace(/\n/g, '<br>');
+  output.innerHTML = renderSummaryHtml(summary);
   output.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -3151,6 +3370,8 @@ safeAddListener(editBtn, 'click', updateCurrentTemplate);
 safeAddListener(deleteBtn, 'click', deleteCurrentTemplate);
 safeAddListener(loginBtn, 'click', signInUser);
 safeAddListener(logoutBtn, 'click', signOutUser);
+safeAddListener(addPatientLinkBtn, 'click', () => createPatientLinkRow());
+renderPatientLinks([]);
 
 renderTemplates();
 syncHero();
