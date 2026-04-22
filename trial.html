@@ -950,11 +950,11 @@ select option {
 
     .floating-generate {
   position: fixed;
-  right: 18px;
-  bottom: 110px;
+  right: 12px;
+  bottom: 80px;
   z-index: 70;
-  width: 56px;
-  height: 56px;
+  width: 55px;
+  height: 55px;
   border-radius: 50%;
   border: 1px solid rgba(20,20,20,0.16);
   background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62));
@@ -1776,6 +1776,20 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+function formatPrivateNoteHtml(value) {
+  let clean = escapeHtml(value || '');
+
+  clean = clean
+    .replace(/&lt;b&gt;/g, '<b>')
+    .replace(/&lt;\/b&gt;/g, '</b>')
+    .replace(/&lt;i&gt;/g, '<i>')
+    .replace(/&lt;\/i&gt;/g, '</i>')
+    .replace(/&lt;u&gt;/g, '<u>')
+    .replace(/&lt;\/u&gt;/g, '</u>');
+
+  return clean.replace(/\n/g, '<br>');
+}
+
 function splitPromptToItems(value) {
   if (Array.isArray(value)) {
     return value.map(v => String(v).trim()).filter(Boolean);
@@ -2359,6 +2373,54 @@ function getCheckedTreatmentFlags() {
   return flags;
 }
 
+function setupPrivateNoteFormattingShortcuts() {
+  const privateNoteIds = [
+    'presentationPrivateNote',
+    'redFlagsPrivateNote',
+    'examPrivateNote',
+    'privateConsultNote',
+    'prescribingPrivateNote'
+  ];
+
+  function wrapSelectedText(textarea, tag) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+
+    if (start === end) return;
+
+    const selectedText = value.slice(start, end);
+    const before = value.slice(0, start);
+    const after = value.slice(end);
+
+    const wrappedText = `<${tag}>${selectedText}</${tag}>`;
+    textarea.value = before + wrappedText + after;
+
+    textarea.focus();
+    textarea.selectionStart = start;
+    textarea.selectionEnd = start + wrappedText.length;
+
+    autoGrowTextarea(textarea);
+  }
+
+  privateNoteIds.forEach(id => {
+    const field = getField(id);
+    if (!field) return;
+
+    field.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+
+      if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].includes(key)) {
+        e.preventDefault();
+
+        if (key === 'b') wrapSelectedText(field, 'b');
+        if (key === 'i') wrapSelectedText(field, 'i');
+        if (key === 'u') wrapSelectedText(field, 'u');
+      }
+    });
+  });
+}
+
 function buildSummaryText() {
   const age = getField('patientDemo')?.value.trim() || '';
   const ethnicity = getField('patientEthnicity')?.value.trim() || '';
@@ -2673,18 +2735,18 @@ function printFilledTemplate() {
   ];
 
   function renderValue(value, isPrivate = false) {
-    const clean = String(value || '').trim();
+  const clean = String(value || '').trim();
 
-    if (!clean) {
-      return `<div class="empty-line">____________________________</div>`;
-    }
-
-    return `
-      <div class="${isPrivate ? 'private-box' : 'text-box'}">
-        ${escapeHtml(clean).replace(/\n/g, '<br>')}
-      </div>
-    `;
+  if (!clean) {
+    return `<div class="empty-line">____________________________</div>`;
   }
+
+  return `
+    <div class="${isPrivate ? 'private-box' : 'text-box'}">
+      ${isPrivate ? formatPrivateNoteHtml(clean) : escapeHtml(clean).replace(/\n/g, '<br>')}
+    </div>
+  `;
+}
 
   function renderChecklist(items = []) {
     const validItems = items.filter(item => item.text && item.text.trim());
@@ -3077,6 +3139,7 @@ setupDesktopHeaderMinimize();
 setupPrivateNotesAutoGrow();
 setupDurationCheckboxes();
 setupSexCheckboxes();
+setupPrivateNoteFormattingShortcuts();
 
 if (firebaseReady) {
   onAuthStateChanged(auth, async (user) => {
