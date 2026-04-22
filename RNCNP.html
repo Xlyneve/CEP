@@ -643,6 +643,7 @@ select option {
 #presentationPrivateNote,
 #redFlagsPrivateNote,
 #examPrivateNote,
+#investigationsPrivateNote,
 #privateConsultNote,
 #prescribingPrivateNote {
   min-height: 110px;
@@ -1263,7 +1264,7 @@ select option {
   </div>
 </div>
 
-          <div class="card">
+         <div class="card">
   <div class="section-header">
     <div>
       <div class="section-heading">3. Investigations</div>
@@ -1288,6 +1289,16 @@ select option {
     <label>
       Additional investigation text
       <textarea id="investigationsFreeText" placeholder="Optional extra investigation detail..."></textarea>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+      <div
+        id="investigationsPrivateNote"
+        class="private-note-editor"
+        contenteditable="true"
+        data-placeholder="Reminder to self - not part of summary"
+      ></div>
     </label>
   </div>
 </div>
@@ -1644,6 +1655,7 @@ const defaultTemplates = [
       ],
       investigationsSecondary: [],
       investigationsFreeText: '',
+	  investigationsPrivateNote: '',
 
       assessment: [
         'Working assessment'
@@ -1787,6 +1799,7 @@ const privateNoteIds = [
   'presentationPrivateNote',
   'redFlagsPrivateNote',
   'examPrivateNote',
+  'investigationsPrivateNote',
   'privateConsultNote',
   'prescribingPrivateNote'
 ];
@@ -2192,6 +2205,8 @@ function collectPromptFields() {
     examPrivateNote: getPrivateNoteHtml('examPrivateNote'),
 
     investigationsFreeText: getField('investigationsFreeText')?.value.trim() || '',
+	investigationsPrivateNote: getPrivateNoteHtml('investigationsPrivateNote'),
+	investigationsPrivateNote: getPrivateNoteHtml('investigationsPrivateNote'),
 
     privateConsultNote: getPrivateNoteHtml('privateConsultNote'),
 
@@ -2298,6 +2313,7 @@ function fillTemplatePrompts() {
   setChecklistItems('investigationsPrimaryList', template.prompts?.investigationsPrimary);
   setChecklistItems('investigationsSecondaryList', template.prompts?.investigationsSecondary);
   if (getField('investigationsFreeText')) getField('investigationsFreeText').value = template.prompts?.investigationsFreeText || '';
+  setPrivateNoteHtml('investigationsPrivateNote', template.prompts?.investigationsPrivateNote);
 
   setChecklistItems('assessmentList', template.prompts?.assessment || template.prompts?.diagnosis);
   setPrivateNoteHtml('privateConsultNote', template.prompts?.privateConsultNote);
