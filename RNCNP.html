@@ -911,6 +911,83 @@ select option {
   color: rgba(0,0,0,0.45);
   font-size: 0.88rem;
 }
+
+.patient-link-row {
+  grid-template-columns: 1fr 1.4fr auto auto;
+}
+
+.patient-qr-btn {
+  min-height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.58));
+  color: #111;
+  cursor: pointer;
+  padding: 8px 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  white-space: nowrap;
+}
+
+.patient-qr-input {
+  display: none;
+}
+
+.patient-qr-thumb {
+  width: 74px;
+  height: 74px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: rgba(255,255,255,0.82);
+  padding: 4px;
+}
+
+.patient-info-preview-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: rgba(255,255,255,0.66);
+}
+
+.patient-info-preview-item a {
+  text-decoration: none;
+}
+
+.patient-info-print-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.patient-info-print-item {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  max-width: 130px;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+.patient-info-print-item img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border: 1px solid rgba(0,0,0,0.16);
+  border-radius: 10px;
+  padding: 4px;
+  background: white;
+}
+
+@media (max-width: 760px) {
+  .patient-link-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .checklist-list {
   display: grid;
   gap: 8px;
@@ -2322,14 +2399,20 @@ function getPatientLinks() {
     .map(row => {
       const title = row.querySelector('.patient-link-title')?.value.trim() || '';
       const urlRaw = row.querySelector('.patient-link-url')?.value.trim() || '';
-      const url = normaliseUrl(urlRaw);
+      const url = urlRaw ? normaliseUrl(urlRaw) : '';
+      const qrDataUrl = row.dataset.qrDataUrl || '';
 
       return {
-        title: title || url,
-        url
+        title: title || url || 'Patient information',
+        url,
+        qrDataUrl
       };
     })
-    .filter(link => link.url && isUsableUrl(link.url));
+    .filter(link => {
+      const hasUrl = link.url && isUsableUrl(link.url);
+      const hasQr = !!link.qrDataUrl;
+      return hasUrl || hasQr;
+    });
 }
 
 function renderPatientLinksPreview() {
@@ -2338,14 +2421,19 @@ function renderPatientLinksPreview() {
   const links = getPatientLinks();
 
   patientLinksPreview.innerHTML = links.map(link => `
-    <a
-      class="glass-btn"
-      href="${escapeHtml(link.url)}"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      🔗 ${escapeHtml(link.title)}
-    </a>
+    <div class="patient-info-preview-item">
+      ${
+        link.url
+          ? `<a class="glass-btn" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(link.title)}</a>`
+          : `<span class="glass-btn">🔗 ${escapeHtml(link.title)}</span>`
+      }
+
+      ${
+        link.qrDataUrl
+          ? `<img class="patient-qr-thumb" src="${escapeHtml(link.qrDataUrl)}" alt="QR code for ${escapeHtml(link.title)}">`
+          : ''
+      }
+    </div>
   `).join('');
 }
 
@@ -2354,6 +2442,7 @@ function createPatientLinkRow(link = {}) {
 
   const row = document.createElement('div');
   row.className = 'patient-link-row';
+  row.dataset.qrDataUrl = link.qrDataUrl || '';
 
   row.innerHTML = `
     <input
@@ -2370,8 +2459,44 @@ function createPatientLinkRow(link = {}) {
       value="${escapeHtml(link.url || '')}"
     />
 
+    <button type="button" class="patient-qr-btn">▣ QR</button>
+    <input type="file" class="patient-qr-input" accept="image/*" />
+
     <button type="button" class="patient-link-delete" title="Delete link">✕</button>
   `;
+
+  const qrBtn = row.querySelector('.patient-qr-btn');
+  const qrInput = row.querySelector('.patient-qr-input');
+
+  qrBtn?.addEventListener('click', () => {
+    qrInput?.click();
+  });
+
+  qrInput?.addEventListener('change', () => {
+    const file = qrInput.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file.');
+      qrInput.value = '';
+      return;
+    }
+
+    if (file.size > 350 * 1024) {
+      alert('QR image is too large. Please use a small QR image under 350KB.');
+      qrInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      row.dataset.qrDataUrl = reader.result || '';
+      renderPatientLinksPreview();
+    };
+
+    reader.readAsDataURL(file);
+  });
 
   row.querySelector('.patient-link-delete')?.addEventListener('click', () => {
     row.remove();
@@ -2856,7 +2981,10 @@ const patientLinks = getPatientLinks();
 if (patientLinks.length) {
   sections.push(
     `Patient information provided:\n${patientLinks
-      .map(link => `${link.title}: ${link.url}`)
+      .map(link => {
+        if (link.url) return `${link.title}: ${link.url}`;
+        return `${link.title}: QR code provided`;
+      })
       .join('\n')}`
   );
 }
@@ -2875,10 +3003,26 @@ function renderSummaryHtml(text) {
     .replace(/\n/g, '<br>');
 }
 
+function buildPatientInfoQrHtml() {
+  const links = getPatientLinks().filter(link => link.qrDataUrl);
+  if (!links.length) return '';
+
+  return `
+    <div class="patient-info-print-grid">
+      ${links.map(link => `
+        <div class="patient-info-print-item">
+          <img src="${escapeHtml(link.qrDataUrl)}" alt="QR code for ${escapeHtml(link.title)}">
+          <div>${escapeHtml(link.title)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
 function generateSummary() {
   const summary = buildSummaryText();
   if (!output) return;
-  output.innerHTML = renderSummaryHtml(summary);
+  output.innerHTML = renderSummaryHtml(summary) + buildPatientInfoQrHtml();
   output.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -3090,6 +3234,24 @@ function printFilledTemplate() {
       ${section.rows.map(renderRow).join('')}
     </section>
   `).join('');
+  
+  const patientQrLinks = getPatientLinks().filter(link => link.qrDataUrl);
+
+const printablePatientQrSection = patientQrLinks.length ? `
+  <section class="print-section patient-qr-section">
+    <h2>Patient information QR codes</h2>
+
+    <div class="patient-qr-print-grid">
+      ${patientQrLinks.map(link => `
+        <div class="patient-qr-print-item">
+          <img src="${escapeHtml(link.qrDataUrl)}" alt="QR code for ${escapeHtml(link.title)}">
+          <div class="patient-qr-title">${escapeHtml(link.title || 'Patient information')}</div>
+          ${link.url ? `<div class="patient-qr-url">${escapeHtml(link.url)}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  </section>
+` : '';
 
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -3144,6 +3306,48 @@ function printFilledTemplate() {
           padding-bottom: 3px;
           border-bottom: 1px solid #ddd;
         }
+		
+		.patient-qr-section {
+  page-break-inside: avoid;
+}
+
+.patient-qr-print-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.patient-qr-print-item {
+  width: 135px;
+  min-height: 160px;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  align-content: start;
+  text-align: center;
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
+}
+
+.patient-qr-print-item img {
+  width: 105px;
+  height: 105px;
+  object-fit: contain;
+}
+
+.patient-qr-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.patient-qr-url {
+  font-size: 0.64rem;
+  color: #555;
+  overflow-wrap: anywhere;
+}
 
         .row {
           margin-bottom: 5px;
@@ -3199,6 +3403,7 @@ function printFilledTemplate() {
       <h1>${escapeHtml(activeTemplateTitle?.textContent || 'Consultation Template')}</h1>
       <div class="print-grid">
         ${printableSections}
+        ${printablePatientQrSection}
       </div>
     </body>
     </html>
