@@ -660,6 +660,25 @@ select option {
   color: rgba(0, 0, 0, 0.45);
 }
 
+.private-note-editor {
+  min-height: 110px;
+  width: 100%;
+  border-radius: 16px;
+  padding: 12px 14px;
+  outline: none;
+  overflow: hidden;
+  color: #111;
+  background: linear-gradient(180deg, rgba(255, 253, 232, 0.92), rgba(255, 247, 205, 0.78));
+  border: 1px solid rgba(170, 145, 70, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.72), 0 4px 16px rgba(0,0,0,0.05);
+  white-space: pre-wrap;
+}
+
+.private-note-editor:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
     .card.full {
       grid-column: 1 / -1;
     }
@@ -1201,7 +1220,12 @@ select option {
 
     <label class="private-note-label">
       Private notes
-      <textarea id="presentationPrivateNote" placeholder="Quick note to self - not part of summary"></textarea>
+<div
+  id="presentationPrivateNote"
+  class="private-note-editor"
+  contenteditable="true"
+  data-placeholder="Quick note to self - not part of summary"
+></div>
     </label>
   </div>
 </div>
@@ -1230,8 +1254,12 @@ select option {
 
     <label class="private-note-label">
       Private notes
-      <textarea id="redFlagsPrivateNote" placeholder="Reminder to self - not part of summary"></textarea>
-    </label>
+<div
+  id="redFlagsPrivateNote"
+  class="private-note-editor"
+  contenteditable="true"
+  data-placeholder="Reminder to self - not part of summary"
+></div>    </label>
   </div>
 </div>
 
@@ -1293,7 +1321,12 @@ select option {
 
     <label class="private-note-label">
       Private notes
-      <textarea id="examPrivateNote" placeholder="Quick note to self during exam - not part of summary"></textarea>
+      <div
+  id="examPrivateNote"
+  class="private-note-editor"
+  contenteditable="true"
+  data-placeholder="Quick note to self during exam - not part of summary"
+></div>
     </label>
   </div>
 </div>
@@ -1366,7 +1399,12 @@ select option {
   <div class="section-fields private-note-wrap">
     <label class="private-note-label">
       Private consult note
-      <textarea id="privateConsultNote" placeholder="Quick note to self while consulting - not part of summary"></textarea>
+<div
+  id="privateConsultNote"
+  class="private-note-editor"
+  contenteditable="true"
+  data-placeholder="Quick note to self while consulting - not part of summary"
+></div>
     </label>
   </div>
 </div>
@@ -1400,7 +1438,12 @@ select option {
 
     <label class="private-note-label">
       Private notes
-      <textarea id="prescribingPrivateNote" placeholder="Reminder to self - not part of summary"></textarea>
+<div
+  id="prescribingPrivateNote"
+  class="private-note-editor"
+  contenteditable="true"
+  data-placeholder="Reminder to self - not part of summary"
+></div>
     </label>
   </div>
 </div>
@@ -1545,6 +1588,7 @@ try {
 } catch (err) {
   console.warn('Firebase failed to initialise. Built-in templates will still load.', err);
 }
+
 const defaultTemplates = [
   {
     id: 'general',
@@ -1574,10 +1618,8 @@ const defaultTemplates = [
         'Relevant dangerous symptoms asked about',
         'Relevant dangerous symptoms absent unless present'
       ],
-
       redFlagsSecondary: [],
-	  
-	  redFlagsPrivateNote: '',
+      redFlagsPrivateNote: '',
 
       vitalTemp: '',
       vitalPR: '',
@@ -1591,54 +1633,44 @@ const defaultTemplates = [
       examPrimary: [
         'Voice normal, no drooling or trismus present'
       ],
-
       examSecondary: [
         'Oropharynx visualised, uvula central and no palatal swelling'
       ],
-
       examFreeText: '',
       examPrivateNote: '',
 
       investigationsPrimary: [
         'No investigations indicated'
       ],
-
       investigationsSecondary: [],
-
       investigationsFreeText: '',
 
       assessment: [
         'Working assessment'
       ],
-
       privateConsultNote: '',
 
       managementPlanPrimary: [
         'Supportive measures discussed'
       ],
-
       managementPlanSecondary: [],
-
       managementPlanFreeText: '',
       prescribingPrivateNote: '',
 
       followUpPrimary: [
         'Review if not improving'
       ],
-
       followUpSecondary: [],
 
       advicePrimary: [
         'Supportive care and home advice'
       ],
-
       adviceSecondary: [],
 
       safetyNetPrimary: [
         'Return if worsening',
         'Return if not improving'
       ],
-
       safetyNetSecondary: [
         'Return if red flags develop'
       ]
@@ -1751,6 +1783,14 @@ const checklistIds = [
   'safetyNetSecondaryList'
 ];
 
+const privateNoteIds = [
+  'presentationPrivateNote',
+  'redFlagsPrivateNote',
+  'examPrivateNote',
+  'privateConsultNote',
+  'prescribingPrivateNote'
+];
+
 function getField(id) {
   return document.getElementById(id);
 }
@@ -1776,6 +1816,66 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+function getPrivateNoteHtml(id) {
+  return getField(id)?.innerHTML.trim() || '';
+}
+
+function setPrivateNoteHtml(id, value) {
+  const field = getField(id);
+  if (!field) return;
+  field.innerHTML = value || '';
+}
+
+function clearPrivateNoteHtml(id) {
+  const field = getField(id);
+  if (!field) return;
+  field.innerHTML = '';
+}
+
+function formatPrivateNoteHtml(value) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = value || '';
+
+  wrapper.querySelectorAll('script, style').forEach(el => el.remove());
+
+  const allowedTags = new Set(['B', 'I', 'U', 'STRONG', 'EM', 'BR', 'DIV', 'P', 'SPAN']);
+
+  function cleanNode(node) {
+    [...node.childNodes].forEach(child => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (!allowedTags.has(child.tagName)) {
+          child.replaceWith(document.createTextNode(child.textContent || ''));
+          return;
+        }
+
+        [...child.attributes].forEach(attr => {
+          if (attr.name !== 'style') child.removeAttribute(attr.name);
+        });
+
+        if (child.hasAttribute('style')) {
+          const style = child.getAttribute('style') || '';
+          const safeStyle = style
+            .split(';')
+            .map(s => s.trim())
+            .filter(s =>
+              /^font-weight\s*:\s*(bold|700|600)/i.test(s) ||
+              /^font-style\s*:\s*italic/i.test(s) ||
+              /^text-decoration\s*:\s*underline/i.test(s)
+            )
+            .join('; ');
+          if (safeStyle) child.setAttribute('style', safeStyle);
+          else child.removeAttribute('style');
+        }
+
+        cleanNode(child);
+      }
+    });
+  }
+
+  cleanNode(wrapper);
+  return wrapper.innerHTML;
+}
+
 function splitPromptToItems(value) {
   if (Array.isArray(value)) {
     return value.map(v => String(v).trim()).filter(Boolean);
@@ -1788,6 +1888,14 @@ function splitPromptToItems(value) {
 
 function joinList(items, separator = '\n') {
   return items.filter(Boolean).join(separator);
+}
+
+function joinNaturalList(items) {
+  const clean = items.filter(Boolean);
+  if (!clean.length) return '';
+  if (clean.length === 1) return clean[0];
+  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
+  return `${clean.slice(0, -1).join(', ')} and ${clean[clean.length - 1]}`;
 }
 
 function sentence(text) {
@@ -1811,19 +1919,36 @@ function autoGrowTextarea(el) {
 function setupPrivateNotesAutoGrow() {
   [
     'presentationExtraText',
-    'presentationPrivateNote',
-    'redFlagsPrivateNote',
+    ...privateNoteIds,
     'examFreeText',
-    'examPrivateNote',
     'investigationsFreeText',
-    'privateConsultNote',
-    'managementPlanFreeText',
-    'prescribingPrivateNote'
+    'managementPlanFreeText'
   ].forEach(id => {
     const field = getField(id);
     if (!field) return;
 
     autoGrowTextarea(field);
+    field.addEventListener('input', () => autoGrowTextarea(field));
+  });
+}
+
+function setupPrivateNoteFormattingShortcuts() {
+  privateNoteIds.forEach(id => {
+    const field = getField(id);
+    if (!field) return;
+
+    field.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+
+      if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].includes(key)) {
+        e.preventDefault();
+
+        if (key === 'b') document.execCommand('bold', false, null);
+        if (key === 'i') document.execCommand('italic', false, null);
+        if (key === 'u') document.execCommand('underline', false, null);
+      }
+    });
+
     field.addEventListener('input', () => autoGrowTextarea(field));
   });
 }
@@ -1845,12 +1970,51 @@ function setupSexCheckboxes() {
   }
 }
 
+function setupDurationCheckboxes() {
+  const days = getField('durationDays');
+  const hours = getField('durationHours');
+
+  if (days) {
+    days.addEventListener('change', () => {
+      if (days.checked && hours) hours.checked = false;
+    });
+  }
+
+  if (hours) {
+    hours.addEventListener('change', () => {
+      if (hours.checked && days) days.checked = false;
+    });
+  }
+}
+
+function setupPRToggleButtons() {
+  const reg = getField('prRegular');
+  const irreg = getField('prIrregular');
+
+  if (reg) {
+    reg.addEventListener('click', () => {
+      const isActive = reg.classList.contains('active');
+      reg.classList.toggle('active', !isActive);
+      if (!isActive && irreg) irreg.classList.remove('active');
+    });
+  }
+
+  if (irreg) {
+    irreg.addEventListener('click', () => {
+      const isActive = irreg.classList.contains('active');
+      irreg.classList.toggle('active', !isActive);
+      if (!isActive && reg) reg.classList.remove('active');
+    });
+  }
+}
+
 function buildSplitChecklist(primary = [], secondary = []) {
   const parts = [];
   if (primary.length) parts.push(joinList(primary));
   if (secondary.length) parts.push(joinList(secondary));
   return parts.join('\n\n');
 }
+
 function setupChecklistRowDrag(row) {
   row.draggable = true;
 
@@ -2002,75 +2166,6 @@ function setupMinimalistChecklistToggle() {
   });
 }
 
-function updateAuthUI() {
-  if (!firebaseReady) {
-    authStatus.textContent = 'Firebase unavailable';
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'none';
-    saveBtn.style.opacity = '0.6';
-    editBtn.style.opacity = '0.6';
-    deleteBtn.style.opacity = '0.6';
-    return;
-  }
-
-  if (currentUser) {
-    authStatus.textContent = currentUser.email || currentUser.displayName || 'Signed in';
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'inline-flex';
-    saveBtn.style.opacity = '1';
-    editBtn.style.opacity = '1';
-    deleteBtn.style.opacity = '1';
-  } else {
-    authStatus.textContent = 'Not signed in';
-    loginBtn.style.display = 'inline-flex';
-    logoutBtn.style.display = 'none';
-    saveBtn.style.opacity = '0.6';
-    editBtn.style.opacity = '0.6';
-    deleteBtn.style.opacity = '0.6';
-  }
-}
-
-async function signInUser() {
-  if (!firebaseReady) return;
-  try {
-    await signInWithPopup(auth, provider);
-  } catch (err) {
-    console.error('Google sign-in failed:', err);
-    alert('Google sign-in failed.');
-  }
-}
-
-async function signOutUser() {
-  if (!firebaseReady) return;
-  try {
-    await signOut(auth);
-  } catch (err) {
-    console.error('Sign out failed:', err);
-    alert('Sign out failed.');
-  }
-}
-
-function promptForTemplateMeta(existing = null) {
-  const title = prompt('Template title:', existing?.title || '');
-  if (title === null) return null;
-
-  const category = prompt('Category (respiratory / skin / viral / urinary / msk):', existing?.category || 'viral');
-  if (category === null) return null;
-
-  const desc = prompt('Short description:', existing?.desc || '');
-  if (desc === null) return null;
-
-  const tagsRaw = prompt('Tags separated by commas:', existing?.tags?.join(', ') || '');
-  if (tagsRaw === null) return null;
-
-  return {
-    title: title.trim() || 'Untitled Template',
-    category: (category.trim() || 'viral').toLowerCase(),
-    desc: desc.trim() || 'Custom consultation template.',
-    tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
-  };
-}
-
 function collectPromptFields() {
   return {
     patientDemo: getField('patientDemo')?.value.trim() || '',
@@ -2081,9 +2176,11 @@ function collectPromptFields() {
     durationDays: !!getField('durationDays')?.checked,
     durationHours: !!getField('durationHours')?.checked,
     presentationExtraText: getField('presentationExtraText')?.value.trim() || '',
-    presentationPrivateNote: getField('presentationPrivateNote')?.value.trim() || '',
-    redFlagsPrivateNote: getField('redFlagsPrivateNote')?.value.trim() || '',  
-	vitalTemp: getField('vitalTemp')?.value.trim() || '',
+
+    presentationPrivateNote: getPrivateNoteHtml('presentationPrivateNote'),
+    redFlagsPrivateNote: getPrivateNoteHtml('redFlagsPrivateNote'),
+
+    vitalTemp: getField('vitalTemp')?.value.trim() || '',
     vitalPR: getField('vitalPR')?.value.trim() || '',
     prRegular: getField('prRegular')?.classList.contains('active') || false,
     prIrregular: getField('prIrregular')?.classList.contains('active') || false,
@@ -2092,11 +2189,14 @@ function collectPromptFields() {
     vitalSats: getField('vitalSats')?.value.trim() || '',
     vitalWE: getField('vitalWE')?.value.trim() || '',
     examFreeText: getField('examFreeText')?.value.trim() || '',
-    examPrivateNote: getField('examPrivateNote')?.value.trim() || '',
+    examPrivateNote: getPrivateNoteHtml('examPrivateNote'),
+
     investigationsFreeText: getField('investigationsFreeText')?.value.trim() || '',
-    privateConsultNote: getField('privateConsultNote')?.value.trim() || '',
+
+    privateConsultNote: getPrivateNoteHtml('privateConsultNote'),
+
     managementPlanFreeText: getField('managementPlanFreeText')?.value.trim() || '',
-    prescribingPrivateNote: getField('prescribingPrivateNote')?.value.trim() || '',
+    prescribingPrivateNote: getPrivateNoteHtml('prescribingPrivateNote'),
 
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
@@ -2117,12 +2217,112 @@ function collectPromptFields() {
   };
 }
 
-function joinNaturalList(items) {
-  const clean = items.filter(Boolean);
-  if (!clean.length) return '';
-  if (clean.length === 1) return clean[0];
-  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
-  return `${clean.slice(0, -1).join(', ')} and ${clean[clean.length - 1]}`;
+function clearForm() {
+  textFieldIds.forEach(id => {
+    const field = getField(id);
+    if (!field) return;
+
+    if (field.isContentEditable) {
+      field.innerHTML = '';
+    } else {
+      field.value = '';
+    }
+  });
+
+  privateNoteIds.forEach(clearPrivateNoteHtml);
+  checklistIds.forEach(clearChecklist);
+
+  ['sexMale', 'sexFemale', 'durationDays', 'durationHours'].forEach(id => {
+    const box = getField(id);
+    if (box) box.checked = false;
+  });
+
+  ['prRegular', 'prIrregular'].forEach(id => {
+    const btn = getField(id);
+    if (btn) btn.classList.remove('active');
+  });
+
+  [
+    'presentationExtraText',
+    'examFreeText',
+    'investigationsFreeText',
+    'managementPlanFreeText'
+  ].forEach(id => autoGrowTextarea(getField(id)));
+
+  if (output) output.innerHTML = '';
+}
+
+function fillTemplatePrompts() {
+  const template = getActiveTemplate();
+  if (!template) return;
+
+  if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
+  if (getField('patientEthnicity')) getField('patientEthnicity').value = template.prompts?.patientEthnicity || '';
+  if (getField('sexMale')) getField('sexMale').checked = !!template.prompts?.sexMale;
+  if (getField('sexFemale')) getField('sexFemale').checked = !!template.prompts?.sexFemale;
+
+  if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
+  if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
+  if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
+  if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
+
+  setPrivateNoteHtml('presentationPrivateNote', template.prompts?.presentationPrivateNote);
+
+  setChecklistItems('hpcList', template.prompts?.hpc);
+
+  setChecklistItems('redFlagsPrimaryList', template.prompts?.redFlagsPrimary || template.prompts?.redFlags);
+  setChecklistItems('redFlagsSecondaryList', template.prompts?.redFlagsSecondary);
+  setPrivateNoteHtml('redFlagsPrivateNote', template.prompts?.redFlagsPrivateNote);
+
+  if (getField('vitalTemp')) getField('vitalTemp').value = template.prompts?.vitalTemp || '';
+  if (getField('vitalPR')) getField('vitalPR').value = template.prompts?.vitalPR || '';
+
+  if (getField('prRegular')) {
+    getField('prRegular').classList.toggle('active', !!template.prompts?.prRegular);
+  }
+
+  if (getField('prIrregular')) {
+    getField('prIrregular').classList.toggle('active', !!template.prompts?.prIrregular);
+  }
+
+  if (getField('vitalRR')) getField('vitalRR').value = template.prompts?.vitalRR || '';
+  if (getField('vitalBP')) getField('vitalBP').value = template.prompts?.vitalBP || '';
+  if (getField('vitalSats')) getField('vitalSats').value = template.prompts?.vitalSats || '';
+  if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
+
+  setChecklistItems('examPrimaryList', template.prompts?.examPrimary);
+  setChecklistItems('examSecondaryList', template.prompts?.examSecondary);
+  if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
+  setPrivateNoteHtml('examPrivateNote', template.prompts?.examPrivateNote);
+
+  setChecklistItems('investigationsPrimaryList', template.prompts?.investigationsPrimary);
+  setChecklistItems('investigationsSecondaryList', template.prompts?.investigationsSecondary);
+  if (getField('investigationsFreeText')) getField('investigationsFreeText').value = template.prompts?.investigationsFreeText || '';
+
+  setChecklistItems('assessmentList', template.prompts?.assessment || template.prompts?.diagnosis);
+  setPrivateNoteHtml('privateConsultNote', template.prompts?.privateConsultNote);
+
+  setChecklistItems('managementPlanPrimaryList', template.prompts?.managementPlanPrimary || template.prompts?.planTreatment);
+  setChecklistItems('managementPlanSecondaryList', template.prompts?.managementPlanSecondary);
+  if (getField('managementPlanFreeText')) getField('managementPlanFreeText').value = template.prompts?.managementPlanFreeText || '';
+  setPrivateNoteHtml('prescribingPrivateNote', template.prompts?.prescribingPrivateNote);
+
+  setChecklistItems('followUpPrimaryList', template.prompts?.followUpPrimary);
+  setChecklistItems('followUpSecondaryList', template.prompts?.followUpSecondary);
+
+  setChecklistItems('advicePrimaryList', template.prompts?.advicePrimary || template.prompts?.patientAdvice);
+  setChecklistItems('adviceSecondaryList', template.prompts?.adviceSecondary);
+
+  setChecklistItems('safetyNetPrimaryList', template.prompts?.safetyNetPrimary || template.prompts?.safetyNet);
+  setChecklistItems('safetyNetSecondaryList', template.prompts?.safetyNetSecondary);
+
+  [
+    'presentationExtraText',
+    ...privateNoteIds,
+    'examFreeText',
+    'investigationsFreeText',
+    'managementPlanFreeText'
+  ].forEach(id => autoGrowTextarea(getField(id)));
 }
 
 async function loadUserTemplates() {
@@ -2216,147 +2416,73 @@ function syncHero() {
   editBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
 }
 
-function fillTemplatePrompts() {
-  const template = getActiveTemplate();
-  if (!template) return;
-
-  if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
-  if (getField('patientEthnicity')) getField('patientEthnicity').value = template.prompts?.patientEthnicity || '';
-  if (getField('sexMale')) getField('sexMale').checked = !!template.prompts?.sexMale;
-  if (getField('sexFemale')) getField('sexFemale').checked = !!template.prompts?.sexFemale;
-
-  if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
-  if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
-  if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
-  if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
-  if (getField('presentationPrivateNote')) getField('presentationPrivateNote').value = template.prompts?.presentationPrivateNote || '';
-
-  setChecklistItems('hpcList', template.prompts?.hpc);
-
-  setChecklistItems('redFlagsPrimaryList', template.prompts?.redFlagsPrimary || template.prompts?.redFlags);
-  setChecklistItems('redFlagsSecondaryList', template.prompts?.redFlagsSecondary);
-
-  if (getField('redFlagsPrivateNote')) {
-  getField('redFlagsPrivateNote').value = template.prompts?.redFlagsPrivateNote || '';
-}
-  if (getField('vitalTemp')) getField('vitalTemp').value = template.prompts?.vitalTemp || '';
-  if (getField('vitalPR')) getField('vitalPR').value = template.prompts?.vitalPR || '';
-
-  if (getField('prRegular')) {
-    getField('prRegular').classList.toggle('active', !!template.prompts?.prRegular);
+function updateAuthUI() {
+  if (!firebaseReady) {
+    authStatus.textContent = 'Firebase unavailable';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    saveBtn.style.opacity = '0.6';
+    editBtn.style.opacity = '0.6';
+    deleteBtn.style.opacity = '0.6';
+    return;
   }
 
-  if (getField('prIrregular')) {
-    getField('prIrregular').classList.toggle('active', !!template.prompts?.prIrregular);
-  }
-
-  if (getField('vitalRR')) getField('vitalRR').value = template.prompts?.vitalRR || '';
-  if (getField('vitalBP')) getField('vitalBP').value = template.prompts?.vitalBP || '';
-  if (getField('vitalSats')) getField('vitalSats').value = template.prompts?.vitalSats || '';
-  if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
-
-  setChecklistItems('examPrimaryList', template.prompts?.examPrimary);
-  setChecklistItems('examSecondaryList', template.prompts?.examSecondary);
-
-  setChecklistItems('investigationsPrimaryList', template.prompts?.investigationsPrimary);
-  setChecklistItems('investigationsSecondaryList', template.prompts?.investigationsSecondary);
-  if (getField('investigationsFreeText')) getField('investigationsFreeText').value = template.prompts?.investigationsFreeText || '';
-
-  setChecklistItems('assessmentList', template.prompts?.assessment || template.prompts?.diagnosis);
-
-  if (getField('privateConsultNote')) getField('privateConsultNote').value = template.prompts?.privateConsultNote || '';
-
-  setChecklistItems('managementPlanPrimaryList', template.prompts?.managementPlanPrimary || template.prompts?.planTreatment);
-  setChecklistItems('managementPlanSecondaryList', template.prompts?.managementPlanSecondary);
-  if (getField('managementPlanFreeText')) getField('managementPlanFreeText').value = template.prompts?.managementPlanFreeText || '';
-  if (getField('prescribingPrivateNote')) getField('prescribingPrivateNote').value = template.prompts?.prescribingPrivateNote || '';
-
-  setChecklistItems('followUpPrimaryList', template.prompts?.followUpPrimary);
-  setChecklistItems('followUpSecondaryList', template.prompts?.followUpSecondary);
-
-  setChecklistItems('advicePrimaryList', template.prompts?.advicePrimary || template.prompts?.patientAdvice);
-  setChecklistItems('adviceSecondaryList', template.prompts?.adviceSecondary);
-
-  setChecklistItems('safetyNetPrimaryList', template.prompts?.safetyNetPrimary || template.prompts?.safetyNet);
-  setChecklistItems('safetyNetSecondaryList', template.prompts?.safetyNetSecondary);
-
-  [
-    'presentationExtraText',
-    'presentationPrivateNote',
-    'examFreeText',
-    'examPrivateNote',
-    'investigationsFreeText',
-    'privateConsultNote',
-    'managementPlanFreeText',
-    'prescribingPrivateNote'
-  ].forEach(id => autoGrowTextarea(getField(id)));
-}
-
-function clearForm() {
-  textFieldIds.forEach(id => {
-    const field = getField(id);
-    if (field) field.value = '';
-  });
-
-  checklistIds.forEach(clearChecklist);
-
-  ['sexMale', 'sexFemale', 'durationDays', 'durationHours'].forEach(id => {
-    const box = getField(id);
-    if (box) box.checked = false;
-  });
-
-  ['prRegular', 'prIrregular'].forEach(id => {
-    const btn = getField(id);
-    if (btn) btn.classList.remove('active');
-  });
-
-  if (output) output.innerHTML = '';
-}
-function setupDurationCheckboxes() {
-  const days = getField('durationDays');
-  const hours = getField('durationHours');
-
-  if (days) {
-    days.addEventListener('change', () => {
-      if (days.checked && hours) hours.checked = false;
-    });
-  }
-
-  if (hours) {
-    hours.addEventListener('change', () => {
-      if (hours.checked && days) days.checked = false;
-    });
+  if (currentUser) {
+    authStatus.textContent = currentUser.email || currentUser.displayName || 'Signed in';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+    saveBtn.style.opacity = '1';
+    editBtn.style.opacity = '1';
+    deleteBtn.style.opacity = '1';
+  } else {
+    authStatus.textContent = 'Not signed in';
+    loginBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'none';
+    saveBtn.style.opacity = '0.6';
+    editBtn.style.opacity = '0.6';
+    deleteBtn.style.opacity = '0.6';
   }
 }
 
-function setupPRToggleButtons() {
-  const reg = getField('prRegular');
-  const irreg = getField('prIrregular');
-
-  if (reg) {
-    reg.addEventListener('click', () => {
-      const isActive = reg.classList.contains('active');
-      reg.classList.toggle('active', !isActive);
-      if (!isActive && irreg) irreg.classList.remove('active');
-    });
-  }
-
-  if (irreg) {
-    irreg.addEventListener('click', () => {
-      const isActive = irreg.classList.contains('active');
-      irreg.classList.toggle('active', !isActive);
-      if (!isActive && reg) reg.classList.remove('active');
-    });
+async function signInUser() {
+  if (!firebaseReady) return;
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    console.error('Google sign-in failed:', err);
+    alert('Google sign-in failed.');
   }
 }
 
-function getCheckedTreatmentFlags() {
-  const flags = [];
-  if (getField('abxNotIndicated')?.checked) flags.push('Antibiotics not indicated');
-  if (getField('abxDelayed')?.checked) flags.push('Delayed antibiotic approach considered / provided');
-  if (getField('abxPrescribed')?.checked) flags.push('Antibiotics prescribed');
-  if (getField('supportiveCareOnly')?.checked) flags.push('Supportive care only');
-  return flags;
+async function signOutUser() {
+  if (!firebaseReady) return;
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error('Sign out failed:', err);
+    alert('Sign out failed.');
+  }
+}
+
+function promptForTemplateMeta(existing = null) {
+  const title = prompt('Template title:', existing?.title || '');
+  if (title === null) return null;
+
+  const category = prompt('Category (respiratory / skin / viral / urinary / msk):', existing?.category || 'viral');
+  if (category === null) return null;
+
+  const desc = prompt('Short description:', existing?.desc || '');
+  if (desc === null) return null;
+
+  const tagsRaw = prompt('Tags separated by commas:', existing?.tags?.join(', ') || '');
+  if (tagsRaw === null) return null;
+
+  return {
+    title: title.trim() || 'Untitled Template',
+    category: (category.trim() || 'viral').toLowerCase(),
+    desc: desc.trim() || 'Custom consultation template.',
+    tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+  };
 }
 
 function buildSummaryText() {
@@ -2375,27 +2501,19 @@ function buildSummaryText() {
   const managementPlanFreeText = getField('managementPlanFreeText')?.value.trim() || '';
 
   const hpc = getCheckedChecklistTexts('hpcList');
-
   const redFlagsPrimary = getCheckedChecklistTexts('redFlagsPrimaryList');
   const redFlagsSecondary = getCheckedChecklistTexts('redFlagsSecondaryList');
-
   const examPrimary = getCheckedChecklistTexts('examPrimaryList');
   const examSecondary = getCheckedChecklistTexts('examSecondaryList');
-
   const investigationsPrimary = getCheckedChecklistTexts('investigationsPrimaryList');
   const investigationsSecondary = getCheckedChecklistTexts('investigationsSecondaryList');
-
   const assessment = getCheckedChecklistTexts('assessmentList');
-
   const managementPlanPrimary = getCheckedChecklistTexts('managementPlanPrimaryList');
   const managementPlanSecondary = getCheckedChecklistTexts('managementPlanSecondaryList');
-
   const followUpPrimary = getCheckedChecklistTexts('followUpPrimaryList');
   const followUpSecondary = getCheckedChecklistTexts('followUpSecondaryList');
-
   const advicePrimary = getCheckedChecklistTexts('advicePrimaryList');
   const adviceSecondary = getCheckedChecklistTexts('adviceSecondaryList');
-
   const safetyNetPrimary = getCheckedChecklistTexts('safetyNetPrimaryList');
   const safetyNetSecondary = getCheckedChecklistTexts('safetyNetSecondaryList');
 
@@ -2411,12 +2529,13 @@ function buildSummaryText() {
   const sections = [];
 
   const sexLabel = sexFemale ? 'female' : (sexMale ? 'male' : '');
-
   const introBits = [];
+
   if (age) introBits.push(`${age} years old`);
   if (sexLabel) introBits.push(sexLabel);
 
   let openingLine = introBits.join(' ');
+
   if (ethnicity) {
     openingLine += openingLine ? `, ${ethnicity}` : ethnicity;
   }
@@ -2488,19 +2607,13 @@ function buildSummaryText() {
   }
 
   const followUpBlock = buildSplitChecklist(followUpPrimary, followUpSecondary);
-  if (followUpBlock) {
-    sections.push(`Follow up:\n${followUpBlock}`);
-  }
+  if (followUpBlock) sections.push(`Follow up:\n${followUpBlock}`);
 
   const adviceBlock = buildSplitChecklist(advicePrimary, adviceSecondary);
-  if (adviceBlock) {
-    sections.push(`Advice to parent / patient:\n${adviceBlock}`);
-  }
+  if (adviceBlock) sections.push(`Advice to parent / patient:\n${adviceBlock}`);
 
   const safetyNetBlock = buildSplitChecklist(safetyNetPrimary, safetyNetSecondary);
-  if (safetyNetBlock) {
-    sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
-  }
+  if (safetyNetBlock) sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
 
   return sections.join('\n\n');
 }
@@ -2510,39 +2623,6 @@ function generateSummary() {
   if (!output) return;
   output.innerHTML = escapeHtml(summary).replace(/\n/g, '<br>');
   output.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function formatChecklistForPrint(id) {
-  const items = getChecklistItems(id);
-  if (!items.length) return '<div class="empty-line">None</div>';
-
-  return items.map(item => `
-    <div class="print-check-item">
-      <span class="print-check-icon">${item.checked ? '☑' : '☐'}</span>
-      <span>${escapeHtml(item.text)}</span>
-    </div>
-  `).join('');
-}
-
-function formatTextValue(value) {
-  const clean = String(value || '').trim();
-  return clean ? escapeHtml(clean).replace(/\n/g, '<br>') : '<span class="empty-line">None</span>';
-}
-
-function formatTreatmentFlagsForPrint() {
-  const flags = [
-    { id: 'abxNotIndicated', label: 'Antibiotics not indicated' },
-    { id: 'abxDelayed', label: 'Delayed / back-pocket approach' },
-    { id: 'abxPrescribed', label: 'Antibiotics prescribed' },
-    { id: 'supportiveCareOnly', label: 'Supportive care only' }
-  ];
-
-  return flags.map(flag => `
-    <div class="print-check-item">
-      <span class="print-check-icon">${getField(flag.id)?.checked ? '☑' : '☐'}</span>
-      <span>${escapeHtml(flag.label)}</span>
-    </div>
-  `).join('');
 }
 
 function printFilledTemplate() {
@@ -2558,14 +2638,14 @@ function printFilledTemplate() {
   const sex = getField('sexFemale')?.checked ? 'Female' : (getField('sexMale')?.checked ? 'Male' : '');
   const presentationDuration = getField('presentationDuration')?.value || '';
   const presentationExtraText = getField('presentationExtraText')?.value || '';
-  const presentationPrivateNote = getField('presentationPrivateNote')?.value || '';
-  const redFlagsPrivateNote = getField('redFlagsPrivateNote')?.value || '';
+  const presentationPrivateNote = getPrivateNoteHtml('presentationPrivateNote');
+  const redFlagsPrivateNote = getPrivateNoteHtml('redFlagsPrivateNote');
   const examFreeText = getField('examFreeText')?.value || '';
-  const examPrivateNote = getField('examPrivateNote')?.value || '';
+  const examPrivateNote = getPrivateNoteHtml('examPrivateNote');
   const investigationsFreeText = getField('investigationsFreeText')?.value || '';
-  const privateConsultNote = getField('privateConsultNote')?.value || '';
+  const privateConsultNote = getPrivateNoteHtml('privateConsultNote');
   const managementPlanFreeText = getField('managementPlanFreeText')?.value || '';
-  const prescribingPrivateNote = getField('prescribingPrivateNote')?.value || '';
+  const prescribingPrivateNote = getPrivateNoteHtml('prescribingPrivateNote');
 
   const durationParts = [];
   if (presentationDuration.trim()) {
@@ -2681,7 +2761,7 @@ function printFilledTemplate() {
 
     return `
       <div class="${isPrivate ? 'private-box' : 'text-box'}">
-        ${escapeHtml(clean).replace(/\n/g, '<br>')}
+        ${isPrivate ? formatPrivateNoteHtml(clean) : escapeHtml(clean).replace(/\n/g, '<br>')}
       </div>
     `;
   }
@@ -2875,7 +2955,6 @@ function printFilledTemplate() {
   }, 250);
 }
 
-
 async function copyOutput(asPlainText = false) {
   const text = buildSummaryText();
   if (!text.trim()) return;
@@ -2887,6 +2966,7 @@ async function copyOutput(asPlainText = false) {
 
     const original = target.textContent;
     target.textContent = '✅ Copied';
+
     setTimeout(() => {
       target.textContent = original;
     }, 1400);
@@ -2900,6 +2980,7 @@ async function saveCurrentTemplate() {
     alert('Firebase is not connected.');
     return;
   }
+
   if (!currentUser) {
     alert('Please sign in first.');
     return;
@@ -2931,12 +3012,14 @@ async function updateCurrentTemplate() {
     alert('Firebase is not connected.');
     return;
   }
+
   if (!currentUser) {
     alert('Please sign in first.');
     return;
   }
 
   const template = getActiveTemplate();
+
   if (!template || template.isBuiltIn) {
     alert('Built-in templates cannot be overwritten. Save as a new template instead.');
     return;
@@ -2966,12 +3049,14 @@ async function deleteCurrentTemplate() {
     alert('Firebase is not connected.');
     return;
   }
+
   if (!currentUser) {
     alert('Please sign in first.');
     return;
   }
 
   const template = getActiveTemplate();
+
   if (!template || template.isBuiltIn) {
     alert('Built-in templates cannot be deleted.');
     return;
@@ -3019,7 +3104,6 @@ function setupDesktopHeaderMinimize() {
   applyHeaderState();
 }
 
-
 function setupMobileTopbar() {
   if (!topbar || !topbarToggle) return;
 
@@ -3040,8 +3124,10 @@ function setupMobileTopbar() {
 
   document.addEventListener('click', (e) => {
     if (window.innerWidth > 760) return;
+
     const clickedInsideTopbar = topbar.contains(e.target);
     const clickedToggle = topbarToggle.contains(e.target);
+
     if (!clickedInsideTopbar && !clickedToggle) {
       topbar.classList.remove('show-mobile');
     }
@@ -3077,6 +3163,7 @@ setupDesktopHeaderMinimize();
 setupPrivateNotesAutoGrow();
 setupDurationCheckboxes();
 setupSexCheckboxes();
+setupPrivateNoteFormattingShortcuts();
 
 if (firebaseReady) {
   onAuthStateChanged(auth, async (user) => {
