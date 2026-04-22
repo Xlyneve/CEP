@@ -1796,7 +1796,7 @@
     const toggleBtn = document.createElement("button");
     toggleBtn.id = "calcToggleBtn";
     toggleBtn.type = "button";
-    toggleBtn.innerHTML = "🧮";
+    toggleBtn.innerHTML = "💊";
     toggleBtn.setAttribute("aria-label", "Open dose calculator");
 
     const panel = document.createElement("div");
