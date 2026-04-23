@@ -813,19 +813,14 @@ window.deleteNote = async (id) => {
   }
 };
 
-// Copy note text only
 async function copyNoteHTML(note, cardEl){
   const textEl = cardEl.querySelector('.note-text') || document.getElementById(`editText-${note.id}`);
   const html = textEl ? textEl.innerHTML : '';
   if (!html) return;
 
-  const normalizedHTML = normalizeHighlightWrappers(html);
-
-  const fullHTML = `
-    <div style="font-family: Tahoma, sans-serif; font-size: 12px; white-space: pre-wrap;">
-      ${normalizedHTML}
-    </div>
-  `;
+  const normalizedHTML = removeLeadingIndent(
+    normalizeHighlightWrappers(html)
+  );
 
   const plain = stripHTML(normalizedHTML);
 
@@ -845,7 +840,7 @@ async function copyNoteHTML(note, cardEl){
   try {
     if (navigator.clipboard && window.ClipboardItem) {
       const data = {
-        'text/html': new Blob([fullHTML], { type: 'text/html' }),
+        'text/html': new Blob([normalizedHTML], { type: 'text/html' }),
         'text/plain': new Blob([plain], { type: 'text/plain' })
       };
 
@@ -857,7 +852,7 @@ async function copyNoteHTML(note, cardEl){
 
   const onCopy = (e) => {
     e.preventDefault();
-    e.clipboardData.setData('text/html', fullHTML);
+    e.clipboardData.setData('text/html', normalizedHTML);
     e.clipboardData.setData('text/plain', plain);
   };
 
@@ -883,6 +878,43 @@ function normalizeHighlightWrappers(html){
     while(el.firstChild) span.appendChild(el.firstChild);
     el.replaceWith(span);
   });
+  return tmp.innerHTML;
+}
+
+function removeLeadingIndent(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  // remove leading spaces, tabs, NBSPs and blank <br> before actual content
+  while (tmp.firstChild) {
+    const node = tmp.firstChild;
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      node.textContent = node.textContent.replace(/^[\s\u00A0]+/, '');
+      if (!node.textContent) {
+        tmp.removeChild(node);
+        continue;
+      }
+      break;
+    }
+
+    if (
+      node.nodeType === Node.ELEMENT_NODE &&
+      node.tagName === 'BR'
+    ) {
+      tmp.removeChild(node);
+      continue;
+    }
+
+    // if first node is an element, clean its leading text too
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
+    const firstText = walker.nextNode();
+    if (firstText) {
+      firstText.textContent = firstText.textContent.replace(/^[\s\u00A0]+/, '');
+    }
+    break;
+  }
+
   return tmp.innerHTML;
 }
 
