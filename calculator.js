@@ -254,12 +254,12 @@
   label: "Flucloxacillin",
   age: { minMonths: 1, maxYears: 18 },
   strengths: [
-    { id: "liq125", value: 125, label: "125 mg / 5 mL" },
-    { id: "liq250", value: 250, label: "250 mg / 5 mL" },
-    { id: "cap250", value: 250, label: "250 mg capsule" },
-    { id: "cap500", value: 500, label: "500 mg capsule" },
-    { id: "cap1000", value: 1000, label: "1 g capsule" }
-  ],
+  { id: "liq125", type: "liquid", strengthMg: 125, volumeMl: 5, label: "125 mg / 5 mL" },
+  { id: "liq250", type: "liquid", strengthMg: 250, volumeMl: 5, label: "250 mg / 5 mL" },
+  { id: "cap250", type: "tablet", strengthMg: 250, volumeMl: null, label: "250 mg capsule" },
+  { id: "cap500", type: "tablet", strengthMg: 500, volumeMl: null, label: "500 mg capsule" },
+  { id: "cap1000", type: "tablet", strengthMg: 1000, volumeMl: null, label: "1 g capsule" }
+],
   options: [
     {
       id: "dosingType",
