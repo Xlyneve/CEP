@@ -1019,54 +1019,15 @@
   }
 },
 
-    cefaclor: {
-      label: "Cefaclor",
-      age: { minMonths: 1, maxYears: 18 },
-      strengths: [
-        { id: "liq125", value: 125, label: "125 mg / 5 mL" },
-        { id: "liq250", value: 250, label: "250 mg / 5 mL" },
-        { id: "cap500", value: 500, label: "500 mg capsule" }
-      ],
-      note: ({ formulation, patientType }) => {
-        const tabletNotice = formulation?.type === "tablet"
-          ? patientType === "adult"
-            ? `<br><br><strong>Capsule note:</strong> This medicine does not yet have an adult fixed-dose pathway in the calculator, so weight is still required.`
-            : `<br><br><strong>Capsule note:</strong> Weight is still required for this medicine.`
-          : "";
-
-        return `
-          <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
-          10 mg/kg three times daily.<br>
-          Maximum single dose: 500 mg.
-          ${tabletNotice}
-        `;
-      },
-      calc: ({ weightKg }) => {
-        const rawDose = weightKg * 10;
-        const doseMg = Math.min(rawDose, 500);
-
-        return {
-          mode: "single",
-          frequency: "Three times daily",
-          sigFrequency: "three times daily",
-          dosesPerDay: 3,
-          defaultDurationDays: null,
-          doseMg,
-          maxDailyMg: doseMg * 3,
-          warnings: rawDose > 500 ? ["Dose capped at max single dose of 500 mg."] : [],
-          extra: [`Daily total: ${formatMg(doseMg * 3)}`]
-        };
-      }
-    },
 
     erythromycin: {
       label: "Erythromycin Ethylsuccinate",
       age: { minMonths: 1, maxYears: 120 },
       strengths: [
-        { id: "liq200", value: 200, label: "200 mg / 5 mL" },
-        { id: "liq400", value: 400, label: "400 mg / 5 mL" },
-        { id: "tab400", value: 400, label: "400 mg tablet" }
-      ],
+  { id: "liq200", type: "liquid", strengthMg: 200, volumeMl: 5, label: "200 mg / 5 mL" },
+  { id: "liq400", type: "liquid", strengthMg: 400, volumeMl: 5, label: "400 mg / 5 mL" },
+  { id: "tab400", type: "tablet", strengthMg: 400, volumeMl: null, label: "400 mg tablet" }
+],
       options: [
         {
           id: "dosingType",
@@ -1361,11 +1322,10 @@
   label: "Amoxicillin + Clavulanic Acid",
   age: { minMonths: 1, maxYears: 18 },
   strengths: [
-    { id: "liq125", value: 125, label: "125 mg / 5 mL + 31.25 mg clavulanic acid" },
-    { id: "liq250", value: 250, label: "250 mg / 5 mL + 62.5 mg clavulanic acid" },
-    { id: "tab500", value: 500, label: "500 mg tablet + 125 mg clavulanic acid" },
-    { id: "tab625", value: 625, label: "625 mg tablet + 125 mg clavulanic acid" }
-  ],
+  { id: "liq125", type: "liquid", strengthMg: 125, volumeMl: 5, label: "125 mg / 5 mL" },
+  { id: "liq250", type: "liquid", strengthMg: 250, volumeMl: 5, label: "250 mg / 5 mL" },
+  { id: "tab500_125", type: "tablet", strengthMg: 500, clavulanateMg: 125, volumeMl: null, label: "500 mg + 125 mg tablet" }
+],
   options: [
     {
       id: "dosingType",
@@ -1517,9 +1477,11 @@
   label: "Penicillin V",
   age: { minMonths: 1, maxYears: 120 },
   strengths: [
-    { id: "cap250", value: 250, label: "250 mg capsule" },
-    { id: "cap500", value: 500, label: "500 mg capsule" }
-  ],
+  { id: "liq125", type: "liquid", strengthMg: 125, volumeMl: 5, label: "125 mg / 5 mL" },
+  { id: "liq250", type: "liquid", strengthMg: 250, volumeMl: 5, label: "250 mg / 5 mL" },
+  { id: "cap250", type: "tablet", strengthMg: 250, volumeMl: null, label: "250 mg capsule" },
+  { id: "cap500", type: "tablet", strengthMg: 500, volumeMl: null, label: "500 mg capsule" }
+],
   options: [
     {
       id: "dosingType",
@@ -1619,177 +1581,7 @@
       }
     },
 
-    roxithromycin: {
-      label: "Roxithromycin",
-      age: { minMonths: 1, maxYears: 120 },
-      strengths: [
-        { id: "tab150", value: 150, label: "150 mg tablet" },
-        { id: "tab300", value: 300, label: "300 mg tablet" }
-      ],
-      options: [
-        {
-          id: "roxMode",
-          label: "Dosing Type",
-          type: "select",
-          choices: [
-            { value: "strepA", label: "Strep A" },
-            { value: "impetigo", label: "Impetigo" }
-          ]
-        },
-        {
-          id: "roxAdultMode",
-          label: "Adult Regimen",
-          type: "select",
-          choices: [
-            { value: "300od", label: "300 mg once daily" },
-            { value: "150bd", label: "150 mg twice daily" }
-          ]
-        },
-        {
-          id: "roxDoseLevel",
-          label: "Dose Level",
-          type: "select",
-          choices: [
-            { value: "low", label: "Low dose" },
-            { value: "high", label: "High dose" },
-            { value: "range", label: "Show both" }
-          ]
-        }
-      ],
-      note: ({ selections, patientType }) => {
-        if (patientType === "adult") {
-          return `
-            <strong>Note:</strong> Adult tablet dosing.<br><br>
-            300 mg once daily or 150 mg twice daily for 10 days.
-          `;
-        }
 
-        if (selections.roxMode === "impetigo") {
-          return `
-            <strong>Note:</strong> Impetigo alternative.<br><br>
-            Only if aged older than 12 years and able to swallow tablets.<br>
-            2.5 to 4 mg/kg/dose, twice a day.<br>
-            Round dose to nearest 75 mg (half tablet).<br>
-            Tablets 150 mg (maximum 150 mg per dose).
-          `;
-        }
-
-        return `
-          <strong>Note:</strong> Strep A alternative if concern about IgE mediated or anaphylactic beta-lactam allergy.<br><br>
-          <strong>Children:</strong> 2.5 mg/kg per dose twice daily for 10 days.<br>
-          Only use in children who can be prescribed a full 150 mg tablet due to discontinuation of roxithromycin 50 mg dispersible tablets.<br><br>
-          <strong>Adults:</strong> 300 mg once daily or 150 mg twice daily for 10 days.
-        `;
-      },
-      adultCalc: ({ selections }) => {
-        const adultMode = selections.roxAdultMode || "300od";
-        const doseMg = adultMode === "300od" ? 300 : 150;
-        const dosesPerDay = adultMode === "300od" ? 1 : 2;
-        const frequency = adultMode === "300od" ? "Once daily for 10 days" : "Twice daily for 10 days";
-
-        return {
-          mode: "single",
-          frequency,
-          sigFrequency: adultMode === "300od" ? "once daily" : "twice daily",
-          dosesPerDay,
-          defaultDurationDays: 10,
-          doseMg,
-          maxDailyMg: doseMg * dosesPerDay,
-          warnings: [],
-          extra: ["Adult fixed-dose regimen used."]
-        };
-      },
-      calc: ({ weightKg, ageMonths, selections }) => {
-        const warnings = [];
-        const ageYears = isFinite(ageMonths) ? ageMonths / 12 : null;
-        const mode = selections.roxMode || "strepA";
-
-        if (mode === "impetigo") {
-          if (ageYears !== null && ageYears <= 12) {
-            warnings.push("Impetigo roxithromycin is only for age older than 12 years and able to swallow tablets.");
-          }
-
-          const doseLevel = selections.roxDoseLevel || "low";
-          const lowRaw = weightKg * 2.5;
-          const highRaw = weightKg * 4;
-
-          const lowRounded = Math.min(roundToNearest75(lowRaw), 150);
-          const highRounded = Math.min(roundToNearest75(highRaw), 150);
-
-          if (lowRaw > 150 || highRaw > 150) {
-            warnings.push("Dose capped at max single dose of 150 mg.");
-          }
-
-          if (doseLevel === "low") {
-            return {
-              mode: "single",
-              frequency: "Twice daily",
-              sigFrequency: "twice daily",
-              dosesPerDay: 2,
-              defaultDurationDays: null,
-              doseMg: lowRounded,
-              maxDailyMg: lowRounded * 2,
-              warnings,
-              extra: [`Daily total: ${formatMg(lowRounded * 2)}`]
-            };
-          }
-
-          if (doseLevel === "high") {
-            return {
-              mode: "single",
-              frequency: "Twice daily",
-              sigFrequency: "twice daily",
-              dosesPerDay: 2,
-              defaultDurationDays: null,
-              doseMg: highRounded,
-              maxDailyMg: highRounded * 2,
-              warnings,
-              extra: [`Daily total: ${formatMg(highRounded * 2)}`]
-            };
-          }
-
-          return {
-            mode: "range",
-            frequency: "Twice daily",
-            sigFrequency: "twice daily",
-            dosesPerDay: 2,
-            defaultDurationDays: null,
-            lowDoseMg: lowRounded,
-            highDoseMg: highRounded,
-            maxDailyMg: highRounded * 2,
-            warnings,
-            extra: [
-              `Daily total (low): ${formatMg(lowRounded * 2)}`,
-              `Daily total (high): ${formatMg(highRounded * 2)}`
-            ]
-          };
-        }
-
-        const rawDose = weightKg * 2.5;
-        const doseMg = rawDose;
-        const canUseTablet = doseMg >= 150;
-
-        if (!canUseTablet) {
-          warnings.push("Calculated child dose is below 150 mg. Guideline says only use in children who can take a full 150 mg tablet.");
-        }
-
-        return {
-          mode: "single",
-          frequency: "Twice daily for 10 days",
-          sigFrequency: "twice daily",
-          dosesPerDay: 2,
-          defaultDurationDays: 10,
-          doseMg,
-          maxDailyMg: doseMg * 2,
-          warnings,
-          extra: [
-            `Daily total: ${formatMg(doseMg * 2)}`,
-            `Practical tablet check: ${canUseTablet ? "Can use full 150 mg tablet" : "Cannot use full 150 mg tablet"}`
-          ]
-        };
-      }
-    }
-  };
 
   function buildCalculatorUI() {
     if (document.getElementById("doseCalculator")) return;
@@ -2132,14 +1924,7 @@ if (result?.warnings?.length) {
   warnings.push(...result.warnings);
 }
 
-if (!result || result.doseMg === null || result.doseMg === undefined || Number.isNaN(result.doseMg)) {
-  resultBox.innerHTML = `
-    <div class="calcWarnings">
-      <div>⚠ Cannot calculate safely. Check required fields, weight, indication, and strength.</div>
-    </div>
-  `;
-  return;
-}
+
 
 if (!result || !["single", "range"].includes(result.mode)) {
   resultBox.innerHTML = `
