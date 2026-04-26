@@ -1935,16 +1935,24 @@ if (opt.type === "number") {
 
     let result = null;
 
-    if (hasValidWeight) {
-      result = med.calc({
-        weightKg,
-        ageMonths,
-        selections,
-        formulation,
-        strength: selectedStrength,
-        patientType
-      });
-    } else if (canUseAdultFixedDose) {
+    if (canUseAdultFixedDose) {
+  result = med.adultCalc({
+    ageMonths,
+    selections,
+    formulation,
+    strength: selectedStrength,
+    patientType
+  });
+} else if (hasValidWeight) {
+  result = med.calc({
+    weightKg,
+    ageMonths,
+    selections,
+    formulation,
+    strength: selectedStrength,
+    patientType
+  });
+} else if (canUseChildTabletRule) {
       result = med.adultCalc({
         ageMonths,
         selections,
@@ -2141,19 +2149,23 @@ window.lastDoseForPlan = {
   }
 
   if (strength.type === "tablet") {
-    const strengthMg = Number(strength.strengthMg);
+  const strengthMg = Number(strength.strengthMg);
+  const clavulanateMg = Number(strength.clavulanateMg || 0);
+  const unitTotalMg = strengthMg + clavulanateMg;
 
-    if (!isFinite(strengthMg) || strengthMg <= 0) {
-      return null;
-    }
-
-    return {
-      type: "tablet",
-      mgPerUnit: strengthMg,
-      strengthMg,
-      label: strength.label
-    };
+  if (!isFinite(strengthMg) || strengthMg <= 0) {
+    return null;
   }
+
+  return {
+    type: "tablet",
+    mgPerUnit: unitTotalMg,
+    strengthMg,
+    clavulanateMg,
+    unitTotalMg,
+    label: strength.label
+  };
+}
 
   // Backward compatibility for old format
   if (label.includes("mg / 5 ml") || label.includes("mg/5ml")) {
