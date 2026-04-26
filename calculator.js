@@ -1680,6 +1680,9 @@ if (type === "bites") {
       <div id="extraOptions" class="hidden"></div>
       <div id="medicationNote"></div>
       <div id="result"></div>
+	  <button type="button" id="addDoseToPlanBtn">
+  Add dose to Management/Plan
+</button>
     `;
 
     document.body.appendChild(toggleBtn);
@@ -2004,7 +2007,15 @@ if (
 
 const effectiveFormulation = getEffectiveFormulation(medKey, result, selectedStrength);
 resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, durationDaysInput);
+
+window.lastDoseForPlan = {
+  medication: MEDS[medKey]?.label || "",
+  indication: selections.dosingType || "",
+  text: resultBox.innerText.trim()
+};
 }
+
+
   function renderResult(result, formulation, warnings, enteredDurationDays) {
     let html = "";
 
@@ -2369,4 +2380,17 @@ resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, durat
   } else {
     buildCalculatorUI();
   }
+  
+  document.addEventListener("click", (e) => {
+  if (e.target.id !== "addDoseToPlanBtn") return;
+
+  if (!window.lastDoseForPlan?.text) {
+    alert("No dose result to add yet.");
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent("dose:addToPlan", {
+    detail: window.lastDoseForPlan
+  }));
+});
 })();
