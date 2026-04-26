@@ -1935,7 +1935,7 @@ if (opt.type === "number") {
 
     let result = null;
 
-    if (canUseAdultFixedDose) {
+if (canUseAdultFixedDose) {
   result = med.adultCalc({
     ageMonths,
     selections,
@@ -1943,7 +1943,7 @@ if (opt.type === "number") {
     strength: selectedStrength,
     patientType
   });
-} else if (hasValidWeight) {
+} else if (hasValidWeight && typeof med.calc === "function") {
   result = med.calc({
     weightKg,
     ageMonths,
@@ -1961,15 +1961,17 @@ if (opt.type === "number") {
     patientType
   });
 } else {
-      resultBox.innerHTML = isTabletFormulation
-        ? `<div class="calcWarnings"><div>⚠ Weight is still required for this selection unless an adult fixed-dose or child tablet rule exists for this medicine.</div></div>`
-        : "";
-      return;
-    }
+  resultBox.innerHTML = isTabletFormulation
+    ? `<div class="calcWarnings"><div>⚠ Weight is still required for this selection unless an adult fixed-dose or child tablet rule exists for this medicine.</div></div>`
+    : "";
+
+  window.lastDoseForPlan = null;
+  return;
+}
+
 if (result?.warnings?.length) {
   warnings.push(...result.warnings);
 }
-
 
 
 if (!result || !["single", "range"].includes(result.mode)) {
