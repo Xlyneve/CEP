@@ -997,6 +997,44 @@ select option {
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(0,0,0,0.06);
 }
+.dose-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.dose-modal.hidden {
+  display: none;
+}
+
+.dose-modal-card {
+  width: 90%;
+  max-width: 420px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+#doseEditTextarea {
+  width: 100%;
+  min-height: 100px;
+  margin: 12px 0;
+  border-radius: 12px;
+  padding: 10px;
+  border: 1px solid rgba(0,0,0,0.1);
+  resize: none;
+}
+
+.dose-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
 
 @media (max-width: 760px) {
   .patient-link-row {
@@ -1789,7 +1827,20 @@ select option {
       </main>
     </div>
     <button class="floating-generate" id="floatingGenerateBtn" title="Generate summary">📋</button>
+<div id="doseEditModal" class="dose-modal hidden">
+  <div class="dose-modal-card">
+    <div class="dose-modal-header">
+      <strong>Edit medication plan</strong>
+    </div>
 
+    <textarea id="doseEditTextarea"></textarea>
+
+    <div class="dose-modal-actions">
+      <button type="button" id="doseCancelBtn">Cancel</button>
+      <button type="button" id="doseInsertBtn">Insert</button>
+    </div>
+  </div>
+</div>
   <script src="calculator.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -2045,54 +2096,48 @@ function safeAddListener(el, eventName, handler) {
   if (el) el.addEventListener(eventName, handler);
 }
 
+let pendingDoseText = "";
+
 window.addEventListener("dose:addToPlan", (e) => {
   const dose = e.detail;
-  const planBox = document.getElementById("managementPlanFreeText");
-
-  if (!planBox) {
-    alert("Management/Plan box not found.");
-    return;
-  }
-
-  let textToInsert = "";
 
   if (dose.mode === "single") {
-    textToInsert =
+    pendingDoseText =
       `${dose.medication} ${Math.round(dose.doseMg)} mg ${dose.frequency}` +
       (dose.durationDays ? ` for ${dose.durationDays} days` : "") +
       ".";
   } else if (dose.mode === "range") {
-    textToInsert =
+    pendingDoseText =
       `${dose.medication} ${Math.round(dose.lowDoseMg)}–${Math.round(dose.highDoseMg)} mg ${dose.frequency}` +
       (dose.durationDays ? ` for ${dose.durationDays} days` : "") +
       ".";
   } else {
-    textToInsert = dose.fullText || "";
+    pendingDoseText = dose.fullText || "";
   }
 
+  document.getElementById("doseEditTextarea").value = pendingDoseText;
+  document.getElementById("doseEditModal").classList.remove("hidden");
+});
+
+document.getElementById("doseCancelBtn").addEventListener("click", () => {
+  document.getElementById("doseEditModal").classList.add("hidden");
+});
+
+document.getElementById("doseInsertBtn").addEventListener("click", () => {
+  const planBox = document.getElementById("managementPlanFreeText");
+  const text = document.getElementById("doseEditTextarea").value.trim();
+
+  if (!planBox || !text) return;
+
   planBox.value = planBox.value
-    ? `${planBox.value}\n${textToInsert}`
-    : textToInsert;
+    ? `${planBox.value}\n${text}`
+    : text;
 
   planBox.dispatchEvent(new Event("input", { bubbles: true }));
   autoGrowTextarea(planBox);
+
+  document.getElementById("doseEditModal").classList.add("hidden");
 });
-
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".quick-dose-btn");
-  if (!btn) return;
-
-  const medKey = btn.dataset.med;
-  const dosingType = btn.dataset.type;
-
-  if (typeof window.prefillDoseCalculator !== "function") {
-    alert("Dose calculator is not ready.");
-    return;
-  }
-
-  window.prefillDoseCalculator({ medKey, dosingType });
-});
-
 function allTemplates() {
   return [...defaultTemplates, ...userTemplates];
 }
@@ -3736,7 +3781,7 @@ if (firebaseReady) {
     syncHero();
   });
 }
-</script>
 
+</script>
 </body>
 </html>
