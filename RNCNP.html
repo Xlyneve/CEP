@@ -1036,6 +1036,49 @@ select option {
   gap: 8px;
 }
 
+.dose-modal-actions button {
+  border: 1px solid rgba(20,20,20,0.12);
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  color: #111;
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.62));
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+#doseInsertBtn {
+  background: linear-gradient(180deg, rgba(214,236,255,0.95), rgba(196,223,255,0.82));
+  font-weight: 700;
+}
+
+#doseCancelBtn {
+  opacity: 0.75;
+}
+
+.dose-safety {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.dose-safety label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.56);
+  border: 1px solid rgba(20,20,20,0.08);
+}
+
+.dose-safety input {
+  width: 15px;
+  height: 15px;
+  accent-color: #d6ecff;
+}
+
 @media (max-width: 760px) {
   .patient-link-row {
     grid-template-columns: 1fr;
@@ -1827,6 +1870,7 @@ select option {
       </main>
     </div>
     <button class="floating-generate" id="floatingGenerateBtn" title="Generate summary">📋</button>
+
 <div id="doseEditModal" class="dose-modal hidden">
   <div class="dose-modal-card">
     <div class="dose-modal-header">
@@ -1835,12 +1879,19 @@ select option {
 
     <textarea id="doseEditTextarea"></textarea>
 
+    <div class="dose-safety">
+      <label><input type="checkbox" id="checkAllergy"> Allergy checked</label>
+      <label><input type="checkbox" id="checkPenicillin"> Penicillin allergy considered</label>
+      <label><input type="checkbox" id="checkGuideline"> NZF / Te Whatakura / local guidance checked</label>
+    </div>
+
     <div class="dose-modal-actions">
       <button type="button" id="doseCancelBtn">Cancel</button>
       <button type="button" id="doseInsertBtn">Insert</button>
     </div>
   </div>
 </div>
+
   <script src="calculator.js?v=6"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -2127,6 +2178,14 @@ document.getElementById("doseInsertBtn").addEventListener("click", () => {
   const planBox = document.getElementById("managementPlanFreeText");
   const text = document.getElementById("doseEditTextarea").value.trim();
 
+  const allergy = document.getElementById("checkAllergy")?.checked;
+  const guideline = document.getElementById("checkGuideline")?.checked;
+
+  if (!allergy || !guideline) {
+    alert("Confirm allergy check and guideline check before inserting.");
+    return;
+  }
+
   if (!planBox || !text) return;
 
   planBox.value = planBox.value
@@ -2138,7 +2197,6 @@ document.getElementById("doseInsertBtn").addEventListener("click", () => {
 
   document.getElementById("doseEditModal").classList.add("hidden");
 });
-
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".quick-dose-btn");
   if (!btn) return;
