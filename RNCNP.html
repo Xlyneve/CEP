@@ -982,6 +982,22 @@ select option {
   background: white;
 }
 
+.quick-dose-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-dose-btn {
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62));
+  color: #111;
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
 @media (max-width: 760px) {
   .patient-link-row {
     grid-template-columns: 1fr;
@@ -1588,6 +1604,28 @@ select option {
     </div>
   </div>
 
+  <div class="quick-dose-row">
+    <button type="button" class="quick-dose-btn" data-med="amoxClav" data-type="bites">
+      Amox-clav bites
+    </button>
+
+    <button type="button" class="quick-dose-btn" data-med="flucloxacillin" data-type="cellulitis">
+      Fluclox cellulitis
+    </button>
+
+    <button type="button" class="quick-dose-btn" data-med="amoxicillin" data-type="strepA">
+      Amoxicillin Strep A
+    </button>
+
+    <button type="button" class="quick-dose-btn" data-med="penicillinV" data-type="strepA">
+      Pen V Strep A
+    </button>
+  </div>
+
+  <div class="hint">
+    Quick picks only prefill the calculator. Confirm NZF / Te Whatakura / local guidance before prescribing.
+  </div>
+
   <div class="section-fields">
     <label>
       Management plan - first line
@@ -1606,12 +1644,12 @@ select option {
 
     <label class="private-note-label">
       Private notes
-<div
-  id="prescribingPrivateNote"
-  class="private-note-editor"
-  contenteditable="true"
-  data-placeholder="Reminder to self - not part of summary"
-></div>
+      <div
+        id="prescribingPrivateNote"
+        class="private-note-editor"
+        contenteditable="true"
+        data-placeholder="Reminder to self - not part of summary"
+      ></div>
     </label>
   </div>
 </div>
@@ -2009,7 +2047,6 @@ function safeAddListener(el, eventName, handler) {
 
 window.addEventListener("dose:addToPlan", (e) => {
   const dose = e.detail;
-
   const planBox = document.getElementById("managementPlanFreeText");
 
   if (!planBox) {
@@ -2038,7 +2075,22 @@ window.addEventListener("dose:addToPlan", (e) => {
     : textToInsert;
 
   planBox.dispatchEvent(new Event("input", { bubbles: true }));
-autoGrowTextarea(planBox);
+  autoGrowTextarea(planBox);
+});
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".quick-dose-btn");
+  if (!btn) return;
+
+  const medKey = btn.dataset.med;
+  const dosingType = btn.dataset.type;
+
+  if (typeof window.prefillDoseCalculator !== "function") {
+    alert("Dose calculator is not ready.");
+    return;
+  }
+
+  window.prefillDoseCalculator({ medKey, dosingType });
 });
 
 function allTemplates() {
