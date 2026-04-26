@@ -2370,6 +2370,31 @@ window.lastDoseForPlan = {
     if (!isFinite(value)) return 0;
     return Math.round(value / 75) * 75;
   }
+  
+  window.prefillDoseCalculator = function ({ medKey, dosingType } = {}) {
+  const panel = document.getElementById("doseCalculator");
+  const medSelect = document.getElementById("medicationSelect");
+
+  if (!panel || !medSelect) return;
+
+  panel.classList.remove("hidden");
+
+  if (!medKey || !MEDS[medKey]) return;
+
+  medSelect.value = medKey;
+  renderMedicationOptions();
+
+  setTimeout(() => {
+    const dosingSelect = document.getElementById("dosingType");
+
+    if (dosingSelect && dosingType) {
+      dosingSelect.value = dosingType;
+    }
+
+    renderMedicationOptions();
+    calculateDose();
+  }, 0);
+};
 
   function updatePatientFieldHints() {
     const patientType = document.getElementById("patientType")?.value || "child";
