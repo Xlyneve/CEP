@@ -2138,6 +2138,21 @@ document.getElementById("doseInsertBtn").addEventListener("click", () => {
 
   document.getElementById("doseEditModal").classList.add("hidden");
 });
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".quick-dose-btn");
+  if (!btn) return;
+
+  const medKey = btn.dataset.med;
+  const dosingType = btn.dataset.type;
+
+  if (typeof window.prefillDoseCalculator !== "function") {
+    alert("Dose calculator is not ready.");
+    return;
+  }
+
+  window.prefillDoseCalculator({ medKey, dosingType });
+});
 function allTemplates() {
   return [...defaultTemplates, ...userTemplates];
 }
