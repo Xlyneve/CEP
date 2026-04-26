@@ -1953,22 +1953,14 @@ if (opt.type === "number") {
     patientType
   });
 } else if (canUseChildTabletRule) {
-      result = med.adultCalc({
-        ageMonths,
-        selections,
-        formulation,
-        strength: selectedStrength,
-        patientType
-      });
-    } else if (canUseChildTabletRule) {
-      result = med.tabletAgeCalc({
-        ageMonths,
-        selections,
-        formulation,
-        strength: selectedStrength,
-        patientType
-      });
-    } else {
+  result = med.tabletAgeCalc({
+    ageMonths,
+    selections,
+    formulation,
+    strength: selectedStrength,
+    patientType
+  });
+} else {
       resultBox.innerHTML = isTabletFormulation
         ? `<div class="calcWarnings"><div>⚠ Weight is still required for this selection unless an adult fixed-dose or child tablet rule exists for this medicine.</div></div>`
         : "";
@@ -2402,10 +2394,10 @@ window.lastDoseForPlan = {
   document.addEventListener("click", (e) => {
   if (e.target.id !== "addDoseToPlanBtn") return;
 
-  if (!window.lastDoseForPlan?.text) {
-    alert("No dose result to add yet.");
-    return;
-  }
+ if (!window.lastDoseForPlan?.fullText && !window.lastDoseForPlan?.doseMg) {
+  alert("No dose result to add yet.");
+  return;
+}
 
   window.dispatchEvent(new CustomEvent("dose:addToPlan", {
     detail: window.lastDoseForPlan
