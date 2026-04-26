@@ -1550,7 +1550,7 @@
   }
 },
 
-    benzathinePenicillinIM: {
+       benzathinePenicillinIM: {
       label: "Benzathine Penicillin IM",
       age: { minMonths: 1, maxYears: 120 },
       strengths: [
@@ -1579,7 +1579,8 @@
           extra: [`Equivalent dose: ${units}`]
         };
       }
-    },
+    }
+  };
 
 
 
