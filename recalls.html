@@ -1111,22 +1111,27 @@ button:focus,
         div.addEventListener('mouseleave', () => clearTimeout(pressTimer));
 
         div.addEventListener('click', (e) => {
-          if (!e.target.classList.contains('edit-btn') &&
-              !e.target.classList.contains('delete-btn') &&
-              !e.target.classList.contains('zoomable')) {
-            navigator.clipboard.writeText(div.querySelector('.note-content').innerText).then(() => {
-              const tick = document.createElement('div');
-              tick.textContent = '✔';
-              tick.style.position = 'absolute';
-              tick.style.top = '10px';
-              tick.style.right = '10px';
-              tick.style.color = '#d291bc';
-              tick.style.fontSize = '20px';
-              tick.style.opacity = '0';
-              tick.style.pointerEvents = 'none';
-              tick.style.transition = 'all 0.6s ease-out';
-              div.appendChild(tick);
+  if (!e.target.classList.contains('edit-btn') &&
+      !e.target.classList.contains('delete-btn') &&
+      !e.target.classList.contains('zoomable')) {
 
+    const copiedText = div.querySelector('.note-content').innerText
+      .replace(/\r\n/g, '\n')      // normalise line endings
+      .replace(/\n{3,}/g, '\n\n')  // remove extra blank lines
+      .trim();
+
+    navigator.clipboard.writeText(copiedText).then(() => {
+      const tick = document.createElement('div');
+      tick.textContent = '✔';
+      tick.style.position = 'absolute';
+      tick.style.top = '10px';
+      tick.style.right = '10px';
+      tick.style.color = '#d291bc';
+      tick.style.fontSize = '20px';
+      tick.style.opacity = '0';
+      tick.style.pointerEvents = 'none';
+      tick.style.transition = 'all 0.6s ease-out';
+      div.appendChild(tick);
               requestAnimationFrame(() => {
                 tick.style.opacity = '1';
                 tick.style.transform = 'scale(1.5)';
