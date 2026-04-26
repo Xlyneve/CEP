@@ -2007,6 +2007,25 @@ function safeAddListener(el, eventName, handler) {
   if (el) el.addEventListener(eventName, handler);
 }
 
+window.addEventListener("dose:addToPlan", (e) => {
+  const dose = e.detail;
+
+  const planBox = document.getElementById("managementPlanFreeText");
+
+  if (!planBox) {
+    alert("Management/Plan box not found.");
+    return;
+  }
+
+  const textToInsert = `Medication plan: ${dose.text}`;
+
+  planBox.value = planBox.value
+    ? `${planBox.value}\n${textToInsert}`
+    : textToInsert;
+
+  planBox.dispatchEvent(new Event("input", { bubbles: true }));
+});
+
 function allTemplates() {
   return [...defaultTemplates, ...userTemplates];
 }
