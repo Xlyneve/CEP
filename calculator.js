@@ -125,10 +125,10 @@
       label: "Paracetamol",
       age: { minMonths: 1, maxYears: 18 },
       strengths: [
-        { id: "liq120", value: 120, label: "120 mg / 5 mL" },
-        { id: "liq250", value: 250, label: "250 mg / 5 mL" },
-        { id: "tab500", value: 500, label: "500 mg tablet" }
-      ],
+  { id: "liq120", type: "liquid", strengthMg: 120, volumeMl: 5, label: "120 mg / 5 mL" },
+  { id: "liq250", type: "liquid", strengthMg: 250, volumeMl: 5, label: "250 mg / 5 mL" },
+  { id: "tab500", type: "tablet", strengthMg: 500, volumeMl: null, label: "500 mg tablet" }
+],
       note: ({ formulation, patientType }) => {
         if (formulation?.type === "tablet") {
           if (patientType === "adult") {
@@ -2131,6 +2131,48 @@ if (result?.warnings?.length) {
   warnings.push(...result.warnings);
 }
 
+if (!result || result.doseMg === null || result.doseMg === undefined || Number.isNaN(result.doseMg)) {
+  resultBox.innerHTML = `
+    <div class="calcWarnings">
+      <div>⚠ Cannot calculate safely. Check required fields, weight, indication, and strength.</div>
+    </div>
+  `;
+  return;
+}
+
+if (!result || !["single", "range"].includes(result.mode)) {
+  resultBox.innerHTML = `
+    <div class="calcWarnings">
+      <div>⚠ Cannot calculate safely. Invalid dose result.</div>
+    </div>
+  `;
+  return;
+}
+
+if (
+  result.mode === "single" &&
+  (!isFinite(result.doseMg) || result.doseMg <= 0)
+) {
+  resultBox.innerHTML = `
+    <div class="calcWarnings">
+      <div>⚠ Cannot calculate safely. Check weight, dose, indication, and strength.</div>
+    </div>
+  `;
+  return;
+}
+
+if (
+  result.mode === "range" &&
+  (!isFinite(result.lowDoseMg) || !isFinite(result.highDoseMg))
+) {
+  resultBox.innerHTML = `
+    <div class="calcWarnings">
+      <div>⚠ Cannot calculate safely. Check weight, dose range, indication, and strength.</div>
+    </div>
+  `;
+  return;
+}
+
 const effectiveFormulation = getEffectiveFormulation(medKey, result, selectedStrength);
 resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, durationDaysInput);
 }
@@ -2230,39 +2272,65 @@ resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, durat
   }
 
   function getFormulationInfo(strength) {
-    if (!strength || !isFinite(strength.value)) return null;
+  if (!strength) return null;
 
-    const label = String(strength.label || "").toLowerCase();
+  const label = String(strength.label || "").toLowerCase();
 
-    if (label.includes("/ 5 ml")) {
-      return {
-        type: "liquid",
-        mgPerMl: strength.value / 5,
-        strengthMg: strength.value,
-        label: strength.label
-      };
+  // New safer format
+  if (strength.type === "liquid") {
+    const strengthMg = Number(strength.strengthMg);
+    const volumeMl = Number(strength.volumeMl);
+
+    if (!isFinite(strengthMg) || !isFinite(volumeMl) || strengthMg <= 0 || volumeMl <= 0) {
+      return null;
     }
 
-    if (label.includes("/ 2.3 ml")) {
-      return {
-        type: "liquid",
-        mgPerMl: strength.value / 2.3,
-        strengthMg: strength.value,
-        label: strength.label
-      };
-    }
-
-    if (label.includes("tablet") || label.includes("capsule")) {
-      return {
-        type: "tablet",
-        mgPerUnit: strength.value,
-        strengthMg: strength.value,
-        label: strength.label
-      };
-    }
-
-    return null;
+    return {
+      type: "liquid",
+      mgPerMl: strengthMg / volumeMl,
+      strengthMg,
+      volumeMl,
+      label: strength.label
+    };
   }
+
+  if (strength.type === "tablet") {
+    const strengthMg = Number(strength.strengthMg);
+
+    if (!isFinite(strengthMg) || strengthMg <= 0) {
+      return null;
+    }
+
+    return {
+      type: "tablet",
+      mgPerUnit: strengthMg,
+      strengthMg,
+      label: strength.label
+    };
+  }
+
+  // Backward compatibility for old format
+  if (label.includes("mg / 5 ml") || label.includes("mg/5ml")) {
+    return {
+      type: "liquid",
+      mgPerMl: Number(strength.value) / 5,
+      strengthMg: Number(strength.value),
+      volumeMl: 5,
+      label: strength.label
+    };
+  }
+
+  if (label.includes("tablet") || label.includes("capsule")) {
+    return {
+      type: "tablet",
+      mgPerUnit: Number(strength.value),
+      strengthMg: Number(strength.value),
+      label: strength.label
+    };
+  }
+
+  return null;
+}
 
   function buildScriptAndMitte({ doseMg, formulation, result, enteredDurationDays }) {
     const dosesPerDay = result.dosesPerDay;
