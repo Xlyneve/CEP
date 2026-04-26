@@ -1332,9 +1332,10 @@
       label: "Dosing Type",
       type: "select",
       choices: [
-        { value: "general", label: "General" },
-        { value: "cellulitis", label: "Cellulitis" }
-      ]
+  { value: "general", label: "General" },
+  { value: "cellulitis", label: "Cellulitis" },
+  { value: "bites", label: "Bites" }
+]
     },
     {
       id: "doseLevel",
@@ -1353,6 +1354,16 @@
         ? `<br><br><strong>Tablet note:</strong> Fixed adult dosing can be used for the cellulitis pathway without entering weight.`
         : `<br><br><strong>Tablet note:</strong> Weight is still required for this medicine even when tablet formulation is selected.`
       : "";
+	  
+	  if (selections.dosingType === "bites") {
+  return `
+    <strong>Note:</strong> Bite wound dosing.<br><br>
+    Adult: 625 mg three times daily for 3 days, with food.<br>
+    Children ≤14 years: 30 mg/kg/dose three times daily for 3 days.<br>
+    Maximum single dose: 625 mg.
+    ${tabletNotice}
+  `;
+}
 
     if (selections.dosingType === "cellulitis") {
       return `
@@ -1373,6 +1384,19 @@
   adultCalc: ({ selections }) => {
     const type = selections.dosingType || "general";
 
+if (type === "bites") {
+  return {
+    mode: "single",
+    frequency: "Three times daily for 3 days, with food",
+    sigFrequency: "three times daily with food",
+    dosesPerDay: 3,
+    defaultDurationDays: 3,
+    doseMg: 625,
+    maxDailyMg: 1875,
+    warnings: [],
+    extra: ["Adult bite wound regimen used."]
+  };
+}
     if (type === "cellulitis") {
       return {
         mode: "single",
@@ -1399,9 +1423,34 @@
       extra: ["Adult fixed-dose regimen used."]
     };
   },
-  calc: ({ weightKg, selections }) => {
+calc: ({ weightKg, selections, patientType }) => {
     const type = selections.dosingType || "general";
+	
+if (type === "bites") {
+  const rawDose = weightKg * 30;
+  const doseMg = Math.min(rawDose, 625);
+  const warnings = [];
 
+  if (patientType === "adult") {
+    warnings.push("Adult bite regimen is 625 mg three times daily for 3 days with food. Select adult + tablet if using fixed adult dosing.");
+  }
+
+  if (rawDose > 625) {
+    warnings.push("Dose capped at max single dose of 625 mg.");
+  }
+
+  return {
+    mode: "single",
+    frequency: "Three times daily for 3 days, with food",
+    sigFrequency: "three times daily with food",
+    dosesPerDay: 3,
+    defaultDurationDays: 3,
+    doseMg,
+    maxDailyMg: doseMg * 3,
+    warnings,
+    extra: [`Daily total: ${formatMg(doseMg * 3)}`, "Bite wound regimen used."]
+  };
+}
     if (type === "cellulitis") {
       return {
         mode: "single",
