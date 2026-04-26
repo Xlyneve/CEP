@@ -2011,7 +2011,13 @@ resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, durat
 window.lastDoseForPlan = {
   medication: MEDS[medKey]?.label || "",
   indication: selections.dosingType || "",
-  text: resultBox.innerText.trim()
+  doseMg: result.mode === "single" ? result.doseMg : null,
+  lowDoseMg: result.mode === "range" ? result.lowDoseMg : null,
+  highDoseMg: result.mode === "range" ? result.highDoseMg : null,
+  mode: result.mode,
+  frequency: result.sigFrequency || result.frequency || "",
+  durationDays: result.defaultDurationDays || null,
+  fullText: resultBox.innerText.trim()
 };
 }
 
