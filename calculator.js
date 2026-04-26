@@ -1728,14 +1728,7 @@
           if (opt.id === "eryImpFreq" && selections.dosingType !== "impetigo") return;
         }
 
-        if (medKey === "roxithromycin") {
-          if (patientType === "adult") {
-            if (opt.id === "roxDoseLevel") return;
-          } else {
-            if (opt.id === "roxAdultMode" && selections.roxMode === "impetigo") return;
-            if (opt.id === "roxDoseLevel" && selections.roxMode !== "impetigo") return;
-          }
-        }
+        
 
         if (opt.type === "select") {
   html += `
