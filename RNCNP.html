@@ -2017,7 +2017,21 @@ window.addEventListener("dose:addToPlan", (e) => {
     return;
   }
 
-  const textToInsert = `Medication plan: ${dose.text}`;
+  let textToInsert = "";
+
+  if (dose.mode === "single") {
+    textToInsert =
+      `${dose.medication} ${Math.round(dose.doseMg)} mg ${dose.frequency}` +
+      (dose.durationDays ? ` for ${dose.durationDays} days` : "") +
+      ".";
+  } else if (dose.mode === "range") {
+    textToInsert =
+      `${dose.medication} ${Math.round(dose.lowDoseMg)}–${Math.round(dose.highDoseMg)} mg ${dose.frequency}` +
+      (dose.durationDays ? ` for ${dose.durationDays} days` : "") +
+      ".";
+  } else {
+    textToInsert = dose.fullText || "";
+  }
 
   planBox.value = planBox.value
     ? `${planBox.value}\n${textToInsert}`
