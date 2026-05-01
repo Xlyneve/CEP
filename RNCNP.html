@@ -3142,89 +3142,64 @@ function buildSummaryText() {
   if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
   if (vitalWE) vitals.push(`WE: ${vitalWE}`);
 
-  if (vitals.length) examParts.push(`Vital signs: ${joinList(vitals)}`);
+  if (vitals.length) examParts.push(`Vital signs:\n${joinList(vitals)}`);
   if (examFreeText) examParts.push(sentence(examFreeText));
 
   if (examParts.length) {
-  sections.push(`On examination: ${examParts.join('\n')}`);
-}
+    sections.push(`On examination:\n${examParts.join('\n')}`);
+  }
 
   const investigationsParts = [];
   const investigationsBlock = buildSplitChecklist(investigationsPrimary, investigationsSecondary);
   if (investigationsBlock) investigationsParts.push(investigationsBlock);
   if (investigationsFreeText) investigationsParts.push(sentence(investigationsFreeText));
 
-sections.push(`History of presenting complaint:\n${historyParts.join('\n')}`);
+  if (investigationsParts.length) {
+    sections.push(`Investigations:\n${investigationsParts.join('\n')}`);
+  }
 
-const examParts = [];
-const examBlock = buildSplitChecklist(examPrimary, examSecondary);
-if (examBlock) examParts.push(examBlock);
+  if (assessment.length) {
+    sections.push(`Assessment:\n${joinList(assessment)}`);
+  }
 
-const vitals = [];
-if (vitalTemp) vitals.push(`Temp: ${vitalTemp}`);
-if (vitalPR) {
-  let prLine = `PR: ${vitalPR}`;
-  if (prRegular) prLine += ' REG';
-  else if (prIrregular) prLine += ' IRREG';
-  vitals.push(prLine);
-}
-if (vitalRR) vitals.push(`RR: ${vitalRR}`);
-if (vitalBP) vitals.push(`BP: ${vitalBP}`);
-if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
-if (vitalWE) vitals.push(`WE: ${vitalWE}`);
+  const managementParts = [];
+  const managementBlock = buildSplitChecklist(managementPlanPrimary, managementPlanSecondary);
+  if (managementBlock) managementParts.push(managementBlock);
+  if (managementPlanFreeText) managementParts.push(sentence(managementPlanFreeText));
 
-if (vitals.length) examParts.push(`Vital signs:\n${joinList(vitals)}`);
-if (examFreeText) examParts.push(sentence(examFreeText));
+  if (managementParts.length) {
+    sections.push(`Management Plan:\n${managementParts.join('\n')}`);
+  }
 
-if (examParts.length) {
-  sections.push(`On examination:\n${examParts.join('\n')}`);
-}
+  const followUpBlock = buildSplitChecklist(followUpPrimary, followUpSecondary);
+  if (followUpBlock) {
+    sections.push(`Follow up:\n${followUpBlock}`);
+  }
 
-const investigationsParts = [];
-const investigationsBlock = buildSplitChecklist(investigationsPrimary, investigationsSecondary);
-if (investigationsBlock) investigationsParts.push(investigationsBlock);
-if (investigationsFreeText) investigationsParts.push(sentence(investigationsFreeText));
+  const adviceBlock = buildSplitChecklist(advicePrimary, adviceSecondary);
+  if (adviceBlock) {
+    sections.push(`Advice to parent / patient:\n${adviceBlock}`);
+  }
 
-if (investigationsParts.length) {
-  sections.push(`Investigations:\n${investigationsParts.join('\n')}`);
-}
+  const safetyNetBlock = buildSplitChecklist(safetyNetPrimary, safetyNetSecondary);
+  if (safetyNetBlock) {
+    sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
+  }
 
-if (assessment.length) {
-  sections.push(`Assessment:\n${joinList(assessment)}`);
-}
+  const patientLinks = getPatientLinks();
 
-const managementParts = [];
-const managementBlock = buildSplitChecklist(managementPlanPrimary, managementPlanSecondary);
-if (managementBlock) managementParts.push(managementBlock);
-if (managementPlanFreeText) managementParts.push(sentence(managementPlanFreeText));
+  if (patientLinks.length) {
+    sections.push(
+      `Patient information provided:\n${patientLinks
+        .map(link => {
+          if (link.url) return `${link.title}: ${link.url}`;
+          return `${link.title}: QR code provided`;
+        })
+        .join('\n')}`
+    );
+  }
 
-if (managementParts.length) {
-  sections.push(`Management Plan:\n${managementParts.join('\n')}`);
-}
-
-const followUpBlock = buildSplitChecklist(followUpPrimary, followUpSecondary);
-if (followUpBlock) sections.push(`Follow up:\n${followUpBlock}`);
-
-const adviceBlock = buildSplitChecklist(advicePrimary, adviceSecondary);
-if (adviceBlock) sections.push(`Advice to parent / patient:\n${adviceBlock}`);
-
-const safetyNetBlock = buildSplitChecklist(safetyNetPrimary, safetyNetSecondary);
-if (safetyNetBlock) sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
-
-const patientLinks = getPatientLinks();
-
-if (patientLinks.length) {
-  sections.push(
-    `Patient information provided:\n${patientLinks
-      .map(link => {
-        if (link.url) return `${link.title}: ${link.url}`;
-        return `${link.title}: QR code provided`;
-      })
-      .join('\n')}`
-  );
-}
-
-return sections.join('\n');
+  return sections.join('\n');
 }
 
 function renderSummaryHtml(text) {
