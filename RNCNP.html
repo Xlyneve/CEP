@@ -3123,7 +3123,7 @@ function buildSummaryText() {
   const redFlagsBlock = buildSplitChecklist(redFlagsPrimary, redFlagsSecondary);
   if (redFlagsBlock) historyParts.push(redFlagsBlock);
 
-  sections.push(`History of presenting complaint: ${historyParts.join('\n')}`);
+  sections.push(`History of presenting complaint:\n${historyParts.join('\n')}`);
 
   const examParts = [];
   const examBlock = buildSplitChecklist(examPrimary, examSecondary);
@@ -3154,12 +3154,43 @@ function buildSummaryText() {
   if (investigationsBlock) investigationsParts.push(investigationsBlock);
   if (investigationsFreeText) investigationsParts.push(sentence(investigationsFreeText));
 
-  if (investigationsParts.length) {
-  sections.push(`Investigations: ${investigationsParts.join('\n')}`);
+sections.push(`History of presenting complaint:\n${historyParts.join('\n')}`);
+
+const examParts = [];
+const examBlock = buildSplitChecklist(examPrimary, examSecondary);
+if (examBlock) examParts.push(examBlock);
+
+const vitals = [];
+if (vitalTemp) vitals.push(`Temp: ${vitalTemp}`);
+if (vitalPR) {
+  let prLine = `PR: ${vitalPR}`;
+  if (prRegular) prLine += ' REG';
+  else if (prIrregular) prLine += ' IRREG';
+  vitals.push(prLine);
+}
+if (vitalRR) vitals.push(`RR: ${vitalRR}`);
+if (vitalBP) vitals.push(`BP: ${vitalBP}`);
+if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
+if (vitalWE) vitals.push(`WE: ${vitalWE}`);
+
+if (vitals.length) examParts.push(`Vital signs:\n${joinList(vitals)}`);
+if (examFreeText) examParts.push(sentence(examFreeText));
+
+if (examParts.length) {
+  sections.push(`On examination:\n${examParts.join('\n')}`);
+}
+
+const investigationsParts = [];
+const investigationsBlock = buildSplitChecklist(investigationsPrimary, investigationsSecondary);
+if (investigationsBlock) investigationsParts.push(investigationsBlock);
+if (investigationsFreeText) investigationsParts.push(sentence(investigationsFreeText));
+
+if (investigationsParts.length) {
+  sections.push(`Investigations:\n${investigationsParts.join('\n')}`);
 }
 
 if (assessment.length) {
-  sections.push(`Assessment: ${joinList(assessment)}`);
+  sections.push(`Assessment:\n${joinList(assessment)}`);
 }
 
 const managementParts = [];
@@ -3168,17 +3199,17 @@ if (managementBlock) managementParts.push(managementBlock);
 if (managementPlanFreeText) managementParts.push(sentence(managementPlanFreeText));
 
 if (managementParts.length) {
-  sections.push(`Management Plan: ${managementParts.join('\n')}`);
+  sections.push(`Management Plan:\n${managementParts.join('\n')}`);
 }
 
 const followUpBlock = buildSplitChecklist(followUpPrimary, followUpSecondary);
-if (followUpBlock) sections.push(`Follow up: ${followUpBlock}`);
+if (followUpBlock) sections.push(`Follow up:\n${followUpBlock}`);
 
 const adviceBlock = buildSplitChecklist(advicePrimary, adviceSecondary);
-if (adviceBlock) sections.push(`Advice to parent / patient: ${adviceBlock}`);
+if (adviceBlock) sections.push(`Advice to parent / patient:\n${adviceBlock}`);
 
 const safetyNetBlock = buildSplitChecklist(safetyNetPrimary, safetyNetSecondary);
-if (safetyNetBlock) sections.push(`Safety netting provided to patient: ${safetyNetBlock}`);
+if (safetyNetBlock) sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
 
 const patientLinks = getPatientLinks();
 
