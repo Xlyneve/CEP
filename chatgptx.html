@@ -1211,13 +1211,12 @@ a.conceptLink.hasDef::before{
 
 <body>
 
-<div id="lockToggle" title="Enter access code">🔒</div>
+<div id="lockToggle" title="Sign in / Sign out">🔒</div>
 
 <div id="lockSection">
-  <input type="password" id="accessCode" placeholder="Access code" autocomplete="off" />
-  <button id="unlockBtn">Unlock</button>
-  <button id="lockBtn" style="display:none;" title="Lock">🔒</button>
-  <div id="lockInfo">Locked</div>
+  <button id="unlockBtn">Sign in with Google</button>
+<button id="lockBtn" style="display:none;" title="Sign out">Sign out</button>
+<div id="lockInfo">Signed out</div>
 </div>
 
 
@@ -1352,7 +1351,7 @@ const notePanel = document.getElementById('notePanel');
 
 const lockToggle = document.getElementById('lockToggle');
 const lockSection = document.getElementById('lockSection');
-const accessCodeInput = document.getElementById('accessCode');
+// const accessCodeInput = document.getElementById('accessCode'); // removed - no longer using password input
 const unlockBtn = document.getElementById('unlockBtn');
 const lockBtn = document.getElementById('lockBtn');
 const lockInfo = document.getElementById('lockInfo');
@@ -1895,15 +1894,15 @@ document.getElementById('deleteColBtn')?.addEventListener('mousedown', (e) => {
   });
 }, true);
 
+
 /* =========================
-   Simple access code gate
+   Firebase Auth gate
 ========================= */
-const ACCESS_CODE = "oatee";
-let isUnlocked = (localStorage.getItem('notes_unlocked') === '1');
+let isUnlocked = false;
+let currentUser = null;
 
 function setUnlocked(state) {
   isUnlocked = state;
-  localStorage.setItem('notes_unlocked', state ? '1' : '0');
   updateUIForLockState();
 }
 
@@ -2204,37 +2203,48 @@ document.addEventListener('click', (e) => {
 ========================= */
 function updateUIForLockState() {
   if (isUnlocked) {
-    lockInfo.textContent = "Unlocked";
-    lockToggle.textContent = "🔓";
-    lockToggle.title = "Unlocked";
+    lockInfo.textContent = currentUser?.email
+      ? `Signed in as ${currentUser.email}`
+      : "Signed in";
 
-    unlockBtn.style.display = "none";
-    lockBtn.style.display = "inline-block";
-    accessCodeInput.style.display = "none";
+    unlockBtn.style.display = 'none';
+    lockBtn.style.display = 'inline-block';
 
-    addNoteToggle.style.display = 'inline-block';
-    notePanel.style.display = 'none';
+    inputArea.style.display = 'flex';
+    noteContainer.style.display = 'block';
+    formatToggle.style.display = 'block';
 
     startNotesListener();
     startDefsListener();
     startConceptMediaListener();
 
+    const q = userInput.value.trim();
+    if (q) runLiveSearch(q, true);
+    else renderWelcome();
+
   } else {
-    lockInfo.textContent = "Locked";
-    lockToggle.textContent = "🔒";
-    lockToggle.title = "Enter access code";
+    lockInfo.textContent = "Signed out";
 
-    unlockBtn.style.display = "inline-block";
-    lockBtn.style.display = "none";
-    accessCodeInput.style.display = "inline-block";
-    accessCodeInput.value = "";
+    unlockBtn.style.display = 'inline-block';
+    lockBtn.style.display = 'none';
 
-    addNoteToggle.style.display = 'none';
-    notePanel.style.display = 'none';
+    inputArea.style.display = 'none';
+    noteContainer.style.display = 'none';
+    formatToggle.style.display = 'none';
 
     stopNotesListener();
     stopDefsListener();
     stopConceptMediaListener();
+
+    notesCache = [];
+    defsCache = {};
+    conceptMediaCache = {};
+    notesDerived.clear();
+    conceptCountMap = new Map();
+    tagIndexSorted = [];
+
+    clearLiveResults();
+    renderHeaderLine("🔒 Please sign in to access notes.");
   }
 }
 
@@ -4581,21 +4591,43 @@ lockToggle.onclick = () => {
   lockSection.style.display = (lockSection.style.display === 'flex') ? 'none' : 'flex';
 };
 
-unlockBtn.onclick = () => {
-  const code = (accessCodeInput.value || '').trim();
-  if (code === ACCESS_CODE) {
-    setUnlocked(true);
+unlockBtn.onclick = async () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  try {
+    await auth.signInWithPopup(provider);
     lockSection.style.display = 'none';
-  } else {
-    lockInfo.textContent = "Wrong code";
-    accessCodeInput.select();
+  } catch (err) {
+    console.error(err);
+    lockInfo.textContent = "Sign in failed";
   }
 };
 
-lockBtn.onclick = () => {
-  setUnlocked(false);
-  lockSection.style.display = 'none';
+lockBtn.onclick = async () => {
+  try {
+    await auth.signOut();
+    lockSection.style.display = 'none';
+  } catch (err) {
+    console.error(err);
+    lockInfo.textContent = "Sign out failed";
+  }
 };
+
+auth.onAuthStateChanged((user) => {
+  currentUser = user || null;
+
+  if (user) {
+    setUnlocked(true);
+    lockInfo.textContent = `Signed in as ${user.email}`;
+    unlockBtn.style.display = 'none';
+    lockBtn.style.display = 'inline-block';
+  } else {
+    setUnlocked(false);
+    lockInfo.textContent = "Signed out";
+    unlockBtn.style.display = 'inline-block';
+    lockBtn.style.display = 'none';
+  }
+});
 
 document.getElementById('formatToggle').onclick = () =>
   document.getElementById('formatToolbar').classList.toggle('visible');
@@ -4648,7 +4680,7 @@ function wrapSelectionWithBrackets(mode = 'wrap') {
 // Ctrl+L = wrap, Shift+L = unwrap
 document.addEventListener('keydown', (e) => {
   const t = e.target;
-  if (t === userInput || t === accessCodeInput) return;
+  if (t === userInput) return;
 
   const key = (e.key || '').toLowerCase();
   if (key !== 'l') return;
