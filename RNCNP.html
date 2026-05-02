@@ -2481,10 +2481,10 @@ function setupPRToggleButtons() {
 }
 
 function buildSplitChecklist(primary = [], secondary = []) {
-  const parts = [];
-  if (primary.length) parts.push(joinList(primary));
-  if (secondary.length) parts.push(joinList(secondary));
-  return parts.join('\n\n');
+  return [...primary, ...secondary]
+    .map(item => String(item || '').trim())
+    .filter(Boolean)
+    .join('\n');
 }
 
 function setupChecklistRowDrag(row) {
@@ -3230,7 +3230,7 @@ function buildSummaryText() {
   const redFlagsBlock = buildSplitChecklist(redFlagsPrimary, redFlagsSecondary);
   if (redFlagsBlock) historyParts.push(redFlagsBlock);
 
-  sections.push(`History of presenting complaint:\n${historyParts.join('\n')}`);
+  sections.push(`History of presenting complaint:\n${historyParts.filter(Boolean).join(' ')}`);
 
   const examParts = [];
   const examBlock = buildSplitChecklist(examPrimary, examSecondary);
@@ -3253,7 +3253,7 @@ function buildSummaryText() {
   if (examFreeText) examParts.push(sentence(examFreeText));
 
   if (examParts.length) {
-    sections.push(`On examination:\n${examParts.join('\n')}`);
+    sections.push(`On examination:\n${examParts.filter(Boolean).join(' ')}`);
   }
 
   const investigationsParts = [];
@@ -3262,7 +3262,7 @@ function buildSummaryText() {
   if (investigationsFreeText) investigationsParts.push(sentence(investigationsFreeText));
 
   if (investigationsParts.length) {
-    sections.push(`Investigations:\n${investigationsParts.join('\n')}`);
+    sections.push(`Investigations:\n${investigationsParts.filter(Boolean).join(' ')}`);
   }
 
   if (assessment.length) {
@@ -3275,7 +3275,7 @@ function buildSummaryText() {
   if (managementPlanFreeText) managementParts.push(sentence(managementPlanFreeText));
 
   if (managementParts.length) {
-    sections.push(`Management Plan:\n${managementParts.join('\n')}`);
+    sections.push(`Management Plan:\n${managementParts.filter(Boolean).join(' ')}`);
   }
 
   const followUpBlock = buildSplitChecklist(followUpPrimary, followUpSecondary);
@@ -3855,26 +3855,36 @@ function setupDesktopHeaderMinimize() {
   if (!topbar) return;
 
   const headerBtns = document.querySelectorAll('.header-btn');
+  let isMinimized = false;
+
+  function setHeaderMini(mini) {
+    if (isMinimized === mini) return; // prevents repeated flicker/toggling
+
+    isMinimized = mini;
+    topbar.classList.toggle('minimized', mini);
+
+    headerBtns.forEach(btn => {
+      btn.textContent = mini
+        ? (btn.dataset.mini || btn.textContent)
+        : (btn.dataset.full || btn.textContent);
+    });
+  }
 
   function applyHeaderState() {
     if (window.innerWidth <= 760) {
-      topbar.classList.remove('minimized');
-      headerBtns.forEach(btn => {
-        btn.textContent = btn.dataset.full || btn.textContent;
-      });
+      setHeaderMini(false);
       return;
     }
 
-    if (window.scrollY > 80) {
-      topbar.classList.add('minimized');
-      headerBtns.forEach(btn => {
-        btn.textContent = btn.dataset.mini || btn.textContent;
-      });
-    } else {
-      topbar.classList.remove('minimized');
-      headerBtns.forEach(btn => {
-        btn.textContent = btn.dataset.full || btn.textContent;
-      });
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+
+    // Use two different points so it does not bounce around one threshold
+    if (!isMinimized && y > 120) {
+      setHeaderMini(true);
+    }
+
+    if (isMinimized && y < 40) {
+      setHeaderMini(false);
     }
   }
 
