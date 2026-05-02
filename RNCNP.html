@@ -1617,11 +1617,11 @@ select option {
   </div>
 </div>
 
-        <div class="card">
+      <div class="card">
   <div class="section-header">
     <div>
       <div class="section-heading">4. On Examination</div>
-      <div class="hint">First checklist = first line. Second checklist = next line.</div>
+      <div class="hint">Structured exam findings by system</div>
     </div>
     <div class="badge-row">
       <span class="badge green">Exam</span>
@@ -1630,13 +1630,28 @@ select option {
 
   <div class="section-fields">
     <label>
-      Examination - first line
-      <div class="editable-checklist" id="examPrimaryList" data-placeholder="Add main examination item..."></div>
+      HEAD & NECK
+      <div class="editable-checklist" id="examHeadNeckList" data-placeholder="Add head & neck finding..."></div>
     </label>
 
     <label>
-      Examination - next line
-      <div class="editable-checklist" id="examSecondaryList" data-placeholder="Add additional examination item..."></div>
+      ENT
+      <div class="editable-checklist" id="examEntList" data-placeholder="Add ENT finding..."></div>
+    </label>
+
+    <label>
+      Oropharynx
+      <div class="editable-checklist" id="examOropharynxList" data-placeholder="Add oropharynx finding..."></div>
+    </label>
+
+    <label>
+      CHEST
+      <div class="editable-checklist" id="examChestList" data-placeholder="Add chest finding..."></div>
+    </label>
+
+    <label>
+      Other findings
+      <div class="editable-checklist" id="examOtherList" data-placeholder="Add other finding..."></div>
     </label>
 
     <label>
@@ -1647,11 +1662,11 @@ select option {
     <label class="private-note-label">
       Private notes
       <div
-  id="examPrivateNote"
-  class="private-note-editor"
-  contenteditable="true"
-  data-placeholder="Quick note to self during exam - not part of summary"
-></div>
+        id="examPrivateNote"
+        class="private-note-editor"
+        contenteditable="true"
+        data-placeholder="Quick note to self during exam - not part of summary"
+      ></div>
     </label>
   </div>
 </div>
@@ -2175,8 +2190,11 @@ const checklistIds = [
   'hpcList',
   'redFlagsPrimaryList',
   'redFlagsSecondaryList',
-  'examPrimaryList',
-  'examSecondaryList',
+  'examHeadNeckList',
+  'examEntList',
+  'examOropharynxList',
+  'examChestList',
+  'examOtherList',
   'investigationsPrimaryList',
   'investigationsSecondaryList',
   'assessmentList',
@@ -2870,8 +2888,11 @@ function collectPromptFields() {
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
     redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
-    examPrimary: getChecklistItems('examPrimaryList').map(i => i.text),
-    examSecondary: getChecklistItems('examSecondaryList').map(i => i.text),
+    examHeadNeck: getChecklistItems('examHeadNeckList').map(i => i.text),
+    examEnt: getChecklistItems('examEntList').map(i => i.text),
+    examOropharynx: getChecklistItems('examOropharynxList').map(i => i.text),
+    examChest: getChecklistItems('examChestList').map(i => i.text),
+    examOther: getChecklistItems('examOtherList').map(i => i.text),
     investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
     investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
     assessment: getChecklistItems('assessmentList').map(i => i.text),
@@ -2960,8 +2981,11 @@ function fillTemplatePrompts() {
   if (getField('vitalSats')) getField('vitalSats').value = template.prompts?.vitalSats || '';
   if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
 
-  setChecklistItems('examPrimaryList', template.prompts?.examPrimary);
-  setChecklistItems('examSecondaryList', template.prompts?.examSecondary);
+  setChecklistItems('examHeadNeckList', template.prompts?.examHeadNeck || template.prompts?.examPrimary);
+  setChecklistItems('examEntList', template.prompts?.examEnt);
+  setChecklistItems('examOropharynxList', template.prompts?.examOropharynx);
+  setChecklistItems('examChestList', template.prompts?.examChest);
+  setChecklistItems('examOtherList', template.prompts?.examOther || template.prompts?.examSecondary);
   if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
   setPrivateNoteHtml('examPrivateNote', template.prompts?.examPrivateNote);
 
@@ -3175,8 +3199,11 @@ function buildSummaryText() {
   const hpc = getCheckedChecklistTexts('hpcList');
   const redFlagsPrimary = getCheckedChecklistTexts('redFlagsPrimaryList');
   const redFlagsSecondary = getCheckedChecklistTexts('redFlagsSecondaryList');
-  const examPrimary = getCheckedChecklistTexts('examPrimaryList');
-  const examSecondary = getCheckedChecklistTexts('examSecondaryList');
+  const examHeadNeck = getCheckedChecklistTexts('examHeadNeckList');
+  const examEnt = getCheckedChecklistTexts('examEntList');
+  const examOropharynx = getCheckedChecklistTexts('examOropharynxList');
+  const examChest = getCheckedChecklistTexts('examChestList');
+  const examOther = getCheckedChecklistTexts('examOtherList');
   const investigationsPrimary = getCheckedChecklistTexts('investigationsPrimaryList');
   const investigationsSecondary = getCheckedChecklistTexts('investigationsSecondaryList');
   const assessment = getCheckedChecklistTexts('assessmentList');
@@ -3232,29 +3259,46 @@ function buildSummaryText() {
 
   sections.push(`History of presenting complaint:\n${historyParts.filter(Boolean).join(' ')}`);
 
-  const examParts = [];
-  const examBlock = buildSplitChecklist(examPrimary, examSecondary);
-  if (examBlock) examParts.push(examBlock);
+ const examParts = [];
 
-  const vitals = [];
-  if (vitalTemp) vitals.push(`Temp: ${vitalTemp}`);
-  if (vitalPR) {
-    let prLine = `PR: ${vitalPR}`;
-    if (prRegular) prLine += ' REG';
-    else if (prIrregular) prLine += ' IRREG';
-    vitals.push(prLine);
-  }
-  if (vitalRR) vitals.push(`RR: ${vitalRR}`);
-  if (vitalBP) vitals.push(`BP: ${vitalBP}`);
-  if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
-  if (vitalWE) vitals.push(`WE: ${vitalWE}`);
+function examLine(label, items) {
+  if (!items || !items.length) return '';
+  return `${label} - ${items.join(' ')}`;
+}
 
-  if (vitals.length) examParts.push(`Vital signs:\n${joinList(vitals)}`);
-  if (examFreeText) examParts.push(sentence(examFreeText));
+const headNeckLine = examLine('HEAD & NECK', examHeadNeck);
+const entLine = examLine('ENT', examEnt);
+const oropharynxLine = examLine('Oropharynx', examOropharynx);
+const chestLine = examLine('CHEST', examChest);
 
-  if (examParts.length) {
-    sections.push(`On examination:\n${examParts.filter(Boolean).join(' ')}`);
-  }
+if (headNeckLine) examParts.push(headNeckLine);
+if (entLine) examParts.push(entLine);
+if (oropharynxLine) examParts.push(oropharynxLine);
+
+// Other findings: no “Other” heading, just its own line.
+if (examOther.length) examParts.push(examOther.join(' '));
+
+if (chestLine) examParts.push(chestLine);
+
+const vitals = [];
+if (vitalTemp) vitals.push(`Temp: ${vitalTemp}`);
+if (vitalPR) {
+  let prLine = `PR: ${vitalPR}`;
+  if (prRegular) prLine += ' REG';
+  else if (prIrregular) prLine += ' IRREG';
+  vitals.push(prLine);
+}
+if (vitalRR) vitals.push(`RR: ${vitalRR}`);
+if (vitalBP) vitals.push(`BP: ${vitalBP}`);
+if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
+if (vitalWE) vitals.push(`WE: ${vitalWE}`);
+
+if (vitals.length) examParts.push(`Vital signs:\n${joinList(vitals)}`);
+if (examFreeText) examParts.push(sentence(examFreeText));
+
+if (examParts.length) {
+  sections.push(`On examination:\n${examParts.filter(Boolean).join('\n')}`);
+}
 
   const investigationsParts = [];
   const investigationsBlock = buildSplitChecklist(investigationsPrimary, investigationsSecondary);
