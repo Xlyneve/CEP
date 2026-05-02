@@ -590,7 +590,8 @@ select option {
 .hero-template-desc {
   color: #222;
   font-size: 0.82rem;
-  line-height: 1.25;
+  line-height: 1.35;
+  white-space: pre-wrap;
 }
 
 .hero-template-desc a {
@@ -1047,6 +1048,9 @@ select option {
 
 #templateMetaDesc {
   min-height: 120px;
+  overflow: hidden;
+  resize: none;
+  white-space: pre-wrap;
 }
 
 .template-meta-actions {
@@ -2529,6 +2533,12 @@ function safeAddListener(el, eventName, handler) {
   if (el) el.addEventListener(eventName, handler);
 }
 
+function autoResizeInputTextarea(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 let pendingDoseText = "";
 
 window.addEventListener("dose:addToPlan", (e) => {
@@ -2709,6 +2719,7 @@ function autoGrowTextarea(el) {
   el.style.height = 'auto';
   el.style.height = `${el.scrollHeight}px`;
 }
+
 
 function setupPrivateNotesAutoGrow() {
   [
@@ -3507,6 +3518,7 @@ function promptForTemplateMeta(existing = null) {
     categoryInput.value = existing?.category || 'viral';
     descInput.value = existing?.desc || '';
     tagsInput.value = existing?.tags?.join(', ') || '';
+    autoResizeInputTextarea(descInput);
 
     modal.classList.remove('hidden');
 
@@ -3516,16 +3528,21 @@ function promptForTemplateMeta(existing = null) {
     }, 50);
 
     function closeModal(result) {
-      modal.classList.add('hidden');
+  modal.classList.add('hidden');
 
-      saveMetaBtn.removeEventListener('click', onSave);
-      cancelMetaBtn?.removeEventListener('click', onCancel);
-      closeMetaBtn?.removeEventListener('click', onCancel);
-      modal.removeEventListener('click', onBackdropClick);
-      document.removeEventListener('keydown', onKeyDown);
+  saveMetaBtn.removeEventListener('click', onSave);
+  cancelMetaBtn?.removeEventListener('click', onCancel);
+  closeMetaBtn?.removeEventListener('click', onCancel);
+  modal.removeEventListener('click', onBackdropClick);
+  document.removeEventListener('keydown', onKeyDown);
+  descInput.removeEventListener('input', onDescInput);
 
-      resolve(result);
-    }
+  resolve(result);
+}
+
+function onDescInput() {
+  autoResizeInputTextarea(descInput);
+}
 
     function onSave() {
       const tagsRaw = tagsInput.value || '';
@@ -3555,10 +3572,11 @@ function promptForTemplateMeta(existing = null) {
     }
 
     saveMetaBtn.addEventListener('click', onSave);
-    cancelMetaBtn?.addEventListener('click', onCancel);
-    closeMetaBtn?.addEventListener('click', onCancel);
-    modal.addEventListener('click', onBackdropClick);
-    document.addEventListener('keydown', onKeyDown);
+cancelMetaBtn?.addEventListener('click', onCancel);
+closeMetaBtn?.addEventListener('click', onCancel);
+modal.addEventListener('click', onBackdropClick);
+document.addEventListener('keydown', onKeyDown);
+descInput.addEventListener('input', onDescInput);
   });
 }
 
