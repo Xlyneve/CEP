@@ -560,6 +560,18 @@ select option {
   line-height: 1.25;
 }
 
+.hero-template-desc a {
+  color: #174ea6;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-word;
+}
+
+.hero-template-desc a:hover {
+  opacity: 0.8;
+}
+
     .hero-actions {
       display: flex;
       flex-wrap: wrap;
@@ -856,7 +868,94 @@ select option {
   color: #555;
   font-size: 0.84rem;
 }
-    
+    .template-meta-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0,0,0,0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.template-meta-modal.hidden {
+  display: none;
+}
+
+.template-meta-card {
+  width: min(680px, 96vw);
+  max-height: 88vh;
+  overflow: auto;
+  border-radius: 24px;
+  padding: 18px;
+  border: 1px solid rgba(30,30,30,0.16);
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.88));
+  box-shadow: 0 18px 44px rgba(0,0,0,0.18);
+}
+
+.template-meta-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.template-meta-header strong {
+  font-family: 'Fors', Tahoma, sans-serif;
+  font-size: 1.2rem;
+}
+
+.template-meta-subtitle {
+  margin-top: 4px;
+  font-size: 0.84rem;
+  color: rgba(0,0,0,0.58);
+}
+
+.template-meta-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: rgba(255,255,255,0.72);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.template-meta-body {
+  display: grid;
+  gap: 12px;
+}
+
+#templateMetaDesc {
+  min-height: 130px;
+}
+
+.template-meta-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.template-meta-actions button {
+  border: 1px solid rgba(20,20,20,0.12);
+  border-radius: 999px;
+  padding: 9px 14px;
+  cursor: pointer;
+  color: #111;
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.62));
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+#templateMetaSaveBtn {
+  background: linear-gradient(180deg, rgba(214,236,255,0.95), rgba(196,223,255,0.82));
+  font-weight: 700;
+}
 
     .preview-box {
   white-space: pre-wrap;
@@ -3136,12 +3235,24 @@ function setActiveTemplate(id) {
   renderTemplates();
 }
 
+function linkifyText(text) {
+  const escaped = escapeHtml(text || '');
+
+  return escaped.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+}
+
 function syncHero() {
   const template = getActiveTemplate();
   if (!template) return;
 
   if (activeTemplateTitle) activeTemplateTitle.textContent = template.title;
-  if (activeTemplateDesc) activeTemplateDesc.textContent = template.desc;
+
+  if (activeTemplateDesc) {
+    activeTemplateDesc.innerHTML = linkifyText(template.desc);
+  }
 
   deleteBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
   editBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
@@ -3196,24 +3307,82 @@ async function signOutUser() {
 }
 
 function promptForTemplateMeta(existing = null) {
-  const title = prompt('Template title:', existing?.title || '');
-  if (title === null) return null;
+  return new Promise(resolve => {
+    const modal = document.getElementById('templateMetaModal');
+    const modalTitle = document.getElementById('templateMetaModalTitle');
+    const titleInput = document.getElementById('templateMetaTitle');
+    const categoryInput = document.getElementById('templateMetaCategory');
+    const descInput = document.getElementById('templateMetaDesc');
+    const tagsInput = document.getElementById('templateMetaTags');
+    const saveMetaBtn = document.getElementById('templateMetaSaveBtn');
+    const cancelMetaBtn = document.getElementById('templateMetaCancelBtn');
+    const closeMetaBtn = document.getElementById('templateMetaCloseBtn');
 
-  const category = prompt('Category (respiratory / skin / viral / urinary / msk):', existing?.category || 'viral');
-  if (category === null) return null;
+    if (!modal || !titleInput || !categoryInput || !descInput || !tagsInput || !saveMetaBtn) {
+      alert('Template editor modal is missing from the page.');
+      resolve(null);
+      return;
+    }
 
-  const desc = prompt('Short description:', existing?.desc || '');
-  if (desc === null) return null;
+    modalTitle.textContent = existing ? 'Update template details' : 'Save new template';
 
-  const tagsRaw = prompt('Tags separated by commas:', existing?.tags?.join(', ') || '');
-  if (tagsRaw === null) return null;
+    titleInput.value = existing?.title || '';
+    categoryInput.value = existing?.category || 'viral';
+    descInput.value = existing?.desc || '';
+    tagsInput.value = existing?.tags?.join(', ') || '';
 
-  return {
-    title: title.trim() || 'Untitled Template',
-    category: (category.trim() || 'viral').toLowerCase(),
-    desc: desc.trim() || 'Custom consultation template.',
-    tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
-  };
+    modal.classList.remove('hidden');
+
+    setTimeout(() => {
+      titleInput.focus();
+      titleInput.select();
+    }, 50);
+
+    function closeModal(result) {
+      modal.classList.add('hidden');
+
+      saveMetaBtn.removeEventListener('click', onSave);
+      cancelMetaBtn?.removeEventListener('click', onCancel);
+      closeMetaBtn?.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onBackdropClick);
+      document.removeEventListener('keydown', onKeyDown);
+
+      resolve(result);
+    }
+
+    function onSave() {
+      const tagsRaw = tagsInput.value || '';
+
+      closeModal({
+        title: titleInput.value.trim() || 'Untitled Template',
+        category: (categoryInput.value.trim() || 'viral').toLowerCase(),
+        desc: descInput.value.trim() || 'Custom consultation template.',
+        tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+      });
+    }
+
+    function onCancel() {
+      closeModal(null);
+    }
+
+    function onBackdropClick(e) {
+      if (e.target === modal) onCancel();
+    }
+
+    function onKeyDown(e) {
+      if (e.key === 'Escape') onCancel();
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        onSave();
+      }
+    }
+
+    saveMetaBtn.addEventListener('click', onSave);
+    cancelMetaBtn?.addEventListener('click', onCancel);
+    closeMetaBtn?.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBackdropClick);
+    document.addEventListener('keydown', onKeyDown);
+  });
 }
 
 function buildSummaryText() {
@@ -3848,8 +4017,8 @@ async function saveCurrentTemplate() {
     return;
   }
 
-  const meta = promptForTemplateMeta();
-  if (!meta) return;
+  const meta = await promptForTemplateMeta();
+if (!meta) return;
 
   const payload = {
     title: meta.title,
@@ -3887,9 +4056,9 @@ async function updateCurrentTemplate() {
     return;
   }
 
-  const meta = promptForTemplateMeta(template);
-  if (!meta) return;
-
+  const meta = await promptForTemplateMeta(template);
+if (!meta) return;
+  
   await updateDoc(doc(db, 'consultationTemplates', template.id), {
     title: meta.title,
     category: meta.category,
@@ -4062,5 +4231,49 @@ if (firebaseReady) {
 }
 
 </script>
+<div id="templateMetaModal" class="template-meta-modal hidden">
+  <div class="template-meta-card">
+    <div class="template-meta-header">
+      <div>
+        <strong id="templateMetaModalTitle">Template details</strong>
+        <div class="template-meta-subtitle">Edit title, category, description, and tags in one place.</div>
+      </div>
+      <button type="button" id="templateMetaCloseBtn" class="template-meta-close">×</button>
+    </div>
+
+    <div class="template-meta-body">
+      <label>
+        Template title
+        <input id="templateMetaTitle" placeholder="e.g. Sore throat" />
+      </label>
+
+      <label>
+        Category
+        <select id="templateMetaCategory">
+          <option value="respiratory">Respiratory / ENT</option>
+          <option value="skin">Skin / Soft tissue</option>
+          <option value="viral">Viral / General</option>
+          <option value="urinary">Urinary</option>
+          <option value="msk">MSK / Injury</option>
+        </select>
+      </label>
+
+      <label>
+        Description
+        <textarea id="templateMetaDesc" placeholder="Short template description. URLs will become clickable."></textarea>
+      </label>
+
+      <label>
+        Tags
+        <input id="templateMetaTags" placeholder="e.g. sore throat, strep, ENT" />
+      </label>
+    </div>
+
+    <div class="template-meta-actions">
+      <button type="button" id="templateMetaCancelBtn">Cancel</button>
+      <button type="button" id="templateMetaSaveBtn">Save template details</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
