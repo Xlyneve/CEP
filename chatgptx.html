@@ -817,6 +817,24 @@ mark.underlineMatch{
 #defTip .kbHoverImage {
   pointer-events: auto;
 }
+
+#defTip a.tipUrlLink {
+  color: #1a0dab;
+  text-decoration: underline;
+  cursor: pointer;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+#defTip a.tipUrlLink:hover {
+  color: #6b4bb8;
+  text-decoration-thickness: 2px;
+}
+
+#defTip .tipCaption a.tipUrlLink {
+  font-size: 11px;
+}
+
 a.conceptLink { 
   position: relative; 
   overflow: visible; 
@@ -3398,19 +3416,47 @@ function showDefTip(defText, whyText, imageUrl, caption, x, y) {
 
 function escapeHtml(s) {
   return (s || '').replace(/[&<>"']/g, (ch) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
   }[ch]));
 }
 
+function linkifyText(s) {
+  const safe = escapeHtml(s);
+
+  return safe.replace(
+    /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi,
+    (url) => {
+      let cleanUrl = url;
+      let trailing = '';
+
+      // Avoid including punctuation at the end of links
+      while (/[.,!?;:)]+$/.test(cleanUrl)) {
+        trailing = cleanUrl.slice(-1) + trailing;
+        cleanUrl = cleanUrl.slice(0, -1);
+      }
+
+      const href = cleanUrl.startsWith('www.')
+        ? `https://${cleanUrl}`
+        : cleanUrl;
+
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="tipUrlLink">${cleanUrl}</a>${trailing}`;
+    }
+  );
+}
+
 function renderTip(defText, whyText, imageUrl = '', caption = '') {
-  const defSafe = escapeHtml(defText);
-  const whySafe = escapeHtml(whyText);
-  const capSafe = escapeHtml(caption);
+  const defSafe = linkifyText(defText);
+  const whySafe = linkifyText(whyText);
+  const capSafe = linkifyText(caption);
 
   return `
     ${imageUrl ? `
-      <img class="kbHoverImage" src="${imageUrl}" alt="">
-      ${capSafe ? `<div class="defLabel" style="margin-bottom:8px;">${capSafe}</div>` : ''}
+      <img class="kbHoverImage" src="${escapeHtml(imageUrl)}" alt="">
+      ${capSafe ? `<div class="defLabel tipCaption" style="margin-bottom:8px;">${capSafe}</div>` : ''}
     ` : ''}
 
     <div class="defLabel">DEFINITION</div>
@@ -4625,4 +4671,3 @@ updateUIForLockState();
 
 </body>
 </html>
-
