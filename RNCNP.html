@@ -77,7 +77,45 @@
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
 
-    
+    .sticky-template-info {
+  display: grid;
+  gap: 3px;
+  min-width: 220px;
+  max-width: 360px;
+  flex: 1 1 260px;
+}
+
+.sticky-template-title {
+  font-family: 'Fors', Tahoma, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sticky-template-desc {
+  font-size: 0.76rem;
+  color: #555;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar.minimized .sticky-template-desc {
+  display: none;
+}
+
+.topbar.minimized .sticky-template-title {
+  font-size: 0.88rem;
+}
+
+.topbar.minimized .sticky-template-info {
+  max-width: 260px;
+}
 
     .topbar-toggle {
   display: none;
@@ -838,7 +876,7 @@ select option {
 
 .patient-link-row {
   display: grid;
-  grid-template-columns: 1fr 1.4fr auto;
+  grid-template-columns: 1fr 1.4fr auto auto;
   gap: 8px;
   align-items: center;
 }
@@ -847,35 +885,17 @@ select option {
   width: 100%;
 }
 
-.patient-link-row {
-  grid-template-columns: auto 1fr 1.4fr auto auto;
+.patient-link-include {
+  display: none;
 }
 
-.patient-link-include-wrap {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 10px;
-  border-radius: 14px;
-  border: 1px solid rgba(20,20,20,0.12);
-  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
-  white-space: nowrap;
-  cursor: pointer;
-  font-size: 0.82rem;
-}
-
-.patient-link-include-wrap input {
-  width: 16px;
-  height: 16px;
-  accent-color: #d6ecff;
-}
 
 @media (max-width: 760px) {
   .patient-link-row {
     grid-template-columns: 1fr;
   }
 
-  .patient-link-include-wrap {
+  .patient-link-delete {
     width: 100%;
   }
 }
@@ -901,15 +921,7 @@ select option {
   text-decoration: none;
 }
 
-@media (max-width: 760px) {
-  .patient-link-row {
-    grid-template-columns: 1fr;
-  }
 
-  .patient-link-delete {
-    width: 100%;
-  }
-}
 
 .patient-link-top {
   display: flex;
@@ -945,9 +957,6 @@ select option {
   font-size: 0.88rem;
 }
 
-.patient-link-row {
-  grid-template-columns: 1fr 1.4fr auto auto;
-}
 
 .patient-qr-btn {
   min-height: 38px;
@@ -979,40 +988,49 @@ select option {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 8px 10px;
   border-radius: 16px;
   border: 1px solid rgba(20,20,20,0.12);
   background: rgba(255,255,255,0.66);
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
-.patient-info-preview-item a {
+.patient-info-preview-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.patient-info-preview-item.selected {
+  border-color: rgba(90, 140, 210, 0.32);
+  background: linear-gradient(180deg, rgba(214,236,255,0.95), rgba(196,223,255,0.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.72), 0 6px 16px rgba(80,120,180,0.10);
+}
+
+.patient-info-select-status {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(20,20,20,0.10);
+  flex-shrink: 0;
+}
+
+.patient-info-open-link {
   text-decoration: none;
+  color: #111;
+  padding: 5px 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.36);
 }
 
-.patient-info-print-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.patient-info-print-item {
-  display: grid;
-  gap: 6px;
-  justify-items: center;
-  max-width: 130px;
-  text-align: center;
-  font-size: 0.82rem;
-}
-
-.patient-info-print-item img {
-  width: 100px;
-  height: 100px;
-  object-fit: contain;
-  border: 1px solid rgba(0,0,0,0.16);
-  border-radius: 10px;
-  padding: 4px;
-  background: white;
+.patient-info-open-link:hover {
+  background: rgba(255,255,255,0.55);
 }
 
 .quick-dose-row {
@@ -1112,11 +1130,6 @@ select option {
   accent-color: #d6ecff;
 }
 
-@media (max-width: 760px) {
-  .patient-link-row {
-    grid-template-columns: 1fr;
-  }
-}
 
 .checklist-list {
   display: grid;
@@ -1382,6 +1395,31 @@ select option {
       .page-title {
         font-size: 1.5rem;
       }
+	    .sticky-template-info {
+    width: 100%;
+    max-width: none;
+  }
+
+  .sticky-template-title {
+    font-size: 0.98rem;
+  }
+
+  .sticky-template-desc {
+    display: none;
+  }
+
+  .top-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .top-actions .glass-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 9px;
+    font-size: 0.82rem;
+  }
     }
 	
 
@@ -1391,14 +1429,23 @@ select option {
   <button class="topbar-toggle" id="topbarToggle" title="Show header">☰</button>
   <div class="page-shell">
     <header class="topbar" id="topbar">
-      <div class="brand-wrap" style="display:none;"></div>
+  <div class="sticky-template-info">
+    <div class="sticky-template-title" id="activeTemplateTitle">General Consultation</div>
+    <div class="sticky-template-desc" id="activeTemplateDesc">
+      Use this page to guide assessment, decision-making, prescribing checks, patient advice, and clean documentation.
+    </div>
+  </div>
 
-      <div class="top-actions">
-       <a class="glass-btn header-btn" href="home.html" data-full="🏠 Home" data-mini="🏠">🏠 Home</a>
-<a class="glass-btn header-btn" href="https://xlyneve.github.io/CEP/chatgptx.html" data-full="📝 Notes" data-mini="📝">📝 Notes</a>
-<button class="glass-btn header-btn" id="printBtn" data-full="🖨️ Print template" data-mini="🖨️">🖨️ Print template</button>
-      </div>
-    </header>
+  <div class="top-actions">
+    <button class="glass-btn" id="fillTemplateBtn">✨ Load template prompts</button>
+    <button class="glass-btn" id="clearBtn">🧼 Clear form</button>
+    <button class="glass-btn" id="generateBtn">📋 Generate summary</button>
+
+    <a class="glass-btn header-btn" href="home.html" data-full="🏠 Home" data-mini="🏠">🏠 Home</a>
+    <a class="glass-btn header-btn" href="https://xlyneve.github.io/CEP/chatgptx.html" data-full="📝 Notes" data-mini="📝">📝 Notes</a>
+    <button class="glass-btn header-btn" id="printBtn" data-full="🖨️ Print template" data-mini="🖨️">🖨️ Print template</button>
+  </div>
+</header>
 
     <div class="layout">
       <aside class="panel">
@@ -1422,19 +1469,12 @@ select option {
       <main class="main">
         <section class="hero">
           <div class="hero-top">
-            <div>
-              <h2 class="hero-title" id="activeTemplateTitle">General Consultation</h2>
-              <p class="hero-sub" id="activeTemplateDesc">
-                Use this page to guide assessment, decision-making, prescribing checks, patient advice, and clean documentation.
-              </p>
-            </div>
-
-            <div class="hero-actions">
-              <button class="glass-btn" id="fillTemplateBtn">✨ Load template prompts</button>
-              <button class="glass-btn" id="clearBtn">🧼 Clear form</button>
-              <button class="glass-btn" id="generateBtn">📋 Generate summary</button>
-            </div>
-          </div>
+           <div>
+  <p class="hero-sub">
+    Select a template from the left, then use the sticky header buttons to load prompts, clear, or generate the summary.
+  </p>
+</div>
+		   </div>
 
         
         </section>
@@ -2639,8 +2679,10 @@ function getPatientLinks() {
       const url = urlRaw ? normaliseUrl(urlRaw) : '';
       const qrDataUrl = row.dataset.qrDataUrl || '';
       const includeInSummary = !!row.querySelector('.patient-link-include')?.checked;
+      const id = row.dataset.linkId || '';
 
       return {
+        id,
         title: title || url || 'Patient information',
         url,
         qrDataUrl,
@@ -2660,11 +2702,19 @@ function renderPatientLinksPreview() {
   const links = getPatientLinks();
 
   patientLinksPreview.innerHTML = links.map(link => `
-    <div class="patient-info-preview-item">
+    <div
+      class="patient-info-preview-item ${link.includeInSummary ? 'selected' : ''}"
+      data-link-id="${escapeHtml(link.id)}"
+      title="${link.includeInSummary ? 'Included in generated summary' : 'Click to add to generated summary'}"
+    >
+      <span class="patient-info-select-status">
+        ${link.includeInSummary ? '✓' : '+'}
+      </span>
+
       ${
         link.url
-          ? `<a class="glass-btn" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(link.title)}</a>`
-          : `<span class="glass-btn">🔗 ${escapeHtml(link.title)}</span>`
+          ? `<a class="patient-info-open-link" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(link.title)}</a>`
+          : `<span class="patient-info-open-link">🔗 ${escapeHtml(link.title)}</span>`
       }
 
       ${
@@ -2681,19 +2731,22 @@ function createPatientLinkRow(link = {}) {
 
   const row = document.createElement('div');
   row.className = 'patient-link-row';
+
+  const linkId =
+    link.id ||
+    (crypto?.randomUUID ? crypto.randomUUID() : `patient-link-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
+  row.dataset.linkId = linkId;
   row.dataset.qrDataUrl = link.qrDataUrl || '';
 
-  const checked = link.includeInSummary !== false ? 'checked' : '';
+  const checked = link.includeInSummary === true ? 'checked' : '';
 
   row.innerHTML = `
-    <label class="patient-link-include-wrap" title="Include in generated summary">
-      <input
-        type="checkbox"
-        class="patient-link-include"
-        ${checked}
-      />
-      <span>Add to summary</span>
-    </label>
+    <input
+      type="checkbox"
+      class="patient-link-include"
+      ${checked}
+    />
 
     <input
       type="text"
@@ -2715,6 +2768,7 @@ function createPatientLinkRow(link = {}) {
     <button type="button" class="patient-link-delete" title="Delete link">✕</button>
   `;
 
+  const includeBox = row.querySelector('.patient-link-include');
   const qrBtn = row.querySelector('.patient-qr-btn');
   const qrInput = row.querySelector('.patient-qr-input');
 
@@ -2761,6 +2815,28 @@ function createPatientLinkRow(link = {}) {
   patientLinksList.appendChild(row);
   renderPatientLinksPreview();
 }
+
+patientLinksPreview?.addEventListener('click', (e) => {
+  const link = e.target.closest('.patient-info-open-link');
+
+  // Centre/link area opens the actual patient info link.
+  if (link && link.tagName === 'A') {
+    e.stopPropagation();
+    return;
+  }
+
+  const item = e.target.closest('.patient-info-preview-item');
+  if (!item) return;
+
+  const linkId = item.dataset.linkId;
+  const row = patientLinksList?.querySelector(`.patient-link-row[data-link-id="${CSS.escape(linkId)}"]`);
+  const includeBox = row?.querySelector('.patient-link-include');
+
+  if (!includeBox) return;
+
+  includeBox.checked = !includeBox.checked;
+  renderPatientLinksPreview();
+});
 
 function renderPatientLinks(links = []) {
   if (!patientLinksList) return;
