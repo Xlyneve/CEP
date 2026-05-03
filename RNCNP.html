@@ -2334,6 +2334,8 @@ let firebaseReady = false;
 let currentUser = null;
 let userTemplates = [];
 let activeTemplateId = 'general';
+let hasUnsavedTemplateEdits = false;
+let suppressDirtyTracking = false;
 
 try {
   app = initializeApp(firebaseConfig);
@@ -2460,6 +2462,26 @@ const patientLinkEditor = document.getElementById('patientLinkEditor');
 const topbar = document.getElementById('topbar');
 const topbarToggle = document.getElementById('topbarToggle');
 const topActions = document.querySelector('.top-actions');
+
+
+function markTemplateDirty() {
+  if (suppressDirtyTracking) return;
+  hasUnsavedTemplateEdits = true;
+}
+
+function setupTemplateDirtyTracking() {
+  const selectors = [
+    'input',
+    'textarea',
+    '.editable-checklist',
+    '.private-note-editor'
+  ];
+
+  document.querySelectorAll(selectors.join(',')).forEach(el => {
+    el.addEventListener('input', markTemplateDirty);
+    el.addEventListener('change', markTemplateDirty);
+  });
+}
 
 const authWrap = document.createElement('div');
 authWrap.style.display = 'inline-flex';
@@ -3387,22 +3409,31 @@ async function loadUserTemplates() {
   try {
     const q = query(templatesRef, orderBy('updatedAt', 'desc'));
     const snap = await getDocs(q);
-    userTemplates = snap.docs.map(d => ({
-      id: d.id,
-      firebaseId: d.id,
-      isBuiltIn: false,
-      ...d.data()
-    }));
+
+    userTemplates = snap.docs
+      .map(docSnap => ({
+        id: docSnap.id,
+        firebaseId: docSnap.id,
+        isBuiltIn: false,
+        ...docSnap.data()
+      }))
+      .filter(template => !template.archived);
+
   } catch (err) {
     console.warn('Firestore load failed, retrying without orderBy:', err);
+
     try {
       const snap = await getDocs(templatesRef);
-      userTemplates = snap.docs.map(d => ({
-        id: d.id,
-        firebaseId: d.id,
-        isBuiltIn: false,
-        ...d.data()
-      }));
+
+      userTemplates = snap.docs
+        .map(docSnap => ({
+          id: docSnap.id,
+          firebaseId: docSnap.id,
+          isBuiltIn: false,
+          ...docSnap.data()
+        }))
+        .filter(template => !template.archived);
+
     } catch (innerErr) {
       console.warn('Firestore fallback load also failed. Showing built-in templates only.', innerErr);
       userTemplates = [];
@@ -3451,11 +3482,26 @@ function renderTemplates() {
 }
 
 function setActiveTemplate(id) {
+  if (id === activeTemplateId) return;
+
+  if (hasUnsavedTemplateEdits) {
+    const ok = confirm(
+      'You have unsaved changes in the current template.\n\nLoad another template and replace what is currently showing?'
+    );
+
+    if (!ok) return;
+  }
+
   activeTemplateId = id;
   syncHero();
+
+  suppressDirtyTracking = true;
+  fillTemplatePrompts();
+  suppressDirtyTracking = false;
+
+  hasUnsavedTemplateEdits = false;
   renderTemplates();
 }
-
 function formatTemplateDescHtml(value) {
   const wrapper = document.createElement('div');
   wrapper.innerHTML = value || '';
@@ -4394,6 +4440,7 @@ if (!meta) return;
   const docRef = await addDoc(templatesRef, payload);
   activeTemplateId = docRef.id;
   await loadUserTemplates();
+  hasUnsavedTemplateEdits = false;
   alert('Template saved.');
 }
 
@@ -4415,24 +4462,46 @@ async function updateCurrentTemplate() {
     return;
   }
 
+  const ok = confirm(
+    `Update this template?\n\nTemplate: ${template.title}\n\nA backup copy will be saved first.`
+  );
+  if (!ok) return;
+
   const meta = await promptForTemplateMeta(template);
-if (!meta) return;
-  
+  if (!meta) return;
+
+  await addDoc(collection(db, 'consultationTemplateBackups'), {
+    templateId: template.id,
+    backedUpAt: serverTimestamp(),
+    backedUpBy: currentUser.email || currentUser.uid || 'unknown',
+    templateData: {
+      title: template.title || '',
+      category: template.category || '',
+      desc: template.desc || '',
+      tags: template.tags || [],
+      prompts: template.prompts || {},
+      ownerUid: template.ownerUid || currentUser.uid || '',
+      ownerEmail: template.ownerEmail || currentUser.email || ''
+    }
+  });
+
   await updateDoc(doc(db, 'consultationTemplates', template.id), {
     title: meta.title,
     category: meta.category,
     desc: meta.desc,
     tags: meta.tags,
     prompts: collectPromptFields(),
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
+    lastBackedUpAt: serverTimestamp()
   });
 
   await loadUserTemplates();
   activeTemplateId = template.id;
   syncHero();
   renderTemplates();
+  hasUnsavedTemplateEdits = false;
   alert('Template updated.');
-}
+  }
 
 async function deleteCurrentTemplate() {
   if (!firebaseReady) {
@@ -4452,14 +4521,23 @@ async function deleteCurrentTemplate() {
     return;
   }
 
-  const ok = confirm(`Delete template: ${template.title}?`);
-  if (!ok) return;
+  const ok = confirm(
+  `Archive template instead of deleting?\n\nTemplate: ${template.title}\n\nYou can recover it from Firestore if needed.`
+);
+if (!ok) return;
 
-  await deleteDoc(doc(db, 'consultationTemplates', template.id));
-  activeTemplateId = defaultTemplates[0].id;
-  await loadUserTemplates();
-  syncHero();
-  alert('Template deleted.');
+await updateDoc(doc(db, 'consultationTemplates', template.id), {
+  archived: true,
+  archivedAt: serverTimestamp(),
+  archivedBy: currentUser.email || currentUser.uid || 'unknown',
+  updatedAt: serverTimestamp()
+});
+
+activeTemplateId = defaultTemplates[0].id;
+await loadUserTemplates();
+syncHero();
+renderTemplates();
+alert('Template archived.');
 }
 
 function setupDesktopHeaderMinimize() {
@@ -4571,6 +4649,8 @@ safeAddListener(patientLinkToggleBtn, 'click', () => {
     createPatientLinkRow();
   }
 });
+
+setupTemplateDirtyTracking();
 
 safeAddListener(addPatientLinkBtn, 'click', () => createPatientLinkRow());
 
