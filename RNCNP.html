@@ -1046,11 +1046,36 @@ select option {
     0 8px 18px rgba(0,0,0,0.07);
 }
 
-#templateMetaDesc {
+#templateMetaDesc,
+.template-desc-editor {
   min-height: 120px;
   overflow: hidden;
   resize: none;
   white-space: pre-wrap;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(20,20,20,0.11);
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.66));
+  color: #111;
+  padding: 11px 13px;
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.70),
+    0 5px 14px rgba(0,0,0,0.05);
+}
+
+.template-desc-editor:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(0,0,0,0.42);
+  pointer-events: none;
+}
+
+.template-desc-editor:focus {
+  border-color: rgba(90,140,210,0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.78),
+    0 0 0 3px rgba(214,236,255,0.50),
+    0 8px 18px rgba(0,0,0,0.07);
 }
 
 .template-meta-actions {
@@ -2255,10 +2280,15 @@ select option {
         </select>
       </label>
 
-      <label>
-        Description
-        <textarea id="templateMetaDesc" placeholder="Short template description. URLs will become clickable."></textarea>
-      </label>
+     <label>
+  Description
+  <div
+    id="templateMetaDesc"
+    class="template-desc-editor"
+    contenteditable="true"
+    data-placeholder="Short template description. URLs will become clickable."
+  ></div>
+</label>
 
       <label>
         Tags
@@ -3419,13 +3449,109 @@ function setActiveTemplate(id) {
   renderTemplates();
 }
 
-function linkifyText(text) {
-  const escaped = escapeHtml(text || '');
+function formatTemplateDescHtml(value) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = value || '';
 
-  return escaped.replace(
-    /(https?:\/\/[^\s<]+)/g,
-    '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
-  );
+  wrapper.querySelectorAll('script, style, iframe, object, embed').forEach(el => el.remove());
+
+  const allowedTags = new Set([
+    'B', 'I', 'U', 'STRONG', 'EM', 'BR', 'DIV', 'P', 'SPAN', 'A'
+  ]);
+
+  function linkifyTextNode(textNode) {
+    const text = textNode.nodeValue || '';
+    const urlRegex = /(https?:\/\/[^\s<]+)/g;
+
+    if (!urlRegex.test(text)) return;
+
+    urlRegex.lastIndex = 0;
+
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+    let match;
+
+    while ((match = urlRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+
+      const a = document.createElement('a');
+      a.href = match[1];
+      a.textContent = match[1];
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      frag.appendChild(a);
+
+      lastIndex = match.index + match[1].length;
+    }
+
+    if (lastIndex < text.length) {
+      frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+
+    textNode.replaceWith(frag);
+  }
+
+  function cleanNode(node) {
+    [...node.childNodes].forEach(child => {
+      if (child.nodeType === Node.TEXT_NODE) {
+        linkifyTextNode(child);
+        return;
+      }
+
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (!allowedTags.has(child.tagName)) {
+          child.replaceWith(document.createTextNode(child.textContent || ''));
+          return;
+        }
+
+        if (child.tagName === 'A') {
+          const href = child.getAttribute('href') || child.textContent || '';
+
+          if (!/^https?:\/\//i.test(href)) {
+            child.replaceWith(document.createTextNode(child.textContent || ''));
+            return;
+          }
+
+          child.setAttribute('href', href);
+          child.setAttribute('target', '_blank');
+          child.setAttribute('rel', 'noopener noreferrer');
+
+          [...child.attributes].forEach(attr => {
+            if (!['href', 'target', 'rel'].includes(attr.name)) {
+              child.removeAttribute(attr.name);
+            }
+          });
+        } else {
+          [...child.attributes].forEach(attr => {
+            if (attr.name !== 'style') child.removeAttribute(attr.name);
+          });
+
+          if (child.hasAttribute('style')) {
+            const style = child.getAttribute('style') || '';
+            const safeStyle = style
+              .split(';')
+              .map(s => s.trim())
+              .filter(s =>
+                /^font-weight\s*:\s*(bold|700|600)/i.test(s) ||
+                /^font-style\s*:\s*italic/i.test(s) ||
+                /^text-decoration\s*:\s*underline/i.test(s)
+              )
+              .join('; ');
+
+            if (safeStyle) child.setAttribute('style', safeStyle);
+            else child.removeAttribute('style');
+          }
+        }
+
+        cleanNode(child);
+      }
+    });
+  }
+
+  cleanNode(wrapper);
+  return wrapper.innerHTML;
 }
 
 function syncHero() {
@@ -3435,8 +3561,8 @@ function syncHero() {
   if (activeTemplateTitle) activeTemplateTitle.textContent = template.title;
 
   if (activeTemplateDesc) {
-    activeTemplateDesc.innerHTML = linkifyText(template.desc);
-  }
+  activeTemplateDesc.innerHTML = formatTemplateDescHtml(template.desc);
+}
   
   heroTemplateInfo?.classList.remove('expanded');
 if (activeTemplateDesc) activeTemplateDesc.classList.add('collapsed');
@@ -3516,7 +3642,7 @@ function promptForTemplateMeta(existing = null) {
 
     titleInput.value = existing?.title || '';
     categoryInput.value = existing?.category || 'viral';
-    descInput.value = existing?.desc || '';
+    descInput.innerHTML = formatTemplateDescHtml(existing?.desc || '');
     tagsInput.value = existing?.tags?.join(', ') || '';
     autoResizeInputTextarea(descInput);
 
@@ -3536,6 +3662,7 @@ function promptForTemplateMeta(existing = null) {
   modal.removeEventListener('click', onBackdropClick);
   document.removeEventListener('keydown', onKeyDown);
   descInput.removeEventListener('input', onDescInput);
+  descInput.removeEventListener('keydown', onDescKeyDown);
 
   resolve(result);
 }
@@ -3544,13 +3671,37 @@ function onDescInput() {
   autoResizeInputTextarea(descInput);
 }
 
+function onDescKeyDown(e) {
+  if (!(e.ctrlKey || e.metaKey)) return;
+
+  const key = e.key.toLowerCase();
+
+  if (key === 'b') {
+    e.preventDefault();
+    document.execCommand('bold');
+    autoResizeInputTextarea(descInput);
+  }
+
+  if (key === 'i') {
+    e.preventDefault();
+    document.execCommand('italic');
+    autoResizeInputTextarea(descInput);
+  }
+
+  if (key === 'u') {
+    e.preventDefault();
+    document.execCommand('underline');
+    autoResizeInputTextarea(descInput);
+  }
+}
+
     function onSave() {
       const tagsRaw = tagsInput.value || '';
 
       closeModal({
         title: titleInput.value.trim() || 'Untitled Template',
         category: (categoryInput.value.trim() || 'viral').toLowerCase(),
-        desc: descInput.value.trim() || 'Custom consultation template.',
+        desc: formatTemplateDescHtml(descInput.innerHTML.trim()) || 'Custom consultation template.',
         tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
       });
     }
@@ -3572,11 +3723,12 @@ function onDescInput() {
     }
 
     saveMetaBtn.addEventListener('click', onSave);
-cancelMetaBtn?.addEventListener('click', onCancel);
-closeMetaBtn?.addEventListener('click', onCancel);
-modal.addEventListener('click', onBackdropClick);
-document.addEventListener('keydown', onKeyDown);
-descInput.addEventListener('input', onDescInput);
+    cancelMetaBtn?.addEventListener('click', onCancel);
+    closeMetaBtn?.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBackdropClick);
+    document.addEventListener('keydown', onKeyDown);
+    descInput.addEventListener('input', onDescInput);
+    descInput.addEventListener('keydown', onDescKeyDown);
   });
 }
 
