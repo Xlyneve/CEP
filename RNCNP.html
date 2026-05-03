@@ -3864,9 +3864,16 @@ function buildSummaryText() {
   if (presentationExtraText) historyParts.push(sentence(presentationExtraText));
 
   const redFlagsBlock = buildSplitChecklist(redFlagsPrimary, redFlagsSecondary);
-  if (redFlagsBlock) historyParts.push(redFlagsBlock);
 
-  sections.push(`History of presenting complaint:\n${historyParts.filter(Boolean).join(' ')}`);
+let historySummary = historyParts.filter(Boolean).join(' ');
+
+if (redFlagsBlock) {
+  historySummary += `\n${redFlagsBlock}`;
+}
+
+if (historySummary) {
+  sections.push(`History of presenting complaint:\n${historySummary}`);
+}
 
  const examParts = [];
 
@@ -3932,8 +3939,8 @@ if (examParts.length) {
   if (managementPlanFreeText) managementParts.push(sentence(managementPlanFreeText));
 
   if (managementParts.length) {
-    sections.push(`Management Plan:\n${managementParts.filter(Boolean).join(' ')}`);
-  }
+  sections.push(`Management Plan:\n${managementParts.filter(Boolean).join('\n')}`);
+}
 
   const followUpBlock = buildSplitChecklist(followUpPrimary, followUpSecondary);
   if (followUpBlock) {
