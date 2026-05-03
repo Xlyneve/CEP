@@ -593,6 +593,9 @@ select option {
   line-height: 1.35;
   white-space: pre-wrap;
 }
+.hero-template-desc {
+  overscroll-behavior: contain;
+}
 
 .hero-template-desc a {
   color: rgba(62, 122, 170, 0.88);
@@ -640,8 +643,11 @@ select option {
 }
 
 .hero-template-info.expanded .hero-template-desc {
-  max-height: 240px;
-  overflow: auto;
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  overscroll-behavior: contain;
 }
 
 .hero-template-info.expanded .hero-template-toggle {
@@ -3565,7 +3571,11 @@ function syncHero() {
 }
   
   heroTemplateInfo?.classList.remove('expanded');
-if (activeTemplateDesc) activeTemplateDesc.classList.add('collapsed');
+
+if (activeTemplateDesc) {
+  activeTemplateDesc.classList.add('collapsed');
+  activeTemplateDesc.scrollTop = 0;
+}
 if (heroTemplateToggle) heroTemplateToggle.textContent = '˅';
   
   deleteBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
@@ -4528,7 +4538,13 @@ function setupMobileTopbar() {
 safeAddListener(searchInput, 'input', renderTemplates);
 safeAddListener(categoryFilter, 'change', renderTemplates);
 safeAddListener(heroTemplateToggle, 'click', () => {
-  heroTemplateInfo?.classList.toggle('expanded');
+  if (!heroTemplateInfo || !activeTemplateDesc) return;
+
+  const isExpanded = heroTemplateInfo.classList.toggle('expanded');
+
+  if (!isExpanded) {
+    activeTemplateDesc.scrollTop = 0;
+  }
 });
 safeAddListener(fillTemplateBtn, 'click', fillTemplatePrompts);
 safeAddListener(clearBtn, 'click', clearForm);
