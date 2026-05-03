@@ -2755,8 +2755,15 @@ function autoGrowTextarea(el) {
   el.style.height = 'auto';
   el.style.height = `${el.scrollHeight}px`;
 }
+function autoResizeInputTextarea(el) {
+  if (!el) return;
 
+  el.style.height = 'auto';
 
+  requestAnimationFrame(() => {
+    el.style.height = `${el.scrollHeight}px`;
+  });
+}
 function setupPrivateNotesAutoGrow() {
   [
     'presentationExtraText',
@@ -3659,9 +3666,10 @@ function promptForTemplateMeta(existing = null) {
     modal.classList.remove('hidden');
 
     setTimeout(() => {
-      titleInput.focus();
-      titleInput.select();
-    }, 50);
+  autoResizeInputTextarea(descInput);
+  titleInput.focus();
+  titleInput.select();
+}, 50);
 
     function closeModal(result) {
   modal.classList.add('hidden');
