@@ -367,8 +367,18 @@ button:hover,
   background: rgba(240,248,255,0.3);
 }
 
-mark {
-  background-color: #F3F5A9;
+mark,
+.highlight-gradient {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 205, 225, 0.82),
+    rgba(255, 244, 170, 0.82),
+    rgba(196, 235, 202, 0.82)
+  );
+  border-radius: 5px;
+  padding: 0 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .edit-box {
@@ -913,18 +923,17 @@ function normalizeHighlightWrappers(html){
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
   tmp.querySelectorAll('mark').forEach(el => {
-    const span = document.createElement('span');
-    span.style.backgroundColor = '#F3F5A9';
-    while(el.firstChild) span.appendChild(el.firstChild);
-    el.replaceWith(span);
-  });
-  tmp.querySelectorAll('[style*="background-color"]').forEach(el => {
-    const bg = el.style.backgroundColor || '#F3F5A9';
-    const span = document.createElement('span');
-    span.style.backgroundColor = bg;
-    while(el.firstChild) span.appendChild(el.firstChild);
-    el.replaceWith(span);
-  });
+  const span = document.createElement('span');
+  span.className = 'highlight-gradient';
+  while(el.firstChild) span.appendChild(el.firstChild);
+  el.replaceWith(span);
+});
+  tmp.querySelectorAll('[style*="background-color"], [style*="background"]').forEach(el => {
+  const span = document.createElement('span');
+  span.className = 'highlight-gradient';
+  while(el.firstChild) span.appendChild(el.firstChild);
+  el.replaceWith(span);
+});
   return tmp.innerHTML;
 }
 
@@ -981,18 +990,41 @@ function stripHTML(html) {
 }
 
 // Format buttons
-const HIGHLIGHT_COLOR = '#F3F5A9';
 window.formatText = function(id, command){
   const editableDiv = document.getElementById(`editText-${id}`);
   if (!editableDiv) return;
+
   editableDiv.focus();
-  if(command==='bold'){ document.execCommand('bold', false, null); return; }
-  if(command==='highlight'){
-    try{
-      const supported = document.queryCommandSupported && document.queryCommandSupported('hiliteColor');
-      if(supported) document.execCommand('hiliteColor', false, HIGHLIGHT_COLOR);
-      else document.execCommand('backColor', false, HIGHLIGHT_COLOR);
-    }catch{ document.execCommand('backColor', false, HIGHLIGHT_COLOR);}
+
+  if (command === 'bold') {
+    document.execCommand('bold', false, null);
+    return;
+  }
+
+  if (command === 'highlight') {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = selection.toString();
+    if (!selectedText.trim()) return;
+
+    const container = range.commonAncestorContainer;
+    const parent = container.nodeType === 3 ? container.parentNode : container;
+
+    if (parent.classList && parent.classList.contains('highlight-gradient')) {
+      const textNode = document.createTextNode(parent.textContent);
+      parent.replaceWith(textNode);
+    } else {
+      const span = document.createElement('span');
+      span.className = 'highlight-gradient';
+      span.textContent = selectedText;
+
+      range.deleteContents();
+      range.insertNode(span);
+    }
+
+    selection.removeAllRanges();
   }
 };
 
