@@ -1920,11 +1920,16 @@ select option {
     </div>
   </div>
 
-  <div class="section-fields">
-    <label>
-      HEAD & NECK
-      <div class="editable-checklist" id="examHeadNeckList" data-placeholder="Add head & neck finding..."></div>
-    </label>
+ <div class="section-fields">
+  <label>
+    General findings
+    <div class="editable-checklist" id="examGeneralList" data-placeholder="Add general finding..."></div>
+  </label>
+
+  <label>
+    HEAD & NECK
+    <div class="editable-checklist" id="examHeadNeckList" data-placeholder="Add head & neck finding..."></div>
+  </label>
 
     <label>
       ENT
@@ -2556,6 +2561,7 @@ const checklistIds = [
   'hpcList',
   'redFlagsPrimaryList',
   'redFlagsSecondaryList',
+  'examGeneralList',
   'examHeadNeckList',
   'examEntList',
   'examOropharynxList',
@@ -3262,6 +3268,7 @@ function collectPromptFields() {
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
     redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
+    examGeneral: getChecklistItems('examGeneralList').map(i => i.text),
     examHeadNeck: getChecklistItems('examHeadNeckList').map(i => i.text),
     examEnt: getChecklistItems('examEntList').map(i => i.text),
     examOropharynx: getChecklistItems('examOropharynxList').map(i => i.text),
@@ -3355,13 +3362,14 @@ function fillTemplatePrompts() {
   if (getField('vitalSats')) getField('vitalSats').value = template.prompts?.vitalSats || '';
   if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
 
-  setChecklistItems('examHeadNeckList', template.prompts?.examHeadNeck || template.prompts?.examPrimary);
-  setChecklistItems('examEntList', template.prompts?.examEnt);
-  setChecklistItems('examOropharynxList', template.prompts?.examOropharynx);
-  setChecklistItems('examChestList', template.prompts?.examChest);
-  setChecklistItems('examOtherList', template.prompts?.examOther || template.prompts?.examSecondary);
-  if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
-  setPrivateNoteHtml('examPrivateNote', template.prompts?.examPrivateNote);
+  setChecklistItems('examGeneralList', template.prompts?.examGeneral);
+setChecklistItems('examHeadNeckList', template.prompts?.examHeadNeck || template.prompts?.examPrimary);
+setChecklistItems('examEntList', template.prompts?.examEnt);
+setChecklistItems('examOropharynxList', template.prompts?.examOropharynx);
+setChecklistItems('examChestList', template.prompts?.examChest);
+setChecklistItems('examOtherList', template.prompts?.examOther || template.prompts?.examSecondary);
+if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
+setPrivateNoteHtml('examPrivateNote', template.prompts?.examPrivateNote);
 
   setChecklistItems('investigationsPrimaryList', template.prompts?.investigationsPrimary);
   setChecklistItems('investigationsSecondaryList', template.prompts?.investigationsSecondary);
@@ -3808,6 +3816,7 @@ function buildSummaryText() {
   const hpc = getCheckedChecklistTexts('hpcList');
   const redFlagsPrimary = getCheckedChecklistTexts('redFlagsPrimaryList');
   const redFlagsSecondary = getCheckedChecklistTexts('redFlagsSecondaryList');
+  const examGeneral = getCheckedChecklistTexts('examGeneralList');
   const examHeadNeck = getCheckedChecklistTexts('examHeadNeckList');
   const examEnt = getCheckedChecklistTexts('examEntList');
   const examOropharynx = getCheckedChecklistTexts('examOropharynxList');
@@ -3886,6 +3895,14 @@ const headNeckLine = examLine('HEAD & NECK', examHeadNeck);
 const entLine = examLine('ENT', examEnt);
 const oropharynxLine = examLine('Oropharynx', examOropharynx);
 const chestLine = examLine('CHEST', examChest);
+
+// General findings: no heading.
+// Appears first under "On examination:"
+if (examGeneral.length) {
+  examGeneral.forEach(item => {
+    if (item) examParts.push(item);
+  });
+}
 
 if (headNeckLine) examParts.push(headNeckLine);
 if (entLine) examParts.push(entLine);
