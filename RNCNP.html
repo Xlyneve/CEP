@@ -1942,14 +1942,19 @@ select option {
     </label>
 
     <label>
-      CHEST
-      <div class="editable-checklist" id="examChestList" data-placeholder="Add chest finding..."></div>
-    </label>
+  CHEST
+  <div class="editable-checklist" id="examChestList" data-placeholder="Add chest finding..."></div>
+</label>
 
-    <label>
-      Other findings
-      <div class="editable-checklist" id="examOtherList" data-placeholder="Add other finding..."></div>
-    </label>
+<label>
+  Abdomen
+  <div class="editable-checklist" id="examAbdomenList" data-placeholder="Add abdomen finding..."></div>
+</label>
+
+<label>
+  Other findings
+  <div class="editable-checklist" id="examOtherList" data-placeholder="Add other finding..."></div>
+</label>
 
     <label>
       Additional findings
@@ -2566,6 +2571,7 @@ const checklistIds = [
   'examEntList',
   'examOropharynxList',
   'examChestList',
+  'examAbdomenList',
   'examOtherList',
   'investigationsPrimaryList',
   'investigationsSecondaryList',
@@ -3273,6 +3279,7 @@ function collectPromptFields() {
     examEnt: getChecklistItems('examEntList').map(i => i.text),
     examOropharynx: getChecklistItems('examOropharynxList').map(i => i.text),
     examChest: getChecklistItems('examChestList').map(i => i.text),
+    examAbdomen: getChecklistItems('examAbdomenList').map(i => i.text),
     examOther: getChecklistItems('examOtherList').map(i => i.text),
     investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
     investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
@@ -3363,13 +3370,14 @@ function fillTemplatePrompts() {
   if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
 
   setChecklistItems('examGeneralList', template.prompts?.examGeneral);
-setChecklistItems('examHeadNeckList', template.prompts?.examHeadNeck || template.prompts?.examPrimary);
-setChecklistItems('examEntList', template.prompts?.examEnt);
-setChecklistItems('examOropharynxList', template.prompts?.examOropharynx);
-setChecklistItems('examChestList', template.prompts?.examChest);
-setChecklistItems('examOtherList', template.prompts?.examOther || template.prompts?.examSecondary);
-if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
-setPrivateNoteHtml('examPrivateNote', template.prompts?.examPrivateNote);
+  setChecklistItems('examHeadNeckList', template.prompts?.examHeadNeck || template.prompts?.examPrimary);
+  setChecklistItems('examEntList', template.prompts?.examEnt);
+  setChecklistItems('examOropharynxList', template.prompts?.examOropharynx);
+  setChecklistItems('examChestList', template.prompts?.examChest);
+  setChecklistItems('examAbdomenList', template.prompts?.examAbdomen);
+  setChecklistItems('examOtherList', template.prompts?.examOther || template.prompts?.examSecondary);
+  if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
+  setPrivateNoteHtml('examPrivateNote', template.prompts?.examPrivateNote);
 
   setChecklistItems('investigationsPrimaryList', template.prompts?.investigationsPrimary);
   setChecklistItems('investigationsSecondaryList', template.prompts?.investigationsSecondary);
@@ -3816,12 +3824,13 @@ function buildSummaryText() {
   const hpc = getCheckedChecklistTexts('hpcList');
   const redFlagsPrimary = getCheckedChecklistTexts('redFlagsPrimaryList');
   const redFlagsSecondary = getCheckedChecklistTexts('redFlagsSecondaryList');
-  const examGeneral = getCheckedChecklistTexts('examGeneralList');
-  const examHeadNeck = getCheckedChecklistTexts('examHeadNeckList');
-  const examEnt = getCheckedChecklistTexts('examEntList');
-  const examOropharynx = getCheckedChecklistTexts('examOropharynxList');
-  const examChest = getCheckedChecklistTexts('examChestList');
-  const examOther = getCheckedChecklistTexts('examOtherList');
+  const examGeneral = getSelectedChecklistTexts('examGeneralList');
+  const examHeadNeck = getSelectedChecklistTexts('examHeadNeckList');
+  const examEnt = getSelectedChecklistTexts('examEntList');
+  const examOropharynx = getSelectedChecklistTexts('examOropharynxList');
+  const examChest = getSelectedChecklistTexts('examChestList');
+  const examAbdomen = getSelectedChecklistTexts('examAbdomenList');
+  const examOther = getSelectedChecklistTexts('examOtherList');
   const investigationsPrimary = getCheckedChecklistTexts('investigationsPrimaryList');
   const investigationsSecondary = getCheckedChecklistTexts('investigationsSecondaryList');
   const assessment = getCheckedChecklistTexts('assessmentList');
@@ -3895,6 +3904,7 @@ const headNeckLine = examLine('HEAD & NECK', examHeadNeck);
 const entLine = examLine('ENT', examEnt);
 const oropharynxLine = examLine('Oropharynx', examOropharynx);
 const chestLine = examLine('CHEST', examChest);
+const abdomenLine = examLine('Abdomen', examAbdomen);
 
 // General findings: no heading.
 // Appears first under "On examination:"
@@ -3908,6 +3918,7 @@ if (headNeckLine) examParts.push(headNeckLine);
 if (entLine) examParts.push(entLine);
 if (oropharynxLine) examParts.push(oropharynxLine);
 if (chestLine) examParts.push(chestLine);
+if (abdomenLine) examParts.push(abdomenLine);
 
 // Other findings: no “Other” heading.
 // Each checked item appears after CHEST on its own line.
