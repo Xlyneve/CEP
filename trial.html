@@ -1334,6 +1334,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
+
+db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+  console.warn('Firestore persistence not enabled:', err?.code || err);
+});
+
 const storage = firebase.storage();
 const auth = firebase.auth();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
@@ -1348,6 +1353,7 @@ const noteInput = document.getElementById('noteInput');
 const addNoteBtn = document.getElementById('addNoteBtn');
 const addNoteToggle = document.getElementById('addNoteToggle');
 const notePanel = document.getElementById('notePanel');
+const noteContainer = document.getElementById('noteContainer');
 
 const lockToggle = document.getElementById('lockToggle');
 const lockSection = document.getElementById('lockSection');
@@ -2409,7 +2415,7 @@ function startNotesListener() {
   if (!isUnlocked) return;
   if (unsubscribeNotes) unsubscribeNotes();
 
-  renderHeaderLine('Loading latest notes…');
+  renderHeaderLine('Loading notes…');
 
   ensureSignedIn().then(() => {
     if (!isUnlocked) return;
@@ -2427,10 +2433,11 @@ function startNotesListener() {
         const q = userInput.value.trim();
 
         if (q) {
-          runLiveSearch(q, true);
-        } else {
-          renderLiveResults(notesCache.slice(0, 30), 'Latest notes');
-        }
+  runLiveSearch(q, true);
+} else {
+  clearLiveResults();
+  renderHeaderLine(`✅ Notes loaded. Type to search.`);
+}
 
       }, (err) => {
         console.error('Notes listener error:', err);
@@ -2764,8 +2771,12 @@ addNoteBtn.onclick = async () => {
     notePanel.style.display = 'none';
 
     const q = userInput.value.trim();
-    if (q) runLiveSearch(q, true);
-    else renderLiveResults(notesCache.slice(0, 30), 'Latest notes');
+    if (q) {
+  runLiveSearch(q, true);
+} else {
+  clearLiveResults();
+  renderHeaderLine(`✅ Notes loaded. Type to search.`);
+}
 
   } catch (e) {
     alert('Error: ' + e.message);
