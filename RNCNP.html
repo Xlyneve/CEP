@@ -1804,11 +1804,14 @@ select option {
 
         <div class="mini-checks" style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap;">
           <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
-            <input type="checkbox" id="durationDays" /> Days
-          </label>
-          <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
-            <input type="checkbox" id="durationHours" /> Hours
-          </label>
+  <input type="checkbox" id="durationDays" /> Days
+</label>
+<label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+  <input type="checkbox" id="durationWeeks" /> Weeks
+</label>
+<label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+  <input type="checkbox" id="durationHours" /> Hours
+</label>
         </div>
       </div>
     </label>
@@ -2848,19 +2851,20 @@ function setupSexCheckboxes() {
 
 function setupDurationCheckboxes() {
   const days = getField('durationDays');
+  const weeks = getField('durationWeeks');
   const hours = getField('durationHours');
 
-  if (days) {
-    days.addEventListener('change', () => {
-      if (days.checked && hours) hours.checked = false;
-    });
-  }
+  const boxes = [days, weeks, hours].filter(Boolean);
 
-  if (hours) {
-    hours.addEventListener('change', () => {
-      if (hours.checked && days) days.checked = false;
+  boxes.forEach(box => {
+    box.addEventListener('change', () => {
+      if (!box.checked) return;
+
+      boxes.forEach(otherBox => {
+        if (otherBox !== box) otherBox.checked = false;
+      });
     });
-  }
+  });
 }
 
 function setupPRToggleButtons() {
@@ -3246,6 +3250,7 @@ function collectPromptFields() {
     sexFemale: !!getField('sexFemale')?.checked,
     presentationDuration: getField('presentationDuration')?.value.trim() || '',
     durationDays: !!getField('durationDays')?.checked,
+    durationWeeks: !!getField('durationWeeks')?.checked,
     durationHours: !!getField('durationHours')?.checked,
     presentationExtraText: getField('presentationExtraText')?.value.trim() || '',
 
@@ -3311,7 +3316,7 @@ function clearForm() {
   privateNoteIds.forEach(clearPrivateNoteHtml);
   checklistIds.forEach(clearChecklist);
 
-  ['sexMale', 'sexFemale', 'durationDays', 'durationHours'].forEach(id => {
+  ['sexMale', 'sexFemale', 'durationDays', 'durationWeeks', 'durationHours'].forEach(id => {
     const box = getField(id);
     if (box) box.checked = false;
   });
@@ -3342,6 +3347,7 @@ function fillTemplatePrompts() {
 
   if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
   if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
+  if (getField('durationWeeks')) getField('durationWeeks').checked = !!template.prompts?.durationWeeks;
   if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
   if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
 
@@ -3815,6 +3821,7 @@ function buildSummaryText() {
 
   const presentationDuration = getField('presentationDuration')?.value.trim() || '';
   const durationDays = !!getField('durationDays')?.checked;
+  const durationWeeks = !!getField('durationWeeks')?.checked;
   const durationHours = !!getField('durationHours')?.checked;
 
   const presentationExtraText = getField('presentationExtraText')?.value.trim() || '';
@@ -3872,10 +3879,16 @@ function buildSummaryText() {
 
   let durationLabel = '';
   if (presentationDuration) {
-    if (durationDays) durationLabel = `${presentationDuration} day${presentationDuration === '1' ? '' : 's'}`;
-    else if (durationHours) durationLabel = `${presentationDuration} hour${presentationDuration === '1' ? '' : 's'}`;
-    else durationLabel = presentationDuration;
+  if (durationDays) {
+    durationLabel = `${presentationDuration} day${presentationDuration === '1' ? '' : 's'}`;
+  } else if (durationWeeks) {
+    durationLabel = `${presentationDuration} week${presentationDuration === '1' ? '' : 's'}`;
+  } else if (durationHours) {
+    durationLabel = `${presentationDuration} hour${presentationDuration === '1' ? '' : 's'}`;
+  } else {
+    durationLabel = presentationDuration;
   }
+}
 
   if (durationLabel) openingLine += ` for ${durationLabel}`;
 
@@ -4063,6 +4076,7 @@ function printFilledTemplate() {
   if (presentationDuration.trim()) {
     durationParts.push(presentationDuration.trim());
     if (getField('durationDays')?.checked) durationParts.push('days');
+    if (getField('durationWeeks')?.checked) durationParts.push('weeks');
     if (getField('durationHours')?.checked) durationParts.push('hours');
   }
 
