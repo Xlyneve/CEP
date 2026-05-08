@@ -1812,6 +1812,14 @@ select option {
 <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
   <input type="checkbox" id="durationHours" /> Hours
 </label>
+<label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+  <input type="checkbox" id="durationThisMorning" /> This morning
+</label>
+
+<label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+  <input type="checkbox" id="durationLastNight" /> Last night
+</label>
+
         </div>
       </div>
     </label>
@@ -1829,16 +1837,33 @@ select option {
 
 <label>
   When developed
-  <div class="mini-checks" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:8px;">
-    <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
-      <input type="checkbox" id="developedThisMorning" /> This morning
-    </label>
+  <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+    <input
+      id="developedDuration"
+      placeholder="e.g. 2"
+      style="width:54px; min-width:54px; max-width:54px; padding:8px 6px; text-align:center;"
+    />
 
-    <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
-      <input type="checkbox" id="developedLastNight" /> Last night
-    </label>
+    <div class="mini-checks" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+      <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+        <input type="checkbox" id="developedDurationHours" /> Hours
+      </label>
+
+      <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+        <input type="checkbox" id="developedDurationDays" /> Days
+      </label>
+
+      <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+        <input type="checkbox" id="developedThisMorning" /> This morning
+      </label>
+
+      <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+        <input type="checkbox" id="developedLastNight" /> Last night
+      </label>
+    </div>
   </div>
 </label>
+    
     <label>
       Additional presentation text
       <textarea id="presentationExtraText" placeholder="Extra line after presenting symptoms..."></textarea>
@@ -2867,17 +2892,36 @@ function setupSexCheckboxes() {
 }
 
 function setupDurationCheckboxes() {
-  const days = getField('durationDays');
-  const weeks = getField('durationWeeks');
-  const hours = getField('durationHours');
+  const durationBoxes = [
+    getField('durationDays'),
+    getField('durationWeeks'),
+    getField('durationHours'),
+    getField('durationThisMorning'),
+    getField('durationLastNight')
+  ].filter(Boolean);
 
-  const boxes = [days, weeks, hours].filter(Boolean);
-
-  boxes.forEach(box => {
+  durationBoxes.forEach(box => {
     box.addEventListener('change', () => {
       if (!box.checked) return;
 
-      boxes.forEach(otherBox => {
+      durationBoxes.forEach(otherBox => {
+        if (otherBox !== box) otherBox.checked = false;
+      });
+    });
+  });
+
+  const developedBoxes = [
+    getField('developedDurationHours'),
+    getField('developedDurationDays'),
+    getField('developedThisMorning'),
+    getField('developedLastNight')
+  ].filter(Boolean);
+
+  developedBoxes.forEach(box => {
+    box.addEventListener('change', () => {
+      if (!box.checked) return;
+
+      developedBoxes.forEach(otherBox => {
         if (otherBox !== box) otherBox.checked = false;
       });
     });
@@ -3266,10 +3310,19 @@ function collectPromptFields() {
     sexMale: !!getField('sexMale')?.checked,
     sexFemale: !!getField('sexFemale')?.checked,
     presentationDuration: getField('presentationDuration')?.value.trim() || '',
-    durationDays: !!getField('durationDays')?.checked,
-    durationWeeks: !!getField('durationWeeks')?.checked,
-    durationHours: !!getField('durationHours')?.checked,
-    presentationExtraText: getField('presentationExtraText')?.value.trim() || '',
+durationDays: !!getField('durationDays')?.checked,
+durationWeeks: !!getField('durationWeeks')?.checked,
+durationHours: !!getField('durationHours')?.checked,
+durationThisMorning: !!getField('durationThisMorning')?.checked,
+durationLastNight: !!getField('durationLastNight')?.checked,
+
+developedDuration: getField('developedDuration')?.value.trim() || '',
+developedDurationHours: !!getField('developedDurationHours')?.checked,
+developedDurationDays: !!getField('developedDurationDays')?.checked,
+developedThisMorning: !!getField('developedThisMorning')?.checked,
+developedLastNight: !!getField('developedLastNight')?.checked,
+
+presentationExtraText: getField('presentationExtraText')?.value.trim() || '',
 
     presentationPrivateNote: getPrivateNoteHtml('presentationPrivateNote'),
     redFlagsPrivateNote: getPrivateNoteHtml('redFlagsPrivateNote'),
@@ -3342,9 +3395,16 @@ function clearForm() {
   'durationDays',
   'durationWeeks',
   'durationHours',
+  'durationThisMorning',
+  'durationLastNight',
+  'developedDurationHours',
+  'developedDurationDays',
   'developedThisMorning',
   'developedLastNight'
 ].forEach(id => {
+if (getField('developedDuration')) {
+  getField('developedDuration').value = '';
+}
     const box = getField(id);
     if (box) box.checked = false;
   });
@@ -3374,10 +3434,19 @@ function fillTemplatePrompts() {
   if (getField('sexFemale')) getField('sexFemale').checked = !!template.prompts?.sexFemale;
 
   if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
-  if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
-  if (getField('durationWeeks')) getField('durationWeeks').checked = !!template.prompts?.durationWeeks;
-  if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
-  if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
+if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
+if (getField('durationWeeks')) getField('durationWeeks').checked = !!template.prompts?.durationWeeks;
+if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
+if (getField('durationThisMorning')) getField('durationThisMorning').checked = !!template.prompts?.durationThisMorning;
+if (getField('durationLastNight')) getField('durationLastNight').checked = !!template.prompts?.durationLastNight;
+
+if (getField('developedDuration')) getField('developedDuration').value = template.prompts?.developedDuration || '';
+if (getField('developedDurationHours')) getField('developedDurationHours').checked = !!template.prompts?.developedDurationHours;
+if (getField('developedDurationDays')) getField('developedDurationDays').checked = !!template.prompts?.developedDurationDays;
+if (getField('developedThisMorning')) getField('developedThisMorning').checked = !!template.prompts?.developedThisMorning;
+if (getField('developedLastNight')) getField('developedLastNight').checked = !!template.prompts?.developedLastNight;
+
+if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
 
   setPrivateNoteHtml('presentationPrivateNote', template.prompts?.presentationPrivateNote);
 
@@ -3858,9 +3927,17 @@ function buildSummaryText() {
   const sexFemale = !!getField('sexFemale')?.checked;
 
   const presentationDuration = getField('presentationDuration')?.value.trim() || '';
-  const durationDays = !!getField('durationDays')?.checked;
-  const durationWeeks = !!getField('durationWeeks')?.checked;
-  const durationHours = !!getField('durationHours')?.checked;
+const durationDays = !!getField('durationDays')?.checked;
+const durationWeeks = !!getField('durationWeeks')?.checked;
+const durationHours = !!getField('durationHours')?.checked;
+const durationThisMorning = !!getField('durationThisMorning')?.checked;
+const durationLastNight = !!getField('durationLastNight')?.checked;
+
+const developedDuration = getField('developedDuration')?.value.trim() || '';
+const developedDurationHours = !!getField('developedDurationHours')?.checked;
+const developedDurationDays = !!getField('developedDurationDays')?.checked;
+const developedThisMorning = !!getField('developedThisMorning')?.checked;
+const developedLastNight = !!getField('developedLastNight')?.checked;
 
   const presentationExtraText = getField('presentationExtraText')?.value.trim() || '';
   const examFreeText = getField('examFreeText')?.value.trim() || '';
@@ -3898,8 +3975,7 @@ function buildSummaryText() {
   const vitalBP = getField('vitalBP')?.value.trim() || '';
   const vitalSats = getField('vitalSats')?.value.trim() || '';
   const vitalWE = getField('vitalWE')?.value.trim() || '';
-  const developedThisMorning = getField('developedThisMorning')?.checked || false;
-  const developedLastNight = getField('developedLastNight')?.checked || false;
+ 
 
   const sections = [];
 
@@ -3919,23 +3995,38 @@ function buildSummaryText() {
   openingLine += hpc.length ? ` ${joinNaturalList(hpc)}` : ' symptoms';
 
   let durationLabel = '';
-  if (presentationDuration) {
+
+if (presentationDuration) {
   if (durationDays) {
-    durationLabel = `${presentationDuration} day${presentationDuration === '1' ? '' : 's'}`;
+    durationLabel = `for ${presentationDuration} day${presentationDuration === '1' ? '' : 's'}`;
   } else if (durationWeeks) {
-    durationLabel = `${presentationDuration} week${presentationDuration === '1' ? '' : 's'}`;
+    durationLabel = `for ${presentationDuration} week${presentationDuration === '1' ? '' : 's'}`;
   } else if (durationHours) {
-    durationLabel = `${presentationDuration} hour${presentationDuration === '1' ? '' : 's'}`;
+    durationLabel = `for ${presentationDuration} hour${presentationDuration === '1' ? '' : 's'}`;
   } else {
-    durationLabel = presentationDuration;
+    durationLabel = `for ${presentationDuration}`;
   }
+} else if (durationThisMorning) {
+  durationLabel = 'since this morning';
+} else if (durationLastNight) {
+  durationLabel = 'since last night';
 }
+
+if (durationLabel) openingLine += ` ${durationLabel}`;
 
   if (durationLabel) openingLine += ` for ${durationLabel}`;
 
 let developedWhen = '';
 
-if (developedThisMorning) {
+if (developedDuration) {
+  if (developedDurationHours) {
+    developedWhen = `for ${developedDuration} hour${developedDuration === '1' ? '' : 's'}`;
+  } else if (developedDurationDays) {
+    developedWhen = `for ${developedDuration} day${developedDuration === '1' ? '' : 's'}`;
+  } else {
+    developedWhen = `for ${developedDuration}`;
+  }
+} else if (developedThisMorning) {
   developedWhen = 'this morning';
 } else if (developedLastNight) {
   developedWhen = 'last night';
