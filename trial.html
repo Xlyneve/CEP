@@ -1822,7 +1822,23 @@ select option {
       Presenting symptoms / complaints
       <div class="editable-checklist" id="hpcList" data-placeholder="Add symptom..."></div>
     </label>
+<label>
+  Then developed
+  <div class="editable-checklist" id="hpcDevelopedList" data-placeholder="Add later symptom..."></div>
+</label>
 
+<label>
+  When developed
+  <div class="mini-checks" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+    <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+      <input type="checkbox" id="developedThisMorning" /> This morning
+    </label>
+
+    <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+      <input type="checkbox" id="developedLastNight" /> Last night
+    </label>
+  </div>
+</label>
     <label>
       Additional presentation text
       <textarea id="presentationExtraText" placeholder="Extra line after presenting symptoms..."></textarea>
@@ -2567,6 +2583,7 @@ const textFieldIds = [
 
 const checklistIds = [
   'hpcList',
+  'hpcDevelopedList',
   'redFlagsPrimaryList',
   'redFlagsSecondaryList',
   'examGeneralList',
@@ -3277,6 +3294,9 @@ function collectPromptFields() {
     prescribingPrivateNote: getPrivateNoteHtml('prescribingPrivateNote'),
 
     hpc: getChecklistItems('hpcList').map(i => i.text),
+	hpcDeveloped: getChecklistItems('hpcDevelopedList').map(i => i.text),
+    developedThisMorning: !!getField('developedThisMorning')?.checked,
+    developedLastNight: !!getField('developedLastNight')?.checked,
     redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
     redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
     examGeneral: getChecklistItems('examGeneralList').map(i => i.text),
@@ -3316,7 +3336,15 @@ function clearForm() {
   privateNoteIds.forEach(clearPrivateNoteHtml);
   checklistIds.forEach(clearChecklist);
 
-  ['sexMale', 'sexFemale', 'durationDays', 'durationWeeks', 'durationHours'].forEach(id => {
+  [
+  'sexMale',
+  'sexFemale',
+  'durationDays',
+  'durationWeeks',
+  'durationHours',
+  'developedThisMorning',
+  'developedLastNight'
+].forEach(id => {
     const box = getField(id);
     if (box) box.checked = false;
   });
@@ -3354,6 +3382,16 @@ function fillTemplatePrompts() {
   setPrivateNoteHtml('presentationPrivateNote', template.prompts?.presentationPrivateNote);
 
   setChecklistItems('hpcList', template.prompts?.hpc);
+  
+  setChecklistItems('hpcDevelopedList', template.prompts?.hpcDeveloped);
+
+if (getField('developedThisMorning')) {
+  getField('developedThisMorning').checked = !!template.prompts?.developedThisMorning;
+}
+
+if (getField('developedLastNight')) {
+  getField('developedLastNight').checked = !!template.prompts?.developedLastNight;
+}
 
   setChecklistItems('redFlagsPrimaryList', template.prompts?.redFlagsPrimary || template.prompts?.redFlags);
   setChecklistItems('redFlagsSecondaryList', template.prompts?.redFlagsSecondary);
@@ -3830,6 +3868,7 @@ function buildSummaryText() {
   const managementPlanFreeText = getField('managementPlanFreeText')?.value.trim() || '';
 
   const hpc = getCheckedChecklistTexts('hpcList');
+  const hpcDeveloped = getCheckedChecklistTexts('hpcDevelopedList');
   const redFlagsPrimary = getCheckedChecklistTexts('redFlagsPrimaryList');
   const redFlagsSecondary = getCheckedChecklistTexts('redFlagsSecondaryList');
   const examGeneral = getCheckedChecklistTexts('examGeneralList');
@@ -3859,6 +3898,8 @@ function buildSummaryText() {
   const vitalBP = getField('vitalBP')?.value.trim() || '';
   const vitalSats = getField('vitalSats')?.value.trim() || '';
   const vitalWE = getField('vitalWE')?.value.trim() || '';
+  const developedThisMorning = getField('developedThisMorning')?.checked || false;
+  const developedLastNight = getField('developedLastNight')?.checked || false;
 
   const sections = [];
 
@@ -3891,6 +3932,19 @@ function buildSummaryText() {
 }
 
   if (durationLabel) openingLine += ` for ${durationLabel}`;
+
+let developedWhen = '';
+
+if (developedThisMorning) {
+  developedWhen = 'this morning';
+} else if (developedLastNight) {
+  developedWhen = 'last night';
+}
+
+if (hpcDeveloped.length) {
+  openingLine += `, then developed ${joinNaturalList(hpcDeveloped)}`;
+  if (developedWhen) openingLine += ` ${developedWhen}`;
+}
 
   const historyParts = [sentence(openingLine)];
   if (presentationExtraText) historyParts.push(sentence(presentationExtraText));
@@ -4673,6 +4727,7 @@ function setupMobileTopbar() {
 
 safeAddListener(searchInput, 'input', renderTemplates);
 safeAddListener(categoryFilter, 'change', renderTemplates);
+
 safeAddListener(heroTemplateToggle, 'click', () => {
   if (!heroTemplateInfo || !activeTemplateDesc) return;
 
@@ -4682,6 +4737,7 @@ safeAddListener(heroTemplateToggle, 'click', () => {
     activeTemplateDesc.scrollTop = 0;
   }
 });
+
 safeAddListener(fillTemplateBtn, 'click', fillTemplatePrompts);
 safeAddListener(clearBtn, 'click', clearForm);
 safeAddListener(generateBtn, 'click', generateSummary);
@@ -4694,6 +4750,7 @@ safeAddListener(editBtn, 'click', updateCurrentTemplate);
 safeAddListener(deleteBtn, 'click', deleteCurrentTemplate);
 safeAddListener(loginBtn, 'click', signInUser);
 safeAddListener(logoutBtn, 'click', signOutUser);
+
 safeAddListener(patientLinkToggleBtn, 'click', () => {
   patientLinkEditor?.classList.toggle('show');
 
@@ -4704,6 +4761,19 @@ safeAddListener(patientLinkToggleBtn, 'click', () => {
   ) {
     createPatientLinkRow();
   }
+});
+
+/* Only allow one "developed when" option */
+['developedThisMorning', 'developedLastNight'].forEach(id => {
+  safeAddListener(getField(id), 'change', () => {
+    if (!getField(id)?.checked) return;
+
+    ['developedThisMorning', 'developedLastNight'].forEach(otherId => {
+      if (otherId !== id && getField(otherId)) {
+        getField(otherId).checked = false;
+      }
+    });
+  });
 });
 
 setupTemplateDirtyTracking();
