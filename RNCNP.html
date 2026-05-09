@@ -3575,11 +3575,17 @@ function renderTemplates() {
   const term = (searchInput?.value || '').trim().toLowerCase();
   const category = categoryFilter?.value || 'all';
 
-  const filtered = allTemplates().filter(t => {
+  const filtered = allTemplates()
+  .filter(t => {
     const matchesCategory = category === 'all' || t.category === category;
     const haystack = [t.title, t.desc, ...(t.tags || [])].join(' ').toLowerCase();
     const matchesTerm = !term || haystack.includes(term);
     return matchesCategory && matchesTerm;
+  })
+  .sort((a, b) => {
+    const titleA = (a.title || '').toLowerCase();
+    const titleB = (b.title || '').toLowerCase();
+    return titleA.localeCompare(titleB);
   });
 
   templateList.innerHTML = '';
