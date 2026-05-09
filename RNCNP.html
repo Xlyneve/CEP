@@ -3304,8 +3304,10 @@ patientLinks: getPatientLinks()
 function clearForm() {
   suppressDirtyTracking = true;
 
-  // Clear patient-specific temporary fields
+  // Clear normal patient-specific fields, but DO NOT clear privateConsultNote
   textFieldIds.forEach(id => {
+    if (id === 'privateConsultNote') return;
+
     const field = getField(id);
     if (!field) return;
 
@@ -3316,7 +3318,12 @@ function clearForm() {
     }
   });
 
-  privateNoteIds.forEach(clearPrivateNoteHtml);
+  // Clear private notes, but keep privateConsultNote
+  privateNoteIds
+    .filter(id => id !== 'privateConsultNote')
+    .forEach(clearPrivateNoteHtml);
+
+  checklistIds.forEach(clearChecklist);
 
   ['sexMale', 'sexFemale', 'durationDays', 'durationWeeks', 'durationHours'].forEach(id => {
     const box = getField(id);
@@ -3330,10 +3337,10 @@ function clearForm() {
 
   renderPatientLinks([]);
 
-  // Reload the saved active template checklist/text defaults
+  // Reload saved template defaults
   fillTemplatePrompts();
 
-  // Make sure all checkboxes are unticked after reload
+  // Untick all checkboxes after template reload
   checklistIds.forEach(id => {
     const container = getField(id);
     if (!container) return;
@@ -3342,29 +3349,6 @@ function clearForm() {
       box.checked = false;
     });
   });
-
-  // Clear patient-specific free text again,
-  // in case the saved template contains old consult text
-  [
-    'patientDemo',
-    'patientEthnicity',
-    'presentationDuration',
-    'presentationExtraText',
-    'vitalTemp',
-    'vitalPR',
-    'vitalRR',
-    'vitalBP',
-    'vitalSats',
-    'vitalWE',
-    'examFreeText',
-    'investigationsFreeText',
-    'managementPlanFreeText'
-  ].forEach(id => {
-    const field = getField(id);
-    if (field) field.value = '';
-  });
-
-  privateNoteIds.forEach(clearPrivateNoteHtml);
 
   [
     'presentationExtraText',
