@@ -3304,6 +3304,8 @@ patientLinks: getPatientLinks()
 function clearForm() {
   suppressDirtyTracking = true;
 
+  const keptPrivateConsultNote = getPrivateNoteHtml('privateConsultNote');
+
   // Clear normal patient-specific fields, but DO NOT clear privateConsultNote
   textFieldIds.forEach(id => {
     if (id === 'privateConsultNote') return;
@@ -3339,6 +3341,9 @@ function clearForm() {
 
   // Reload saved template defaults
   fillTemplatePrompts();
+
+  // Restore private consult note after template reload
+  setPrivateNoteHtml('privateConsultNote', keptPrivateConsultNote);
 
   // Untick all checkboxes after template reload
   checklistIds.forEach(id => {
