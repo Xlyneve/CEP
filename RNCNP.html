@@ -4043,15 +4043,12 @@ if (examParts.length) {
     sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
   }
 
-  const patientLinks = getPatientLinks().filter(link => link.includeInSummary);
+  const patientLinks = getPatientLinks().filter(link => link.includeInSummary && link.url);
 
 if (patientLinks.length) {
   sections.push(
     `Patient information provided:\n${patientLinks
-      .map(link => {
-        if (link.url) return `${link.title}: ${link.url}`;
-        return `${link.title}: QR code provided`;
-      })
+      .map(link => `${link.title}: ${link.url}`)
       .join('\n')}`
   );
 }
@@ -4089,7 +4086,9 @@ function buildPatientInfoQrHtml() {
 function generateSummary() {
   const summary = buildSummaryText();
   if (!output) return;
-  output.innerHTML = renderSummaryHtml(summary) + buildPatientInfoQrHtml();
+
+  output.innerHTML = renderSummaryHtml(summary);
+
   output.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
