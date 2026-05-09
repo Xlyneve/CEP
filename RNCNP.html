@@ -3302,6 +3302,9 @@ patientLinks: getPatientLinks()
 }
 
 function clearForm() {
+  suppressDirtyTracking = true;
+
+  // Clear patient-specific temporary fields
   textFieldIds.forEach(id => {
     const field = getField(id);
     if (!field) return;
@@ -3314,7 +3317,6 @@ function clearForm() {
   });
 
   privateNoteIds.forEach(clearPrivateNoteHtml);
-  checklistIds.forEach(clearChecklist);
 
   ['sexMale', 'sexFemale', 'durationDays', 'durationWeeks', 'durationHours'].forEach(id => {
     const box = getField(id);
@@ -3326,14 +3328,55 @@ function clearForm() {
     if (btn) btn.classList.remove('active');
   });
 
+  renderPatientLinks([]);
+
+  // Reload the saved active template checklist/text defaults
+  fillTemplatePrompts();
+
+  // Make sure all checkboxes are unticked after reload
+  checklistIds.forEach(id => {
+    const container = getField(id);
+    if (!container) return;
+
+    container.querySelectorAll('input[type="checkbox"]').forEach(box => {
+      box.checked = false;
+    });
+  });
+
+  // Clear patient-specific free text again,
+  // in case the saved template contains old consult text
+  [
+    'patientDemo',
+    'patientEthnicity',
+    'presentationDuration',
+    'presentationExtraText',
+    'vitalTemp',
+    'vitalPR',
+    'vitalRR',
+    'vitalBP',
+    'vitalSats',
+    'vitalWE',
+    'examFreeText',
+    'investigationsFreeText',
+    'managementPlanFreeText'
+  ].forEach(id => {
+    const field = getField(id);
+    if (field) field.value = '';
+  });
+
+  privateNoteIds.forEach(clearPrivateNoteHtml);
+
   [
     'presentationExtraText',
     'examFreeText',
     'investigationsFreeText',
     'managementPlanFreeText'
   ].forEach(id => autoGrowTextarea(getField(id)));
-  renderPatientLinks([]);
+
   if (output) output.innerHTML = '';
+
+  hasUnsavedTemplateEdits = false;
+  suppressDirtyTracking = false;
 }
 
 function fillTemplatePrompts() {
@@ -3381,7 +3424,7 @@ function fillTemplatePrompts() {
   setChecklistItems('examOropharynxList', template.prompts?.examOropharynx);
   setChecklistItems('examChestList', template.prompts?.examChest);
   setChecklistItems('examAbdomenList', template.prompts?.examAbdomen);
-  setChecklistItems('examOtherList', template.prompts?.examOther || template.prompts?.examSecondary);
+  
   setChecklistItems('examOtherList', template.prompts?.examOther || template.prompts?.examSecondary);
   if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
   setPrivateNoteHtml('examPrivateNote', template.prompts?.examPrivateNote);
