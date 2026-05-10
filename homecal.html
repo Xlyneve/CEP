@@ -1005,9 +1005,30 @@ buttonContainer.append(editBtn, deleteBtn);
 // Load todos
 function loadTodos() {
   const ref = collection(db, 'todos');
+
   onSnapshot(ref, snap => {
     todoListEl.innerHTML = '';
-    snap.forEach(doc => renderTodoItem(doc.id, doc.data().text, doc.data().done));
+
+    const todos = [];
+    snap.forEach(docSnap => {
+      todos.push({
+        id: docSnap.id,
+        text: docSnap.data().text || '',
+        done: !!docSnap.data().done
+      });
+    });
+
+    todos.sort((a, b) => {
+      // unticked first, ticked last
+      if (a.done !== b.done) return a.done ? 1 : -1;
+
+      // optional: alphabetical within each group
+      return a.text.localeCompare(b.text);
+    });
+
+    todos.forEach(todo => {
+      renderTodoItem(todo.id, todo.text, todo.done);
+    });
   });
 }
 
