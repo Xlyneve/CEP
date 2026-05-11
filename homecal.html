@@ -129,6 +129,29 @@ body {
   gap: 10px;
 }
 
+.todo-item.priority {
+  border: 1px solid rgba(255, 231, 0, 0.75);
+  background: rgba(255, 247, 180, 0.22);
+  box-shadow:
+    inset 0 0 8px rgba(255,255,255,0.25),
+    0 0 10px rgba(255, 231, 0, 0.25);
+}
+
+.priority-tag {
+  align-self: flex-start;
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 231, 0, 0.6);
+  background: rgba(255, 247, 180, 0.35);
+  color: #5a4a00;
+  white-space: nowrap;
+}
+
+.todo-item.done {
+  opacity: 0.55;
+}
+
 .todo-item {
   display: flex;
   align-items: stretch;
@@ -924,23 +947,38 @@ newTodo.addEventListener('input', () => autoResizeTextarea(newTodo));
 autoResizeTextarea(newTodo);
 
 
-// To-do functions
 async function addTodo() {
   const value = todoInput.value.trim();
+
   if (value) {
-    await addDoc(collection(db, 'todos'), { text: value, done: false });
+    await addDoc(collection(db, 'todos'), {
+      text: value,
+      done: false,
+      priority: false,
+      createdAt: Date.now()
+    });
+
     todoInput.value = '';
+    autoResizeTextarea(todoInput);
   }
 }
-function renderTodoItem(id, text, done) {
+
+function renderTodoItem(id, text, done, priority = false) {
   const item = document.createElement('div');
   item.className = 'todo-item';
+
+  if (done) item.classList.add('done');
+  if (priority && !done) item.classList.add('priority');
 
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.checked = done;
-  checkbox.onchange = () =>
-    updateDoc(doc(db, 'todos', id), { done: checkbox.checked });
+
+  checkbox.onchange = async () => {
+    await updateDoc(doc(db, 'todos', id), {
+      done: checkbox.checked
+    });
+  };
 
   const input = document.createElement('textarea');
   input.value = text;
@@ -951,54 +989,68 @@ function renderTodoItem(id, text, done) {
   input.style.resize = 'none';
   input.style.overflow = 'hidden';
 
-  // initial autoresize on render
   autoResizeTextarea(input);
 
-  // autoresize while typing
   input.addEventListener('input', () => autoResizeTextarea(input));
 
+  const priorityTag = document.createElement('div');
+  priorityTag.className = 'priority-tag';
+  priorityTag.textContent = 'Priority';
+  priorityTag.style.display = priority && !done ? 'block' : 'none';
+
   const buttonContainer = document.createElement('div');
-buttonContainer.className = 'todo-actions';
+  buttonContainer.className = 'todo-actions';
 
-const editBtn = document.createElement('button');
-editBtn.type = 'button';
-editBtn.title = 'Edit';
-editBtn.textContent = '✎';   // minimalist pencil
+  const priorityBtn = document.createElement('button');
+  priorityBtn.type = 'button';
+  priorityBtn.title = priority ? 'Remove priority' : 'Mark priority';
+  priorityBtn.textContent = priority ? '★' : '☆';
 
-editBtn.onclick = async () => {
-  if (input.readOnly) {
-    // enter edit mode
-    input.readOnly = false;
-    input.focus();
+  priorityBtn.onclick = async () => {
+    await updateDoc(doc(db, 'todos', id), {
+      priority: !priority
+    });
+  };
 
-    setTimeout(() => autoResizeTextarea(input), 20);
-    editBtn.textContent = '💾';
-  } else {
-    // save changes
-    await updateDoc(doc(db, 'todos', id), { text: input.value });
-    input.readOnly = true;
+  const editBtn = document.createElement('button');
+  editBtn.type = 'button';
+  editBtn.title = 'Edit';
+  editBtn.textContent = '✎';
 
-    autoResizeTextarea(input);
-    editBtn.textContent = '✏️';
-  }
-};
+  editBtn.onclick = async () => {
+    if (input.readOnly) {
+      input.readOnly = false;
+      input.focus();
 
-const deleteBtn = document.createElement('button');
-deleteBtn.type = 'button';
-deleteBtn.title = 'Delete';
-deleteBtn.textContent = '×';  // minimalist delete
+      setTimeout(() => autoResizeTextarea(input), 20);
+      editBtn.textContent = '💾';
+    } else {
+      await updateDoc(doc(db, 'todos', id), {
+        text: input.value
+      });
 
-deleteBtn.onclick = async () => {
-  if (confirm("Delete this to-do?"))
-    await deleteDoc(doc(db, 'todos', id));
-};
+      input.readOnly = true;
+      autoResizeTextarea(input);
+      editBtn.textContent = '✎';
+    }
+  };
 
-buttonContainer.append(editBtn, deleteBtn);
+  const deleteBtn = document.createElement('button');
+  deleteBtn.type = 'button';
+  deleteBtn.title = 'Delete';
+  deleteBtn.textContent = '×';
 
-  item.append(checkbox, input, buttonContainer);
+  deleteBtn.onclick = async () => {
+    if (confirm("Delete this to-do?")) {
+      await deleteDoc(doc(db, 'todos', id));
+    }
+  };
+
+  buttonContainer.append(priorityBtn, editBtn, deleteBtn);
+
+  item.append(checkbox, input, priorityTag, buttonContainer);
   todoListEl.appendChild(item);
 
-  // safe double-pass autoresize for long text loaded from db
   setTimeout(() => autoResizeTextarea(input), 30);
 }
 
@@ -1010,28 +1062,42 @@ function loadTodos() {
     todoListEl.innerHTML = '';
 
     const todos = [];
+
     snap.forEach(docSnap => {
+      const data = docSnap.data();
+
       todos.push({
         id: docSnap.id,
-        text: docSnap.data().text || '',
-        done: !!docSnap.data().done
+        text: data.text || '',
+        done: !!data.done,
+        priority: !!data.priority,
+        createdAt: data.createdAt || 0
       });
     });
 
     todos.sort((a, b) => {
-      // unticked first, ticked last
+      // completed items always go to the bottom
       if (a.done !== b.done) return a.done ? 1 : -1;
 
-      // optional: alphabetical within each group
+      // among unticked items, priority goes first
+      if (!a.done && a.priority !== b.priority) {
+        return a.priority ? -1 : 1;
+      }
+
+      // newest added first if createdAt exists
+      if (a.createdAt !== b.createdAt) {
+        return b.createdAt - a.createdAt;
+      }
+
+      // fallback sort
       return a.text.localeCompare(b.text);
     });
 
     todos.forEach(todo => {
-      renderTodoItem(todo.id, todo.text, todo.done);
+      renderTodoItem(todo.id, todo.text, todo.done, todo.priority);
     });
   });
 }
-
 // --- FILTER FUNCTION: SHOW ALL MATCHING NOTES GROUPED BY MONTH ---
 async function filterNotes() {
   const term = document.getElementById("noteFilterInput").value.trim(); // Get the filter input and remove leading/trailing spaces
