@@ -100,29 +100,33 @@
 
       // ------------------ Image ------------------
       if (data.image) {
-        const img = document.createElement("img");
-        img.src = data.image;
-        img.alt = "Note Image";
-        img.className = "note-image";
-        img.addEventListener("click", () => {
-          if (!img.classList.contains("zoomed")) {
-            const zoomedImg = img.cloneNode(true);
-            zoomedImg.classList.add("zoomed");
-            Object.assign(zoomedImg.style, {
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              zIndex: "9999",
-              cursor: "zoom-out"
-            });
-            zoomedImg.id = "zoomed-image-overlay";
-            zoomedImg.addEventListener("click", () => zoomedImg.remove());
-            document.body.appendChild(zoomedImg);
-          }
-        });
-        card.appendChild(img);
-      }
+  const img = document.createElement("img");
+  img.loading = "lazy";
+  img.decoding = "async";
+  img.src = data.image;
+  img.alt = "Note Image";
+  img.className = "note-image";
+
+  img.addEventListener("click", () => {
+    if (!img.classList.contains("zoomed")) {
+      const zoomedImg = img.cloneNode(true);
+      zoomedImg.classList.add("zoomed");
+      Object.assign(zoomedImg.style, {
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        zIndex: "9999",
+        cursor: "zoom-out"
+      });
+      zoomedImg.id = "zoomed-image-overlay";
+      zoomedImg.addEventListener("click", () => zoomedImg.remove());
+      document.body.appendChild(zoomedImg);
+    }
+  });
+
+  card.appendChild(img);
+}
 
       // ------------------ Note text ------------------
       const p = document.createElement("div");
