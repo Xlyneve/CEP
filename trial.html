@@ -19,23 +19,24 @@ html, body {
   position: relative;
 }
 
-html {
-  background: #f7f3f6;
+html,
+body {
+  background-color: #f7f3f6;
 }
 
 body {
-  background: #f7f3f6;
+  background-image: url('2b.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  background-attachment: scroll;
 }
 
-/* Background image with full-page blur overlay */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: url('2b.png') no-repeat center center;
-  background-size: cover;
-  filter: blur(8px) brightness(0.9);
-  transform: scale(1.04);
+  background: rgba(247, 243, 246, 0.28);
   z-index: 0;
   pointer-events: none;
 }
@@ -242,29 +243,28 @@ h2 {
 }
 
 .cards-container {
-  column-count: 4;
-  column-gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
   width: 100%;
   padding: 10px 0;
+  align-items: start;
 }
 
 .note-card {
-  display: inline-block;
+  display: block;
   width: 100%;
-  margin: 0 0 12px 0;
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-  page-break-inside: avoid;
-
+  min-height: 40px;
   padding: 14px;
   border-radius: 12px;
   position: relative;
   word-wrap: break-word;
+  overflow-wrap: anywhere;
   box-sizing: border-box;
 
   transition: box-shadow 0.2s ease-in-out;
   border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.32);
 
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -294,8 +294,6 @@ h2 {
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
   color: #222;
   transition: all 0.3s ease;
@@ -400,6 +398,21 @@ button:focus,
 .note-url a .icon {
   margin-right: 6px;
 }
+.note-title,
+.note-content {
+  display: block;
+  visibility: visible;
+  opacity: 1;
+  color: #000;
+  position: relative;
+  z-index: 1;
+}
+
+.note-content {
+  min-height: 1em;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 
 .custom-file-btn {
   display: inline-block;
@@ -492,7 +505,7 @@ button:focus,
   box-shadow: 0 8px 20px rgba(0,0,0,0.25);
   transition: bottom 0.4s ease, opacity 0.4s ease;
   opacity: 0;
-  z-index: 999;
+  z-index: 1000;
 }
 
 #nurseFormWrapper.show {
@@ -639,14 +652,15 @@ button:focus,
   }
 
   .cards-container {
-    column-count: 4;
-    column-gap: 15px;
-    width: 100%;
-  }
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
 
-  .note-card {
-    width: 100%;
-  }
+.note-card {
+  width: 100%;
+}
 
   .center-toggle {
   position: absolute;
@@ -1000,7 +1014,7 @@ function applySearchFilter(query) {
     const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
 
     card.style.display = (title.includes(query) || content.includes(query))
-      ? 'inline-block'
+      ? 'block'
       : 'none';
   });
 }
