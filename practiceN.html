@@ -281,17 +281,21 @@ textarea:focus {
   font-weight: bold;
 }
 
-.note-text mark {
+.note-text mark,
+.edit-note mark,
+mark.highlight-hue {
   background: linear-gradient(
     90deg,
-    #d8e5f7,
-    #d8eedf,
-    #f2d9ef,
-    #fdf1c9,
-    #fedcdb
-  );
+    #fff6cc,
+    #d6f5ff,
+    #e8ffd8,
+	#e3d7ff
+  ) !important;
   border-radius: 4px;
-  padding: 0 2px;
+  padding: 0 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  color: inherit;
 }
 
 .note-url a {
@@ -804,9 +808,11 @@ textarea:focus {
 
     <div class="action-buttons">
   <div class="format-buttons">
-    <button type="button" onclick="document.execCommand('bold')"><strong>Bold</strong></button>
-    <button type="button" onclick="document.execCommand('hiliteColor', false, '#fdf1c9')"><mark>Highlight</mark></button>
-  </div>
+  <button type="button" id="boldMainBtn"><strong>Bold</strong></button>
+  <button type="button" id="highlightMainBtn">
+    <mark class="highlight-hue">Highlight</mark>
+  </button>
+</div>
 
   <button class="add-btn" id="addBtn">Add Note</button>
   <button type="button" id="uploadPhotoBtn" class="custom-file-btn">＋ Add Photo</button>
@@ -902,7 +908,7 @@ function toggleHighlightInEditor(editor) {
   // Otherwise, apply highlight (toggle ON)
   if (range.collapsed) return; // nothing selected
   const mark = document.createElement('mark');
-  mark.style.backgroundColor = '#fdf1c9';
+  mark.className = 'highlight-hue';
   try {
     range.surroundContents(mark);
     // keep selection on the new mark
@@ -916,7 +922,7 @@ function toggleHighlightInEditor(editor) {
     const temp = document.createElement('div');
     temp.appendChild(frag);
     const html = temp.innerHTML;
-    document.execCommand('insertHTML', false, `<mark style="background-color:#fdf1c9;">${html}</mark>`);
+    document.execCommand('insertHTML', false, `<mark class="highlight-hue">${html}</mark>`);
   }
 }
 
@@ -938,7 +944,52 @@ async function copyPlainText(text, onDone) {
     console.error('Copy failed', e);
   }
 }
+function applyHueHighlightToSelection(editor) {
+  editor.focus();
 
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+
+  if (!editor.contains(range.commonAncestorContainer)) return;
+  if (range.collapsed) return;
+
+  const mark = document.createElement('mark');
+  mark.className = 'highlight-hue';
+
+  try {
+    range.surroundContents(mark);
+
+    sel.removeAllRanges();
+    const r = document.createRange();
+    r.selectNodeContents(mark);
+    sel.addRange(r);
+  } catch (_) {
+    const frag = range.cloneContents();
+    const temp = document.createElement('div');
+    temp.appendChild(frag);
+
+    document.execCommand(
+      'insertHTML',
+      false,
+      `<mark class="highlight-hue">${temp.innerHTML}</mark>`
+    );
+  }
+}
+
+document.getElementById('boldMainBtn').addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  const editor = document.getElementById('noteText');
+  editor.focus();
+  document.execCommand('bold');
+});
+
+document.getElementById('highlightMainBtn').addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  const editor = document.getElementById('noteText');
+  applyHueHighlightToSelection(editor);
+});
 /* ---------------- Create note (from add form) ---------------- */
 // Assumes #noteText is a contenteditable div (live formatting)
 document.getElementById('addBtn').addEventListener('click', async () => {
@@ -1076,12 +1127,20 @@ function renderNotes(arr) {
     const boldBtn = document.createElement('button');
     boldBtn.textContent = 'Bold';
     boldBtn.title = 'Bold';
-    boldBtn.addEventListener('click', (e) => { e.stopPropagation(); document.execCommand('bold'); });
+    boldBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  document.execCommand('bold');
+});
 
     const highlightBtn = document.createElement('button');
     highlightBtn.textContent = 'Highlight';
     highlightBtn.title = 'Highlight';
-    highlightBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHighlightInEditor(textEditor); });
+    highlightBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleHighlightInEditor(textEditor);
+});
 
     editorBtns.append(boldBtn, highlightBtn);
 
