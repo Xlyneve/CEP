@@ -354,14 +354,21 @@ textarea:focus {
   transition: transform 0.2s ease-in-out;
 }
 
-.note-card:hover {
-  transform: scale(1.04);
-  box-shadow: 
-    inset 0 3px 8px rgba(220, 240, 255, 0.6),
-    0 0 15px 6px rgba(220, 240, 255, 0.45),
-    0 10px 30px rgba(190, 210, 240, 0.15);
+@media (hover: hover) {
+  .note-card:not(.is-editing):hover {
+    transform: scale(1.04);
+    box-shadow: 
+      inset 0 3px 8px rgba(220, 240, 255, 0.6),
+      0 0 15px 6px rgba(220, 240, 255, 0.45),
+      0 10px 30px rgba(190, 210, 240, 0.15);
+  }
 }
 
+@media (hover: none) {
+  .note-card:hover {
+    transform: none;
+  }
+}
 
 /* Note contents */
 .note-title {
@@ -480,13 +487,37 @@ mark.highlight-hue {
   background: rgba(255, 255, 255, 0.4);
   outline: none;
 }
-
 .btn-group {
-  margin-top: 10px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 5px;
+  margin-top: 0;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition: opacity 160ms ease, transform 160ms ease;
+  transform: translateY(-2px);
 }
+
+.note-card.actions-visible .btn-group,
+.note-card.is-editing .btn-group {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.note-card.is-editing {
+  transform: none !important;
+}
+
 .edit-note:empty:before {
   content: attr(data-placeholder);
   color: #888;
@@ -1367,7 +1398,7 @@ function renderNotes(arr) {
     // Buttons (hidden until long-press)
     const btnGroup = document.createElement('div');
     btnGroup.className = 'btn-group';
-    btnGroup.style.display = 'none';
+    btnGroup.style.display = 'flex';
 
     const editBtn = document.createElement('button');
 editBtn.textContent = 'Edit';
@@ -1528,27 +1559,44 @@ editorBtns.append(mainEditActions, tableTools);
     /* ---------- Interactions ---------- */
     // Long-press to reveal edit/delete
     let pressTimer = null;
-    let longPressed = false;
+let longPressed = false;
 
-    const startPress = () => {
-      if (textEditor.style.display === 'block') return; // ignore while editing
-      longPressed = false;
-      pressTimer = setTimeout(() => {
-        btnGroup.style.display = 'flex';
-        longPressed = true;
-      }, LONG_PRESS_MS);
-    };
-    const endPress = () => {
-      if (pressTimer) clearTimeout(pressTimer);
-      // delay clearing flag so the upcoming click won't copy
-      setTimeout(() => { longPressed = false; }, 10);
-    };
+const isInteractiveTarget = (target) => {
+  return target.closest(
+    'button, a, input, textarea, [contenteditable="true"], .btn-group, .edit-toolbar, .note-url'
+  );
+};
 
-    card.addEventListener('mousedown', startPress);
-    card.addEventListener('mouseup', endPress);
-    card.addEventListener('mouseleave', endPress);
-    card.addEventListener('touchstart', startPress, { passive: true });
-    card.addEventListener('touchend', endPress);
+const startPress = (e) => {
+  if (isInteractiveTarget(e.target)) return;
+  if (textEditor.style.display === 'block') return;
+
+  longPressed = false;
+
+  pressTimer = setTimeout(() => {
+    card.classList.add('actions-visible');
+    longPressed = true;
+  }, LONG_PRESS_MS);
+};
+
+const endPress = () => {
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+
+  setTimeout(() => {
+    longPressed = false;
+  }, 80);
+};
+
+card.addEventListener('mousedown', startPress);
+card.addEventListener('mouseup', endPress);
+card.addEventListener('mouseleave', endPress);
+
+card.addEventListener('touchstart', startPress, { passive: true });
+card.addEventListener('touchend', endPress);
+card.addEventListener('touchcancel', endPress);
 
     // Click card to copy (only when NOT editing / NOT clicking buttons / NOT long-press)
     card.addEventListener('click', (e) => {
@@ -1591,6 +1639,7 @@ function toggleEdit(card, editing) {
   const [editBtn, saveBtn, cancelBtn] = btnGroup.querySelectorAll('button');
 
   if (editing) {
+  card.classList.add('is-editing', 'actions-visible');
     titleEl.style.display = 'none';
     titleInput.style.display = 'block';
     textDisplay.style.display = 'none';
@@ -1602,6 +1651,7 @@ function toggleEdit(card, editing) {
     editorBtns.style.display = 'flex';
     textEditor.focus();
   } else {
+ card.classList.remove('is-editing', 'actions-visible');
     titleEl.style.display = 'block';
     titleInput.style.display = 'none';
     textDisplay.style.display = 'block';
