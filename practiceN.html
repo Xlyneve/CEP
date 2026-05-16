@@ -311,6 +311,35 @@ mark.highlight-hue {
   display: inline-block;
   text-decoration: none;
 }
+.note-text table,
+.edit-note table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 12px;
+  font-family: Tahoma, sans-serif;
+}
+
+.note-text td,
+.note-text th,
+.edit-note td,
+.edit-note th {
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  padding: 6px;
+  min-width: 60px;
+  vertical-align: top;
+}
+
+.note-text th,
+.edit-note th {
+  background: rgba(255, 255, 255, 0.35);
+  font-weight: bold;
+}
+
+.note-text td,
+.edit-note td {
+  background: rgba(255, 255, 255, 0.18);
+}
 
 .timestamp {
   font-size: 11px;
@@ -814,9 +843,16 @@ mark.highlight-hue {
     <div class="action-buttons">
   <div class="format-buttons">
   <button type="button" id="boldMainBtn"><strong>Bold</strong></button>
+
   <button type="button" id="highlightMainBtn">
     <mark class="highlight-hue">Highlight</mark>
   </button>
+
+  <button type="button" id="tableMainBtn">Table</button>
+  <button type="button" id="addRowMainBtn">+ Row</button>
+  <button type="button" id="addColMainBtn">+ Column</button>
+  <button type="button" id="delRowMainBtn">- Row</button>
+  <button type="button" id="delColMainBtn">- Column</button>
 </div>
 
   <button class="add-btn" id="addBtn">Add Note</button>
@@ -995,6 +1031,41 @@ document.getElementById('highlightMainBtn').addEventListener('mousedown', (e) =>
   const editor = document.getElementById('noteText');
   applyHueHighlightToSelection(editor);
 });
+
+document.getElementById('tableMainBtn').addEventListener('mousedown', (e) => {
+  e.preventDefault();
+
+  const editor = document.getElementById('noteText');
+  insertTableInEditor(editor, 2, 2);
+});
+document.getElementById('addRowMainBtn').addEventListener('mousedown', (e) => {
+  e.preventDefault();
+
+  const editor = document.getElementById('noteText');
+  addTableRow(editor);
+});
+
+document.getElementById('addColMainBtn').addEventListener('mousedown', (e) => {
+  e.preventDefault();
+
+  const editor = document.getElementById('noteText');
+  addTableColumn(editor);
+});
+
+document.getElementById('delRowMainBtn').addEventListener('mousedown', (e) => {
+  e.preventDefault();
+
+  const editor = document.getElementById('noteText');
+  deleteTableRow(editor);
+});
+
+document.getElementById('delColMainBtn').addEventListener('mousedown', (e) => {
+  e.preventDefault();
+
+  const editor = document.getElementById('noteText');
+  deleteTableColumn(editor);
+});
+
 /* ---------------- Create note (from add form) ---------------- */
 // Assumes #noteText is a contenteditable div (live formatting)
 document.getElementById('addBtn').addEventListener('click', async () => {
@@ -1016,6 +1087,110 @@ onSnapshot(collection(db, "practiceNNotes"), (snapshot) => {
   renderNotes(notes);
 });
 
+function insertTableInEditor(editor, rows = 3, cols = 3) {
+  editor.focus();
+
+  let tableHtml = `
+    <table>
+      <tbody>
+  `;
+
+  for (let r = 0; r < rows; r++) {
+    tableHtml += `<tr>`;
+
+    for (let c = 0; c < cols; c++) {
+      tableHtml += `<td><br></td>`;
+    }
+
+    tableHtml += `</tr>`;
+  }
+
+  tableHtml += `
+      </tbody>
+    </table>
+    <br>
+  `;
+
+  document.execCommand('insertHTML', false, tableHtml);
+}
+
+function getCurrentTableCell(editor) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
+
+  let node = sel.anchorNode;
+
+  if (!editor.contains(node)) return null;
+
+  if (node.nodeType === 3) {
+    node = node.parentNode;
+  }
+
+  return node.closest ? node.closest('td, th') : null;
+}
+
+function addTableRow(editor) {
+  const cell = getCurrentTableCell(editor);
+  if (!cell) return alert("Click inside a table cell first.");
+
+  const row = cell.parentElement;
+  const table = row.closest('table');
+  const colCount = row.children.length;
+
+  const newRow = document.createElement('tr');
+
+  for (let i = 0; i < colCount; i++) {
+    const td = document.createElement('td');
+    td.innerHTML = '<br>';
+    newRow.appendChild(td);
+  }
+
+  row.after(newRow);
+}
+
+function addTableColumn(editor) {
+  const cell = getCurrentTableCell(editor);
+  if (!cell) return alert("Click inside a table cell first.");
+
+  const cellIndex = Array.from(cell.parentElement.children).indexOf(cell);
+  const table = cell.closest('table');
+
+  Array.from(table.rows).forEach(row => {
+    const td = document.createElement('td');
+    td.innerHTML = '<br>';
+    row.children[cellIndex].after(td);
+  });
+}
+
+function deleteTableRow(editor) {
+  const cell = getCurrentTableCell(editor);
+  if (!cell) return alert("Click inside a table cell first.");
+
+  const row = cell.parentElement;
+  const table = row.closest('table');
+
+  if (table.rows.length <= 1) {
+    return alert("You need at least one row.");
+  }
+
+  row.remove();
+}
+
+function deleteTableColumn(editor) {
+  const cell = getCurrentTableCell(editor);
+  if (!cell) return alert("Click inside a table cell first.");
+
+  const cellIndex = Array.from(cell.parentElement.children).indexOf(cell);
+  const table = cell.closest('table');
+
+  if (table.rows[0].children.length <= 1) {
+    return alert("You need at least one column.");
+  }
+
+  Array.from(table.rows).forEach(row => {
+    row.children[cellIndex].remove();
+  });
+}
 /* ---------------- Render ---------------- */
 function renderNotes(arr) {
   notesContainer.innerHTML = '';
