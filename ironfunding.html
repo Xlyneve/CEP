@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iron Funding Checker</title>
+  <style>
+    * { box-sizing: border-box; font-family: Tahoma, sans-serif; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(255, 220, 235, 0.55), transparent 35%),
+        radial-gradient(circle at top right, rgba(210, 232, 255, 0.65), transparent 35%),
+        linear-gradient(135deg, #fff8fb, #f4fbff 45%, #fff8e8);
+      color: #222;
+      padding: 22px;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: 22px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(255,255,255,0.7);
+      box-shadow: 0 16px 45px rgba(120, 130, 160, 0.16);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtext {
+      margin: 0;
+      line-height: 1.5;
+      font-size: 13px;
+      color: #444;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(255,255,255,0.75);
+      box-shadow: 0 10px 28px rgba(120, 130, 160, 0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .card.full { grid-column: 1 / -1; }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    label {
+      display: block;
+      margin: 9px 0;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    input[type="number"], input[type="date"], select, textarea {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,120,140,0.22);
+      background: rgba(255,255,255,0.7);
+      font-size: 13px;
+      outline: none;
+    }
+
+    input[type="checkbox"] {
+      transform: translateY(2px);
+      margin-right: 7px;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 700;
+      background: rgba(199, 217, 255, 0.85);
+      box-shadow: 0 8px 20px rgba(90, 100, 140, 0.14);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(120,120,140,0.18);
+      font-weight: 600;
+    }
+
+    .result {
+      border-radius: 18px;
+      padding: 14px;
+      margin-top: 12px;
+      border: 1px solid rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.7);
+      white-space: pre-wrap;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .yes { background: #d8f5c8; }
+    .maybe { background: #fff1b8; }
+    .no { background: #ffd1dc; }
+
+    .muted {
+      color: #666;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .copybox {
+      margin-top: 10px;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 760px) {
+      body { padding: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+      h1 { font-size: 23px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Iron Funding Checker</h1>
+      <p class="subtext">
+        Quick screening tool for likely funded ferric carboxymaltose / Ferinject pathway. This is a helper only — always confirm against current PHARMAC Special Authority, local POAC / regional rules, and clinic policy.
+      </p>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>1. Patient / region</h2>
+        <label>Sex / Hb threshold
+          <select id="sex">
+            <option value="">Select...</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="publiclyFunded"> Eligible for publicly funded healthcare in NZ</label>
+        <label><input type="checkbox" id="metroAuckland"> Lives in or enrolled with GP in Metro Auckland</label>
+        <label><input type="checkbox" id="specialAuthority"> Special Authority already approved / will be applied for</label>
+        <label><input type="checkbox" id="pregnant"> Pregnant</label>
+        <label><input type="checkbox" id="firstTrimester"> First trimester pregnancy</label>
+        <label><input type="checkbox" id="latePregnancy"> >37 weeks gestation or severe late pregnancy concern</label>
+      </div>
+
+      <div class="card">
+        <h2>2. Bloods</h2>
+        <div class="row">
+          <label>Hb g/L
+            <input type="number" id="hb" placeholder="e.g. 102">
+          </label>
+          <label>Ferritin mcg/L
+            <input type="number" id="ferritin" placeholder="e.g. 12">
+          </label>
+        </div>
+        <div class="row">
+          <label>CRP mg/L
+            <input type="number" id="crp" placeholder="e.g. 7">
+          </label>
+          <label>Blood test date
+            <input type="date" id="bloodDate">
+          </label>
+        </div>
+        <label><input type="checkbox" id="renalPatient"> Renal patient / CKD context — labs may be accepted up to 3 months</label>
+        <label><input type="checkbox" id="symptomaticAnaemia"> Symptomatic anaemia / clinically anaemic</label>
+        <p class="muted">Hb threshold is checked automatically from sex: female Hb &lt;115 g/L, male Hb &lt;130 g/L. For non-specialist POAC “other patient” criteria, the stricter threshold is female Hb &lt;100 g/L or male Hb &lt;115 g/L.</p>
+      </div>
+
+      <div class="card">
+        <h2>3. Criteria pathway</h2>
+        <label><input type="checkbox" id="chronicInflammatory"> Chronic inflammatory disease with symptoms of anaemia despite normal iron levels</label>
+        <label><input type="checkbox" id="specialistRecommendation"> Specialist recommendation for treatment of iron deficiency anaemia</label>
+        <label><input type="checkbox" id="oralIneffective"> Oral iron tried and ineffective</label>
+        <label><input type="checkbox" id="oralIntolerance"> Oral iron caused dose-limiting intolerance</label>
+        <label><input type="checkbox" id="rapidCorrection"> Rapid correction of anaemia required</label>
+        <label><input type="checkbox" id="hfCkdIbd"> Symptomatic heart failure, CKD stage 3+, or active IBD where oral iron unlikely to work</label>
+      </div>
+
+      <div class="card">
+        <h2>4. Safety / extra checks</h2>
+        <label><input type="checkbox" id="twoInfusions"> Two or more iron infusions in preceding 6 months</label>
+        <label><input type="checkbox" id="hypophosphateRisk"> Hypophosphataemia risk: BMI <18, poor nutrition, chronic diarrhoea, etc.</label>
+        <label><input type="checkbox" id="phosphateDone"> Baseline phosphate checked if indicated</label>
+        <label>Notes
+          <textarea id="notes" placeholder="Optional: reason for rapid correction, oral iron issue, specialist advice, etc."></textarea>
+        </label>
+      </div>
+
+      <div class="card full">
+        <h2>Result</h2>
+        <div class="buttons">
+          <button onclick="checkFunding()">Check funding</button>
+          <button class="secondary" onclick="copySummary()">Copy clinical summary</button>
+          <button class="secondary" onclick="copyPatientExplanation()">Copy patient explanation</button>
+          <button class="secondary" onclick="resetForm()">Clear</button>
+        </div>
+        <div id="result" class="result">Enter details, then click Check funding.</div>
+        <p class="muted">
+          Note: This checks likely criteria only. Medication subsidy and administration funding are not exactly the same thing. Local processes may require Special Authority number, recent bloods, checklist completion, and regional eligibility.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function checked(id) {
+      const el = document.getElementById(id);
+      return el ? el.checked : false;
+    }
+
+    function valueNum(id) {
+      const el = document.getElementById(id);
+      if (!el || el.value === '') return null;
+      const num = Number(el.value);
+      return Number.isFinite(num) ? num : null;
+    }
+
+    function getSex() {
+      const el = document.getElementById('sex');
+      return el ? el.value : '';
+    }
+
+    function labIsRecent() {
+      const dateEl = document.getElementById('bloodDate');
+      const dateValue = dateEl ? dateEl.value : '';
+      if (!dateValue) return false;
+
+      const testDate = new Date(dateValue + 'T00:00:00');
+      const today = new Date();
+      const diffDays = Math.floor((today - testDate) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) return false;
+      return checked('renalPatient') ? diffDays <= 92 : diffDays <= 28;
+    }
+
+    function getAnaemiaStatus() {
+      const hb = valueNum('hb');
+      const sex = getSex();
+
+      if (hb === null || !sex) {
+        return {
+          hasAnaemia: false,
+          standardAnaemia: false,
+          stricterPoacAnaemia: false,
+          thresholdText: 'Hb threshold cannot be checked until sex and Hb are entered.'
+        };
+      }
+
+      const standardThreshold = sex === 'female' ? 115 : 130;
+      const stricterThreshold = sex === 'female' ? 100 : 115;
+
+      return {
+        hasAnaemia: hb < standardThreshold,
+        standardAnaemia: hb < standardThreshold,
+        stricterPoacAnaemia: hb < stricterThreshold,
+        thresholdText: `${sex === 'female' ? 'Female' : 'Male'} threshold: anaemia Hb <${standardThreshold} g/L; stricter POAC other-patient threshold Hb <${stricterThreshold} g/L.`
+      };
+    }
+
+    function getLabPathway() {
+      const ferritin = valueNum('ferritin');
+      const crp = valueNum('crp');
+      const anaemia = getAnaemiaStatus();
+      const hasAnaemia = anaemia.standardAnaemia || checked('symptomaticAnaemia');
+
+      if (checked('chronicInflammatory') && hasAnaemia) {
+        return 'Chronic inflammatory disease with symptoms of anaemia';
+      }
+
+      if (ferritin !== null && ferritin <= 20 && hasAnaemia) {
+        if (anaemia.stricterPoacAnaemia || checked('specialistRecommendation')) {
+          return 'Anaemia with ferritin ≤20 mcg/L';
+        }
+        return 'Anaemia with ferritin ≤20 mcg/L — check local POAC threshold / specialist route because Hb does not meet stricter other-patient threshold';
+      }
+
+      if (ferritin !== null && ferritin > 20 && ferritin <= 50 && crp !== null && crp >= 5 && hasAnaemia) {
+        return 'Anaemia with ferritin 20–50 mcg/L and CRP ≥5 mg/L';
+      }
+
+      if (checked('specialistRecommendation') && hasAnaemia) {
+        return 'Specialist recommendation documented with sex-specific anaemia threshold met';
+      }
+
+      return '';
+    }
+
+    function getOralPathway() {
+      const reasons = [];
+      if (checked('oralIneffective')) reasons.push('oral iron ineffective');
+      if (checked('oralIntolerance')) reasons.push('dose-limiting oral iron intolerance');
+      if (checked('rapidCorrection')) reasons.push('rapid correction required');
+      if (checked('hfCkdIbd')) reasons.push('HF / CKD3+ / active IBD where oral iron unlikely to work');
+      return reasons;
+    }
+
+    function buildFundingAssessment() {
+      const labPathway = getLabPathway();
+      const oralReasons = getOralPathway();
+      const recentLabs = labIsRecent();
+      const anaemia = getAnaemiaStatus();
+
+      const hasAnaemia = anaemia.standardAnaemia || checked('symptomaticAnaemia');
+      const hasLabPathway = Boolean(labPathway);
+      const hasOralPathway = oralReasons.length > 0;
+      const likelyPharmac = hasAnaemia && hasLabPathway && hasOralPathway;
+      const likelyPoac = likelyPharmac && checked('publiclyFunded') && checked('metroAuckland') && checked('specialAuthority') && recentLabs;
+
+      const needsPhosphate = checked('twoInfusions') || checked('hypophosphateRisk');
+      const phosphateOkay = !needsPhosphate || checked('phosphateDone');
+      const pregnancyFlag = checked('pregnant') && (checked('firstTrimester') || checked('latePregnancy'));
+
+      let statusClass = 'maybe';
+      let statusText = 'Needs review';
+
+      if (likelyPoac && phosphateOkay && !pregnancyFlag) {
+        statusClass = 'yes';
+        statusText = 'Likely funded / proceed to usual checks';
+      } else if (!likelyPharmac) {
+        statusClass = 'no';
+        statusText = 'Does not clearly meet criteria from entered information';
+      }
+
+      const missing = [];
+      const patientMissing = [];
+
+      if (!hasAnaemia) {
+        missing.push('Sex-specific Hb threshold for anaemia not met, or sex/Hb missing.');
+        patientMissing.push('Your haemoglobin level does not clearly meet the anaemia threshold for this funded pathway, or we do not have enough information entered to confirm this.');
+      }
+
+      if (!hasLabPathway) {
+        missing.push('No qualifying ferritin/CRP/chronic inflammatory/specialist pathway selected.');
+        patientMissing.push('The iron blood test criteria are not clearly met. Funding usually needs low ferritin, or ferritin in a borderline range with raised inflammation marker CRP, or a chronic inflammatory condition with anaemia symptoms.');
+      }
+
+      if (!hasOralPathway) {
+        missing.push('No oral iron issue / rapid correction / relevant comorbidity reason selected.');
+        patientMissing.push('The funding pathway usually needs a reason why tablets are not enough, such as oral iron not working, side effects from oral iron, or a clinical need to correct anaemia quickly.');
+      }
+
+      if (!checked('publiclyFunded')) {
+        missing.push('Public healthcare eligibility not confirmed.');
+        patientMissing.push('Public healthcare eligibility has not been confirmed.');
+      }
+
+      if (!checked('metroAuckland')) {
+        missing.push('Metro Auckland residence/enrolment not confirmed for POAC administration funding.');
+        patientMissing.push('The Auckland administration funding criteria have not been confirmed for your address or GP enrolment.');
+      }
+
+      if (!checked('specialAuthority')) {
+        missing.push('Special Authority not confirmed.');
+        patientMissing.push('The medicine subsidy usually needs Special Authority approval before treatment can be funded.');
+      }
+
+      if (!recentLabs) {
+        missing.push('Recent bloods not confirmed: usually within 4 weeks, or up to 3 months for renal patients.');
+        patientMissing.push('The blood tests may need to be repeated or updated because funding pathways usually require recent results.');
+      }
+
+      if (needsPhosphate && !checked('phosphateDone')) {
+        missing.push('Baseline phosphate appears indicated but not ticked as checked.');
+        patientMissing.push('A phosphate blood test may be needed before proceeding, especially if there have been repeated iron infusions or risk factors for low phosphate.');
+      }
+
+      if (pregnancyFlag) {
+        missing.push('Pregnancy flag: specialist obstetric advice recommended for first trimester or late/severe pregnancy situations.');
+        patientMissing.push('Because of the pregnancy timing or severity, specialist advice may be needed before proceeding.');
+      }
+
+      const hb = valueNum('hb');
+      const ferritin = valueNum('ferritin');
+      const crp = valueNum('crp');
+      const notesEl = document.getElementById('notes');
+      const userNotes = notesEl ? notesEl.value.trim() : '';
+
+      return {
+        statusClass,
+        statusText,
+        likelyPharmac,
+        likelyPoac,
+        labPathway,
+        oralReasons,
+        recentLabs,
+        anaemia,
+        missing,
+        patientMissing,
+        hb,
+        ferritin,
+        crp,
+        userNotes
+      };
+    }
+
+    function checkFunding() {
+      const result = document.getElementById('result');
+      const a = buildFundingAssessment();
+
+      const summary = [
+        `<span class="status ${a.statusClass}">${a.statusText}</span>`,
+        '',
+        `PHARMAC Special Authority likely met: ${a.likelyPharmac ? 'Yes' : 'Not clearly'}`,
+        `POAC Auckland administration funding likely met: ${a.likelyPoac ? 'Yes' : 'Not clearly'}`,
+        '',
+        `Sex: ${getSex() || 'not selected'}`,
+        `Hb: ${a.hb ?? 'not entered'} g/L`,
+        `Hb threshold check: ${a.anaemia.thresholdText}`,
+        `Ferritin: ${a.ferritin ?? 'not entered'} mcg/L`,
+        `CRP: ${a.crp ?? 'not entered'} mg/L`,
+        `Lab pathway: ${a.labPathway || 'not met / not entered'}`,
+        `Oral iron / clinical reason: ${a.oralReasons.join(', ') || 'not entered'}`,
+        `Recent labs: ${a.recentLabs ? 'Yes' : 'No / not entered'}`,
+        '',
+        a.missing.length ? `Issues to resolve:
+- ${a.missing.join('
+- ')}` : 'No obvious missing funding items from entered information.',
+        a.userNotes ? `
+Notes:
+${a.userNotes}` : ''
+      ].join('
+');
+
+      result.innerHTML = summary;
+    }
+
+    function copySummary() {
+      checkFunding();
+      const result = document.getElementById('result');
+      const plain = result.innerText || result.textContent;
+
+      navigator.clipboard.writeText(plain).then(() => {
+        const old = result.innerHTML;
+        result.innerHTML = old + '
+
+Copied clinical summary.';
+        setTimeout(() => result.innerHTML = old, 900);
+      });
+    }
+
+    function copyPatientExplanation() {
+      const a = buildFundingAssessment();
+      const explanation = [];
+      const sex = getSex() || 'not selected';
+
+      explanation.push('Iron infusion funding criteria');
+      explanation.push('');
+
+      if (a.likelyPharmac && a.likelyPoac && a.missing.length === 0) {
+        explanation.push('You meet the entered funding criteria for an iron infusion.');
+        explanation.push('');
+        explanation.push('This is because:');
+        explanation.push(`- Your haemoglobin/ferritin/CRP results meet the entered criteria.`);
+        explanation.push(`- Your iron pathway is: ${a.labPathway}.`);
+        explanation.push(`- The reason oral iron is not enough is: ${a.oralReasons.join(', ')}.`);
+        explanation.push('- Public healthcare eligibility, Auckland POAC criteria, Special Authority, and recent blood tests have been ticked as confirmed.');
+        explanation.push('');
+        explanation.push('Final approval still depends on the clinician confirming the information and following the current funding process.');
+      } else {
+        explanation.push('You do not clearly meet the entered funding criteria for an iron infusion at this stage.');
+        explanation.push('');
+        explanation.push('Reason/s:');
+
+        if (!a.patientMissing.length) {
+          explanation.push('- The entered information needs clinician review before funding can be confirmed.');
+        } else {
+          a.patientMissing.forEach(item => explanation.push(`- ${item}`));
+        }
+
+        explanation.push('');
+        explanation.push('In simple terms, funded iron infusion usually needs ALL of the following:');
+        explanation.push('- Anaemia confirmed by haemoglobin level or clinical criteria.');
+        explanation.push('- Iron blood results that meet the funded range, such as low ferritin, or ferritin 20–50 with raised CRP.');
+        explanation.push('- A reason oral iron tablets are not suitable or not enough, such as not working, side effects, or urgent need to correct anaemia.');
+        explanation.push('- Current blood tests and required funding paperwork / Special Authority.');
+      }
+
+      explanation.push('');
+      explanation.push('Entered results:');
+      explanation.push(`- Sex: ${sex}`);
+      explanation.push(`- Haemoglobin: ${a.hb ?? 'not entered'} g/L`);
+      explanation.push(`- Ferritin: ${a.ferritin ?? 'not entered'} mcg/L`);
+      explanation.push(`- CRP: ${a.crp ?? 'not entered'} mg/L`);
+      explanation.push(`- Hb threshold check: ${a.anaemia.thresholdText}`);
+
+      if (a.userNotes) {
+        explanation.push('');
+        explanation.push(`Additional notes: ${a.userNotes}`);
+      }
+
+      navigator.clipboard.writeText(explanation.join('
+')).then(() => {
+        const result = document.getElementById('result');
+        const old = result.innerHTML;
+        result.innerHTML = old + '
+
+Copied patient explanation.';
+        setTimeout(() => result.innerHTML = old, 900);
+      });
+    }
+
+    function resetForm() {
+      document.querySelectorAll('input[type="checkbox"]').forEach(input => input.checked = false);
+      document.querySelectorAll('input[type="number"], input[type="date"], textarea, select').forEach(input => input.value = '');
+      document.getElementById('result').textContent = 'Enter details, then click Check funding.';
+    }
+  </script>
+</body>
+</html>
