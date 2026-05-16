@@ -188,6 +188,101 @@ textarea:focus {
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+.mini-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+  align-items: center;
+}
+.mini-btn,
+.table-mini {
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.28) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-weight: 400 !important;
+  cursor: pointer;
+}
+
+.save-mini {
+  background: rgba(214, 245, 255, 0.5) !important;
+}
+
+.cancel-mini {
+  background: rgba(255, 220, 220, 0.42) !important;
+}
+
+.delete-mini {
+  background: rgba(255, 210, 210, 0.5) !important;
+}
+
+.highlight-mini {
+  background: rgba(255, 246, 204, 0.55) !important;
+}
+
+.bold-mini {
+  font-weight: 700 !important;
+}
+
+.mini-btn:hover,
+.table-mini:hover {
+  background: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: none !important;
+}
+
+.edit-table-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.table-tools-label {
+  width: 100%;
+  font-size: 9px;
+  color: #555;
+  margin-bottom: 1px;
+  letter-spacing: 0.3px;
+}
+
+.edit-toolbar {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.edit-main-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.edit-table-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.table-tools-label {
+  width: 100%;
+  font-size: 9px;
+  color: #555;
+  margin-bottom: 1px;
+  letter-spacing: 0.3px;
+}
 .format-buttons button:hover,
 .add-btn:hover,
 .btn-group button:hover,
@@ -841,18 +936,15 @@ mark.highlight-hue {
     <input type="text" id="noteUrl" placeholder="Optional URL" />
 
     <div class="action-buttons">
-  <div class="format-buttons">
-  <button type="button" id="boldMainBtn"><strong>Bold</strong></button>
+  <div class="format-buttons mini-toolbar">
+  <button type="button" id="boldMainBtn" class="mini-btn bold-mini">B</button>
+  <button type="button" id="highlightMainBtn" class="mini-btn highlight-mini">H</button>
 
-  <button type="button" id="highlightMainBtn">
-    <mark class="highlight-hue">Highlight</mark>
-  </button>
-
-  <button type="button" id="tableMainBtn">Table</button>
-  <button type="button" id="addRowMainBtn">+ Row</button>
-  <button type="button" id="addColMainBtn">+ Column</button>
-  <button type="button" id="delRowMainBtn">- Row</button>
-  <button type="button" id="delColMainBtn">- Column</button>
+  <button type="button" id="tableMainBtn" class="table-mini">Table</button>
+  <button type="button" id="addRowMainBtn" class="table-mini">+ Row</button>
+  <button type="button" id="addColMainBtn" class="table-mini">+ Col</button>
+  <button type="button" id="delRowMainBtn" class="table-mini">- Row</button>
+  <button type="button" id="delColMainBtn" class="table-mini">- Col</button>
 </div>
 
   <button class="add-btn" id="addBtn">Add Note</button>
@@ -1021,8 +1113,10 @@ function applyHueHighlightToSelection(editor) {
 
 document.getElementById('boldMainBtn').addEventListener('mousedown', (e) => {
   e.preventDefault();
+
   const editor = document.getElementById('noteText');
   editor.focus();
+
   document.execCommand('bold');
 });
 
@@ -1276,53 +1370,156 @@ function renderNotes(arr) {
     btnGroup.style.display = 'none';
 
     const editBtn = document.createElement('button');
-    editBtn.textContent = 'Edit';
-    editBtn.title = 'Edit this note';
-    editBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleEdit(card, true); });
+editBtn.textContent = 'Edit';
+editBtn.title = 'Edit this note';
+editBtn.className = 'mini-btn';
+editBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleEdit(card, true);
+});
 
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = 'Save';
-    saveBtn.title = 'Save changes';
-    saveBtn.style.display = 'none';
-    saveBtn.addEventListener('click', (e) => { e.stopPropagation(); saveEdit(card); });
+const saveBtn = document.createElement('button');
+saveBtn.textContent = 'Save';
+saveBtn.title = 'Save changes';
+saveBtn.className = 'mini-btn save-mini';
+saveBtn.style.display = 'none';
+saveBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  saveEdit(card);
+});
 
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.title = 'Cancel editing';
-    cancelBtn.style.display = 'none';
-    cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleEdit(card, false); });
+const cancelBtn = document.createElement('button');
+cancelBtn.textContent = 'Cancel';
+cancelBtn.title = 'Cancel editing';
+cancelBtn.className = 'mini-btn cancel-mini';
+cancelBtn.style.display = 'none';
+cancelBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleEdit(card, false);
+});
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.title = 'Delete this note';
-    deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteNote(note.id); });
+const deleteBtn = document.createElement('button');
+deleteBtn.textContent = 'Delete';
+deleteBtn.title = 'Delete this note';
+deleteBtn.className = 'mini-btn delete-mini';
+deleteBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  deleteNote(note.id);
+});
 
-    btnGroup.append(editBtn, saveBtn, cancelBtn, deleteBtn);
+btnGroup.append(editBtn, saveBtn, cancelBtn, deleteBtn);
 
     // Editor formatting (only visible in edit mode)
     const editorBtns = document.createElement('div');
-    editorBtns.className = 'editor-buttons';
-    editorBtns.style.display = 'none';
+editorBtns.className = 'edit-toolbar';
+editorBtns.style.display = 'none';
 
-    const boldBtn = document.createElement('button');
-    boldBtn.textContent = 'Bold';
-    boldBtn.title = 'Bold';
-    boldBtn.addEventListener('mousedown', (e) => {
+const mainEditActions = document.createElement('div');
+mainEditActions.className = 'edit-main-actions';
+
+const boldBtn = document.createElement('button');
+boldBtn.textContent = 'B';
+boldBtn.title = 'Bold';
+boldBtn.className = 'mini-btn bold-mini';
+boldBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
+  textEditor.focus();
   document.execCommand('bold');
 });
 
-    const highlightBtn = document.createElement('button');
-    highlightBtn.textContent = 'Highlight';
-    highlightBtn.title = 'Highlight';
-    highlightBtn.addEventListener('mousedown', (e) => {
+const highlightBtn = document.createElement('button');
+highlightBtn.textContent = 'H';
+highlightBtn.title = 'Highlight';
+highlightBtn.className = 'mini-btn highlight-mini';
+highlightBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
+  textEditor.focus();
   toggleHighlightInEditor(textEditor);
 });
 
-    editorBtns.append(boldBtn, highlightBtn);
+const saveInlineBtn = document.createElement('button');
+saveInlineBtn.textContent = 'Save';
+saveInlineBtn.title = 'Save changes';
+saveInlineBtn.className = 'mini-btn save-mini';
+saveInlineBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  saveEdit(card);
+});
+
+const cancelInlineBtn = document.createElement('button');
+cancelInlineBtn.textContent = 'Cancel';
+cancelInlineBtn.title = 'Cancel editing';
+cancelInlineBtn.className = 'mini-btn cancel-mini';
+cancelInlineBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleEdit(card, false);
+});
+
+mainEditActions.append(boldBtn, highlightBtn, saveInlineBtn, cancelInlineBtn);
+
+const tableTools = document.createElement('div');
+tableTools.className = 'edit-table-tools';
+
+const tableLabel = document.createElement('div');
+tableLabel.className = 'table-tools-label';
+tableLabel.textContent = 'Table tools';
+
+const tableBtn = document.createElement('button');
+tableBtn.textContent = 'Table';
+tableBtn.className = 'table-mini';
+tableBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  textEditor.focus();
+  insertTableInEditor(textEditor, 3, 3);
+});
+
+const addRowBtn = document.createElement('button');
+addRowBtn.textContent = '+ Row';
+addRowBtn.className = 'table-mini';
+addRowBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  textEditor.focus();
+  addTableRow(textEditor);
+});
+
+const addColBtn = document.createElement('button');
+addColBtn.textContent = '+ Col';
+addColBtn.className = 'table-mini';
+addColBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  textEditor.focus();
+  addTableColumn(textEditor);
+});
+
+const delRowBtn = document.createElement('button');
+delRowBtn.textContent = '- Row';
+delRowBtn.className = 'table-mini';
+delRowBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  textEditor.focus();
+  deleteTableRow(textEditor);
+});
+
+const delColBtn = document.createElement('button');
+delColBtn.textContent = '- Col';
+delColBtn.className = 'table-mini';
+delColBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  textEditor.focus();
+  deleteTableColumn(textEditor);
+});
+
+tableTools.append(tableLabel, tableBtn, addRowBtn, addColBtn, delRowBtn, delColBtn);
+editorBtns.append(mainEditActions, tableTools);
 
     // Assemble card
     card.append(titleEl, titleInput, urlEl, textDisplay, textEditor, editorBtns, timeEl, btnGroup);
@@ -1358,7 +1555,7 @@ function renderNotes(arr) {
       if (textEditor.style.display === 'block') return;            // editing
       if (longPressed) return;                                     // just long-pressed
       if (e.target.closest('.btn-group')) return;                  // clicked a button
-      if (e.target.closest('.editor-buttons')) return;             // clicked format buttons
+       if (e.target.closest('.edit-toolbar')) return;            // clicked format buttons
       if (e.target.closest('.note-url')) return;                   // clicked link area
       const textToCopy = textDisplay.innerText; // plain text only
       copyPlainText(textToCopy, () => {
@@ -1389,7 +1586,7 @@ function toggleEdit(card, editing) {
   const textDisplay = card.querySelector('.note-text');
   const textEditor = card.querySelector('.edit-note');
   const btnGroup = card.querySelector('.btn-group');
-  const editorBtns = card.querySelector('.editor-buttons');
+  const editorBtns = card.querySelector('.edit-toolbar');
 
   const [editBtn, saveBtn, cancelBtn] = btnGroup.querySelectorAll('button');
 
@@ -1400,8 +1597,8 @@ function toggleEdit(card, editing) {
     textEditor.style.display = 'block';
     btnGroup.style.display = 'flex';
     editBtn.style.display = 'none';
-    saveBtn.style.display = 'inline-block';
-    cancelBtn.style.display = 'inline-block';
+    saveBtn.style.display = 'none';
+	cancelBtn.style.display = 'none';
     editorBtns.style.display = 'flex';
     textEditor.focus();
   } else {
