@@ -322,6 +322,73 @@ h2 {
   margin-top: 6px;
 }
 
+
+.edit-save-btn {
+  background: rgba(214, 245, 255, 0.7);
+}
+
+.edit-cancel-btn {
+  background: rgba(255, 220, 220, 0.55);
+}
+.edit-main-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.mini-btn,
+.table-mini {
+  padding: 4px 8px;
+  font-size: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.mini-btn:hover,
+.table-mini:hover {
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: none;
+}
+
+.btn-bold {
+  font-weight: bold;
+}
+
+.btn-highlight {
+  background: rgba(255, 246, 204, 0.55);
+}
+
+.save-mini {
+  background: rgba(214, 245, 255, 0.55);
+}
+
+.cancel-mini {
+  background: rgba(255, 220, 220, 0.45);
+}
+
+.edit-table-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.table-tools-label {
+  width: 100%;
+  font-size: 9px;
+  color: #555;
+  margin-bottom: 1px;
+  letter-spacing: 0.3px;
+}
+
 #nurseNote.main-note-editor {
   flex: 2 1 280px;
   min-height: 90px;
@@ -881,10 +948,11 @@ async function deleteNote(id) {
   }
 }
 
-async function saveEdit(id, updatedTitle, updatedNote) {
+async function saveEdit(id, updatedTitle, updatedNote, updatedUrl) {
   await updateDoc(doc(db, "nurseNotes", id), {
     title: updatedTitle || "Untitled",
-    note: updatedNote
+    note: updatedNote,
+    url: updatedUrl || ""
   });
 }
 
@@ -1029,7 +1097,7 @@ function deleteTableColumn(editor) {
   });
 }
 /* ---------------- Editing ---------------- */
-function enableEditing(card, id, title, note) {
+function enableEditing(card, id, title, note, url = "") {
   card.innerHTML = `
     <input type="text" class="edit-title" value="${escapeHtml(title)}" />
 
@@ -1040,21 +1108,34 @@ function enableEditing(card, id, title, note) {
   ${note}
 </div>
 
-    <div class="editor-buttons" style="margin-top:6px; flex-wrap:wrap;">
-      <button class="btn-save">Save</button>
-      <button class="btn-cancel">Cancel</button>
-      <button class="btn-bold">Bold</button>
-      <button class="btn-highlight">Highlight</button>
-      <button class="btn-table">Table</button>
-      <button class="btn-add-row">+ Row</button>
-      <button class="btn-add-col">+ Column</button>
-      <button class="btn-del-row">- Row</button>
-      <button class="btn-del-col">- Column</button>
-    </div>
+<input type="text" class="edit-url" value="${escapeHtml(url || "")}" placeholder="Optional URL"
+  style="width:93%; margin-top:6px; margin-bottom:6px; padding:6px 10px;
+         font-family:Tahoma,sans-serif; font-size:11px; border-radius:8px;
+         border:1px solid rgba(255,255,255,0.4);
+         background:rgba(255,255,255,0.3);
+         backdrop-filter:blur(8px);
+         -webkit-backdrop-filter:blur(8px);" />
+
+   <div class="edit-main-actions">
+  <button class="btn-bold mini-btn">B</button>
+  <button class="btn-highlight mini-btn">H</button>
+  <button class="btn-save mini-btn save-mini">Save</button>
+  <button class="btn-cancel mini-btn cancel-mini">Cancel</button>
+</div>
+
+<div class="edit-table-tools">
+  <div class="table-tools-label">Table tools</div>
+  <button class="btn-table table-mini">Table</button>
+  <button class="btn-add-row table-mini">+ Row</button>
+  <button class="btn-add-col table-mini">+ Col</button>
+  <button class="btn-del-row table-mini">- Row</button>
+  <button class="btn-del-col table-mini">- Col</button>
+</div>
   `;
 
   const inputTitle = card.querySelector('.edit-title');
   const editableDiv = card.querySelector('.edit-note');
+  const inputUrl = card.querySelector('.edit-url');
 
   const btnSave = card.querySelector('.btn-save');
   const btnCancel = card.querySelector('.btn-cancel');
@@ -1067,12 +1148,13 @@ function enableEditing(card, id, title, note) {
   const btnDelCol = card.querySelector('.btn-del-col');
 
   btnSave.addEventListener('click', async () => {
-    const updatedTitle = inputTitle.value.trim() || "Untitled";
-    const updatedNote = editableDiv.innerHTML.trim();
+  const updatedTitle = inputTitle.value.trim() || "Untitled";
+  const updatedNote = editableDiv.innerHTML.trim();
+  const updatedUrl = inputUrl.value.trim();
 
-    await saveEdit(id, updatedTitle, updatedNote);
-    renderNotes();
-  });
+  await saveEdit(id, updatedTitle, updatedNote, updatedUrl);
+  renderNotes();
+});
 
   btnCancel.addEventListener('click', () => {
     renderNotes();
@@ -1172,7 +1254,7 @@ function renderNotes() {
         </div>
       `;
 
-      div.querySelector('.edit-btn').addEventListener('click', () => enableEditing(div, id, title, note));
+      div.querySelector('.edit-btn').addEventListener('click', () => enableEditing(div, id, title, note, url));
       div.querySelector('.delete-btn').addEventListener('click', () => deleteNote(id));
 
       // 👇 Add zoom function to image
