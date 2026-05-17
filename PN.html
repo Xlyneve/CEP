@@ -274,6 +274,69 @@ h2 {
   transform: translateY(-10px);
 }
 
+.note-card.new-note-highlight {
+  animation: newNoteGlow 2.4s ease;
+  outline: 3px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 4px;
+}
+
+.note-card.new-note-highlight::after {
+  content: "NEW";
+  position: absolute;
+  top: -12px;
+  right: -10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #111;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 239, 166, 0.96),
+    rgba(232, 205, 255, 0.94)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 0 10px rgba(255, 239, 166, 0.55),
+    0 0 16px rgba(232, 205, 255, 0.45);
+}
+
+@keyframes newNoteGlow {
+  0% {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 0 4px rgba(255, 255, 255, 0.95),
+      0 0 22px rgba(255, 255, 255, 0.75),
+      0 0 35px rgba(255, 255, 255, 0.45);
+  }
+
+  60% {
+    transform: scale(1.02);
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.65),
+      0 0 18px rgba(255, 255, 255, 0.45),
+      0 0 28px rgba(255, 255, 255, 0.25);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 8px 32px rgba(100, 100, 150, 0.15),
+      0 0 10px rgba(255, 255, 255, 0.2);
+  }
+}
+
+.note-card.editing-note {
+  transform: scale(1.035);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.45),
+    0 0 20px rgba(255, 239, 166, 0.55),
+    0 0 34px rgba(232, 205, 255, 0.45),
+    0 12px 34px rgba(100, 100, 150, 0.22);
+  background: rgba(255, 255, 255, 0.34);
+  z-index: 20;
+}
+
 .edit-title {
   width: 93%;
   margin-bottom: 6px;
@@ -900,7 +963,9 @@ const notesCol = collection(db, "nurseNotes");
 
 /* ---------------- Global Filter Persistence ---------------- */
 let currentSearchQuery = "";
-
+let newestNoteId = null;
+let pendingNewNoteTime = null;
+let unsubscribeNotes = null;
 /* ---------------- CRUD ---------------- */
 async function addNote() {
   const title = nurseTitle.value.trim();
@@ -909,39 +974,40 @@ async function addNote() {
   const fileInput = document.getElementById('nurseImage');
   const file = fileInput.files[0];
 
+  const createdAt = new Date().toISOString();
+  pendingNewNoteTime = createdAt;
+
   let imageBase64 = "";
 
   if (file) {
-  imageBase64 = await resizeImage(file, 700, 0.7);
+    imageBase64 = await resizeImage(file, 700, 0.7);
+  }
 
-  await addDoc(notesCol, {
+  const newDoc = await addDoc(notesCol, {
     title: title || "Untitled",
     note,
     url: url || "",
-    image: imageBase64,
-    time: new Date().toISOString()
+    image: imageBase64 || "",
+    time: createdAt
   });
 
+  newestNoteId = newDoc.id;
+  resetAddForm();
+}
+function resetAddForm() {
   nurseTitle.value = '';
   nurseNote.innerHTML = '';
   nurseURL.value = '';
-  nurseImage.value = '';
-} else {
-    await addDoc(notesCol, {
-      title: title || "Untitled",
-      note,
-      url: url || "",
-      image: "",
-      time: new Date().toISOString()
-    });
 
-    nurseTitle.value = '';
-	nurseNote.innerHTML = '';
-    nurseURL.value = '';
-    nurseImage.value = '';
-  }
+  const fileInput = document.getElementById('nurseImage');
+  if (fileInput) fileInput.value = '';
+
+  const nurseForm = document.getElementById('nurseFormWrapper');
+  const toggleBtn = document.getElementById('toggleFormBtn');
+
+  if (nurseForm) nurseForm.classList.remove('show');
+  if (toggleBtn) toggleBtn.textContent = '+';
 }
-
 async function deleteNote(id) {
   if (confirm("Delete this note?")) {
     await deleteDoc(doc(db, "nurseNotes", id));
@@ -965,6 +1031,77 @@ function escapeHtml(text) {
              .replace(/'/g, "&#039;");
 }
 
+function closestTagWithin(node, className, container) {
+  let el = node && node.nodeType === 3 ? node.parentNode : node;
+
+  while (el && el !== container) {
+    if (el.nodeType === 1 && el.classList.contains(className)) {
+      return el;
+    }
+    el = el.parentNode;
+  }
+
+  return null;
+}
+
+function unwrapElement(el) {
+  if (!el || !el.parentNode) return;
+
+  const parent = el.parentNode;
+
+  while (el.firstChild) {
+    parent.insertBefore(el.firstChild, el);
+  }
+
+  parent.removeChild(el);
+}
+
+function toggleGradientHighlight(editor) {
+  editor.focus();
+
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return;
+
+  const selectedText = selection.toString();
+  if (!selectedText.trim()) return;
+
+  const startHighlight = closestTagWithin(selection.anchorNode, 'highlight-gradient', editor);
+  const endHighlight = closestTagWithin(selection.focusNode, 'highlight-gradient', editor);
+
+  let removed = false;
+
+  if (startHighlight) {
+    unwrapElement(startHighlight);
+    removed = true;
+  }
+
+  if (endHighlight && endHighlight.isConnected && endHighlight !== startHighlight) {
+    unwrapElement(endHighlight);
+    removed = true;
+  }
+
+  if (removed) {
+    selection.removeAllRanges();
+    return;
+  }
+
+  const span = document.createElement('span');
+  span.className = 'highlight-gradient';
+
+  try {
+    range.surroundContents(span);
+  } catch (_) {
+    const selectedHtml = range.cloneContents();
+    span.appendChild(selectedHtml);
+    range.deleteContents();
+    range.insertNode(span);
+  }
+
+  selection.removeAllRanges();
+}
 function resizeImage(file, maxWidth = 900, quality = 0.75) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1098,6 +1235,8 @@ function deleteTableColumn(editor) {
 }
 /* ---------------- Editing ---------------- */
 function enableEditing(card, id, title, note, url = "") {
+  card.classList.add('editing-note');
+
   card.innerHTML = `
     <input type="text" class="edit-title" value="${escapeHtml(title)}" />
 
@@ -1153,12 +1292,11 @@ function enableEditing(card, id, title, note, url = "") {
   const updatedUrl = inputUrl.value.trim();
 
   await saveEdit(id, updatedTitle, updatedNote, updatedUrl);
-  renderNotes();
 });
 
   btnCancel.addEventListener('click', () => {
-    renderNotes();
-  });
+  renderNotesOnce();
+});
 
   btnBold.addEventListener('mousedown', (e) => {
     e.preventDefault();
@@ -1167,44 +1305,9 @@ function enableEditing(card, id, title, note, url = "") {
   });
 
   btnHighlight.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    editableDiv.focus();
-
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-
-    const range = selection.getRangeAt(0);
-
-    if (!editableDiv.contains(range.commonAncestorContainer)) return;
-
-    const selectedText = selection.toString();
-    if (!selectedText.trim()) return;
-
-    const container = range.commonAncestorContainer;
-    const parent = container.nodeType === 3 ? container.parentNode : container;
-
-    if (
-      parent.tagName === 'SPAN' &&
-      parent.classList.contains('highlight-gradient')
-    ) {
-      const textNode = document.createTextNode(parent.textContent);
-      parent.replaceWith(textNode);
-    } else {
-      const span = document.createElement('span');
-      span.className = 'highlight-gradient';
-
-      try {
-        range.surroundContents(span);
-      } catch (_) {
-        const selectedHtml = range.cloneContents();
-        span.appendChild(selectedHtml);
-        range.deleteContents();
-        range.insertNode(span);
-      }
-    }
-
-    selection.removeAllRanges();
-  });
+  e.preventDefault();
+  toggleGradientHighlight(editableDiv);
+});
 
   btnTable.addEventListener('mousedown', (e) => {
     e.preventDefault();
@@ -1232,47 +1335,87 @@ function enableEditing(card, id, title, note, url = "") {
   });
 }
 /* ---------------- Rendering ---------------- */
-function renderNotes() {
+function buildNoteCards(snapshot) {
   const list = document.getElementById('nurseNotesList');
-  onSnapshot(notesCol, snapshot => {
-    list.innerHTML = '';
-    snapshot.forEach(docSnap => {
-      const { title, note, time, url, image } = docSnap.data();
-      const id = docSnap.id;
+  list.innerHTML = '';
 
-      const div = document.createElement('div');
-      div.className = 'note-card';
-      div.innerHTML = `
-        <div class="note-title">${title}</div>
-        <div class="note-content">${note}</div>
-        ${image ? `<img src="${image}" class="note-image" style="width:65%; max-width:220px; margin-top:10px; border-radius:6px; cursor:pointer; display:block;" />` : ""}
-        <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
-        ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
-        <div class="note-actions">
-          <button class="edit-btn">Edit</button>
-          <button class="delete-btn">Delete</button>
-        </div>
-      `;
+  snapshot.forEach(docSnap => {
+    const { title, note, time, url, image } = docSnap.data();
+    const id = docSnap.id;
 
-      div.querySelector('.edit-btn').addEventListener('click', () => enableEditing(div, id, title, note, url));
-      div.querySelector('.delete-btn').addEventListener('click', () => deleteNote(id));
+    const div = document.createElement('div');
+    div.className = 'note-card';
 
-      // 👇 Add zoom function to image
-      const img = div.querySelector('.note-image');
-      if (img) {
-        img.addEventListener('click', () => openImageZoom(img.src));
-      }
+    if (
+      id === newestNoteId ||
+      (pendingNewNoteTime && time === pendingNewNoteTime)
+    ) {
+      div.classList.add('new-note-highlight');
 
-      list.appendChild(div);
+      setTimeout(() => {
+        div.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        });
+      }, 300);
+
+      setTimeout(() => {
+        div.classList.remove('new-note-highlight');
+        newestNoteId = null;
+        pendingNewNoteTime = null;
+      }, 2600);
+    }
+
+    div.innerHTML = `
+      <div class="note-title">${title}</div>
+      <div class="note-content">${note}</div>
+      ${image ? `<img src="${image}" class="note-image" style="width:65%; max-width:220px; margin-top:10px; border-radius:6px; cursor:pointer; display:block;" />` : ""}
+      <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
+      ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
+      <div class="note-actions">
+        <button class="edit-btn">Edit</button>
+        <button class="delete-btn">Delete</button>
+      </div>
+    `;
+
+    div.querySelector('.edit-btn').addEventListener('click', () => {
+      enableEditing(div, id, title, note, url);
     });
 
-    // 👇 Reapply the current search filter after refresh
-    if (currentSearchQuery.trim() !== "") {
-      applySearchFilter(currentSearchQuery);
+    div.querySelector('.delete-btn').addEventListener('click', () => {
+      deleteNote(id);
+    });
+
+    const img = div.querySelector('.note-image');
+    if (img) {
+      img.addEventListener('click', () => openImageZoom(img.src));
     }
+
+    list.appendChild(div);
+  });
+
+  if (currentSearchQuery.trim() !== "") {
+    applySearchFilter(currentSearchQuery);
+  }
+}
+
+function renderNotes() {
+  if (unsubscribeNotes) return;
+
+  unsubscribeNotes = onSnapshot(notesCol, snapshot => {
+    buildNoteCards(snapshot);
   });
 }
 
+async function renderNotesOnce() {
+  if (unsubscribeNotes) {
+    unsubscribeNotes();
+    unsubscribeNotes = null;
+  }
+
+  renderNotes();
+}
 /* ---------------- Image Zoom ---------------- */
 function openImageZoom(src) {
   // Create overlay
@@ -1339,30 +1482,8 @@ document.getElementById('mainHighlightBtn').addEventListener('mousedown', (e) =>
   e.preventDefault();
 
   const editor = document.getElementById('nurseNote');
-  editor.focus();
-
-  const selection = window.getSelection();
-  if (!selection.rangeCount) return;
-
-  const range = selection.getRangeAt(0);
-  if (!editor.contains(range.commonAncestorContainer)) return;
-  if (!selection.toString().trim()) return;
-
-  const span = document.createElement('span');
-  span.className = 'highlight-gradient';
-
-  try {
-    range.surroundContents(span);
-  } catch (_) {
-    const selectedHtml = range.cloneContents();
-    span.appendChild(selectedHtml);
-    range.deleteContents();
-    range.insertNode(span);
-  }
-
-  selection.removeAllRanges();
+  toggleGradientHighlight(editor);
 });
-
 document.getElementById('mainTableBtn').addEventListener('mousedown', (e) => {
   e.preventDefault();
 
