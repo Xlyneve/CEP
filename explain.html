@@ -29,7 +29,26 @@ body::before {
   height: 100%;
   background: url('2b.png') no-repeat center center;
   background-size: cover;
-  filter: blur(25px);
+  filter: blur(25px) brightness(0.88) saturate(1.08);
+  z-index: -1;
+  pointer-events: none;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 70% 40%,
+      rgba(232, 205, 255, 0.20),
+      transparent 38%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 239, 166, 0.10),
+      rgba(232, 205, 255, 0.18),
+      rgba(214, 245, 255, 0.16)
+    );
   z-index: -1;
   pointer-events: none;
 }
@@ -120,7 +139,7 @@ body::before {
   padding: 20px 40px;
   box-sizing: border-box;
   padding-top: 100px;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.45);
   backdrop-filter: saturate(180%) blur(12px);
@@ -137,40 +156,52 @@ body::before {
   gap: 12px;
 
   position: fixed;
-  bottom: -100%;
+  bottom: 80px;
   right: 20px;
 
   width: 300px;
   max-width: calc(100vw - 40px);
 
   padding: 15px;
-  border-radius: 12px;
+  border-radius: 14px;
 
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+
+  border: 1px solid rgba(255, 255, 255, 0.85);
 
   box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.15),
-    0 0 15px rgba(184, 142, 170, 0.2);
+    0 12px 30px rgba(80, 80, 120, 0.18),
+    0 0 22px rgba(255, 255, 255, 0.35),
+    inset 0 0 18px rgba(255, 255, 255, 0.22);
 
-  transition: bottom 0.4s ease, opacity 0.4s ease, box-shadow 0.4s ease;
+  transform: translateY(calc(100% + 120px));
   opacity: 0;
-  z-index: 999;
+
+  transition:
+    transform 0.4s ease,
+    opacity 0.4s ease,
+    box-shadow 0.4s ease;
+
+  z-index: 5000;
+  pointer-events: auto;
 }
 
 .input-group.show {
-  bottom: 80px;
+  transform: translateY(0);
   opacity: 1;
   box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.15),
-    0 0 20px rgba(184, 142, 170, 0.25);
+    0 14px 34px rgba(80, 80, 120, 0.22),
+    0 0 24px rgba(255, 239, 166, 0.28),
+    0 0 28px rgba(232, 205, 255, 0.24),
+    inset 0 0 18px rgba(255, 255, 255, 0.25);
 }
 
 /* Glassy input fields */
 .input-group input[type="text"],
 .input-group textarea {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -250,7 +281,7 @@ button:hover,
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 
   cursor: pointer;
-  z-index: 1000;
+  z-index: 5001;
   transition: background 0.3s, transform 0.2s;
 }
 
@@ -290,6 +321,72 @@ button:hover,
     0 0 14px 5px rgba(220 240 255 / 0.45),
     0 8px 24px rgba(190 210 240 / 0.15);
 }
+
+.note-card.editing-note {
+  transform: scale(1.025);
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.55),
+    inset 0 0 18px rgba(255, 239, 166, 0.22),
+    0 0 18px rgba(232, 205, 255, 0.30),
+    0 10px 28px rgba(100, 100, 150, 0.18);
+  background: rgba(255, 255, 255, 0.30);
+  z-index: 999;
+}
+.note-card.new-note-highlight {
+  animation: newNoteGlow 2.4s ease;
+  outline: 3px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 4px;
+  z-index: 1200;
+}
+
+.note-card.new-note-highlight::after {
+  content: "NEW";
+  position: absolute;
+  top: -12px;
+  right: -10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #111;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 239, 166, 0.96),
+    rgba(232, 205, 255, 0.94)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 0 10px rgba(255, 239, 166, 0.55),
+    0 0 16px rgba(232, 205, 255, 0.45);
+}
+
+@keyframes newNoteGlow {
+  0% {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 0 4px rgba(255, 255, 255, 0.95),
+      0 0 22px rgba(255, 255, 255, 0.75),
+      0 0 35px rgba(255, 255, 255, 0.45);
+  }
+
+  60% {
+    transform: scale(1.02);
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.65),
+      0 0 18px rgba(255, 255, 255, 0.45),
+      0 0 28px rgba(255, 255, 255, 0.25);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow:
+      inset 0 2px 6px rgba(255, 255, 255, 0.30),
+      0 0 10px 3px rgba(255, 255, 255, 0.18),
+      0 4px 12px rgba(255, 255, 255, 0.10);
+  }
+}
+
 .note-title {
   font-weight: bold;
   font-size: 15px;
@@ -651,7 +748,7 @@ mark,
 }
 
 .input-group.show {
-  bottom: 80px;
+  transform: translateY(0);
 }
 
   .ray {
@@ -662,6 +759,42 @@ mark,
 
 
 </style>
+
+</head>
+<body>
+
+<div class="top-header">
+  <div class="header-left">
+    <!-- Home toggle with rays -->
+    <div class="center-toggle">
+      <div class="toggle-icon" id="menuToggle">☐</div>
+      <div class="rays"></div>
+    </div>
+
+    <h1>Templates</h1>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" class="search-input" placeholder="Search notes...">
+  </div>
+</div>
+
+<div class="container">
+  <!-- Notes will render here -->
+  <div id="notesContainer" class="note-list"></div>
+</div>
+
+<!-- Floating add-note panel -->
+<div class="input-group">
+  <input type="text" id="noteTitle" placeholder="Title" />
+  <textarea id="noteText" placeholder="Write your template"></textarea>
+
+  <button class="add-btn">Add Note</button>
+</div>
+
+<!-- Floating toggle button -->
+<button id="toggleInput">+</button>
+
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
@@ -683,26 +816,52 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 let allNotes = [];
 let currentFilter = "";
+let newestNoteId = null;
+let pendingNewNoteTimestamp = null;
+let forceExitEditingId = null;
 
 // --- Add new note ---
-document.querySelector('.add-btn').addEventListener('click', async () => {
-  const title = document.getElementById('noteTitle').value.trim();
-  const rawText = document.getElementById('noteText').value.trim();
+document.querySelector('.add-btn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const titleEl = document.getElementById('noteTitle');
+  const textEl = document.getElementById('noteText');
+
+  const title = titleEl.value.trim();
+  const rawText = textEl.value.trim();
 
   if (!title && !rawText) return;
 
+  const createdAt = new Date().toISOString();
+  pendingNewNoteTimestamp = createdAt;
+
   const text = plainTextToHTML(rawText);
 
-  await addDoc(collection(db, 'explainNotes'), {
+  const newDoc = await addDoc(collection(db, 'explainNotes'), {
     title: title || 'Untitled',
     text,
-    timestamp: new Date().toISOString()
+    timestamp: createdAt
   });
 
-  document.getElementById('noteTitle').value = '';
-  document.getElementById('noteText').value = '';
+  newestNoteId = newDoc.id;
+  resetAddForm();
 });
 
+function resetAddForm() {
+  const titleEl = document.getElementById('noteTitle');
+  const textEl = document.getElementById('noteText');
+  const inputGroup = document.querySelector('.input-group');
+  const toggleBtn = document.getElementById('toggleInput');
+
+  if (titleEl) titleEl.value = '';
+  if (textEl) {
+    textEl.value = '';
+    textEl.style.height = '';
+  }
+
+  closeAddPanel();
+}
 // --- Render notes ---
 function renderNotes(notesToRender = allNotes) {
   const container = document.getElementById('notesContainer');
@@ -710,23 +869,44 @@ function renderNotes(notesToRender = allNotes) {
 
   notesToRender.forEach((note) => {
     const card = document.createElement('div');
-    card.className = 'note-card';
-    card.style.position = 'relative';
-    card.dataset.id = note.id; // store note ID for delegation
+	card.className = note.editing ? 'note-card editing-note' : 'note-card';
+	card.style.position = 'relative';
+	card.dataset.id = note.id;
+	
+	if (
+  note.id === newestNoteId ||
+  (pendingNewNoteTimestamp && note.timestamp === pendingNewNoteTimestamp)
+) {
+  card.classList.add('new-note-highlight');
+
+  setTimeout(() => {
+    card.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+  }, 300);
+
+  setTimeout(() => {
+    card.classList.remove('new-note-highlight');
+    newestNoteId = null;
+    pendingNewNoteTimestamp = null;
+  }, 2600);
+}
 
     if (note.editing) {
       card.innerHTML = `
         <input type="text" id="editTitle-${note.id}" class="edit-title" value="${escapeAttr(note.title)}" />
         <div id="editText-${note.id}" class="edit-box" contenteditable="true">${note.text || ''}</div>
         <div class="formatting-buttons">
-          <button onclick="window.formatText('${note.id}', 'bold')">Bold</button>
-          <button onclick="window.formatText('${note.id}', 'highlight')">Highlight</button>
-        </div>
+  <button type="button" class="btn-bold-edit">Bold</button>
+<button type="button" class="btn-highlight-edit">Highlight</button>
+</div>
         <div class="timestamp">Last updated: ${formatTS(note.timestamp)}</div>
         <div class="edit-controls" style="display:flex; gap:8px; margin-top:8px;">
-          <button onclick="window.saveEdit('${note.id}')">Save</button>
-          <button onclick="window.cancelEdit('${note.id}')">Cancel</button>
-        </div>
+  <button type="button" class="btn-save-edit">Save</button>
+<button type="button" class="btn-cancel-edit">Cancel</button>
+</div>
         <div class="copied-indicator">✓</div>
       `;
     } else {
@@ -776,17 +956,52 @@ document.addEventListener('click', (e) => {
 });
 
 // ✅ Delegated Edit/Delete (outside renderNotes)
-document.getElementById('notesContainer').addEventListener('click', (e) => {
+document.getElementById('notesContainer').addEventListener('mousedown', (e) => {
   const card = e.target.closest('.note-card');
   if (!card) return;
+
   const id = card.dataset.id;
 
   if (e.target.closest('.btn-edit')) {
+    e.preventDefault();
     e.stopPropagation();
     window.toggleEdit(id);
-  } else if (e.target.closest('.btn-delete')) {
+    return;
+  }
+
+  if (e.target.closest('.btn-delete')) {
+    e.preventDefault();
     e.stopPropagation();
     window.deleteNote(id);
+    return;
+  }
+
+  if (e.target.closest('.btn-save-edit')) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.saveEdit(id);
+    return;
+  }
+
+  if (e.target.closest('.btn-cancel-edit')) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.cancelEdit(id);
+    return;
+  }
+
+  if (e.target.closest('.btn-bold-edit')) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.formatText(id, 'bold');
+    return;
+  }
+
+  if (e.target.closest('.btn-highlight-edit')) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.formatText(id, 'highlight');
+    return;
   }
 });
 
@@ -834,32 +1049,42 @@ window.toggleEdit = (id) => {
 window.saveEdit = async (id) => {
   const note = allNotes.find(n => n.id === id);
   if (!note) return;
-  const newTitle = (document.getElementById(`editTitle-${id}`)?.value || '').trim();
-  const newText = (document.getElementById(`editText-${id}`)?.innerHTML || '').trim();
 
-  await updateDoc(doc(db, 'explainNotes', note.id), {
-    title: newTitle || 'Untitled',
-    text: newText,
-    timestamp: new Date().toISOString()
-  });
+  const titleEl = document.getElementById(`editTitle-${id}`);
+  const textEl = document.getElementById(`editText-${id}`);
 
+  const newTitle = (titleEl?.value || '').trim();
+  const newText = (textEl?.innerHTML || '').trim();
+
+  // Important: force card out of edit mode BEFORE Firestore refreshes
+  forceExitEditingId = id;
   note.title = newTitle || 'Untitled';
   note.text = newText;
   note.editing = false;
   delete note._originalTitle;
   delete note._originalText;
+
   renderNotes(getFilteredNotes());
+
+  await updateDoc(doc(db, 'explainNotes', id), {
+    title: newTitle || 'Untitled',
+    text: newText,
+    timestamp: new Date().toISOString()
+  });
 };
 
 // Cancel edits
 window.cancelEdit = (id) => {
   const note = allNotes.find(n => n.id === id);
   if (!note) return;
+
+  forceExitEditingId = id;
   note.title = note._originalTitle ?? note.title;
   note.text = note._originalText ?? note.text;
   note.editing = false;
   delete note._originalTitle;
   delete note._originalText;
+
   renderNotes(getFilteredNotes());
 };
 
@@ -1035,8 +1260,30 @@ document.getElementById('searchInput').addEventListener('input', e=>{
 });
 
 // Firestore live sync
-onSnapshot(collection(db, 'explainNotes'), snapshot=>{
-  allNotes = snapshot.docs.map(docSnap=>({...docSnap.data(), id: docSnap.id, editing:false}));
+onSnapshot(collection(db, 'explainNotes'), snapshot => {
+  const previousEditing = new Map(
+    allNotes
+      .filter(n => n.editing && n.id !== forceExitEditingId)
+      .map(n => [n.id, {
+        editing: true,
+        _originalTitle: n._originalTitle,
+        _originalText: n._originalText
+      }])
+  );
+
+  allNotes = snapshot.docs.map(docSnap => {
+    const existingEdit = previousEditing.get(docSnap.id);
+
+    return {
+      ...docSnap.data(),
+      id: docSnap.id,
+      editing: existingEdit?.editing || false,
+      _originalTitle: existingEdit?._originalTitle,
+      _originalText: existingEdit?._originalText
+    };
+  });
+
+  forceExitEditingId = null;
   renderNotes(getFilteredNotes());
 });
 
@@ -1046,20 +1293,38 @@ const inputGroup = document.querySelector('.input-group');
 const noteTitle = document.getElementById('noteTitle');
 const noteText = document.getElementById('noteText');
 
-toggleBtn.addEventListener('click', () => {
-  inputGroup.classList.toggle('show');
-  toggleBtn.textContent = inputGroup.classList.contains('show') ? '×' : '+';
+function openAddPanel() {
+  inputGroup.classList.add('show');
+  toggleBtn.textContent = '×';
+}
+
+function closeAddPanel() {
+  inputGroup.classList.remove('show');
+  toggleBtn.textContent = '+';
+}
+
+toggleBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 
   if (inputGroup.classList.contains('show')) {
-    noteTitle.focus();
+    closeAddPanel();
+  } else {
+    openAddPanel();
   }
 });
 
-// Close input if click outside
-document.addEventListener('click', (e) => {
-  if (!inputGroup.contains(e.target) && !toggleBtn.contains(e.target)) {
-    inputGroup.classList.remove('show');
-    toggleBtn.textContent = '+';
+inputGroup.addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+});
+
+document.addEventListener('pointerdown', (e) => {
+  if (
+    inputGroup.classList.contains('show') &&
+    !inputGroup.contains(e.target) &&
+    !toggleBtn.contains(e.target)
+  ) {
+    closeAddPanel();
   }
 });
 
@@ -1194,44 +1459,5 @@ document.addEventListener("click", (e) => {
   }
 });
 </script>
-
-
-</head>
-<body>
-
-<div class="top-header">
-  <div class="header-left">
-    <!-- Home toggle with rays -->
-    <div class="center-toggle">
-      <div class="toggle-icon" id="menuToggle">☐</div>
-      <div class="rays"></div>
-    </div>
-
-    <h1>Templates</h1>
-  </div>
-
-  <div class="search-bar">
-    <input type="text" id="searchInput" class="search-input" placeholder="Search notes...">
-  </div>
-</div>
-
-
-<div class="container">
-  <div class="input-group">
-    <input type="text" id="noteTitle" placeholder="Title" />
-    <textarea id="noteText" placeholder="Write your template"></textarea>
-    
-    <button class="add-btn">Add Note</button>
-  </div>
-
-  <!-- Notes will render here -->
-  <div id="notesContainer" class="note-list"></div>
-</div>
-
-
-<!-- Floating toggle button -->
-<button id="toggleInput">+</button>
-
-
 </body>
 </html>
