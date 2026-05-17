@@ -297,6 +297,70 @@ textarea:focus {
     0 10px 30px rgba(190, 210, 240, 0.15);
 }
 
+.note-card.editing-note {
+  transform: scale(1.035);
+  outline: 3px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 5px;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.45),
+    0 0 20px rgba(255, 239, 166, 0.55),
+    0 0 34px rgba(232, 205, 255, 0.45),
+    0 12px 34px rgba(100, 100, 150, 0.22);
+  background: rgba(255, 255, 255, 0.34);
+  z-index: 20;
+}
+
+.note-card.new-note-highlight {
+  animation: newNoteGlow 2.4s ease;
+  outline: 3px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 4px;
+}
+
+.note-card.new-note-highlight::after {
+  content: "NEW";
+  position: absolute;
+  top: -12px;
+  right: -10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #111;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 239, 166, 0.96),
+    rgba(232, 205, 255, 0.94)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 0 10px rgba(255, 239, 166, 0.55),
+    0 0 16px rgba(232, 205, 255, 0.45);
+}
+
+@keyframes newNoteGlow {
+   0% {
+  transform: scale(1.04);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.95),
+    0 0 22px rgba(255, 255, 255, 0.75),
+    0 0 35px rgba(255, 255, 255, 0.45);
+}
+
+  60% {
+  transform: scale(1.02);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.65),
+    0 0 18px rgba(255, 255, 255, 0.45),
+    0 0 28px rgba(255, 255, 255, 0.25);
+}
+
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 8px 32px rgba(100, 100, 150, 0.15),
+      0 0 10px rgba(255, 255, 255, 0.2);
+  }
+}
 
 /* Note contents */
 .note-title {
@@ -795,7 +859,7 @@ textarea:focus {
     <div class="action-buttons">
       <div class="format-buttons">
         <button type="button" onclick="document.execCommand('bold')"><strong>Bold</strong></button>
-        <button type="button" onclick="applyGradientHighlightToAddNote()"><mark>Highlight</mark></button>
+        <button type="button" id="addHighlightBtn"><mark>Highlight</mark></button>
       </div>
       <button class="add-btn" id="addBtn">Add Note</button>
     </div>
@@ -828,6 +892,9 @@ const db = getFirestore(app);
 
 /* ---------------- State ---------------- */
 let notes = [];
+let newestNoteId = null;
+let pendingNewNoteTimestamp = null;
+
 const notesContainer = document.getElementById('notesContainer');
 const LONG_PRESS_MS = 600;
 
@@ -841,15 +908,30 @@ function escapeHtml(text) {
     .replace(/'/g, "&#039;");
 }
 function maybeParseLegacy(text) {
-  if (text.indexOf('<') === -1) {
-    let s = escapeHtml(text);
-    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    s = s.replace(/==(.+?)==/g, '<mark>$1</mark>');
-    s = s.replace(/\n/g, '<br>');
-    return s;
+  if (!text) return '';
+
+  // Fix double-encoded symbols like &amp; showing as text
+  text = decodeHtmlEntities(String(text));
+
+  // If it already contains real HTML tags, display it as HTML
+  if (text.indexOf('<') !== -1) {
+    return text;
   }
-  return text;
+
+  // Legacy plain-text notes
+  let s = escapeHtml(text);
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/==(.+?)==/g, '<mark class="gradient-highlight">$1</mark>');
+  s = s.replace(/\n/g, '<br>');
+  return s;
 }
+
+function decodeHtmlEntities(str) {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = str;
+  return txt.value;
+}
+
 function closestTagWithin(node, tagName, container) {
   tagName = tagName.toUpperCase();
   let el = (node && node.nodeType === 3) ? node.parentNode : node;
@@ -941,12 +1023,30 @@ function applyGradientHighlightToAddNote() {
     );
   }
 }
+
+const addHighlightBtn = document.getElementById('addHighlightBtn');
+
+if (addHighlightBtn) {
+  addHighlightBtn.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // keeps text selection active
+  });
+
+  addHighlightBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    applyGradientHighlightToAddNote();
+  });
+}
 /* ---------------- Create note (with optional image) ---------------- */
 document.getElementById('addBtn').addEventListener('click', async () => {
   const title = document.getElementById('noteTitle').value.trim();
-  const textEl = document.getElementById('noteText');
-  const text = (textEl ? textEl.innerHTML : '').trim();
-  const url = document.getElementById('noteUrl').value.trim();
+const textEl = document.getElementById('noteText');
+
+// Decode before saving so & does not become visible as &amp;
+const text = textEl ? decodeHtmlEntities(textEl.innerHTML.trim()) : '';
+
+const url = document.getElementById('noteUrl').value.trim();
+const createdAt = Date.now();
+pendingNewNoteTimestamp = createdAt;
   const fileInput = document.getElementById('noteImage');
   const file = fileInput ? fileInput.files[0] : null;
   if (!title || !text) return alert("Please fill in both Title and Explanation.");
@@ -956,28 +1056,62 @@ document.getElementById('addBtn').addEventListener('click', async () => {
     const reader = new FileReader();
     reader.onloadend = async () => {
       imageBase64 = reader.result;
-      await addDoc(collection(db, "informationNotes"), { title, text, url, image: imageBase64, timestamp: Date.now() });
-      resetAddForm();
+      const newDoc = await addDoc(collection(db, "informationNotes"), {
+  title,
+  text,
+  url,
+  image: imageBase64,
+  timestamp: createdAt
+});
+
+newestNoteId = newDoc.id;
+resetAddForm();
     };
     reader.readAsDataURL(file);
   } else {
-    await addDoc(collection(db, "informationNotes"), { title, text, url, image: "", timestamp: Date.now() });
-    resetAddForm();
+    const newDoc = await addDoc(collection(db, "informationNotes"), {
+  title,
+  text,
+  url,
+  image: "",
+timestamp: createdAt
+});
+
+newestNoteId = newDoc.id;
+resetAddForm();
   }
 });
 
 function resetAddForm() {
   document.getElementById('noteTitle').value = '';
-  if (document.getElementById('noteText')) document.getElementById('noteText').innerHTML = '';
+
+  if (document.getElementById('noteText')) {
+    document.getElementById('noteText').innerHTML = '';
+  }
+
   document.getElementById('noteUrl').value = '';
+
   const fileInput = document.getElementById('noteImage');
   if (fileInput) fileInput.value = '';
+
+  // close add-note window after adding
+  const inputGroup = document.getElementById('inputGroup');
+  const toggleBtn = document.getElementById('toggleInputBtn');
+
+  if (inputGroup) inputGroup.classList.remove('show');
+  if (toggleBtn) toggleBtn.textContent = '+';
 }
 
 /* ---------------- Real-time updates ---------------- */
 onSnapshot(collection(db, "informationNotes"), (snapshot) => {
   notes = [];
   snapshot.forEach(docSnap => notes.push({ id: docSnap.id, ...docSnap.data() }));
+  // If snapshot renders before addDoc gives us the ID,
+// use the timestamp as backup to identify the new note.
+if (!newestNoteId && pendingNewNoteTimestamp) {
+  const pendingNote = notes.find(n => n.timestamp === pendingNewNoteTimestamp);
+  if (pendingNote) newestNoteId = pendingNote.id;
+}
   const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
   if (searchVal) {
     const filtered = notes.filter(n =>
@@ -999,6 +1133,28 @@ function renderNotes(arr) {
     card.className = 'note-card';
     card.dataset.id = note.id;
     card.style.position = 'relative';
+	
+	if (
+  note.id === newestNoteId ||
+  (pendingNewNoteTimestamp && note.timestamp === pendingNewNoteTimestamp)
+) {
+  card.classList.add('new-note-highlight');
+
+  setTimeout(() => {
+    card.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+  }, 300);
+
+  setTimeout(() => {
+    card.classList.remove('new-note-highlight');
+    newestNoteId = null;
+    pendingNewNoteTimestamp = null;
+  }, 2600);
+}
+	
 
     // Tick feedback
     const tick = document.createElement('div');
@@ -1118,12 +1274,14 @@ function toggleEdit(card, editing){
   const editorBtns = card.querySelector('.editor-buttons');
   const [editBtn, saveBtn, cancelBtn] = btnGroup.querySelectorAll('button');
   if(editing){
+  card.classList.add('editing-note');
     titleEl.style.display='none'; titleInput.style.display='block';
     textDisplay.style.display='none'; textEditor.style.display='block';
     btnGroup.style.display='flex'; editBtn.style.display='none';
     saveBtn.style.display='inline-block'; cancelBtn.style.display='inline-block';
     editorBtns.style.display='flex'; textEditor.focus();
   } else {
+  card.classList.remove('editing-note');
     titleEl.style.display='block'; titleInput.style.display='none';
     textDisplay.style.display='block'; textEditor.style.display='none';
     editBtn.style.display=''; saveBtn.style.display='none'; cancelBtn.style.display='none';
@@ -1469,24 +1627,14 @@ function getAverageLumaAt(imgX, imgY, sample = 18){
     const sy = e.clientY - rect.top;
     const imgP = toImageSpace(sx, sy);
 
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // === REAL MARKER HIGHLIGHT ===
-    // Multiply blend keeps text visible underneath
-    ctx.save();
-    ctx.globalCompositeOperation = "multiply";
-
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    // Marker color
-    // === TRANSPARENT GRADIENT MARKER HIGHLIGHT ===
-// Multiply blend keeps image/text visible underneath
-ctx.save();
-ctx.globalCompositeOperation = "multiply";
-ctx.lineCap = "round";
-ctx.lineJoin = "round";
-ctx.lineWidth = 24;
+	ctx.save();
+	ctx.globalCompositeOperation = "multiply";
+	ctx.lineCap = "round";
+	ctx.lineJoin = "round";
+	ctx.lineWidth = 24;
 
 // horizontal gradient
 const horizontalGradient = ctx.createLinearGradient(startX, startY, imgP.x, startY);
@@ -1514,7 +1662,7 @@ ctx.stroke();
 
 ctx.restore();
 
-    return;
+return;
   }
 
     if (isPanning) {
