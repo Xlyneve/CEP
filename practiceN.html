@@ -517,6 +517,70 @@ mark.highlight-hue {
 .note-card.is-editing {
   transform: none !important;
 }
+.note-card.new-note-highlight {
+  animation: newNoteGlow 2.4s ease;
+  outline: 3px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 4px;
+  z-index: 1200;
+}
+
+.note-card.new-note-highlight::after {
+  content: "NEW";
+  position: absolute;
+  top: -12px;
+  right: -10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #111;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 239, 166, 0.96),
+    rgba(232, 205, 255, 0.94)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 0 10px rgba(255, 239, 166, 0.55),
+    0 0 16px rgba(232, 205, 255, 0.45);
+}
+
+@keyframes newNoteGlow {
+  0% {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 0 4px rgba(255, 255, 255, 0.95),
+      0 0 22px rgba(255, 255, 255, 0.75),
+      0 0 35px rgba(255, 255, 255, 0.45);
+  }
+
+  60% {
+    transform: scale(1.02);
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.65),
+      0 0 18px rgba(255, 255, 255, 0.45),
+      0 0 28px rgba(255, 255, 255, 0.25);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 8px 32px rgba(100, 100, 150, 0.15),
+      0 0 10px rgba(255, 255, 255, 0.2);
+  }
+}
+
+.note-card.is-editing {
+  transform: scale(1.025) !important;
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.55),
+    inset 0 0 18px rgba(255, 239, 166, 0.22),
+    0 0 18px rgba(232, 205, 255, 0.30),
+    0 10px 28px rgba(100, 100, 150, 0.18) !important;
+  background: rgba(255, 255, 255, 0.34);
+  z-index: 999;
+}
 
 .edit-note:empty:before {
   content: attr(data-placeholder);
@@ -1011,6 +1075,9 @@ const db = getFirestore(app);
 
 /* ---------------- State ---------------- */
 let notes = [];
+let newestNoteId = null;
+let pendingNewNoteTimestamp = null;
+
 const notesContainer = document.getElementById('notesContainer');
 const LONG_PRESS_MS = 600;
 let currentSearch = ''; // <-- track current search/filter
@@ -1119,6 +1186,28 @@ function applyHueHighlightToSelection(editor) {
   if (!editor.contains(range.commonAncestorContainer)) return;
   if (range.collapsed) return;
 
+  // If selected text/caret is already inside a highlight, remove it
+  const m1 = closestTagWithin(sel.anchorNode, 'MARK', editor);
+  const m2 = closestTagWithin(sel.focusNode, 'MARK', editor);
+
+  let toggledOff = false;
+
+  if (m1) {
+    unwrapElement(m1);
+    toggledOff = true;
+  }
+
+  if (m2 && m2.isConnected && m2 !== m1) {
+    unwrapElement(m2);
+    toggledOff = true;
+  }
+
+  if (toggledOff) {
+    sel.removeAllRanges();
+    return;
+  }
+
+  // Otherwise apply highlight
   const mark = document.createElement('mark');
   mark.className = 'highlight-hue';
 
@@ -1193,17 +1282,52 @@ document.getElementById('delColMainBtn').addEventListener('mousedown', (e) => {
 
 /* ---------------- Create note (from add form) ---------------- */
 // Assumes #noteText is a contenteditable div (live formatting)
-document.getElementById('addBtn').addEventListener('click', async () => {
-  const title = document.getElementById('noteTitle').value.trim();
+document.getElementById('addBtn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const titleEl = document.getElementById('noteTitle');
   const textEl = document.getElementById('noteText');
+  const urlEl = document.getElementById('noteUrl');
+
+  const title = titleEl.value.trim();
   const text = (textEl ? textEl.innerHTML : '').trim();
-  const url = document.getElementById('noteUrl').value.trim();
-  if (!title || !text) return alert("Please fill in both Title and Explanation.");
-  await addDoc(collection(db, "practiceNNotes"), { title, text, url, timestamp: Date.now() });
-  document.getElementById('noteTitle').value = '';
-  if (textEl) textEl.innerHTML = '';
-  document.getElementById('noteUrl').value = '';
+  const url = urlEl.value.trim();
+
+  if (!title || !text) {
+    return alert("Please fill in both Title and Explanation.");
+  }
+
+  const createdAt = Date.now();
+  pendingNewNoteTimestamp = createdAt;
+
+  const newDoc = await addDoc(collection(db, "practiceNNotes"), {
+    title,
+    text,
+    url,
+    timestamp: createdAt
+  });
+
+  newestNoteId = newDoc.id;
+  resetAddForm();
 });
+
+function resetAddForm() {
+  const titleEl = document.getElementById('noteTitle');
+  const textEl = document.getElementById('noteText');
+  const urlEl = document.getElementById('noteUrl');
+  const inputGroup = document.getElementById('inputGroup');
+  const toggleBtn = document.getElementById('toggleInputBtn');
+  const photoInput = document.getElementById('photoInput');
+
+  if (titleEl) titleEl.value = '';
+  if (textEl) textEl.innerHTML = '';
+  if (urlEl) urlEl.value = '';
+  if (photoInput) photoInput.value = '';
+
+  if (inputGroup) inputGroup.classList.remove('show');
+  if (toggleBtn) toggleBtn.textContent = '+';
+}
 
 /* ---------------- Real-time updates ---------------- */
 onSnapshot(collection(db, "practiceNNotes"), (snapshot) => {
@@ -1326,6 +1450,27 @@ function renderNotes(arr) {
     card.className = 'note-card';
     card.dataset.id = note.id;
     card.style.position = 'relative';
+	
+	if (
+  note.id === newestNoteId ||
+  (pendingNewNoteTimestamp && note.timestamp === pendingNewNoteTimestamp)
+) {
+  card.classList.add('new-note-highlight');
+
+  setTimeout(() => {
+    card.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+  }, 300);
+
+  setTimeout(() => {
+    card.classList.remove('new-note-highlight');
+    newestNoteId = null;
+    pendingNewNoteTimestamp = null;
+  }, 2600);
+}
 
     // Soft yellow check (top-right), hidden by default
     const tick = document.createElement('div');
@@ -1673,7 +1818,6 @@ async function saveEdit(card) {
   if (!newTitle || !newText) return alert("Title and explanation cannot be empty.");
   await updateDoc(doc(db, "practiceNNotes", id), { title: newTitle, text: newText });
 toggleEdit(card, false);
-renderFilteredNotes(); // <-- keep current filter applied
 
 }
 
@@ -1691,9 +1835,39 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 const toggleBtn = document.getElementById('toggleInputBtn');
 const inputGroup = document.getElementById('inputGroup');
 
-toggleBtn.addEventListener('click', () => {
-  inputGroup.classList.toggle('show');
-  toggleBtn.textContent = inputGroup.classList.contains('show') ? '×' : '+';
+function openAddPanel() {
+  inputGroup.classList.add('show');
+  toggleBtn.textContent = '×';
+}
+
+function closeAddPanel() {
+  inputGroup.classList.remove('show');
+  toggleBtn.textContent = '+';
+}
+
+toggleBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (inputGroup.classList.contains('show')) {
+    closeAddPanel();
+  } else {
+    openAddPanel();
+  }
+});
+
+inputGroup.addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+});
+
+document.addEventListener('pointerdown', (e) => {
+  if (
+    inputGroup.classList.contains('show') &&
+    !inputGroup.contains(e.target) &&
+    !toggleBtn.contains(e.target)
+  ) {
+    closeAddPanel();
+  }
 });
 
 const centerToggle = document.querySelector('.center-toggle');
