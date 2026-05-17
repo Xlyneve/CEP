@@ -290,7 +290,70 @@ h2 {
   transform: translateY(-10px); /* slight lift */
 }
 
+.note-card.new-note-highlight {
+  animation: newNoteGlow 2.4s ease;
+  outline: 3px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 4px;
+  z-index: 1200;
+}
 
+.note-card.new-note-highlight::after {
+  content: "NEW";
+  position: absolute;
+  top: -12px;
+  right: -10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #111;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 239, 166, 0.96),
+    rgba(232, 205, 255, 0.94)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 0 10px rgba(255, 239, 166, 0.55),
+    0 0 16px rgba(232, 205, 255, 0.45);
+}
+
+@keyframes newNoteGlow {
+  0% {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 0 4px rgba(255, 255, 255, 0.95),
+      0 0 22px rgba(255, 255, 255, 0.75),
+      0 0 35px rgba(255, 255, 255, 0.45);
+  }
+
+  60% {
+    transform: scale(1.02);
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.65),
+      0 0 18px rgba(255, 255, 255, 0.45),
+      0 0 28px rgba(255, 255, 255, 0.25);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 8px 32px rgba(100, 100, 150, 0.15),
+      0 0 10px rgba(255, 255, 255, 0.2);
+  }
+}
+
+.note-card.editing-note {
+  transform: scale(1.025);
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.55),
+    inset 0 0 18px rgba(255, 239, 166, 0.22),
+    0 0 18px rgba(232, 205, 255, 0.30),
+    0 10px 28px rgba(100, 100, 150, 0.18);
+  background: rgba(255, 255, 255, 0.34);
+  z-index: 999;
+}
 
 .edit-title {
   width: 93%;
@@ -559,37 +622,94 @@ button:focus,
   align-items: center;
   justify-content: center;
   transition: background 0.3s ease, transform 0.2s ease;
-  z-index: 1000;
+  z-index: 5001;
 }
 
 #toggleFormBtn:hover {
   background: rgba(255, 255, 255, 0.5);
   transform: scale(1.1);
 }
+
 #nurseFormWrapper {
   position: fixed;
-  bottom: -100%; /* hidden offscreen */
+  bottom: 80px;
   right: 20px;
+
   width: 300px;
-  padding: 15px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 
-    0 8px 20px rgba(0, 0, 0, 0.15),       /* subtle shadow */
-    0 0 15px rgba(184, 142, 170, 0.2);     /* subtle accent-colored glow */
-  transition: bottom 0.4s ease, opacity 0.4s ease, box-shadow 0.4s ease;
+  max-width: calc(100vw - 40px);
+
+  padding: 14px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+
+  border: 1px solid rgba(255, 255, 255, 0.85);
+
+  box-shadow:
+    0 12px 30px rgba(80, 80, 120, 0.18),
+    0 0 22px rgba(255, 255, 255, 0.35),
+    inset 0 0 18px rgba(255, 255, 255, 0.22);
+
+  transform: translateY(calc(100% + 120px));
   opacity: 0;
-  z-index: 999;
+
+  transition:
+    transform 0.4s ease,
+    opacity 0.4s ease,
+    box-shadow 0.4s ease;
+
+  z-index: 5000;
+  pointer-events: auto;
 }
 
 #nurseFormWrapper.show {
-  bottom: 80px;
+  transform: translateY(0);
   opacity: 1;
-  box-shadow: 
-    0 8px 20px rgba(0, 0, 0, 0.15), 
-    0 0 20px rgba(184, 142, 170, 0.25);   /* slightly stronger glow on show */
+  box-shadow:
+    0 14px 34px rgba(80, 80, 120, 0.22),
+    0 0 24px rgba(255, 239, 166, 0.28),
+    0 0 28px rgba(232, 205, 255, 0.24),
+    inset 0 0 18px rgba(255, 255, 255, 0.25);
+}
+#nurseFormWrapper input[type="text"],
+#nurseFormWrapper textarea {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+
+  font-family: Tahoma, sans-serif;
+  font-size: 12px;
+
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 10px;
+
+  padding: 8px 10px;
+  color: #222;
+
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, 0.22);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#nurseFormWrapper textarea {
+  min-height: 140px;
+  max-height: 280px;
+  resize: vertical;
+}
+
+#nurseFormWrapper input[type="text"]:focus,
+#nurseFormWrapper textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 0 12px rgba(232, 205, 255, 0.28),
+    inset 0 0 6px rgba(255, 255, 255, 0.35);
 }
 
 /* 🧊 Clear Glass Scrollbar (cool purple-blue tint) */
@@ -825,20 +945,21 @@ button:focus,
   }
 
   #toggleFormBtn {
-    right: 20px;
-    bottom: 20px;
-    z-index: 1000;
-  }
+  right: 20px;
+  bottom: 20px;
+  z-index: 5001;
+}
 
   #nurseFormWrapper {
-    right: 20px;
-    width: 300px;
-    z-index: 999;
-  }
+  right: 20px;
+  width: 300px;
+  max-width: 300px;
+  z-index: 5000;
+}
 
-  #nurseFormWrapper.show {
-    bottom: 80px;
-  }
+#nurseFormWrapper.show {
+  transform: translateY(0);
+}
 
   .ray {
     white-space: nowrap;
@@ -870,32 +991,29 @@ button:focus,
 
   <div class="header-right">
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
+    <input type="text" id="searchInput" placeholder="Search...">  
     </div>
   </div>
 </div>
 
 <div class="container">
-  <!-- Hidden glassy form -->
-  <div id="nurseFormWrapper" class="form-section">
-    <input id="nurseTitle" placeholder="Title">
-    <textarea id="nurseNote" placeholder="Note..."></textarea>
-    <input id="nurseURL" placeholder="Optional URL (if any)">
-    <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
-    <label for="nurseImage" class="custom-file-btn">Choose File</label>
-    <button class="add-btn" onclick="addNote()">Add</button>
-  </div>
-
   <!-- Notes container -->
   <div class="cards-container" id="nurseNotesList"></div>
+</div>
+
+<!-- Hidden glassy form -->
+<div id="nurseFormWrapper" class="form-section">
+  <input id="nurseTitle" placeholder="Title">
+  <textarea id="nurseNote" placeholder="Note..."></textarea>
+  <input id="nurseURL" placeholder="Optional URL (if any)">
+  <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
+  <label for="nurseImage" class="custom-file-btn">Choose File</label>
+  <button class="add-btn" onclick="addNote()">Add</button>
 </div>
 
 <!-- Floating glassy + button -->
 <button id="toggleFormBtn">+</button>
 
-
-</div>
- 
 <!-- Image Zoom Modal -->
 <div id="imgModal" class="image-modal">
   <img id="modalImg" src="" alt="Zoomed Image" />
@@ -920,52 +1038,58 @@ button:focus,
   const db = getFirestore(app);
   const notesCol = collection(db, "recallNotes");
 
-  let currentSearch = ""; // <-- NEW global variable to persist search/filter
+	let currentSearch = "";
+	let newestNoteId = null;
+	let pendingNewNoteTime = null;
+	let unsubscribeNotes = null;
 
   async function addNote() {
-    const title = nurseTitle.value.trim();
-    const note = nurseNote.value.trim();
-    const url = nurseURL.value.trim();
-    const fileInput = document.getElementById('nurseImage');
-    const file = fileInput.files[0];
+  const title = nurseTitle.value.trim();
+  const note = nurseNote.value.trim();
+  const url = nurseURL.value.trim();
+  const fileInput = document.getElementById('nurseImage');
+  const file = fileInput.files[0];
 
-    let imageBase64 = "";
+  const createdAt = new Date().toISOString();
+  pendingNewNoteTime = createdAt;
 
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        imageBase64 = reader.result;
+  let imageBase64 = "";
 
-        await addDoc(notesCol, {
-          title: title || "Untitled",
-          note,
-          url: url || "",
-          image: imageBase64,
-          time: new Date().toISOString()
-        });
-
-        nurseTitle.value = '';
-        nurseNote.value = '';
-        nurseURL.value = '';
-        nurseImage.value = '';
-      };
-      reader.readAsDataURL(file);
-    } else {
-      await addDoc(notesCol, {
-        title: title || "Untitled",
-        note,
-        url: url || "",
-        image: "",
-        time: new Date().toISOString()
-      });
-
-      nurseTitle.value = '';
-      nurseNote.value = '';
-      nurseURL.value = '';
-      nurseImage.value = '';
-    }
+  if (file) {
+    imageBase64 = await readFileAsDataURL(file);
   }
 
+  const newDoc = await addDoc(notesCol, {
+    title: title || "Untitled",
+    note,
+    url: url || "",
+    image: imageBase64 || "",
+    time: createdAt
+  });
+
+  newestNoteId = newDoc.id;
+  resetAddForm();
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function resetAddForm() {
+  nurseTitle.value = '';
+  nurseNote.value = '';
+  nurseURL.value = '';
+
+  const fileInput = document.getElementById('nurseImage');
+  if (fileInput) fileInput.value = '';
+
+  closeAddPanel();
+}
   async function deleteNote(id) {
     if (confirm("Delete this note?")) {
       await deleteDoc(doc(db, "recallNotes", id));
@@ -973,11 +1097,12 @@ button:focus,
   }
 
   async function saveEdit(id, updatedTitle, updatedNote) {
-    await updateDoc(doc(db, "recallNotes", id), {
-      title: updatedTitle || "Untitled",
-      note: updatedNote
-    });
-  }
+  await updateDoc(doc(db, "recallNotes", id), {
+    title: updatedTitle || "Untitled",
+    note: updatedNote,
+    time: new Date().toISOString()
+  });
+}
 
   function handleCardPress(card, noteContent) {
     let pressTimer;
@@ -1010,212 +1135,305 @@ button:focus,
                .replace(/'/g, "&#039;");
   }
 
-  function enableEditing(card, id, title, note) {
-    card.innerHTML = `
-      <input type="text" class="edit-title" value="${escapeHtml(title)}" />
-      <div class="edit-note" contenteditable="true"
-        style="width:95%; min-height:60px; padding:6px; border:1px solid rgba(255, 255, 255, 0.4);
-        border-radius:8px; background:rgba(255,255,255,0.5); backdrop-filter:blur(7px);
-        -webkit-backdrop-filter:blur(8px); font-family:Tahoma,sans-serif; font-size:11px;">
-        ${note.replace(/\n/g, "<br>")}
-      </div>
-      <div class="editor-buttons" style="margin-top:6px;">
-        <button class="btn-save">Save</button>
-        <button class="btn-cancel">Cancel</button>
-        <button class="btn-bold">Bold</button>
-<button class="btn-highlight">Highlight</button>
-      </div>
-    `;
+ function closestClassWithin(node, className, container) {
+  let el = node && node.nodeType === 3 ? node.parentNode : node;
 
-    const inputTitle = card.querySelector('.edit-title');
-    const editableDiv = card.querySelector('.edit-note');
-    const btnSave = card.querySelector('.btn-save');
-    const btnCancel = card.querySelector('.btn-cancel');
-    const btnBold = card.querySelector('.btn-bold');
-    const btnHighlight = card.querySelector('.btn-highlight');
-
-    btnSave.addEventListener('click', async () => {
-      const updatedTitle = inputTitle.value.trim() || "Untitled";
-      const updatedNote = editableDiv.innerHTML.trim();
-      await saveEdit(id, updatedTitle, updatedNote);
-      renderNotes(); // <-- keeps search persistent
-    });
-
-    btnCancel.addEventListener('click', () => {
-      renderNotes(); // <-- keeps search persistent
-    });
-
-    btnBold.addEventListener('click', () => {
-      document.execCommand('bold');
-    });
-
-    let savedRange = null;
-
-editableDiv.addEventListener('mouseup', () => {
-  const selection = window.getSelection();
-  if (selection.rangeCount && editableDiv.contains(selection.anchorNode)) {
-    savedRange = selection.getRangeAt(0).cloneRange();
+  while (el && el !== container) {
+    if (el.nodeType === 1 && el.classList.contains(className)) {
+      return el;
+    }
+    el = el.parentNode;
   }
-});
 
-editableDiv.addEventListener('keyup', () => {
-  const selection = window.getSelection();
-  if (selection.rangeCount && editableDiv.contains(selection.anchorNode)) {
-    savedRange = selection.getRangeAt(0).cloneRange();
+  return null;
+}
+
+function unwrapElement(el) {
+  if (!el || !el.parentNode) return;
+
+  const parent = el.parentNode;
+
+  while (el.firstChild) {
+    parent.insertBefore(el.firstChild, el);
   }
-});
 
-function applyHighlight() {
+  parent.removeChild(el);
+}
+
+function toggleGradientHighlight(editor) {
+  editor.focus();
+
   const selection = window.getSelection();
   if (!selection.rangeCount) return;
 
   const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return;
+
   const selectedText = selection.toString();
   if (!selectedText.trim()) return;
 
-  const container = range.commonAncestorContainer;
-  const parent = container.nodeType === 3 ? container.parentNode : container;
+  const startHighlight = closestClassWithin(selection.anchorNode, 'highlight-gradient', editor);
+  const endHighlight = closestClassWithin(selection.focusNode, 'highlight-gradient', editor);
 
-  if (
-    parent.tagName === 'SPAN' &&
-    parent.classList.contains('highlight-gradient')
-  ) {
-    const textNode = document.createTextNode(parent.textContent);
-    parent.replaceWith(textNode);
-  } else {
-    const span = document.createElement('span');
-    span.className = 'highlight-gradient';
-    span.textContent = selectedText;
+  let removed = false;
 
+  if (startHighlight) {
+    unwrapElement(startHighlight);
+    removed = true;
+  }
+
+  if (endHighlight && endHighlight.isConnected && endHighlight !== startHighlight) {
+    unwrapElement(endHighlight);
+    removed = true;
+  }
+
+  if (removed) {
+    selection.removeAllRanges();
+    return;
+  }
+
+  const span = document.createElement('span');
+  span.className = 'highlight-gradient';
+
+  try {
+    range.surroundContents(span);
+  } catch (_) {
+    const selectedHtml = range.cloneContents();
+    span.appendChild(selectedHtml);
     range.deleteContents();
     range.insertNode(span);
   }
 
   selection.removeAllRanges();
 }
+  function enableEditing(card, id, title, note) {
+  card.classList.add('editing-note');
 
-btnHighlight.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  applyHighlight();
-});
+  card.innerHTML = `
+    <input type="text" class="edit-title" value="${escapeHtml(title)}" />
 
-btnHighlightYellow.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  applyHighlight('highlight-yellow');
-});
+    <div class="edit-note" contenteditable="true"
+      style="width:95%; min-height:80px; padding:8px; border:1px solid rgba(255, 255, 255, 0.55);
+      border-radius:10px; background:rgba(255,255,255,0.5); backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px); font-family:Tahoma,sans-serif; font-size:12px;">
+      ${note.replace(/\n/g, "<br>")}
+    </div>
 
-btnHighlightGreen.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  applyHighlight('highlight-green');
-});
-  }
+    <div class="editor-buttons" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
+      <button type="button" class="btn-bold">Bold</button>
+      <button type="button" class="btn-highlight">Highlight</button>
+      <button type="button" class="btn-save">Save</button>
+      <button type="button" class="btn-cancel">Cancel</button>
+    </div>
+  `;
 
-  function renderNotes() {
-    const list = document.getElementById('nurseNotesList');
-    onSnapshot(notesCol, snapshot => {
-      list.innerHTML = '';
-      snapshot.forEach(docSnap => {
-        const { title, note, time, url, image } = docSnap.data();
-        const id = docSnap.id;
+  const inputTitle = card.querySelector('.edit-title');
+  const editableDiv = card.querySelector('.edit-note');
+  const btnSave = card.querySelector('.btn-save');
+  const btnCancel = card.querySelector('.btn-cancel');
+  const btnBold = card.querySelector('.btn-bold');
+  const btnHighlight = card.querySelector('.btn-highlight');
 
-        // <-- NEW: Apply search filter
-        const titleLower = title.toLowerCase();
-        const noteLower = note.toLowerCase();
-        if (currentSearch && !titleLower.includes(currentSearch) && !noteLower.includes(currentSearch)) return;
+  btnSave.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-        const div = document.createElement('div');
-        div.className = 'note-card';
-        div.style.position = 'relative';
-        div.innerHTML = `
-          <div class="note-title">${title}</div>
-          <div class="note-content">${note}</div>
-          ${image ? `<img class="zoomable" src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px; cursor:zoom-in;" />` : ""}
-          <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
-          ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
-          <div class="note-actions" style="display:none;">
-            <button class="edit-btn">Edit</button>
-            <button class="delete-btn">Delete</button>
-          </div>
-        `;
+    const updatedTitle = inputTitle.value.trim() || "Untitled";
+    const updatedNote = editableDiv.innerHTML.trim();
 
-        const editBtn = div.querySelector('.edit-btn');
-        const deleteBtn = div.querySelector('.delete-btn');
+    await saveEdit(id, updatedTitle, updatedNote);
+    renderNotesOnce();
+  });
 
-        editBtn.addEventListener('click', () => enableEditing(div, id, title, note));
-        deleteBtn.addEventListener('click', () => deleteNote(id));
+  btnCancel.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    renderNotesOnce();
+  });
 
-        let pressTimer;
-        div.addEventListener('mousedown', () => {
-          pressTimer = setTimeout(() => {
-            const actions = div.querySelector('.note-actions');
-            if (actions) actions.style.display = 'flex';
-          }, 600);
+  btnBold.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    editableDiv.focus();
+    document.execCommand('bold');
+  });
+
+  btnHighlight.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleGradientHighlight(editableDiv);
+  });
+}
+
+
+  function buildNoteCards(snapshot) {
+  const list = document.getElementById('nurseNotesList');
+  list.innerHTML = '';
+
+  snapshot.forEach(docSnap => {
+    const { title = '', note = '', time, url, image } = docSnap.data();
+    const id = docSnap.id;
+
+    const titleLower = title.toLowerCase();
+    const noteLower = String(note).toLowerCase();
+
+    if (
+      currentSearch &&
+      !titleLower.includes(currentSearch) &&
+      !noteLower.includes(currentSearch)
+    ) {
+      return;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'note-card';
+    div.style.position = 'relative';
+
+    if (
+      id === newestNoteId ||
+      (pendingNewNoteTime && time === pendingNewNoteTime)
+    ) {
+      div.classList.add('new-note-highlight');
+
+      setTimeout(() => {
+        div.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
         });
-        div.addEventListener('mouseup', () => clearTimeout(pressTimer));
-        div.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+      }, 300);
 
-        div.addEventListener('click', (e) => {
-  if (!e.target.classList.contains('edit-btn') &&
-      !e.target.classList.contains('delete-btn') &&
-      !e.target.classList.contains('zoomable')) {
+      setTimeout(() => {
+        div.classList.remove('new-note-highlight');
+        newestNoteId = null;
+        pendingNewNoteTime = null;
+      }, 2600);
+    }
 
-    const copiedText = div.querySelector('.note-content').innerText
-      .replace(/\r\n/g, '\n')      // normalise line endings
-      .replace(/\n{3,}/g, '\n\n')  // remove extra blank lines
-      .trim();
+    div.innerHTML = `
+      <div class="note-title">${escapeHtml(title)}</div>
+      <div class="note-content">${note}</div>
+      ${image ? `<img class="zoomable" src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px; cursor:zoom-in;" />` : ""}
+      <div style="font-size:12px; margin-top:10px; color:#555;">${time ? new Date(time).toLocaleString() : ""}</div>
+      ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
+      <div class="note-actions" style="display:none;">
+        <button type="button" class="edit-btn">Edit</button>
+        <button type="button" class="delete-btn">Delete</button>
+      </div>
+    `;
 
-    navigator.clipboard.writeText(copiedText).then(() => {
-      const tick = document.createElement('div');
-      tick.textContent = '✔';
-      tick.style.position = 'absolute';
-      tick.style.top = '10px';
-      tick.style.right = '10px';
-      tick.style.color = '#d291bc';
-      tick.style.fontSize = '20px';
-      tick.style.opacity = '0';
-      tick.style.pointerEvents = 'none';
-      tick.style.transition = 'all 0.6s ease-out';
-      div.appendChild(tick);
-              requestAnimationFrame(() => {
-                tick.style.opacity = '1';
-                tick.style.transform = 'scale(1.5)';
-              });
+    const editBtn = div.querySelector('.edit-btn');
+    const deleteBtn = div.querySelector('.delete-btn');
 
-              setTimeout(() => {
-                tick.style.opacity = '0';
-                tick.style.transform = 'scale(0.8)';
-              }, 600);
+    editBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      enableEditing(div, id, title, note);
+    });
 
-              setTimeout(() => {
-                tick.remove();
-              }, 1200);
-            });
-          }
+    deleteBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      deleteNote(id);
+    });
+
+    let pressTimer;
+    div.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button, a, input, textarea, [contenteditable="true"], .zoomable')) return;
+
+      pressTimer = setTimeout(() => {
+        const actions = div.querySelector('.note-actions');
+        if (actions) actions.style.display = 'flex';
+      }, 600);
+    });
+
+    div.addEventListener('mouseup', () => clearTimeout(pressTimer));
+    div.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+
+    div.addEventListener('click', (e) => {
+      if (
+        e.target.closest('button, a, input, textarea, [contenteditable="true"], .zoomable')
+      ) {
+        return;
+      }
+
+      const copiedText = div.querySelector('.note-content').innerText
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+      navigator.clipboard.writeText(copiedText).then(() => {
+        const tick = document.createElement('div');
+        tick.textContent = '✔';
+        tick.style.position = 'absolute';
+        tick.style.top = '10px';
+        tick.style.right = '10px';
+        tick.style.color = '#d291bc';
+        tick.style.fontSize = '20px';
+        tick.style.opacity = '0';
+        tick.style.pointerEvents = 'none';
+        tick.style.transition = 'all 0.6s ease-out';
+        div.appendChild(tick);
+
+        requestAnimationFrame(() => {
+          tick.style.opacity = '1';
+          tick.style.transform = 'scale(1.5)';
         });
 
-        list.appendChild(div);
-      });
+        setTimeout(() => {
+          tick.style.opacity = '0';
+          tick.style.transform = 'scale(0.8)';
+        }, 600);
 
-      const modal = document.getElementById("imgModal");
-      const modalImg = document.getElementById("modalImg");
-
-      document.querySelectorAll(".zoomable").forEach(img => {
-        img.addEventListener("click", () => {
-          modal.style.display = "flex";
-          modalImg.src = img.src;
-        });
-      });
-
-      modal.addEventListener("click", () => {
-        modal.style.display = "none";
+        setTimeout(() => {
+          tick.remove();
+        }, 1200);
       });
     });
+
+    list.appendChild(div);
+  });
+
+  setupImageZoom();
+}
+
+function renderNotes() {
+  if (unsubscribeNotes) return;
+
+  unsubscribeNotes = onSnapshot(notesCol, snapshot => {
+    buildNoteCards(snapshot);
+  });
+}
+
+function renderNotesOnce() {
+  if (unsubscribeNotes) {
+    unsubscribeNotes();
+    unsubscribeNotes = null;
   }
 
+  renderNotes();
+}
+
+function setupImageZoom() {
+  const modal = document.getElementById("imgModal");
+  const modalImg = document.getElementById("modalImg");
+
+  document.querySelectorAll(".zoomable").forEach(img => {
+    img.addEventListener("click", (e) => {
+      e.stopPropagation();
+      modal.style.display = "flex";
+      modalImg.src = img.src;
+    });
+  });
+
+  modal.onclick = () => {
+    modal.style.display = "none";
+  };
+}
   function searchNotes(event) {
-    currentSearch = event.target.value.toLowerCase(); // <-- store search globally
-    renderNotes(); // <-- re-render notes with search applied
-  }
+  currentSearch = event.target.value.toLowerCase();
+  renderNotesOnce();
+}
 
   document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');
@@ -1237,11 +1455,39 @@ btnHighlightGreen.addEventListener('mousedown', (e) => {
 const toggleBtn = document.getElementById('toggleFormBtn');
 const nurseForm = document.getElementById('nurseFormWrapper');
 
-toggleBtn.addEventListener('click', () => {
-  nurseForm.classList.toggle('show');
+function openAddPanel() {
+  nurseForm.classList.add('show');
+  toggleBtn.textContent = '×';
+}
 
-  // Optional: change + to × when open
-  toggleBtn.textContent = nurseForm.classList.contains('show') ? '×' : '+';
+function closeAddPanel() {
+  nurseForm.classList.remove('show');
+  toggleBtn.textContent = '+';
+}
+
+toggleBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (nurseForm.classList.contains('show')) {
+    closeAddPanel();
+  } else {
+    openAddPanel();
+  }
+});
+
+nurseForm.addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+});
+
+document.addEventListener('pointerdown', (e) => {
+  if (
+    nurseForm.classList.contains('show') &&
+    !nurseForm.contains(e.target) &&
+    !toggleBtn.contains(e.target)
+  ) {
+    closeAddPanel();
+  }
 });
 
 const centerToggle = document.querySelector('.center-toggle');
