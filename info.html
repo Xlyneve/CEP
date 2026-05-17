@@ -318,7 +318,30 @@ textarea:focus {
 }
 
 .note-text mark {
-  background-color: #feb7ab;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 226, 120, 0.95),
+    rgba(126, 218, 255, 0.90),
+    rgba(172, 246, 135, 0.90)
+  );
+  border-radius: 4px;
+  padding: 0 3px;
+}
+
+.gradient-highlight,
+.note-text mark.gradient-highlight,
+#noteText mark.gradient-highlight,
+.edit-note mark.gradient-highlight,
+.format-buttons mark,
+.editor-buttons mark {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 226, 120, 0.95),
+    rgba(126, 218, 255, 0.90),
+    rgba(172, 246, 135, 0.90)
+  );
+  border-radius: 4px;
+  padding: 0 3px;
 }
 
 .note-url a {
@@ -772,7 +795,7 @@ textarea:focus {
     <div class="action-buttons">
       <div class="format-buttons">
         <button type="button" onclick="document.execCommand('bold')"><strong>Bold</strong></button>
-        <button type="button" onclick="document.execCommand('hiliteColor', false, '#feb7ab')"><mark>Highlight</mark></button>
+        <button type="button" onclick="applyGradientHighlightToAddNote()"><mark>Highlight</mark></button>
       </div>
       <button class="add-btn" id="addBtn">Add Note</button>
     </div>
@@ -855,7 +878,7 @@ function toggleHighlightInEditor(editor) {
   if (toggledOff) return;
   if (range.collapsed) return;
   const mark = document.createElement('mark');
-  mark.style.backgroundColor = '#feb7ab';
+  mark.className = 'gradient-highlight';
   try {
     range.surroundContents(mark);
     sel.removeAllRanges();
@@ -867,7 +890,7 @@ function toggleHighlightInEditor(editor) {
     const temp = document.createElement('div');
     temp.appendChild(frag);
     const html = temp.innerHTML;
-    document.execCommand('insertHTML', false, `<mark style="background-color:#feb7ab;">${html}</mark>`);
+    document.execCommand('insertHTML', false, `<mark class="gradient-highlight">${html}</mark>`);
   }
 }
 async function copyPlainText(text, onDone) {
@@ -886,6 +909,38 @@ async function copyPlainText(text, onDone) {
   } catch (e) { console.error('Copy failed', e); }
 }
 
+function applyGradientHighlightToAddNote() {
+  const editor = document.getElementById('noteText');
+  if (!editor) return;
+
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return;
+  if (range.collapsed) return;
+
+  const span = document.createElement('mark');
+  span.className = 'gradient-highlight';
+
+  try {
+    range.surroundContents(span);
+    sel.removeAllRanges();
+
+    const r = document.createRange();
+    r.selectNodeContents(span);
+    sel.addRange(r);
+  } catch (_) {
+    const frag = range.cloneContents();
+    const temp = document.createElement('div');
+    temp.appendChild(frag);
+    document.execCommand(
+      'insertHTML',
+      false,
+      `<mark class="gradient-highlight">${temp.innerHTML}</mark>`
+    );
+  }
+}
 /* ---------------- Create note (with optional image) ---------------- */
 document.getElementById('addBtn').addEventListener('click', async () => {
   const title = document.getElementById('noteTitle').value.trim();
@@ -1425,17 +1480,39 @@ function getAverageLumaAt(imgX, imgY, sample = 18){
     ctx.lineJoin = "round";
 
     // Marker color
-    ctx.strokeStyle = "rgba(255, 230, 0, 0.30)"; // classic yellow highlighter
-    ctx.lineWidth = 26;
+    // === REAL GRADIENT MARKER HIGHLIGHT ===
+// Multiply blend keeps image/text visible underneath
+ctx.save();
+ctx.globalCompositeOperation = "multiply";
+ctx.lineCap = "round";
+ctx.lineJoin = "round";
+ctx.lineWidth = 26;
 
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(imgP.x, startY);
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(startX, imgP.y);
-    ctx.stroke();
+// horizontal gradient
+const horizontalGradient = ctx.createLinearGradient(startX, startY, imgP.x, startY);
+horizontalGradient.addColorStop(0, "rgba(255, 226, 120, 0.45)");
+horizontalGradient.addColorStop(0.5, "rgba(126, 218, 255, 0.40)");
+horizontalGradient.addColorStop(1, "rgba(172, 246, 135, 0.40)");
 
-    ctx.restore();
+ctx.strokeStyle = horizontalGradient;
+ctx.beginPath();
+ctx.moveTo(startX, startY);
+ctx.lineTo(imgP.x, startY);
+ctx.stroke();
+
+// vertical gradient
+const verticalGradient = ctx.createLinearGradient(startX, startY, startX, imgP.y);
+verticalGradient.addColorStop(0, "rgba(255, 226, 120, 0.45)");
+verticalGradient.addColorStop(0.5, "rgba(126, 218, 255, 0.40)");
+verticalGradient.addColorStop(1, "rgba(172, 246, 135, 0.40)");
+
+ctx.strokeStyle = verticalGradient;
+ctx.beginPath();
+ctx.moveTo(startX, startY);
+ctx.lineTo(startX, imgP.y);
+ctx.stroke();
+
+ctx.restore();
 
     return;
   }
