@@ -261,7 +261,7 @@ h2 {
   margin-bottom: 15px;    /* Vertical spacing */
   break-inside: avoid;    /* Prevent card from breaking across columns */
 
-  padding: 15px;
+  padding: 15px 15px 45px 15px;
   border-radius: 12px;
   position: relative;
   word-wrap: break-word;
@@ -378,13 +378,27 @@ h2 {
   font-size: 14px;
   margin-bottom: 6px;
 }
-
 .note-actions {
-  margin-top: 12px;
-  display: none;
-  justify-content: flex-end;
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
   gap: 6px;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+
+  z-index: 20;
 }
+
+.note-card.actions-visible .note-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
 
 
 .highlight-gradient {
@@ -1104,28 +1118,7 @@ function resetAddForm() {
   });
 }
 
-  function handleCardPress(card, noteContent) {
-    let pressTimer;
 
-    card.addEventListener('mousedown', () => {
-      pressTimer = setTimeout(() => {
-        const actions = card.querySelector('.note-actions');
-        if (actions) actions.style.display = 'flex';
-      }, 600);
-    });
-
-    card.addEventListener('mouseup', () => clearTimeout(pressTimer));
-    card.addEventListener('mouseleave', () => clearTimeout(pressTimer));
-
-    card.addEventListener('click', (e) => {
-      if (!e.target.classList.contains('edit-btn') &&
-          !e.target.classList.contains('delete-btn')) {
-        navigator.clipboard.writeText(noteContent).then(() => {
-          alert('Note copied!');
-        });
-      }
-    });
-  }
 
   function escapeHtml(text) {
     return text.replace(/&/g, "&amp;")
@@ -1216,7 +1209,7 @@ function toggleGradientHighlight(editor) {
       style="width:95%; min-height:80px; padding:8px; border:1px solid rgba(255, 255, 255, 0.55);
       border-radius:10px; background:rgba(255,255,255,0.5); backdrop-filter:blur(8px);
       -webkit-backdrop-filter:blur(8px); font-family:Tahoma,sans-serif; font-size:12px;">
-      ${note.replace(/\n/g, "<br>")}
+      ${escapeHtml(String(note)).replace(/\n/g, "<br>")}
     </div>
 
     <div class="editor-buttons" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
@@ -1239,7 +1232,7 @@ function toggleGradientHighlight(editor) {
     e.stopPropagation();
 
     const updatedTitle = inputTitle.value.trim() || "Untitled";
-    const updatedNote = editableDiv.innerHTML.trim();
+    const updatedNote = editableDiv.innerText.trim();
 
     await saveEdit(id, updatedTitle, updatedNote);
     renderNotesOnce();
@@ -1310,13 +1303,23 @@ function toggleGradientHighlight(editor) {
       }, 2600);
     }
 
-    div.innerHTML = `
-      <div class="note-title">${escapeHtml(title)}</div>
-      <div class="note-content">${note}</div>
+    const safeTitle = escapeHtml(title);
+const safeNote = String(note)
+  .replace(/<br\s*\/?>/gi, "\n")   // convert existing <br> back to newline first
+  .replace(/<\/div><div>/gi, "\n") // helps if contenteditable saved divs
+  .replace(/<\/p><p>/gi, "\n")
+  .replace(/<[^>]*>/g, "")         // remove leftover HTML tags
+  .replace(/&nbsp;/g, " ");
+
+const displayNote = escapeHtml(safeNote).replace(/\n/g, "<br>");
+
+div.innerHTML = `
+  <div class="note-title">${safeTitle}</div>
+  <div class="note-content">${displayNote}</div>
       ${image ? `<img class="zoomable" src="${image}" style="max-width:100%; margin-top:10px; border-radius:6px; cursor:zoom-in;" />` : ""}
       <div style="font-size:12px; margin-top:10px; color:#555;">${time ? new Date(time).toLocaleString() : ""}</div>
       ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
-      <div class="note-actions" style="display:none;">
+      <div class="note-actions">
         <button type="button" class="edit-btn">Edit</button>
         <button type="button" class="delete-btn">Delete</button>
       </div>
@@ -1338,19 +1341,33 @@ function toggleGradientHighlight(editor) {
     });
 
     let pressTimer;
-    div.addEventListener('mousedown', (e) => {
-      if (e.target.closest('button, a, input, textarea, [contenteditable="true"], .zoomable')) return;
+let didLongPress = false;
 
-      pressTimer = setTimeout(() => {
-        const actions = div.querySelector('.note-actions');
-        if (actions) actions.style.display = 'flex';
-      }, 600);
-    });
+div.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('button, a, input, textarea, [contenteditable="true"], .zoomable')) return;
 
-    div.addEventListener('mouseup', () => clearTimeout(pressTimer));
-    div.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+  didLongPress = false;
+
+  pressTimer = setTimeout(() => {
+    didLongPress = true;
+    div.classList.add('actions-visible');
+  }, 600);
+});
+
+div.addEventListener('pointerup', () => {
+  clearTimeout(pressTimer);
+});
+
+div.addEventListener('pointerleave', () => {
+  clearTimeout(pressTimer);
+});
 
     div.addEventListener('click', (e) => {
+	if (didLongPress) {
+  didLongPress = false;
+  return;
+}
+
       if (
         e.target.closest('button, a, input, textarea, [contenteditable="true"], .zoomable')
       ) {
@@ -1489,6 +1506,15 @@ document.addEventListener('pointerdown', (e) => {
     closeAddPanel();
   }
 });
+
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('.note-card')) {
+    document.querySelectorAll('.note-card.actions-visible').forEach(card => {
+      card.classList.remove('actions-visible');
+    });
+  }
+});
+
 
 const centerToggle = document.querySelector('.center-toggle');
 const toggleIcon = document.getElementById("menuToggle");
