@@ -1128,6 +1128,33 @@ function resetAddForm() {
                .replace(/'/g, "&#039;");
   }
 
+function sanitizeNoteHtml(html) {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+
+  const allowedTags = ['B', 'STRONG', 'I', 'EM', 'U', 'BR', 'SPAN'];
+
+  template.content.querySelectorAll('*').forEach(el => {
+    if (!allowedTags.includes(el.tagName)) {
+      el.replaceWith(...el.childNodes);
+      return;
+    }
+
+    [...el.attributes].forEach(attr => {
+      const isAllowedHighlight =
+        el.tagName === 'SPAN' &&
+        attr.name === 'class' &&
+        attr.value === 'highlight-gradient';
+
+      if (!isAllowedHighlight) {
+        el.removeAttribute(attr.name);
+      }
+    });
+  });
+
+  return template.innerHTML;
+}
+
  function closestClassWithin(node, className, container) {
   let el = node && node.nodeType === 3 ? node.parentNode : node;
 
@@ -1209,7 +1236,7 @@ function toggleGradientHighlight(editor) {
       style="width:95%; min-height:80px; padding:8px; border:1px solid rgba(255, 255, 255, 0.55);
       border-radius:10px; background:rgba(255,255,255,0.5); backdrop-filter:blur(8px);
       -webkit-backdrop-filter:blur(8px); font-family:Tahoma,sans-serif; font-size:12px;">
-      ${escapeHtml(String(note)).replace(/\n/g, "<br>")}
+      ${sanitizeNoteHtml(String(note || "")).replace(/\n/g, "<br>")}
     </div>
 
     <div class="editor-buttons" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
@@ -1232,7 +1259,11 @@ function toggleGradientHighlight(editor) {
     e.stopPropagation();
 
     const updatedTitle = inputTitle.value.trim() || "Untitled";
-    const updatedNote = editableDiv.innerText.trim();
+    const updatedNote = editableDiv.innerHTML
+  .replace(/<div><br><\/div>/gi, "<br>")
+  .replace(/<div>/gi, "<br>")
+  .replace(/<\/div>/gi, "")
+  .trim();
 
     await saveEdit(id, updatedTitle, updatedNote);
     renderNotesOnce();
@@ -1304,15 +1335,7 @@ function toggleGradientHighlight(editor) {
     }
 
     const safeTitle = escapeHtml(title);
-const safeNote = String(note)
-  .replace(/<br\s*\/?>/gi, "\n")   // convert existing <br> back to newline first
-  .replace(/<\/div><div>/gi, "\n") // helps if contenteditable saved divs
-  .replace(/<\/p><p>/gi, "\n")
-  .replace(/<[^>]*>/g, "")         // remove leftover HTML tags
-  .replace(/&nbsp;/g, " ");
-
-const displayNote = escapeHtml(safeNote).replace(/\n/g, "<br>");
-
+const displayNote = sanitizeNoteHtml(String(note || ""));
 div.innerHTML = `
   <div class="note-title">${safeTitle}</div>
   <div class="note-content">${displayNote}</div>
