@@ -1059,8 +1059,8 @@ button:focus,
 
   async function addNote() {
   const title = nurseTitle.value.trim();
-  const note = nurseNote.value.trim();
-  const url = nurseURL.value.trim();
+const note = textToSafeHtml(nurseNote.value.trim());
+const url = nurseURL.value.trim();
   const fileInput = document.getElementById('nurseImage');
   const file = fileInput.files[0];
 
@@ -1127,6 +1127,12 @@ function resetAddForm() {
                .replace(/"/g, "&quot;")
                .replace(/'/g, "&#039;");
   }
+  
+  function textToSafeHtml(text) {
+  return escapeHtml(String(text || ""))
+    .replace(/\r\n/g, "\n")
+    .replace(/\n/g, "<br>");
+}
 
 function sanitizeNoteHtml(html) {
   const template = document.createElement('template');
