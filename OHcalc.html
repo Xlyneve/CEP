@@ -649,7 +649,10 @@ toggleBtn.addEventListener('click',()=>{
 });
 
 function id(i){ return document.getElementById(i); }
-function safeDivide(a,b){ return b ? a/b : 0; }
+function safeDivide(a, b) {
+  if (!b) return null;
+  return a / b;
+}
 
 // Hook up Severe Croup neb adrenaline calculator
 id('adrenNebWeight').addEventListener('input', calcNebAdrenaline);
@@ -898,8 +901,7 @@ function calcNebAdrenaline() {
   // Ampoules required (round up; cannot use partial ampoules practically)
   const ampoules = Math.ceil(adrenMl / ampSize);
 
-  const capBadge = capped ? '<span class="max-badge">MAX DOSE REACHED</span>' : '';
-  const capNote = capped ? ` <span style="font-weight:600; opacity:0.85;">(calculated ${rawMl.toFixed(2)} mL → capped to 5.00 mL)</span>` : '';
+    const capNote = capped ? ` <span style="font-weight:600; opacity:0.85;">(calculated ${rawMl.toFixed(2)} mL → capped to 5.00 mL)</span>` : '';
 
   id('adrenNebResult').innerHTML =
 
@@ -926,22 +928,6 @@ function calcNebAdrenaline() {
 }
 
 
-// Accordion behavior (inside General Calculators)
-document.querySelectorAll('#generalCalculators .acc-title').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const panel = btn.nextElementSibling;
-    const chevron = btn.querySelector('.acc-chevron');
-
-    panel.classList.toggle('open');
-    const isOpen = panel.classList.contains('open');
-    if (chevron) chevron.textContent = isOpen ? '▲' : '▼';
-
-    // Recalc neb adrenaline when its panel opens
-    if (isOpen && btn.textContent.includes('Nebulised Adrenaline')) {
-      calcNebAdrenaline();
-    }
-  });
-});
 document.querySelectorAll('#generalCalculators .acc-title').forEach(btn => {
   btn.addEventListener('click', () => {
     const panel = btn.nextElementSibling;
