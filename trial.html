@@ -1402,8 +1402,8 @@ select option {
 }
 
 .check-item {
-  display: grid;
-  grid-template-columns: 16px auto minmax(0, 1fr);
+   display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -1411,6 +1411,10 @@ select option {
   border: 1px solid rgba(20,20,20,0.12);
   background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.check-item.exam-check-item {
+  grid-template-columns: 16px auto minmax(0, 1fr);
 }
 
 .line-break-toggle {
@@ -3032,25 +3036,38 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   checkbox.type = 'checkbox';
   checkbox.checked = checked;
 
-  const lineBreakLabel = document.createElement('label');
-  lineBreakLabel.className = 'line-break-toggle';
-  lineBreakLabel.title = 'Start this item on a new line in the generated summary';
-
-  const lineBreakCheckbox = document.createElement('input');
-  lineBreakCheckbox.type = 'checkbox';
-  lineBreakCheckbox.className = 'line-break-checkbox';
-  lineBreakCheckbox.checked = lineBreak;
-
-  const lineBreakText = document.createElement('span');
-  lineBreakText.textContent = '↵';
-
-  lineBreakLabel.appendChild(lineBreakCheckbox);
-  lineBreakLabel.appendChild(lineBreakText);
-
   const input = document.createElement('textarea');
   input.value = text;
   input.placeholder = 'Edit item';
   input.rows = 1;
+
+  const isExamChecklist = container.id && container.id.startsWith('exam');
+
+  if (isExamChecklist) {
+    label.classList.add('exam-check-item');
+
+    const lineBreakLabel = document.createElement('label');
+    lineBreakLabel.className = 'line-break-toggle';
+    lineBreakLabel.title = 'Start this item on a new line in the generated summary';
+
+    const lineBreakCheckbox = document.createElement('input');
+    lineBreakCheckbox.type = 'checkbox';
+    lineBreakCheckbox.className = 'line-break-checkbox';
+    lineBreakCheckbox.checked = lineBreak;
+
+    const lineBreakText = document.createElement('span');
+    lineBreakText.textContent = '↵';
+
+    lineBreakLabel.appendChild(lineBreakCheckbox);
+    lineBreakLabel.appendChild(lineBreakText);
+
+    label.appendChild(checkbox);
+    label.appendChild(lineBreakLabel);
+    label.appendChild(input);
+  } else {
+    label.appendChild(checkbox);
+    label.appendChild(input);
+  }
 
   const delBtn = document.createElement('button');
   delBtn.type = 'button';
@@ -3061,9 +3078,6 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
 
   input.addEventListener('input', () => autoGrowChecklistTextarea(input));
 
-  label.appendChild(checkbox);
-  label.appendChild(lineBreakLabel);
-  label.appendChild(input);
   row.appendChild(label);
   row.appendChild(delBtn);
   list.appendChild(row);
@@ -3988,13 +4002,13 @@ function buildSummaryText() {
   const hpc = getCheckedChecklistTexts('hpcList');
   const redFlagsPrimary = getCheckedChecklistTexts('redFlagsPrimaryList');
   const redFlagsSecondary = getCheckedChecklistTexts('redFlagsSecondaryList');
-  const examGeneral = getCheckedChecklistTexts('examGeneralList');
-  const examHeadNeck = getCheckedChecklistTexts('examHeadNeckList');
-  const examEnt = getCheckedChecklistTexts('examEntList');
-  const examOropharynx = getCheckedChecklistTexts('examOropharynxList');
-  const examChest = getCheckedChecklistTexts('examChestList');
-  const examAbdomen = getCheckedChecklistTexts('examAbdomenList');
-  const examOther = getCheckedChecklistTexts('examOtherList');
+  const examGeneral = getCheckedChecklistItems('examGeneralList');
+  const examHeadNeck = getCheckedChecklistItems('examHeadNeckList');
+  const examEnt = getCheckedChecklistItems('examEntList');
+  const examOropharynx = getCheckedChecklistItems('examOropharynxList');
+  const examChest = getCheckedChecklistItems('examChestList');
+  const examAbdomen = getCheckedChecklistItems('examAbdomenList');
+  const examOther = getCheckedChecklistItems('examOtherList');
   const investigationsPrimary = getCheckedChecklistTexts('investigationsPrimaryList');
   const investigationsSecondary = getCheckedChecklistTexts('investigationsSecondaryList');
   const assessment = getCheckedChecklistTexts('assessmentList');
