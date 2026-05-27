@@ -1402,16 +1402,52 @@ select option {
 }
 
 .check-item {
-  display: grid;
+   display: grid;
   grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
   border-radius: 14px;
- border: 1px solid rgba(20,20,20,0.12);
+  border: 1px solid rgba(20,20,20,0.12);
   background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
 }
+
+.check-item.exam-check-item {
+  grid-template-columns: 16px auto minmax(0, 1fr);
+}
+.line-break-toggle {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  color: rgba(0,0,0,0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 2px 6px rgba(0,0,0,0.05);
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.line-break-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.line-break-toggle.active {
+  border-color: rgba(220, 255, 0, 0.75);
+  background: linear-gradient(180deg, rgba(250, 255, 90, 0.98), rgba(220, 255, 0, 0.9));
+  color: #111;
+  box-shadow:
+    0 0 7px rgba(220, 255, 0, 0.55),
+    inset 0 1px 0 rgba(255,255,255,0.7);
+}
+
 #planTreatmentList .checklist-new-input,
 #prescribingFirstLineList .checklist-new-input,
 #prescribingSecondLineList .checklist-new-input {
@@ -2993,12 +3029,13 @@ function setupChecklistRowDrag(row) {
   });
 }
 
-function createChecklistRow(container, text = '', checked = false) {
+function createChecklistRow(container, text = '', checked = false, lineBreak = false) {
   const list = container.querySelector('.checklist-list');
   if (!list) return;
 
   const row = document.createElement('div');
   row.className = 'checklist-row';
+  row.dataset.lineBreak = lineBreak ? 'true' : 'false';
   setupChecklistRowDrag(row);
 
   const label = document.createElement('label');
@@ -3013,6 +3050,46 @@ function createChecklistRow(container, text = '', checked = false) {
   input.placeholder = 'Edit item';
   input.rows = 1;
 
+  const isExamChecklist = container.id && container.id.startsWith('exam');
+
+  label.appendChild(checkbox);
+
+  if (isExamChecklist) {
+    label.classList.add('exam-check-item');
+
+    const lineBreakBtn = document.createElement('button');
+    lineBreakBtn.type = 'button';
+    lineBreakBtn.className = 'line-break-toggle';
+    lineBreakBtn.title = 'Start this item on a new line in the generated summary';
+    lineBreakBtn.textContent = '↩';
+    lineBreakBtn.dataset.lineBreak = lineBreak ? 'true' : 'false';
+
+    if (lineBreak) {
+      lineBreakBtn.classList.add('active');
+    }
+
+    lineBreakBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const isActive = lineBreakBtn.dataset.lineBreak === 'true';
+  const nextValue = isActive ? 'false' : 'true';
+
+  lineBreakBtn.dataset.lineBreak = nextValue;
+  row.dataset.lineBreak = nextValue;
+  lineBreakBtn.classList.toggle('active', nextValue === 'true');
+
+  // If using ↩, also include this item in the generated summary
+  if (nextValue === 'true') {
+    checkbox.checked = true;
+  }
+});
+
+    label.appendChild(lineBreakBtn);
+  }
+
+  label.appendChild(input);
+
   const delBtn = document.createElement('button');
   delBtn.type = 'button';
   delBtn.className = 'checklist-delete';
@@ -3022,8 +3099,6 @@ function createChecklistRow(container, text = '', checked = false) {
 
   input.addEventListener('input', () => autoGrowChecklistTextarea(input));
 
-  label.appendChild(checkbox);
-  label.appendChild(input);
   row.appendChild(label);
   row.appendChild(delBtn);
   list.appendChild(row);
@@ -3081,11 +3156,19 @@ function getChecklistItems(id) {
 
   return [...container.querySelectorAll('.checklist-row')]
     .map(row => {
-      const checkbox = row.querySelector('input[type="checkbox"]');
+      const checkbox = row.querySelector('.check-item > input[type="checkbox"]');
+      const lineBreakButton = row.querySelector('.line-break-toggle');
       const input = row.querySelector('textarea');
+
+      const hasLineBreak =
+        row.dataset.lineBreak === 'true' ||
+        lineBreakButton?.dataset.lineBreak === 'true' ||
+        lineBreakButton?.classList.contains('active');
+
       return {
         text: input?.value.trim() || '',
-        checked: !!checkbox?.checked
+        checked: !!checkbox?.checked,
+        lineBreak: hasLineBreak
       };
     })
     .filter(item => item.text);
@@ -3095,6 +3178,11 @@ function getCheckedChecklistTexts(id) {
   return getChecklistItems(id)
     .filter(item => item.checked)
     .map(item => item.text);
+}
+
+function getCheckedChecklistItems(id) {
+  return getChecklistItems(id)
+    .filter(item => item.checked || item.lineBreak);
 }
 
 function initAllChecklists() {
@@ -3349,13 +3437,13 @@ function collectPromptFields() {
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
     redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
-    examGeneral: getChecklistItems('examGeneralList').map(i => i.text),
-    examHeadNeck: getChecklistItems('examHeadNeckList').map(i => i.text),
-    examEnt: getChecklistItems('examEntList').map(i => i.text),
-    examOropharynx: getChecklistItems('examOropharynxList').map(i => i.text),
-    examChest: getChecklistItems('examChestList').map(i => i.text),
-    examAbdomen: getChecklistItems('examAbdomenList').map(i => i.text),
-    examOther: getChecklistItems('examOtherList').map(i => i.text),
+    examGeneral: getCheckedChecklistItems('examGeneralList'),
+	examHeadNeck: getCheckedChecklistItems('examHeadNeckList'),
+	examEnt: getCheckedChecklistItems('examEntList'),
+	examOropharynx: getCheckedChecklistItems('examOropharynxList'),
+	examChest: getCheckedChecklistItems('examChestList'),
+	examAbdomen: getCheckedChecklistItems('examAbdomenList'),
+	examOther: getCheckedChecklistItems('examOtherList'),
     investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
     investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
     assessment: getChecklistItems('assessmentList').map(i => i.text),
@@ -3940,13 +4028,13 @@ function buildSummaryText() {
   const hpc = getCheckedChecklistTexts('hpcList');
   const redFlagsPrimary = getCheckedChecklistTexts('redFlagsPrimaryList');
   const redFlagsSecondary = getCheckedChecklistTexts('redFlagsSecondaryList');
-  const examGeneral = getCheckedChecklistTexts('examGeneralList');
-  const examHeadNeck = getCheckedChecklistTexts('examHeadNeckList');
-  const examEnt = getCheckedChecklistTexts('examEntList');
-  const examOropharynx = getCheckedChecklistTexts('examOropharynxList');
-  const examChest = getCheckedChecklistTexts('examChestList');
-  const examAbdomen = getCheckedChecklistTexts('examAbdomenList');
-  const examOther = getCheckedChecklistTexts('examOtherList');
+  const examGeneral = getCheckedChecklistItems('examGeneralList');
+  const examHeadNeck = getCheckedChecklistItems('examHeadNeckList');
+  const examEnt = getCheckedChecklistItems('examEntList');
+  const examOropharynx = getCheckedChecklistItems('examOropharynxList');
+  const examChest = getCheckedChecklistItems('examChestList');
+  const examAbdomen = getCheckedChecklistItems('examAbdomenList');
+  const examOther = getCheckedChecklistItems('examOtherList');
   const investigationsPrimary = getCheckedChecklistTexts('investigationsPrimaryList');
   const investigationsSecondary = getCheckedChecklistTexts('investigationsSecondaryList');
   const assessment = getCheckedChecklistTexts('assessmentList');
@@ -4019,7 +4107,27 @@ if (historySummary) {
 
 function examLine(label, items) {
   if (!items || !items.length) return '';
-  return `${label} - ${items.join(' ')}`;
+
+  const lines = [];
+  let currentLine = `${label} -`;
+
+  items.forEach(item => {
+    const text = typeof item === 'string' ? item : item.text;
+    const lineBreak = typeof item === 'object' && item.lineBreak;
+
+    if (!text) return;
+
+    if (lineBreak && currentLine.trim() !== `${label} -`) {
+      lines.push(currentLine.trim());
+      currentLine = text;
+    } else {
+      currentLine += ` ${text}`;
+    }
+  });
+
+  if (currentLine.trim()) lines.push(currentLine.trim());
+
+  return lines.join('\n');
 }
 
 const headNeckLine = examLine('HEAD & NECK', examHeadNeck);
@@ -4032,7 +4140,7 @@ const abdomenLine = examLine('Abdomen', examAbdomen);
 // Appears first under "On examination:"
 if (examGeneral.length) {
   examGeneral.forEach(item => {
-    if (item) examParts.push(item);
+    if (item?.text) examParts.push(item.text);
   });
 }
 
@@ -4047,7 +4155,7 @@ if (abdomenLine) examParts.push(abdomenLine);
 // Each checked item appears after Abdomen on its own line.
 if (examOther.length) {
   examOther.forEach(item => {
-    if (item) examParts.push(item);
+    if (item?.text) examParts.push(item.text);
   });
 }
 
