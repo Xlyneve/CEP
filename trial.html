@@ -3067,16 +3067,21 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     }
 
     lineBreakBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  e.preventDefault();
+  e.stopPropagation();
 
-      const isActive = lineBreakBtn.dataset.lineBreak === 'true';
-      const nextValue = isActive ? 'false' : 'true';
+  const isActive = lineBreakBtn.dataset.lineBreak === 'true';
+  const nextValue = isActive ? 'false' : 'true';
 
-      lineBreakBtn.dataset.lineBreak = nextValue;
-      row.dataset.lineBreak = nextValue;
-      lineBreakBtn.classList.toggle('active', nextValue === 'true');
-    });
+  lineBreakBtn.dataset.lineBreak = nextValue;
+  row.dataset.lineBreak = nextValue;
+  lineBreakBtn.classList.toggle('active', nextValue === 'true');
+
+  // If using ↩, also include this item in the generated summary
+  if (nextValue === 'true') {
+    checkbox.checked = true;
+  }
+});
 
     label.appendChild(lineBreakBtn);
   }
@@ -3175,7 +3180,7 @@ function getCheckedChecklistTexts(id) {
 
 function getCheckedChecklistItems(id) {
   return getChecklistItems(id)
-    .filter(item => item.checked);
+    .filter(item => item.checked || item.lineBreak);
 }
 
 function initAllChecklists() {
