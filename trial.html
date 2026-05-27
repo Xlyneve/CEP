@@ -2,1165 +2,4913 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="stylesheet" href="https://xlyneve.github.io/CEP/emoji.css?v=2">
-  <title>Nurse Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consultation Templates</title>
+
+  <link rel="stylesheet" href="calculator.css" />
+
   <style>
-@font-face {
-  font-family: 'fors';
-  src: url('fors.ttf') format('truetype');
+    @font-face {
+      font-family: 'Adelicia';
+      src: url('AdeliciaRegular.ttf');
+    }
+
+    @font-face {
+      font-family: 'Fors';
+      src: url('fors.ttf');
+    }
+
+    :root {
+  --bg1: rgba(255,255,255,0.68);
+  --bg2: rgba(255,255,255,0.52);
+  --stroke: rgba(40,40,40,0.22);
+  --text: #111;
+  --soft: rgba(20,20,20,0.78);
+  --faint: rgba(20,20,20,0.58);
+  --shadow: 0 10px 30px rgba(0,0,0,0.10);
+  --pink: rgba(255, 163, 196, 0.22);
+  --blue: rgba(134, 197, 255, 0.20);
+  --green: rgba(173, 255, 210, 0.18);
+  --warn: rgba(255, 202, 130, 0.22);
+  --danger: rgba(255, 120, 120, 0.18);
+  --radius: 24px;
+  --radius-sm: 16px;
 }
-html, body {
-  min-height: 100%;
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
   margin: 0;
   padding: 0;
-  font-family: 'Tahoma', sans-serif;
-  overflow-x: auto;
-  position: relative;
+  font-family: Tahoma, Arial, sans-serif;
+  color: var(--text);
+  min-height: 100%;
+  background: linear-gradient(135deg, #f8fbff, #edf3f8);
 }
 
-html,
-body {
-  background-color: #f7f3f6;
+   body {
+  padding: 6px 18px 18px;
 }
 
-body {
-  background-image: url('2b.png');
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
-  background-attachment: scroll;
-}
+    .page-shell {
+      max-width: 1450px;
+      margin: 0 auto;
+    }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(247, 243, 246, 0.28);
-  z-index: 0;
-  pointer-events: none;
-}
-
-.note-content {
-  font-family: 'Tahoma', sans-serif;
-  font-size: 12px;
-}
-
-.header {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  height: 70px;
+  .topbar {
+  position: sticky;
+  top: 4px;
+  z-index: 30;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.15);
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+  border: 1px solid rgba(30,30,30,0.16);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,255,255,0.56));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+    .sticky-template-info {
+  display: grid;
+  gap: 3px;
+  min-width: 220px;
+  max-width: 360px;
+  flex: 1 1 260px;
+}
+
+.sticky-template-title {
+  font-family: 'Fors', Tahoma, sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.topbar.minimized .sticky-template-title {
+  font-size: 0.88rem;
+}
+
+.topbar.minimized .sticky-template-info {
+  max-width: 260px;
+}
+
+    .topbar-toggle {
+  display: none;
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  z-index: 60;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,20,20,0.16);
+  background: rgba(255,255,255,0.78);
+  color: #111;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-  z-index: 50;
-  pointer-events: auto;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  cursor: pointer;
+  font-size: 0.95rem;
 }
 
-.header-left {
-  position: absolute;
-  top: 18px;
-  left: 10px;
-  z-index: 1001;
+      .topbar.minimized {
+  padding: 6px 10px;
+  border-radius: 16px;
 }
 
-.header-left a.header-link,
-.header a.header-link {
-  padding: 6px 12px;
-  font-size: 14px;
-  font-weight: bold;
-  background-color: rgba(189, 191, 218, 0.6);
-  border-radius: 6px;
-  border: 1px solid rgba(204, 186, 181, 0.6);
-  color: black;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background-color 0.3s ease;
-  pointer-events: auto;
-  position: relative;
-  z-index: 1000;
+.topbar.minimized .brand-dot {
+  width: 24px;
+  height: 24px;
 }
 
-.header-left a.header-link {
-  padding: 4px 10px;
-  font-size: 13px;
-  background-color: rgba(189, 191, 218, 0.7);
-  border: 1px solid rgba(204, 186, 181, 0.6);
-  position: absolute;
-  top: 3px;
-  left: 10px;
-  z-index: 1001;
+.topbar.minimized .glass-btn {
+  padding: 7px 9px;
+  font-size: 0.85rem;
 }
 
-.header a:hover,
-.header-left a.header-link:hover {
-  background-color: #b88eaa;
-  color: #000;
+.topbar.minimized .subtitle {
+  display: none;
 }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
 
-.header-title {
-  position: absolute;
-  top: 10px;
-  left: 80px;
-  transform: none;
-  font-size: 22px;
-  font-weight: bold;
-  color: #000;
-  text-align: left;
-  z-index: 60;
-  pointer-events: auto;
-  opacity: 0;
-  animation: fadeIn 1.5s ease forwards;
-  margin: 0;
-}
+    .brand-dot {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.12));
+      border: 1px solid rgba(255,255,255,0.28);
+      box-shadow: 0 0 20px rgba(255,255,255,0.16);
+      flex-shrink: 0;
+    }
 
-/* Add keyframes for fade-in */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+    .title-block {
+      min-width: 0;
+    }
 
+    .page-title {
+      margin: 0;
+      font-family: 'Adelicia', 'Segoe Script', cursive;
+      font-size: clamp(1.35rem, 2.2vw, 2rem);
+      line-height: 1;
+      letter-spacing: 0.4px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.24);
+    }
 
-a.header-link {
-  position: relative;
-  z-index: 1000;
-  pointer-events: auto;
-}
+    .subtitle {
+      margin-top: 4px;
+      color: var(--soft);
+      font-size: 0.82rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-.search-box {
-  z-index: 50;
-  pointer-events: auto;
-}
-
-.search-box input {
-  padding: 4px 8px;
-  font-size: 12px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  width: 150px; /* fixed width */
-}
-
-.container {
-  background: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  padding: 100px 20px 20px 20px;
-  position: relative;
-  z-index: 40;
-}
-
-h2 {
-  text-align: center;
-  font-size: 20px;
-}
-
-.form-section {
+   .top-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 40;
-  align-items: flex-start;
-  background: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-left: auto;
+  align-items: center;
 }
 
-.form-section input[type="file"],
-.form-section textarea {
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #222;
-  padding: 6px 8px;
-  font-size: 12px;
-  border-radius: 8px;
-  box-sizing: border-box;
-  font-family: 'Tahoma', sans-serif;
-  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
+    .glass-btn,
+    .chip,
+    select,
+    input,
+    textarea,
+    button {
+      font: inherit;
+    }
 
-#nurseTitle,
-#nurseURL {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: none;
-  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.15);
-  color: #222;
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 8px;
-  box-sizing: border-box;
-  font-family: 'fors', sans-serif;
-  transition: all 0.3s ease;
-}
-
-#nurseTitle:focus,
-#nurseURL:focus {
-  outline: none;
-  background: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-}
-
-#nurseTitle {
-  flex: 1 1 180px;
-  height: 60px;
-  min-width: 150px;
-}
-
-#nurseNote {
-  flex: 2 1 280px;
-  min-height: 60px;
-  resize: vertical;
-}
-
-#nurseURL {
-  flex: 1 1 180px;
-  height: 60px;
-  min-width: 150px;
-}
-
-#nurseImage {
-  flex: 0 0 auto;
-  height: 34px;
-  padding: 4px 10px;
+    .glass-btn {
+  border: 1px solid rgba(20,20,20,0.14);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.58));
+  color: #111;
+  border-radius: 16px;
+  padding: 10px 14px;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
-.cards-container {
+    .glass-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+    }
+
+    .layout {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  width: 100%;
-  padding: 10px 0;
+  grid-template-columns: 320px 1fr;
+  gap: 14px;
   align-items: start;
 }
 
-.note-card {
-  display: block;
-  width: 100%;
-  min-height: 40px;
-  padding: 14px;
-  border-radius: 12px;
-  position: relative;
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
-  box-sizing: border-box;
-
-  transition: box-shadow 0.2s ease-in-out;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.32);
-
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-
-  box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15),
-              0 0 10px rgba(255, 255, 255, 0.2);
-}
-
-.note-card .note-content,
-.note-card .note-title {
-  color: #000;
-}
-
-.note-card:hover {
-  box-shadow:
-    inset 0 3px 8px rgba(220 240 255 / 0.6),
-    0 0 14px 5px rgba(220 240 255 / 0.45),
-    0 8px 24px rgba(190 210 240 / 0.15);
-}
-
-.edit-title {
-  width: 93%;
-  margin-bottom: 6px;
-  padding: 6px 10px;
-  font-family: Tahoma, sans-serif;
-  font-size: 11px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.3);
-  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
-  color: #222;
-  transition: all 0.3s ease;
-}
-
-.note-title {
-  font-weight: bold;
-  font-size: 14px;
-  margin-bottom: 6px;
-}
-
-.note-actions {
-  margin-top: 12px;
+.duration-inline {
   display: flex;
-  justify-content: flex-end;
-  gap: 6px;
+  gap: 8px;
+  align-items: center;
 }
 
-.highlight-gradient {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 205, 225, 0.82),
-    rgba(255, 244, 170, 0.82),
-    rgba(215, 200, 255, 0.82)
-  );
-  border-radius: 5px;
-  padding: 0 2px;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-}
-
-.editor-buttons {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-button,
-.note-actions button,
-.editor-buttons button,
-.header a.header-link {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #111;
-  padding: 6px 12px;
-  font-size: 11px;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3),
-              inset 0 0 10px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
+.duration-small {
+  width: 78px;
+  min-width: 78px;
+  max-width: 78px;
   text-align: center;
 }
 
-button:hover,
-.note-actions button:hover,
-.editor-buttons button:hover,
-.header a.header-link:hover {
-  background: rgba(255, 255, 255, 0.35);
-  color: #000;
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.5),
-              inset 0 0 12px rgba(255, 255, 255, 0.3);
+    .panel,
+.card,
+.template-card,
+.info-box {
+  border: 1px solid rgba(30,30,30,0.18);
+  background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.54));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.08);
 }
 
-button:active,
-.note-actions button:active,
-.editor-buttons button:active,
-.header a.header-link:active,
-button:focus,
-.note-actions button:focus,
-.editor-buttons button:focus,
-.header a.header-link:focus {
-  outline: none;
-  background: rgba(255, 255, 255, 0.45);
-  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6),
-              inset 0 0 14px rgba(255, 255, 255, 0.4);
-  color: #000;
+.prescribing-split {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 16px;
+  align-items: start;
 }
 
-.note-url {
-  margin-top: 10px;
+.prescribing-left,
+.prescribing-right {
+  display: grid;
+  gap: 12px;
 }
 
-.note-url a {
-  background-color: #FFF1F5;
-  color: #333;
-  text-decoration: none;
-  padding: 3px 8px;
-  border-radius: 5px;
-  font-size: 11px;
-  display: inline-block;
-  transition: background-color 0.3s ease;
+.prescribing-right label {
+  display: grid;
+  gap: 8px;
 }
 
-.note-url a:hover {
-  background-color: #ddc6b2;
+.prescribing-right .editable-checklist {
+  min-height: 100%;
 }
 
-.note-url a .icon {
-  margin-right: 6px;
+.prescribing-layout {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 20px;
+  align-items: start;
 }
-.note-title,
-.note-content {
+
+.prescribing-decisions {
+  display: grid;
+  gap: 12px;
+}
+
+.prescribing-treatment-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.treatment-column {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.treatment-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #222;
+  padding-bottom: 2px;
+}
+
+.mini-checks {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.mini-checks label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
+  cursor: pointer;
+}
+
+#prescribingFirstLineList .checklist-add-row,
+#prescribingSecondLineList .checklist-add-row {
+  display: grid;
+}
+
+#planTreatmentList .checklist-list:empty::before,
+#prescribingFirstLineList .checklist-list:empty::before,
+#prescribingSecondLineList .checklist-list:empty::before {
+  content: "Add item";
   display: block;
-  visibility: visible;
-  opacity: 1;
-  color: #000;
-  position: relative;
-  z-index: 1;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  color: rgba(0,0,0,0.55);
+  font-size: 0.9rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
 }
 
-.note-content {
-  min-height: 1em;
+
+#planTreatmentList .checklist-add-btn,
+#prescribingFirstLineList .checklist-add-btn,
+#prescribingSecondLineList .checklist-add-btn {
+  border-radius: 14px;
+}
+
+@media (max-width: 900px) {
+  .prescribing-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .prescribing-treatment-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+    .panel {
+  border-radius: 28px;
+  padding: 18px;
+  position: sticky;
+  top: 56px;
+  height: fit-content;
+}
+
+    .panel h2,
+    .section-heading,
+    .template-card h3,
+    .info-box h3 {
+      margin: 0 0 12px;
+      font-family: 'Fors', Tahoma, sans-serif;
+      letter-spacing: 0.3px;
+      font-weight: 600;
+    }
+
+    .search-wrap {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .search-wrap input,
+.search-wrap select,
+.note-area textarea,
+.section-fields textarea,
+.section-fields input,
+.section-fields select {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.68));
+  color: #111;
+  padding: 12px 14px;
+  outline: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 16px rgba(0,0,0,0.08);
+}
+
+    input::placeholder,
+textarea::placeholder {
+  color: rgba(0,0,0,0.45);
+}
+
+.search-wrap select,
+.section-fields select {
+  color: #111;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 42px;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.6) 50%),
+    linear-gradient(135deg, rgba(0,0,0,0.6) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.search-wrap select:hover,
+.section-fields select:hover {
+  border-color: rgba(20,20,20,0.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 8px 18px rgba(0,0,0,0.1);
+}
+
+.search-wrap select:focus,
+.section-fields select:focus,
+.search-wrap input:focus,
+.section-fields input:focus,
+.section-fields textarea:focus,
+.note-area textarea:focus {
+  border-color: rgba(60,60,60,0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    0 0 0 3px rgba(255,255,255,0.45),
+    0 8px 20px rgba(0,0,0,0.1);
+}
+
+select option {
+  color: #111;
+  background: #fff;
+}
+
+    .template-list {
+      display: grid;
+      gap: 10px;
+    }
+
+	.template-card {
+  border-radius: 16px;
+  padding: 10px 11px;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+  background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0.44));
+  border: 1px solid rgba(30,30,30,0.12);
+  box-shadow: 0 5px 14px rgba(0,0,0,0.05);
+}
+
+.template-card:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,255,255,0.54));
+}
+
+.template-card.active {
+  border-color: rgba(150, 145, 180, 0.30);
+  background:
+    radial-gradient(circle at top left, rgba(220, 218, 240, 0.50), transparent 46%),
+    radial-gradient(circle at top right, rgba(255, 246, 214, 0.38), transparent 44%),
+    radial-gradient(circle at bottom left, rgba(220, 235, 225, 0.34), transparent 48%),
+    linear-gradient(180deg, rgba(255,255,255,0.76), rgba(255,255,255,0.54));
+  box-shadow:
+    0 0 0 1px rgba(190, 185, 215, 0.14),
+    0 0 24px rgba(190, 185, 215, 0.16),
+    0 8px 18px rgba(0,0,0,0.06);
+}
+
+.template-card.active .chip {
+  background: rgba(255,255,255,0.54);
+  border-color: rgba(150, 145, 180, 0.18);
+  color: rgba(58, 56, 72, 0.72);
+}
+.template-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.25;
+}
+
+.template-card-icon {
+  opacity: 0.72;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.template-card p {
+  display: none;
+}
+
+.template-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.template-tags .chip {
+  padding: 4px 7px;
+  font-size: 0.68rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.50);
+  border: 1px solid rgba(20,20,20,0.08);
+  color: rgba(0,0,0,0.62);
+}
+
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color: var(--soft);
+      font-size: 0.8rem;
+    }
+
+    .main {
+  display: grid;
+  gap: 10px;
+}
+
+     .hero {
+  position: sticky;
+  top: 54px;
+  z-index: 19;
+  padding: 7px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(30,30,30,0.14);
+  background: linear-gradient(180deg, rgba(255,255,255,0.76), rgba(255,255,255,0.58));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.07);
+}
+
+    .hero-top {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+    .hero-title {
+      font-family: 'Fors', Tahoma, sans-serif;
+      font-size: clamp(1.2rem, 2vw, 1.65rem);
+      margin: 0;
+    }
+
+    .hero-sub {
+  color: #333;
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+
+
+.hero-template-info {
+  display: grid;
+  gap: 2px;
+}
+
+.hero-template-label {
+  font-size: 0.66rem;
+  color: rgba(0,0,0,0.48);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hero-template-desc {
+  color: #222;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+}
+.hero-template-desc {
+  overscroll-behavior: contain;
+}
+
+.hero-template-desc a {
+  color: rgba(62, 122, 170, 0.88);
+  font-weight: 400;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(62, 122, 170, 0.28);
+  word-break: break-word;
+}
+
+.hero-template-desc a:hover {
+  color: rgba(42, 100, 150, 0.95);
+  border-bottom-color: rgba(42, 100, 150, 0.42);
+}
+
+.hero-template-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hero-template-toggle {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(20,20,20,0.10);
+  background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,255,255,0.48));
+  color: rgba(0,0,0,0.58);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 0.9rem;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.hero-template-toggle:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.62));
+}
+
+.hero-template-desc.collapsed {
+  max-height: 2.6em;
+  overflow: hidden;
+}
+
+.hero-template-info.expanded .hero-template-desc {
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  overscroll-behavior: contain;
+}
+
+.hero-template-info.expanded .hero-template-toggle {
+  transform: rotate(180deg);
+}
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .info-box {
+      border-radius: 22px;
+      padding: 14px;
+    }
+
+    .info-box h3 {
+      margin-bottom: 8px;
+      font-size: 0.98rem;
+    }
+
+    .info-box p,
+.info-box ul {
+  margin: 0;
+  color: #333;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+    .info-box ul {
+      padding-left: 18px;
+    }
+
+    .consultation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+    .card {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  padding: 18px 18px 16px;
+  border-radius: 26px;
+  background: rgba(255,255,255,0.42);
+  border: 1px solid rgba(30,30,30,0.10);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  align-content: start;
+}
+.vitals-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.vital-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  color: #222;
+}
+
+.vital-inline > span:first-child {
+  min-width: 52px;
+  font-weight: 500;
+}
+
+.vital-inline input[type="text"],
+.vital-inline input:not([type]),
+.vital-inline input[type="input"],
+.vital-inline input {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.08) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.62)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 3px 10px rgba(0,0,0,0.04) !important;
+}
+
+#vitalBP,
+#vitalSats {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+}
+
+.vital-pr-row {
+  gap: 8px;
+}
+
+
+.pr-toggle {
+  border: 1px solid rgba(20,20,20,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.62));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 3px 10px rgba(0,0,0,0.04);
+  color: #222;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.pr-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.pr-toggle.active {
+  border-color: rgba(90, 140, 210, 0.28);
+  background: linear-gradient(180deg, rgba(214,236,255,0.95), rgba(196,223,255,0.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.62), 0 4px 12px rgba(80,120,180,0.10);
+}
+
+#exam {
+  min-height: 210px;
+}
+
+#diagnosis,
+#differentials {
+  min-height: 170px;
+}
+.private-note-wrap {
+  margin-top: 2px;
+}
+
+.private-note-label {
+  color: #6b5a7a;
+}
+#presentationPrivateNote,
+#redFlagsPrivateNote,
+#examPrivateNote,
+#investigationsPrivateNote,
+#privateConsultNote,
+#prescribingPrivateNote {
+  min-height: 110px;
+  color: #111;
+  background: linear-gradient(180deg, rgba(255, 253, 232, 0.92), rgba(255, 247, 205, 0.78));
+  border: 1px solid rgba(170, 145, 70, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.72), 0 4px 16px rgba(0,0,0,0.05);
+}
+
+#presentationPrivateNote::placeholder,
+#redFlagsPrivateNote::placeholder,
+#examPrivateNote::placeholder,
+#privateConsultNote::placeholder,
+#prescribingPrivateNote::placeholder {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.private-note-editor {
+  min-height: 110px;
+  width: 100%;
+  border-radius: 16px;
+  padding: 12px 14px;
+  outline: none;
+  overflow: hidden;
+  color: #111;
+  background: linear-gradient(180deg, rgba(255, 253, 232, 0.92), rgba(255, 247, 205, 0.78));
+  border: 1px solid rgba(170, 145, 70, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.72), 0 4px 16px rgba(0,0,0,0.05);
+  white-space: pre-wrap;
+}
+
+.private-note-editor:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+    .card.full {
+      grid-column: 1 / -1;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-heading {
+      font-size: 1.08rem;
+    }
+
+    .hint {
+  color: #555;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+    .section-fields {
+      display: grid;
+      gap: 12px;
+    }
+
+    .section-fields.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+   .section-fields.three {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+    label {
+  display: grid;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #222;
+}
+
+    textarea {
+  min-height: 110px;
+  resize: none;
+  overflow: hidden;
+}
+
+     .mini-checks {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.mini-checks label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
+  cursor: pointer;
+}
+	 
+    .mini-checks input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #d6ecff;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .badge {
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.10);
+    }
+
+    .pink { background: var(--pink); }
+    .blue { background: var(--blue); }
+    .green { background: var(--green); }
+    .warn { background: var(--warn); }
+    .danger { background: var(--danger); }
+
+    .note-area {
+      display: grid;
+      gap: 12px;
+    }
+
+    .footer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .footer-left,
+    .footer-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .small-note {
+  color: #555;
+  font-size: 0.84rem;
+}
+    .template-meta-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(214,236,255,0.28), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(255,210,230,0.22), transparent 32%),
+    rgba(245,248,252,0.42);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.template-meta-modal.hidden {
+  display: none;
+}
+
+.template-meta-card {
+  width: min(640px, 94vw);
+  max-height: 88vh;
+  overflow: auto;
+  border-radius: 28px;
+  padding: 18px;
+  border: 1px solid rgba(30,30,30,0.14);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62));
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow:
+    0 18px 44px rgba(0,0,0,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.72);
+}
+
+.template-meta-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.template-meta-header strong {
+  font-family: 'Fors', Tahoma, sans-serif;
+  font-size: 1.35rem;
+  color: #111;
+}
+
+.template-meta-subtitle {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: rgba(0,0,0,0.56);
+}
+
+.template-meta-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,20,20,0.10);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.52));
+  color: #111;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.template-meta-body {
+  display: grid;
+  gap: 11px;
+}
+
+.template-meta-body label {
+  color: #222;
+  font-size: 0.84rem;
+}
+
+.template-meta-body input,
+.template-meta-body select,
+.template-meta-body textarea {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(20,20,20,0.11);
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.66));
+  color: #111;
+  padding: 11px 13px;
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.70),
+    0 5px 14px rgba(0,0,0,0.05);
+}
+
+.template-meta-body input:focus,
+.template-meta-body select:focus,
+.template-meta-body textarea:focus {
+  border-color: rgba(90,140,210,0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.78),
+    0 0 0 3px rgba(214,236,255,0.50),
+    0 8px 18px rgba(0,0,0,0.07);
+}
+
+#templateMetaDesc,
+.template-desc-editor {
+  min-height: 120px;
+  overflow: hidden;
+  resize: none;
+  white-space: pre-wrap;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(20,20,20,0.11);
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.66));
+  color: #111;
+  padding: 11px 13px;
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.70),
+    0 5px 14px rgba(0,0,0,0.05);
+}
+
+.template-desc-editor:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(0,0,0,0.42);
+  pointer-events: none;
+}
+
+.template-desc-editor:focus {
+  border-color: rgba(90,140,210,0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.78),
+    0 0 0 3px rgba(214,236,255,0.50),
+    0 8px 18px rgba(0,0,0,0.07);
+}
+
+.template-meta-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.template-meta-actions button {
+  border: 1px solid rgba(20,20,20,0.10);
+  border-radius: 999px;
+  padding: 9px 14px;
+  cursor: pointer;
+  color: #111;
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.58));
+  box-shadow: 0 5px 14px rgba(0,0,0,0.07);
+}
+
+#templateMetaSaveBtn {
+  background: linear-gradient(180deg, rgba(214,236,255,0.96), rgba(196,223,255,0.78));
+  font-weight: 700;
+}
+
+#templateMetaCancelBtn {
+  opacity: 0.78;
+}
+
+    .preview-box {
+  white-space: pre-wrap;
+  line-height: 1.55;
+  color: #111;
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(20,20,20,0.14);
+  border-radius: 18px;
+  padding: 16px;
+  min-height: 180px;
+  max-height: 560px;
+  overflow: auto;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+}
+
+    .preview-box:empty::before {
+  content: 'Your generated consultation summary will appear here.';
+  color: rgba(0,0,0,0.38);
+}
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.22), rgba(255,255,255,0));
+      margin: 4px 0;
+    }
+
+.editable-checklist {
+  display: grid;
+  gap: 10px;
+}
+
+.patient-links-box {
+  display: grid;
+  gap: 10px;
+}
+
+.patient-link-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.patient-link-row input {
+  width: 100%;
+}
+
+.patient-link-include {
+  display: none;
+}
+
+
+@media (max-width: 760px) {
+  .patient-link-row {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-link-delete {
+    width: 100%;
+  }
+}
+
+.patient-link-delete {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.58));
+  color: #111;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.patient-link-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.patient-link-preview a {
+  text-decoration: none;
+}
+
+
+
+.patient-link-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.patient-link-toggle {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62));
+  color: #111;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.patient-link-editor {
+  display: none;
+  gap: 10px;
+}
+
+.patient-link-editor.show {
+  display: grid;
+}
+
+.patient-link-preview:empty::before {
+  content: "No patient links added";
+  color: rgba(0,0,0,0.45);
+  font-size: 0.88rem;
+}
+
+
+.patient-qr-btn {
+  min-height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.58));
+  color: #111;
+  cursor: pointer;
+  padding: 8px 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  white-space: nowrap;
+}
+
+.patient-qr-input {
+  display: none;
+}
+
+.patient-qr-thumb {
+  width: 74px;
+  height: 74px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: rgba(255,255,255,0.82);
+  padding: 4px;
+}
+
+.patient-info-preview-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: rgba(255,255,255,0.66);
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.patient-info-preview-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.patient-info-preview-item.selected {
+  border-color: rgba(196, 154, 55, 0.34);
+  background: linear-gradient(180deg, rgba(255, 248, 198, 0.96), rgba(255, 236, 153, 0.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.76), 0 6px 16px rgba(180,140,50,0.10);
+}
+
+
+.patient-info-open-link {
+  text-decoration: none;
+  color: #111;
+  padding: 5px 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.36);
+}
+
+.patient-info-open-link:hover {
+  background: rgba(255,255,255,0.55);
+}
+
+.quick-dose-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-dose-btn {
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62));
+  color: #111;
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+.dose-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.dose-modal.hidden {
+  display: none;
+}
+
+.dose-modal-card {
+  width: 90%;
+  max-width: 420px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+#doseEditTextarea {
+  width: 100%;
+  min-height: 100px;
+  margin: 12px 0;
+  border-radius: 12px;
+  padding: 10px;
+  border: 1px solid rgba(0,0,0,0.1);
+  resize: none;
+}
+
+.dose-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dose-modal-actions button {
+  border: 1px solid rgba(20,20,20,0.12);
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  color: #111;
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.62));
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+#doseInsertBtn {
+  background: linear-gradient(180deg, rgba(214,236,255,0.95), rgba(196,223,255,0.82));
+  font-weight: 700;
+}
+
+#doseCancelBtn {
+  opacity: 0.75;
+}
+
+.dose-safety {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.dose-safety label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.56);
+  border: 1px solid rgba(20,20,20,0.08);
+}
+
+.dose-safety input {
+  width: 15px;
+  height: 15px;
+  accent-color: #d6ecff;
+}
+
+
+.checklist-list {
+  display: grid;
+  gap: 8px;
+}
+
+.checklist-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.check-item {
+  display: grid;
+  grid-template-columns: 16px auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.line-break-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 34px;
+  height: 26px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(20,20,20,0.10);
+  background: rgba(255,255,255,0.52);
+  font-size: 0.72rem;
+  color: rgba(0,0,0,0.62);
+  cursor: pointer;
+  user-select: none;
+}
+
+.line-break-toggle input {
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 !important;
+  accent-color: #d6ecff;
+}
+#planTreatmentList .checklist-new-input,
+#prescribingFirstLineList .checklist-new-input,
+#prescribingSecondLineList .checklist-new-input {
+  border-radius: 14px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.68));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 16px rgba(0,0,0,0.08);
+  color: #111;
+  padding: 12px 14px;
+}
+
+.check-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 7px;
+  accent-color: #d6ecff;
+}
+
+.check-item textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 30px;
+  resize: none;
+  overflow: hidden;
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 4px 0 3px !important;
+  margin: 0;
+  color: #111;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.check-item textarea:focus {
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.check-item input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  color: #111;
+  line-height: 1.4;
   white-space: normal;
   overflow-wrap: anywhere;
 }
 
-.custom-file-btn {
-  display: inline-block;
-  padding: 6px 14px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
-  border: 1.5px solid rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'fors', sans-serif;
-  font-size: 13px;
-  color: #222;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
-  user-select: none;
-  transition: all 0.3s ease;
-  margin-left: 8px;
-  vertical-align: middle;
+.check-item input[type="text"]:focus {
+  border: none;
+  outline: none;
+  box-shadow: none;
 }
 
-.custom-file-btn:hover {
-  background: rgba(255, 255, 255, 0.8);
-  color: #000;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+.checklist-add-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
 }
 
-.add-btn {
-  height: 34px;
-  min-width: 100px;
-  align-self: flex-start;
-  padding: 6px 16px;
-  background: rgba(255, 255, 255, 0.65);
-  border: 1.5px solid rgba(255, 255, 255, 0.9);
+.checklist-new-input {
+  width: 100%;
+}
+
+.checklist-delete {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,20,20,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.58));
   color: #111;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-left: 8px;
-  vertical-align: middle;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
 }
 
-.add-btn:hover {
-  background: rgba(255, 255, 255, 0.9);
-  color: #000;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+.checklist-delete:hover {
+  transform: translateY(-1px);
+}
+.checklist-row.dragging {
+  opacity: 0.55;
 }
 
-.hidden {
+.checklist-row {
+  cursor: grab;
+}
+
+.checklist-row:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 760px) {
+  .checklist-add-row,
+  .checklist-row {
+    grid-template-columns: 1fr;
+  }
+
+  .checklist-delete {
+    width: 100%;
+  }
+}
+
+    .floating-generate {
+  position: fixed;
+  right: 12px;
+  bottom: 80px;
+  z-index: 70;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: 1px solid rgba(20,20,20,0.16);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62));
+  color: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+  font-size: 1.2rem;
+}
+
+ /* Matching soft glass scrollbar - #f9f7ff */
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+::-webkit-scrollbar-track {
+  background: linear-gradient(
+    180deg,
+    rgba(249, 247, 255, 0.34),
+    rgba(249, 247, 255, 0.16)
+  );
+  border-radius: 999px;
+  border: 1px solid rgba(249, 247, 255, 0.55);
+  box-shadow:
+    inset 0 1px 4px rgba(255,255,255,0.42),
+    inset 0 -1px 4px rgba(180,175,195,0.08);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(249, 247, 255, 0.96),
+    rgba(232, 228, 245, 0.82)
+  );
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.68);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.88),
+    0 2px 8px rgba(120,115,145,0.12);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.98),
+    rgba(249,247,255,0.92)
+  );
+  border-color: rgba(255,255,255,0.82);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 228, 245, 0.88) rgba(249, 247, 255, 0.20);
+}
+	@media (min-width: 1181px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .page-shell {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+  }
+
+  .layout {
+    height: calc(100vh - 72px);
+    overflow: hidden;
+    align-items: stretch;
+  }
+
+  .panel {
+    position: static;
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .main {
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+  }
+
+  .main .hero {
+    top: 0;
+  }
+}
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        position: static;
+      }
+
+      .quick-grid,
+      .consultation-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 10px;
+        padding-top: 64px;
+      }
+
+       .hero {
+  top: 8px;
+  z-index: 18;
+  padding: 7px 10px;
+  border-radius: 16px;
+}
+
+.hero-template-label {
   display: none;
 }
 
-#toggleFormBtn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(90px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  font-size: 28px;
-  font-weight: bold;
-  color: #000;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s ease, transform 0.2s ease;
-  z-index: 1000;
+.hero-template-desc {
+  font-size: 0.8rem;
+  line-height: 1.25;
 }
 
-#toggleFormBtn:hover {
-  background: rgba(255, 255, 255, 0.5);
-  transform: scale(1.1);
-}
+      .topbar {
+        position: fixed;
+        top: 8px;
+        left: 10px;
+        right: 10px;
+        padding: 10px 12px;
+        border-radius: 18px;
+        margin-bottom: 0;
+      }
 
-#nurseFormWrapper {
-  position: fixed;
-  bottom: -100%;
-  right: 20px;
-  width: 300px;
-  padding: 15px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-  transition: bottom 0.4s ease, opacity 0.4s ease;
-  opacity: 0;
-  z-index: 1000;
-}
-
-#nurseFormWrapper.show {
-  bottom: 80px;
-  opacity: 1;
-}
-
-/* 🌸 Toggle + Rays (updated) */
-.center-toggle {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 30px;
-  z-index: 1002;
-}
-
-
-/* 🌸 Glassmorphism style for rays */
-.center-toggle .ray {
-  background: rgba(255, 255, 255, 1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  padding: 6px 12px;
-  color: #000;
-  text-decoration: none !important;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transform: rotate(var(--angle)) translate(0px);
-  transition: 
-    opacity 0.4s ease, 
-    transform 0.4s ease; /* smooth transition */
-}
-
-/* Show rays when active */
-.center-toggle.active .ray {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Ray hover effect — change box color */
-.center-toggle .ray:hover {
-  background: #ededed;
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-}
-
-.toggle-icon {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  color: #2d4d2d;
-  cursor: pointer;
-  transition: transform 0.4s ease;
-}
-
-.toggle-icon.active {
-  transform: rotate(45deg);
-}
-
-.rays {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  pointer-events: auto;
-  transform: translate(-50%, -50%);
-  z-index: 1003;
-}
-
-.ray {
-  position: absolute;
-  top: 0;
-  left: 0;
-  font-size: 14px;
-  font-weight: 400;
-  color: #2f4f2f;
-  opacity: 0;
-  transform-origin: 0 0;
-  white-space: nowrap;
-  transform: rotate(var(--angle)) translate(40px);
-  transition: opacity 0.5s ease;
-  pointer-events: none;
-}
-
-.ray span {
-  display: inline-block;
-  transform: rotate(calc(-1 * var(--angle)));
-  transition: color 0.3s ease;
-}
-
-/* Text color hover effect */
-.ray:hover span {
-  color: #F0EEEA;
-}
-@media (max-width: 768px) {
-  html, body {
-    overflow-x: auto;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+      .topbar-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+	  
+	    .topbar {
+    transform: translateY(-120%);
+    opacity: 0;
+    pointer-events: none;
   }
 
-  body {
-    min-width: 1280px;
+  .topbar.show-mobile {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
   }
 
-  body::before {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 1280px;
-    min-width: 1280px;
-    min-height: 100%;
-    background: url('2b.png') no-repeat center center;
-    background-size: cover;
-    background-attachment: scroll;
+      .brand-wrap {
+        width: 100%;
+      }
+
+      .top-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .top-actions .glass-btn {
+        flex: 1 1 calc(50% - 8px);
+        justify-content: center;
+      }
+
+      .quick-grid,
+      .consultation-grid,
+      .section-fields.two,
+      .section-fields.three {
+        grid-template-columns: 1fr;
+      }
+    
+	   .floating-generate {
+       width: 54px;
+       height: 54px;
+       right: 14px;
+       bottom: 85px;
+       }
+      .card,
+      .panel {
+       padding: 15px;
+       }
+
+      .page-title {
+        font-size: 1.5rem;
+      }
+	    .sticky-template-info {
+    width: 100%;
+    max-width: none;
   }
 
-  .header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 1280px;
-    min-width: 1280px;
-    padding: 0 20px;
+  .sticky-template-title {
+    font-size: 1.5rem;
   }
 
-  .container {
-    width: 1280px;
-    min-width: 1280px;
-    padding: 100px 20px 20px 20px;
-    box-sizing: border-box;
+  .sticky-template-desc {
+    display: none;
   }
 
-  .cards-container {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  width: 100%;
-}
-
-.note-card {
-  width: 100%;
-}
-
-  .center-toggle {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 30px;
-  z-index: 1002;
-}
-
-  .header-title {
-    top: 10px;
-    left: 80px;
-    font-size: 22px;
-    margin: 0;
+  .top-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .search-box {
-    position: absolute;
-    top: 18px;
-    right: 20px;
-    z-index: 1001;
+  .top-actions .glass-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 9px;
+    font-size: 0.82rem;
   }
+    }
+	
 
-  .search-box input {
-    width: 150px;
-  }
-
-  #toggleFormBtn {
-    right: 20px;
-    bottom: 20px;
-    z-index: 1003;
-  }
-
-  #nurseFormWrapper {
-    right: 20px;
-    width: 300px;
-    z-index: 1002;
-  }
-
-  #nurseFormWrapper.show {
-    bottom: 80px;
-  }
-
-  .ray {
-    white-space: nowrap;
-  }
-}
-
-
-</style>
+  </style>
 </head>
 <body>
+  <button class="topbar-toggle" id="topbarToggle" title="Show header">☰</button>
+  <div class="page-shell">
+    <header class="topbar" id="topbar">
+  <div class="sticky-template-info">
+  <div class="sticky-template-title" id="activeTemplateTitle">General Consultation</div>
+</div>
 
-<div class="header">
-  <div class="header-bg"></div>
+  <div class="top-actions">
+    <button class="glass-btn" id="fillTemplateBtn" style="display:none;">✨ Load</button>
+    <button class="glass-btn" id="clearBtn">🧼 Clear</button>
+    <button class="glass-btn" id="generateBtn">📋 Generate</button>
 
-  <div class="header-left">
-    <!-- 🌸 Home toggle with rays -->
-<div class="center-toggle">
-  <div class="toggle-icon" id="menuToggle">☐</div>
-  <div class="rays">
-    <!-- Rays will be generated dynamically by JS -->
+    <a class="glass-btn header-btn" href="home.html" data-full="🏠 Home" data-mini="🏠">🏠 Home</a>
+    <a class="glass-btn header-btn" href="https://xlyneve.github.io/CEP/chatgptx.html" data-full="💬 Notes" data-mini="💬">💬 Notes</a>
+    <button class="glass-btn header-btn" id="printBtn" data-full="🖨️ Print template" data-mini="🖨️">🖨️ Print</button>
+  </div>
+</header>
+
+    <div class="layout">
+      <aside class="panel">
+        <h2>Templates</h2>
+
+        <div class="search-wrap">
+          <input type="text" id="searchInput" placeholder="Search template or symptom..." />
+          <select id="categoryFilter">
+            <option value="all">All categories</option>
+            <option value="respiratory">Respiratory / ENT</option>
+            <option value="skin">Skin / Soft tissue</option>
+            <option value="viral">Viral / General</option>
+            <option value="urinary">Urinary</option>
+            <option value="msk">MSK / Injury</option>
+          </select>
+        </div>
+
+        <div class="template-list" id="templateList"></div>
+      </aside>
+
+      <main class="main">
+        <section class="hero">
+          <div class="hero-top">
+           <div>
+  <div class="hero-template-info" id="heroTemplateInfo">
+  <div class="hero-template-top">
+    <div class="hero-template-label">Template description</div>
+    <button type="button" class="hero-template-toggle" id="heroTemplateToggle" title="Show more">
+      ˅
+    </button>
+  </div>
+
+  <div class="hero-template-desc collapsed" id="activeTemplateDesc">
+    Flexible all-purpose assessment structure for common acute presentations.
+  </div>
+</div>
+</div>
+		   </div>
+
+        
+        </section>
+
+        <section class="consultation-grid">
+      <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">1. History of presenting complaint</div>
+      <div class="hint">Opening line, duration, symptoms, and demographics</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">Core</span>
+    </div>
+  </div>
+
+  <div class="section-fields three" style="column-gap:16px; row-gap:10px; margin-bottom:-2px;">
+    <label>
+      Age
+      <input id="patientDemo" placeholder="e.g. 37" />
+    </label>
+
+    <label>
+      Sex
+      <div class="mini-checks" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+        <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+          <input type="checkbox" id="sexMale" /> Male
+        </label>
+        <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+          <input type="checkbox" id="sexFemale" /> Female
+        </label>
+      </div>
+    </label>
+
+    <label>
+      Ethnicity
+      <input id="patientEthnicity" placeholder="e.g. Pakeha" />
+    </label>
+
+    <label style="grid-column: 1 / -1;">
+      <span>Duration</span>
+      <div style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap; margin-top:8px;">
+        <input
+          id="presentationDuration"
+          placeholder="e.g. 2"
+          style="width:54px; min-width:54px; max-width:54px; padding:8px 6px; text-align:center;"
+        />
+
+        <div class="mini-checks" style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap;">
+          <label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+  <input type="checkbox" id="durationDays" /> Days
+</label>
+<label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+  <input type="checkbox" id="durationWeeks" /> Weeks
+</label>
+<label style="margin:0; font-size:0.82rem; padding:6px 8px;">
+  <input type="checkbox" id="durationHours" /> Hours
+</label>
+        </div>
+      </div>
+    </label>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Presenting symptoms / complaints
+      <div class="editable-checklist" id="hpcList" data-placeholder="Add symptom..."></div>
+    </label>
+
+    <label>
+      Additional presentation text
+      <textarea id="presentationExtraText" placeholder="Extra line after presenting symptoms..."></textarea>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+<div
+  id="presentationPrivateNote"
+  class="private-note-editor"
+  contenteditable="true"
+  data-placeholder="Quick note to self - not part of summary"
+></div>
+    </label>
+  </div>
+</div>
+
+        <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">2. Red flags checked</div>
+      <div class="hint">Use the second checklist if you want a blank line before more red flags</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge danger">High value</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Red flags - first line
+      <div class="editable-checklist" id="redFlagsPrimaryList" data-placeholder="Add red flag item..."></div>
+    </label>
+
+    <label>
+      Red flags - next line
+      <div class="editable-checklist" id="redFlagsSecondaryList" data-placeholder="Add red flag item for new line..."></div>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+<div
+  id="redFlagsPrivateNote"
+  class="private-note-editor"
+  contenteditable="true"
+  data-placeholder="Reminder to self - not part of summary"
+></div>    </label>
+  </div>
+</div>
+
+         <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">3. Investigations</div>
+      <div class="hint">Use the second checklist if you want investigations on the next line</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge pink">Investigations</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Investigations - first line
+      <div class="editable-checklist" id="investigationsPrimaryList" data-placeholder="Add investigation..."></div>
+    </label>
+
+    <label>
+      Investigations - next line
+      <div class="editable-checklist" id="investigationsSecondaryList" data-placeholder="Add investigation for new line..."></div>
+    </label>
+
+    <label>
+      Additional investigation text
+      <textarea id="investigationsFreeText" placeholder="Optional extra investigation detail..."></textarea>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+      <div
+        id="investigationsPrivateNote"
+        class="private-note-editor"
+        contenteditable="true"
+        data-placeholder="Reminder to self - not part of summary"
+      ></div>
+    </label>
+  </div>
+</div>
+
+      <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">4. On Examination</div>
+      <div class="hint">Structured exam findings by system</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge green">Exam</span>
+    </div>
+  </div>
+
+ <div class="section-fields">
+  <label>
+    General findings
+    <div class="editable-checklist" id="examGeneralList" data-placeholder="Add general finding..."></div>
+  </label>
+
+  <label>
+    HEAD & NECK
+    <div class="editable-checklist" id="examHeadNeckList" data-placeholder="Add head & neck finding..."></div>
+  </label>
+
+    <label>
+      ENT
+      <div class="editable-checklist" id="examEntList" data-placeholder="Add ENT finding..."></div>
+    </label>
+
+    <label>
+      Oropharynx
+      <div class="editable-checklist" id="examOropharynxList" data-placeholder="Add oropharynx finding..."></div>
+    </label>
+
+    <label>
+  CHEST
+  <div class="editable-checklist" id="examChestList" data-placeholder="Add chest finding..."></div>
+</label>
+
+<label>
+  Abdomen
+  <div class="editable-checklist" id="examAbdomenList" data-placeholder="Add abdomen finding..."></div>
+</label>
+
+<label>
+  Other findings
+  <div class="editable-checklist" id="examOtherList" data-placeholder="Add other finding..."></div>
+</label>
+
+    <label>
+      Additional findings
+      <textarea id="examFreeText" placeholder="Optional extra findings..."></textarea>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+      <div
+        id="examPrivateNote"
+        class="private-note-editor"
+        contenteditable="true"
+        data-placeholder="Quick note to self during exam - not part of summary"
+      ></div>
+    </label>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">Vital Signs</div>
+      <div class="hint">Only filled values will appear in summary</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">Observations</span>
+    </div>
+  </div>
+
+  <div class="vitals-grid">
+    <label class="vital-inline">
+      <span>Temp:</span>
+      <input id="vitalTemp" placeholder="" />
+    </label>
+
+    <label class="vital-inline vital-pr-row">
+  <span>PR:</span>
+  <input id="vitalPR" placeholder="" />
+
+  <button type="button" class="pr-toggle" id="prRegular">REG</button>
+  <button type="button" class="pr-toggle" id="prIrregular">IRREG</button>
+</label>
+
+    <label class="vital-inline">
+      <span>RR:</span>
+      <input id="vitalRR" placeholder="" />
+    </label>
+
+    <label class="vital-inline">
+      <span>BP:</span>
+      <input id="vitalBP" placeholder="" />
+    </label>
+
+    <label class="vital-inline">
+      <span>Sats:</span>
+      <input id="vitalSats" placeholder="" />
+    </label>
+
+    <label class="vital-inline">
+      <span>WE:</span>
+      <input id="vitalWE" placeholder="" />
+    </label>
+  </div>
+</div>
+
+     <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">5. Assessment</div>
+      <div class="hint">Clinical impression / working assessment</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge warn">Clinical reasoning</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Assessment
+      <div class="editable-checklist" id="assessmentList" data-placeholder="Add assessment item..."></div>
+    </label>
+  </div>
+
+  <div class="section-fields private-note-wrap">
+    <label class="private-note-label">
+      Private consult note
+<div
+  id="privateConsultNote"
+  class="private-note-editor"
+  contenteditable="true"
+  data-placeholder="Quick note to self while consulting - not part of summary"
+></div>
+    </label>
+  </div>
+</div>
+
+<div class="card full">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">6. Management Plan</div>
+      <div class="hint">Use the second checklist if you want a blank line before more plan items</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge pink">Plan</span>
+    </div>
+  </div>
+
+  <div class="quick-dose-row">
+    <button type="button" class="quick-dose-btn" data-med="amoxClav" data-type="bites">
+      Amox-clav bites
+    </button>
+
+    <button type="button" class="quick-dose-btn" data-med="flucloxacillin" data-type="cellulitis">
+      Fluclox cellulitis
+    </button>
+
+    <button type="button" class="quick-dose-btn" data-med="amoxicillin" data-type="strepA">
+      Amoxicillin Strep A
+    </button>
+
+    <button type="button" class="quick-dose-btn" data-med="penicillinV" data-type="strepA">
+      Pen V Strep A
+    </button>
+  </div>
+
+  <div class="hint">
+    Quick picks only prefill the calculator. Confirm NZF / Te Whatakura / local guidance before prescribing.
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Management plan - first line
+      <div class="editable-checklist" id="managementPlanPrimaryList" data-placeholder="Add management item..."></div>
+    </label>
+
+    <label>
+      Management plan - next line
+      <div class="editable-checklist" id="managementPlanSecondaryList" data-placeholder="Add management item for new line..."></div>
+    </label>
+
+    <label>
+      Additional management text
+      <textarea id="managementPlanFreeText" placeholder="Optional extra management detail..."></textarea>
+    </label>
+
+    <label class="private-note-label">
+      Private notes
+      <div
+        id="prescribingPrivateNote"
+        class="private-note-editor"
+        contenteditable="true"
+        data-placeholder="Reminder to self - not part of summary"
+      ></div>
+    </label>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">7. Follow up</div>
+      <div class="hint">Use the second checklist if you want a blank line before more follow-up items</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">Follow up</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Follow up - first line
+      <div class="editable-checklist" id="followUpPrimaryList" data-placeholder="Add follow-up item..."></div>
+    </label>
+
+    <label>
+      Follow up - next line
+      <div class="editable-checklist" id="followUpSecondaryList" data-placeholder="Add follow-up item for new line..."></div>
+    </label>
+  </div>
+</div>
+
+        <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">8. Advice to parent / patient</div>
+      <div class="hint">Separate the second checklist onto a new line if needed</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">Advice</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Advice - first line
+      <div class="editable-checklist" id="advicePrimaryList" data-placeholder="Add advice item..."></div>
+    </label>
+
+    <label>
+      Advice - next line
+      <div class="editable-checklist" id="adviceSecondaryList" data-placeholder="Add advice item for new line..."></div>
+    </label>
+  </div>
+</div>
+
+ <div class="card">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">9. Safety netting provided to patient</div>
+      <div class="hint">Separate the second checklist onto a new line if needed</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge danger">Safety net</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+    <label>
+      Safety netting - first line
+      <div class="editable-checklist" id="safetyNetPrimaryList" data-placeholder="Add safety-net item..."></div>
+    </label>
+
+    <label>
+      Safety netting - next line
+      <div class="editable-checklist" id="safetyNetSecondaryList" data-placeholder="Add safety-net item for new line..."></div>
+    </label>
+  </div>
+</div>
+
+<div class="card full">
+  <div class="section-header">
+    <div>
+      <div class="section-heading">10. Patient information links</div>
+      <div class="hint">Useful links to give to patient after consult</div>
+    </div>
+    <div class="badge-row">
+      <span class="badge green">Patient info</span>
+    </div>
+  </div>
+
+  <div class="section-fields">
+  <div class="patient-links-box">
+    <div class="patient-link-top">
+      <div class="patient-link-preview" id="patientLinksPreview"></div>
+
+      <button type="button" class="patient-link-toggle" id="patientLinkToggleBtn" title="Add/edit patient links">
+        🔗
+      </button>
+    </div>
+
+    <div class="patient-link-editor" id="patientLinkEditor">
+      <div id="patientLinksList"></div>
+
+      <button type="button" class="glass-btn" id="addPatientLinkBtn">
+        ＋ Add patient link
+      </button>
+    </div>
   </div>
 </div>
 </div>
 
-  <h1 class="header-title">Nurse Notes</h1>
+          <div class="card full">
+            <div class="section-header">
+              <div>
+                <div class="section-heading">11. Generated consultation summary</div>
+                <div class="hint">Auto-build a clean note from what you entered</div>
+              </div>
+              <div class="badge-row">
+                <span class="badge green">Copy-ready</span>
+              </div>
+            </div>
 
-  <div class="header-right">
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
+            <div class="note-area">
+              <div class="preview-box" id="output"></div>
+
+              <div class="divider"></div>
+
+              <div class="footer-actions">
+                <div class="footer-left">
+                  <button class="glass-btn" id="copyBtn">📎 Copy summary</button>
+                  <button class="glass-btn" id="copyPlainBtn">🧾 Copy plain text</button>
+                </div>
+                <div class="footer-right">
+                  <span class="small-note">Built for structured consults and cleaner prescribing logic.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <button class="floating-generate" id="floatingGenerateBtn" title="Generate summary">📋</button>
+
+<div id="doseEditModal" class="dose-modal hidden">
+  <div class="dose-modal-card">
+    <div class="dose-modal-header">
+      <strong>Edit medication plan</strong>
+    </div>
+
+    <textarea id="doseEditTextarea"></textarea>
+
+    <div class="dose-safety">
+      <label><input type="checkbox" id="checkAllergy"> Allergy checked</label>
+      <label><input type="checkbox" id="checkPenicillin"> Penicillin allergy considered</label>
+      <label><input type="checkbox" id="checkGuideline"> NZF / Te Whatakura / local guidance checked</label>
+    </div>
+
+    <div class="dose-modal-actions">
+      <button type="button" id="doseCancelBtn">Cancel</button>
+      <button type="button" id="doseInsertBtn">Insert</button>
     </div>
   </div>
 </div>
 
-<div class="container">
-  <!-- Hidden glassy form -->
-  <div id="nurseFormWrapper" class="form-section">
-    <input id="nurseTitle" placeholder="Title">
-    <textarea id="nurseNote" placeholder="Note..."></textarea>
-    <input id="nurseURL" placeholder="Optional URL (if any)">
-    <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
-    <label for="nurseImage" class="custom-file-btn">Choose File</label>
-    <button class="add-btn" onclick="addNote()">Add</button>
-  </div>
+<div id="templateMetaModal" class="template-meta-modal hidden">
+  <div class="template-meta-card">
+    <div class="template-meta-header">
+      <div>
+        <strong id="templateMetaModalTitle">Template details</strong>
+        <div class="template-meta-subtitle">Save the template details and sticky description.</div>
+      </div>
+      <button type="button" id="templateMetaCloseBtn" class="template-meta-close">×</button>
+    </div>
 
-  <!-- Notes container -->
-  <div class="cards-container" id="nurseNotesList"></div>
+    <div class="template-meta-body">
+      <label>
+        Template title
+        <input id="templateMetaTitle" placeholder="e.g. Sore throat" />
+      </label>
+
+      <label>
+        Category
+        <select id="templateMetaCategory">
+          <option value="respiratory">Respiratory / ENT</option>
+          <option value="skin">Skin / Soft tissue</option>
+          <option value="viral">Viral / General</option>
+          <option value="urinary">Urinary</option>
+          <option value="msk">MSK / Injury</option>
+        </select>
+      </label>
+
+     <label>
+  Description
+  <div
+    id="templateMetaDesc"
+    class="template-desc-editor"
+    contenteditable="true"
+    data-placeholder="Short template description. URLs will become clickable."
+  ></div>
+</label>
+
+      <label>
+        Tags
+        <input id="templateMetaTags" placeholder="e.g. sore throat, strep, ENT" />
+      </label>
+    </div>
+
+    <div class="template-meta-actions">
+      <button type="button" id="templateMetaCancelBtn">Cancel</button>
+      <button type="button" id="templateMetaSaveBtn">Save</button>
+    </div>
+  </div>
 </div>
 
-<!-- Floating glassy + button -->
-<button id="toggleFormBtn">+</button>
-
- 
-
+  <script src="calculator.js?v=6"></script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {
-  getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-/* ---------------- Firebase ---------------- */
 const firebaseConfig = {
-  apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-  authDomain: "cepx-f9d2a.firebaseapp.com",
-  projectId: "cepx-f9d2a",
-  storageBucket: "cepx-f9d2a.appspot.com",
-  messagingSenderId: "840696526325",
-  appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  apiKey: "AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4",
+  authDomain: "notes-chat-c5ff3.firebaseapp.com",
+  projectId: "notes-chat-c5ff3",
+  storageBucket: "notes-chat-c5ff3.firebasestorage.app",
+  messagingSenderId: "597780727252",
+  appId: "1:597780727252:web:8407eb4096dbe301d74241",
+  measurementId: "G-YQD63H7L5T"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const notesCol = collection(db, "nurseNotes");
+let app = null;
+let auth = null;
+let db = null;
+let templatesRef = null;
+let provider = null;
+let firebaseReady = false;
+let currentUser = null;
+let userTemplates = [];
+let activeTemplateId = 'general';
+let hasUnsavedTemplateEdits = false;
+let suppressDirtyTracking = false;
 
-/* ---------------- Global Filter Persistence ---------------- */
-let currentSearchQuery = "";
-
-/* ---------------- CRUD ---------------- */
-async function addNote() {
-  const title = nurseTitle.value.trim();
-  const note = nurseNote.value.trim();
-  const url = nurseURL.value.trim();
-  const fileInput = document.getElementById('nurseImage');
-  const file = fileInput.files[0];
-
-  let imageBase64 = "";
-
-  if (file) {
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      imageBase64 = reader.result;
-
-      await addDoc(notesCol, {
-        title: title || "Untitled",
-        note,
-        url: url || "",
-        image: imageBase64,
-        time: new Date().toISOString()
-      });
-
-      nurseTitle.value = '';
-      nurseNote.value = '';
-      nurseURL.value = '';
-      nurseImage.value = '';
-    };
-    reader.readAsDataURL(file);
-  } else {
-    await addDoc(notesCol, {
-      title: title || "Untitled",
-      note,
-      url: url || "",
-      image: "",
-      time: new Date().toISOString()
-    });
-
-    nurseTitle.value = '';
-    nurseNote.value = '';
-    nurseURL.value = '';
-    nurseImage.value = '';
-  }
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  templatesRef = collection(db, 'consultationTemplates');
+  provider = new GoogleAuthProvider();
+  firebaseReady = true;
+} catch (err) {
+  console.warn('Firebase failed to initialise. Built-in templates will still load.', err);
 }
 
-async function deleteNote(id) {
-  if (confirm("Delete this note?")) {
-    await deleteDoc(doc(db, "nurseNotes", id));
+const defaultTemplates = [
+  {
+    id: 'general',
+    title: 'General Consultation',
+    category: 'viral',
+    desc: 'Flexible all-purpose assessment structure for common acute presentations.',
+    tags: ['general', 'assessment', 'documentation'],
+    isBuiltIn: true,
+    prompts: {
+      patientDemo: '',
+      patientEthnicity: '',
+      sexMale: false,
+      sexFemale: false,
+      presentationDuration: '',
+      durationDays: true,
+      durationHours: false,
+      presentationExtraText: '',
+      presentationPrivateNote: '',
+
+      hpc: [
+        'cough',
+        'sore throat',
+        'fever'
+      ],
+
+      redFlagsPrimary: [
+        'Relevant dangerous symptoms asked about',
+        'Relevant dangerous symptoms absent unless present'
+      ],
+      redFlagsSecondary: [],
+      redFlagsPrivateNote: '',
+
+      vitalTemp: '',
+      vitalPR: '',
+      prRegular: false,
+      prIrregular: false,
+      vitalRR: '',
+      vitalBP: '',
+      vitalSats: '',
+      vitalWE: '',
+
+      examPrimary: [
+        'Voice normal, no drooling or trismus present'
+      ],
+      examSecondary: [
+        'Oropharynx visualised, uvula central and no palatal swelling'
+      ],
+      examFreeText: '',
+      examPrivateNote: '',
+
+      investigationsPrimary: [
+        'No investigations indicated'
+      ],
+      investigationsSecondary: [],
+      investigationsFreeText: '',
+	  investigationsPrivateNote: '',
+
+      assessment: [
+        'Working assessment'
+      ],
+      privateConsultNote: '',
+
+      managementPlanPrimary: [
+        'Supportive measures discussed'
+      ],
+      managementPlanSecondary: [],
+      managementPlanFreeText: '',
+      prescribingPrivateNote: '',
+
+      followUpPrimary: [
+        'Review if not improving'
+      ],
+      followUpSecondary: [],
+
+      advicePrimary: [
+        'Supportive care and home advice'
+      ],
+      adviceSecondary: [],
+
+      safetyNetPrimary: [
+  'Return if worsening',
+  'Return if not improving'
+],
+safetyNetSecondary: [
+  'Return if red flags develop'
+],
+
+patientLinks: []
+    }
   }
+];
+const templateList = document.getElementById('templateList');
+const searchInput = document.getElementById('searchInput');
+const categoryFilter = document.getElementById('categoryFilter');
+const activeTemplateTitle = document.getElementById('activeTemplateTitle');
+const activeTemplateDesc = document.getElementById('activeTemplateDesc');
+const heroTemplateInfo = document.getElementById('heroTemplateInfo');
+const heroTemplateToggle = document.getElementById('heroTemplateToggle');
+const fillTemplateBtn = document.getElementById('fillTemplateBtn');
+const clearBtn = document.getElementById('clearBtn');
+const generateBtn = document.getElementById('generateBtn');
+const output = document.getElementById('output');
+const printBtn = document.getElementById('printBtn');
+const copyBtn = document.getElementById('copyBtn');
+const copyPlainBtn = document.getElementById('copyPlainBtn');
+const floatingGenerateBtn = document.getElementById('floatingGenerateBtn');
+const patientLinksList = document.getElementById('patientLinksList');
+const addPatientLinkBtn = document.getElementById('addPatientLinkBtn');
+const patientLinksPreview = document.getElementById('patientLinksPreview');
+const patientLinkToggleBtn = document.getElementById('patientLinkToggleBtn');
+const patientLinkEditor = document.getElementById('patientLinkEditor');
+const topbar = document.getElementById('topbar');
+const topbarToggle = document.getElementById('topbarToggle');
+const topActions = document.querySelector('.top-actions');
+
+
+function markTemplateDirty() {
+  if (suppressDirtyTracking) return;
+  hasUnsavedTemplateEdits = true;
 }
 
-async function saveEdit(id, updatedTitle, updatedNote) {
-  await updateDoc(doc(db, "nurseNotes", id), {
-    title: updatedTitle || "Untitled",
-    note: updatedNote
+function setupTemplateDirtyTracking() {
+  const selectors = [
+    'input',
+    'textarea',
+    '.editable-checklist',
+    '.private-note-editor'
+  ];
+
+  document.querySelectorAll(selectors.join(',')).forEach(el => {
+    el.addEventListener('input', markTemplateDirty);
+    el.addEventListener('change', markTemplateDirty);
   });
 }
 
-/* ---------------- Utilities ---------------- */
-function escapeHtml(text) {
-  return text.replace(/&/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/"/g, "&quot;")
-             .replace(/'/g, "&#039;");
+const authWrap = document.createElement('div');
+authWrap.style.display = 'inline-flex';
+authWrap.style.alignItems = 'center';
+authWrap.style.gap = '8px';
+authWrap.style.flexWrap = 'wrap';
+
+const loginBtn = document.createElement('button');
+loginBtn.className = 'glass-btn';
+loginBtn.id = 'loginBtn';
+loginBtn.textContent = '🔐 Sign in';
+
+const logoutBtn = document.createElement('button');
+logoutBtn.className = 'glass-btn';
+logoutBtn.id = 'logoutBtn';
+logoutBtn.textContent = '🚪 Sign out';
+logoutBtn.style.display = 'none';
+
+const authStatus = document.createElement('span');
+authStatus.className = 'chip';
+authStatus.id = 'authStatus';
+authStatus.textContent = firebaseReady ? 'Checking sign-in...' : 'Firebase unavailable';
+
+authWrap.appendChild(loginBtn);
+authWrap.appendChild(logoutBtn);
+authWrap.appendChild(authStatus);
+
+const saveBtn = document.createElement('button');
+saveBtn.className = 'glass-btn';
+saveBtn.id = 'saveTemplateBtn';
+saveBtn.textContent = '💾 Save';
+
+const editBtn = document.createElement('button');
+editBtn.className = 'glass-btn';
+editBtn.id = 'editTemplateBtn';
+editBtn.textContent = '✏️ Update';
+
+const deleteBtn = document.createElement('button');
+deleteBtn.className = 'glass-btn';
+deleteBtn.id = 'deleteTemplateBtn';
+deleteBtn.textContent = '🗑️ Delete';
+
+if (topActions) {
+  topActions.appendChild(authWrap);
+  topActions.appendChild(saveBtn);
+  topActions.appendChild(editBtn);
+  topActions.appendChild(deleteBtn);
 }
 
-/* ---------------- Editing ---------------- */
-function enableEditing(card, id, title, note) {
-  card.innerHTML = `
-    <input type="text" class="edit-title" value="${escapeHtml(title)}" />
-    <div class="edit-note" contenteditable="true"
-  style="width:95%; min-height:60px; padding:6px; border:1px solid rgba(255, 255, 255, 0.4);
-         border-radius:8px; background:rgba(255,255,255,0.65);
-         font-family:Tahoma,sans-serif; font-size:11px;">
-      ${note.replace(/\n/g, "<br>")}
-    </div>
-    <div class="editor-buttons" style="margin-top:6px;">
-      <button class="btn-save">Save</button>
-      <button class="btn-cancel">Cancel</button>
-      <button class="btn-bold">Bold</button>
-      <button class="btn-highlight">Highlight</button>
+const textFieldIds = [
+  'patientDemo',
+  'patientEthnicity',
+  'presentationDuration',
+  'presentationExtraText',
+  'presentationPrivateNote',
+  'redFlagsPrivateNote',
+  'vitalTemp',
+  'vitalPR',
+  'vitalRR',
+  'vitalBP',
+  'vitalSats',
+  'vitalWE',
+  'examFreeText',
+  'examPrivateNote',
+  'investigationsFreeText',
+  'privateConsultNote',
+  'managementPlanFreeText',
+  'prescribingPrivateNote'
+];
+
+const checklistIds = [
+  'hpcList',
+  'redFlagsPrimaryList',
+  'redFlagsSecondaryList',
+  'examGeneralList',
+  'examHeadNeckList',
+  'examEntList',
+  'examOropharynxList',
+  'examChestList',
+  'examAbdomenList',
+  'examOtherList',
+  'investigationsPrimaryList',
+  'investigationsSecondaryList',
+  'assessmentList',
+  'managementPlanPrimaryList',
+  'managementPlanSecondaryList',
+  'followUpPrimaryList',
+  'followUpSecondaryList',
+  'advicePrimaryList',
+  'adviceSecondaryList',
+  'safetyNetPrimaryList',
+  'safetyNetSecondaryList'
+];
+
+const privateNoteIds = [
+  'presentationPrivateNote',
+  'redFlagsPrivateNote',
+  'examPrivateNote',
+  'investigationsPrivateNote',
+  'privateConsultNote',
+  'prescribingPrivateNote'
+];
+
+function getField(id) {
+  return document.getElementById(id);
+}
+
+function safeAddListener(el, eventName, handler) {
+  if (el) el.addEventListener(eventName, handler);
+}
+
+let pendingDoseText = "";
+
+window.addEventListener("dose:addToPlan", (e) => {
+  const dose = e.detail;
+
+  if (dose.mode === "single") {
+    pendingDoseText =
+      `${dose.medication} ${Math.round(dose.doseMg)} mg ${dose.frequency}` +
+      (dose.durationDays ? ` for ${dose.durationDays} days` : "") +
+      ".";
+  } else if (dose.mode === "range") {
+    pendingDoseText =
+      `${dose.medication} ${Math.round(dose.lowDoseMg)}–${Math.round(dose.highDoseMg)} mg ${dose.frequency}` +
+      (dose.durationDays ? ` for ${dose.durationDays} days` : "") +
+      ".";
+  } else {
+    pendingDoseText = dose.fullText || "";
+  }
+
+  document.getElementById("doseEditTextarea").value = pendingDoseText;
+  document.getElementById("doseEditModal").classList.remove("hidden");
+});
+
+document.getElementById("doseCancelBtn").addEventListener("click", () => {
+  document.getElementById("doseEditModal").classList.add("hidden");
+});
+
+document.getElementById("doseInsertBtn").addEventListener("click", () => {
+  const planBox = document.getElementById("managementPlanFreeText");
+  const text = document.getElementById("doseEditTextarea").value.trim();
+
+  const allergy = document.getElementById("checkAllergy")?.checked;
+  const guideline = document.getElementById("checkGuideline")?.checked;
+
+  if (!allergy || !guideline) {
+    alert("Confirm allergy check and guideline check before inserting.");
+    return;
+  }
+
+  if (!planBox || !text) return;
+
+  planBox.value = planBox.value
+    ? `${planBox.value}\n${text}`
+    : text;
+
+  planBox.dispatchEvent(new Event("input", { bubbles: true }));
+  autoGrowTextarea(planBox);
+
+  document.getElementById("doseEditModal").classList.add("hidden");
+});
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".quick-dose-btn");
+  if (!btn) return;
+
+  const medKey = btn.dataset.med;
+  const dosingType = btn.dataset.type;
+
+  if (typeof window.prefillDoseCalculator !== "function") {
+    alert("Dose calculator is not ready.");
+    return;
+  }
+
+  window.prefillDoseCalculator({ medKey, dosingType });
+});
+function allTemplates() {
+  return [...defaultTemplates, ...userTemplates];
+}
+
+function getActiveTemplate() {
+  return allTemplates().find(t => t.id === activeTemplateId) || allTemplates()[0] || null;
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getPrivateNoteHtml(id) {
+  return getField(id)?.innerHTML.trim() || '';
+}
+
+function setPrivateNoteHtml(id, value) {
+  const field = getField(id);
+  if (!field) return;
+  field.innerHTML = value || '';
+}
+
+function clearPrivateNoteHtml(id) {
+  const field = getField(id);
+  if (!field) return;
+  field.innerHTML = '';
+}
+
+function formatPrivateNoteHtml(value) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = value || '';
+
+  wrapper.querySelectorAll('script, style').forEach(el => el.remove());
+
+  const allowedTags = new Set(['B', 'I', 'U', 'STRONG', 'EM', 'BR', 'DIV', 'P', 'SPAN']);
+
+  function cleanNode(node) {
+    [...node.childNodes].forEach(child => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (!allowedTags.has(child.tagName)) {
+          child.replaceWith(document.createTextNode(child.textContent || ''));
+          return;
+        }
+
+        [...child.attributes].forEach(attr => {
+          if (attr.name !== 'style') child.removeAttribute(attr.name);
+        });
+
+        if (child.hasAttribute('style')) {
+          const style = child.getAttribute('style') || '';
+          const safeStyle = style
+            .split(';')
+            .map(s => s.trim())
+            .filter(s =>
+              /^font-weight\s*:\s*(bold|700|600)/i.test(s) ||
+              /^font-style\s*:\s*italic/i.test(s) ||
+              /^text-decoration\s*:\s*underline/i.test(s)
+            )
+            .join('; ');
+          if (safeStyle) child.setAttribute('style', safeStyle);
+          else child.removeAttribute('style');
+        }
+
+        cleanNode(child);
+      }
+    });
+  }
+
+  cleanNode(wrapper);
+  return wrapper.innerHTML;
+}
+
+function splitPromptToItems(value) {
+  if (Array.isArray(value)) {
+    return value.map(v => String(v).trim()).filter(Boolean);
+  }
+  return String(value || '')
+    .split(/\n|,/)
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+
+function joinList(items, separator = '\n') {
+  return items.filter(Boolean).join(separator);
+}
+
+function joinNaturalList(items) {
+  const clean = items.filter(Boolean);
+  if (!clean.length) return '';
+  if (clean.length === 1) return clean[0];
+  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
+  return `${clean.slice(0, -1).join(', ')} and ${clean[clean.length - 1]}`;
+}
+
+function sentence(text) {
+  const clean = String(text || '').trim();
+  if (!clean) return '';
+  return /[.!?]$/.test(clean) ? clean : `${clean}.`;
+}
+
+function autoGrowChecklistTextarea(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+}
+
+function autoGrowTextarea(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+}
+function autoResizeInputTextarea(el) {
+  if (!el) return;
+
+  el.style.height = 'auto';
+
+  requestAnimationFrame(() => {
+    el.style.height = `${el.scrollHeight}px`;
+  });
+}
+function setupPrivateNotesAutoGrow() {
+  [
+    'presentationExtraText',
+    ...privateNoteIds,
+    'examFreeText',
+    'investigationsFreeText',
+    'managementPlanFreeText'
+  ].forEach(id => {
+    const field = getField(id);
+    if (!field) return;
+
+    autoGrowTextarea(field);
+    field.addEventListener('input', () => autoGrowTextarea(field));
+  });
+}
+
+function setupPrivateNoteFormattingShortcuts() {
+  privateNoteIds.forEach(id => {
+    const field = getField(id);
+    if (!field) return;
+
+    field.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+
+      if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].includes(key)) {
+        e.preventDefault();
+
+        if (key === 'b') document.execCommand('bold', false, null);
+        if (key === 'i') document.execCommand('italic', false, null);
+        if (key === 'u') document.execCommand('underline', false, null);
+      }
+    });
+
+    field.addEventListener('input', () => autoGrowTextarea(field));
+  });
+}
+
+function setupSexCheckboxes() {
+  const male = getField('sexMale');
+  const female = getField('sexFemale');
+
+  if (male) {
+    male.addEventListener('change', () => {
+      if (male.checked && female) female.checked = false;
+    });
+  }
+
+  if (female) {
+    female.addEventListener('change', () => {
+      if (female.checked && male) male.checked = false;
+    });
+  }
+}
+
+function setupDurationCheckboxes() {
+  const days = getField('durationDays');
+  const weeks = getField('durationWeeks');
+  const hours = getField('durationHours');
+
+  const boxes = [days, weeks, hours].filter(Boolean);
+
+  boxes.forEach(box => {
+    box.addEventListener('change', () => {
+      if (!box.checked) return;
+
+      boxes.forEach(otherBox => {
+        if (otherBox !== box) otherBox.checked = false;
+      });
+    });
+  });
+}
+
+function setupPRToggleButtons() {
+  const reg = getField('prRegular');
+  const irreg = getField('prIrregular');
+
+  if (reg) {
+    reg.addEventListener('click', () => {
+      const isActive = reg.classList.contains('active');
+      reg.classList.toggle('active', !isActive);
+      if (!isActive && irreg) irreg.classList.remove('active');
+    });
+  }
+
+  if (irreg) {
+    irreg.addEventListener('click', () => {
+      const isActive = irreg.classList.contains('active');
+      irreg.classList.toggle('active', !isActive);
+      if (!isActive && reg) reg.classList.remove('active');
+    });
+  }
+}
+
+function buildSplitChecklist(primary = [], secondary = []) {
+  return [...primary, ...secondary]
+    .map(item => String(item || '').trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+function setupChecklistRowDrag(row) {
+  row.draggable = true;
+
+  row.addEventListener('dragstart', () => {
+    row.classList.add('dragging');
+  });
+
+  row.addEventListener('dragend', () => {
+    row.classList.remove('dragging');
+  });
+
+  row.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const list = row.parentElement;
+    const draggingRow = list.querySelector('.checklist-row.dragging');
+    if (!draggingRow || draggingRow === row) return;
+
+    const rect = row.getBoundingClientRect();
+    const offset = e.clientY - rect.top;
+
+    if (offset < rect.height / 2) {
+      list.insertBefore(draggingRow, row);
+    } else {
+      list.insertBefore(draggingRow, row.nextSibling);
+    }
+  });
+}
+
+function createChecklistRow(container, text = '', checked = false, lineBreak = false) {
+  const list = container.querySelector('.checklist-list');
+  if (!list) return;
+
+  const row = document.createElement('div');
+  row.className = 'checklist-row';
+  setupChecklistRowDrag(row);
+
+  const label = document.createElement('label');
+  label.className = 'check-item';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = checked;
+
+  const lineBreakLabel = document.createElement('label');
+  lineBreakLabel.className = 'line-break-toggle';
+  lineBreakLabel.title = 'Start this item on a new line in the generated summary';
+
+  const lineBreakCheckbox = document.createElement('input');
+  lineBreakCheckbox.type = 'checkbox';
+  lineBreakCheckbox.className = 'line-break-checkbox';
+  lineBreakCheckbox.checked = lineBreak;
+
+  const lineBreakText = document.createElement('span');
+  lineBreakText.textContent = '↵';
+
+  lineBreakLabel.appendChild(lineBreakCheckbox);
+  lineBreakLabel.appendChild(lineBreakText);
+
+  const input = document.createElement('textarea');
+  input.value = text;
+  input.placeholder = 'Edit item';
+  input.rows = 1;
+
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'checklist-delete';
+  delBtn.textContent = '✕';
+  delBtn.title = 'Delete item';
+  delBtn.addEventListener('click', () => row.remove());
+
+  input.addEventListener('input', () => autoGrowChecklistTextarea(input));
+
+  label.appendChild(checkbox);
+  label.appendChild(lineBreakLabel);
+  label.appendChild(input);
+  row.appendChild(label);
+  row.appendChild(delBtn);
+  list.appendChild(row);
+
+  autoGrowChecklistTextarea(input);
+}
+
+function initEditableChecklist(id, seedItems = []) {
+  const container = getField(id);
+  if (!container) return;
+
+  const placeholder = container.dataset.placeholder || 'Add item...';
+
+  container.innerHTML = `
+    <div class="checklist-list"></div>
+    <div class="checklist-add-row">
+      <input type="text" class="checklist-new-input" placeholder="${escapeHtml(placeholder)}">
+      <button type="button" class="glass-btn checklist-add-btn">＋ Add</button>
     </div>
   `;
 
-  const inputTitle = card.querySelector('.edit-title');
-  const editableDiv = card.querySelector('.edit-note');
-  const btnSave = card.querySelector('.btn-save');
-  const btnCancel = card.querySelector('.btn-cancel');
-  const btnBold = card.querySelector('.btn-bold');
-  const btnHighlight = card.querySelector('.btn-highlight');
+  const addInput = container.querySelector('.checklist-new-input');
+  const addBtn = container.querySelector('.checklist-add-btn');
 
-  btnSave.addEventListener('click', async () => {
-    const updatedTitle = inputTitle.value.trim() || "Untitled";
-    const updatedNote = editableDiv.innerHTML.trim();
-    await saveEdit(id, updatedTitle, updatedNote);
+  const addFromInput = () => {
+    const value = addInput?.value.trim() || '';
+    if (!value) return;
+    createChecklistRow(container, value, false);
+    addInput.value = '';
+    addInput.focus();
+  };
+
+  safeAddListener(addBtn, 'click', addFromInput);
+  safeAddListener(addInput, 'keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addFromInput();
+    }
   });
 
-  btnCancel.addEventListener('click', () => drawNotes());
-
-  btnBold.addEventListener('click', () => document.execCommand('bold'));
-
-  btnHighlight.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-
-  const selection = window.getSelection();
-  if (!selection.rangeCount) return;
-
-  const range = selection.getRangeAt(0);
-  const selectedText = selection.toString();
-  if (!selectedText.trim()) return;
-
-  const container = range.commonAncestorContainer;
-  const parent = container.nodeType === 3 ? container.parentNode : container;
-
-  if (
-    parent.tagName === 'SPAN' &&
-    parent.classList.contains('highlight-gradient')
-  ) {
-    const textNode = document.createTextNode(parent.textContent);
-    parent.replaceWith(textNode);
-  } else {
-    const span = document.createElement('span');
-    span.className = 'highlight-gradient';
-    span.textContent = selectedText;
-
-    range.deleteContents();
-    range.insertNode(span);
-  }
-
-  selection.removeAllRanges();
-});
+  seedItems.forEach(item => createChecklistRow(container, item, false));
 }
 
-/* ---------------- Rendering ---------------- */
-let latestNotesSnapshot = null;
-let unsubscribeNotes = null;
+function setChecklistItems(id, items = []) {
+  initEditableChecklist(id, splitPromptToItems(items));
+}
 
-function startNotesListener() {
-  if (unsubscribeNotes) {
-    unsubscribeNotes();
-  }
+function clearChecklist(id) {
+  initEditableChecklist(id, []);
+}
 
-  unsubscribeNotes = onSnapshot(notesCol, snapshot => {
-    latestNotesSnapshot = snapshot;
-    drawNotes(snapshot);
+function getChecklistItems(id) {
+  const container = getField(id);
+  if (!container) return [];
+
+  return [...container.querySelectorAll('.checklist-row')]
+    .map(row => {
+      const checkbox = row.querySelector('.check-item > input[type="checkbox"]');
+      const lineBreakCheckbox = row.querySelector('.line-break-checkbox');
+      const input = row.querySelector('textarea');
+
+      return {
+        text: input?.value.trim() || '',
+        checked: !!checkbox?.checked,
+        lineBreak: !!lineBreakCheckbox?.checked
+      };
+    })
+    .filter(item => item.text);
+}
+
+function getCheckedChecklistTexts(id) {
+  return getChecklistItems(id)
+    .filter(item => item.checked)
+    .map(item => item.text);
+}
+
+function getCheckedChecklistItems(id) {
+  return getChecklistItems(id)
+    .filter(item => item.checked);
+}
+
+function initAllChecklists() {
+  checklistIds.forEach(id => initEditableChecklist(id, []));
+}
+
+function setupMinimalistChecklistToggle() {
+  document.querySelectorAll('.minimalist-checklist').forEach(container => {
+    container.addEventListener('click', () => {
+      container.classList.add('is-active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) {
+        const hasRows = container.querySelectorAll('.checklist-row').length > 0;
+        if (!hasRows) container.classList.remove('is-active');
+      }
+    });
   });
 }
 
-function drawNotes(snapshot = latestNotesSnapshot) {
-  if (!snapshot) return;
+function normaliseUrl(url) {
+  const clean = String(url || '').trim();
+  if (!clean) return '';
 
-  const list = document.getElementById('nurseNotesList');
-  list.innerHTML = '';
+  if (/^https?:\/\//i.test(clean)) return clean;
 
-  snapshot.forEach(docSnap => {
-    const { title, note, time, url, image } = docSnap.data();
-    const id = docSnap.id;
+  return `https://${clean}`;
+}
 
-    const safeTitle = title || "Untitled";
-    const safeNote = note || "";
+function isUsableUrl(url) {
+  try {
+    const checked = new URL(normaliseUrl(url));
+    return checked.protocol === 'http:' || checked.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
-    const div = document.createElement('div');
-    div.className = 'note-card';
-    div.innerHTML = `
-      <div class="note-title">${safeTitle}</div>
-      <div class="note-content">${safeNote.replace(/\n/g, '<br>')}</div>
-      ${image ? `<img src="${image}" class="note-image" style="max-width:100%; margin-top:10px; border-radius:6px; cursor:pointer;" />` : ""}
-      <div style="font-size:12px; margin-top:10px; color:#555;">${time ? new Date(time).toLocaleString() : ""}</div>
-      ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
-      <div class="note-actions">
-        <button class="edit-btn">Edit</button>
-        <button class="delete-btn">Delete</button>
-      </div>
-    `;
+function getPatientLinks() {
+  if (!patientLinksList) return [];
 
-    div.querySelector('.edit-btn').addEventListener('click', () => enableEditing(div, id, safeTitle, safeNote));
-    div.querySelector('.delete-btn').addEventListener('click', () => deleteNote(id));
+  return [...patientLinksList.querySelectorAll('.patient-link-row')]
+    .map(row => {
+      const title = row.querySelector('.patient-link-title')?.value.trim() || '';
+      const urlRaw = row.querySelector('.patient-link-url')?.value.trim() || '';
+      const url = urlRaw ? normaliseUrl(urlRaw) : '';
+      const qrDataUrl = row.dataset.qrDataUrl || '';
+      const includeInSummary = !!row.querySelector('.patient-link-include')?.checked;
+      const id = row.dataset.linkId || '';
 
-    const img = div.querySelector('.note-image');
-    if (img) {
-      img.addEventListener('click', () => openImageZoom(img.src));
+      return {
+        id,
+        title: title || url || 'Patient information',
+        url,
+        qrDataUrl,
+        includeInSummary
+      };
+    })
+    .filter(link => {
+      const hasUrl = link.url && isUsableUrl(link.url);
+      const hasQr = !!link.qrDataUrl;
+      return hasUrl || hasQr;
+    });
+}
+
+function renderPatientLinksPreview() {
+  if (!patientLinksPreview) return;
+
+  const links = getPatientLinks();
+
+  patientLinksPreview.innerHTML = links.map(link => `
+    <div
+      class="patient-info-preview-item ${link.includeInSummary ? 'selected' : ''}"
+      data-link-id="${escapeHtml(link.id)}"
+      title="${link.includeInSummary ? 'Included in generated summary' : 'Click to add to generated summary'}"
+    >
+
+      ${
+        link.url
+          ? `<a class="patient-info-open-link" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(link.title)}</a>`
+          : `<span class="patient-info-open-link">🔗 ${escapeHtml(link.title)}</span>`
+      }
+
+      ${
+        link.qrDataUrl
+          ? `<img class="patient-qr-thumb" src="${escapeHtml(link.qrDataUrl)}" alt="QR code for ${escapeHtml(link.title)}">`
+          : ''
+      }
+    </div>
+  `).join('');
+}
+
+function createPatientLinkRow(link = {}) {
+  if (!patientLinksList) return;
+
+  const row = document.createElement('div');
+  row.className = 'patient-link-row';
+
+  const linkId =
+    link.id ||
+    (crypto?.randomUUID ? crypto.randomUUID() : `patient-link-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
+  row.dataset.linkId = linkId;
+  row.dataset.qrDataUrl = link.qrDataUrl || '';
+
+  const checked = link.includeInSummary === true ? 'checked' : '';
+
+  row.innerHTML = `
+    <input
+      type="checkbox"
+      class="patient-link-include"
+      ${checked}
+    />
+
+    <input
+      type="text"
+      class="patient-link-title"
+      placeholder="Name e.g. Healthify cystitis"
+      value="${escapeHtml(link.title || '')}"
+    />
+
+    <input
+      type="url"
+      class="patient-link-url"
+      placeholder="URL e.g. https://healthify.nz/..."
+      value="${escapeHtml(link.url || '')}"
+    />
+
+    <button type="button" class="patient-qr-btn">▣ QR</button>
+    <input type="file" class="patient-qr-input" accept="image/*" />
+
+    <button type="button" class="patient-link-delete" title="Delete link">✕</button>
+  `;
+
+  const includeBox = row.querySelector('.patient-link-include');
+  const qrBtn = row.querySelector('.patient-qr-btn');
+  const qrInput = row.querySelector('.patient-qr-input');
+
+  qrBtn?.addEventListener('click', () => {
+    qrInput?.click();
+  });
+
+  qrInput?.addEventListener('change', () => {
+    const file = qrInput.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file.');
+      qrInput.value = '';
+      return;
     }
 
-    list.appendChild(div);
+    if (file.size > 350 * 1024) {
+      alert('QR image is too large. Please use a small QR image under 350KB.');
+      qrInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      row.dataset.qrDataUrl = reader.result || '';
+      renderPatientLinksPreview();
+    };
+
+    reader.readAsDataURL(file);
   });
 
-  if (currentSearchQuery.trim() !== "") {
-    applySearchFilter(currentSearchQuery);
-  }
-}
-
-/* ---------------- Image Zoom ---------------- */
-function openImageZoom(src) {
-  // Create overlay
-  const overlay = document.createElement('div');
-  overlay.style.position = 'fixed';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100%';
-  overlay.style.height = '100%';
-  overlay.style.background = 'rgba(0, 0, 0, 0.8)';
-  overlay.style.display = 'flex';
-  overlay.style.alignItems = 'center';
-  overlay.style.justifyContent = 'center';
-  overlay.style.zIndex = '9999';
-  overlay.style.cursor = 'zoom-out';
-  overlay.addEventListener('click', () => document.body.removeChild(overlay));
-
-  // Image
-  const zoomedImg = document.createElement('img');
-  zoomedImg.src = src;
-  zoomedImg.style.maxWidth = '90%';
-  zoomedImg.style.maxHeight = '90%';
-  zoomedImg.style.borderRadius = '10px';
-  zoomedImg.style.boxShadow = '0 0 20px rgba(255,255,255,0.2)';
-  zoomedImg.style.transition = 'transform 0.3s ease';
-  zoomedImg.addEventListener('click', e => e.stopPropagation());
-
-  overlay.appendChild(zoomedImg);
-  document.body.appendChild(overlay);
-}
-
-/* ---------------- Search / Filter ---------------- */
-function applySearchFilter(query) {
-  const cards = document.querySelectorAll('.note-card');
-  query = query.toLowerCase();
-
-  cards.forEach(card => {
-    const title = card.querySelector('.note-title')?.textContent.toLowerCase() || '';
-    const content = card.querySelector('.note-content')?.textContent.toLowerCase() || '';
-
-    card.style.display = (title.includes(query) || content.includes(query))
-      ? 'block'
-      : 'none';
+  row.querySelector('.patient-link-delete')?.addEventListener('click', () => {
+    row.remove();
+    renderPatientLinksPreview();
   });
+
+  row.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', renderPatientLinksPreview);
+    input.addEventListener('change', renderPatientLinksPreview);
+  });
+
+  patientLinksList.appendChild(row);
+  renderPatientLinksPreview();
 }
 
-function searchNotes(event) {
-  currentSearchQuery = event.target.value; // remember filter text
-  applySearchFilter(currentSearchQuery);
-}
+patientLinksPreview?.addEventListener('click', (e) => {
+  const link = e.target.closest('.patient-info-open-link');
 
-/* ---------------- Setup ---------------- */
-document.addEventListener('DOMContentLoaded', () => {
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.addEventListener('keyup', searchNotes);
+  // Centre/link area opens the actual patient info link.
+  if (link && link.tagName === 'A') {
+    e.stopPropagation();
+    return;
   }
+
+  const item = e.target.closest('.patient-info-preview-item');
+  if (!item) return;
+
+  const linkId = item.dataset.linkId;
+  const row = patientLinksList?.querySelector(`.patient-link-row[data-link-id="${CSS.escape(linkId)}"]`);
+  const includeBox = row?.querySelector('.patient-link-include');
+
+  if (!includeBox) return;
+
+  includeBox.checked = !includeBox.checked;
+  renderPatientLinksPreview();
 });
 
-window.addNote = addNote;
-window.deleteNote = deleteNote;
-window.saveEdit = saveEdit;
-window.enableEditing = enableEditing;
-window.startNotesListener = startNotesListener;
-window.drawNotes = drawNotes;
-window.openImageZoom = openImageZoom;
+function renderPatientLinks(links = []) {
+  if (!patientLinksList) return;
 
-// Initial load
-startNotesListener();
+  patientLinksList.innerHTML = '';
 
-/* ---------------- Toggle Form + Rays (unchanged) ---------------- */
-// keep your existing toggle & ray animation code here
+  const cleanLinks = Array.isArray(links) ? links : [];
+
+  cleanLinks.forEach(link => createPatientLinkRow(link));
+
+  renderPatientLinksPreview();
+}
+
+function collectPromptFields() {
+  return {
+    patientDemo: getField('patientDemo')?.value.trim() || '',
+    patientEthnicity: getField('patientEthnicity')?.value.trim() || '',
+    sexMale: !!getField('sexMale')?.checked,
+    sexFemale: !!getField('sexFemale')?.checked,
+    presentationDuration: getField('presentationDuration')?.value.trim() || '',
+    durationDays: !!getField('durationDays')?.checked,
+    durationWeeks: !!getField('durationWeeks')?.checked,
+    durationHours: !!getField('durationHours')?.checked,
+    presentationExtraText: getField('presentationExtraText')?.value.trim() || '',
+
+    presentationPrivateNote: getPrivateNoteHtml('presentationPrivateNote'),
+    redFlagsPrivateNote: getPrivateNoteHtml('redFlagsPrivateNote'),
+
+    vitalTemp: getField('vitalTemp')?.value.trim() || '',
+    vitalPR: getField('vitalPR')?.value.trim() || '',
+    prRegular: getField('prRegular')?.classList.contains('active') || false,
+    prIrregular: getField('prIrregular')?.classList.contains('active') || false,
+    vitalRR: getField('vitalRR')?.value.trim() || '',
+    vitalBP: getField('vitalBP')?.value.trim() || '',
+    vitalSats: getField('vitalSats')?.value.trim() || '',
+    vitalWE: getField('vitalWE')?.value.trim() || '',
+    examFreeText: getField('examFreeText')?.value.trim() || '',
+    examPrivateNote: getPrivateNoteHtml('examPrivateNote'),
+
+    investigationsFreeText: getField('investigationsFreeText')?.value.trim() || '',
+	investigationsPrivateNote: getPrivateNoteHtml('investigationsPrivateNote'),
+
+    privateConsultNote: getPrivateNoteHtml('privateConsultNote'),
+
+    managementPlanFreeText: getField('managementPlanFreeText')?.value.trim() || '',
+    prescribingPrivateNote: getPrivateNoteHtml('prescribingPrivateNote'),
+
+    hpc: getChecklistItems('hpcList').map(i => i.text),
+    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
+    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
+    examGeneral: getCheckedChecklistItems('examGeneralList'),
+	examHeadNeck: getCheckedChecklistItems('examHeadNeckList'),
+	examEnt: getCheckedChecklistItems('examEntList'),
+	examOropharynx: getCheckedChecklistItems('examOropharynxList'),
+	examChest: getCheckedChecklistItems('examChestList'),
+	examAbdomen: getCheckedChecklistItems('examAbdomenList'),
+	examOther: getCheckedChecklistItems('examOtherList'),
+    investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
+    investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
+    assessment: getChecklistItems('assessmentList').map(i => i.text),
+    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList').map(i => i.text),
+    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList').map(i => i.text),
+    followUpPrimary: getChecklistItems('followUpPrimaryList').map(i => i.text),
+    followUpSecondary: getChecklistItems('followUpSecondaryList').map(i => i.text),
+    advicePrimary: getChecklistItems('advicePrimaryList').map(i => i.text),
+    adviceSecondary: getChecklistItems('adviceSecondaryList').map(i => i.text),
+    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList').map(i => i.text),
+safetyNetSecondary: getChecklistItems('safetyNetSecondaryList').map(i => i.text),
+patientLinks: getPatientLinks()
+  };
+}
+
+function clearForm() {
+  suppressDirtyTracking = true;
+
+  const keptPrivateConsultNote = getPrivateNoteHtml('privateConsultNote');
+
+  // Clear normal patient-specific fields, but DO NOT clear privateConsultNote
+  textFieldIds.forEach(id => {
+    if (id === 'privateConsultNote') return;
+
+    const field = getField(id);
+    if (!field) return;
+
+    if (field.isContentEditable) {
+      field.innerHTML = '';
+    } else {
+      field.value = '';
+    }
+  });
+
+  // Clear private notes, but keep privateConsultNote
+  privateNoteIds
+    .filter(id => id !== 'privateConsultNote')
+    .forEach(clearPrivateNoteHtml);
+
+  checklistIds.forEach(clearChecklist);
+
+  ['sexMale', 'sexFemale', 'durationDays', 'durationWeeks', 'durationHours'].forEach(id => {
+    const box = getField(id);
+    if (box) box.checked = false;
+  });
+
+  ['prRegular', 'prIrregular'].forEach(id => {
+    const btn = getField(id);
+    if (btn) btn.classList.remove('active');
+  });
+
+  renderPatientLinks([]);
+
+  // Reload saved template defaults
+  fillTemplatePrompts();
+
+  // Restore private consult note after template reload
+  setPrivateNoteHtml('privateConsultNote', keptPrivateConsultNote);
+
+  // Untick all checkboxes after template reload
+  checklistIds.forEach(id => {
+    const container = getField(id);
+    if (!container) return;
+
+    container.querySelectorAll('input[type="checkbox"]').forEach(box => {
+      box.checked = false;
+    });
+  });
+
+  [
+    'presentationExtraText',
+    'examFreeText',
+    'investigationsFreeText',
+    'managementPlanFreeText'
+  ].forEach(id => autoGrowTextarea(getField(id)));
+
+  if (output) output.innerHTML = '';
+
+  hasUnsavedTemplateEdits = false;
+  suppressDirtyTracking = false;
+}
+
+function fillTemplatePrompts() {
+  const template = getActiveTemplate();
+  if (!template) return;
+
+  if (getField('patientDemo')) getField('patientDemo').value = template.prompts?.patientDemo || '';
+  if (getField('patientEthnicity')) getField('patientEthnicity').value = template.prompts?.patientEthnicity || '';
+  if (getField('sexMale')) getField('sexMale').checked = !!template.prompts?.sexMale;
+  if (getField('sexFemale')) getField('sexFemale').checked = !!template.prompts?.sexFemale;
+
+  if (getField('presentationDuration')) getField('presentationDuration').value = template.prompts?.presentationDuration || '';
+  if (getField('durationDays')) getField('durationDays').checked = !!template.prompts?.durationDays;
+  if (getField('durationWeeks')) getField('durationWeeks').checked = !!template.prompts?.durationWeeks;
+  if (getField('durationHours')) getField('durationHours').checked = !!template.prompts?.durationHours;
+  if (getField('presentationExtraText')) getField('presentationExtraText').value = template.prompts?.presentationExtraText || '';
+
+  setPrivateNoteHtml('presentationPrivateNote', template.prompts?.presentationPrivateNote);
+
+  setChecklistItems('hpcList', template.prompts?.hpc);
+
+  setChecklistItems('redFlagsPrimaryList', template.prompts?.redFlagsPrimary || template.prompts?.redFlags);
+  setChecklistItems('redFlagsSecondaryList', template.prompts?.redFlagsSecondary);
+  setPrivateNoteHtml('redFlagsPrivateNote', template.prompts?.redFlagsPrivateNote);
+
+  if (getField('vitalTemp')) getField('vitalTemp').value = template.prompts?.vitalTemp || '';
+  if (getField('vitalPR')) getField('vitalPR').value = template.prompts?.vitalPR || '';
+
+  if (getField('prRegular')) {
+    getField('prRegular').classList.toggle('active', !!template.prompts?.prRegular);
+  }
+
+  if (getField('prIrregular')) {
+    getField('prIrregular').classList.toggle('active', !!template.prompts?.prIrregular);
+  }
+
+  if (getField('vitalRR')) getField('vitalRR').value = template.prompts?.vitalRR || '';
+  if (getField('vitalBP')) getField('vitalBP').value = template.prompts?.vitalBP || '';
+  if (getField('vitalSats')) getField('vitalSats').value = template.prompts?.vitalSats || '';
+  if (getField('vitalWE')) getField('vitalWE').value = template.prompts?.vitalWE || '';
+
+  setChecklistItems('examGeneralList', template.prompts?.examGeneral);
+  setChecklistItems('examHeadNeckList', template.prompts?.examHeadNeck || template.prompts?.examPrimary);
+  setChecklistItems('examEntList', template.prompts?.examEnt);
+  setChecklistItems('examOropharynxList', template.prompts?.examOropharynx);
+  setChecklistItems('examChestList', template.prompts?.examChest);
+  setChecklistItems('examAbdomenList', template.prompts?.examAbdomen);
   
- // Toggle form
-const toggleBtn = document.getElementById('toggleFormBtn');
-const nurseForm = document.getElementById('nurseFormWrapper');
+  setChecklistItems('examOtherList', template.prompts?.examOther || template.prompts?.examSecondary);
+  if (getField('examFreeText')) getField('examFreeText').value = template.prompts?.examFreeText || '';
+  setPrivateNoteHtml('examPrivateNote', template.prompts?.examPrivateNote);
 
-toggleBtn.addEventListener('click', () => {
-  nurseForm.classList.toggle('show');
+  setChecklistItems('investigationsPrimaryList', template.prompts?.investigationsPrimary);
+  setChecklistItems('investigationsSecondaryList', template.prompts?.investigationsSecondary);
+  if (getField('investigationsFreeText')) getField('investigationsFreeText').value = template.prompts?.investigationsFreeText || '';
+  setPrivateNoteHtml('investigationsPrivateNote', template.prompts?.investigationsPrivateNote);
 
-  // Optional: change + to × when open
-  toggleBtn.textContent = nurseForm.classList.contains('show') ? '×' : '+';
-});
+  setChecklistItems('assessmentList', template.prompts?.assessment || template.prompts?.diagnosis);
+  setPrivateNoteHtml('privateConsultNote', template.prompts?.privateConsultNote);
 
-const centerToggle = document.querySelector('.center-toggle');
-const toggleIcon = document.getElementById("menuToggle");
-const raysContainer = centerToggle.querySelector(".rays");
+  setChecklistItems('managementPlanPrimaryList', template.prompts?.managementPlanPrimary || template.prompts?.planTreatment);
+  setChecklistItems('managementPlanSecondaryList', template.prompts?.managementPlanSecondary);
+  if (getField('managementPlanFreeText')) getField('managementPlanFreeText').value = template.prompts?.managementPlanFreeText || '';
+  setPrivateNoteHtml('prescribingPrivateNote', template.prompts?.prescribingPrivateNote);
 
-let hoverTimeout;
-let currentSet = 0; // tracks which set to show next
+  setChecklistItems('followUpPrimaryList', template.prompts?.followUpPrimary);
+  setChecklistItems('followUpSecondaryList', template.prompts?.followUpSecondary);
 
-const raySets = [
+  setChecklistItems('advicePrimaryList', template.prompts?.advicePrimary || template.prompts?.patientAdvice);
+  setChecklistItems('adviceSecondaryList', template.prompts?.adviceSecondary);
+
+  setChecklistItems('safetyNetPrimaryList', template.prompts?.safetyNetPrimary || template.prompts?.safetyNet);
+  setChecklistItems('safetyNetSecondaryList', template.prompts?.safetyNetSecondary);
+  renderPatientLinks(template.prompts?.patientLinks || []);
+
   [
-    { text: "Home", link: "https://xlyneve.github.io/CEP/home.html" },
-    { text: "Info", link: "https://xlyneve.github.io/CEP/info.html" },
-    { text: "Template", link: "https://xlyneve.github.io/CEP/explain.html" },
-    { text: "PN", link: "https://xlyneve.github.io/CEP/practiceN.html" },
-	{ text: "Recall", link: "https://xlyneve.github.io/CEP/recalls.html" }
-  ],
-  [
-    { text: "Drug Calculator", link: "https://xlyneve.github.io/CEP/OHcalc.html" },
-    { text: "Vaccine Calc", link: "https://xlyneve.github.io/CEP/vaccine-spacing.html" },
-    { text: "Vaccines", link: "https://xlyneve.github.io/CEP/complete-vaccine-info.html" },
-    { text: "Meds list", link: "https://xlyneve.github.io/CEP/Npres.html" }
-  ]
-];
+    'presentationExtraText',
+    ...privateNoteIds,
+    'examFreeText',
+    'investigationsFreeText',
+    'managementPlanFreeText'
+  ].forEach(id => autoGrowTextarea(getField(id)));
+}
 
-const angles = ["-20deg","20deg","60deg","100deg","140deg","180deg"];
+async function loadUserTemplates() {
+  if (!firebaseReady || !currentUser) {
+    userTemplates = [];
+    if (!allTemplates().some(t => t.id === activeTemplateId)) {
+      activeTemplateId = defaultTemplates[0].id;
+    }
+    renderTemplates();
+    syncHero();
+    return;
+  }
 
-function showRays() {
-  raysContainer.querySelectorAll('.ray').forEach(ray => {
-    ray.style.opacity = 1;
-    ray.style.pointerEvents = 'auto';
+  try {
+    const q = query(templatesRef, orderBy('updatedAt', 'desc'));
+    const snap = await getDocs(q);
+
+    userTemplates = snap.docs
+      .map(docSnap => ({
+        id: docSnap.id,
+        firebaseId: docSnap.id,
+        isBuiltIn: false,
+        ...docSnap.data()
+      }))
+      .filter(template => !template.archived);
+
+  } catch (err) {
+    console.warn('Firestore load failed, retrying without orderBy:', err);
+
+    try {
+      const snap = await getDocs(templatesRef);
+
+      userTemplates = snap.docs
+        .map(docSnap => ({
+          id: docSnap.id,
+          firebaseId: docSnap.id,
+          isBuiltIn: false,
+          ...docSnap.data()
+        }))
+        .filter(template => !template.archived);
+
+    } catch (innerErr) {
+      console.warn('Firestore fallback load also failed. Showing built-in templates only.', innerErr);
+      userTemplates = [];
+    }
+  }
+
+  if (!allTemplates().some(t => t.id === activeTemplateId)) {
+    activeTemplateId = defaultTemplates[0].id;
+  }
+
+  renderTemplates();
+  syncHero();
+}
+
+function renderTemplates() {
+  if (!templateList) return;
+
+  const term = (searchInput?.value || '').trim().toLowerCase();
+  const category = categoryFilter?.value || 'all';
+
+  const filtered = allTemplates()
+  .filter(t => {
+    const matchesCategory = category === 'all' || t.category === category;
+    const haystack = [t.title, t.desc, ...(t.tags || [])].join(' ').toLowerCase();
+    const matchesTerm = !term || haystack.includes(term);
+    return matchesCategory && matchesTerm;
+  })
+  .sort((a, b) => {
+    const titleA = (a.title || '').toLowerCase();
+    const titleB = (b.title || '').toLowerCase();
+    return titleA.localeCompare(titleB);
+  });
+
+  templateList.innerHTML = '';
+
+  filtered.forEach(template => {
+    const card = document.createElement('div');
+    card.className = 'template-card' + (template.id === activeTemplateId ? ' active' : '');
+    card.innerHTML = `
+  <div class="template-card-title">
+    <span>${escapeHtml(template.title)}</span>
+    <span class="template-card-icon">${template.isBuiltIn ? '⭐' : ''}</span>
+  </div>
+
+  <div class="template-tags">
+    ${(template.tags || []).map(tag => `<span class="chip">${escapeHtml(tag)}</span>`).join('')}
+  </div>
+`;
+    card.addEventListener('click', () => setActiveTemplate(template.id));
+    templateList.appendChild(card);
   });
 }
 
-function hideRays() {
-  raysContainer.querySelectorAll('.ray').forEach(ray => {
-    ray.style.opacity = 0;
-    ray.style.pointerEvents = 'none';
-  });
+function setActiveTemplate(id) {
+  if (id === activeTemplateId) return;
+
+  if (hasUnsavedTemplateEdits) {
+    const ok = confirm(
+      'You have unsaved changes in the current template.\n\nLoad another template and replace what is currently showing?'
+    );
+
+    if (!ok) return;
+  }
+
+  activeTemplateId = id;
+  syncHero();
+
+  suppressDirtyTracking = true;
+  fillTemplatePrompts();
+  suppressDirtyTracking = false;
+
+  hasUnsavedTemplateEdits = false;
+  renderTemplates();
+}
+function formatTemplateDescHtml(value) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = value || '';
+
+  wrapper.querySelectorAll('script, style, iframe, object, embed').forEach(el => el.remove());
+
+  const allowedTags = new Set([
+    'B', 'I', 'U', 'STRONG', 'EM', 'BR', 'DIV', 'P', 'SPAN', 'A'
+  ]);
+
+  function linkifyTextNode(textNode) {
+    const text = textNode.nodeValue || '';
+    const urlRegex = /(https?:\/\/[^\s<]+)/g;
+
+    if (!urlRegex.test(text)) return;
+
+    urlRegex.lastIndex = 0;
+
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+    let match;
+
+    while ((match = urlRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+
+      const a = document.createElement('a');
+      a.href = match[1];
+      a.textContent = match[1];
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      frag.appendChild(a);
+
+      lastIndex = match.index + match[1].length;
+    }
+
+    if (lastIndex < text.length) {
+      frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+
+    textNode.replaceWith(frag);
+  }
+
+  function cleanNode(node) {
+    [...node.childNodes].forEach(child => {
+      if (child.nodeType === Node.TEXT_NODE) {
+        linkifyTextNode(child);
+        return;
+      }
+
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (!allowedTags.has(child.tagName)) {
+          child.replaceWith(document.createTextNode(child.textContent || ''));
+          return;
+        }
+
+        if (child.tagName === 'A') {
+          const href = child.getAttribute('href') || child.textContent || '';
+
+          if (!/^https?:\/\//i.test(href)) {
+            child.replaceWith(document.createTextNode(child.textContent || ''));
+            return;
+          }
+
+          child.setAttribute('href', href);
+          child.setAttribute('target', '_blank');
+          child.setAttribute('rel', 'noopener noreferrer');
+
+          [...child.attributes].forEach(attr => {
+            if (!['href', 'target', 'rel'].includes(attr.name)) {
+              child.removeAttribute(attr.name);
+            }
+          });
+        } else {
+          [...child.attributes].forEach(attr => {
+            if (attr.name !== 'style') child.removeAttribute(attr.name);
+          });
+
+          if (child.hasAttribute('style')) {
+            const style = child.getAttribute('style') || '';
+            const safeStyle = style
+              .split(';')
+              .map(s => s.trim())
+              .filter(s =>
+                /^font-weight\s*:\s*(bold|700|600)/i.test(s) ||
+                /^font-style\s*:\s*italic/i.test(s) ||
+                /^text-decoration\s*:\s*underline/i.test(s)
+              )
+              .join('; ');
+
+            if (safeStyle) child.setAttribute('style', safeStyle);
+            else child.removeAttribute('style');
+          }
+        }
+
+        cleanNode(child);
+      }
+    });
+  }
+
+  cleanNode(wrapper);
+  return wrapper.innerHTML;
 }
 
-// Hover (optional) — only show if no set active
-centerToggle.addEventListener('mouseenter', () => {
-  if (!toggleIcon.classList.contains("active")) {
-    clearTimeout(hoverTimeout);
-    showRays();
+function syncHero() {
+  const template = getActiveTemplate();
+  if (!template) return;
+
+  if (activeTemplateTitle) activeTemplateTitle.textContent = template.title;
+
+  if (activeTemplateDesc) {
+  activeTemplateDesc.innerHTML = formatTemplateDescHtml(template.desc);
+}
+  
+  heroTemplateInfo?.classList.remove('expanded');
+
+if (activeTemplateDesc) {
+  activeTemplateDesc.classList.add('collapsed');
+  activeTemplateDesc.scrollTop = 0;
+}
+if (heroTemplateToggle) heroTemplateToggle.textContent = '˅';
+  
+  deleteBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
+  editBtn.style.display = template.isBuiltIn ? 'none' : (currentUser ? 'inline-flex' : 'none');
+}
+
+function updateAuthUI() {
+  if (!firebaseReady) {
+    authStatus.textContent = 'Firebase unavailable';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    saveBtn.style.opacity = '0.6';
+    editBtn.style.opacity = '0.6';
+    deleteBtn.style.opacity = '0.6';
+    return;
   }
-});
 
-centerToggle.addEventListener('mouseleave', () => {
-  if (!toggleIcon.classList.contains("active")) {
-    hoverTimeout = setTimeout(() => {
-      hideRays();
-    }, 1000);
+  if (currentUser) {
+    authStatus.textContent = currentUser.email || currentUser.displayName || 'Signed in';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+    saveBtn.style.opacity = '1';
+    editBtn.style.opacity = '1';
+    deleteBtn.style.opacity = '1';
+  } else {
+    authStatus.textContent = 'Not signed in';
+    loginBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'none';
+    saveBtn.style.opacity = '0.6';
+    editBtn.style.opacity = '0.6';
+    deleteBtn.style.opacity = '0.6';
   }
-});
+}
 
-// Click rotates between sets
-toggleIcon.addEventListener("click", () => {
-  toggleIcon.classList.add("active");
+async function signInUser() {
+  if (!firebaseReady) return;
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    console.error('Google sign-in failed:', err);
+    alert('Google sign-in failed.');
+  }
+}
 
-  // Clear old rays
-  raysContainer.innerHTML = "";
+async function signOutUser() {
+  if (!firebaseReady) return;
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error('Sign out failed:', err);
+    alert('Sign out failed.');
+  }
+}
 
-  // Add current set of rays
-  const set = raySets[currentSet];
-  set.forEach((rayData, i) => {
-    const ray = document.createElement("a");
-    ray.className = "ray";
-    ray.href = rayData.link;
-    ray.textContent = rayData.text;
-    ray.style.opacity = "0";
-    ray.style.setProperty("--angle", angles[i] || "0deg");
-	ray.style.pointerEvents = "auto"; // Ensure clickable
-    raysContainer.appendChild(ray);
-	
-    // Small timeout to trigger smooth transition
+function promptForTemplateMeta(existing = null) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('templateMetaModal');
+    const modalTitle = document.getElementById('templateMetaModalTitle');
+    const titleInput = document.getElementById('templateMetaTitle');
+    const categoryInput = document.getElementById('templateMetaCategory');
+    const descInput = document.getElementById('templateMetaDesc');
+    const tagsInput = document.getElementById('templateMetaTags');
+    const saveMetaBtn = document.getElementById('templateMetaSaveBtn');
+    const cancelMetaBtn = document.getElementById('templateMetaCancelBtn');
+    const closeMetaBtn = document.getElementById('templateMetaCloseBtn');
+
+    if (!modal || !titleInput || !categoryInput || !descInput || !tagsInput || !saveMetaBtn) {
+      alert('Template editor modal is missing from the page.');
+      resolve(null);
+      return;
+    }
+
+    modalTitle.textContent = existing ? 'Update template details' : 'Save new template';
+
+    titleInput.value = existing?.title || '';
+    categoryInput.value = existing?.category || 'viral';
+    descInput.innerHTML = formatTemplateDescHtml(existing?.desc || '');
+    tagsInput.value = existing?.tags?.join(', ') || '';
+    autoResizeInputTextarea(descInput);
+
+    modal.classList.remove('hidden');
+
     setTimeout(() => {
-      ray.style.opacity = "1";
-      ray.style.transform = `rotate(${angles[i] || "0deg"}) translate(60px)`;
-      ray.style.pointerEvents = "auto";
-    }, 50); // 50ms delay triggers CSS transition
-  });
-  // Move to next set for next click
-  currentSet = (currentSet + 1) % raySets.length;
-});
+  autoResizeInputTextarea(descInput);
+  titleInput.focus();
+  titleInput.select();
+   }, 50);
 
-// Function to hide rays
-function hideAllRays() {
-  const allRays = raysContainer.querySelectorAll(".ray");
-  allRays.forEach(ray => {
-    ray.style.opacity = "0";
-    ray.style.pointerEvents = "none";
-    ray.style.transform = `rotate(${ray.style.getPropertyValue("--angle")}) translate(0px)`;
-  });
-  toggleIcon.classList.remove("active");
+    function closeModal(result) {
+  modal.classList.add('hidden');
+
+  saveMetaBtn.removeEventListener('click', onSave);
+  cancelMetaBtn?.removeEventListener('click', onCancel);
+  closeMetaBtn?.removeEventListener('click', onCancel);
+  modal.removeEventListener('click', onBackdropClick);
+  document.removeEventListener('keydown', onKeyDown);
+  descInput.removeEventListener('input', onDescInput);
+  descInput.removeEventListener('keydown', onDescKeyDown);
+
+  resolve(result);
 }
 
-// Close rays when clicking outside
-document.addEventListener("click", (e) => {
-  if (!centerToggle.contains(e.target)) {
-    hideAllRays();
+function onDescInput() {
+  autoResizeInputTextarea(descInput);
+}
+
+function onDescKeyDown(e) {
+  if (!(e.ctrlKey || e.metaKey)) return;
+
+  const key = e.key.toLowerCase();
+
+  if (key === 'b') {
+    e.preventDefault();
+    document.execCommand('bold');
+    autoResizeInputTextarea(descInput);
+  }
+
+  if (key === 'i') {
+    e.preventDefault();
+    document.execCommand('italic');
+    autoResizeInputTextarea(descInput);
+  }
+
+  if (key === 'u') {
+    e.preventDefault();
+    document.execCommand('underline');
+    autoResizeInputTextarea(descInput);
+  }
+}
+
+    function onSave() {
+      const tagsRaw = tagsInput.value || '';
+
+      closeModal({
+        title: titleInput.value.trim() || 'Untitled Template',
+        category: (categoryInput.value.trim() || 'viral').toLowerCase(),
+        desc: formatTemplateDescHtml(descInput.innerHTML.trim()) || 'Custom consultation template.',
+        tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+      });
+    }
+
+    function onCancel() {
+      closeModal(null);
+    }
+
+    function onBackdropClick(e) {
+      if (e.target === modal) onCancel();
+    }
+
+    function onKeyDown(e) {
+      if (e.key === 'Escape') onCancel();
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        onSave();
+      }
+    }
+
+    saveMetaBtn.addEventListener('click', onSave);
+    cancelMetaBtn?.addEventListener('click', onCancel);
+    closeMetaBtn?.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBackdropClick);
+    document.addEventListener('keydown', onKeyDown);
+    descInput.addEventListener('input', onDescInput);
+    descInput.addEventListener('keydown', onDescKeyDown);
+  });
+}
+
+function buildSummaryText() {
+  const age = getField('patientDemo')?.value.trim() || '';
+  const ethnicity = getField('patientEthnicity')?.value.trim() || '';
+  const sexMale = !!getField('sexMale')?.checked;
+  const sexFemale = !!getField('sexFemale')?.checked;
+
+  const presentationDuration = getField('presentationDuration')?.value.trim() || '';
+  const durationDays = !!getField('durationDays')?.checked;
+  const durationWeeks = !!getField('durationWeeks')?.checked;
+  const durationHours = !!getField('durationHours')?.checked;
+
+  const presentationExtraText = getField('presentationExtraText')?.value.trim() || '';
+  const examFreeText = getField('examFreeText')?.value.trim() || '';
+  const investigationsFreeText = getField('investigationsFreeText')?.value.trim() || '';
+  const managementPlanFreeText = getField('managementPlanFreeText')?.value.trim() || '';
+
+  const hpc = getCheckedChecklistTexts('hpcList');
+  const redFlagsPrimary = getCheckedChecklistTexts('redFlagsPrimaryList');
+  const redFlagsSecondary = getCheckedChecklistTexts('redFlagsSecondaryList');
+  const examGeneral = getCheckedChecklistTexts('examGeneralList');
+  const examHeadNeck = getCheckedChecklistTexts('examHeadNeckList');
+  const examEnt = getCheckedChecklistTexts('examEntList');
+  const examOropharynx = getCheckedChecklistTexts('examOropharynxList');
+  const examChest = getCheckedChecklistTexts('examChestList');
+  const examAbdomen = getCheckedChecklistTexts('examAbdomenList');
+  const examOther = getCheckedChecklistTexts('examOtherList');
+  const investigationsPrimary = getCheckedChecklistTexts('investigationsPrimaryList');
+  const investigationsSecondary = getCheckedChecklistTexts('investigationsSecondaryList');
+  const assessment = getCheckedChecklistTexts('assessmentList');
+  const managementPlanPrimary = getCheckedChecklistTexts('managementPlanPrimaryList');
+  const managementPlanSecondary = getCheckedChecklistTexts('managementPlanSecondaryList');
+  const followUpPrimary = getCheckedChecklistTexts('followUpPrimaryList');
+  const followUpSecondary = getCheckedChecklistTexts('followUpSecondaryList');
+  const advicePrimary = getCheckedChecklistTexts('advicePrimaryList');
+  const adviceSecondary = getCheckedChecklistTexts('adviceSecondaryList');
+  const safetyNetPrimary = getCheckedChecklistTexts('safetyNetPrimaryList');
+  const safetyNetSecondary = getCheckedChecklistTexts('safetyNetSecondaryList');
+
+  const vitalTemp = getField('vitalTemp')?.value.trim() || '';
+  const vitalPR = getField('vitalPR')?.value.trim() || '';
+  const prRegular = getField('prRegular')?.classList.contains('active') || false;
+  const prIrregular = getField('prIrregular')?.classList.contains('active') || false;
+  const vitalRR = getField('vitalRR')?.value.trim() || '';
+  const vitalBP = getField('vitalBP')?.value.trim() || '';
+  const vitalSats = getField('vitalSats')?.value.trim() || '';
+  const vitalWE = getField('vitalWE')?.value.trim() || '';
+
+  const sections = [];
+
+  const sexLabel = sexFemale ? 'female' : (sexMale ? 'male' : '');
+  const introBits = [];
+
+  if (age) introBits.push(`${age} years old`);
+  if (sexLabel) introBits.push(sexLabel);
+
+  let openingLine = introBits.join(' ');
+
+  if (ethnicity) {
+    openingLine += openingLine ? `, ${ethnicity}` : ethnicity;
+  }
+
+  openingLine += openingLine ? ' presenting with' : 'Presenting with';
+  openingLine += hpc.length ? ` ${joinNaturalList(hpc)}` : ' symptoms';
+
+  let durationLabel = '';
+  if (presentationDuration) {
+  if (durationDays) {
+    durationLabel = `${presentationDuration} day${presentationDuration === '1' ? '' : 's'}`;
+  } else if (durationWeeks) {
+    durationLabel = `${presentationDuration} week${presentationDuration === '1' ? '' : 's'}`;
+  } else if (durationHours) {
+    durationLabel = `${presentationDuration} hour${presentationDuration === '1' ? '' : 's'}`;
+  } else {
+    durationLabel = presentationDuration;
+  }
+}
+
+  if (durationLabel) openingLine += ` for ${durationLabel}`;
+
+  const historyParts = [sentence(openingLine)];
+  if (presentationExtraText) historyParts.push(sentence(presentationExtraText));
+
+  const redFlagsBlock = buildSplitChecklist(redFlagsPrimary, redFlagsSecondary);
+
+let historySummary = historyParts.filter(Boolean).join('\n');
+
+if (redFlagsBlock) {
+  historySummary += `\n${redFlagsBlock}`;
+}
+
+if (historySummary) {
+  sections.push(`History of presenting complaint:\n${historySummary}`);
+}
+
+ const examParts = [];
+
+function examLine(label, items) {
+  if (!items || !items.length) return '';
+
+  const lines = [];
+  let currentLine = `${label} -`;
+
+  items.forEach(item => {
+    const text = typeof item === 'string' ? item : item.text;
+    const lineBreak = typeof item === 'object' && item.lineBreak;
+
+    if (!text) return;
+
+    if (lineBreak && currentLine.trim() !== `${label} -`) {
+      lines.push(currentLine.trim());
+      currentLine = text;
+    } else {
+      currentLine += ` ${text}`;
+    }
+  });
+
+  if (currentLine.trim()) lines.push(currentLine.trim());
+
+  return lines.join('\n');
+}
+
+const headNeckLine = examLine('HEAD & NECK', examHeadNeck);
+const entLine = examLine('ENT', examEnt);
+const oropharynxLine = examLine('Oropharynx', examOropharynx);
+const chestLine = examLine('CHEST', examChest);
+const abdomenLine = examLine('Abdomen', examAbdomen);
+
+// General findings: no heading.
+// Appears first under "On examination:"
+if (examGeneral.length) {
+  examGeneral.forEach(item => {
+    if (item?.text) examParts.push(item.text);
+  });
+}
+
+if (headNeckLine) examParts.push(headNeckLine);
+if (entLine) examParts.push(entLine);
+if (oropharynxLine) examParts.push(oropharynxLine);
+if (chestLine) examParts.push(chestLine);
+if (abdomenLine) examParts.push(abdomenLine);
+
+
+// Other findings: no “Other” heading.
+// Each checked item appears after Abdomen on its own line.
+if (examOther.length) {
+  examOther.forEach(item => {
+    if (item?.text) examParts.push(item.text);
+  });
+}
+
+const vitals = [];
+if (vitalTemp) vitals.push(`Temp: ${vitalTemp}`);
+if (vitalPR) {
+  let prLine = `PR: ${vitalPR}`;
+  if (prRegular) prLine += ' REG';
+  else if (prIrregular) prLine += ' IRREG';
+  vitals.push(prLine);
+}
+if (vitalRR) vitals.push(`RR: ${vitalRR}`);
+if (vitalBP) vitals.push(`BP: ${vitalBP}`);
+if (vitalSats) vitals.push(`Sats: ${vitalSats}`);
+if (vitalWE) vitals.push(`WE: ${vitalWE}`);
+
+if (vitals.length) examParts.push(`Vital signs:\n${joinList(vitals)}`);
+if (examFreeText) examParts.push(sentence(examFreeText));
+
+if (examParts.length) {
+  sections.push(`On examination:\n${examParts.filter(Boolean).join('\n')}`);
+}
+
+  const investigationsParts = [];
+  const investigationsBlock = buildSplitChecklist(investigationsPrimary, investigationsSecondary);
+  if (investigationsBlock) investigationsParts.push(investigationsBlock);
+  if (investigationsFreeText) investigationsParts.push(sentence(investigationsFreeText));
+
+  if (investigationsParts.length) {
+    sections.push(`Investigations:\n${investigationsParts.filter(Boolean).join('\n')}`);
+  }
+
+  if (assessment.length) {
+    sections.push(`Assessment:\n${joinList(assessment)}`);
+  }
+
+  const managementParts = [];
+  const managementBlock = buildSplitChecklist(managementPlanPrimary, managementPlanSecondary);
+  if (managementBlock) managementParts.push(managementBlock);
+  if (managementPlanFreeText) managementParts.push(sentence(managementPlanFreeText));
+
+  if (managementParts.length) {
+  sections.push(`Management Plan:\n${managementParts.filter(Boolean).join('\n')}`);
+}
+
+  const followUpBlock = buildSplitChecklist(followUpPrimary, followUpSecondary);
+  if (followUpBlock) {
+    sections.push(`Follow up:\n${followUpBlock}`);
+  }
+
+  const adviceBlock = buildSplitChecklist(advicePrimary, adviceSecondary);
+  if (adviceBlock) {
+    sections.push(`Advice to parent / patient:\n${adviceBlock}`);
+  }
+
+  const safetyNetBlock = buildSplitChecklist(safetyNetPrimary, safetyNetSecondary);
+  if (safetyNetBlock) {
+    sections.push(`Safety netting provided to patient:\n${safetyNetBlock}`);
+  }
+
+  const patientLinks = getPatientLinks().filter(link => link.includeInSummary && link.url);
+
+if (patientLinks.length) {
+  sections.push(
+    `Patient information provided:\n${patientLinks
+      .map(link => `${link.title}: ${link.url}`)
+      .join('\n')}`
+  );
+}
+
+  return sections.join('\n\n');
+}
+
+function renderSummaryHtml(text) {
+  const escaped = escapeHtml(text);
+
+  return escaped
+    .replace(
+      /(https?:\/\/[^\s<]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    )
+    .replace(/\n/g, '<br>');
+}
+
+function buildPatientInfoQrHtml() {
+  const links = getPatientLinks().filter(link => link.includeInSummary && link.qrDataUrl);
+  if (!links.length) return '';
+
+  return `
+    <div class="patient-info-print-grid">
+      ${links.map(link => `
+        <div class="patient-info-print-item">
+          <img src="${escapeHtml(link.qrDataUrl)}" alt="QR code for ${escapeHtml(link.title)}">
+          <div>${escapeHtml(link.title)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function generateSummary() {
+  const summary = buildSummaryText();
+  if (!output) return;
+
+  output.innerHTML = renderSummaryHtml(summary);
+
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function printFilledTemplate() {
+  const printWindow = window.open('', '_blank', 'width=1000,height=800');
+
+  if (!printWindow) {
+    alert('Pop-up blocked. Please allow pop-ups for printing.');
+    return;
+  }
+
+  const patientDemo = getField('patientDemo')?.value || '';
+  const patientEthnicity = getField('patientEthnicity')?.value || '';
+  const sex = getField('sexFemale')?.checked ? 'Female' : (getField('sexMale')?.checked ? 'Male' : '');
+  const presentationDuration = getField('presentationDuration')?.value || '';
+  const presentationExtraText = getField('presentationExtraText')?.value || '';
+  const presentationPrivateNote = getPrivateNoteHtml('presentationPrivateNote');
+  const redFlagsPrivateNote = getPrivateNoteHtml('redFlagsPrivateNote');
+  const examFreeText = getField('examFreeText')?.value || '';
+  const examPrivateNote = getPrivateNoteHtml('examPrivateNote');
+  const investigationsFreeText = getField('investigationsFreeText')?.value || '';
+  const privateConsultNote = getPrivateNoteHtml('privateConsultNote');
+  const managementPlanFreeText = getField('managementPlanFreeText')?.value || '';
+  const prescribingPrivateNote = getPrivateNoteHtml('prescribingPrivateNote');
+
+  const durationParts = [];
+  if (presentationDuration.trim()) {
+    durationParts.push(presentationDuration.trim());
+    if (getField('durationDays')?.checked) durationParts.push('days');
+    if (getField('durationWeeks')?.checked) durationParts.push('weeks');
+    if (getField('durationHours')?.checked) durationParts.push('hours');
+  }
+
+  const vitalRows = [
+    ['Temp', getField('vitalTemp')?.value || ''],
+    [
+      'PR',
+      `${getField('vitalPR')?.value || ''}${
+        getField('prRegular')?.classList.contains('active') ? ' REG' :
+        getField('prIrregular')?.classList.contains('active') ? ' IRREG' : ''
+      }`
+    ],
+    ['RR', getField('vitalRR')?.value || ''],
+    ['BP', getField('vitalBP')?.value || ''],
+    ['Sats', getField('vitalSats')?.value || ''],
+    ['WE', getField('vitalWE')?.value || '']
+  ].filter(row => row[1] && row[1].trim());
+
+  const sections = [
+    {
+      title: 'History of presenting complaint',
+      rows: [
+        { label: 'Age', value: patientDemo },
+        { label: 'Sex', value: sex },
+        { label: 'Ethnicity', value: patientEthnicity },
+        { label: 'Duration', value: durationParts.join(' ') },
+        { label: 'Presenting symptoms / complaints', checklist: getChecklistItems('hpcList') },
+        { label: 'Additional presentation text', value: presentationExtraText },
+        { label: 'Private notes', value: presentationPrivateNote, private: true }
+      ]
+    },
+       {
+      title: 'Red flags checked',
+      rows: [
+        { label: 'Red flags - first line', checklist: getChecklistItems('redFlagsPrimaryList') },
+        { label: 'Red flags - next line', checklist: getChecklistItems('redFlagsSecondaryList') },
+        { label: 'Private notes', value: redFlagsPrivateNote, private: true }
+      ]
+    },
+    {
+      title: 'On Examination',
+      rows: [
+    { label: 'General findings', checklist: getChecklistItems('examGeneralList') },
+    { label: 'HEAD & NECK', checklist: getChecklistItems('examHeadNeckList') },
+    { label: 'ENT', checklist: getChecklistItems('examEntList') },
+    { label: 'Oropharynx', checklist: getChecklistItems('examOropharynxList') },
+    { label: 'CHEST', checklist: getChecklistItems('examChestList') },
+    { label: 'Abdomen', checklist: getChecklistItems('examAbdomenList') },
+    { label: 'Other findings', checklist: getChecklistItems('examOtherList') },
+    { label: 'Additional findings', value: getField('examFreeText')?.value || '' },
+    { label: 'Private notes', value: getPrivateNoteHtml('examPrivateNote'), private: true }
+  ]
+},
+    {
+      title: 'Vital Signs',
+      rows: [
+        { label: 'Observations', vitals: vitalRows }
+      ]
+    },
+    {
+      title: 'Investigations',
+      rows: [
+        { label: 'Investigations - first line', checklist: getChecklistItems('investigationsPrimaryList') },
+        { label: 'Investigations - next line', checklist: getChecklistItems('investigationsSecondaryList') },
+        { label: 'Additional investigation text', value: investigationsFreeText }
+      ]
+    },
+    {
+      title: 'Assessment',
+      rows: [
+        { label: 'Assessment', checklist: getChecklistItems('assessmentList') },
+        { label: 'Private consult note', value: privateConsultNote, private: true }
+      ]
+    },
+    {
+      title: 'Management Plan',
+      rows: [
+        { label: 'Management plan - first line', checklist: getChecklistItems('managementPlanPrimaryList') },
+        { label: 'Management plan - next line', checklist: getChecklistItems('managementPlanSecondaryList') },
+        { label: 'Additional management text', value: managementPlanFreeText },
+        { label: 'Private notes', value: prescribingPrivateNote, private: true }
+      ]
+    },
+    {
+      title: 'Follow up',
+      rows: [
+        { label: 'Follow up - first line', checklist: getChecklistItems('followUpPrimaryList') },
+        { label: 'Follow up - next line', checklist: getChecklistItems('followUpSecondaryList') }
+      ]
+    },
+    {
+      title: 'Advice to parent / patient',
+      rows: [
+        { label: 'Advice - first line', checklist: getChecklistItems('advicePrimaryList') },
+        { label: 'Advice - next line', checklist: getChecklistItems('adviceSecondaryList') }
+      ]
+    },
+    {
+      title: 'Safety netting provided to patient',
+      rows: [
+        { label: 'Safety netting - first line', checklist: getChecklistItems('safetyNetPrimaryList') },
+        { label: 'Safety netting - next line', checklist: getChecklistItems('safetyNetSecondaryList') }
+      ]
+    }
+  ];
+
+  function renderValue(value, isPrivate = false) {
+    const clean = String(value || '').trim();
+
+    if (!clean) {
+      return `<div class="empty-line">____________________________</div>`;
+    }
+
+    return `
+      <div class="${isPrivate ? 'private-box' : 'text-box'}">
+        ${isPrivate ? formatPrivateNoteHtml(clean) : escapeHtml(clean).replace(/\n/g, '<br>')}
+      </div>
+    `;
+  }
+
+  function renderChecklist(items = []) {
+    const validItems = items.filter(item => item.text && item.text.trim());
+
+    if (!validItems.length) {
+      return `
+        <div class="check-item">
+          <span class="box">☐</span>
+          <span class="blank-line">____________________________</span>
+        </div>
+      `;
+    }
+
+    return validItems.map(item => `
+      <div class="check-item">
+        <span class="box">${item.checked ? '☑' : '☐'}</span>
+        <span>${escapeHtml(item.text)}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderVitals(vitals = []) {
+    if (!vitals.length) {
+      return `<div class="empty-line">No vitals added</div>`;
+    }
+
+    return `
+      <div class="vital-list">
+        ${vitals.map(([label, value]) => `
+          <div><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderRow(row) {
+    if (row.checklist) {
+      return `
+        <div class="row">
+          <div class="label">${escapeHtml(row.label)}</div>
+          ${renderChecklist(row.checklist)}
+        </div>
+      `;
+    }
+
+    if (row.vitals) {
+      return `
+        <div class="row">
+          <div class="label">${escapeHtml(row.label)}</div>
+          ${renderVitals(row.vitals)}
+        </div>
+      `;
+    }
+
+    return `
+      <div class="row">
+        <div class="label">${escapeHtml(row.label)}</div>
+        ${renderValue(row.value, row.private)}
+      </div>
+    `;
+  }
+
+  const printableSections = sections.map(section => `
+    <section class="print-section">
+      <h2>${escapeHtml(section.title)}</h2>
+      ${section.rows.map(renderRow).join('')}
+    </section>
+  `).join('');
+  
+  const patientQrLinks = getPatientLinks().filter(link => link.qrDataUrl);
+
+const printablePatientQrSection = patientQrLinks.length ? `
+  <section class="print-section patient-qr-section">
+    <h2>Patient information QR codes</h2>
+
+    <div class="patient-qr-print-grid">
+      ${patientQrLinks.map(link => `
+        <div class="patient-qr-print-item">
+          <img src="${escapeHtml(link.qrDataUrl)}" alt="QR code for ${escapeHtml(link.title)}">
+          <div class="patient-qr-title">${escapeHtml(link.title || 'Patient information')}</div>
+          ${link.url ? `<div class="patient-qr-url">${escapeHtml(link.url)}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  </section>
+` : '';
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Consultation Template</title>
+      <style>
+        @page {
+          size: A4 portrait;
+          margin: 8mm;
+        }
+
+        * {
+          box-sizing: border-box;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        body {
+          font-family: Tahoma, Arial, sans-serif;
+          color: #111;
+          margin: 0;
+          font-size: 10px;
+          line-height: 1.25;
+        }
+
+        h1 {
+          font-size: 16px;
+          margin: 0 0 8px;
+        }
+
+        .print-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 7px;
+          align-items: start;
+        }
+
+        .print-section {
+          border: 1px solid #bbb;
+          border-radius: 8px;
+          padding: 7px;
+          break-inside: avoid;
+          page-break-inside: avoid;
+          background: #fff;
+        }
+
+        .print-section h2 {
+          font-size: 12px;
+          margin: 0 0 5px;
+          padding-bottom: 3px;
+          border-bottom: 1px solid #ddd;
+        }
+		
+		.patient-qr-section {
+  page-break-inside: avoid;
+}
+
+.patient-qr-print-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.patient-qr-print-item {
+  width: 135px;
+  min-height: 160px;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  align-content: start;
+  text-align: center;
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
+}
+
+.patient-qr-print-item img {
+  width: 105px;
+  height: 105px;
+  object-fit: contain;
+}
+
+.patient-qr-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.patient-qr-url {
+  font-size: 0.64rem;
+  color: #555;
+  overflow-wrap: anywhere;
+}
+
+        .row {
+          margin-bottom: 5px;
+        }
+
+        .label {
+          font-weight: 700;
+          font-size: 10px;
+          margin-bottom: 2px;
+        }
+
+        .check-item {
+          display: grid;
+          grid-template-columns: 15px 1fr;
+          gap: 4px;
+          align-items: start;
+          margin-bottom: 2px;
+          padding: 2px 0;
+        }
+
+        .box {
+          font-size: 11px;
+          line-height: 1.1;
+        }
+
+        .text-box {
+          white-space: normal;
+        }
+
+        .private-box {
+          min-height: 34px;
+          padding: 5px;
+          border: 1px solid rgba(170, 145, 70, 0.35);
+          border-radius: 6px;
+          background: linear-gradient(180deg, rgba(255, 253, 232, 0.96), rgba(255, 247, 205, 0.86));
+          color: #111;
+        }
+
+        .empty-line,
+        .blank-line {
+          color: #777;
+        }
+
+        .vital-list {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 2px 8px;
+        }
+      </style>
+    </head>
+
+    <body>
+      <h1>${escapeHtml(activeTemplateTitle?.textContent || 'Consultation Template')}</h1>
+      <div class="print-grid">
+        ${printableSections}
+        ${printablePatientQrSection}
+      </div>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+
+  setTimeout(() => {
+    printWindow.print();
+  }, 250);
+}
+
+async function copyOutput(asPlainText = false) {
+  const text = buildSummaryText();
+  if (!text.trim()) return;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    const target = asPlainText ? copyPlainBtn : copyBtn;
+    if (!target) return;
+
+    const original = target.textContent;
+    target.textContent = '✅ Copied';
+
+    setTimeout(() => {
+      target.textContent = original;
+    }, 1400);
+  } catch (err) {
+    alert('Copy failed on this browser. You can still highlight and copy manually.');
+  }
+}
+
+async function saveCurrentTemplate() {
+  if (!firebaseReady) {
+    alert('Firebase is not connected.');
+    return;
+  }
+
+  if (!currentUser) {
+    alert('Please sign in first.');
+    return;
+  }
+
+  const meta = await promptForTemplateMeta();
+if (!meta) return;
+
+  const payload = {
+    title: meta.title,
+    category: meta.category,
+    desc: meta.desc,
+    tags: meta.tags,
+    prompts: collectPromptFields(),
+    ownerUid: currentUser.uid,
+    ownerEmail: currentUser.email || '',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  const docRef = await addDoc(templatesRef, payload);
+  activeTemplateId = docRef.id;
+  await loadUserTemplates();
+  hasUnsavedTemplateEdits = false;
+  alert('Template saved.');
+}
+
+async function updateCurrentTemplate() {
+  if (!firebaseReady) {
+    alert('Firebase is not connected.');
+    return;
+  }
+
+  if (!currentUser) {
+    alert('Please sign in first.');
+    return;
+  }
+
+  const template = getActiveTemplate();
+
+  if (!template || template.isBuiltIn) {
+    alert('Built-in templates cannot be overwritten. Save as a new template instead.');
+    return;
+  }
+
+  const ok = confirm(
+    `Update this template?\n\nTemplate: ${template.title}\n\nA backup copy will be saved first.`
+  );
+  if (!ok) return;
+
+  const meta = await promptForTemplateMeta(template);
+  if (!meta) return;
+
+  await addDoc(collection(db, 'consultationTemplateBackups'), {
+    templateId: template.id,
+    backedUpAt: serverTimestamp(),
+    backedUpBy: currentUser.email || currentUser.uid || 'unknown',
+    templateData: {
+      title: template.title || '',
+      category: template.category || '',
+      desc: template.desc || '',
+      tags: template.tags || [],
+      prompts: template.prompts || {},
+      ownerUid: template.ownerUid || currentUser.uid || '',
+      ownerEmail: template.ownerEmail || currentUser.email || ''
+    }
+  });
+
+  await updateDoc(doc(db, 'consultationTemplates', template.id), {
+    title: meta.title,
+    category: meta.category,
+    desc: meta.desc,
+    tags: meta.tags,
+    prompts: collectPromptFields(),
+    updatedAt: serverTimestamp(),
+    lastBackedUpAt: serverTimestamp()
+  });
+
+  await loadUserTemplates();
+  activeTemplateId = template.id;
+  syncHero();
+  renderTemplates();
+  hasUnsavedTemplateEdits = false;
+  alert('Template updated.');
+  }
+
+async function deleteCurrentTemplate() {
+  if (!firebaseReady) {
+    alert('Firebase is not connected.');
+    return;
+  }
+
+  if (!currentUser) {
+    alert('Please sign in first.');
+    return;
+  }
+
+  const template = getActiveTemplate();
+
+  if (!template || template.isBuiltIn) {
+    alert('Built-in templates cannot be deleted.');
+    return;
+  }
+
+  const ok = confirm(
+  `Archive template instead of deleting?\n\nTemplate: ${template.title}\n\nYou can recover it from Firestore if needed.`
+);
+if (!ok) return;
+
+await updateDoc(doc(db, 'consultationTemplates', template.id), {
+  archived: true,
+  archivedAt: serverTimestamp(),
+  archivedBy: currentUser.email || currentUser.uid || 'unknown',
+  updatedAt: serverTimestamp()
+});
+
+activeTemplateId = defaultTemplates[0].id;
+await loadUserTemplates();
+syncHero();
+renderTemplates();
+alert('Template archived.');
+}
+
+function setupDesktopHeaderMinimize() {
+  if (!topbar) return;
+
+  const headerBtns = document.querySelectorAll('.header-btn');
+  let isMinimized = false;
+
+  function setHeaderMini(mini) {
+    if (isMinimized === mini) return; // prevents repeated flicker/toggling
+
+    isMinimized = mini;
+    topbar.classList.toggle('minimized', mini);
+
+    headerBtns.forEach(btn => {
+      btn.textContent = mini
+        ? (btn.dataset.mini || btn.textContent)
+        : (btn.dataset.full || btn.textContent);
+    });
+  }
+
+  function applyHeaderState() {
+    if (window.innerWidth <= 760) {
+      setHeaderMini(false);
+      return;
+    }
+
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+
+    // Use two different points so it does not bounce around one threshold
+    if (!isMinimized && y > 120) {
+      setHeaderMini(true);
+    }
+
+    if (isMinimized && y < 40) {
+      setHeaderMini(false);
+    }
+  }
+
+  window.addEventListener('scroll', applyHeaderState, { passive: true });
+  window.addEventListener('resize', applyHeaderState);
+  applyHeaderState();
+}
+
+function setupMobileTopbar() {
+  if (!topbar || !topbarToggle) return;
+
+  function resetForDesktop() {
+    if (window.innerWidth > 760) {
+      topbar.classList.remove('mobile-hidden');
+      topbar.classList.remove('show-mobile');
+    } else {
+      topbar.classList.remove('show-mobile');
+    }
+  }
+
+  topbarToggle.addEventListener('click', () => {
+    if (window.innerWidth <= 760) {
+      topbar.classList.toggle('show-mobile');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth > 760) return;
+
+    const clickedInsideTopbar = topbar.contains(e.target);
+    const clickedToggle = topbarToggle.contains(e.target);
+
+    if (!clickedInsideTopbar && !clickedToggle) {
+      topbar.classList.remove('show-mobile');
+    }
+  });
+
+  window.addEventListener('resize', resetForDesktop);
+  resetForDesktop();
+}
+
+safeAddListener(searchInput, 'input', renderTemplates);
+safeAddListener(categoryFilter, 'change', renderTemplates);
+safeAddListener(heroTemplateToggle, 'click', () => {
+  if (!heroTemplateInfo || !activeTemplateDesc) return;
+
+  const isExpanded = heroTemplateInfo.classList.toggle('expanded');
+
+  if (!isExpanded) {
+    activeTemplateDesc.scrollTop = 0;
   }
 });
+safeAddListener(fillTemplateBtn, 'click', fillTemplatePrompts);
+safeAddListener(clearBtn, 'click', clearForm);
+safeAddListener(generateBtn, 'click', generateSummary);
+safeAddListener(floatingGenerateBtn, 'click', generateSummary);
+safeAddListener(copyBtn, 'click', () => copyOutput(false));
+safeAddListener(copyPlainBtn, 'click', () => copyOutput(true));
+safeAddListener(printBtn, 'click', printFilledTemplate);
+safeAddListener(saveBtn, 'click', saveCurrentTemplate);
+safeAddListener(editBtn, 'click', updateCurrentTemplate);
+safeAddListener(deleteBtn, 'click', deleteCurrentTemplate);
+safeAddListener(loginBtn, 'click', signInUser);
+safeAddListener(logoutBtn, 'click', signOutUser);
+safeAddListener(patientLinkToggleBtn, 'click', () => {
+  patientLinkEditor?.classList.toggle('show');
+
+  if (
+    patientLinkEditor?.classList.contains('show') &&
+    patientLinksList &&
+    patientLinksList.querySelectorAll('.patient-link-row').length === 0
+  ) {
+    createPatientLinkRow();
+  }
+});
+
+setupTemplateDirtyTracking();
+
+safeAddListener(addPatientLinkBtn, 'click', () => createPatientLinkRow());
+
+renderPatientLinks([]);
+
+renderTemplates();
+syncHero();
+updateAuthUI();
+initAllChecklists();
+setupMinimalistChecklistToggle();
+setupMobileTopbar();
+setupPRToggleButtons();
+setupDesktopHeaderMinimize();
+setupPrivateNotesAutoGrow();
+setupDurationCheckboxes();
+setupSexCheckboxes();
+setupPrivateNoteFormattingShortcuts();
+
+if (firebaseReady) {
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user || null;
+    updateAuthUI();
+    await loadUserTemplates();
+    syncHero();
+  });
+}
 
 </script>
-<script src="https://xlyneve.github.io/CEP/emoji.js?v=3" defer></script>
 </body>
 </html>
