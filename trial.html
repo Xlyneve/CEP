@@ -3033,6 +3033,7 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
 
   const row = document.createElement('div');
   row.className = 'checklist-row';
+  row.dataset.lineBreak = lineBreak ? 'true' : 'false';
   setupChecklistRowDrag(row);
 
   const label = document.createElement('label');
@@ -3049,33 +3050,38 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
 
   const isExamChecklist = container.id && container.id.startsWith('exam');
 
+  label.appendChild(checkbox);
+
   if (isExamChecklist) {
     label.classList.add('exam-check-item');
 
     const lineBreakBtn = document.createElement('button');
-lineBreakBtn.type = 'button';
-lineBreakBtn.className = 'line-break-toggle';
-lineBreakBtn.title = 'Start this item on a new line in the generated summary';
-lineBreakBtn.textContent = '↩';
-lineBreakBtn.dataset.lineBreak = lineBreak ? 'true' : 'false';
+    lineBreakBtn.type = 'button';
+    lineBreakBtn.className = 'line-break-toggle';
+    lineBreakBtn.title = 'Start this item on a new line in the generated summary';
+    lineBreakBtn.textContent = '↩';
+    lineBreakBtn.dataset.lineBreak = lineBreak ? 'true' : 'false';
 
-if (lineBreak) {
-  lineBreakBtn.classList.add('active');
-}
+    if (lineBreak) {
+      lineBreakBtn.classList.add('active');
+    }
 
-lineBreakBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+    lineBreakBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-  const isActive = lineBreakBtn.dataset.lineBreak === 'true';
-  lineBreakBtn.dataset.lineBreak = isActive ? 'false' : 'true';
-  lineBreakBtn.classList.toggle('active', !isActive);
-});
+      const isActive = lineBreakBtn.dataset.lineBreak === 'true';
+      const nextValue = isActive ? 'false' : 'true';
 
-label.appendChild(checkbox);
-label.appendChild(lineBreakBtn);
-label.appendChild(input);
+      lineBreakBtn.dataset.lineBreak = nextValue;
+      row.dataset.lineBreak = nextValue;
+      lineBreakBtn.classList.toggle('active', nextValue === 'true');
+    });
+
+    label.appendChild(lineBreakBtn);
   }
+
+  label.appendChild(input);
 
   const delBtn = document.createElement('button');
   delBtn.type = 'button';
@@ -3147,10 +3153,15 @@ function getChecklistItems(id) {
       const lineBreakButton = row.querySelector('.line-break-toggle');
       const input = row.querySelector('textarea');
 
+      const hasLineBreak =
+        row.dataset.lineBreak === 'true' ||
+        lineBreakButton?.dataset.lineBreak === 'true' ||
+        lineBreakButton?.classList.contains('active');
+
       return {
         text: input?.value.trim() || '',
         checked: !!checkbox?.checked,
-        lineBreak: lineBreakButton?.dataset.lineBreak === 'true'
+        lineBreak: hasLineBreak
       };
     })
     .filter(item => item.text);
