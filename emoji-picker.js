@@ -94,12 +94,12 @@ function createEmojiSymbolPicker() {
   `;
 
   symbolGrid.style.cssText = `
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 6px;
-    max-height: 145px;
-    overflow-y: auto;
-  `;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  max-height: 145px;
+  overflow-y: auto;
+`;
 
   symbols.forEach(symbol => {
     const btn = document.createElement("button");
