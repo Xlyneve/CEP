@@ -363,16 +363,20 @@ function insertAtCursor(text) {
   console.log("Click inside a text box first, then choose a symbol or emoji.");
 }
 
-
 function saveActiveTextField(el) {
   if (!el) return;
 
   if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
     activeTextField = el;
-    activeStart = el.selectionStart || 0;
-    activeEnd = el.selectionEnd || 0;
+
+    activeStart =
+      typeof el.selectionStart === "number" ? el.selectionStart : el.value.length;
+
+    activeEnd =
+      typeof el.selectionEnd === "number" ? el.selectionEnd : el.value.length;
   }
 }
+
 
 document.addEventListener("focusin", (e) => {
   if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
@@ -393,6 +397,18 @@ document.addEventListener("keyup", (e) => {
 });
 
 document.addEventListener("mouseup", (e) => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
+    saveActiveTextField(e.target);
+  }
+});
+
+document.addEventListener("input", (e) => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
+    saveActiveTextField(e.target);
+  }
+});
+
+document.addEventListener("select", (e) => {
   if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
     saveActiveTextField(e.target);
   }
