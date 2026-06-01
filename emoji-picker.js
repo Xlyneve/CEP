@@ -58,7 +58,7 @@ document.addEventListener("selectionchange", () => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.altKey && e.key.toLowerCase() === "e") {
+  if (e.altKey && e.key.toLowerCase() === "z") {
     e.preventDefault();
 
     if (!pickerWrapper) return;
