@@ -8,17 +8,30 @@ document.head.appendChild(emojiScript);
 
 let savedRange = null;
 let pickerWrapper = null;
-let emojiButton = null;
 
 const symbols = [
+  // Arrows
   "➜", "➤", "➔", "➙", "➝", "➞", "→", "←", "↑", "↓",
   "↔", "↕", "⇄", "⇅", "⇒", "⇐", "⇧", "⇩", "↩", "↪",
+
+  // Checks / crosses
   "✓", "✔", "☑", "✕", "✖", "✗", "✘",
+
+  // Bullets / shapes
   "•", "◦", "▪", "▫", "■", "□", "◆", "◇", "●", "○",
+  "◉", "◎", "▸", "▹", "▾", "▿",
+
+  // Stars / alerts
   "★", "☆", "✦", "✧", "✩", "⚠", "‼", "⁉",
+
+  // Medical / useful symbols
   "°", "℃", "℉", "±", "×", "÷", "≈", "≠", "≤", "≥",
   "µ", "Ω", "∞", "∴", "∵", "∆", "∑",
+
+  // Keyboard / UI
   "⌘", "⌥", "⌃", "⇧", "⏎", "⌫", "⌦", "␣", "⎋",
+
+  // Misc
   "♥", "♡", "♪", "♫", "☀", "☁", "☂", "☎", "✉", "⚡"
 ];
 
@@ -84,7 +97,7 @@ function createEmojiSymbolPicker() {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     gap: 6px;
-    max-height: 150px;
+    max-height: 145px;
     overflow-y: auto;
   `;
 
@@ -97,11 +110,17 @@ function createEmojiSymbolPicker() {
       border: 1px solid rgba(180,180,180,0.3);
       background: rgba(255,255,255,0.85);
       border-radius: 8px;
-      padding: 6px 2px;
-      font-size: 20px;
+      width: 100%;
+      height: 34px;
+      padding: 0;
+      font-size: 17px;
+      line-height: 1;
       cursor: pointer;
       text-align: center;
-      font-family: Tahoma, Arial, sans-serif;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", Tahoma, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     `;
 
     btn.addEventListener("click", () => {
@@ -116,37 +135,6 @@ function createEmojiSymbolPicker() {
     insertAtCursor(event.detail.unicode);
     hideEmojiPicker();
   });
-
-  createEmojiButton();
-}
-
-function createEmojiButton() {
-  emojiButton = document.createElement("button");
-  emojiButton.id = "emojiPickerButton";
-  emojiButton.textContent = "😊";
-  emojiButton.type = "button";
-  emojiButton.title = "Open emoji and symbol picker";
-
-  emojiButton.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999999;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: none;
-    background: white;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-    font-size: 24px;
-    cursor: pointer;
-  `;
-
-  emojiButton.addEventListener("click", () => {
-    toggleEmojiPicker();
-  });
-
-  document.body.appendChild(emojiButton);
 }
 
 // Save cursor position
@@ -168,7 +156,7 @@ document.addEventListener("selectionchange", () => {
   }
 });
 
-// Shortcut:
+// Keyboard shortcut:
 // Mac: Command + Shift + E or Control + Shift + E
 // Windows: Ctrl + Shift + E
 document.addEventListener("keydown", (e) => {
@@ -262,14 +250,13 @@ function getEditableParent(node) {
   return null;
 }
 
-// Close picker when clicking outside it and outside the emoji button
+// Close picker when clicking outside it
 document.addEventListener("click", (e) => {
-  if (!pickerWrapper || !emojiButton) return;
+  if (!pickerWrapper) return;
 
   const clickedInsidePicker = pickerWrapper.contains(e.target);
-  const clickedEmojiButton = emojiButton.contains(e.target);
 
-  if (!clickedInsidePicker && !clickedEmojiButton) {
+  if (!clickedInsidePicker) {
     hideEmojiPicker();
   }
 });
