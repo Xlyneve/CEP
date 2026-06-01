@@ -136,18 +136,19 @@ function createEmojiSymbolPicker() {
 `;
 
   pickerWrapper.style.cssText = `
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    z-index: 999999;
-    display: none;
-    width: min(380px, 94vw);
-    max-height: 620px;
-    overflow: hidden;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
-  `;
+  position: fixed;
+  bottom: 30px;
+  right: 20px;
+  z-index: 999999;
+  display: none;
+  width: min(380px, 94vw);
+  max-height: min(720px, 90vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+`;
 
   document.body.appendChild(pickerWrapper);
 
@@ -159,6 +160,9 @@ const symbolSection = pickerWrapper.querySelector("#symbolSection");
 const symbolHeader = pickerWrapper.querySelector("#symbolHeader");
 const symbolGrid = pickerWrapper.querySelector("#symbolGrid");
 const emojiPicker = pickerWrapper.querySelector("emoji-picker");
+  
+  emojiPicker.style.height = "420px";
+  emojiPicker.style.maxHeight = "55vh";
   emojiPicker.style.width = "100%";
 
   recentSection.style.cssText = `
