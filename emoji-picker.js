@@ -1,6 +1,6 @@
 // emoji-picker.js
 
-// Loads the external emoji picker library
+// Load external emoji picker library
 const emojiScript = document.createElement("script");
 emojiScript.type = "module";
 emojiScript.src = "https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js";
@@ -10,23 +10,38 @@ let savedRange = null;
 let pickerWrapper = null;
 let emojiButton = null;
 
-// When external emoji picker has loaded
+const symbols = [
+  "➜", "➤", "➔", "➙", "➝", "➞", "→", "←", "↑", "↓",
+  "↔", "↕", "⇄", "⇅", "⇒", "⇐", "⇧", "⇩", "↩", "↪",
+  "✓", "✔", "☑", "✕", "✖", "✗", "✘",
+  "•", "◦", "▪", "▫", "■", "□", "◆", "◇", "●", "○",
+  "★", "☆", "✦", "✧", "✩", "⚠", "‼", "⁉",
+  "°", "℃", "℉", "±", "×", "÷", "≈", "≠", "≤", "≥",
+  "µ", "Ω", "∞", "∴", "∵", "∆", "∑",
+  "⌘", "⌥", "⌃", "⇧", "⏎", "⌫", "⌦", "␣", "⎋",
+  "♥", "♡", "♪", "♫", "☀", "☁", "☂", "☎", "✉", "⚡"
+];
+
 emojiScript.onload = () => {
-  createEmojiPicker();
+  createEmojiSymbolPicker();
 };
 
 emojiScript.onerror = () => {
   console.error("Emoji picker failed to load. Check internet connection or CDN link.");
 };
 
-function createEmojiPicker() {
-  // Prevent duplicate picker if script accidentally loads twice
+function createEmojiSymbolPicker() {
   if (document.getElementById("emojiPickerWrapper")) return;
 
   pickerWrapper = document.createElement("div");
   pickerWrapper.id = "emojiPickerWrapper";
 
   pickerWrapper.innerHTML = `
+    <div id="symbolSection">
+      <div id="symbolHeader">Symbols</div>
+      <div id="symbolGrid"></div>
+    </div>
+
     <emoji-picker></emoji-picker>
   `;
 
@@ -36,15 +51,66 @@ function createEmojiPicker() {
     right: 20px;
     z-index: 999999;
     display: none;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
-    border-radius: 16px;
+    width: min(380px, 94vw);
+    max-height: 620px;
     overflow: hidden;
-    max-width: 95vw;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
   `;
 
   document.body.appendChild(pickerWrapper);
 
+  const symbolSection = pickerWrapper.querySelector("#symbolSection");
+  const symbolHeader = pickerWrapper.querySelector("#symbolHeader");
+  const symbolGrid = pickerWrapper.querySelector("#symbolGrid");
   const emojiPicker = pickerWrapper.querySelector("emoji-picker");
+
+  symbolSection.style.cssText = `
+    padding: 10px;
+    border-bottom: 1px solid rgba(180,180,180,0.25);
+    background: rgba(255,255,255,0.96);
+  `;
+
+  symbolHeader.style.cssText = `
+    font-family: Tahoma, Arial, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #555;
+  `;
+
+  symbolGrid.style.cssText = `
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+  `;
+
+  symbols.forEach(symbol => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = symbol;
+
+    btn.style.cssText = `
+      border: 1px solid rgba(180,180,180,0.3);
+      background: rgba(255,255,255,0.85);
+      border-radius: 8px;
+      padding: 6px 2px;
+      font-size: 20px;
+      cursor: pointer;
+      text-align: center;
+      font-family: Tahoma, Arial, sans-serif;
+    `;
+
+    btn.addEventListener("click", () => {
+      insertAtCursor(symbol);
+      hideEmojiPicker();
+    });
+
+    symbolGrid.appendChild(btn);
+  });
 
   emojiPicker.addEventListener("emoji-click", (event) => {
     insertAtCursor(event.detail.unicode);
@@ -59,7 +125,7 @@ function createEmojiButton() {
   emojiButton.id = "emojiPickerButton";
   emojiButton.textContent = "😊";
   emojiButton.type = "button";
-  emojiButton.title = "Open emoji picker";
+  emojiButton.title = "Open emoji and symbol picker";
 
   emojiButton.style.cssText = `
     position: fixed;
@@ -83,7 +149,7 @@ function createEmojiButton() {
   document.body.appendChild(emojiButton);
 }
 
-// Save cursor position from input, textarea, or contenteditable
+// Save cursor position
 document.addEventListener("selectionchange", () => {
   const selection = window.getSelection();
   if (!selection.rangeCount) return;
@@ -102,8 +168,8 @@ document.addEventListener("selectionchange", () => {
   }
 });
 
-// Keyboard shortcut
-// Mac: Command + Shift + E OR Control + Shift + E
+// Shortcut:
+// Mac: Command + Shift + E or Control + Shift + E
 // Windows: Ctrl + Shift + E
 document.addEventListener("keydown", (e) => {
   const key = e.key.toLowerCase();
@@ -111,6 +177,10 @@ document.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === "e") {
     e.preventDefault();
     toggleEmojiPicker();
+  }
+
+  if (e.key === "Escape") {
+    hideEmojiPicker();
   }
 });
 
@@ -133,7 +203,7 @@ function hideEmojiPicker() {
 function insertAtCursor(text) {
   const active = document.activeElement;
 
-  // For input and textarea
+  // Input or textarea
   if (active && (active.tagName === "TEXTAREA" || active.tagName === "INPUT")) {
     const start = active.selectionStart;
     const end = active.selectionEnd;
@@ -150,7 +220,7 @@ function insertAtCursor(text) {
     return;
   }
 
-  // For contenteditable
+  // contenteditable
   if (savedRange) {
     const selection = window.getSelection();
 
@@ -159,25 +229,26 @@ function insertAtCursor(text) {
 
     savedRange.deleteContents();
 
-    const emojiNode = document.createTextNode(text);
-    savedRange.insertNode(emojiNode);
+    const textNode = document.createTextNode(text);
+    savedRange.insertNode(textNode);
 
-    savedRange.setStartAfter(emojiNode);
-    savedRange.setEndAfter(emojiNode);
+    savedRange.setStartAfter(textNode);
+    savedRange.setEndAfter(textNode);
 
     selection.removeAllRanges();
     selection.addRange(savedRange);
 
-    const editableParent = getEditableParent(emojiNode);
+    const editableParent = getEditableParent(textNode);
+
     if (editableParent) {
-      editableParent.dispatchEvent(new Event("input", { bubbles: true }));
       editableParent.focus();
+      editableParent.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
     return;
   }
 
-  console.log("No cursor position saved yet. Click inside a text box first.");
+  console.log("Click inside a text box first, then choose a symbol or emoji.");
 }
 
 function getEditableParent(node) {
@@ -190,13 +261,6 @@ function getEditableParent(node) {
 
   return null;
 }
-
-// Close picker when pressing Escape
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    hideEmojiPicker();
-  }
-});
 
 // Close picker when clicking outside it and outside the emoji button
 document.addEventListener("click", (e) => {
