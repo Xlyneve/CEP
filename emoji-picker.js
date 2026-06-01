@@ -87,7 +87,7 @@ function createEmojiSymbolPicker() {
 
   symbolHeader.style.cssText = `
     font-family: Tahoma, Arial, sans-serif;
-    font-size: 13px;
+    font-size: 10px;
     font-weight: bold;
     margin-bottom: 8px;
     color: #555;
@@ -96,7 +96,7 @@ function createEmojiSymbolPicker() {
   symbolGrid.style.cssText = `
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 3px;
   max-height: 145px;
   overflow-y: auto;
 `;
@@ -113,7 +113,7 @@ function createEmojiSymbolPicker() {
   width: 100%;
   height: 30px;
   padding: 0;
-  font-size: 12px;
+  font-size: 10px;
   line-height: 1;
   cursor: pointer;
   text-align: center;
