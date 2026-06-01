@@ -742,37 +742,6 @@ body {
 .add-todo textarea::placeholder {
   color: rgba(255,255,255,0.7);
 }
-.emoji-popup {
-  position: fixed;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 8px;
-  border-radius: 10px;
-  display: flex;
-  gap: 8px;
-  z-index: 9999;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-}
-
-.emoji-popup.hidden {
-  display: none;
-}
-
-.emoji-popup button {
-  background: rgba(255,255,255,0.3);
-  border: none;
-  border-radius: 10px;
-  font-size: 10px;
-  padding: 4px 8px;
-  cursor: pointer;
-}
-
-.emoji-popup button:hover {
-  background: rgba(255,255,255,0.5);
-}
-
 
 </style>
 
@@ -1201,66 +1170,9 @@ window.addEventListener('resize', () => {
   autoResizeAllDayTextareas();
 });
 
-let activeTextarea = null;
-const emojiPopup = document.getElementById("emojiPopup");
-
-// SHOW EMOJI POPUP ON DAY CLICK
-document.addEventListener("click", (e) => {
-    const dayBox = e.target.closest(".day");
-
-    if (dayBox) {
-        const rect = dayBox.getBoundingClientRect();
-
-        // find textarea inside day
-        activeTextarea = dayBox.querySelector("textarea");
-
-        // position popup (centered above the day)
-        emojiPopup.style.left = rect.left + rect.width / 2 + "px";
-        emojiPopup.style.top = rect.top - 55 + "px";
-
-        emojiPopup.classList.remove("hidden");
-        return;
-    }
-
-    // CLICK OUTSIDE → CLOSE POPUP
-    if (!e.target.closest("#emojiPopup")) {
-        emojiPopup.classList.add("hidden");
-    }
-});
-
-// INSERT EMOJI INTO CURRENT DAY NOTE
-window.insertEmoji = function(emoji) {
-    if (!activeTextarea) return;
-
-    const cursorPos = activeTextarea.selectionStart;
-    const text = activeTextarea.value;
-
-    activeTextarea.value =
-        text.slice(0, cursorPos) + emoji + " " + text.slice(cursorPos);
-
-    activeTextarea.focus();
-    activeTextarea.selectionEnd = cursorPos + emoji.length + 1;
-
-    autoResizeTextarea(activeTextarea);
-
-    // keep popup open (optional)
-};
 
 </script>
 
-
-<!-- EMOJI POPUP -->
-<div id="emojiPopup" class="emoji-popup hidden">
-  <button onclick="insertEmoji('☐')">☐</button>
-  <button onclick="insertEmoji('✅')">✅</button>
-  <button onclick="insertEmoji('🟡')">🟡</button>
-	<button onclick="insertEmoji('▪️')">▪️</button>
-  <button onclick="insertEmoji('📌')">📌</button>
-	<button onclick="insertEmoji('⚠️')">⚠️</button>
-	<button onclick="insertEmoji('📊')">📊</button>
-  <button onclick="insertEmoji('🌸')">🌸</button>
-	<button onclick="insertEmoji('✈️')">✈️</button>
-</div>
 <script src="emoji-picker.js"></script>
 </body>
 </html>
