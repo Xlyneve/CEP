@@ -19,7 +19,7 @@ let recentItems = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
 
 const symbols = [
   // Arrows
-  "➜", "➤", "➔", "➙", "➝", "➞", "→", "←", "↑", "↓",
+  "☐", "➜", "➤", "➔", "➙", "➝", "➞", "→", "←", "↑", "↓",
   "↔", "↕", "⇄", "⇅", "⇒", "⇐", "⇧", "⇩", "↩", "↪",
 
   // Checks / crosses
