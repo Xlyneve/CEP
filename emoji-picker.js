@@ -107,21 +107,28 @@ function createEmojiSymbolPicker() {
     btn.textContent = symbol;
 
     btn.style.cssText = `
-      border: 1px solid rgba(180,180,180,0.3);
-      background: rgba(255,255,255,0.85);
-      border-radius: 8px;
-      width: 100%;
-      height: 34px;
-      padding: 0;
-      font-size: 12px;
-      line-height: 1;
-      cursor: pointer;
-      text-align: center;
-      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", Tahoma, Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  width: 100%;
+  height: 30px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  text-align: center;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", Tahoma, Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+    btn.addEventListener("mouseenter", () => {
+  btn.style.background = "rgba(180,180,180,0.12)";
+});
+
+btn.addEventListener("mouseleave", () => {
+  btn.style.background = "transparent";
+});
 
     btn.addEventListener("click", () => {
       insertAtCursor(symbol);
