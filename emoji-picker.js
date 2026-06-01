@@ -9,6 +9,11 @@ document.head.appendChild(emojiScript);
 let savedRange = null;
 let pickerWrapper = null;
 
+const RECENT_KEY = "recentEmojiSymbols";
+const RECENT_LIMIT = 14;
+
+let recentItems = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+
 const symbols = [
   // Arrows
   "➜", "➤", "➔", "➙", "➝", "➞", "→", "←", "↑", "↓",
@@ -43,6 +48,70 @@ emojiScript.onerror = () => {
   console.error("Emoji picker failed to load. Check internet connection or CDN link.");
 };
 
+function addToRecent(item) {
+  recentItems = recentItems.filter(x => x !== item);
+  recentItems.unshift(item);
+  recentItems = recentItems.slice(0, RECENT_LIMIT);
+
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recentItems));
+  renderRecentItems();
+}
+
+function renderRecentItems() {
+  const recentGrid = document.getElementById("recentGrid");
+  const recentSection = document.getElementById("recentSection");
+
+  if (!recentGrid || !recentSection) return;
+
+  recentGrid.innerHTML = "";
+
+  if (recentItems.length === 0) {
+    recentSection.style.display = "none";
+    return;
+  }
+
+  recentSection.style.display = "block";
+
+  recentItems.forEach(item => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = item;
+
+    btn.style.cssText = `
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      width: 100%;
+      height: 30px;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      text-align: center;
+      font-family: Tahoma, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    btn.addEventListener("mouseenter", () => {
+      btn.style.background = "rgba(180,180,180,0.12)";
+    });
+
+    btn.addEventListener("mouseleave", () => {
+      btn.style.background = "transparent";
+    });
+
+    btn.addEventListener("click", () => {
+      insertAtCursor(item);
+      addToRecent(item);
+      hideEmojiPicker();
+    });
+
+    recentGrid.appendChild(btn);
+  });
+}
+
 function createEmojiSymbolPicker() {
   if (document.getElementById("emojiPickerWrapper")) return;
 
@@ -50,13 +119,18 @@ function createEmojiSymbolPicker() {
   pickerWrapper.id = "emojiPickerWrapper";
 
   pickerWrapper.innerHTML = `
-    <div id="symbolSection">
-      <div id="symbolHeader">Symbols</div>
-      <div id="symbolGrid"></div>
-    </div>
+  <div id="recentSection">
+    <div id="recentHeader">Recently used</div>
+    <div id="recentGrid"></div>
+  </div>
 
-    <emoji-picker></emoji-picker>
-  `;
+  <div id="symbolSection">
+    <div id="symbolHeader">Symbols</div>
+    <div id="symbolGrid"></div>
+  </div>
+
+  <emoji-picker></emoji-picker>
+`;
 
   pickerWrapper.style.cssText = `
     position: fixed;
@@ -74,12 +148,37 @@ function createEmojiSymbolPicker() {
 
   document.body.appendChild(pickerWrapper);
 
-  const symbolSection = pickerWrapper.querySelector("#symbolSection");
-  const symbolHeader = pickerWrapper.querySelector("#symbolHeader");
-  const symbolGrid = pickerWrapper.querySelector("#symbolGrid");
-  const emojiPicker = pickerWrapper.querySelector("emoji-picker");
+  const recentSection = pickerWrapper.querySelector("#recentSection");
+const recentHeader = pickerWrapper.querySelector("#recentHeader");
+const recentGrid = pickerWrapper.querySelector("#recentGrid");
+
+const symbolSection = pickerWrapper.querySelector("#symbolSection");
+const symbolHeader = pickerWrapper.querySelector("#symbolHeader");
+const symbolGrid = pickerWrapper.querySelector("#symbolGrid");
+const emojiPicker = pickerWrapper.querySelector("emoji-picker");
   emojiPicker.style.width = "100%";
 
+  recentSection.style.cssText = `
+  padding: 10px 10px 6px;
+  border-bottom: 1px solid rgba(180,180,180,0.18);
+  background: rgba(255,255,255,0.96);
+`;
+
+recentHeader.style.cssText = `
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #555;
+`;
+
+recentGrid.style.cssText = `
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  min-height: 30px;
+`;
+  
   symbolSection.style.cssText = `
     padding: 10px;
     border-bottom: 1px solid rgba(180,180,180,0.25);
@@ -132,18 +231,23 @@ btn.addEventListener("mouseleave", () => {
   btn.style.background = "transparent";
 });
 
-    btn.addEventListener("click", () => {
-      insertAtCursor(symbol);
-      hideEmojiPicker();
-    });
+   btn.addEventListener("click", () => {
+  insertAtCursor(symbol);
+  addToRecent(symbol);
+  hideEmojiPicker();
+});
 
     symbolGrid.appendChild(btn);
   });
 
-  emojiPicker.addEventListener("emoji-click", (event) => {
-    insertAtCursor(event.detail.unicode);
-    hideEmojiPicker();
-  });
+emojiPicker.addEventListener("emoji-click", (event) => {
+  const emoji = event.detail.unicode;
+  insertAtCursor(emoji);
+  addToRecent(emoji);
+  hideEmojiPicker();
+});
+  
+  renderRecentItems();
 }
 
 // Save cursor position
