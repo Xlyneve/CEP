@@ -8,6 +8,9 @@ document.head.appendChild(emojiScript);
 
 let savedRange = null;
 let pickerWrapper = null;
+let activeTextField = null;
+let activeStart = 0;
+let activeEnd = 0;
 
 const RECENT_KEY = "recentEmojiSymbols";
 const RECENT_LIMIT = 14;
@@ -304,24 +307,32 @@ function hideEmojiPicker() {
 function insertAtCursor(text) {
   const active = document.activeElement;
 
-  // Input or textarea
+  // Use currently focused textarea/input if available
   if (active && (active.tagName === "TEXTAREA" || active.tagName === "INPUT")) {
-    const start = active.selectionStart;
-    const end = active.selectionEnd;
+    activeTextField = active;
+    activeStart = active.selectionStart || 0;
+    activeEnd = active.selectionEnd || 0;
+  }
 
-    active.value =
-      active.value.substring(0, start) +
-      text +
-      active.value.substring(end);
+  // Textarea/input insertion
+  if (activeTextField && (activeTextField.tagName === "TEXTAREA" || activeTextField.tagName === "INPUT")) {
+    activeTextField.focus();
 
-    active.selectionStart = active.selectionEnd = start + text.length;
-    active.focus();
+    const start = activeStart;
+    const end = activeEnd;
 
-    active.dispatchEvent(new Event("input", { bubbles: true }));
+    activeTextField.setRangeText(text, start, end, "end");
+
+    activeStart = activeTextField.selectionStart;
+    activeEnd = activeTextField.selectionEnd;
+
+    // VERY IMPORTANT: triggers your homecal saveCalendar listener
+    activeTextField.dispatchEvent(new Event("input", { bubbles: true }));
+
     return;
   }
 
-  // contenteditable
+  // contenteditable insertion
   if (savedRange) {
     const selection = window.getSelection();
 
@@ -351,6 +362,41 @@ function insertAtCursor(text) {
 
   console.log("Click inside a text box first, then choose a symbol or emoji.");
 }
+
+
+function saveActiveTextField(el) {
+  if (!el) return;
+
+  if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
+    activeTextField = el;
+    activeStart = el.selectionStart || 0;
+    activeEnd = el.selectionEnd || 0;
+  }
+}
+
+document.addEventListener("focusin", (e) => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
+    saveActiveTextField(e.target);
+  }
+});
+
+document.addEventListener("click", (e) => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
+    saveActiveTextField(e.target);
+  }
+});
+
+document.addEventListener("keyup", (e) => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
+    saveActiveTextField(e.target);
+  }
+});
+
+document.addEventListener("mouseup", (e) => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
+    saveActiveTextField(e.target);
+  }
+});
 
 function getEditableParent(node) {
   let current = node.parentNode;
