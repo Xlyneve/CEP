@@ -78,6 +78,7 @@ function createEmojiSymbolPicker() {
   const symbolHeader = pickerWrapper.querySelector("#symbolHeader");
   const symbolGrid = pickerWrapper.querySelector("#symbolGrid");
   const emojiPicker = pickerWrapper.querySelector("emoji-picker");
+  emojiPicker.style.width = "100%";
 
   symbolSection.style.cssText = `
     padding: 10px;
@@ -95,8 +96,8 @@ function createEmojiSymbolPicker() {
 
   symbolGrid.style.cssText = `
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
   max-height: 145px;
   overflow-y: auto;
 `;
@@ -106,22 +107,23 @@ function createEmojiSymbolPicker() {
     btn.type = "button";
     btn.textContent = symbol;
 
-    btn.style.cssText = `
+btn.style.cssText = `
   border: none;
   background: transparent;
   border-radius: 6px;
   width: 100%;
-  height: 30px;
+  height: 34px;
   padding: 0;
-  font-size: 10px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
   text-align: center;
-  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", Tahoma, Arial, sans-serif;
+  font-family: Tahoma, Arial, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
 `;
+    
     btn.addEventListener("mouseenter", () => {
   btn.style.background = "rgba(180,180,180,0.12)";
 });
