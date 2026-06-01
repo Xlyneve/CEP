@@ -113,7 +113,7 @@ function createEmojiSymbolPicker() {
       width: 100%;
       height: 34px;
       padding: 0;
-      font-size: 17px;
+      font-size: 15px;
       line-height: 1;
       cursor: pointer;
       text-align: center;
