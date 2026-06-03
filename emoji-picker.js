@@ -145,12 +145,56 @@ function createEmojiSymbolPicker() {
   max-height: min(720px, 90vh);
   overflow-y: auto;
   overflow-x: hidden;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 20px;
+
+  box-shadow:
+    0 18px 45px rgba(120, 100, 160, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(170, 155, 210, 0.45) transparent;
 `;
 
   document.body.appendChild(pickerWrapper);
+
+  const pickerGlassStyle = document.createElement("style");
+pickerGlassStyle.textContent = `
+  #emojiPickerWrapper::-webkit-scrollbar,
+  #symbolGrid::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  #emojiPickerWrapper::-webkit-scrollbar-track,
+  #symbolGrid::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  #emojiPickerWrapper::-webkit-scrollbar-thumb,
+  #symbolGrid::-webkit-scrollbar-thumb {
+    background: rgba(170, 155, 210, 0.38);
+    border-radius: 999px;
+    border: 2px solid rgba(255,255,255,0.35);
+  }
+
+  #emojiPickerWrapper emoji-picker {
+    --background: rgba(255,255,255,0.28);
+    --border-color: transparent;
+    --category-emoji-padding: 4px;
+    --emoji-padding: 6px;
+    --indicator-color: rgba(160, 130, 220, 0.75);
+    --input-border-color: rgba(255,255,255,0.5);
+    --input-font-color: #555;
+    --input-placeholder-color: #888;
+    --outline-color: rgba(190,170,230,0.6);
+  }
+`;
+document.head.appendChild(pickerGlassStyle);
 
   const recentSection = pickerWrapper.querySelector("#recentSection");
 const recentHeader = pickerWrapper.querySelector("#recentHeader");
@@ -167,8 +211,10 @@ const emojiPicker = pickerWrapper.querySelector("emoji-picker");
 
   recentSection.style.cssText = `
   padding: 10px 10px 6px;
-  border-bottom: 1px solid rgba(180,180,180,0.18);
-  background: rgba(255,255,255,0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 `;
 
 recentHeader.style.cssText = `
@@ -187,10 +233,12 @@ recentGrid.style.cssText = `
 `;
   
   symbolSection.style.cssText = `
-    padding: 10px;
-    border-bottom: 1px solid rgba(180,180,180,0.25);
-    background: rgba(255,255,255,0.96);
-  `;
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+`;
 
   symbolHeader.style.cssText = `
     font-family: Tahoma, Arial, sans-serif;
@@ -231,7 +279,7 @@ btn.style.cssText = `
 `;
     
     btn.addEventListener("mouseenter", () => {
-  btn.style.background = "rgba(180,180,180,0.12)";
+ btn.style.background = "rgba(210, 195, 255, 0.28)";
 });
 
 btn.addEventListener("mouseleave", () => {
