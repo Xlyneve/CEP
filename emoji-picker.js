@@ -273,9 +273,11 @@ recentGrid.style.cssText = `
 
   categoryTabs.style.cssText = `
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 8px 10px;
-  overflow-x: auto;
+  overflow-x: hidden;
+  overflow-y: visible;
   border-bottom: 1px solid rgba(255, 255, 255, 0.38);
   background: rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(12px);
@@ -358,17 +360,18 @@ Object.keys(emojiGroups).forEach(categoryName => {
   tab.textContent = categoryName;
 
   tab.style.cssText = `
-    border: 1px solid rgba(255,255,255,0.55);
-    background: rgba(255,255,255,0.32);
-    color: #555;
-    border-radius: 999px;
-    padding: 6px 10px;
-    font-size: 11px;
-    font-family: Tahoma, Arial, sans-serif;
-    white-space: nowrap;
-    cursor: pointer;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
-  `;
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.32);
+  color: #555;
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 10.5px;
+  font-family: Tahoma, Arial, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+  flex: 0 0 auto;
+`;
 
   tab.addEventListener("click", () => {
     renderCategory(categoryName);
