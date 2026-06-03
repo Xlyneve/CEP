@@ -188,16 +188,22 @@ pickerWrapper.innerHTML = `
   overflow-y: auto;
   overflow-x: hidden;
 
- background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0.08)
+  );
 
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 20px;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 22px;
 
   box-shadow:
-    0 18px 45px rgba(120, 100, 160, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    0 18px 45px rgba(80, 60, 130, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12);
 
   scrollbar-width: thin;
   scrollbar-color: rgba(170, 155, 210, 0.45) transparent;
