@@ -188,7 +188,7 @@ pickerWrapper.innerHTML = `
   overflow-y: auto;
   overflow-x: hidden;
 
- background: rgba(255, 255, 255, 0.32);
+ background: rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
 
