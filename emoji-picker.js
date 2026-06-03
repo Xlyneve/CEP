@@ -257,7 +257,7 @@ let activeCategory = "Clinical";
   recentSection.style.cssText = `
   padding: 10px 10px 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.38);
-  background: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 `;
@@ -285,7 +285,7 @@ recentGrid.style.cssText = `
   overflow-x: hidden;
   overflow-y: visible;
   border-bottom: 1px solid rgba(255, 255, 255, 0.38);
-  background: rgba(255, 255, 255, 0.24);
+background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 `;
@@ -293,7 +293,7 @@ recentGrid.style.cssText = `
   symbolSection.style.cssText = `
   padding: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.38);
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 `;
@@ -366,16 +366,18 @@ Object.keys(emojiGroups).forEach(categoryName => {
   tab.textContent = categoryName;
 
   tab.style.cssText = `
-  border: 1px solid rgba(255,255,255,0.55);
-  background: rgba(255,255,255,0.32);
-  color: #555;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.12);
+  color: #4b4260;
   border-radius: 999px;
   padding: 6px 9px;
   font-size: 10.5px;
   font-family: Tahoma, Arial, sans-serif;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    0 2px 8px rgba(120,100,160,0.08);
   flex: 0 0 auto;
 `;
 
@@ -388,9 +390,9 @@ Object.keys(emojiGroups).forEach(categoryName => {
       btn.style.fontWeight = "normal";
     });
 
-    tab.style.background = "rgba(210, 195, 255, 0.38)";
-    tab.style.color = "#3f3260";
-    tab.style.fontWeight = "bold";
+   tab.style.background = "rgba(255, 255, 255, 0.26)";
+   tab.style.color = "#3f3260";
+   tab.style.fontWeight = "bold";
   });
 
   categoryTabs.appendChild(tab);
