@@ -1,10 +1,5 @@
 // emoji-picker.js
 
-// Load external emoji picker library
-const emojiScript = document.createElement("script");
-emojiScript.type = "module";
-emojiScript.src = "https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js";
-document.head.appendChild(emojiScript);
 
 let savedRange = null;
 let pickerWrapper = null;
@@ -17,39 +12,86 @@ const RECENT_LIMIT = 14;
 
 let recentItems = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
 
-const symbols = [
-  // Arrows
-  "☐", "➜", "➤", "➔", "➙", "➝", "➞", "→", "←", "↑", "↓",
-  "↔", "↕", "⇄", "⇅", "⇒", "⇐", "⇧", "⇩", "↩", "↪",
+const emojiGroups = {
+  "Clinical": [
+    "🩺", "💊", "💉", "🩹", "🧪", "🧬", "🦠", "🩸",
+    "🫁", "🫀", "🧠", "🦷", "👁", "👂", "👃", "👄",
+    "🦴", "😷", "🤒", "🤧", "🤮", "🤕", "🥵", "🥶",
+    "🌡", "🚑", "🏥", "⚕", "♿"
+  ],
 
-  // Checks / crosses
-  "✓", "✔", "☑", "✕", "✖", "✗", "✘",
+  "Travel": [
+    "✈", "🛫", "🛬", "🧳", "🎒", "🛂", "🛃", "🛅",
+    "🌍", "🌎", "🌏", "🗺", "📍", "📌", "🏨", "🏝",
+    "🏖", "⛱", "🚗", "🚕", "🚌", "🚆", "🚢", "🛳",
+    "🛟", "🪪", "💳", "💵", "💰", "📅", "🕒", "⏰"
+  ],
 
-  // Bullets / shapes
-  "•", "◦", "▪", "▫", "■", "☐", "◆", "◇", "●", "○",
-  "◉", "◎", "▸", "▹", "▾", "▿",
+  "Contact / Website": [
+    "☎", "☏", "📞", "📱", "📲", "✉", "📧", "📨",
+    "🌐", "🔗", "🖥", "💻", "⌨", "🖱", "🔍", "📡",
+    "📤", "📥", "📎", "📁", "📂", "🗂", "📋", "📝"
+  ],
 
-  // Stars / alerts
-  "★", "☆", "✦", "✧", "✩", "⚠", "‼", "⁉",
+  "Login / Password": [
+    "👤", "👥", "🪪", "🔐", "🔒", "🔓", "🔑", "🗝",
+    "🛡", "✅", "☑", "✔", "❌", "✖", "⚠", "‼",
+    "⁉", "❗", "❓", "🔁", "🔄", "📌", "📍", "📝"
+  ],
 
-  // Medical / useful symbols
-  "°", "℃", "℉", "±", "×", "÷", "≈", "≠", "≤", "≥",
-  "µ", "Ω", "∞", "∴", "∵", "∆", "∑",
+  "Faces": [
+    "😀", "😃", "😄", "😁", "🙂", "😊", "😅", "😂",
+    "🤣", "😌", "😍", "🥰", "😎", "🤔", "😐", "😬",
+    "🙄", "😴", "😢", "😭", "😡", "😳", "😱", "😵",
+    "🤢", "🤮", "🤧", "🥴"
+  ],
 
-  // Keyboard / UI
-  "⌘", "⌥", "⌃", "⇧", "⏎", "⌫", "⌦", "␣", "⎋",
+  "Hands": [
+    "👍", "👎", "👌", "✌", "🤞", "👏", "🙌", "🙏",
+    "👋", "🤚", "✋", "☝", "👆", "👇", "👈", "👉",
+    "✍", "🤝"
+  ],
 
-  // Misc
-  "♥", "♡", "♪", "♫", "☀", "☁", "☂", "☎", "✉", "⚡"
-];
+  "Hearts / Colour": [
+    "❤️", "🧡", "💛", "💚", "💙", "💜", "🤍", "🤎",
+    "🖤", "💕", "💖", "💗", "💓", "💔", "❣", "♥",
+    "🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "⚫", "⚪"
+  ],
 
-emojiScript.onload = () => {
+  "Arrows": [
+    "→", "←", "↑", "↓", "↔", "↕", "↩", "↪",
+    "➜", "➤", "➔", "➙", "➝", "➞", "⇒", "⇐",
+    "⇧", "⇩", "⬅", "➡", "⬆", "⬇", "🔼", "🔽",
+    "⏪", "⏩", "⏫", "⏬"
+  ],
+
+  "Ticks / Boxes": [
+    "☐", "☑", "☒", "✓", "✔", "✅", "✕", "✖",
+    "✗", "✘", "❌", "⭕", "○", "●", "◯", "◉",
+    "◎", "◌", "□", "■", "◇", "◆", "▫", "▪"
+  ],
+
+  "Most Symbols": [
+    "•", "◦", "▪", "▫", "▸", "▹", "▾", "▿",
+    "★", "☆", "✦", "✧", "✩", "⚠", "‼", "⁉",
+    "❗", "❓", "°", "℃", "℉", "±", "×", "÷",
+    "≈", "≠", "≤", "≥", "µ", "Ω", "∞", "∴",
+    "∵", "∆", "∑", "§", "¶", "©", "®", "™",
+    "#", "@", "&", "%", "$", "£", "€", "¥",
+    "+", "-", "=", "/", "\\", "|", "_", "~",
+    "^", "*", ":", ";", "'", "\"", "`"
+  ],
+
+  "Keyboard / UI": [
+    "⌘", "⌥", "⌃", "⇧", "⏎", "⌫", "⌦", "␣",
+    "⎋", "↵", "⇥", "⇤", "⭾", "⏻", "⏸", "▶",
+    "⏹", "⏺", "🔎", "⚙", "🧭", "📶", "🔋", "🔌"
+  ]
+};
+
+document.addEventListener("DOMContentLoaded", () => {
   createEmojiSymbolPicker();
-};
-
-emojiScript.onerror = () => {
-  console.error("Emoji picker failed to load. Check internet connection or CDN link.");
-};
+});
 
 function addToRecent(item) {
   recentItems = recentItems.filter(x => x !== item);
@@ -121,20 +163,20 @@ function createEmojiSymbolPicker() {
   pickerWrapper = document.createElement("div");
   pickerWrapper.id = "emojiPickerWrapper";
 
-  pickerWrapper.innerHTML = `
+pickerWrapper.innerHTML = `
   <div id="recentSection">
     <div id="recentHeader">Recently used</div>
     <div id="recentGrid"></div>
   </div>
 
+  <div id="categoryTabs"></div>
+
   <div id="symbolSection">
-    <div id="symbolHeader">Symbols</div>
+    <div id="symbolHeader">Clinical</div>
     <div id="symbolGrid"></div>
   </div>
-
-  <emoji-picker></emoji-picker>
 `;
-
+  
   pickerWrapper.style.cssText = `
   position: fixed;
   bottom: 30px;
@@ -203,11 +245,8 @@ const recentGrid = pickerWrapper.querySelector("#recentGrid");
 const symbolSection = pickerWrapper.querySelector("#symbolSection");
 const symbolHeader = pickerWrapper.querySelector("#symbolHeader");
 const symbolGrid = pickerWrapper.querySelector("#symbolGrid");
-const emojiPicker = pickerWrapper.querySelector("emoji-picker");
-  
-  emojiPicker.style.height = "420px";
-  emojiPicker.style.maxHeight = "55vh";
-  emojiPicker.style.width = "100%";
+const categoryTabs = pickerWrapper.querySelector("#categoryTabs");
+let activeCategory = "Clinical";
 
   recentSection.style.cssText = `
   padding: 10px 10px 6px;
@@ -231,6 +270,17 @@ recentGrid.style.cssText = `
   gap: 4px;
   min-height: 30px;
 `;
+
+  categoryTabs.style.cssText = `
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+`;
   
   symbolSection.style.cssText = `
   padding: 10px;
@@ -252,55 +302,100 @@ recentGrid.style.cssText = `
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 4px;
-  max-height: 145px;
+  max-height: 230px;
   overflow-y: auto;
+  padding-right: 2px;
 `;
 
-  symbols.forEach(symbol => {
+  function renderCategory(categoryName) {
+  activeCategory = categoryName;
+  symbolHeader.textContent = categoryName;
+  symbolGrid.innerHTML = "";
+
+  emojiGroups[categoryName].forEach(symbol => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = symbol;
 
-btn.style.cssText = `
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  width: 100%;
-  height: 34px;
-  padding: 0;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  text-align: center;
-  font-family: Tahoma, Arial, sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-    
+    btn.style.cssText = `
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      width: 100%;
+      height: 36px;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      text-align: center;
+      font-family: Tahoma, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+
     btn.addEventListener("mouseenter", () => {
- btn.style.background = "rgba(210, 195, 255, 0.28)";
-});
+      btn.style.background = "rgba(210, 195, 255, 0.28)";
+    });
 
-btn.addEventListener("mouseleave", () => {
-  btn.style.background = "transparent";
-});
+    btn.addEventListener("mouseleave", () => {
+      btn.style.background = "transparent";
+    });
 
-   btn.addEventListener("click", () => {
-  insertAtCursor(symbol);
-  addToRecent(symbol);
-  hideEmojiPicker();
-});
+    btn.addEventListener("click", () => {
+      insertAtCursor(symbol);
+      addToRecent(symbol);
+      hideEmojiPicker();
+    });
 
     symbolGrid.appendChild(btn);
   });
+}
 
-emojiPicker.addEventListener("emoji-click", (event) => {
-  const emoji = event.detail.unicode;
-  insertAtCursor(emoji);
-  addToRecent(emoji);
-  hideEmojiPicker();
+Object.keys(emojiGroups).forEach(categoryName => {
+  const tab = document.createElement("button");
+  tab.type = "button";
+  tab.textContent = categoryName;
+
+  tab.style.cssText = `
+    border: 1px solid rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.32);
+    color: #555;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: Tahoma, Arial, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+  `;
+
+  tab.addEventListener("click", () => {
+    renderCategory(categoryName);
+
+    [...categoryTabs.querySelectorAll("button")].forEach(btn => {
+      btn.style.background = "rgba(255,255,255,0.32)";
+      btn.style.color = "#555";
+      btn.style.fontWeight = "normal";
+    });
+
+    tab.style.background = "rgba(210, 195, 255, 0.38)";
+    tab.style.color = "#3f3260";
+    tab.style.fontWeight = "bold";
+  });
+
+  categoryTabs.appendChild(tab);
 });
+
+renderCategory(activeCategory);
+
+const firstTab = categoryTabs.querySelector("button");
+if (firstTab) {
+  firstTab.style.background = "rgba(210, 195, 255, 0.38)";
+  firstTab.style.color = "#3f3260";
+  firstTab.style.fontWeight = "bold";
+}
+
   
   renderRecentItems();
 }
