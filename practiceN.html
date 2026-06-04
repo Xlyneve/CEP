@@ -414,32 +414,83 @@ mark.highlight-hue {
   display: inline-block;
   text-decoration: none;
 }
-.note-text table,
-.edit-note table {
+
+/* --- TABLE INSIDE NOTE CARD: SAFE PREVIEW --- */
+.note-card {
+  overflow: hidden;
+}
+
+.note-text {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.note-text table {
   width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 10px;
+  font-family: Tahoma, sans-serif;
+  cursor: zoom-in;
+}
+
+.note-text td,
+.note-text th {
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  padding: 4px;
+  min-width: 0;
+  max-width: 1px;
+  vertical-align: top;
+
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  line-height: 1.25;
+}
+
+.note-text th {
+  background: rgba(255, 255, 255, 0.35);
+  font-weight: bold;
+}
+
+.note-text td {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* --- TABLE WHILE EDITING --- */
+.edit-note {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.edit-note table {
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   margin: 8px 0;
   font-size: 12px;
   font-family: Tahoma, sans-serif;
 }
 
-.note-text td,
-.note-text th,
 .edit-note td,
 .edit-note th {
   border: 1px solid rgba(0, 0, 0, 0.25);
   padding: 6px;
-  min-width: 60px;
+  min-width: 80px;
   vertical-align: top;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.note-text th,
 .edit-note th {
   background: rgba(255, 255, 255, 0.35);
   font-weight: bold;
 }
 
-.note-text td,
 .edit-note td {
   background: rgba(255, 255, 255, 0.18);
 }
@@ -835,6 +886,93 @@ mark.highlight-hue {
   border-radius: 8px;
   box-shadow: 0 0 20px rgba(255,255,255,0.3);
   transition: transform 0.25s ease;
+}
+
+/* --- TABLE ZOOM OVERLAY --- */
+.table-zoom-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 7000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.table-zoom-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.table-zoom-box {
+  width: 92vw;
+  max-width: 1100px;
+  max-height: 85vh;
+  overflow: auto;
+
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 18px;
+
+  padding: 18px;
+  box-sizing: border-box;
+
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.25),
+    inset 0 0 18px rgba(255, 255, 255, 0.35);
+}
+
+.table-zoom-content table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 14px;
+  font-family: Tahoma, sans-serif;
+}
+
+.table-zoom-content th,
+.table-zoom-content td {
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  padding: 8px;
+  vertical-align: top;
+  background: rgba(255, 255, 255, 0.45);
+  min-width: 120px;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.table-zoom-content th {
+  font-weight: bold;
+  background: rgba(214, 245, 255, 0.65);
+}
+
+.table-close-btn {
+  position: fixed;
+  top: 22px;
+  right: 28px;
+  font-size: 34px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 7100;
+  user-select: none;
+}
+
+/* Make tables in note cards feel clickable */
+.note-text table {
+  cursor: zoom-in;
 }
 
 /* Close button */
@@ -1750,8 +1888,9 @@ card.addEventListener('touchcancel', endPress);
       if (longPressed) return;                                     // just long-pressed
       if (e.target.closest('.btn-group')) return;                  // clicked a button
        if (e.target.closest('.edit-toolbar')) return;            // clicked format buttons
-      if (e.target.closest('.note-url')) return;                   // clicked link area
-      const textToCopy = textDisplay.innerText; // plain text only
+      if (e.target.closest('.note-url')) return;   	  // clicked link area
+      if (e.target.closest('.note-text table')) return;
+	  const textToCopy = textDisplay.innerText; // plain text only
       copyPlainText(textToCopy, () => {
         // soft yellow check feedback
         tick.style.opacity = '1';
@@ -2037,6 +2176,14 @@ document.addEventListener("click", function (e) {
     <img id="zoomedImage" src="">
 </div>
 
+<div class="table-zoom-overlay" id="tableZoomOverlay">
+  <span class="table-close-btn" id="closeTableZoomBtn">&times;</span>
+
+  <div class="table-zoom-box">
+    <div class="table-zoom-content" id="zoomedTableContent"></div>
+  </div>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   
@@ -2068,6 +2215,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 	
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const tableOverlay = document.getElementById("tableZoomOverlay");
+  const zoomedTableContent = document.getElementById("zoomedTableContent");
+  const closeTableZoomBtn = document.getElementById("closeTableZoomBtn");
+
+  document.body.addEventListener("click", (e) => {
+    const table = e.target.closest(".note-text table");
+
+    if (!table) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    zoomedTableContent.innerHTML = "";
+    const clonedTable = table.cloneNode(true);
+
+    zoomedTableContent.appendChild(clonedTable);
+    tableOverlay.classList.add("active");
+  });
+
+  closeTableZoomBtn.addEventListener("click", () => {
+    tableOverlay.classList.remove("active");
+    zoomedTableContent.innerHTML = "";
+  });
+
+  tableOverlay.addEventListener("click", (e) => {
+    if (e.target === tableOverlay) {
+      tableOverlay.classList.remove("active");
+      zoomedTableContent.innerHTML = "";
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && tableOverlay.classList.contains("active")) {
+      tableOverlay.classList.remove("active");
+      zoomedTableContent.innerHTML = "";
+    }
+  });
+});
 </script>
 <script src="emoji-picker.js?v=1"></script>
 
