@@ -2855,12 +2855,33 @@ function formatPrivateNoteHtml(value) {
 
 function splitPromptToItems(value) {
   if (Array.isArray(value)) {
-    return value.map(v => String(v).trim()).filter(Boolean);
+    return value
+      .map(v => {
+        if (typeof v === 'string') {
+          return {
+            text: v.trim(),
+            checked: false,
+            lineBreak: false
+          };
+        }
+
+        return {
+          text: String(v?.text || '').trim(),
+          checked: !!v?.checked,
+          lineBreak: !!v?.lineBreak
+        };
+      })
+      .filter(item => item.text);
   }
+
   return String(value || '')
     .split(/\n|,/)
-    .map(v => v.trim())
-    .filter(Boolean);
+    .map(v => ({
+      text: v.trim(),
+      checked: false,
+      lineBreak: false
+    }))
+    .filter(item => item.text);
 }
 
 function joinList(items, separator = '\n') {
@@ -3139,7 +3160,14 @@ function initEditableChecklist(id, seedItems = []) {
     }
   });
 
-  seedItems.forEach(item => createChecklistRow(container, item, false));
+  seedItems.forEach(item => {
+  createChecklistRow(
+    container,
+    item.text || '',
+    !!item.checked,
+    !!item.lineBreak
+  );
+});
 }
 
 function setChecklistItems(id, items = []) {
@@ -3437,13 +3465,13 @@ function collectPromptFields() {
     hpc: getChecklistItems('hpcList').map(i => i.text),
     redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
     redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
-    examGeneral: getCheckedChecklistItems('examGeneralList'),
-	examHeadNeck: getCheckedChecklistItems('examHeadNeckList'),
-	examEnt: getCheckedChecklistItems('examEntList'),
-	examOropharynx: getCheckedChecklistItems('examOropharynxList'),
-	examChest: getCheckedChecklistItems('examChestList'),
-	examAbdomen: getCheckedChecklistItems('examAbdomenList'),
-	examOther: getCheckedChecklistItems('examOtherList'),
+    examGeneral: getChecklistItems('examGeneralList'),
+	examHeadNeck: getChecklistItems('examHeadNeckList'),
+	examEnt: getChecklistItems('examEntList'),
+	examOropharynx: getChecklistItems('examOropharynxList'),
+	examChest: getChecklistItems('examChestList'),
+	examAbdomen: getChecklistItems('examAbdomenList'),
+	examOther: getChecklistItems('examOtherList'),
     investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
     investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
     assessment: getChecklistItems('assessmentList').map(i => i.text),
@@ -4061,7 +4089,7 @@ function buildSummaryText() {
   const sexLabel = sexFemale ? 'female' : (sexMale ? 'male' : '');
   const introBits = [];
 
-  if (age) introBits.push(`${age} years old`);
+  if (age) introBits.push(`${age} year old`);
   if (sexLabel) introBits.push(sexLabel);
 
   let openingLine = introBits.join(' ');
