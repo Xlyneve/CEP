@@ -1,11 +1,20 @@
 (function () {
-  const centerToggle = document.querySelector(".center-toggle");
-  const toggleIcon = document.getElementById("menuToggle");
+  let centerToggle = document.querySelector(".center-toggle");
 
-  if (!centerToggle || !toggleIcon) return;
+if (!centerToggle) {
+  centerToggle = document.createElement("div");
+  centerToggle.className = "center-toggle";
+  centerToggle.innerHTML = `
+    <div class="toggle-icon" id="menuToggle">☐</div>
+    <div class="rays"></div>
+  `;
+  document.body.appendChild(centerToggle);
+}
 
-  const menuContainer = centerToggle.querySelector(".rays");
-  if (!menuContainer) return;
+const toggleIcon = centerToggle.querySelector(".toggle-icon");
+const menuContainer = centerToggle.querySelector(".rays");
+
+if (!toggleIcon || !menuContainer) return;
 
   const basePath = "https://xlyneve.github.io/CEP/";
 
