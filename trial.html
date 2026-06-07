@@ -346,6 +346,38 @@ body::before {
   column-gap: 16px;
   width: 100%;
 }
+.vaccine-card-grid.searching {
+  column-count: unset;
+  column-gap: unset;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.vaccine-card-grid.searching .vaccine-card {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+
+@media (max-width: 1200px) {
+  .vaccine-card-grid.searching {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 850px) {
+  .vaccine-card-grid.searching {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .vaccine-card-grid.searching {
+    grid-template-columns: 1fr;
+  }
+}
 
 
 @media (max-width: 1200px) {
@@ -573,10 +605,13 @@ function stripHtml(html) {
 }
 
   function applyFilter() {
-    const query = currentSearch.toLowerCase();
-    if (!query) {
-      latestData = [...fullData];
-    } else {
+  const query = currentSearch.toLowerCase();
+
+  vaccineCards.classList.toggle("searching", !!query);
+
+  if (!query) {
+    latestData = [...fullData];
+  } else {
       latestData = fullData.filter(({ data }) => {
         const v = data;
         return (
@@ -762,7 +797,6 @@ function stripHtml(html) {
     document.execCommand(command, false, value);
   };
 
-  // Keyboard shortcuts for formatting
     // Keyboard shortcuts for formatting
   document.addEventListener("keydown", function (e) {
     if (e.ctrlKey) {
