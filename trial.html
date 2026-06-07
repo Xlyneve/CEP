@@ -706,9 +706,22 @@ function stripHtml(html) {
   });
 
   window.editVaccine = (id) => {
-    editId = id;
-    renderCards();
-  };
+  editId = id;
+  renderCards();
+
+  requestAnimationFrame(() => {
+    const editedCard = document.querySelector(`.vaccine-card[data-id="${id}"]`);
+    if (editedCard) {
+      editedCard.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+
+      const firstInput = editedCard.querySelector(".edit-input");
+      if (firstInput) firstInput.focus();
+    }
+  });
+};
 
   window.cancelEdit = () => {
     editId = null;
