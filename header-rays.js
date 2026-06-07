@@ -26,7 +26,7 @@ if (!toggleIcon || !menuContainer) return;
         { text: "Nurse Notes", link: "PN.html" },
         { text: "Info", link: "info.html" },
         { text: "Templates", link: "explain.html" },
-        { text: "Notes", link: "practiceN.html" },
+        { text: "Practice Nurse", link: "practiceN.html" },
         { text: "Recalls", link: "recalls.html" }
       ]
     },
