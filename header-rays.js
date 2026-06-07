@@ -27,23 +27,26 @@ if (!toggleIcon || !menuContainer) return;
         { text: "Info", link: "info.html" },
         { text: "Templates", link: "explain.html" },
         { text: "Practice Nurse", link: "practiceN.html" },
-        { text: "Recalls", link: "recalls.html" }
+        { text: "Recalls", link: "recalls.html" },
+         { text: "Clinical Notes", link: "https://xlyneve.github.io/CEP/Clinicalnotes.html" }
       ]
     },
     {
       name: "Clinical",
       links: [
+        { text: "Links", link: "https://xlyneve.github.io/CEP/forms.html" },
         { text: "Drug Calc", link: "OHcalc.html" },
+         { text: "Vaccines", link: "complete-vaccine-info.html" },
         { text: "Vaccine Calc", link: "vaccine-spacing.html" },
-        { text: "Vaccines", link: "complete-vaccine-info.html" },
-        { text: "Meds", link: "Npres.html" }
+        { text: "Meds", link: "Npres.html" },
+         { text: "Consult", link: "https://xlyneve.github.io/CEP/RNCNP.html" }
       ]
     },
     {
       name: "Admin",
       links: [
-        { text: "Roster", link: "roster.html" },
-        { text: "Documents", link: "documents.html" },
+        { text: "Roster", link: "https://xlyneve.github.io/OHNRoster/" },
+        { text: "Notes", link: "https://xlyneve.github.io/CEP/Notes.html" },
         { text: "Timesheet", link: "timesheet.html" }
       ]
     }
