@@ -3,19 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="header-rays.css?v=1">
   <script src="auth-guard.js"></script>
   <title>Vaccines</title>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
   
   body {
-  background: #f5f6f8; /* subtle off-white gray */
-  color: #222;
-  font-family: 'sans-serif';
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  margin: 0;
+  padding: 90px 40px 40px;
+  font-family: Tahoma, sans-serif;
+  color: #111;
+  background: none;
+  overflow-x: auto;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url('2b.png') no-repeat center center fixed;
+  background-size: cover;
+  filter: blur(15px) brightness(0.9);
+  z-index: -1;
+  pointer-events: none;
 }
 
     .notes-cell {
@@ -25,11 +41,7 @@
       padding: 4px;
     }
 
-    .actions-cell {
-      width: 100px;
-      white-space: nowrap;
-    }
-
+    
     tr:hover {
       background-color: #f1f1f1;
     }
@@ -88,6 +100,148 @@
   outline: none;
 }
 
+#vaccineFormWrapper {
+  position: fixed;
+  bottom: 82px;
+  right: 22px;
+  width: min(760px, calc(100vw - 44px));
+  padding: 16px;
+  border-radius: 22px;
+
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 14px 34px rgba(80, 80, 120, 0.18),
+    inset 0 0 20px rgba(255, 255, 255, 0.24);
+
+  transform: translateY(calc(100% + 120px));
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    transform 0.35s ease,
+    opacity 0.35s ease,
+    box-shadow 0.35s ease;
+
+  z-index: 5000;
+}
+
+#vaccineFormWrapper.show {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#toggleVaccineFormBtn {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 10px 26px rgba(80, 80, 120, 0.18),
+    inset 0 0 14px rgba(255, 255, 255, 0.28);
+
+  font-size: 30px;
+  line-height: 1;
+  color: #111;
+  cursor: pointer;
+  z-index: 5001;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+#toggleVaccineFormBtn:hover {
+  transform: scale(1.06);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.vaccine-notes-input {
+  width: 100%;
+  min-height: 64px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 0 10px rgba(255, 255, 255, 0.22);
+
+  font-family: Tahoma, sans-serif;
+  font-size: 13px;
+  color: #222;
+  outline: none;
+}
+
+.add-vaccine-btn {
+  height: 44px;
+  min-width: 110px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.48);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 8px 18px rgba(80, 80, 120, 0.12),
+    inset 0 0 12px rgba(255, 255, 255, 0.24);
+
+  color: #111;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.edit-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+
+  font-family: Tahoma, sans-serif;
+  font-size: 12px;
+  outline: none;
+}
+
+.edit-notes-box {
+  min-height: 90px;
+  padding: 10px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+
+  font-family: Tahoma, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+  outline: none;
+  white-space: pre-wrap;
+}
+
+.edit-tools {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 #notes {
   background: rgba(255 255 255 / 0.75);
   border-radius: 14px;
@@ -138,91 +292,48 @@
   box-shadow: 0 12px 28px rgba(180, 180, 180, 0.7);
 }
 
-.overflow-x-auto {
-  border-radius: 20px;
-  background: rgba(255 255 255 / 0.6);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 16px;
+.note-gradient-highlight {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 246, 204, 0.85),
+    rgba(214, 245, 255, 0.78),
+    rgba(232, 255, 216, 0.72)
+  );
+  border-radius: 5px;
+  padding: 0 3px;
 }
 
-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: inset 0 0 12px rgba(255 255 255 / 0.35);
-  user-select: none;
-}
+#highlightMainBtn,
+.edit-highlight-btn {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 246, 204, 0.58),
+    rgba(214, 245, 255, 0.46),
+    rgba(232, 255, 216, 0.42)
+  ) !important;
 
-thead tr {
-  background: rgba(240 240 240 / 0.8);
-  color: #222;
-  text-shadow: none;
-}
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
 
-th, td {
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(180 180 180 / 0.5);
-  color: #222;
-  vertical-align: middle;
-  font-size: 14px;
-  user-select: text;
-}
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 4px 14px rgba(160, 190, 210, 0.18),
+    inset 0 0 12px rgba(255, 255, 255, 0.38);
 
-tbody tr:hover {
-  background: rgba(200 200 200 / 0.15);
-  transition: background 0.3s ease;
-}
-
-.notes-cell {
-  max-width: 100%;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  padding: 4px;
   color: #222;
 }
+#highlightMainBtn:hover,
+.edit-highlight-btn:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 246, 204, 0.72),
+    rgba(214, 245, 255, 0.58),
+    rgba(232, 255, 216, 0.52)
+  ) !important;
 
-.actions-cell {
-  width: 110px;
-  white-space: nowrap;
-  display: flex;
-  gap: 6px;
-  justify-content: flex-start;
-  user-select: none;
-}
-
-.actions-cell button {
-  border-radius: 8px;
-  border: none;
-  padding: 4px 8px;
-  font-size: 12px;
-  cursor: pointer;
-  user-select: none;
-  transition: box-shadow 0.25s ease;
-  box-shadow: 0 0 6px rgba(255 255 255 / 0.7);
-}
-
-.actions-cell button:nth-child(1) {
-  background: #e1d9d9;
-  color: #222;
-}
-
-.actions-cell button:nth-child(1):hover {
-  background: #d3c6c6;
-  box-shadow: 0 0 10px rgba(211 198 198 / 0.9);
-}
-
-.actions-cell button:nth-child(2) {
-  background: #c9d3d0;
-  color: #222;
-}
-
-.actions-cell button:nth-child(2):hover {
-  background: #abb8b4;
-  box-shadow: 0 0 10px rgba(171 184 180 / 0.9);
+  box-shadow:
+    0 6px 18px rgba(160, 190, 210, 0.26),
+    inset 0 0 14px rgba(255, 255, 255, 0.46);
 }
 
 /* Scrollbar for notes */
@@ -235,17 +346,32 @@ tbody tr:hover {
   border-radius: 10px;
 }
 
-/* 🌸 Fixed top title */
 .page-title {
   position: fixed;
   top: 18px;
-  left: 40px;
+  left: 28px;
   z-index: 2500;
   margin: 0;
-  font-family: 'Courier New', sans-serif;
-  font-size: 24px;
+
+  font-family: Tahoma, sans-serif;
+  font-size: 20px;
   font-weight: 700;
-  color: #111;
+  letter-spacing: 0.2px;
+
+  color: rgba(20, 20, 30, 0.88);
+
+  padding: 7px 14px;
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+
+  box-shadow:
+    0 8px 22px rgba(80, 80, 120, 0.10),
+    inset 0 0 12px rgba(255, 255, 255, 0.18);
 }
 
 /* Push page content down so fixed title/menu do not overlap */
@@ -253,139 +379,301 @@ tbody tr:hover {
   margin-top: 70px;
 }
 
-/* 🌸 Center Rays Navigation Menu */
-.center-toggle {
-  position: fixed;
-  top: 32px;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 34px;
-  height: 34px;
-  z-index: 3000;
+.vaccine-card-grid {
+  column-count: 4;
+  column-gap: 16px;
+  width: 100%;
+}
+.vaccine-card-grid.searching {
+  column-count: unset;
+  column-gap: unset;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.toggle-icon {
+.vaccine-card-grid.searching .vaccine-card {
+  display: block;
   width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  display: flex;
+  margin: 0;
+}
+
+@media (max-width: 1200px) {
+  .vaccine-card-grid.searching {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 850px) {
+  .vaccine-card-grid.searching {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .vaccine-card-grid.searching {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 1200px) {
+  .vaccine-card-grid {
+    column-count: 3;
+  }
+}
+
+@media (max-width: 850px) {
+  .vaccine-card-grid {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .vaccine-card-grid {
+    column-count: 1;
+  }
+}
+
+.card-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+
+  display: none;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  color: #000;
-  cursor: pointer;
-  transition: transform 0.4s ease;
-  background: rgba(255 255 255 / 0.72);
-  border: 1px solid rgba(200 200 200 / 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
 }
 
-.toggle-icon.active {
-  transform: rotate(45deg);
+.card-zoom-overlay.show {
+  display: flex;
 }
 
-.rays {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  pointer-events: auto;
-  transform: translate(-50%, -50%);
-  z-index: 3001;
+.card-zoom-modal {
+  position: relative;
+  width: min(720px, calc(100vw - 34px));
+  max-height: min(78vh, 760px);
+  overflow-y: auto;
+
+  padding: 24px;
+  border-radius: 26px;
+
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+
+  box-shadow:
+    0 22px 60px rgba(80, 80, 120, 0.22),
+    inset 0 0 24px rgba(255, 255, 255, 0.26);
+
+  color: #111;
 }
 
-.ray {
-  position: absolute;
+.card-zoom-close {
+  position: sticky;
   top: 0;
-  left: 0;
+  float: right;
+
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.62);
+
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.zoom-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.zoom-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.zoom-card-notes {
   font-size: 14px;
-  font-weight: 600;
-  color: #000;
-  opacity: 0;
-  transform-origin: 0 0;
-  white-space: nowrap;
-  transform: rotate(var(--angle)) translate(0px);
-  transition:
-    opacity 0.4s ease,
-    transform 0.4s ease,
-    background 0.3s ease;
-  pointer-events: none;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
 
-  background: rgba(255 255 255 / 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(200 200 200 / 0.6);
-  border-radius: 14px;
-  padding: 7px 13px;
+@media (max-width: 560px) {
+  .card-zoom-modal {
+    padding: 18px;
+    border-radius: 22px;
+    max-height: 82vh;
+  }
+
+  .zoom-card-title {
+    font-size: 18px;
+  }
+
+  .zoom-card-notes {
+    font-size: 13px;
+  }
+}
+
+.vaccine-card {
+  position: relative;
+  padding: 11px;
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  box-shadow:
+    0 10px 24px rgba(80, 80, 120, 0.10),
+    inset 0 0 14px rgba(255, 255, 255, 0.16);
+
+  color: #111;
+  word-wrap: break-word;
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 11px;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+
+.vaccine-card:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 16px 38px rgba(80, 80, 120, 0.16),
+    inset 0 0 20px rgba(255, 255, 255, 0.22);
+}
+
+.vaccine-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.vaccine-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.vaccine-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.72);
+}
+
+.vaccine-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(214, 245, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+  color: #111;
   text-decoration: none;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
 
-.ray:hover {
-  background: rgba(255 255 255 / 0.95);
-  transform: rotate(var(--angle)) translate(60px) scale(1.05);
+.vaccine-card-notes {
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  margin-top: 5px;
 }
+
+.vaccine-card-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+}
+
+.vaccine-card.actions-visible .vaccine-card-actions,
+.vaccine-card.editing-card .vaccine-card-actions {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.vaccine-card-actions button,
+.edit-tools button {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  padding: 5px 9px;
+  font-size: 12px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow:
+    0 6px 14px rgba(80, 80, 120, 0.10),
+    inset 0 0 10px rgba(255, 255, 255, 0.24);
+}
+
   </style>
 </head>
 
-<body class="bg-[#ebebeb] text-sm font-sans px-4 py-6">
+<body>
 
-  <!-- 🌸 Rays navigation menu -->
-  <div class="center-toggle">
-    <div class="toggle-icon" id="menuToggle">☐</div>
-    <div class="rays">
-      <!-- Rays generated by JavaScript -->
-    </div>
-  </div>
-
-  <h1 class="page-title">💉 Vaccines</h1>
+  <h1 class="page-title">Vaccines</h1>
 
   <input type="text" id="searchBox" placeholder="Search..." />
 
   <div class="w-full page-content">
-   <form id="vaccineForm" class="grid grid-cols-12 gap-x-1 gap-y-2 mb-4 items-start">
+
+  <div id="vaccineFormWrapper">
+    <form id="vaccineForm" class="grid grid-cols-12 gap-x-1 gap-y-2 items-start">
   <!-- Input fields -->
   <input id="inj" type="text" placeholder="Inj" class="border p-2 col-span-1 w-full h-16" required />
   <input id="name" type="text" placeholder="Vaccine Name" class="border p-2 text-sm col-span-2 w-full h-16" required />
   <input id="price" type="text" placeholder="Price" class="border p-2 col-span-1 w-full h-16" />
   <input id="url" type="text" placeholder="Medsafe URL" class="border p-2 text-sm col-span-2 w-full h-16" />
 
-  <!-- Notes + Buttons -->
-  <div class="col-span-6 flex items-start space-x-2">
-    <!-- Notes field -->
-    <div id="notes" contenteditable="true" class="border p-2 h-16 w-full overflow-auto bg-white text-sm rounded"></div>
+  <!-- Notes + Add -->
+<div class="col-span-6 flex items-start space-x-2">
+  <div id="notes" contenteditable="true" class="vaccine-notes-input"></div>
 
-    <!-- Buttons & Add -->
-    <div class="flex flex-col space-y-1">
-      <div class="flex space-x-1">
-        <button type="button" onclick="formatText('bold')" class="px-1 py-0.5 bg-gray-200 rounded text-xs font-bold">B</button>
-        <button type="button" onclick="formatText('underline')" class="px-1 py-0.5 bg-gray-200 rounded text-xs underline">U</button>
-        <button type="button" onclick="formatText('hiliteColor', 'yellow')" class="px-1 py-0.5 bg-yellow-200 rounded text-xs">Highlight</button>
-      </div>
-      <button type="submit" class="bg-[#f9e4e0] text-black px-3 py-1 rounded text-xs">Add Vaccine</button>
-    </div>
+  <button type="submit" class="add-vaccine-btn">Add Vaccine</button>
+</div>
+        </form>
   </div>
-</form>
 
-
-    <div class="overflow-x-auto w-full">
-      <table class="w-full bg-white border border-gray-300">
-        <thead class="bg-[#eae0da]">
-          <tr>
-            <th class="px-4 py-2 text-left border-r">Type</th>
-            <th class="px-4 py-2 text-left border-r">Name</th>
-            <th class="px-4 py-2 text-left border-r">Price</th>
-            <th class="px-4 py-2 text-left border-r">URL</th>
-            <th class="px-4 py-2 text-left border-r">Notes</th>
-            <th class="px-2 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
+  <button id="toggleVaccineFormBtn" type="button">+</button>
+  <div id="vaccineCards" class="vaccine-card-grid"></div>
+  <div id="cardZoomOverlay" class="card-zoom-overlay">
+  <div class="card-zoom-modal">
+    <button id="closeCardZoom" class="card-zoom-close">×</button>
+    <div id="cardZoomContent"></div>
+  </div>
+</div>
+  
   </div>
 
   <script type="module">
@@ -409,8 +697,12 @@ tbody tr:hover {
   const vaccineRef = collection(db, "vaccines");
 
   const form = document.getElementById("vaccineForm");
-  const tableBody = document.getElementById("tableBody");
+  const vaccineCards = document.getElementById("vaccineCards");
   const searchBox = document.getElementById("searchBox");
+  
+  const cardZoomOverlay = document.getElementById("cardZoomOverlay");
+const cardZoomContent = document.getElementById("cardZoomContent");
+const closeCardZoom = document.getElementById("closeCardZoom");
 
   let fullData = [];
   let latestData = [];
@@ -432,92 +724,205 @@ tbody tr:hover {
         timestamp: serverTimestamp()
       });
       form.reset();
-      document.getElementById("notes").innerHTML = '';
+document.getElementById("notes").innerHTML = '';
+closeVaccineForm();
     }
   });
+ 
+function stripHtml(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html || "";
+  return div.textContent || div.innerText || "";
+}
 
   function applyFilter() {
-    const query = currentSearch.toLowerCase();
-    if (!query) {
-      latestData = [...fullData];
-    } else {
+  const query = currentSearch.toLowerCase();
+
+  vaccineCards.classList.toggle("searching", !!query);
+
+  if (!query) {
+    latestData = [...fullData];
+  } else {
       latestData = fullData.filter(({ data }) => {
         const v = data;
         return (
           (v.inj || '').toLowerCase().includes(query) ||
           (v.name || '').toLowerCase().includes(query) ||
           (v.price || '').toLowerCase().includes(query) ||
-          (v.notes || '').toLowerCase().includes(query)
+          stripHtml(v.notes || '').toLowerCase().includes(query)
         );
       });
     }
   }
+  
+  function escapeAttr(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
 
-  function renderTable() {
-  tableBody.innerHTML = "";
+function applyGradientHighlight() {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+
+  const range = selection.getRangeAt(0);
+  const span = document.createElement("span");
+  span.className = "note-gradient-highlight";
+
+  try {
+    range.surroundContents(span);
+  } catch (err) {
+    const selectedText = range.extractContents();
+    span.appendChild(selectedText);
+    range.insertNode(span);
+  }
+
+  selection.removeAllRanges();
+}
+
+function convertOldHighlights(html) {
+  return String(html || "")
+    .replaceAll('background-color: rgb(255, 246, 204);', '')
+    .replaceAll('background-color: rgb(255, 246, 204)', '')
+    .replaceAll('background-color: #fff6cc;', '')
+    .replaceAll('background-color: #fff6cc', '')
+    .replaceAll('background-color: rgb(234, 248, 255);', '')
+    .replaceAll('background-color: rgb(234, 248, 255)', '')
+    .replaceAll('background-color: #eaf8ff;', '')
+    .replaceAll('background-color: #eaf8ff', '')
+    .replaceAll('<span style="">', '<span class="note-gradient-highlight">');
+}
+
+function openCardZoom(v) {
+  cardZoomContent.innerHTML = `
+    <div class="zoom-card-title">💉 ${v.name || "Untitled vaccine"}</div>
+
+    <div class="zoom-card-meta">
+      ${v.inj ? `<span class="vaccine-pill">${v.inj}</span>` : ""}
+      ${v.price ? `<span class="vaccine-pill">${v.price}</span>` : ""}
+      ${v.url ? `<a class="vaccine-link" href="${v.url}" target="_blank">Medsafe</a>` : ""}
+    </div>
+
+    <div class="zoom-card-notes">${convertOldHighlights ? convertOldHighlights(v.notes || "") : (v.notes || "")}</div>
+  `;
+
+  cardZoomOverlay.classList.add("show");
+}
+closeCardZoom.addEventListener("click", () => {
+  cardZoomOverlay.classList.remove("show");
+});
+
+cardZoomOverlay.addEventListener("click", (e) => {
+  if (e.target === cardZoomOverlay) {
+    cardZoomOverlay.classList.remove("show");
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    cardZoomOverlay.classList.remove("show");
+  }
+});
+
+  function renderCards() {
+  vaccineCards.innerHTML = "";
+
   latestData.forEach(docSnap => {
     const v = docSnap.data;
     const id = docSnap.id;
 
-    const row = document.createElement("tr");
-    row.classList.add("border-t");
+    const card = document.createElement("div");
+    card.className = "vaccine-card";
+    card.dataset.id = id;
 
     if (editId === id) {
-      row.innerHTML = `
-        <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-inj" value="${v.inj || ''}"></td>
-        <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-name" value="${v.name || ''}"></td>
-        <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-price" value="${v.price || ''}"></td>
-        <td class="px-4 py-2"><input class="border p-1 w-full" id="edit-url" value="${v.url || ''}"></td>
-        <td class="px-4 py-2">
-          <div class="flex space-x-1 mb-1">
-            <button type="button" onclick="formatText('bold')" class="px-1 py-0.5 bg-gray-200 text-xs rounded">B</button>
-            <button type="button" onclick="formatText('underline')" class="px-1 py-0.5 bg-gray-200 text-xs rounded">U</button>
-            <button type="button" onclick="formatText('hiliteColor', 'yellow')" class="px-1 py-0.5 bg-yellow-200 text-xs rounded">Highlight</button>
-          </div>
-          <div id="edit-notes" 
-               contenteditable="true"
-               class="border p-1 w-full min-h-[60px] overflow-hidden bg-white whitespace-pre-wrap break-words rounded"
-               style="font-family: Tahoma, sans-serif; font-size: 14px; line-height: 1.4;">
-               ${v.notes || ''}
-          </div>
-        </td>
-        <td class="px-2 py-2 actions-cell">
-          <button class="bg-[#acc791] text-white px-2 py-1 rounded" onclick="saveVaccine()">Save</button>
-          <button class="bg-[#bfc1ce] text-black px-2 py-1 rounded" onclick="cancelEdit()">Cancel</button>
-        </td>
+      card.classList.add("editing-card");
+    }
+
+    let pressTimer;
+
+    card.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("button, a, input, textarea, [contenteditable='true']")) return;
+
+      pressTimer = setTimeout(() => {
+        card.classList.add("actions-visible");
+      }, 600);
+    });
+
+    card.addEventListener("pointerup", () => {
+      clearTimeout(pressTimer);
+    });
+
+    card.addEventListener("pointerleave", () => {
+      clearTimeout(pressTimer);
+    });
+
+    if (editId === id) {
+      card.innerHTML = `
+        <input class="edit-input" id="edit-inj" value="${escapeAttr(v.inj)}" placeholder="Type">
+		<input class="edit-input" id="edit-name" value="${escapeAttr(v.name)}" placeholder="Vaccine name">
+		<input class="edit-input" id="edit-price" value="${escapeAttr(v.price)}" placeholder="Price">
+		<input class="edit-input" id="edit-url" value="${escapeAttr(v.url)}" placeholder="Medsafe URL">
+
+        <div class="edit-tools">
+          <button type="button" class="edit-bold-btn">B</button>
+          <button type="button" class="edit-highlight-btn">Highlight</button>
+        </div>
+
+        <div id="edit-notes"
+             contenteditable="true"
+             class="edit-notes-box">${convertOldHighlights(v.notes || '')}</div>
+
+        <div class="vaccine-card-actions">
+          <button onclick="saveVaccine()">Save</button>
+          <button onclick="cancelEdit()">Cancel</button>
+        </div>
       `;
-      tableBody.appendChild(row);
 
-      // ---- Auto-resize editable notes ----
-      const editNotes = row.querySelector("#edit-notes");
 
-      const resizeNotes = () => {
-        editNotes.style.height = "auto";
-        editNotes.style.height = editNotes.scrollHeight + "px";
-      };
+      const editNotes = card.querySelector("#edit-notes");
+      const editBoldBtn = card.querySelector(".edit-bold-btn");
+      const editHighlightBtn = card.querySelector(".edit-highlight-btn");
 
-      // Initial resize
-      resizeNotes();
+      editBoldBtn.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        editNotes.focus();
+        document.execCommand("bold");
+      });
 
-      // Listen for input and paste
-      editNotes.addEventListener("input", resizeNotes);
-      editNotes.addEventListener("paste", () => setTimeout(resizeNotes, 0));
+      editHighlightBtn.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        editNotes.focus();
+        applyGradientHighlight();
+      });
 
-      // Smooth expansion
-      editNotes.style.transition = "height 0.2s ease-out";
     } else {
-      row.innerHTML = `
-        <td class="px-4 py-2">${v.inj || ''}</td>
-        <td class="px-4 py-2">${v.name || ''}</td>
-        <td class="px-4 py-2">${v.price || ''}</td>
-        <td class="px-4 py-2">${v.url ? `<a href="${v.url}" target="_blank" class="text-blue-600 underline">Link</a>` : ''}</td>
-        <td class="notes-cell px-4 py-2" style="font-family: Tahoma, sans-serif; font-size: 12px; line-height: 1.4;">${v.notes || ''}</td>
-        <td class="px-2 py-2 actions-cell">
-          <button class="bg-[#efd1d4] text-black px-2 py-1 rounded" onclick="editVaccine('${id}')">Edit</button>
-          <button class="bg-[#c3dcd8] text-white px-2 py-1 rounded" onclick="deleteVaccine('${id}')">Delete</button>
-        </td>
+      card.innerHTML = `
+        <div class="vaccine-card-title">💉 ${v.name || 'Untitled vaccine'}</div>
+
+        <div class="vaccine-card-meta">
+          ${v.inj ? `<span class="vaccine-pill">${v.inj}</span>` : ""}
+          ${v.price ? `<span class="vaccine-pill">${v.price}</span>` : ""}
+          ${v.url ? `<a class="vaccine-link" href="${v.url}" target="_blank">Medsafe</a>` : ""}
+        </div>
+
+        <div class="vaccine-card-notes">${convertOldHighlights(v.notes || "")}</div>
+
+        <div class="vaccine-card-actions">
+          <button onclick="editVaccine('${id}')">Edit</button>
+          <button onclick="deleteVaccine('${id}')">Delete</button>
+        </div>
       `;
-      tableBody.appendChild(row);
+
+      vaccineCards.appendChild(card);
+
+card.addEventListener("click", (e) => {
+  if (e.target.closest("button, a")) return;
+  if (card.classList.contains("actions-visible")) return;
+  openCardZoom(v);
+});
     }
   });
 }
@@ -531,17 +936,30 @@ tbody tr:hover {
 
     // preserve current search
     applyFilter();
-    renderTable();
+    renderCards();
   });
 
   window.editVaccine = (id) => {
-    editId = id;
-    renderTable();
-  };
+  editId = id;
+  renderCards();
+
+  requestAnimationFrame(() => {
+    const editedCard = document.querySelector(`.vaccine-card[data-id="${id}"]`);
+    if (editedCard) {
+      editedCard.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+
+      const firstInput = editedCard.querySelector(".edit-input");
+      if (firstInput) firstInput.focus();
+    }
+  });
+};
 
   window.cancelEdit = () => {
     editId = null;
-    renderTable();
+    renderCards();
   };
 
   window.saveVaccine = async () => {
@@ -559,7 +977,7 @@ tbody tr:hover {
       editId = null;
       // reapply current filter after edit
       applyFilter();
-      renderTable();
+      renderCards();
     }
   };
 
@@ -570,7 +988,7 @@ tbody tr:hover {
   searchBox.addEventListener("input", () => {
     currentSearch = searchBox.value; // store current filter
     applyFilter();
-    renderTable();
+    renderCards();
   });
 
   // Text formatting function
@@ -578,7 +996,6 @@ tbody tr:hover {
     document.execCommand(command, false, value);
   };
 
-  // Keyboard shortcuts for formatting
     // Keyboard shortcuts for formatting
   document.addEventListener("keydown", function (e) {
     if (e.ctrlKey) {
@@ -595,115 +1012,58 @@ tbody tr:hover {
             break;
           case "h":
             e.preventDefault();
-            formatText("hiliteColor", "yellow");
+            applyGradientHighlight();
             break;
         }
       }
     }
   });
-
-  /* ---------------- Rays Menu ---------------- */
-  const centerToggle = document.querySelector('.center-toggle');
-  const toggleIcon = document.getElementById("menuToggle");
-  const raysContainer = centerToggle.querySelector(".rays");
-
-  let hoverTimeout;
-  let currentSet = 0;
-
-  const raySets = [
-    [
-      { text: "Home", link: "https://xlyneve.github.io/CEP/home.html" },
-      { text: "Nurse Notes", link: "https://xlyneve.github.io/CEP/PN.html" },
-      { text: "Template", link: "https://xlyneve.github.io/CEP/explain.html" },
-      { text: "PN", link: "https://xlyneve.github.io/CEP/practiceN.html" },
-      { text: "Recall", link: "https://xlyneve.github.io/CEP/recalls.html" }
-    ],
-    [
-      { text: "Drug Calculator", link: "https://xlyneve.github.io/CEP/OHcalc.html" },
-      { text: "Vaccine Calc", link: "https://xlyneve.github.io/CEP/vaccine-spacing.html" },
-      { text: "Vaccines", link: "https://xlyneve.github.io/CEP/complete-vaccine-info.html" },
-      { text: "Meds list", link: "https://xlyneve.github.io/CEP/Npres.html" }
-    ]
-  ];
-
-  const angles = ["-20deg", "20deg", "60deg", "100deg", "140deg", "180deg"];
-
-  function showRays() {
-    raysContainer.querySelectorAll('.ray').forEach(ray => {
-      ray.style.opacity = "1";
-      ray.style.pointerEvents = "auto";
-    });
+document.addEventListener("pointerdown", (e) => {
+  if (!e.target.closest(".vaccine-card")) {
+    document.querySelectorAll(".vaccine-card.actions-visible").forEach(card => {
+  card.classList.remove("actions-visible");
+});
   }
+});
+const toggleVaccineFormBtn = document.getElementById("toggleVaccineFormBtn");
+const vaccineFormWrapper = document.getElementById("vaccineFormWrapper");
 
-  function hideRays() {
-    raysContainer.querySelectorAll('.ray').forEach(ray => {
-      ray.style.opacity = "0";
-      ray.style.pointerEvents = "none";
-    });
+function openVaccineForm() {
+  vaccineFormWrapper.classList.add("show");
+  toggleVaccineFormBtn.textContent = "×";
+}
+
+function closeVaccineForm() {
+  vaccineFormWrapper.classList.remove("show");
+  toggleVaccineFormBtn.textContent = "+";
+}
+
+toggleVaccineFormBtn.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (vaccineFormWrapper.classList.contains("show")) {
+    closeVaccineForm();
+  } else {
+    openVaccineForm();
   }
+});
 
-  centerToggle.addEventListener('mouseenter', () => {
-    if (!toggleIcon.classList.contains("active")) {
-      clearTimeout(hoverTimeout);
-      showRays();
-    }
-  });
+vaccineFormWrapper.addEventListener("pointerdown", (e) => {
+  e.stopPropagation();
+});
 
-  centerToggle.addEventListener('mouseleave', () => {
-    if (!toggleIcon.classList.contains("active")) {
-      hoverTimeout = setTimeout(() => {
-        hideRays();
-      }, 1000);
-    }
-  });
-
-  toggleIcon.addEventListener("click", (e) => {
-    e.stopPropagation();
-
-    toggleIcon.classList.add("active");
-    raysContainer.innerHTML = "";
-
-    const set = raySets[currentSet];
-
-    set.forEach((rayData, i) => {
-      const ray = document.createElement("a");
-
-      ray.className = "ray";
-      ray.href = rayData.link;
-      ray.textContent = rayData.text;
-      ray.style.opacity = "0";
-      ray.style.pointerEvents = "auto";
-      ray.style.setProperty("--angle", angles[i] || "0deg");
-
-      raysContainer.appendChild(ray);
-
-      setTimeout(() => {
-        ray.style.opacity = "1";
-        ray.style.transform = `rotate(${angles[i] || "0deg"}) translate(60px)`;
-        ray.style.pointerEvents = "auto";
-      }, 50);
-    });
-
-    currentSet = (currentSet + 1) % raySets.length;
-  });
-
-  function hideAllRays() {
-    raysContainer.querySelectorAll(".ray").forEach(ray => {
-      const angle = ray.style.getPropertyValue("--angle") || "0deg";
-      ray.style.opacity = "0";
-      ray.style.pointerEvents = "none";
-      ray.style.transform = `rotate(${angle}) translate(0px)`;
-    });
-
-    toggleIcon.classList.remove("active");
+document.addEventListener("pointerdown", (e) => {
+  if (
+    vaccineFormWrapper.classList.contains("show") &&
+    !vaccineFormWrapper.contains(e.target) &&
+    !toggleVaccineFormBtn.contains(e.target)
+  ) {
+    closeVaccineForm();
   }
-
-  document.addEventListener("click", (e) => {
-    if (!centerToggle.contains(e.target)) {
-      hideAllRays();
-    }
-  });
+});
 </script>
+<script src="header-rays.js?v=1"></script>
 <script src="emoji-picker.js?v=1"></script>
 </body>
 </html>
