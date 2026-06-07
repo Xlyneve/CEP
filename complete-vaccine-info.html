@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
   
-  body {
+body {
   position: relative;
   margin: 0;
   padding: 90px 40px 40px;
@@ -23,13 +23,36 @@
 body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
+
   background: url('2b.png') no-repeat center center fixed;
   background-size: cover;
-  filter: blur(15px) brightness(0.9);
+
+  filter: blur(24px) brightness(1.05) saturate(1.25);
+  transform: scale(1.04);
+
+  z-index: -2;
+  pointer-events: none;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(105, 210, 220, 0.16),
+      rgba(255, 255, 255, 0.20),
+      rgba(110, 170, 255, 0.14)
+    );
+
+  backdrop-filter: blur(4px) saturate(130%);
+  -webkit-backdrop-filter: blur(4px) saturate(130%);
+
   z-index: -1;
   pointer-events: none;
 }
@@ -529,21 +552,36 @@ body::before {
 
 .vaccine-card {
   position: relative;
-  padding: 11px;
-  border-radius: 16px;
+  padding: 12px;
+  border-radius: 24px;
 
-  background: rgba(255, 255, 255, 0.32);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.42),
+      rgba(255, 255, 255, 0.16)
+    );
 
-  border: 1px solid rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(34px) saturate(190%);
+  -webkit-backdrop-filter: blur(34px) saturate(190%);
+
+  border: 1px solid rgba(255, 255, 255, 0.62);
+
   box-shadow:
-    0 10px 24px rgba(80, 80, 120, 0.10),
-    inset 0 0 14px rgba(255, 255, 255, 0.16);
+    0 18px 42px rgba(20, 70, 110, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -24px 36px rgba(255, 255, 255, 0.10);
+color: rgba(20, 20, 30, 0.92);
+text-shadow: none;
+ 
 
-  color: #111;
   word-wrap: break-word;
-  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
 
   display: inline-block;
   width: 100%;
@@ -552,48 +590,69 @@ body::before {
   -webkit-column-break-inside: avoid;
 }
 
+.vaccine-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+
+  background:
+    radial-gradient(
+      circle at 25% 12%,
+      rgba(255, 255, 255, 0.70),
+      rgba(255, 255, 255, 0.18) 34%,
+      transparent 55%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(160, 245, 255, 0.18),
+      rgba(255, 255, 255, 0.08),
+      rgba(80, 150, 255, 0.10)
+    );
+
+  pointer-events: none;
+}
+
+.vaccine-card::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  top: 8px;
+  width: 58%;
+  height: 28%;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.48),
+      rgba(255, 255, 255, 0.06)
+    );
+
+  filter: blur(8px);
+  pointer-events: none;
+}
+
 .vaccine-card:hover {
   transform: translateY(-3px);
-  background: rgba(255, 255, 255, 0.42);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.50),
+      rgba(255, 255, 255, 0.22)
+    );
+
   box-shadow:
-    0 16px 38px rgba(80, 80, 120, 0.16),
-    inset 0 0 20px rgba(255, 255, 255, 0.22);
+    0 22px 48px rgba(20, 70, 110, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -24px 36px rgba(255, 255, 255, 0.14);
 }
 
-.vaccine-card-title {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.vaccine-card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-
-.vaccine-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.58);
-  font-size: 10px;
-  color: rgba(0, 0, 0, 0.72);
-}
-
-.vaccine-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: rgba(214, 245, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  font-size: 10px;
-  color: #111;
-  text-decoration: none;
+.vaccine-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .vaccine-card-notes {
@@ -602,6 +661,58 @@ body::before {
   line-height: 1.35;
   white-space: pre-wrap;
   margin-top: 5px;
+  color: rgba(20, 20, 30, 0.82);
+}
+
+.vaccine-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: rgba(20, 20, 30, 0.94);
+  text-shadow: none;
+}
+
+.vaccine-card-notes {
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  margin-top: 5px;
+  color: rgba(20, 20, 30, 0.82);
+  text-shadow: none;
+}
+
+.vaccine-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  font-size: 10px;
+  color: rgba(20, 20, 30, 0.78);
+  text-shadow: none;
+}
+
+.vaccine-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+
+  background: rgba(214, 245, 255, 0.34);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  font-size: 10px;
+  color: rgba(20, 20, 30, 0.86);
+  text-decoration: none;
+  text-shadow: none;
 }
 
 .vaccine-card-actions {
