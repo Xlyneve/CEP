@@ -23,6 +23,7 @@ if (!toggleIcon || !menuContainer) return;
       name: "Main",
       links: [
         { text: "Home", link: "home.html" },
+        { text: "Info", link: "PN.html" },
         { text: "Info", link: "info.html" },
         { text: "Templates", link: "explain.html" },
         { text: "Notes", link: "practiceN.html" },
