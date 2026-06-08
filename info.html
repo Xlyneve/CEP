@@ -1080,6 +1080,14 @@ function renderNotes(arr) {
       link.textContent = 'URL Link'; link.className = 'styled-link';
       urlEl.appendChild(link);
     }
+	
+	// URL editor
+const urlInput = document.createElement('input');
+urlInput.type = 'text';
+urlInput.className = 'edit-title';
+urlInput.value = note.url || '';
+urlInput.placeholder = 'Optional URL';
+urlInput.style.display = 'none';
 
     // Text display
     const textDisplay = document.createElement('div');
@@ -1129,7 +1137,7 @@ function renderNotes(arr) {
     editorBtns.append(boldBtn, highlightBtn);
 
     // Assemble card
-    card.append(titleEl, titleInput, urlEl, textDisplay, textEditor, editorBtns, timeEl, btnGroup);
+    card.append(titleEl, titleInput, urlEl, urlInput, textDisplay, textEditor, editorBtns, timeEl, btnGroup);
     notesContainer.appendChild(card);
 
     // Long press
@@ -1161,38 +1169,72 @@ function renderNotes(arr) {
 function toggleEdit(card, editing){
   const titleEl = card.querySelector('.note-title');
   const titleInput = card.querySelector('.edit-title');
+  const urlEl = card.querySelector('.note-url');
+  const urlInput = card.querySelector('input[placeholder="Optional URL"]');
   const textDisplay = card.querySelector('.note-text');
   const textEditor = card.querySelector('.edit-note');
   const btnGroup = card.querySelector('.btn-group');
   const editorBtns = card.querySelector('.editor-buttons');
   const [editBtn, saveBtn, cancelBtn] = btnGroup.querySelectorAll('button');
+
   if(editing){
-  card.classList.add('editing-note');
-    titleEl.style.display='none'; titleInput.style.display='block';
-    textDisplay.style.display='none'; textEditor.style.display='block';
-    btnGroup.style.display='flex'; editBtn.style.display='none';
-    saveBtn.style.display='inline-block'; cancelBtn.style.display='inline-block';
-    editorBtns.style.display='flex'; textEditor.focus();
+    card.classList.add('editing-note');
+    titleEl.style.display='none';
+    titleInput.style.display='block';
+    urlEl.style.display = 'none';
+    urlInput.style.display = 'block';
+    textDisplay.style.display='none';
+    textEditor.style.display='block';
+    btnGroup.style.display='flex';
+    editBtn.style.display='none';
+    saveBtn.style.display='inline-block';
+    cancelBtn.style.display='inline-block';
+    editorBtns.style.display='flex';
+    textEditor.focus();
   } else {
-  card.classList.remove('editing-note');
-    titleEl.style.display='block'; titleInput.style.display='none';
-    textDisplay.style.display='block'; textEditor.style.display='none';
-    editBtn.style.display=''; saveBtn.style.display='none'; cancelBtn.style.display='none';
+    card.classList.remove('editing-note');
+    titleEl.style.display='block';
+    titleInput.style.display='none';
+    urlEl.style.display = 'block';
+    urlInput.style.display = 'none';
+    textDisplay.style.display='block';
+    textEditor.style.display='none';
+    editBtn.style.display='';
+    saveBtn.style.display='none';
+    cancelBtn.style.display='none';
     editorBtns.style.display='none';
   }
 }
 
 async function saveEdit(card){
-  const id=card.dataset.id;
-  const textEditor=card.querySelector('.edit-note');
-  const titleInput=card.querySelector('.edit-title');
-  const newText=textEditor.innerHTML.trim();
-  const newTitle=titleInput.value.trim();
-  if(!newTitle||!newText) return alert("Title and explanation cannot be empty.");
-  await updateDoc(doc(db,"informationNotes",id),{title:newTitle,text:newText});
-  toggleEdit(card,false);
+  const id = card.dataset.id;
+  const textEditor = card.querySelector('.edit-note');
+  const titleInput = card.querySelector('.edit-title');
+  const urlInput = card.querySelector('input[placeholder="Optional URL"]');
+
+  const newText = decodeHtmlEntities(textEditor.innerHTML.trim());
+  const newTitle = titleInput.value.trim();
+  const newUrl = urlInput ? urlInput.value.trim() : '';
+
+  if(!newTitle || !newText) return alert("Title and explanation cannot be empty.");
+
+  await updateDoc(doc(db, "informationNotes", id), {
+    title: newTitle,
+    text: newText,
+    url: newUrl
+  });
+
+  toggleEdit(card, false);
+
   const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
-  const filtered = searchVal ? notes.filter(n=>(n.title||'').toLowerCase().includes(searchVal)||(String(n.text||'')).toLowerCase().includes(searchVal)) : notes;
+  const filtered = searchVal
+    ? notes.filter(n =>
+        (n.title || '').toLowerCase().includes(searchVal) ||
+        (String(n.text || '')).toLowerCase().includes(searchVal) ||
+        (String(n.url || '')).toLowerCase().includes(searchVal)
+      )
+    : notes;
+
   renderNotes(filtered);
 }
 
