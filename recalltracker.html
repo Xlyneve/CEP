@@ -536,7 +536,8 @@ body.edit-mode .tick-row{
 	  <button id="manageTicksBtn">Manage Ticks</button>
 	<button id="editModeBtn">Edit</button>
 	<button id="editWeeklyBtn">First column</button>
-      <button id="clearBtn">Clear</button>
+      <button id="signInBtn" class="primary">Sign in</button>
+<button id="clearBtn">Clear</button>
     </div>
   </div>
 
@@ -594,29 +595,37 @@ body.edit-mode .tick-row{
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAwITicGVF5_Vxw6Bwf9n1AaQom-76M2IE",
+  authDomain: "krissa-d5a9c.firebaseapp.com",
+  projectId: "krissa-d5a9c",
+  storageBucket: "krissa-d5a9c.firebasestorage.app",
+  messagingSenderId: "550249186610",
+  appId: "1:550249186610:web:5ee5b585ac686021be432b",
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUserEmail = null;
+let stateLoaded = false;
+
 const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-let state = JSON.parse(localStorage.getItem("recallTrackerStateV2") || "{}");
-let weeklyTasks = state.weeklyTasks || ["QB", "Cx + CxSO", "Mammo"];
-let monthlyRows = state.monthlyRows || ["CEP"];
 
-// Rename old saved "Me" row to "CEP"
-monthlyRows = monthlyRows.map(x => x === "Me" ? "CEP" : x);
-
-Object.values(state.months || {}).forEach(month => {
-  Object.values(month.days || {}).forEach(dayObj => {
-    if ("Me" in dayObj) {
-      dayObj["CEP"] = dayObj["Me"];
-      delete dayObj["Me"];
-    }
-  });
-});
-
+let state = {};
+let weeklyTasks = ["QB", "Cx + CxSO", "Mammo"];
+let monthlyRows = ["CEP"];
 
 const today = new Date();
-let currentMonth = state.currentMonth ?? today.getMonth();
-let currentYear = state.currentYear ?? today.getFullYear();
+let currentMonth = today.getMonth();
+let currentYear = today.getFullYear();
 let activeScope = "month";
 let editMode = false;
 
@@ -630,11 +639,85 @@ function key(){
   return `${currentYear}-${String(currentMonth+1).padStart(2,"0")}`;
 }
 
-function save(){
+async function save(){
+  if(!stateLoaded || !currentUserEmail) return;
+
   state.currentMonth = currentMonth;
   state.currentYear = currentYear;
   state.weeklyTasks = weeklyTasks;
-  localStorage.setItem("recallTrackerStateV2", JSON.stringify(state));
+
+  try{
+    await db.collection("recallTrackers").doc(currentUserEmail).set({
+      state,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true });
+  }catch(err){
+    console.error("Firestore save failed:", err);
+
+    // emergency local backup only
+    localStorage.setItem("recallTrackerStateV2_BACKUP", JSON.stringify(state));
+  }
+}
+
+async function loadFromFirestore(){
+  return new Promise((resolve) => {
+    auth.onAuthStateChanged(async user => {
+
+      if(!user){
+        document.getElementById("signInBtn").textContent = "Sign in";
+        stateLoaded = true;
+        resolve();
+        return;
+      }
+
+      currentUserEmail = user.email;
+      document.getElementById("signInBtn").textContent = `Signed in`;
+
+      try{
+        const doc = await db.collection("recallTrackers").doc(currentUserEmail).get();
+
+        if(doc.exists && doc.data().state){
+          state = doc.data().state;
+        }else{
+          state = {};
+        }
+
+        weeklyTasks = state.weeklyTasks || ["QB", "Cx + CxSO", "Mammo"];
+        monthlyRows = state.monthlyRows || ["CEP"];
+
+        monthlyRows = monthlyRows.map(x => x === "Me" ? "CEP" : x);
+
+        Object.values(state.months || {}).forEach(month => {
+          Object.values(month.days || {}).forEach(dayObj => {
+            if("Me" in dayObj){
+              dayObj["CEP"] = dayObj["Me"];
+              delete dayObj["Me"];
+            }
+          });
+        });
+
+        currentMonth = state.currentMonth ?? today.getMonth();
+        currentYear = state.currentYear ?? today.getFullYear();
+
+        stateLoaded = true;
+        resolve();
+
+      }catch(err){
+        console.error("Firestore load failed:", err);
+
+        const backup = localStorage.getItem("recallTrackerStateV2_BACKUP");
+        state = backup ? JSON.parse(backup) : {};
+
+        weeklyTasks = state.weeklyTasks || ["QB", "Cx + CxSO", "Mammo"];
+        monthlyRows = state.monthlyRows || ["CEP"];
+        currentMonth = state.currentMonth ?? today.getMonth();
+        currentYear = state.currentYear ?? today.getFullYear();
+
+        stateLoaded = true;
+        resolve();
+      }
+    });
+  });
 }
 
 function monthData(){
@@ -852,7 +935,6 @@ function weekRowForDate(dateNum){
 }
 
 function render(){
-  save();
   const data = monthData();
 
   title.textContent = `${monthNames[currentMonth]} ${currentYear}`;
@@ -1218,8 +1300,21 @@ document.getElementById("editModeBtn").onclick = () => {
   document.getElementById("editModeBtn").textContent = editMode ? "Done" : "Edit";
 };
 
-populateControls();
-render();
+document.getElementById("signInBtn").onclick = async () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  try{
+    await auth.signInWithPopup(provider);
+  }catch(err){
+    console.error("Sign-in failed:", err);
+    alert("Sign-in failed: " + err.message);
+  }
+};
+
+loadFromFirestore().then(() => {
+  populateControls();
+  render();
+});
 </script>
 </body>
 </html>
