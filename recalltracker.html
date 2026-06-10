@@ -9,11 +9,11 @@
 
 @font-face {
   font-family: 'hellohon';
-  src: url('hellohon.otf') format('opentype');
-  font-weight: normal;
+  src: url('./hellohon.otf') format('opentype');
+  font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
-
 :root{
   --bg:#fbfcff;
   --glass:rgba(255,255,255,.66);
@@ -40,12 +40,13 @@ body{
   min-height:100vh;
   font-family:Tahoma, Arial, sans-serif;
   color:var(--ink);
-  background:
-    radial-gradient(circle at 18% 12%, rgba(218,229,245,.85), transparent 34%),
-    radial-gradient(circle at 86% 8%, rgba(232,238,248,.75), transparent 32%),
-    radial-gradient(circle at 50% 96%, rgba(220,232,238,.65), transparent 38%),
-    linear-gradient(135deg,#ffffff,#f8fbff 48%,#ffffff);
   padding:14px;
+
+  background:
+    radial-gradient(circle at 18% 14%, rgba(255,255,255,.85), transparent 28%),
+    radial-gradient(circle at 82% 10%, rgba(225,233,241,.85), transparent 30%),
+    radial-gradient(circle at 45% 96%, rgba(214,224,232,.70), transparent 36%),
+    linear-gradient(180deg, #edf3f7 0%, #e4ecf2 48%, #eef3f6 100%);
 }
 
 .app{
@@ -79,18 +80,19 @@ body{
   flex-wrap:wrap;
 }
 
-h1{
+#title{
   margin:0;
-  font-family:'hellohon', Tahoma, Arial, sans-serif;
-  font-size:clamp(2.1rem,5vw,3.4rem);
-  font-weight:normal;
+  font-family:'hellohon', Tahoma, Arial, sans-serif !important;
+  font-size:clamp(2.4rem,5.5vw,3.8rem);
+  font-weight:400;
   letter-spacing:.01em;
   line-height:1;
+  color:rgba(52,67,88,.86);
   text-shadow:
-    .35px 0 currentColor,
-    0 .35px currentColor,
-    -.35px 0 currentColor,
-    0 -.35px currentColor;
+    0 1px 1px rgba(255,255,255,.8),
+    0 8px 22px rgba(80,95,120,.18),
+    .45px 0 currentColor,
+    0 .45px currentColor;
 }
 
 .month-check{
@@ -248,44 +250,87 @@ input[type="checkbox"]:checked{
 
 .board{
   margin-top:14px;
-  padding:12px;
-  border:1px solid rgba(255,255,255,.82);
-  border-radius:28px;
-  background:
-    linear-gradient(145deg, rgba(255,255,255,.74), rgba(221,231,242,.42), rgba(255,255,255,.68)),
-    rgba(255,255,255,.52);
-  backdrop-filter:blur(38px) saturate(180%);
-  -webkit-backdrop-filter:blur(38px) saturate(180%);
-  box-shadow:
-    0 20px 58px rgba(105,120,145,.16),
-    inset 0 1px 1px rgba(255,255,255,.8);
+  padding:0;
+  border:none;
+  border-radius:0;
+  background:transparent;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  box-shadow:none;
   overflow:auto;
 }
 
 .calendar{
+  position:relative;
   min-width:880px;
   display:grid;
   grid-template-columns:130px repeat(7,1fr);
-  border:1px solid rgba(150,165,190,.22);
-  border-radius:22px;
+  border-radius:28px;
   overflow:hidden;
+  margin-top:14px;
+
+  border:1px solid rgba(255,255,255,.72);
+
   background:
-    linear-gradient(135deg, rgba(255,255,255,.58), rgba(219,230,242,.34)),
-    rgba(255,255,255,.38);
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.54),
+      rgba(255,255,255,.30)
+    );
+
+  backdrop-filter:blur(30px) saturate(145%);
+  -webkit-backdrop-filter:blur(30px) saturate(145%);
+
   box-shadow:
-    inset 0 1px 1px rgba(255,255,255,.86),
-    0 14px 38px rgba(120,135,160,.12);
+    0 18px 50px rgba(95,112,135,.16),
+    inset 0 1px 0 rgba(255,255,255,.88),
+    inset 0 -1px 0 rgba(255,255,255,.24);
+}
+
+.calendar::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+
+  background:
+    radial-gradient(
+      circle at 22% 10%,
+      rgba(255,255,255,.34),
+      transparent 30%
+    );
+}
+
+.calendar > *{
+  position:relative;
+  z-index:2;
+}
+
+.calendar > *{
+  position:relative;
+  z-index:2;
 }
 
 .cell{
   min-height:110px;
   padding:9px;
-  border-right:1px solid rgba(145,160,185,.18);
-  border-bottom:1px solid rgba(145,160,185,.18);
+
+  border-right:1px solid rgba(255,255,255,.36);
+  border-bottom:1px solid rgba(255,255,255,.34);
+
   background:
-    linear-gradient(145deg, rgba(255,255,255,.48), rgba(224,233,243,.22));
-  backdrop-filter:blur(20px) saturate(160%);
-  -webkit-backdrop-filter:blur(20px) saturate(160%);
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.22),
+      rgba(255,255,255,.08)
+    );
+
+  backdrop-filter:blur(12px) saturate(130%);
+  -webkit-backdrop-filter:blur(12px) saturate(130%);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.45);
 }
 
 .cell:nth-child(8n){
@@ -300,10 +345,18 @@ input[type="checkbox"]:checked{
   font-size:.78rem;
   font-weight:700;
   text-transform:uppercase;
-  color:#6f7d8f;
+  color:rgba(48,60,78,.82);
   letter-spacing:.08em;
+
   background:
-    linear-gradient(135deg, rgba(255,255,255,.76), rgba(220,231,243,.46));
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.36),
+      rgba(255,255,255,.16)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.65);
 }
 
 .weekly-head{
@@ -312,7 +365,11 @@ input[type="checkbox"]:checked{
 
 .weekly{
   background:
-    linear-gradient(145deg, rgba(255,255,255,.58), rgba(214,225,238,.34));
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.28),
+      rgba(255,255,255,.12)
+    );
 }
 
 .task, .tick-row{
