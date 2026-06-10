@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Recall Tracker</title>
+
+<style>
+:root{
+  --bg:#fbfcff;
+  --glass:rgba(255,255,255,.66);
+  --glass2:rgba(255,255,255,.84);
+  --glass-hue:rgba(222,232,255,.42);
+  --glass-lilac:rgba(244,229,255,.34);
+  --line:rgba(132,148,190,.18);
+  --ink:#202636;
+  --muted:#7d8798;
+  --soft:#f7f9ff;
+  --blue:#93a8ff;
+  --mint:#8ff5d2;
+  --pink:#ff9ed8;
+  --lilac:#d7a8ff;
+  --yellow:#fff09a;
+  --red:#d96b6b;
+  --shadow:0 18px 52px rgba(120,135,180,.16);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Tahoma, Arial, sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(218,229,245,.85), transparent 34%),
+    radial-gradient(circle at 86% 8%, rgba(232,238,248,.75), transparent 32%),
+    radial-gradient(circle at 50% 96%, rgba(220,232,238,.65), transparent 38%),
+    linear-gradient(135deg,#ffffff,#f8fbff 48%,#ffffff);
+  padding:14px;
+}
+
+.app{
+  max-width:1180px;
+  margin:auto;
+}
+
+.topbar{
+  position:sticky;
+  top:10px;
+  z-index:20;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.75);
+  border-radius:26px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.74), var(--glass-hue) 52%, rgba(255,255,255,.62)),
+    var(--glass);
+  backdrop-filter:blur(34px) saturate(210%);
+  -webkit-backdrop-filter:blur(34px) saturate(210%);
+  box-shadow:var(--shadow);
+}
+
+.left-top{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+h1{
+  margin:0;
+  font-size:clamp(1.45rem,4vw,2.2rem);
+  font-weight:700;
+  letter-spacing:-.04em;
+}
+
+.month-check{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:.8rem;
+  color:var(--muted);
+  line-height:1.1;
+}
+
+.controls{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+button, select, input{
+  font:inherit;
+}
+
+button, select{
+  border:1px solid rgba(255,255,255,.82);
+  background:rgba(255,255,255,.72);
+  color:var(--ink);
+  border-radius:999px;
+  padding:9px 12px;
+  box-shadow:0 8px 18px rgba(70,80,100,.08);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+
+button{
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+button:active{
+  transform:scale(.96);
+}
+
+.primary{
+  background:rgba(142,167,255,.24);
+  border-color:rgba(142,167,255,.32);
+}
+
+.edit-on{
+  background:rgba(255,230,230,.75);
+  border-color:rgba(217,107,107,.28);
+  color:#8d3d3d;
+}
+
+
+input[type="checkbox"]{
+  width:21px;
+  height:21px;
+  accent-color:#fff09a;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  border:2px solid rgba(95,110,155,.55);
+  border-radius:8px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.96), rgba(236,241,255,.86));
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.9),
+    0 4px 12px rgba(80,95,140,.16);
+  position:relative;
+}
+
+input[type="checkbox"]:checked{
+  border-color:rgba(255,224,105,.82);
+  background:
+    radial-gradient(circle at 28% 25%, rgba(255,255,255,.96), transparent 28%),
+    linear-gradient(135deg, #fff8b8, #ffe36d 58%, #ffc7ec);
+  box-shadow:
+    0 0 0 3px rgba(255,224,105,.22),
+    0 0 18px rgba(255,224,105,.38),
+    inset 0 1px 1px rgba(255,255,255,.75);
+}
+
+/* First column weekly task ticks */
+.weekly-task input[type="checkbox"]:checked{
+  border-color:rgba(178,151,255,.78);
+  background:
+    radial-gradient(circle at 28% 25%, rgba(255,255,255,.96), transparent 28%),
+    linear-gradient(135deg, #e9d7ff, #bfa7ff 58%, #9fb8ff);
+  box-shadow:
+    0 0 0 3px rgba(191,167,255,.2),
+    0 0 18px rgba(159,184,255,.35),
+    inset 0 1px 1px rgba(255,255,255,.75);
+}
+
+/* Added weekly custom ticks */
+.week-tick input[type="checkbox"]:checked{
+  border-color:rgba(255,150,60,.85);
+  background:
+    radial-gradient(circle at 28% 25%, rgba(255,255,255,.96), transparent 28%),
+    linear-gradient(135deg, #fff0d6, #ffb36b 55%, #ff8a3d);
+  box-shadow:
+    0 0 0 3px rgba(255,150,60,.22),
+    0 0 18px rgba(255,138,61,.38),
+    inset 0 1px 1px rgba(255,255,255,.75);
+}
+
+/* Added day-only custom ticks */
+.day-tick input[type="checkbox"]:checked{
+  border-color:rgba(255,150,60,.85);
+  background:
+    radial-gradient(circle at 28% 25%, rgba(255,255,255,.96), transparent 28%),
+    linear-gradient(135deg, #fff0d6, #ffb36b 55%, #ff8a3d);
+  box-shadow:
+    0 0 0 3px rgba(255,150,60,.22),
+    0 0 18px rgba(255,138,61,.38),
+    inset 0 1px 1px rgba(255,255,255,.75);
+}
+
+/* Added weekly custom ticks - orange */
+.week-tick input[type="checkbox"]:checked{
+  border-color:rgba(255,145,55,.9);
+  background:
+    radial-gradient(circle at 28% 25%, rgba(255,255,255,.96), transparent 28%),
+    linear-gradient(135deg, #fff1dc, #ffb56b 55%, #ff8a3d);
+  box-shadow:
+    0 0 0 3px rgba(255,145,55,.22),
+    0 0 18px rgba(255,138,61,.38),
+    inset 0 1px 1px rgba(255,255,255,.75);
+}
+
+/* Added daily custom ticks - orange */
+.day-tick input[type="checkbox"]:checked{
+  border-color:rgba(255,145,55,.9);
+  background:
+    radial-gradient(circle at 28% 25%, rgba(255,255,255,.96), transparent 28%),
+    linear-gradient(135deg, #fff1dc, #ffb56b 55%, #ff8a3d);
+  box-shadow:
+    0 0 0 3px rgba(255,145,55,.22),
+    0 0 18px rgba(255,138,61,.38),
+    inset 0 1px 1px rgba(255,255,255,.75);
+}
+
+/* Added monthly custom ticks - orange */
+.added-month-tick input[type="checkbox"]:checked{
+  border-color:rgba(255,145,55,.9);
+  background:
+    radial-gradient(circle at 28% 25%, rgba(255,255,255,.96), transparent 28%),
+    linear-gradient(135deg, #fff1dc, #ffb56b 55%, #ff8a3d);
+  box-shadow:
+    0 0 0 3px rgba(255,145,55,.22),
+    0 0 18px rgba(255,138,61,.38),
+    inset 0 1px 1px rgba(255,255,255,.75);
+}
+
+.board{
+  margin-top:14px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,.82);
+  border-radius:28px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.74), rgba(221,231,242,.42), rgba(255,255,255,.68)),
+    rgba(255,255,255,.52);
+  backdrop-filter:blur(38px) saturate(180%);
+  -webkit-backdrop-filter:blur(38px) saturate(180%);
+  box-shadow:
+    0 20px 58px rgba(105,120,145,.16),
+    inset 0 1px 1px rgba(255,255,255,.8);
+  overflow:auto;
+}
+
+.calendar{
+  min-width:880px;
+  display:grid;
+  grid-template-columns:130px repeat(7,1fr);
+  border:1px solid rgba(150,165,190,.22);
+  border-radius:22px;
+  overflow:hidden;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.58), rgba(219,230,242,.34)),
+    rgba(255,255,255,.38);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.86),
+    0 14px 38px rgba(120,135,160,.12);
+}
+
+.cell{
+  min-height:110px;
+  padding:9px;
+  border-right:1px solid rgba(145,160,185,.18);
+  border-bottom:1px solid rgba(145,160,185,.18);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.48), rgba(224,233,243,.22));
+  backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+}
+
+.cell:nth-child(8n){
+  border-right:none;
+}
+
+.head{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.78rem;
+  font-weight:700;
+  text-transform:uppercase;
+  color:#6f7d8f;
+  letter-spacing:.08em;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.76), rgba(220,231,243,.46));
+}
+
+.weekly-head{
+  justify-content:flex-start;
+}
+
+.weekly{
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.58), rgba(214,225,238,.34));
+}
+
+.task, .tick-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:29px;
+  font-size:.82rem;
+}
+
+.task span, .tick-row span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.delete-mini{
+  display:none;
+  position:absolute;
+  right:2px;
+  top:50%;
+  transform:translateY(-50%);
+  width:18px;
+  height:18px;
+  min-width:18px;
+  padding:0;
+  border-radius:50%;
+  color:#9a4747;
+  background:rgba(255,230,230,.88);
+  border:1px solid rgba(217,107,107,.24);
+  box-shadow:none;
+  font-size:12px;
+  line-height:1;
+  place-items:center;
+  z-index:2;
+}
+
+body.edit-mode .delete-mini{
+  display:inline-grid;
+}
+
+body.edit-mode .tick-row{
+  position:relative;
+  background:rgba(255,245,245,.32);
+  border-radius:10px;
+  padding-right:22px;
+}
+
+
+
+.task input{
+  margin-left:auto;
+  width:18px;
+  height:18px;
+}
+
+.day.empty{
+  background:rgba(255,255,255,.24);
+}
+
+.day-num{
+  font-weight:700;
+  font-size:.95rem;
+  margin-bottom:10px;
+}
+
+.ticks, .weekly-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+
+.soft-line{
+  border:0;
+  border-top:1px solid var(--line);
+  margin:14px 0;
+}
+
+.settings-note{
+  margin:10px 4px 0;
+  font-size:.78rem;
+  color:var(--muted);
+}
+
+.sheet-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  display:none;
+  background:rgba(30,35,45,.14);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+.sheet-backdrop.show{
+  display:block;
+}
+
+.sheet{
+  position:fixed;
+  left:50%;
+  bottom:16px;
+  transform:translateX(-50%);
+  width:min(520px, calc(100vw - 24px));
+  padding:16px;
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:28px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.82), rgba(228,238,255,.58), rgba(249,236,255,.52)),
+    rgba(255,255,255,.72);
+  backdrop-filter:blur(42px) saturate(220%);
+  -webkit-backdrop-filter:blur(42px) saturate(220%);
+  box-shadow:0 24px 80px rgba(60,70,100,.22);
+}
+
+.sheet h2{
+  margin:0 0 4px;
+  font-size:1.05rem;
+  letter-spacing:-.02em;
+}
+
+.sheet p{
+  margin:0 0 14px;
+  color:var(--muted);
+  font-size:.84rem;
+}
+
+.field{
+  margin-bottom:12px;
+}
+
+.field label{
+  display:block;
+  font-size:.78rem;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.field input, .field select{
+  width:100%;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.72);
+  color:var(--ink);
+  border-radius:16px;
+  padding:11px 12px;
+}
+
+.scope-row{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.scope-btn{
+  border-radius:16px;
+  padding:11px 8px;
+}
+
+.scope-btn.active{
+  background:rgba(142,167,255,.28);
+  border-color:rgba(142,167,255,.42);
+}
+
+.delete-option{
+  width:100%;
+  text-align:left;
+  margin-bottom:7px;
+  border-radius:16px;
+  background:rgba(255,245,245,.75);
+}
+
+.sheet-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.danger{
+  background:rgba(255,230,230,.75);
+  color:#8d3d3d;
+}
+
+.hidden{
+  display:none;
+}
+
+@media(max-width:760px){
+  body{padding:10px}
+  .topbar{
+    align-items:flex-start;
+    flex-direction:column;
+    border-radius:24px;
+  }
+  .controls{
+    justify-content:flex-start;
+  }
+  .calendar{
+    min-width:780px;
+    grid-template-columns:118px repeat(7,1fr);
+  }
+  .cell{
+    min-height:104px;
+    padding:8px;
+  }
+}
+
+::-webkit-scrollbar{height:10px;width:10px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,.24);border-radius:999px}
+::-webkit-scrollbar-thumb{
+  background:rgba(155,175,235,.34);
+  border-radius:999px;
+  border:2px solid rgba(255,255,255,.4);
+}
+*{scrollbar-width:thin;scrollbar-color:rgba(155,175,235,.42) rgba(255,255,255,.18)}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="left-top">
+      <h1 id="title">Recall Tracker</h1>
+      <label class="month-check">
+        <input id="wholeMonth" type="checkbox">
+        <span>Check<br>whole month</span>
+      </label>
+    </div>
+
+    <div class="controls">
+      <button id="prevBtn">‹</button>
+      <select id="monthSelect"></select>
+      <select id="yearSelect"></select>
+      <button id="nextBtn">›</button>
+	  <button id="manageTicksBtn">Manage Ticks</button>
+	<button id="editModeBtn">Edit</button>
+	<button id="editWeeklyBtn">First column</button>
+      <button id="clearBtn">Clear</button>
+    </div>
+  </div>
+
+  <div class="board">
+    <div id="calendar" class="calendar"></div>
+    <p class="settings-note">Swipe sideways on phone. Tick rows autosave on this device.</p>
+  </div>
+</div>
+
+<div id="sheetBackdrop" class="sheet-backdrop">
+  <div class="sheet">
+    <h2>Manage ticks</h2>
+    <p>Add new ticks or delete existing ones for this month.</p>
+
+    <div class="field">
+      <label>Add tick label</label>
+      <input id="tickNameInput" placeholder="e.g. Work">
+    </div>
+
+    <div class="scope-row">
+      <button class="scope-btn active" data-scope="month">Month</button>
+      <button class="scope-btn" data-scope="week">Week</button>
+      <button class="scope-btn" data-scope="day">Day</button>
+    </div>
+
+    <div id="weekField" class="field hidden">
+      <label>Week row</label>
+      <select id="weekSelect">
+        <option value="1">Week row 1</option>
+        <option value="2">Week row 2</option>
+        <option value="3">Week row 3</option>
+        <option value="4">Week row 4</option>
+        <option value="5">Week row 5</option>
+        <option value="6">Week row 6</option>
+      </select>
+    </div>
+
+    <div id="dayField" class="field hidden">
+      <label>Date number</label>
+      <input id="dayInput" type="number" min="1" max="31" placeholder="e.g. 8">
+    </div>
+
+
+    <div class="sheet-actions">
+  <button id="cancelSheet">Close</button>
+  <button id="saveTickBtn" class="primary">Add tick</button>
+</div>
+
+<hr class="soft-line">
+
+<div id="deleteList" class="field">
+  <label>Delete existing tick</label>
+  <div id="deleteOptions"></div>
+</div>
+  </div>
+</div>
+
+<script>
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+let state = JSON.parse(localStorage.getItem("recallTrackerStateV2") || "{}");
+let weeklyTasks = state.weeklyTasks || ["QB", "Cx + CxSO", "Mammo"];
+let monthlyRows = state.monthlyRows || ["CEP"];
+
+// Rename old saved "Me" row to "CEP"
+monthlyRows = monthlyRows.map(x => x === "Me" ? "CEP" : x);
+
+Object.values(state.months || {}).forEach(month => {
+  Object.values(month.days || {}).forEach(dayObj => {
+    if ("Me" in dayObj) {
+      dayObj["CEP"] = dayObj["Me"];
+      delete dayObj["Me"];
+    }
+  });
+});
+
+
+const today = new Date();
+let currentMonth = state.currentMonth ?? today.getMonth();
+let currentYear = state.currentYear ?? today.getFullYear();
+let activeScope = "month";
+let editMode = false;
+
+const calendar = document.getElementById("calendar");
+const title = document.getElementById("title");
+const monthSelect = document.getElementById("monthSelect");
+const yearSelect = document.getElementById("yearSelect");
+const wholeMonth = document.getElementById("wholeMonth");
+
+function key(){
+  return `${currentYear}-${String(currentMonth+1).padStart(2,"0")}`;
+}
+
+function save(){
+  state.currentMonth = currentMonth;
+  state.currentYear = currentYear;
+  state.weeklyTasks = weeklyTasks;
+  localStorage.setItem("recallTrackerStateV2", JSON.stringify(state));
+}
+
+function monthData(){
+  state.months ||= {};
+  state.months[key()] ||= {
+    whole:false,
+    days:{},
+    weekly:{},
+    customDayRows:{},
+    customWeekRows:{},
+    monthlyRows:["CEP"],
+    hiddenMonthRows:{ weeks:{}, days:{} },
+    hiddenWeekRows:{}
+  };
+
+  state.months[key()].monthlyRows ||= ["CEP"];
+  state.months[key()].customDayRows ||= {};
+  state.months[key()].customWeekRows ||= {};
+  state.months[key()].hiddenMonthRows ||= { weeks:{}, days:{} };
+  state.months[key()].hiddenWeekRows ||= {};
+
+  return state.months[key()];
+}
+
+function showDeleteChoices(){
+  const data = monthData();
+  const monthlyRows = data.monthlyRows || ["CEP"];
+  const box = document.getElementById("deleteOptions");
+
+  box.innerHTML = "";
+
+  let items = [];
+
+  monthlyRows.forEach(name => {
+  items.push({
+    name,
+    scope:"month",
+    label:`Delete "${name}" from whole month`
+  });
+
+  items.push({
+    name,
+    scope:"hideMonthWeek",
+    label:`Hide "${name}" from one week row`
+  });
+
+  items.push({
+    name,
+    scope:"hideMonthDay",
+    label:`Hide "${name}" from selected day/s`
+  });
+});
+
+  Object.entries(data.customWeekRows || {}).forEach(([week, rows]) => {
+    rows.forEach(name => {
+      items.push({
+        name,
+        scope:"week",
+        week,
+        label:`Delete "${name}" from week row ${week} only`
+      });
+    });
+  });
+
+  Object.entries(data.customDayRows || {}).forEach(([day, rows]) => {
+  rows.forEach(name => {
+    items.push({
+      name,
+      scope:"day",
+      day,
+      label:`Delete "${name}" from selected day/s`
+    });
+  });
+});
+
+  if(!items.length){
+    box.innerHTML = `<p style="margin:0;color:var(--muted);font-size:.85rem;">No ticks to delete yet.</p>`;
+    return;
+  }
+
+  items.forEach(item => {
+    const btn = document.createElement("button");
+    btn.className = "delete-option";
+    btn.textContent = item.label;
+
+    btn.onclick = () => {
+      if(confirm(item.label + "?")){
+        deleteTickItem(item);
+      }
+    };
+
+    box.appendChild(btn);
+  });
+}
+
+function parseDayNumbers(input){
+  return input
+    .split(",")
+    .map(x => x.trim())
+    .filter(Boolean)
+    .map(Number)
+    .filter(n => Number.isInteger(n) && n >= 1 && n <= 31);
+}
+
+function deleteTickItem(item){
+  const data = monthData();
+  data.monthlyRows ||= ["CEP"];
+  data.customDayRows ||= {};
+  data.customWeekRows ||= {};
+  data.hiddenMonthRows ||= {
+    weeks:{},
+    days:{}
+  };
+
+  if(item.scope === "month"){
+  data.monthlyRows = data.monthlyRows.filter(x => x !== item.name);
+
+  Object.values(data.days || {}).forEach(dayObj => {
+    delete dayObj[item.name];
+  });
+}
+
+  if(item.scope === "week"){
+    data.customWeekRows[item.week] =
+      (data.customWeekRows[item.week] || []).filter(x => x !== item.name);
+
+    Object.keys(data.days || {}).forEach(dayNum => {
+      if(weekRowForDate(Number(dayNum)) === Number(item.week)){
+        delete data.days[dayNum][item.name];
+      }
+    });
+  }
+
+  if(item.scope === "day"){
+  const input = prompt("Which date number/s? Example: 1, 2, 6, 7", item.day || "");
+  if(!input) return;
+
+  const daysToDelete = parseDayNumbers(input);
+  if(!daysToDelete.length) return;
+
+  daysToDelete.forEach(day => {
+    data.customDayRows[day] =
+      (data.customDayRows[day] || []).filter(x => x !== item.name);
+
+    if(data.days[day]){
+      delete data.days[day][item.name];
+    }
+  });
+}
+
+if(item.scope === "singleDay"){
+  data.customDayRows[item.day] =
+    (data.customDayRows[item.day] || []).filter(x => x !== item.name);
+
+  if(data.days[item.day]){
+    delete data.days[item.day][item.name];
+  }
+}
+
+  if(item.scope === "hideMonthWeek"){
+    const week = prompt("Which week row? 1, 2, 3, 4, 5, or 6");
+    if(!week) return;
+
+    data.hiddenMonthRows.weeks[week] ||= [];
+    if(!data.hiddenMonthRows.weeks[week].includes(item.name)){
+      data.hiddenMonthRows.weeks[week].push(item.name);
+    }
+
+    Object.keys(data.days || {}).forEach(dayNum => {
+      if(weekRowForDate(Number(dayNum)) === Number(week)){
+        delete data.days[dayNum][item.name];
+      }
+    });
+  }
+
+  if(item.scope === "hideMonthDay"){
+  const input = prompt("Which date number/s? Example: 1, 2, 6, 7");
+  if(!input) return;
+
+  const daysToHide = parseDayNumbers(input);
+  if(!daysToHide.length) return;
+
+  daysToHide.forEach(day => {
+    data.hiddenMonthRows.days[day] ||= [];
+
+    if(!data.hiddenMonthRows.days[day].includes(item.name)){
+      data.hiddenMonthRows.days[day].push(item.name);
+    }
+
+    if(data.days[day]){
+      delete data.days[day][item.name];
+    }
+  });
+}
+
+  save();
+  render();
+  showDeleteChoices();
+}
+
+function populateControls(){
+  monthSelect.innerHTML = monthNames.map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+  const years = [];
+  for(let y=today.getFullYear()-2; y<=today.getFullYear()+4; y++) years.push(y);
+  yearSelect.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join("");
+}
+
+function mondayIndex(date){
+  return (date.getDay() + 6) % 7;
+}
+
+function weekRowForDate(dateNum){
+  const firstOffset = mondayIndex(new Date(currentYear, currentMonth, 1));
+  return Math.ceil((dateNum + firstOffset) / 7);
+}
+
+function render(){
+  save();
+  const data = monthData();
+
+  title.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+  monthSelect.value = currentMonth;
+  yearSelect.value = currentYear;
+  wholeMonth.checked = !!data.whole;
+
+  calendar.innerHTML = "";
+  calendar.appendChild(headerCell("Weekly"));
+  days.forEach(d => calendar.appendChild(headerCell(d)));
+
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstOffset = mondayIndex(new Date(currentYear, currentMonth, 1));
+  const totalCells = Math.ceil((firstOffset + daysInMonth) / 7) * 7;
+
+  for(let week = 0; week < totalCells / 7; week++){
+    calendar.appendChild(weeklyCell(week + 1));
+
+    for(let dow = 0; dow < 7; dow++){
+      const cellIndex = week * 7 + dow;
+      const dateNum = cellIndex - firstOffset + 1;
+
+      if(dateNum < 1 || dateNum > daysInMonth){
+        const blank = document.createElement("div");
+        blank.className = "cell day empty";
+        calendar.appendChild(blank);
+      }else{
+        calendar.appendChild(dayCell(dateNum));
+      }
+    }
+  }
+}
+
+function headerCell(text){
+  const el = document.createElement("div");
+  el.className = "cell head" + (text === "Weekly" ? " weekly-head" : "");
+  el.textContent = text;
+  return el;
+}
+
+function weeklyCell(weekRow){
+  const data = monthData();
+  const el = document.createElement("div");
+  el.className = "cell weekly";
+
+  const list = document.createElement("div");
+  list.className = "weekly-list";
+
+  weeklyTasks.forEach(task => {
+    const row = document.createElement("div");
+    row.className = "task weekly-task";
+
+    const id = `${weekRow}-${task}`;
+    row.innerHTML = `
+      <span>${task}</span>
+      <input type="checkbox">
+    `;
+
+    const cb = row.querySelector("input");
+    cb.checked = !!data.weekly[id];
+    cb.onchange = () => {
+      data.weekly[id] = cb.checked;
+      save();
+    };
+
+    list.appendChild(row);
+  });
+
+  el.appendChild(list);
+  return el;
+}
+
+function rowElement(rowName, dateNum, rowType = "monthly"){
+  const data = monthData();
+  data.days[dateNum] ||= {};
+
+  const row = document.createElement("div");
+  row.className = `tick-row ${rowType}-tick`;
+  row.innerHTML = `
+    <input type="checkbox">
+    <span>${rowName}</span>
+    <button class="delete-mini" title="Delete">×</button>
+  `;
+
+  const cb = row.querySelector("input");
+  const del = row.querySelector(".delete-mini");
+
+  cb.checked = !!data.days[dateNum][rowName];
+
+  cb.onchange = () => {
+    data.days[dateNum][rowName] = cb.checked;
+    save();
+  };
+
+  del.onclick = (e) => {
+    e.stopPropagation();
+
+    if(!confirm(`Remove "${rowName}" from day ${dateNum} only?`)) return;
+
+    const data = monthData();
+    data.customDayRows ||= {};
+    data.customWeekRows ||= {};
+    data.hiddenMonthRows ||= { weeks:{}, days:{} };
+    data.hiddenWeekRows ||= {};
+
+    // Monthly tick: hide from this day only
+    if(rowType === "monthly" || rowType === "added-month"){
+      data.hiddenMonthRows.days[dateNum] ||= [];
+
+      if(!data.hiddenMonthRows.days[dateNum].includes(rowName)){
+        data.hiddenMonthRows.days[dateNum].push(rowName);
+      }
+
+      if(data.days[dateNum]){
+        delete data.days[dateNum][rowName];
+      }
+    }
+
+    // Weekly tick: hide from this day only
+    if(rowType === "week"){
+      data.hiddenWeekRows[dateNum] ||= [];
+
+      if(!data.hiddenWeekRows[dateNum].includes(rowName)){
+        data.hiddenWeekRows[dateNum].push(rowName);
+      }
+
+      if(data.days[dateNum]){
+        delete data.days[dateNum][rowName];
+      }
+    }
+
+    // Daily tick: delete from this day only
+    if(rowType === "day"){
+      data.customDayRows[dateNum] =
+        (data.customDayRows[dateNum] || []).filter(x => x !== rowName);
+
+      if(data.days[dateNum]){
+        delete data.days[dateNum][rowName];
+      }
+    }
+
+    save();
+    render();
+  };
+
+  return row;
+}
+
+function dayCell(dateNum){
+  const data = monthData();
+  const monthlyRows = data.monthlyRows || ["CEP"];
+  const el = document.createElement("div");
+  el.className = "cell day";
+
+  const num = document.createElement("div");
+  num.className = "day-num";
+  num.textContent = dateNum;
+  el.appendChild(num);
+
+  const ticks = document.createElement("div");
+  ticks.className = "ticks";
+
+  const weekRow = weekRowForDate(dateNum);
+  data.hiddenWeekRows ||= {};
+
+const hiddenWeekRowsForDay = data.hiddenWeekRows?.[dateNum] || [];
+
+const weekRows = (data.customWeekRows?.[weekRow] || []).filter(name => {
+  return !hiddenWeekRowsForDay.includes(name);
+});
+
+const dayRows = data.customDayRows?.[dateNum] || [];
+
+  data.hiddenMonthRows ||= { weeks:{}, days:{} };
+
+  const hiddenForWeek = data.hiddenMonthRows.weeks?.[weekRow] || [];
+  const hiddenForDay = data.hiddenMonthRows.days?.[dateNum] || [];
+
+  const visibleMonthlyRows = monthlyRows.filter(name => {
+    return !hiddenForWeek.includes(name) && !hiddenForDay.includes(name);
+  });
+
+  const allRows = [...visibleMonthlyRows, ...weekRows, ...dayRows];
+
+  [...new Set(allRows)].forEach(rowName => {
+    let rowType = "day";
+
+    if(visibleMonthlyRows.includes(rowName)){
+      rowType = rowName === "CEP" ? "monthly" : "added-month";
+    }else if(weekRows.includes(rowName)){
+      rowType = "week";
+    }
+
+    ticks.appendChild(rowElement(rowName, dateNum, rowType));
+  });
+
+  el.appendChild(ticks);
+  return el;
+}
+
+function openSheet(){
+  document.getElementById("sheetBackdrop").classList.add("show");
+}
+
+function closeSheet(){
+  document.getElementById("sheetBackdrop").classList.remove("show");
+}
+
+function updateScopeButtons(){
+  document.querySelectorAll(".scope-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.scope === activeScope);
+  });
+  document.getElementById("weekField").classList.toggle("hidden", activeScope !== "week");
+  document.getElementById("dayField").classList.toggle("hidden", activeScope !== "day");
+}
+
+function addOrDeleteTick(mode){
+  const name = document.getElementById("tickNameInput").value.trim();
+  if(!name) return;
+
+  const data = monthData();
+  data.monthlyRows ||= ["CEP"];
+  data.customDayRows ||= {};
+  data.customWeekRows ||= {};
+
+  const removeFromArray = (arr, item) => arr.filter(x => x !== item);
+
+  if(activeScope === "month"){
+  if(mode === "add" && !data.monthlyRows.includes(name)){
+    data.monthlyRows.push(name);
+  }
+
+  if(mode === "delete"){
+    data.monthlyRows = removeFromArray(data.monthlyRows, name);
+
+    Object.values(data.days || {}).forEach(dayObj => {
+      delete dayObj[name];
+    });
+  }
+}
+
+  if(activeScope === "week"){
+    const week = document.getElementById("weekSelect").value;
+
+    data.customWeekRows[week] ||= [];
+
+    if(mode === "add" && !data.customWeekRows[week].includes(name)){
+      data.customWeekRows[week].push(name);
+    }
+
+    if(mode === "delete"){
+      data.customWeekRows[week] = removeFromArray(data.customWeekRows[week], name);
+
+      Object.keys(data.days || {}).forEach(dayNum => {
+        if(weekRowForDate(Number(dayNum)) === Number(week)){
+          delete data.days[dayNum][name];
+        }
+      });
+    }
+  }
+
+  if(activeScope === "day"){
+    const day = document.getElementById("dayInput").value;
+    if(!day) return;
+
+    data.customDayRows[day] ||= [];
+
+    if(mode === "add" && !data.customDayRows[day].includes(name)){
+      data.customDayRows[day].push(name);
+    }
+
+    if(mode === "delete"){
+      data.customDayRows[day] = removeFromArray(data.customDayRows[day], name);
+
+      if(data.days[day]){
+        delete data.days[day][name];
+      }
+    }
+  }
+
+    save();
+  render();
+  showDeleteChoices();
+
+  document.getElementById("tickNameInput").value = "";
+}
+
+wholeMonth.onchange = () => {
+  monthData().whole = wholeMonth.checked;
+  save();
+};
+
+monthSelect.onchange = () => {
+  currentMonth = Number(monthSelect.value);
+  render();
+};
+
+yearSelect.onchange = () => {
+  currentYear = Number(yearSelect.value);
+  render();
+};
+
+document.getElementById("prevBtn").onclick = () => {
+  currentMonth--;
+  if(currentMonth < 0){ currentMonth = 11; currentYear--; }
+  render();
+};
+
+document.getElementById("nextBtn").onclick = () => {
+  currentMonth++;
+  if(currentMonth > 11){ currentMonth = 0; currentYear++; }
+  render();
+};
+
+document.getElementById("clearBtn").onclick = () => {
+  if(confirm("Clear this month?")){
+    state.months ||= {};
+    delete state.months[key()];
+    save();
+    render();
+  }
+};
+document.getElementById("editWeeklyBtn").onclick = () => {
+  const next = prompt("First column tasks, separated by commas:", weeklyTasks.join(", "));
+  if(!next) return;
+  weeklyTasks = next.split(",").map(x => x.trim()).filter(Boolean);
+  save();
+  render();
+};
+
+document.querySelectorAll(".scope-btn").forEach(btn => {
+  btn.onclick = () => {
+    activeScope = btn.dataset.scope;
+    updateScopeButtons();
+  };
+});
+
+document.getElementById("cancelSheet").onclick = closeSheet;
+
+document.getElementById("saveTickBtn").onclick = () => {
+  addOrDeleteTick("add");
+};
+
+document.getElementById("sheetBackdrop").onclick = (e) => {
+  if(e.target.id === "sheetBackdrop") closeSheet();
+};
+
+document.getElementById("manageTicksBtn").onclick = () => {
+  document.getElementById("tickNameInput").value = "";
+  document.getElementById("dayInput").value = "";
+  document.getElementById("weekSelect").value = "1";
+
+  activeScope = "month";
+  updateScopeButtons();
+  openSheet();
+  showDeleteChoices();
+};
+
+document.getElementById("editModeBtn").onclick = () => {
+  editMode = !editMode;
+  document.body.classList.toggle("edit-mode", editMode);
+  document.getElementById("editModeBtn").classList.toggle("edit-on", editMode);
+  document.getElementById("editModeBtn").textContent = editMode ? "Done" : "Edit";
+};
+
+populateControls();
+render();
+</script>
+</body>
+</html>
