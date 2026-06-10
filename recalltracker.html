@@ -1087,6 +1087,76 @@ function weeklyCell(weekRow){
   el.appendChild(list);
   return el;
 }
+function replaceInArray(arr, oldName, newName){
+  return (arr || []).map(x => x === oldName ? newName : x);
+}
+
+function renameTick(rowName, dateNum, rowType){
+  if(!editMode) return;
+
+  const newName = prompt("Rename tick:", rowName);
+  if(!newName) return;
+
+  const cleanName = newName.trim();
+  if(!cleanName || cleanName === rowName) return;
+
+  const data = monthData();
+  data.days ||= {};
+  data.monthlyRows ||= ["CEP"];
+  data.customDayRows ||= {};
+  data.customWeekRows ||= {};
+  data.hiddenMonthRows ||= { weeks:{}, days:{} };
+  data.hiddenWeekRows ||= {};
+
+  const moveTickValue = (dayNum) => {
+    if(!data.days[dayNum]) return;
+
+    if(rowName in data.days[dayNum]){
+      data.days[dayNum][cleanName] = data.days[dayNum][cleanName] || data.days[dayNum][rowName];
+      delete data.days[dayNum][rowName];
+    }
+  };
+
+  if(rowType === "monthly" || rowType === "added-month"){
+    data.monthlyRows = replaceInArray(data.monthlyRows, rowName, cleanName);
+
+    Object.keys(data.days || {}).forEach(dayNum => {
+      moveTickValue(dayNum);
+    });
+
+    Object.keys(data.hiddenMonthRows.weeks || {}).forEach(week => {
+      data.hiddenMonthRows.weeks[week] = replaceInArray(data.hiddenMonthRows.weeks[week], rowName, cleanName);
+    });
+
+    Object.keys(data.hiddenMonthRows.days || {}).forEach(day => {
+      data.hiddenMonthRows.days[day] = replaceInArray(data.hiddenMonthRows.days[day], rowName, cleanName);
+    });
+  }
+
+  if(rowType === "week"){
+    const week = weekRowForDate(dateNum);
+
+    data.customWeekRows[week] = replaceInArray(data.customWeekRows[week], rowName, cleanName);
+
+    Object.keys(data.days || {}).forEach(dayNum => {
+      if(weekRowForDate(Number(dayNum)) === Number(week)){
+        moveTickValue(dayNum);
+      }
+    });
+
+    Object.keys(data.hiddenWeekRows || {}).forEach(day => {
+      data.hiddenWeekRows[day] = replaceInArray(data.hiddenWeekRows[day], rowName, cleanName);
+    });
+  }
+
+  if(rowType === "day"){
+    data.customDayRows[dateNum] = replaceInArray(data.customDayRows[dateNum], rowName, cleanName);
+    moveTickValue(dateNum);
+  }
+
+  save();
+  render();
+}
 
 function rowElement(rowName, dateNum, rowType = "monthly"){
   const data = monthData();
@@ -1101,7 +1171,14 @@ function rowElement(rowName, dateNum, rowType = "monthly"){
   `;
 
   const cb = row.querySelector("input");
-  const del = row.querySelector(".delete-mini");
+const label = row.querySelector("span");
+const del = row.querySelector(".delete-mini");
+
+label.title = "Click to rename in Edit mode";
+
+label.onclick = () => {
+  renameTick(rowName, dateNum, rowType);
+};
 
   cb.checked = !!data.days[dateNum][rowName];
 
