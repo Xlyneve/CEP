@@ -12,6 +12,26 @@ const RECENT_LIMIT = 14;
 
 let recentItems = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
 
+function isEmojiTarget(el) {
+  if (!el) return false;
+
+  const isTextBox =
+    el.tagName === "TEXTAREA" ||
+    (el.tagName === "INPUT" && el.type !== "hidden") ||
+    el.isContentEditable;
+
+  if (!isTextBox) return false;
+
+  const text =
+    `${el.id || ""} ${el.className || ""} ${el.name || ""} ${el.placeholder || ""}`
+      .toLowerCase();
+
+  if (el.type === "search") return false;
+  if (text.includes("search")) return false;
+
+  return true;
+}
+
 const emojiGroups = {
   "Clinical": [
     "🩺", "💊", "💉", "🩹", "🧪", "🧬", "🦠", "🩸",
@@ -147,12 +167,15 @@ function renderRecentItems() {
       btn.style.background = "transparent";
     });
 
-    btn.addEventListener("click", () => {
-      insertAtCursor(item);
-      addToRecent(item);
-      hideEmojiPicker();
-    });
+    
+btn.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 
+  insertAtCursor(item);
+  addToRecent(item);
+  hideEmojiPicker();
+});
     recentGrid.appendChild(btn);
   });
 }
@@ -318,25 +341,7 @@ background: rgba(255, 255, 255, 0.06);
   overflow-y: auto;
   padding-right: 2px;
 `;
-function isEmojiTarget(el) {
-  if (!el) return false;
 
-  if (!(el.tagName === "TEXTAREA" || el.tagName === "INPUT" || el.isContentEditable)) {
-    return false;
-  }
-
-  // Do NOT let search boxes become the emoji target
-  if (
-    el.type === "search" ||
-    el.id?.toLowerCase().includes("search") ||
-    el.className?.toString().toLowerCase().includes("search") ||
-    el.placeholder?.toLowerCase().includes("search")
-  ) {
-    return false;
-  }
-
-  return true;
-}
 
   function renderCategory(categoryName) {
   activeCategory = categoryName;
@@ -373,11 +378,14 @@ function isEmojiTarget(el) {
       btn.style.background = "transparent";
     });
 
-    btn.addEventListener("click", () => {
-      insertAtCursor(symbol);
-      addToRecent(symbol);
-      hideEmojiPicker();
-    });
+    btn.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  insertAtCursor(symbol);
+  addToRecent(symbol);
+  hideEmojiPicker();
+});
 
     symbolGrid.appendChild(btn);
   });
@@ -477,20 +485,21 @@ function hideEmojiPicker() {
     pickerWrapper.style.display = "none";
   }
 }
-
 function insertAtCursor(text) {
-  // Do NOT use document.activeElement here.
-  // Clicking emoji buttons can make the button/search/picker become active.
   const target = activeTextField;
 
   if (target && (target.tagName === "TEXTAREA" || target.tagName === "INPUT")) {
     target.focus();
 
     const start =
-      typeof activeStart === "number" ? activeStart : target.value.length;
+      typeof target.selectionStart === "number"
+        ? target.selectionStart
+        : target.value.length;
 
     const end =
-      typeof activeEnd === "number" ? activeEnd : target.value.length;
+      typeof target.selectionEnd === "number"
+        ? target.selectionEnd
+        : target.value.length;
 
     target.setRangeText(text, start, end, "end");
 
@@ -528,8 +537,9 @@ function insertAtCursor(text) {
     return;
   }
 
-  console.log("Click inside your note box first, then choose a symbol or emoji.");
+  console.log("Click inside the edit note box first, then choose an emoji.");
 }
+
 
 function saveActiveTextField(el) {
   if (!isEmojiTarget(el)) return;
@@ -538,16 +548,28 @@ function saveActiveTextField(el) {
     activeTextField = el;
 
     activeStart =
-      typeof el.selectionStart === "number" ? el.selectionStart : el.value.length;
+      typeof el.selectionStart === "number"
+        ? el.selectionStart
+        : el.value.length;
 
     activeEnd =
-      typeof el.selectionEnd === "number" ? el.selectionEnd : el.value.length;
+      typeof el.selectionEnd === "number"
+        ? el.selectionEnd
+        : el.value.length;
   }
 
   if (el.isContentEditable) {
     activeTextField = null;
   }
 }
+
+["focusin", "click", "keyup", "mouseup", "input", "select"].forEach(eventName => {
+  document.addEventListener(eventName, (e) => {
+    if (isEmojiTarget(e.target)) {
+      saveActiveTextField(e.target);
+    }
+  });
+});
 
 function getEditableParent(node) {
   let current = node.parentNode;
