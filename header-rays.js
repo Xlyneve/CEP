@@ -34,6 +34,7 @@ if (!toggleIcon || !menuContainer) return;
     {
       name: "Clinical",
       links: [
+         { text: "Xgpt", link: "https://xlyneve.github.io/CEP/chatgptx.html" },
         { text: "Links", link: "https://xlyneve.github.io/CEP/forms.html" },
         { text: "Drug Calc", link: "OHcalc.html" },
          { text: "Vaccines", link: "complete-vaccine-info.html" },
