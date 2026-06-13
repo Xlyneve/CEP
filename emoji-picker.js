@@ -210,6 +210,10 @@ pickerWrapper.innerHTML = `
 `;
 
   document.body.appendChild(pickerWrapper);
+  
+  pickerWrapper.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+});
 
   const pickerGlassStyle = document.createElement("style");
 pickerGlassStyle.textContent = `
@@ -314,6 +318,25 @@ background: rgba(255, 255, 255, 0.06);
   overflow-y: auto;
   padding-right: 2px;
 `;
+function isEmojiTarget(el) {
+  if (!el) return false;
+
+  if (!(el.tagName === "TEXTAREA" || el.tagName === "INPUT" || el.isContentEditable)) {
+    return false;
+  }
+
+  // Do NOT let search boxes become the emoji target
+  if (
+    el.type === "search" ||
+    el.id?.toLowerCase().includes("search") ||
+    el.className?.toString().toLowerCase().includes("search") ||
+    el.placeholder?.toLowerCase().includes("search")
+  ) {
+    return false;
+  }
+
+  return true;
+}
 
   function renderCategory(categoryName) {
   activeCategory = categoryName;
@@ -418,14 +441,7 @@ document.addEventListener("selectionchange", () => {
 
   const active = document.activeElement;
 
-  if (
-    active &&
-    (
-      active.tagName === "TEXTAREA" ||
-      active.tagName === "INPUT" ||
-      active.isContentEditable
-    )
-  ) {
+  if (isEmojiTarget(active) && active.isContentEditable) {
     savedRange = selection.getRangeAt(0).cloneRange();
   }
 });
@@ -463,34 +479,28 @@ function hideEmojiPicker() {
 }
 
 function insertAtCursor(text) {
-  const active = document.activeElement;
+  // Do NOT use document.activeElement here.
+  // Clicking emoji buttons can make the button/search/picker become active.
+  const target = activeTextField;
 
-  // Use currently focused textarea/input if available
-  if (active && (active.tagName === "TEXTAREA" || active.tagName === "INPUT")) {
-    activeTextField = active;
-    activeStart = active.selectionStart || 0;
-    activeEnd = active.selectionEnd || 0;
-  }
+  if (target && (target.tagName === "TEXTAREA" || target.tagName === "INPUT")) {
+    target.focus();
 
-  // Textarea/input insertion
-  if (activeTextField && (activeTextField.tagName === "TEXTAREA" || activeTextField.tagName === "INPUT")) {
-    activeTextField.focus();
+    const start =
+      typeof activeStart === "number" ? activeStart : target.value.length;
 
-    const start = activeStart;
-    const end = activeEnd;
+    const end =
+      typeof activeEnd === "number" ? activeEnd : target.value.length;
 
-    activeTextField.setRangeText(text, start, end, "end");
+    target.setRangeText(text, start, end, "end");
 
-    activeStart = activeTextField.selectionStart;
-    activeEnd = activeTextField.selectionEnd;
+    activeStart = target.selectionStart;
+    activeEnd = target.selectionEnd;
 
-    // VERY IMPORTANT: triggers your homecal saveCalendar listener
-    activeTextField.dispatchEvent(new Event("input", { bubbles: true }));
-
+    target.dispatchEvent(new Event("input", { bubbles: true }));
     return;
   }
 
-  // contenteditable insertion
   if (savedRange) {
     const selection = window.getSelection();
 
@@ -518,11 +528,11 @@ function insertAtCursor(text) {
     return;
   }
 
-  console.log("Click inside a text box first, then choose a symbol or emoji.");
+  console.log("Click inside your note box first, then choose a symbol or emoji.");
 }
 
 function saveActiveTextField(el) {
-  if (!el) return;
+  if (!isEmojiTarget(el)) return;
 
   if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
     activeTextField = el;
@@ -533,44 +543,11 @@ function saveActiveTextField(el) {
     activeEnd =
       typeof el.selectionEnd === "number" ? el.selectionEnd : el.value.length;
   }
+
+  if (el.isContentEditable) {
+    activeTextField = null;
+  }
 }
-
-
-document.addEventListener("focusin", (e) => {
-  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
-    saveActiveTextField(e.target);
-  }
-});
-
-document.addEventListener("click", (e) => {
-  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
-    saveActiveTextField(e.target);
-  }
-});
-
-document.addEventListener("keyup", (e) => {
-  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
-    saveActiveTextField(e.target);
-  }
-});
-
-document.addEventListener("mouseup", (e) => {
-  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
-    saveActiveTextField(e.target);
-  }
-});
-
-document.addEventListener("input", (e) => {
-  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
-    saveActiveTextField(e.target);
-  }
-});
-
-document.addEventListener("select", (e) => {
-  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") {
-    saveActiveTextField(e.target);
-  }
-});
 
 function getEditableParent(node) {
   let current = node.parentNode;
