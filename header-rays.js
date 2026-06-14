@@ -46,6 +46,7 @@ if (!toggleIcon || !menuContainer) return;
     {
       name: "Admin",
       links: [
+        { text: "Inteleviewer", link: "https://xlyneve.github.io/CEP/inteleviewer.html" },
         { text: "Roster", link: "https://xlyneve.github.io/OHNRoster/" },
         { text: "Notes", link: "https://xlyneve.github.io/CEP/Notes.html" },
         { text: "Timesheet", link: "timesheet.html" }
