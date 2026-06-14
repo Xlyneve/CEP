@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="header-rays.css?v=1">
   <title>Inteleviewer Access</title>
   <style>
     @font-face {
@@ -10,49 +11,58 @@
       src: url('fors.ttf') format('truetype');
     }
 
-    /* Body with subtle bluish purple-white gradient for glassy background */
-    body {
-      font-family: 'fors', sans-serif;
-      margin: 0;
-      padding: 20px;
-       background: url('2b.png') no-repeat center center fixed;
-      color: #222;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+   body {
+  font-family: 'fors', sans-serif;
+  margin: 0;
+  padding: 22px;
+  min-height: 100vh;
 
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-      color: #2a2a2a;
-      font-weight: 600;
-      text-shadow: 0 0 4px rgba(255 255 255 / 0.5);
-    }
+  background:
+  radial-gradient(circle at 18% 18%, rgba(198, 219, 255, 0.76), transparent 34%),
+  radial-gradient(circle at 82% 20%, rgba(220, 214, 238, 0.38), transparent 36%),
+  radial-gradient(circle at 50% 88%, rgba(255, 246, 205, 0.62), transparent 40%),
+  linear-gradient(135deg, #f5f8fb, #f8f5ef, #f1f2f6);
+
+  color: #222;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.page-center {
+  min-height: calc(100vh - 44px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+h1 {
+  text-align: center;
+  margin: 0 0 42px;
+  color: #2a2a2a;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: none;
+}
 
     /* Glassy frosted panels for fixed top buttons */
-    .top-left, .top-right {
-      position: fixed;
-      top: 10px;
-      z-index: 1000;
-      background: rgba(255 255 255 / 0.25);
-      border-radius: 12px;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15), 0 0 10px rgba(255 255 255 / 0.2);
-      padding: 8px 12px;
-      user-select: none;
-    }
-
-    .top-left {
-      left: 10px;
-    }
-
     .top-right {
-      right: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  background: rgba(255 255 255 / 0.25);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15), 0 0 10px rgba(255 255 255 / 0.2);
+  padding: 8px 12px;
+  user-select: none;
+}
 
     /* Buttons styled with subtle glass look */
     .icon-btn {
@@ -91,186 +101,347 @@
       width: 180px;
     }
 
-    /* Table with glassy background and subtle shadows */
-    table {
+   .table-shell {
+  width: min(620px, calc(100vw - 28px));
+  margin: 0 auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow-x: visible;
+}
+
+
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  background: transparent;
+  box-shadow: none;
+}
+
+td:nth-child(1) {
+  width: 30%;
+}
+
+td:nth-child(2) {
+  width: 25%;
+}
+
+td:nth-child(3) {
+  width: 30%;
+}
+
+td:nth-child(4) {
+  width: 150px;
+}
+
+thead {
+  display: none;
+}
+
+tbody tr {
+  transition: 0.18s ease;
+}
+
+td {
+  padding: 12px 14px;
+  border: none;
+  vertical-align: middle;
+}
+
+tbody tr td:nth-child(1),
+tbody tr td:nth-child(2),
+tbody tr td:nth-child(3) {
+  background: rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border-top: 1px solid rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow:
+    0 14px 34px rgba(70, 76, 90, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.22);
+}
+
+tbody tr:hover td:nth-child(1),
+tbody tr:hover td:nth-child(2),
+tbody tr:hover td:nth-child(3) {
+  background: rgba(255, 255, 255, 0.46);
+}
+
+/* Rounded info container only */
+tbody tr td:first-child {
+  border-radius: 15px 0 0 15px;
+}
+
+tbody tr td:nth-child(3) {
+  border-radius: 0 15px 15px 0;
+}
+
+/* Icons live outside the info container */
+tbody tr td:nth-child(4) {
+  background: transparent;
+  box-shadow: none;
+  padding-left: 12px;
+  width: 150px;
+}
+
+
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3000;
+
+  padding: 10px 18px;
+  border-radius: 999px;
+  color: #313247;
+  font-size: 13px;
+  font-weight: 600;
+
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  box-shadow: 0 14px 34px rgba(70, 80, 130, 0.20);
+
+  transition: 0.25s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+
+@media (max-width: 720px) {
+  body {
+    padding: 16px 10px;
+  }
+
+  h1 {
+    margin-top: 72px;
+    font-size: 25px;
+  }
+
+  .table-shell {
+    width: calc(100vw - 20px);
+  }
+
+  table {
+    min-width: 690px;
+  }
+}
+
+.password-click {
+  cursor: pointer;
+}
+
+.password-click:hover {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+input[type="text"],
+input[type="password"] {
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  padding: 8px 6px;
+  font-family: 'fors', sans-serif;
+  font-size: 14px;
+  color: #222;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input[type="text"]:disabled,
+input[type="password"]:disabled {
+  color: #242424;
+  opacity: 1;
+  -webkit-text-fill-color: #242424;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(120, 125, 145, 0.18);
+}
+
+td:first-child input {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+
+.btn {
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(210, 214, 220, 0.8);
+  padding: 5px 8px;
+  border-radius: 9px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #444;
+  transition: 0.18s ease;
+  min-width: 30px;
+}
+
+.btn:hover {
+  background: white;
+  box-shadow: 0 6px 14px rgba(80, 85, 100, 0.12);
+}
+
+.row-tools {
+  display: none;
+  gap: 6px;
+}
+
+body.edit-mode .row-tools {
+  display: flex;
+}
+
+td:nth-child(4) {
+  display: none;
+}
+
+body.edit-mode td:nth-child(4) {
+  display: table-cell;
+}
+
+.add-toggle-wrap {
+  width: min(620px, calc(100vw - 28px));
+  margin: 18px auto 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add-toggle {
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 8px 13px;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 8px 20px rgba(70, 76, 90, 0.08);
+}
+
+.add-section {
+  display: none;
+  width: min(520px, calc(100vw - 36px));
+  margin: 16px auto 0;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 12px 30px rgba(70, 76, 90, 0.10);
+  box-sizing: border-box;
+}
+
+.add-section.show {
+  display: block;
+}
+
+.add-section h3 {
+  margin: 0 0 14px;
+  font-weight: 600;
+  color: #2a2a2a;
+  text-shadow: none;
+}
+
+.add-section input {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: rgba(245, 245, 245, 0.9);
+  padding: 10px 12px;
+}
+
+@media print {
+  @page {
+    margin: 18mm 12mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  h1 {
+    visibility: visible !important;
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    border-collapse: collapse; /* collapsed borders */
-    margin-top: 60px;
-    background: rgba(255 255 255 / 0.15); /* subtle frosted base */
-    border-radius: 12px;
-    box-sizing: border-box;
-    box-shadow: 0 8px 32px rgba(100, 100, 150, 0.1);
-    overflow: hidden; /* rounded corners clip rows */
+
+    text-align: center;
+    font-size: 32px !important;
+    font-weight: 700;
+    margin: 0;
+    padding: 0;
+    color: #000;
   }
 
-    thead tr {
-    background: rgba(200 200 255 / 0.3); /* slight bluish header */
-    box-shadow: inset 0 -2px 4px rgba(255 255 255 / 0.4);
+  table,
+  table * {
+    visibility: visible;
   }
 
-    th, td {
-    padding: 12px 16px;
-    text-align: left;
-    color: #222;
-    font-weight: 600;
-    border-bottom: 1px solid rgba(255 255 255 / 0.3); /* subtle row dividing line */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+  table {
+    position: absolute;
+    top: 95px;
+    left: 0;
+    width: 100%;
   }
 
-    th {
-      background: rgba(255 255 255 / 0.45);
-      font-weight: 600;
-      color: #2a2a2a;
-      box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15);
-    }
+  .top-right,
+.add-section,
+.add-toggle-wrap {
+  display: none !important;
+}
 
-    /* Remove cell borders, rely on spacing + shadows */
-    tbody tr {
-      background: transparent;
-    }
-	tbody tr:hover {
-    background: rgba(255 255 255 / 0.2);
+  .row-tools,
+  .password-tools {
+    display: none !important;
   }
 
-    /* Inputs inside table */
-    input[type="text"] {
+  th:nth-child(4),
+  td:nth-child(4) {
+    display: none !important;
+  }
+
+  input[type="text"],
+  input[type="password"] {
     border: none;
-    border-radius: 6px;
-    background: rgba(255 255 255 / 0.3);
-    padding: 6px 8px;
-    font-family: 'fors', sans-serif;
-    font-size: 14px;
-    color: #222;
-    outline: none;
-    backdrop-filter: blur(6px);
-    box-shadow: inset 0 1px 3px rgba(255 255 255 / 0.5);
-    width: 100%;
-    box-sizing: border-box;
-    transition: box-shadow 0.3s ease;
+    background: transparent;
+    color: #000;
+    font-size: 13px;
   }
-
-    input[type="text"]:focus {
-    box-shadow: 0 0 8px 2px rgba(120, 120, 180, 0.7);
-    background: rgba(255 255 255 / 0.4);
-  }
-
-    /* Buttons inside table */
-    .btn {
-    background: rgba(255 255 255 / 0.35);
-    border: 1px solid rgba(255 255 255 / 0.6);
-    padding: 4px 8px;
-    border-radius: 8px;
-    font-size: 12px;
-    cursor: pointer;
-    color: #444;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    backdrop-filter: blur(10px);
-    box-shadow: inset 0 1px 0 rgba(255 255 255 / 0.7);
-    min-width: 28px;
-  }
-  .btn:hover {
-    background: rgba(255 255 255 / 0.55);
-    box-shadow: 0 4px 15px rgba(120 120 160 / 0.25);
-    color: #222;
-  }
-
-    /* Add-section panel */
-    .add-section {
-      margin-top: 30px;
-      background: rgba(255 255 255 / 0.25);
-      padding: 24px 32px;
-      border-radius: 16px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-      box-shadow: 0 8px 32px rgba(100, 100, 150, 0.15), 0 0 10px rgba(255 255 255 / 0.2);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      color: #222;
-    }
-    .add-section h3 {
-      margin-top: 0;
-      font-weight: 600;
-      color: #2a2a2a;
-      text-shadow: 0 0 4px rgba(255 255 255 / 0.5);
-    }
-    .add-section input {
-      display: block;
-      width: 100%;
-      margin-bottom: 16px;
-      border: none;
-      border-radius: 12px;
-      background: rgba(255 255 255 / 0.25);
-      padding: 10px 14px;
-      font-size: 14px;
-      color: #222;
-      outline: none;
-      box-shadow: inset 0 2px 8px rgba(255 255 255 / 0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      transition: box-shadow 0.3s ease;
-      box-sizing: border-box;
-    }
-    .add-section input:focus {
-      box-shadow: 0 0 12px 3px rgba(120, 120, 180, 0.6);
-      background: rgba(255 255 255 / 0.4);
-    }
-
-    /* Action buttons container */
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    /* Print Styles (unchanged) */
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-
-      table, table * {
-        visibility: visible;
-      }
-
-      table {
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
-
-      .top-left, .top-right, .add-section {
-        display: none !important;
-      }
-
-      input[type="text"] {
-        border: none;
-      }
-
-      .action-buttons {
-        display: none !important;
-      }
-      th:nth-child(4),
-      td:nth-child(4) {
-        display: none !important;
-      }
-    }
+}
+ 
   </style>
 </head>
 <body>
 
-  <div class="top-left">
-    <button class="icon-btn" onclick="location.href='home.html'">🏠</button>
-  </div>
 
   <div class="top-right">
-    <button class="icon-btn" onclick="toggleSearch()">🔍</button>
-    <input type="text" id="searchInput" class="search-box" placeholder="Search..." oninput="filterTable()">
-    <button class="icon-btn" onclick="window.print()">🖨️</button>
-  </div>
+  <button class="icon-btn" onclick="toggleSearch()">🔍</button>
+  <input type="text" id="searchInput" class="search-box" placeholder="Search..." oninput="filterTable()">
+  <button class="icon-btn" onclick="toggleEditMode()" title="Edit mode">✏️</button>
+  <button class="icon-btn" onclick="window.print()">🖨️</button>
+</div>
 
-  <h1>Inteleviewer Access</h1>
+<div class="page-center">
+
+<h1>Inteleviewer Access</h1>
+<div id="toast" class="toast">Copied</div>
+
+<div class="table-shell">
 
   <table>
     <thead>
@@ -283,6 +454,11 @@
     </thead>
     <tbody id="tableBody"></tbody>
   </table>
+  </div>
+  
+<div class="add-toggle-wrap">
+  <button class="add-toggle" onclick="toggleAddSection()">＋ Add access</button>
+</div>
 
   <div class="add-section">
     <h3>Add New Access</h3>
@@ -290,9 +466,10 @@
     <input type="text" id="newUsername" placeholder="Username">
     <input type="text" id="newPassword" placeholder="Password">
     <button class="btn" onclick="addEntry()">Add</button>
-  </div>
+</div>
+</div>
 
-  <script type="module">
+<script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import {
       getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
@@ -320,20 +497,34 @@
       const tr = document.createElement('tr');
 
       tr.innerHTML = `
-        <td><input type="text" value="${data.radiology}" id="rad-${id}" disabled></td>
-        <td><input type="text" value="${data.username}" id="user-${id}" disabled></td>
-        <td>
-          <div style="display: flex; gap: 5px; align-items: center;">
-            <input type="text" value="${data.password}" id="pass-${id}" disabled>
-            <button class="btn" onclick="copyToClipboard('${data.password}')" title="Copy Password">📋</button>
-          </div>
-        </td>
-        <td class="action-buttons">
-          <button class="btn" onclick="enableEdit('${id}')" title="Edit">✏️</button>
-          <button class="btn" onclick="saveEntry('${id}')" style="display: none;" id="save-${id}" title="Save">💾</button>
-          <button class="btn" onclick="deleteEntry('${id}')" title="Delete">🗑️</button>
-        </td>
-      `;
+  <td>
+    <input type="text" value="${data.radiology || ''}" id="rad-${id}" disabled>
+  </td>
+
+  <td>
+    <input type="text" value="${data.username || ''}" id="user-${id}" disabled>
+  </td>
+
+  <td>
+  <input
+    type="text"
+    value="${data.password || ''}"
+    id="pass-${id}"
+    class="password-click"
+    onclick="if (this.readOnly) copyToClipboard(this.value)"
+    title="Click to copy password"
+    readonly
+  >
+</td>
+
+  <td>
+  <div class="row-tools">
+  <button class="btn" onclick="enableEdit('${id}')" title="Edit">✏️</button>
+  <button class="btn" onclick="saveEntry('${id}')" style="display: none;" id="save-${id}" title="Save">💾</button>
+  <button class="btn" onclick="deleteEntry('${id}')" title="Delete">🗑️</button>
+</div>
+</td>
+`;
       return tr;
     }
 
@@ -350,18 +541,38 @@
       });
     }
 
-    window.copyToClipboard = (text) => {
-      navigator.clipboard.writeText(text).then(() => {
-        alert("Password copied to clipboard!");
-      });
-    };
+    function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 1400);
+}
+
+window.copyToClipboard = (text) => {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast("Copied");
+  });
+};
+
+
 
     window.enableEdit = (id) => {
       document.getElementById(`rad-${id}`).disabled = false;
       document.getElementById(`user-${id}`).disabled = false;
-      document.getElementById(`pass-${id}`).disabled = false;
+      document.getElementById(`pass-${id}`).readOnly = false;
       document.getElementById(`save-${id}`).style.display = 'inline-block';
     };
+	
+	window.toggleEditMode = () => {
+  document.body.classList.toggle('edit-mode');
+};
+	
+	window.toggleAddSection = () => {
+  document.querySelector('.add-section').classList.toggle('show');
+};
 
     window.saveEntry = async (id) => {
       const radiology = document.getElementById(`rad-${id}`).value.trim();
@@ -374,7 +585,7 @@
 
       document.getElementById(`rad-${id}`).disabled = true;
       document.getElementById(`user-${id}`).disabled = true;
-      document.getElementById(`pass-${id}`).disabled = true;
+      document.getElementById(`pass-${id}`).readOnly = true;
       document.getElementById(`save-${id}`).style.display = 'none';
     };
 
@@ -388,11 +599,14 @@
       await addDoc(collectionRef, { radiology, username, password });
 
       document.getElementById('newRadiology').value = '';
-      document.getElementById('newUsername').value = '';
-      document.getElementById('newPassword').value = '';
-    };
+document.getElementById('newUsername').value = '';
+document.getElementById('newPassword').value = '';
 
-    window.deleteEntry = async (id) => {
+document.querySelector('.add-section').classList.remove('show');
+showToast("Added");
+};
+
+window.deleteEntry = async (id) => {
       if (confirm("Delete this entry?")) {
         await deleteDoc(doc(db, 'inteleviewerData', id));
       }
