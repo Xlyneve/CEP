@@ -601,8 +601,14 @@ function listenToNotes(){
     });
 }
 
+let unsubscribeReminder = null;
+
 function listenToReminder(){
-  REMINDER_DOC.onSnapshot(doc => {
+  if(unsubscribeReminder){
+    unsubscribeReminder();
+  }
+
+  unsubscribeReminder = REMINDER_DOC.onSnapshot(doc => {
     if(doc.exists){
       reminderValue = doc.data().body || "";
     }else{
@@ -711,7 +717,8 @@ if(!isOwner){
   closeForm();
 }
 
-  listenToNotes();
+listenToNotes();
+listenToReminder();
 });
 </script>
 </body>
