@@ -67,6 +67,27 @@ h1{
   gap:8px;
 }
 
+.note-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:12px;
+  padding:8px 11px;
+  border-radius:999px;
+  text-decoration:none;
+  color:#344358;
+  font-size:.84rem;
+  background:rgba(228,238,255,.72);
+  border:1px solid rgba(255,255,255,.78);
+  box-shadow:
+    0 8px 18px rgba(70,80,100,.08),
+    inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.note-link:hover{
+  background:rgba(214,226,255,.88);
+}
+
 button, input, textarea{
   font:inherit;
 }
@@ -236,8 +257,11 @@ button:active{
   </div>
 
   <div id="formCard" class="form-card">
-    <input id="titleInput" placeholder="Title e.g. 4yo imms">
-    <textarea id="noteInput" placeholder="Instructions..."></textarea>
+  <input id="titleInput" placeholder="Title e.g. 4yo imms">
+  <textarea id="noteInput" placeholder="Instructions..."></textarea>
+
+  <input id="linkLabelInput" placeholder="Optional link label e.g. Immunisation schedule">
+  <input id="linkUrlInput" placeholder="Optional link URL e.g. https://www.health.govt.nz/...">
 
     <div class="controls">
       <button id="cancelBtn">Cancel</button>
@@ -280,6 +304,8 @@ const addBtn = document.getElementById("addBtn");
 const formCard = document.getElementById("formCard");
 const titleInput = document.getElementById("titleInput");
 const noteInput = document.getElementById("noteInput");
+const linkLabelInput = document.getElementById("linkLabelInput");
+const linkUrlInput = document.getElementById("linkUrlInput");
 const saveBtn = document.getElementById("saveBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const searchInput = document.getElementById("searchInput");
@@ -294,16 +320,20 @@ function openForm(note = null){
   formCard.classList.add("show");
 
   if(note){
-    editingId = note.id;
-    titleInput.value = note.title;
-    noteInput.value = note.body;
-    saveBtn.textContent = "Update note";
-  }else{
-    editingId = null;
-    titleInput.value = "";
-    noteInput.value = "";
-    saveBtn.textContent = "Save note";
-  }
+  editingId = note.id;
+  titleInput.value = note.title || "";
+  noteInput.value = note.body || "";
+  linkLabelInput.value = note.linkLabel || "";
+  linkUrlInput.value = note.linkUrl || "";
+  saveBtn.textContent = "Update note";
+}else{
+  editingId = null;
+  titleInput.value = "";
+  noteInput.value = "";
+  linkLabelInput.value = "";
+  linkUrlInput.value = "";
+  saveBtn.textContent = "Save note";
+}
 
   titleInput.focus();
 }
@@ -313,6 +343,8 @@ function closeForm(){
   editingId = null;
   titleInput.value = "";
   noteInput.value = "";
+  linkLabelInput.value = "";
+  linkUrlInput.value = "";
 }
 
 function render(){
@@ -320,9 +352,11 @@ function render(){
 
   const filtered = notes.filter(note => {
     return (
-      note.title.toLowerCase().includes(query) ||
-      note.body.toLowerCase().includes(query)
-    );
+  String(note.title || "").toLowerCase().includes(query) ||
+  String(note.body || "").toLowerCase().includes(query) ||
+  String(note.linkLabel || "").toLowerCase().includes(query) ||
+  String(note.linkUrl || "").toLowerCase().includes(query)
+);
   });
 
   cards.innerHTML = "";
@@ -332,9 +366,18 @@ function render(){
     const card = document.createElement("div");
     card.className = "note-card";
 
-    card.innerHTML = `
+   const safeLink = cleanUrl(note.linkUrl);
+const linkLabel = note.linkLabel || "Open link";
+
+card.innerHTML = `
   <h2>${escapeHTML(note.title)}</h2>
   <p>${escapeHTML(note.body)}</p>
+
+  ${safeLink ? `
+    <a class="note-link" href="${escapeHTML(safeLink)}" target="_blank" rel="noopener noreferrer">
+      🔗 ${escapeHTML(linkLabel)}
+    </a>
+  ` : ""}
 
   ${isOwner ? `
     <div class="card-actions">
@@ -375,9 +418,39 @@ function escapeHTML(text){
     .replaceAll(">", "&gt;");
 }
 
+function cleanUrl(url){
+  const trimmed = String(url || "").trim();
+
+  if(!trimmed) return "";
+
+  const withProtocol =
+    trimmed.startsWith("http://") || trimmed.startsWith("https://")
+      ? trimmed
+      : "https://" + trimmed;
+
+  try{
+    const parsed = new URL(withProtocol);
+
+    if(parsed.protocol !== "http:" && parsed.protocol !== "https:"){
+      return "";
+    }
+
+    return parsed.href;
+  }catch{
+    return "";
+  }
+}
+
 async function saveNote(){
-  const title = titleInput.value.trim();
-  const body = noteInput.value.trim();
+ const title = titleInput.value.trim();
+const body = noteInput.value.trim();
+const linkLabel = linkLabelInput.value.trim();
+const linkUrl = cleanUrl(linkUrlInput.value);
+
+if(linkUrlInput.value.trim() && !linkUrl){
+  alert("Please enter a valid link.");
+  return;
+}
 
   if(!isOwner){
   alert("Only owner can save recall notes.");
@@ -392,20 +465,24 @@ async function saveNote(){
   try{
     if(editingId){
       await db.collection(NOTES_COLLECTION).doc(editingId).set({
-        title,
-        body,
-        updatedBy: currentUserEmail,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge:true });
+  title,
+  body,
+  linkLabel,
+  linkUrl,
+  updatedBy: currentUserEmail,
+  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+}, { merge:true });
     }else{
       await db.collection(NOTES_COLLECTION).add({
-        title,
-        body,
-        createdBy: currentUserEmail,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedBy: currentUserEmail,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+  title,
+  body,
+  linkLabel,
+  linkUrl,
+  createdBy: currentUserEmail,
+  createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  updatedBy: currentUserEmail,
+  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+});
     }
 
     closeForm();
