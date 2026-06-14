@@ -453,13 +453,18 @@ searchInput.oninput = render;
 
 
 signInBtn.onclick = async () => {
-  const provider = new firebase.auth.GoogleAuthProvider();
-
   try{
+    if(auth.currentUser){
+      await auth.signOut();
+      return;
+    }
+
+    const provider = new firebase.auth.GoogleAuthProvider();
     await auth.signInWithPopup(provider);
+
   }catch(err){
-    console.error("Sign-in failed:", err);
-    alert("Sign-in failed: " + err.message);
+    console.error("Auth failed:", err);
+    alert("Auth failed: " + err.message);
   }
 };
 
@@ -479,7 +484,7 @@ auth.onAuthStateChanged(user => {
   currentUserEmail = user.email;
   isOwner = currentUserEmail === OWNER_EMAIL;
 
-  signInBtn.textContent = isOwner ? "Signed in" : "View only";
+  signInBtn.textContent = "Sign out";
   addBtn.style.display = isOwner ? "inline-flex" : "none";
 
   if(!isOwner){
