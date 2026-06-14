@@ -265,14 +265,17 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const signInBtn = document.getElementById("signInBtn");
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 let notes = [];
 let editingId = null;
 let currentUserEmail = null;
+let isOwner = false;
 
+const OWNER_EMAIL = "xeve06@gmail.com";
+
+const signInBtn = document.getElementById("signInBtn");
 const addBtn = document.getElementById("addBtn");
 const formCard = document.getElementById("formCard");
 const titleInput = document.getElementById("titleInput");
@@ -330,14 +333,16 @@ function render(){
     card.className = "note-card";
 
     card.innerHTML = `
-      <h2>${escapeHTML(note.title)}</h2>
-      <p>${escapeHTML(note.body)}</p>
+  <h2>${escapeHTML(note.title)}</h2>
+  <p>${escapeHTML(note.body)}</p>
 
-      <div class="card-actions">
-        <button data-edit="${note.id}">Edit</button>
-        <button class="danger" data-delete="${note.id}">Delete</button>
-      </div>
-    `;
+  ${isOwner ? `
+    <div class="card-actions">
+      <button data-edit="${note.id}">Edit</button>
+      <button class="danger" data-delete="${note.id}">Delete</button>
+    </div>
+  ` : ""}
+`;
 
     cards.appendChild(card);
   });
@@ -374,10 +379,10 @@ async function saveNote(){
   const title = titleInput.value.trim();
   const body = noteInput.value.trim();
 
-  if(!currentUserEmail){
-    alert("Please sign in first.");
-    return;
-  }
+  if(!isOwner){
+  alert("Only owner can save recall notes.");
+  return;
+}
 
   if(!title || !body){
     alert("Please add title and note.");
@@ -433,10 +438,19 @@ function listenToNotes(){
     });
 }
 
-addBtn.onclick = () => openForm();
+addBtn.onclick = () => {
+  if(!isOwner){
+    alert("Only owner can add recall notes.");
+    return;
+  }
+
+  openForm();
+};
 cancelBtn.onclick = closeForm;
 saveBtn.onclick = saveNote;
 searchInput.oninput = render;
+
+
 
 signInBtn.onclick = async () => {
   const provider = new firebase.auth.GoogleAuthProvider();
@@ -452,12 +466,26 @@ signInBtn.onclick = async () => {
 auth.onAuthStateChanged(user => {
   if(!user){
     currentUserEmail = null;
-    signInBtn.textContent = "Sign in";
+    isOwner = false;
+
+    signInBtn.textContent = "Owner sign in";
+    addBtn.style.display = "none";
+    closeForm();
+
+    listenToNotes();
     return;
   }
 
   currentUserEmail = user.email;
-  signInBtn.textContent = "Signed in";
+  isOwner = currentUserEmail === OWNER_EMAIL;
+
+  signInBtn.textContent = isOwner ? "Signed in" : "View only";
+  addBtn.style.display = isOwner ? "inline-flex" : "none";
+
+  if(!isOwner){
+    closeForm();
+  }
+
   listenToNotes();
 });
 </script>
