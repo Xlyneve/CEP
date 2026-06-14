@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Recall Notes</title>
+
+<style>
+:root{
+  --glass:rgba(255,255,255,.66);
+  --glass-hue:rgba(222,232,255,.42);
+  --line:rgba(132,148,190,.18);
+  --ink:#202636;
+  --muted:#7d8798;
+  --shadow:0 18px 52px rgba(120,135,180,.16);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Tahoma, Arial, sans-serif;
+  color:var(--ink);
+  padding:14px;
+
+  background:
+    radial-gradient(circle at 18% 14%, rgba(255,255,255,.85), transparent 28%),
+    radial-gradient(circle at 82% 10%, rgba(225,233,241,.85), transparent 30%),
+    radial-gradient(circle at 45% 96%, rgba(214,224,232,.70), transparent 36%),
+    linear-gradient(180deg, #edf3f7 0%, #e4ecf2 48%, #eef3f6 100%);
+}
+
+.app{
+  max-width:980px;
+  margin:auto;
+}
+
+.topbar{
+  position:sticky;
+  top:10px;
+  z-index:20;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.75);
+  border-radius:26px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.74), var(--glass-hue) 52%, rgba(255,255,255,.62)),
+    var(--glass);
+  backdrop-filter:blur(34px) saturate(210%);
+  -webkit-backdrop-filter:blur(34px) saturate(210%);
+  box-shadow:var(--shadow);
+}
+
+h1{
+  margin:0;
+  font-size:1.55rem;
+  letter-spacing:-.03em;
+}
+
+.controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+button, input, textarea{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.82);
+  background:rgba(255,255,255,.72);
+  color:var(--ink);
+  border-radius:999px;
+  padding:9px 12px;
+  box-shadow:0 8px 18px rgba(70,80,100,.08);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+
+button:active{
+  transform:scale(.96);
+}
+
+.primary{
+  background:rgba(142,167,255,.24);
+  border-color:rgba(142,167,255,.32);
+}
+
+.search-wrap{
+  position:relative;
+  margin:16px 0;
+}
+
+.search-wrap input{
+  width:100%;
+  padding:14px 46px 14px 16px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.82);
+  background:rgba(255,255,255,.68);
+  box-shadow:var(--shadow);
+  outline:none;
+}
+
+.search-icon{
+  position:absolute;
+  right:16px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--muted);
+}
+
+.form-card{
+  display:none;
+  margin-bottom:16px;
+  padding:14px;
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.72);
+  background:rgba(255,255,255,.58);
+  backdrop-filter:blur(28px) saturate(160%);
+  -webkit-backdrop-filter:blur(28px) saturate(160%);
+  box-shadow:var(--shadow);
+}
+
+.form-card.show{
+  display:block;
+}
+
+.form-card input,
+.form-card textarea{
+  width:100%;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.72);
+  color:var(--ink);
+  border-radius:16px;
+  padding:11px 12px;
+  margin-bottom:10px;
+  outline:none;
+}
+
+.form-card textarea{
+  min-height:150px;
+  resize:vertical;
+}
+
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));
+  gap:14px;
+}
+
+.note-card{
+  padding:16px;
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.72);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.64), rgba(255,255,255,.34));
+  backdrop-filter:blur(28px) saturate(150%);
+  -webkit-backdrop-filter:blur(28px) saturate(150%);
+  box-shadow:
+    0 18px 44px rgba(95,112,135,.14),
+    inset 0 1px 0 rgba(255,255,255,.82);
+}
+
+.note-card h2{
+  margin:0 0 8px;
+  font-size:1rem;
+}
+
+.note-card p{
+  margin:0;
+  color:#3f4858;
+  font-size:.9rem;
+  line-height:1.45;
+  white-space:pre-wrap;
+}
+
+.card-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:12px;
+}
+
+.card-actions button{
+  padding:7px 10px;
+  font-size:.8rem;
+}
+
+.danger{
+  background:rgba(255,230,230,.75);
+  color:#8d3d3d;
+}
+
+.empty{
+  color:var(--muted);
+  text-align:center;
+  margin-top:30px;
+}
+
+@media(max-width:700px){
+  .topbar{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .controls{
+    width:100%;
+    justify-content:space-between;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <h1>Recall Notes</h1>
+
+    <div class="controls">
+      <button onclick="window.location.href='recalltracker.html'">← Tracker</button>
+<button id="signInBtn">Sign in</button>
+<button id="addBtn" class="primary">+ Add note</button>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <input id="searchInput" placeholder="Search recall notes...">
+    <span class="search-icon">🔍</span>
+  </div>
+
+  <div id="formCard" class="form-card">
+    <input id="titleInput" placeholder="Title e.g. 4yo imms">
+    <textarea id="noteInput" placeholder="Instructions..."></textarea>
+
+    <div class="controls">
+      <button id="cancelBtn">Cancel</button>
+      <button id="saveBtn" class="primary">Save note</button>
+    </div>
+  </div>
+
+  <div id="cards" class="card-grid"></div>
+  <p id="emptyMsg" class="empty">No recall notes yet.</p>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAwITicGVF5_Vxw6Bwf9n1AaQom-76M2IE",
+  authDomain: "krissa-d5a9c.firebaseapp.com",
+  projectId: "krissa-d5a9c",
+  storageBucket: "krissa-d5a9c.firebasestorage.app",
+  messagingSenderId: "550249186610",
+  appId: "1:550249186610:web:5ee5b585ac686021be432b",
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const signInBtn = document.getElementById("signInBtn");
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let notes = [];
+let editingId = null;
+let currentUserEmail = null;
+
+const addBtn = document.getElementById("addBtn");
+const formCard = document.getElementById("formCard");
+const titleInput = document.getElementById("titleInput");
+const noteInput = document.getElementById("noteInput");
+const saveBtn = document.getElementById("saveBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const searchInput = document.getElementById("searchInput");
+const cards = document.getElementById("cards");
+const emptyMsg = document.getElementById("emptyMsg");
+
+const NOTES_COLLECTION = "recallNotes";
+
+
+
+function openForm(note = null){
+  formCard.classList.add("show");
+
+  if(note){
+    editingId = note.id;
+    titleInput.value = note.title;
+    noteInput.value = note.body;
+    saveBtn.textContent = "Update note";
+  }else{
+    editingId = null;
+    titleInput.value = "";
+    noteInput.value = "";
+    saveBtn.textContent = "Save note";
+  }
+
+  titleInput.focus();
+}
+
+function closeForm(){
+  formCard.classList.remove("show");
+  editingId = null;
+  titleInput.value = "";
+  noteInput.value = "";
+}
+
+function render(){
+  const query = searchInput.value.trim().toLowerCase();
+
+  const filtered = notes.filter(note => {
+    return (
+      note.title.toLowerCase().includes(query) ||
+      note.body.toLowerCase().includes(query)
+    );
+  });
+
+  cards.innerHTML = "";
+  emptyMsg.style.display = filtered.length ? "none" : "block";
+
+  filtered.forEach(note => {
+    const card = document.createElement("div");
+    card.className = "note-card";
+
+    card.innerHTML = `
+      <h2>${escapeHTML(note.title)}</h2>
+      <p>${escapeHTML(note.body)}</p>
+
+      <div class="card-actions">
+        <button data-edit="${note.id}">Edit</button>
+        <button class="danger" data-delete="${note.id}">Delete</button>
+      </div>
+    `;
+
+    cards.appendChild(card);
+  });
+
+  document.querySelectorAll("[data-edit]").forEach(btn => {
+    btn.onclick = () => {
+      const note = notes.find(n => n.id === btn.dataset.edit);
+      if(note) openForm(note);
+    };
+  });
+
+  document.querySelectorAll("[data-delete]").forEach(btn => {
+    btn.onclick = async () => {
+      if(!confirm("Delete this recall note?")) return;
+
+      try{
+        await db.collection(NOTES_COLLECTION).doc(btn.dataset.delete).delete();
+      }catch(err){
+        console.error("Delete failed:", err);
+        alert("Delete failed: " + err.message);
+      }
+    };
+  });
+}
+
+function escapeHTML(text){
+  return String(text || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+async function saveNote(){
+  const title = titleInput.value.trim();
+  const body = noteInput.value.trim();
+
+  if(!currentUserEmail){
+    alert("Please sign in first.");
+    return;
+  }
+
+  if(!title || !body){
+    alert("Please add title and note.");
+    return;
+  }
+
+  try{
+    if(editingId){
+      await db.collection(NOTES_COLLECTION).doc(editingId).set({
+        title,
+        body,
+        updatedBy: currentUserEmail,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge:true });
+    }else{
+      await db.collection(NOTES_COLLECTION).add({
+        title,
+        body,
+        createdBy: currentUserEmail,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: currentUserEmail,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    closeForm();
+
+  }catch(err){
+    console.error("Save failed:", err);
+    alert("Save failed: " + err.message);
+  }
+}
+
+let unsubscribeNotes = null;
+
+function listenToNotes(){
+  if(unsubscribeNotes){
+    unsubscribeNotes();
+  }
+
+  unsubscribeNotes = db.collection(NOTES_COLLECTION)
+    .orderBy("updatedAt", "desc")
+    .onSnapshot(snapshot => {
+      notes = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      render();
+    }, err => {
+      console.error("Load notes failed:", err);
+      alert("Unable to load recall notes: " + err.message);
+    });
+}
+
+addBtn.onclick = () => openForm();
+cancelBtn.onclick = closeForm;
+saveBtn.onclick = saveNote;
+searchInput.oninput = render;
+
+signInBtn.onclick = async () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  try{
+    await auth.signInWithPopup(provider);
+  }catch(err){
+    console.error("Sign-in failed:", err);
+    alert("Sign-in failed: " + err.message);
+  }
+};
+
+auth.onAuthStateChanged(user => {
+  if(!user){
+    currentUserEmail = null;
+    signInBtn.textContent = "Sign in";
+    return;
+  }
+
+  currentUserEmail = user.email;
+  signInBtn.textContent = "Signed in";
+  listenToNotes();
+});
+</script>
+</body>
+</html>
