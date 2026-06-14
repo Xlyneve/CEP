@@ -3,39 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <script src="auth-guard.js"></script>
+  <link rel="stylesheet" href="header-rays.css?v=1">
   <title>Informations for Patients</title>
   <style>
     
-@font-face {
-  font-family: 'fors';
-  src: url('fors.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
 
-    body {
-  font-family: fors, sans-serif;
-  padding: 60px 20px 20px 20px;
-  position: relative;
+body {
+  font-family: Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
-  background: none; /* Remove plain white background */
-  color: #111;
-  z-index: 0;
-  overflow-x: hidden;
-}
+  padding: 22px;
+  min-height: 100vh;
 
-body::before {
-  content: "";
-  position: fixed;  
-  top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: url('2b.png') no-repeat center center fixed;
-  background-size: cover;
-  filter: blur(8px);
-  z-index: -1;
-  pointer-events: none;
-  /* REMOVE opacity to prevent white sheet */
+  background:
+    radial-gradient(circle at 16% 14%, rgba(176, 212, 225, 0.72), transparent 34%),
+    radial-gradient(circle at 6% 84%, rgba(216, 196, 220, 0.46), transparent 36%),
+    radial-gradient(circle at 42% 76%, rgba(180, 211, 220, 0.62), transparent 42%),
+    radial-gradient(circle at 86% 18%, rgba(235, 229, 246, 0.50), transparent 34%),
+    linear-gradient(135deg, #f8f8f6, #edf3f5, #f7f4f8);
+
+  color: #222;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
     .form-group { margin-bottom: 10px; }
@@ -66,28 +54,32 @@ body::before {
     .top-left { left: 10px; }
     .top-right { right: 10px; }
 
-    /* Search input: also frosted glass */
 #searchInput {
   display: block;
-  position: absolute;
-  top: 50px;
-  right: 10px;
   padding: 8px 12px;
   width: 220px;
   border-radius: 12px;
-  border: 1px solid rgba(170, 160, 255, 0.6); /* hint of bluish purple */
+  border: 1px solid rgba(170, 160, 255, 0.6);
   background: rgba(255, 255, 255, 0.15);
   color: #111;
   font-size: 14px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  /* strong bluish-purple glow */
   box-shadow: 
-    0 0 8px rgba(170, 160, 255, 0.6),  /* outer glow */
-    0 4px 10px rgba(255, 255, 255, 0.15) inset; /* glass depth */
+    0 0 8px rgba(170, 160, 255, 0.6),
+    0 4px 10px rgba(255, 255, 255, 0.15) inset;
   outline: none;
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  z-index: 10;
+}
+.search-add-row {
+  position: absolute;
+  top: 50px;
+  right: 10px;
+  z-index: 30;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 #searchInput:focus {
@@ -99,38 +91,212 @@ body::before {
   color: #000;
 }
 
+.add-plus-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
 
-/* File grid container */
+  font-size: 26px;
+  line-height: 1;
+  font-weight: bold;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.78),
+      rgba(255, 255, 255, 0.32)
+    );
+
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  color: #333;
+
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+
+  box-shadow:
+    0 12px 28px rgba(70, 88, 110, 0.20),
+    0 0 18px rgba(219, 220, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.add-plus-btn:hover {
+  transform: scale(1.08);
+
+  box-shadow:
+    0 16px 36px rgba(70, 88, 110, 0.25),
+    0 0 26px rgba(219, 220, 255, 0.78),
+    inset 0 1px 0 rgba(255, 255, 255, 0.98);
+}
+
+.add-form-panel {
+  position: absolute;
+  top: 98px;
+  right: 10px;
+  z-index: 40;
+
+  width: 320px;
+  max-width: calc(100vw - 32px);
+
+  padding: 18px;
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.32)
+    );
+
+  border: 1px solid rgba(255, 255, 255, 0.78);
+
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+
+  box-shadow:
+    0 22px 55px rgba(70, 88, 110, 0.24),
+    0 0 24px rgba(219, 220, 255, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  animation: popOpen 0.22s ease;
+}
+@keyframes popOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .file-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 15px;
+  column-count: 5;
+  column-gap: 12px;
   margin-top: 20px;
 }
-/* Increase transparency of file-item cards for more glass effect */
-.file-item {
-  background: rgba(255, 255, 255, 0.05); /* more transparent */
-  padding: 15px;
-  border-radius: 16px;
-  box-shadow:
-    0 8px 32px rgba(31, 38, 135, 0.05), /* lighter shadows */
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: #111;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+
+@media (max-width: 1200px) {
+  .file-grid {
+    column-count: 4;
+  }
 }
 
+@media (max-width: 900px) {
+  .file-grid {
+    column-count: 3;
+  }
+}
+
+@media (max-width: 650px) {
+  .file-grid {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 430px) {
+  .file-grid {
+    column-count: 1;
+  }
+}
+
+.file-item {
+  position: relative;
+  overflow: hidden;
+
+  display: inline-block;
+  width: 100%;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin-bottom: 12px;
+  vertical-align: top;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.34),
+      rgba(255, 255, 255, 0.10)
+    );
+
+  padding: 12px 12px 30px;
+  border-radius: 22px;
+
+  border: 1px solid rgba(255, 255, 255, 0.58);
+
+  box-shadow:
+    0 18px 45px rgba(70, 88, 110, 0.14),
+    0 0 18px rgba(255, 255, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.16);
+
+  backdrop-filter: blur(16px) saturate(185%) contrast(105%);
+  -webkit-backdrop-filter: blur(16px) saturate(185%) contrast(105%);
+
+  color: #111;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+.file-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      125deg,
+      rgba(255, 255, 255, 0.62) 0%,
+      rgba(255, 255, 255, 0.20) 26%,
+      transparent 48%
+    );
+
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.file-item::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 999px;
+  pointer-events: none;
+}
 
 .file-item:hover {
-  box-shadow:
-    0 12px 48px rgba(31, 38, 135, 0.12),
-    0 0 12px rgba(255, 255, 255, 0.25);
   transform: translateY(-4px);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.42),
+      rgba(255, 255, 255, 0.14)
+    );
+
+  box-shadow:
+    0 24px 58px rgba(70, 88, 110, 0.20),
+    0 0 24px rgba(219, 220, 255, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
 }
+
 /* Glassy style for text inputs and textarea */
 input[type="text"],
 textarea,
@@ -150,6 +316,62 @@ input[type="date"] {
   width: 300px; /* consistent width for text inputs and textarea */
   max-width: 100%;
 }
+* {
+  box-sizing: border-box;
+}
+
+.file-item,
+.file-item * {
+  font-family: Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.view-mode,
+.edit-mode {
+  width: 100%;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.edit-mode input,
+.edit-mode textarea {
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
+
+  font-family: Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+
+  resize: vertical;
+}
+
+.edit-mode textarea {
+  min-height: 76px;
+}
+
+.visit-link-btn {
+  width: fit-content;
+  padding: 3px 7px;
+
+  font-family: Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 11px;
+  line-height: 1.1;
+
+  background: rgba(248, 237, 235, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 7px;
+
+  color: #333;
+  cursor: pointer;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
 
 input[type="text"]:focus,
 textarea:focus,
@@ -160,40 +382,133 @@ input[type="date"]:focus {
   box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3) inset;
   color: #000;
 }
-    .file-item strong {
-      font-size: 18px;
-    }
-    .file-item em {
-      font-size: 14px;
-      color: #555;
-    }
-    .file-item small {
-      display: block;
-      margin: 5px 0;
-      color: #888;
-      word-break: break-word;
-    }
-    .file-buttons {
-      margin-top: 10px;
-    }
-    .file-buttons button {
-  background: rgba(233, 203, 203, 0.3);
-  border: none;
-  margin: 3px 2px;
-  padding: 6px 10px;
+ 
+ .file-item strong {
+  display: block;
+  max-width: 100%;
+
+  font-size: 14px;
+  line-height: 1.35;
+
+  color: #1f2430;
+  letter-spacing: 0.1px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.65);
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.file-item em {
+  display: block;
+  max-width: 100%;
+
   font-size: 12px;
+  line-height: 1.35;
+
+  color: rgba(40, 45, 58, 0.76);
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.file-item small {
+  display: block;
+  margin: 5px 0 0;
+  color: rgba(60, 65, 75, 0.72);
+  word-break: break-word;
+}
+
+.file-buttons {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  z-index: 6;
+
+  display: flex;
+  gap: 4px;
+
+  opacity: 0;
+  transform: translateY(3px);
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.file-item.show-actions .file-buttons {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.file-buttons button {
+  width: 21px;
+  height: 21px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+
+  font-size: 11px;
+  line-height: 1;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+
+  color: rgba(35, 40, 52, 0.78);
+
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+
   cursor: pointer;
-  color: #333;
-  border-radius: 12px;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 4px 8px rgba(255,255,255,0.1) inset;
 }
 
 .file-buttons button:hover {
-  background-color: rgba(172, 163, 126, 0.7);
-  color: white;
+  background: rgba(255, 255, 255, 0.48);
+  color: #111;
+  transform: scale(1.08);
+}
+
+.file-buttons button {
+  width: 21px;
+  height: 21px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+
+  font-size: 11px;
+  line-height: 1;
+
+  border-radius: 50%;
+}
+
+.file-buttons button:hover {
+  background: rgba(255, 255, 255, 0.48);
+  color: #111;
+  transform: scale(1.08);
+}
+
+
+.edit-mode button {
+  padding: 5px 9px;
+  font-size: 11px;
+  border-radius: 999px;
+}
+
+.view-mode,
+.edit-mode {
+  position: relative;
+  z-index: 2;
 }
 
 /* Glassy style for buttons */
@@ -223,22 +538,31 @@ button:hover {
 <body>
 
 <!-- Top Buttons -->
-<a href="home.html" class="top-left">Home</a>
-<input type="text" id="searchInput" placeholder="Search" oninput="filterFiles()">
+<div class="search-add-row">
+  <input type="text" id="searchInput" placeholder="Search" oninput="filterFiles()">
+  <button id="addToggleBtn" class="add-plus-btn" onclick="toggleAddForm()">+</button>
+</div>
 
 <h1>Informations</h1>
 
-<div class="form-group">
-  <input type="text" id="urlInput" placeholder="Enter URL (https://...)" style="width: 300px;">
-</div>
-<div class="form-group">
-  <input type="text" id="urlTitle" placeholder="Enter title" style="width: 300px;">
-</div>
-<div class="form-group">
-  <textarea id="urlNote" rows="3" placeholder="Add a note..." style="width: 300px;"></textarea>
-</div>
-<div class="form-group">
-  <button onclick="addURL()">Save URL</button>
+
+<div id="addForm" class="add-form-panel" style="display:none;">
+  <div class="form-group">
+    <input type="text" id="urlInput" placeholder="Enter URL (https://...)">
+  </div>
+
+  <div class="form-group">
+    <input type="text" id="urlTitle" placeholder="Enter title">
+  </div>
+
+  <div class="form-group">
+    <textarea id="urlNote" rows="3" placeholder="Add a note..."></textarea>
+  </div>
+
+  <div class="form-group">
+    <button onclick="addURL()">Save URL</button>
+    <button onclick="toggleAddForm()">Cancel</button>
+  </div>
 </div>
 
 <div class="file-grid" id="fileList"></div>
@@ -277,9 +601,13 @@ button:hover {
     });
 
     document.getElementById('urlInput').value = '';
-    document.getElementById('urlTitle').value = '';
-    document.getElementById('urlNote').value = '';
-    fetchURLs(document.getElementById('searchInput').value);
+document.getElementById('urlTitle').value = '';
+document.getElementById('urlNote').value = '';
+
+document.getElementById('addForm').style.display = 'none';
+document.getElementById('addToggleBtn').textContent = '+';
+
+fetchURLs(document.getElementById('searchInput').value);
   }
 
   async function fetchURLs(filter = '') {
@@ -306,25 +634,72 @@ button:hover {
           <strong>${data.title || 'Untitled'}</strong><br>
           <em>${data.note || ''}</em><br>
           <small>
-            <button onclick="window.open('${safeUrl}', '_blank')" style="padding:4px 8px; background:#f8edeb; border:none; border-radius:6px; cursor:pointer;">Visit Link</button>
+            <button class="visit-link-btn" onclick="window.open('${safeUrl}', '_blank')">Visit Link</button>
           </small>
         </div>
 
         <div class="edit-mode" id="edit-${doc.id}" style="display:none; margin-top:10px;">
-          <input type="text" id="edit-title-${doc.id}" value="${escapeHtmlAttr(data.title || '')}" placeholder="Edit title" style="width:100%; margin-bottom:8px;">
-          <textarea id="edit-note-${doc.id}" rows="4" placeholder="Edit note" style="width:100%; margin-bottom:8px;">${escapeHtmlText(data.note || '')}</textarea>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button onclick="saveInlineEdit('${doc.id}')">Save</button>
-            <button onclick="cancelInlineEdit('${doc.id}')">Cancel</button>
-          </div>
-        </div>
+  <input 
+    type="text" 
+    id="edit-title-${doc.id}" 
+    value="${escapeHtmlAttr(data.title || '')}" 
+    placeholder="Edit title" 
+    style="width:100%; margin-bottom:8px;"
+  >
+
+  <input 
+    type="text" 
+    id="edit-url-${doc.id}" 
+    value="${escapeHtmlAttr(data.url || '')}" 
+    placeholder="Edit URL" 
+    style="width:100%; margin-bottom:8px;"
+  >
+
+  <textarea 
+    id="edit-note-${doc.id}" 
+    rows="4" 
+    placeholder="Edit note" 
+    style="width:100%; margin-bottom:8px;"
+  >${escapeHtmlText(data.note || '')}</textarea>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button onclick="saveInlineEdit('${doc.id}')">Save</button>
+    <button onclick="cancelInlineEdit('${doc.id}')">Cancel</button>
+  </div>
+</div>
 
         <div class="file-buttons">
-          <button onclick="startInlineEdit('${doc.id}')">Edit</button>
-          <button onclick="deleteURL('${doc.id}')">Delete</button>
-        </div>
+  <button onclick="startInlineEdit('${doc.id}')" title="Edit">✎</button>
+  <button onclick="deleteURL('${doc.id}')" title="Delete">×</button>
+</div>
       `;
-      container.appendChild(div);
+      let pressTimer;
+
+div.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('button, input, textarea')) return;
+
+  pressTimer = setTimeout(() => {
+    document.querySelectorAll('.file-item.show-actions').forEach(card => {
+      if (card !== div) card.classList.remove('show-actions');
+    });
+
+    div.classList.toggle('show-actions');
+  }, 550);
+});
+
+div.addEventListener('pointerup', () => {
+  clearTimeout(pressTimer);
+});
+
+div.addEventListener('pointerleave', () => {
+  clearTimeout(pressTimer);
+});
+
+div.addEventListener('pointercancel', () => {
+  clearTimeout(pressTimer);
+});
+
+container.appendChild(div);
     }
   });
 }
@@ -360,10 +735,17 @@ function cancelInlineEdit(id) {
 
 async function saveInlineEdit(id) {
   const newTitle = document.getElementById(`edit-title-${id}`).value.trim() || 'Untitled';
+  const newUrl = document.getElementById(`edit-url-${id}`).value.trim();
   const newNote = document.getElementById(`edit-note-${id}`).value.trim();
+
+  if (!newUrl.startsWith('http')) {
+    alert('Please enter a valid URL starting with https:// or http://');
+    return;
+  }
 
   await db.collection('urlForms').doc(id).update({
     title: newTitle,
+    url: newUrl,
     note: newNote
   });
 
@@ -388,9 +770,32 @@ async function saveInlineEdit(id) {
   searchInput.style.display = 'block';
   searchInput.addEventListener('input', filterFiles);
 
+function toggleAddForm() {
+  const form = document.getElementById('addForm');
+  const btn = document.getElementById('addToggleBtn');
+
+  const isHidden = form.style.display === 'none' || form.style.display === '';
+
+  if (isHidden) {
+    form.style.display = 'block';
+    btn.textContent = '×';
+  } else {
+    form.style.display = 'none';
+    btn.textContent = '+';
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.file-item')) {
+    document.querySelectorAll('.file-item.show-actions').forEach(card => {
+      card.classList.remove('show-actions');
+    });
+  }
+});
+
   fetchURLs(); // Initial load
 </script>
-
+ <script src="header-rays.js?v=1"></script>
 
 </body>
 </html>
