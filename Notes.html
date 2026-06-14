@@ -138,6 +138,7 @@ h1 {
 }
 
 .note-tile textarea {
+  display: none;
   width: 100%;
   box-sizing: border-box;
   border: none;
@@ -153,6 +154,34 @@ h1 {
   pointer-events: none;     /* still readonly by default */
 }
 
+.note-display {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  font-size: 9pt;
+  padding: 8px;
+  font-family: Arial, sans-serif;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  border-radius: 6px;
+  color: black;
+  white-space: pre-wrap;
+  text-align: left;
+  min-height: 32px;
+}
+
+.search-highlight {
+  background: rgba(254, 255, 163, 0.55);
+  color: #111;
+  border-radius: 4px;
+  padding: 0 0.3mm;
+  font-weight: normal;
+
+  box-shadow:
+    0 0 4px rgba(255, 255, 255, 0.9),
+    0 0 8px rgba(254, 255, 163, 0.75),
+    0 0 14px rgba(254, 255, 163, 0.55);
+}
 
 /* Zoom effect */
 .note-tile.zoomed {
@@ -290,6 +319,29 @@ function renderNotes(filter = "") {
   });
 }
 
+function escapeHTML(text) {
+  return String(text || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function escapeRegExp(text) {
+  return String(text || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightSearchText(text, filter) {
+  const safeText = escapeHTML(text || "");
+
+  if (!filter.trim()) return safeText;
+
+  const pattern = new RegExp(`(${escapeRegExp(filter.trim())})`, "gi");
+
+  return safeText.replace(pattern, `<span class="search-highlight">$1</span>`);
+}
+
 function displayNotes(notesArray, filter = "") {
   const grid = document.getElementById("noteGrid");
   grid.innerHTML = "";
@@ -301,13 +353,20 @@ function displayNotes(notesArray, filter = "") {
     tile.className = "note-tile";
     tile.style.background = note.color || "rgba(255,255,255,0.2)";
 
-    // TEXTAREA
-    const textarea = document.createElement("textarea");
-    textarea.value = note.text || "";
-    textarea.setAttribute("readonly", true);
-    textarea.style.pointerEvents = "none";
-    textarea.style.overflow = "hidden";
-    textarea.style.resize = "none";
+    // DISPLAY TEXT WITH SEARCH HIGHLIGHT
+const displayText = document.createElement("div");
+displayText.className = "note-display";
+displayText.innerHTML = highlightSearchText(note.text || "", filter);
+
+// TEXTAREA FOR EDITING
+const textarea = document.createElement("textarea");
+textarea.value = note.text || "";
+textarea.setAttribute("readonly", true);
+textarea.style.pointerEvents = "none";
+textarea.style.overflow = "hidden";
+textarea.style.resize = "none";
+textarea.style.display = "none";
+    
 
     // DATE
     const dateElem = document.createElement("div");
@@ -345,13 +404,17 @@ function displayNotes(notesArray, filter = "") {
     const editButton = document.createElement("button");
     editButton.innerText = "✏️";
     editButton.onclick = e => {
-      e.stopPropagation();
-      tile.classList.add("editing");
-      textarea.removeAttribute("readonly");
-      textarea.style.pointerEvents = "auto";
-      textarea.focus();
-      autoResize(textarea);
-    };
+  e.stopPropagation();
+  tile.classList.add("editing");
+
+  displayText.style.display = "none";
+  textarea.style.display = "block";
+
+  textarea.removeAttribute("readonly");
+  textarea.style.pointerEvents = "auto";
+  textarea.focus();
+  autoResize(textarea);
+};
 
     const saveButton = document.createElement("button");
     saveButton.innerText = "Save";
@@ -360,10 +423,15 @@ function displayNotes(notesArray, filter = "") {
       try {
         await updateDoc(doc(notesRef, note.id), { text: textarea.value });
         textarea.setAttribute("readonly", true);
-        textarea.style.pointerEvents = "none";
-        tile.classList.remove("editing");
-        autoResize(textarea);
-        resizeTiles();
+textarea.style.pointerEvents = "none";
+textarea.style.display = "none";
+
+displayText.innerHTML = highlightSearchText(textarea.value, document.getElementById("searchInput").value);
+displayText.style.display = "block";
+
+tile.classList.remove("editing");
+autoResize(textarea);
+resizeTiles();
       } catch(err) {
         console.error("Failed to save note:", err);
       }
@@ -381,8 +449,9 @@ function displayNotes(notesArray, filter = "") {
     footer.appendChild(deleteButton);
 
     // ASSEMBLE TILE
-    tile.appendChild(textarea);
-    tile.appendChild(dateElem);
+    tile.appendChild(displayText);
+tile.appendChild(textarea);
+tile.appendChild(dateElem);
     tile.appendChild(editBar);
     tile.appendChild(footer);
     grid.appendChild(tile);
@@ -438,11 +507,19 @@ function resizeTiles() {
   const rowGap = parseInt(window.getComputedStyle(grid).getPropertyValue('gap'));
 
   grid.querySelectorAll('.note-tile').forEach(tile => {
-    const contentHeight =
-      tile.querySelector('textarea').scrollHeight +
-      tile.querySelector('.note-date').offsetHeight +
-      tile.querySelector('.edit-bar').offsetHeight +
-      tile.querySelector('.note-footer').offsetHeight + 24;
+    const display = tile.querySelector('.note-display');
+const textarea = tile.querySelector('textarea');
+
+const mainHeight =
+  textarea.style.display === "block"
+    ? textarea.scrollHeight
+    : display.scrollHeight;
+
+const contentHeight =
+  mainHeight +
+  tile.querySelector('.note-date').offsetHeight +
+  tile.querySelector('.edit-bar').offsetHeight +
+  tile.querySelector('.note-footer').offsetHeight + 24;
 
     const rowSpan = Math.ceil((contentHeight + rowGap) / (rowHeight + rowGap));
     tile.style.gridRowEnd = `span ${rowSpan}`;
