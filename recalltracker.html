@@ -452,6 +452,43 @@ body.edit-mode .tick-row{
   font-size:.95rem;
   margin-bottom:10px;
 }
+.today-cell{
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255,255,255,.92), transparent 34%),
+    radial-gradient(circle at 72% 20%, rgba(254,255,163,.58), transparent 32%),
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.44),
+      rgba(254,255,163,.24),
+      rgba(219,220,255,.24)
+    ) !important;
+
+  border:1px solid rgba(254,255,163,.72);
+
+  box-shadow:
+    0 0 0 2px rgba(254,255,163,.26),
+    0 0 24px rgba(254,255,163,.58),
+    0 0 42px rgba(219,220,255,.42),
+    inset 0 1px 0 rgba(255,255,255,.72),
+    inset 0 0 22px rgba(255,255,255,.34);
+}
+
+.today-cell .day-num{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:26px;
+  height:26px;
+  padding:0 8px;
+  border-radius:999px;
+
+  background:rgba(255,255,255,.62);
+  color:#4f4b2c;
+
+  box-shadow:
+    0 0 14px rgba(254,255,163,.9),
+    inset 0 1px 0 rgba(255,255,255,.85);
+}
 
 .ticks, .weekly-list{
   display:flex;
@@ -1282,8 +1319,17 @@ label.onclick = () => {
 function dayCell(dateNum){
   const data = monthData();
   const monthlyRows = data.monthlyRows || ["CEP"];
-  const el = document.createElement("div");
-  el.className = "cell day";
+ const el = document.createElement("div");
+el.className = "cell day";
+
+const isToday =
+  dateNum === today.getDate() &&
+  currentMonth === today.getMonth() &&
+  currentYear === today.getFullYear();
+
+if(isToday){
+  el.classList.add("today-cell");
+}
 
   const num = document.createElement("div");
   num.className = "day-num";
