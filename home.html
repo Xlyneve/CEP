@@ -248,10 +248,6 @@ header h1 {
   background-color: rgba(140, 150, 200, 0.18);
 }
 
-/* When vitals is open, stop expensive animations behind it */
-body.vitals-open .moving-text{
-  animation: none !important;
-}
 
 body.vitals-open .circle{
   animation: none !important;   /* stops pulseGlow */
@@ -426,25 +422,51 @@ footer {
   clear: both;
 }
 
-.moving-text {
+.reminder-pill {
   position: fixed;
-  top: 0;
-  left: 100%;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: normal;
-  font-family: 'fors', sans-serif;
-  padding: 8px 16px;
-  border: none;
-  animation: moveText 20s linear infinite;
-  z-index: 1000;
-  color: black;
-}
-@keyframes moveText {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
+  top: 88px;
+  right: 44px;
+  z-index: 1001;
 
+  padding: 7px 14px;
+  border-radius: 999px;
+
+  font-family: 'fors', sans-serif;
+  font-size: 12px;
+  color: #111;
+  white-space: nowrap;
+
+  background: rgba(255, 255, 220, 0.28);
+  border: 1px solid rgba(255, 255, 210, 0.65);
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.10),
+    0 0 10px rgba(255, 255, 180, 0.35),
+    inset 0 1px 0 rgba(255,255,255,0.45);
+
+  animation: reminderPulse 2.6s ease-in-out infinite;
+}
+@keyframes reminderPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 8px 20px rgba(0,0,0,0.10),
+      0 0 10px rgba(255, 255, 180, 0.35),
+      inset 0 1px 0 rgba(255,255,255,0.45);
+  }
+
+  50% {
+    transform: scale(1.05);
+    box-shadow:
+      0 10px 24px rgba(0,0,0,0.14),
+      0 0 22px rgba(255, 255, 160, 0.85),
+      0 0 38px rgba(255, 245, 190, 0.55),
+      inset 0 1px 0 rgba(255,255,255,0.70);
+  }
+}
 
 /* === Emoji Picker: sleek slide-out glass === */
 #emojiModal{
@@ -986,6 +1008,157 @@ footer {
   }
 }
 
+/* =========================
+   INTELEVIEWER QUICK ACCESS
+========================= */
+
+.qi {
+  position: fixed;
+  top: 78px;
+  left: 14px;
+
+  width: 248px;
+  max-width: calc(100vw - 28px);
+  z-index: 1390;
+
+  border-radius: 16px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+
+  overflow: hidden;
+  transition: width 180ms ease, left 180ms ease;
+  font-family: Tahoma, sans-serif;
+}
+
+.qi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.qi-row-item {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  color: #111;
+
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  cursor: pointer;
+}
+
+.qi-row-item:hover {
+  background: rgba(255,255,255,0.24);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.35),
+    0 0 14px rgba(255,255,255,0.30);
+}
+
+.qi-name {
+  font-weight: 700;
+}
+
+.qi-pass {
+  opacity: 0.7;
+  font-size: 10px;
+}
+
+.qi-empty {
+  font-size: 11px;
+  opacity: 0.75;
+  padding: 8px;
+  text-align: center;
+}
+
+.qi.collapsed {
+  width: 40px;
+  height: 46px;
+  left: 8px;
+}
+
+.qi.collapsed .qi-body,
+.qi.collapsed .qi-title {
+  display: none;
+}
+
+.qi.collapsed .qi-head {
+  justify-content: center;
+  padding: 8px;
+  border-bottom: none;
+}
+
+.qi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 6px 6px 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+}
+
+.qi-title {
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  opacity: 0.95;
+}
+
+.qi-toggle {
+  width: 34px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.14);
+  color: #111;
+  cursor: pointer;
+}
+
+.qi-body {
+  padding: 9px 10px 11px;
+}
+
+.qi-row-item {
+  width: 100%;
+  margin-top: 7px;
+  padding: 8px 10px;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  color: #111;
+
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  cursor: pointer;
+}
+
+.qi-row-item:hover {
+  background: rgba(255,255,255,0.24);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.35),
+    0 0 14px rgba(255,255,255,0.30);
+}
+
+.qi-pass {
+  opacity: 0.7;
+  font-size: 10px;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 992px) {
   .card-group {
@@ -1290,9 +1463,23 @@ footer {
 
   </div>
 </div>
+<!-- Inteleviewer Quick Access -->
+<div id="quickInteleviewer" class="qi collapsed">
+  <div class="qi-head">
+    <div class="qi-title">Inteleviewer</div>
+    <button class="qi-toggle" type="button" aria-label="Toggle Inteleviewer">❯</button>
+  </div>
+
+  <div class="qi-body">
+    <div id="qiList" class="qi-list">
+      Loading...
+    </div>
+  </div>
+</div>
+</div>
 </div>
 
-  <div class="moving-text">💡 Reminder: Stay organized and check your calendar!</div>
+  <div class="reminder-pill">💡 Check calendar</div>
 
   
 <!-- Vital Signs Table -->
@@ -1686,11 +1873,97 @@ function closeTable() {
     toggleBtn.textContent = qc.classList.contains('collapsed') ? '❯' : '❮';
   });
 
-  // init
+    // init
   resetOutput();
   setMed('para');
 })();
-</script>
+// Inteleviewer login/password box
+(() => {
+  const qi = document.getElementById('quickInteleviewer');
+  const toggle = qi?.querySelector('.qi-toggle');
 
+  toggle?.addEventListener('click', () => {
+    qi.classList.toggle('collapsed');
+    toggle.textContent = qi.classList.contains('collapsed') ? '❯' : '❮';
+  });
+
+  qi?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-copy]');
+    if (!btn) return;
+
+    await navigator.clipboard.writeText(btn.dataset.copy);
+
+    const old = btn.innerHTML;
+    btn.innerHTML = '<span>Copied</span><span class="qi-pass">✓</span>';
+
+    setTimeout(() => {
+      btn.innerHTML = old;
+    }, 800);
+  });
+})();
+
+
+</script>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+  import {
+    getFirestore,
+    collection,
+    onSnapshot,
+    query,
+    orderBy
+  } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const qiList = document.getElementById('qiList');
+  const q = query(collection(db, 'inteleviewerData'), orderBy('radiology'));
+
+  onSnapshot(q, (snapshot) => {
+    if (!qiList) return;
+
+    if (snapshot.empty) {
+      qiList.innerHTML = `<div class="qi-empty">No access saved</div>`;
+      return;
+    }
+
+    qiList.innerHTML = '';
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'qi-row-item';
+      row.dataset.copy = data.password || '';
+
+      row.innerHTML = `
+  <span class="qi-name">${escapeHtml(data.radiology || 'Untitled')}</span>
+  <span class="qi-pass">${escapeHtml(data.password || '')}</span>
+`;
+
+      qiList.appendChild(row);
+    });
+  });
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+</script>
 </body>
 </html>
