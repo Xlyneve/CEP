@@ -26,10 +26,14 @@ function isEmojiTarget(el) {
     `${el.id || ""} ${el.className || ""} ${el.name || ""} ${el.placeholder || ""}`
       .toLowerCase();
 
-  if (el.type === "search") return false;
-  if (text.includes("search")) return false;
+  // Allow calendar search box to use emoji
+if (el.id === "noteFilterInput") return true;
 
-  return true;
+// Still block other search fields if needed
+if (el.type === "search") return false;
+if (text.includes("search")) return false;
+
+return true;
 }
 
 const emojiGroups = {
