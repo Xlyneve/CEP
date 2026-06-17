@@ -361,6 +361,7 @@ button,
   font-size: 10pt;
 }
 
+
 button:hover,
 .add-todo button:hover,
 .home-button:hover,
@@ -371,12 +372,112 @@ button:hover,
 }
 
 .calendar-header {
+  position: sticky;
+  top: 8px;
+  z-index: 30;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 10px;
+
+  margin: 0 auto 12px auto;
+  padding: 10px 16px;
+
+  width: calc(100% - 24px);
+  box-sizing: border-box;
+
+  border-radius: 999px;
+
+  /* white / transparent liquid glass */
+  background:
+    radial-gradient(
+      circle at 28% 16%,
+      rgba(255, 255, 255, 0.52),
+      rgba(255, 255, 255, 0.16) 24%,
+      rgba(255, 255, 255, 0.055) 58%,
+      rgba(255, 255, 255, 0.025) 100%
+    );
+
+  /* blur the background underneath */
+  backdrop-filter: blur(42px) saturate(230%) contrast(108%) brightness(112%);
+  -webkit-backdrop-filter: blur(42px) saturate(230%) contrast(108%) brightness(112%);
+
+  border: 1px solid rgba(255, 255, 255, 0.36);
+
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.80),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.18),
+    inset 0 -16px 24px rgba(255, 255, 255, 0.06),
+    0 8px 22px rgba(0, 0, 0, 0.06),
+    0 0 18px rgba(255, 255, 255, 0.16);
+
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* soft white liquid reflection */
+.calendar-header::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 18px;
+  right: 18px;
+  height: 45%;
+  border-radius: 999px;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.60),
+      rgba(255, 255, 255, 0.14),
+      transparent
+    );
+
+  filter: blur(1px);
+  opacity: 0.65;
+}
+
+/* thin shiny rim */
+.calendar-header::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.60),
+      transparent 24%,
+      transparent 72%,
+      rgba(255, 255, 255, 0.22)
+    );
+
+  opacity: 0.72;
+  mix-blend-mode: screen;
+}
+
+.calendar-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.calendar-header button:hover,
+.calendar-header select:hover {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.12),
+      rgba(255, 255, 255, 0.025)
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    0 0 12px rgba(255, 255, 255, 0.18) !important;
 }
 
 .calendar-header-left {
@@ -385,11 +486,54 @@ button:hover,
   gap: 10px;
 }
 
-.calendar-header h2#monthLabel {
-  font-size: 50pt;
-  margin: 0;
-  color: black;
-  font-family: 'hellohon', cursive, sans-serif;
+.calendar-header button,
+.calendar-header select {
+  background: rgba(255, 255, 255, 0.08) !important;
+
+  backdrop-filter: blur(24px) saturate(210%) brightness(112%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(210%) brightness(112%) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.26) !important;
+  border-radius: 999px !important;
+
+  color: rgba(0, 0, 0, 0.76) !important;
+
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.40);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.035) !important;
+}
+
+.calendar-header button:hover,
+.calendar-header select:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+
+.calendar-header > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  padding: 5px;
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.035);
+
+  backdrop-filter: blur(28px) saturate(220%) contrast(115%);
+  -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(115%);
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 20px rgba(0, 0, 0, 0.06);
+
+  overflow: hidden;
 }
 
 #monthLabel {
@@ -401,10 +545,6 @@ button:hover,
 .calendar-header select {
   padding: 6px 12px;
   font-size: 10pt;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(193, 182, 163, 0.3);
   border-radius: 8px;
   color: black;
   cursor: pointer;
@@ -413,9 +553,26 @@ button:hover,
   appearance: none;
 }
 
+.calendar-header h2#monthLabel {
+  font-size: 50pt;
+  margin: 0;
+
+  color: rgba(0, 0, 0, 0.80);
+  font-family: 'hellohon', cursive, sans-serif;
+  font-weight: 500;
+
+  text-shadow:
+    0.2px 0 rgba(0, 0, 0, 0.25),
+    0 1px 0 rgba(255, 255, 255, 0.45),
+    0 0 8px rgba(255, 255, 255, 0.20);
+}
+
+.calendar-header button:hover,
 .calendar-header select:hover {
-  background: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 0 10px rgba(255, 255, 255, 0.22) !important;
 }
 
 .home-button {
@@ -442,6 +599,13 @@ button:hover,
   grid-template-columns: repeat(7, 1fr);
   gap: 10px;
   margin-top: 5px;
+}
+.todo-item.done {
+  opacity: 0.45;
+}
+
+.todo-item.done textarea {
+  text-decoration: line-through;
 }
 
 .day {
@@ -545,6 +709,19 @@ button:hover,
   background: rgba(255, 255, 255, 0.4);
 }
 
+.day.has-note {
+  box-shadow:
+    inset 0 0 10px rgba(255, 255, 255, 0.28),
+    0 0 12px rgba(255, 255, 255, 0.35),
+    0 0 20px rgba(220, 230, 255, 0.26);
+}
+
+.day.has-note .date-number::after {
+  content: " ✦";
+  font-size: 8pt;
+  opacity: 0.65;
+}
+
 @media (max-width: 600px) {
   html,
 body {
@@ -588,6 +765,7 @@ body {
 .calendar-container {
   -webkit-overflow-scrolling: touch;
 }
+
 
   .calendar {
     grid-template-columns: repeat(7, minmax(130px, 1fr));
@@ -855,13 +1033,26 @@ function populateSelectors() {
   }
 
   monthSelect.addEventListener('change', () => {
-    currentDate.setMonth(parseInt(monthSelect.value));
-    loadCalendar();
-  });
-  yearSelect.addEventListener('change', () => {
-    currentDate.setFullYear(parseInt(yearSelect.value));
-    loadCalendar();
-  });
+  currentDate.setMonth(parseInt(monthSelect.value));
+
+  const today = new Date();
+  const viewingCurrentMonth =
+    currentDate.getMonth() === today.getMonth() &&
+    currentDate.getFullYear() === today.getFullYear();
+
+  loadCalendar(viewingCurrentMonth);
+});
+
+yearSelect.addEventListener('change', () => {
+  currentDate.setFullYear(parseInt(yearSelect.value));
+
+  const today = new Date();
+  const viewingCurrentMonth =
+    currentDate.getMonth() === today.getMonth() &&
+    currentDate.getFullYear() === today.getFullYear();
+
+  loadCalendar(viewingCurrentMonth);
+});
 }
 
 // Go to today
@@ -873,9 +1064,14 @@ function goToToday() {
 // Change month
 function changeMonth(offset) {
   currentDate.setMonth(currentDate.getMonth() + offset);
-  loadCalendar();
-}
 
+  const today = new Date();
+  const viewingCurrentMonth =
+    currentDate.getMonth() === today.getMonth() &&
+    currentDate.getFullYear() === today.getFullYear();
+
+  loadCalendar(viewingCurrentMonth);
+}
 // Days in month
 function getDaysInMonth(month, year) {
   return new Date(year, month + 1, 0).getDate();
@@ -887,7 +1083,7 @@ function getDayName(year, month, day) {
 }
 
 // Load calendar for a month
-async function loadCalendar() {
+async function loadCalendar(scrollToday = true) {
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
   calendarEl.innerHTML = '';
@@ -913,8 +1109,12 @@ async function loadCalendar() {
   // Days with notes
   for (let i = 1; i <= daysInMonth; i++) {
     const note = notes[i] || "";
-    const day = document.createElement('div');
-    day.className = 'day';
+	const day = document.createElement('div');
+	day.className = 'day';
+
+if (note.trim()) {
+  day.classList.add('has-note');
+}
 
     const today = new Date();
     if (i === today.getDate() &&
@@ -933,21 +1133,14 @@ async function loadCalendar() {
     calendarEl.appendChild(day);
     autoResizeTextarea(textarea);
   }
-  autoResizeAllDayTextareas();
+autoResizeAllDayTextareas();
+
+if (scrollToday) {
   scrollToToday();
+} else {
+  scrollCalendarToTop();
 }
-function scrollToToday() {
-  const todayEl = document.querySelector('.day.today');
 
-  if (!todayEl) return;
-
-  setTimeout(() => {
-    todayEl.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'nearest'
-    });
-  }, 150);
 }
 
 // Save note
@@ -960,13 +1153,42 @@ async function saveCalendar(year, month, day, note) {
   }
 }
 
+
 // Auto resize textareas
 function autoResizeTextarea(textarea) {
   textarea.style.height = 'auto';
   textarea.style.height = textarea.scrollHeight + 'px';
 }
+
 function autoResizeAllDayTextareas() {
   document.querySelectorAll('.day textarea').forEach(autoResizeTextarea);
+}
+
+function scrollCalendarToTop() {
+  const calendarContainer = document.querySelector('.calendar-container');
+
+  if (!calendarContainer) return;
+
+  setTimeout(() => {
+    calendarContainer.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, 100);
+}
+
+function scrollToToday() {
+  const todayEl = document.querySelector('.day.today');
+
+  if (!todayEl) return;
+
+  setTimeout(() => {
+    todayEl.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+  }, 150);
 }
 
 const newTodo = document.getElementById('newTodo');
