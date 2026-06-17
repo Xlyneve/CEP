@@ -811,6 +811,75 @@ body {
   border-radius: 12px;
 }
 
+/* Search result month header */
+.month-header {
+  grid-column: 1 / -1;
+  font-family: 'hellohon', cursive, sans-serif;
+  font-size: 20pt;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.78);
+  margin: 10px 0 0;
+  padding: 4px 8px;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.45),
+    0 0 8px rgba(255, 255, 255, 0.20);
+}
+
+/* Search result card */
+.day.match {
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  box-shadow:
+    inset 0 0 10px rgba(255, 255, 255, 0.28),
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 0 16px rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+}
+
+/* Highlight searched word */
+.search-highlight {
+  display: inline;
+  padding: 0 2px;
+  border-radius: 4px;
+  background: rgba(254, 255, 163, 0.75);
+  box-shadow:
+    0 0 6px rgba(254, 255, 163, 0.75),
+    0 0 12px rgba(255, 255, 255, 0.40);
+}
+
+/* Search note display */
+.search-note {
+  width: 100%;
+  min-height: 90px;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  border-radius: 8px;
+  padding: 6px;
+  box-sizing: border-box;
+
+  font-family: Tahoma, sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.4;
+
+  background: rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  border: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+/* No result text */
+.no-search-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 30px;
+  font-size: 11pt;
+  color: rgba(0, 0, 0, 0.55);
+}
+
 /* =========================
    ULTRA SUBTLE GLASS SCROLLBAR
    ========================= */
@@ -1351,63 +1420,103 @@ function loadTodos() {
     });
   });
 }
-// --- FILTER FUNCTION: SHOW ALL MATCHING NOTES GROUPED BY MONTH ---
+
+// Escape special regex characters
+function escapeRegex(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Highlight searched text safely
+function highlightSearchTerm(text, term) {
+  const safeTerm = escapeRegex(term);
+  const regex = new RegExp(`(${safeTerm})`, 'gi');
+
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(regex, '<span class="search-highlight">$1</span>');
+}
+
+// Search notes across all months
 async function filterNotes() {
-  const term = document.getElementById("noteFilterInput").value.trim(); // Get the filter input and remove leading/trailing spaces
-  
-  // If the search term is empty, reload the full calendar (no filtering)
+  const term = document.getElementById("noteFilterInput").value.trim();
+
   if (!term) {
     loadCalendar();
     return;
   }
 
-  // Create a regular expression for partial word matching (case-insensitive)
-  const regExp = new RegExp(term, 'i'); // 'i' flag for case-insensitivity
-  
-  // Get all calendar documents (month-year as document ID)
+  const safeTerm = escapeRegex(term);
+  const regExp = new RegExp(safeTerm, 'i');
+
   const calendarRef = collection(db, 'calendar');
   const allDocs = await getDocs(calendarRef);
 
-  // Clear the existing calendar content
   calendarEl.innerHTML = '';
 
-  // Iterate over all documents in the calendar collection
-  allDocs.forEach(docSnap => {
-    const [year, month] = docSnap.id.split('-').map(Number); // Split the document ID into year and month
-    const notes = docSnap.data(); // Get the notes data for that month
-    
-    // Filter the days based on whether the notes contain the search term (using regex for partial matching)
-    const matchingDays = Object.keys(notes).filter(day => {
-      return regExp.test(notes[day]); // Test if the note contains the search term (case-insensitive)
-    });
+  const results = [];
 
-    // If there are matching days, display them grouped by month
-    if (matchingDays.length > 0) {
-      // Create the month-year header (e.g., "June 2025")
+  allDocs.forEach(docSnap => {
+    const [year, month] = docSnap.id.split('-').map(Number);
+    const notes = docSnap.data();
+
+    Object.keys(notes).forEach(dayNum => {
+      const note = notes[dayNum] || '';
+
+      if (regExp.test(note)) {
+        results.push({
+          year,
+          month,
+          day: Number(dayNum),
+          note
+        });
+      }
+    });
+  });
+
+  results.sort((a, b) => {
+    const dateA = new Date(a.year, a.month - 1, a.day);
+    const dateB = new Date(b.year, b.month - 1, b.day);
+    return dateB - dateA;
+  });
+
+  if (results.length === 0) {
+    calendarEl.innerHTML = `
+      <div class="no-search-results">
+        No notes found for "${term}"
+      </div>
+    `;
+    return;
+  }
+
+  let currentGroup = '';
+
+  results.forEach(result => {
+    const groupName = `${months[result.month - 1]} ${result.year}`;
+
+    if (groupName !== currentGroup) {
+      currentGroup = groupName;
+
       const header = document.createElement('div');
       header.className = 'month-header';
-      header.textContent = `${months[month - 1]} ${year}`;  // Adjust for zero-indexing if necessary
+      header.textContent = groupName;
       calendarEl.appendChild(header);
-
-      // Create a day element for each day with matching notes
-      matchingDays.forEach(dayNum => {
-        const day = document.createElement('div');
-        day.className = 'day match'; // Add 'match' class for styling of matched days
-
-        // Create the day content with the note for that day
-        day.innerHTML = `
-          <div class="date-number">${getDayName(year, month - 1, dayNum)} ${dayNum}</div>
-          <textarea readonly>${notes[dayNum]}</textarea> <!-- Display the note for the matched day -->
-        `;
-
-        // Append the day to the calendar
-        calendarEl.appendChild(day);
-        autoResizeAllDayTextareas(); // Auto-resize all day textareas to fit content
-      });
     }
-  });
-}
 
+    const day = document.createElement('div');
+    day.className = 'day match';
+
+    day.innerHTML = `
+  <div class="date-number">${getDayName(result.year, result.month - 1, result.day)} ${result.day}</div>
+  <div class="search-note">${highlightSearchTerm(result.note.trimStart(), term)}</div>
+`;
+
+    calendarEl.appendChild(day);
+  });
+
+  scrollCalendarToTop();
+}
 
 // Expose functions
 window.changeMonth = changeMonth;
