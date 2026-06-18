@@ -57,7 +57,31 @@ body {
   padding: 8px;
   max-height: 100vh;
   border-radius: 12px 0 0 12px;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+}
+
+.calendar-scroll-glass {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 10px;
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+
+  backdrop-filter: blur(14px) saturate(135%);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+
+  box-shadow:
+    inset 0 0 18px rgba(255, 255, 255, 0.18),
+    0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 /* Background blur layers */
@@ -372,8 +396,8 @@ button:hover,
 }
 
 .calendar-header {
-  position: sticky;
-  top: 8px;
+ position: relative;
+  top: auto;
   z-index: 30;
 
   display: flex;
@@ -884,29 +908,33 @@ body {
    ULTRA SUBTLE GLASS SCROLLBAR
    ========================= */
 
+/* =========================
+   ULTRA SUBTLE GLASS SCROLLBAR
+   ========================= */
+
 /* Firefox */
 .todo-list,
-.calendar-container {
+.calendar-scroll-glass {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
 }
 
 /* WebKit */
-.todo-list::-webkit-scrollbar,
-.calendar-container::-webkit-scrollbar {
-  width: 6px;   /* thinner = more elegant */
+.todo-list::-webkit-scrollbar-track,
+.calendar-scroll-glass::-webkit-scrollbar-track {
+  width: 6px;
   height: 6px;
 }
 
 /* Invisible track */
 .todo-list::-webkit-scrollbar-track,
-.calendar-container::-webkit-scrollbar-track {
+.calendar-scroll-glass::-webkit-scrollbar-track {
   background: transparent;
 }
 
 /* Fully hidden by default */
 .todo-list::-webkit-scrollbar-thumb,
-.calendar-container::-webkit-scrollbar-thumb {
+.calendar-scroll-glass::-webkit-scrollbar-thumb {
   background: transparent;
   border-radius: 20px;
   transition: background 0.25s ease, box-shadow 0.25s ease;
@@ -914,7 +942,7 @@ body {
 
 /* Almost transparent frosted glass on hover */
 .todo-list:hover::-webkit-scrollbar-thumb,
-.calendar-container:hover::-webkit-scrollbar-thumb {
+.calendar-scroll-glass:hover::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.18);
   border: 1px solid rgba(255,255,255,0.25);
   backdrop-filter: blur(4px);
@@ -923,13 +951,13 @@ body {
 
 /* Slightly stronger while dragging */
 .todo-list::-webkit-scrollbar-thumb:active,
-.calendar-container::-webkit-scrollbar-thumb:active {
+.calendar-scroll-glass::-webkit-scrollbar-thumb:active {
   background: rgba(255,255,255,0.28);
 }
 
 /* Firefox hover */
 .todo-list:hover,
-.calendar-container:hover {
+.calendar-scroll-glass:hover {
   scrollbar-color: rgba(255,255,255,0.25) transparent;
 }
 
@@ -1031,11 +1059,13 @@ body {
 ">
 
 </div>
+  <div class="calendar-scroll-glass">
   <div class="day-headers">
     <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
   </div>
 
   <div class="calendar" id="calendar"></div>
+</div>
 </div> <!-- End of .calendar-container -->
 
 
@@ -1245,7 +1275,7 @@ function autoResizeAllDayTextareas() {
 }
 
 function scrollCalendarToTop() {
-  const calendarContainer = document.querySelector('.calendar-container');
+  const calendarContainer = document.querySelector('.calendar-scroll-glass');
 
   if (!calendarContainer) return;
 
@@ -1259,14 +1289,16 @@ function scrollCalendarToTop() {
 
 function scrollToToday() {
   const todayEl = document.querySelector('.day.today');
+  const scrollBox = document.querySelector('.calendar-scroll-glass');
 
-  if (!todayEl) return;
+  if (!todayEl || !scrollBox) return;
 
   setTimeout(() => {
-    todayEl.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'nearest'
+    const todayTop = todayEl.offsetTop - scrollBox.offsetTop;
+
+    scrollBox.scrollTo({
+      top: todayTop - (scrollBox.clientHeight / 2) + (todayEl.clientHeight / 2),
+      behavior: 'smooth'
     });
   }, 150);
 }
