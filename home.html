@@ -1033,118 +1033,6 @@ footer {
   font-family: Tahoma, sans-serif;
 }
 
-.qi-list {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.qi-row-item {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 12px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
-  font-family: Tahoma, sans-serif;
-  font-size: 11px;
-  color: #111;
-
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.22);
-  cursor: pointer;
-}
-
-.qi-row-item:hover {
-  background: rgba(255,255,255,0.24);
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.35),
-    0 0 14px rgba(255,255,255,0.30);
-}
-
-.qi-name {
-  font-weight: 700;
-}
-
-.qi-pass {
-  opacity: 0.7;
-  font-size: 10px;
-}
-
-.qi-info {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.qi-copy-line {
-  width: 100%;
-  padding: 5px 7px;
-  border-radius: 9px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.10);
-
-  font-family: Tahoma, sans-serif;
-  font-size: 10px;
-  color: #111;
-  cursor: pointer;
-}
-
-.qi-copy-line:hover {
-  background: rgba(255,255,255,0.22);
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.30),
-    0 0 12px rgba(255,255,255,0.25);
-}
-
-.qi-label {
-  opacity: 0.55;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.qi-value {
-  opacity: 0.85;
-  font-size: 10px;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-.qi-empty {
-  font-size: 11px;
-  opacity: 0.75;
-  padding: 8px;
-  text-align: center;
-}
-
-.qi.collapsed {
-  width: 40px;
-  height: 46px;
-  left: 8px;
-}
-
-.qi.collapsed .qi-body,
-.qi.collapsed .qi-title {
-  display: none;
-}
-
-.qi.collapsed .qi-head {
-  justify-content: center;
-  padding: 8px;
-  border-bottom: none;
-}
-
 .qi-head {
   display: flex;
   align-items: center;
@@ -1174,24 +1062,30 @@ footer {
   padding: 9px 10px 11px;
 }
 
+.qi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
 .qi-row-item {
   width: 100%;
-  margin-top: 7px;
-  padding: 8px 10px;
+  box-sizing: border-box;
+
+  display: grid;
+  grid-template-columns: 0.75fr 1fr 1fr;
+  align-items: center;
+  gap: 7px;
+
+  padding: 8px 9px;
   border-radius: 12px;
 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
   font-family: Tahoma, sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   color: #111;
 
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.22);
-  cursor: pointer;
 }
 
 .qi-row-item:hover {
@@ -1201,9 +1095,65 @@ footer {
     0 0 14px rgba(255,255,255,0.30);
 }
 
-.qi-pass {
-  opacity: 0.7;
+.qi-name {
+  font-weight: 700;
   font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.qi-copy-mini {
+  min-width: 0;
+  padding: 5px 6px;
+  border-radius: 9px;
+
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+
+  font-family: Tahoma, sans-serif;
+  font-size: 9.5px;
+  color: #111;
+  cursor: pointer;
+
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.qi-copy-mini:hover {
+  background: rgba(255,255,255,0.22);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.30),
+    0 0 12px rgba(255,255,255,0.25);
+}
+
+.qi-empty {
+  font-size: 11px;
+  opacity: 0.75;
+  padding: 8px;
+  text-align: center;
+}
+
+.qi.collapsed {
+  width: 40px;
+  height: 46px;
+  left: 8px;
+}
+
+.qi.collapsed .qi-body,
+.qi.collapsed .qi-title {
+  display: none;
+}
+
+.qi.collapsed .qi-head {
+  justify-content: center;
+  padding: 8px;
+  border-bottom: none;
+}
+
+.qi.collapsed .qi-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  font-size: 14px;
 }
 
 /* Responsive Adjustments */
@@ -1941,7 +1891,7 @@ function closeTable() {
     await navigator.clipboard.writeText(btn.dataset.copy);
 
     const old = btn.innerHTML;
-    btn.innerHTML = '<span>Copied</span><span class="qi-pass">✓</span>';
+    btn.textContent = 'Copied ✓';
 
     setTimeout(() => {
       btn.innerHTML = old;
@@ -1987,29 +1937,25 @@ function closeTable() {
     qiList.innerHTML = '';
 
     snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
+  const data = docSnap.data();
 
-      const row = document.createElement('div');
-row.className = 'qi-row-item';
+  const row = document.createElement('div');
+  row.className = 'qi-row-item';
 
-row.innerHTML = `
-  <div class="qi-info">
+  row.innerHTML = `
     <span class="qi-name">${escapeHtml(data.radiology || 'Untitled')}</span>
 
-    <button class="qi-copy-line" type="button" data-copy="${escapeHtml(data.username || '')}">
-      <span class="qi-label">User</span>
-      <span class="qi-value">${escapeHtml(data.username || '')}</span>
+    <button class="qi-copy-mini" type="button" data-copy="${escapeHtml(data.username || '')}">
+      ${escapeHtml(data.username || '')}
     </button>
 
-    <button class="qi-copy-line" type="button" data-copy="${escapeHtml(data.password || '')}">
-      <span class="qi-label">Pass</span>
-      <span class="qi-value">${escapeHtml(data.password || '')}</span>
+    <button class="qi-copy-mini" type="button" data-copy="${escapeHtml(data.password || '')}">
+      ${escapeHtml(data.password || '')}
     </button>
-  </div>
-`;
+  `;
 
-qiList.appendChild(row);
-    });
+  qiList.appendChild(row);
+});
   });
 
   function escapeHtml(str) {
