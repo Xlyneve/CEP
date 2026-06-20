@@ -1,2671 +1,2041 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<!-- Keep zoomable; we'll handle the "fit to phone" with CSS transform -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<title>Nurses Roster</title>
+  <script src="auth-guard.js"></script>
+
+  <title>Xlyn</title>
+
 <style>
-html {
-  -webkit-text-size-adjust: 100%; /* prevents font resizing on zoom */
-  text-size-adjust: 100%;
+  /* Custom Fonts */
+@font-face {
+  font-family: 'AdeliciaRegular';
+  src: url('AdeliciaRegular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'fors';
+  src: url('fors.ttf') format('truetype');
 }
 
-:root{
-  --cal-w: 900px;   /* calendar width (keep same as your design) */
-  --nurse-w: 250px; /* nurse panel width */
-  --gap: 20px;      /* visual gap between nurse panel and calendar */
-
-}
-
-/* ===== Base ===== */
+/* General Styles */
 body {
-  font-family: Arial, sans-serif;
   margin: 0;
-  padding: 0;
-  background: #ededed; /* very light gray */
-  color: #333;
+  font-family: 'fors', sans-serif;
+  background: #fafbf4;
+  color: black;
+  font-size: 22px;
   position: relative;
   overflow-x: hidden;
-  overflow-y: auto;
-  box-sizing: border-box;
 }
 
-/* Auto-scaling root:
-   - We scale the whole desktop UI down to fit phone width
-   - Width compensation keeps internal layout intact (no wrapping) */
-
-
-
-/* Subtle frosted overlay effect */
-body::after {
+body::before {
   content: "";
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  width: 100vw;
+  height: 100vh;
+  background: url('2b.png') no-repeat center center;
+  background-size: cover;
+  opacity: 0.8;
   z-index: -1;
+  pointer-events: none;
 }
 
-/* Glassy panels (applied to nurse-list by default; calendar gets overridden below) */
-.nurse-list,
-.calendar {
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  padding: 10px;
+header {
+  padding: 30px 10px 20px;
+  text-align: center;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  position: relative;
+  overflow: visible !important;
+  z-index: 0;
+}
+header h1 {
+  font-size: 20px;
+  margin: 0;
 }
 
-.calendar-inner {
-  width: 100%;
-}
+.pageTitle {
+  font-family: 'AdeliciaRegular', cursive, sans-serif;
+  font-size: 120px;
+  letter-spacing: 6px;
+  font-weight: 900;
+  color: black;
+  position: relative;
+  z-index: 2;
+  -webkit-text-stroke: 0.8px black;
+  text-shadow:
+    0 0 1px black,
+    1px 1px 0 rgba(255, 255, 255, 0.9),
+    2px 2px 0 rgba(245, 245, 245, 0.8),
+    3px 3px 0 rgba(230, 230, 230, 0.7);
+  transform: scaleX(1.05);
 
-.notice-board {
-  flex: 0 0 235px;
-  width: 235px;
-  max-width: 235px;
-
-  position: sticky;
-  top: 110px;
-  align-self: flex-start;
-
-  height: auto;
-  min-height: auto;
-  max-height: calc(100vh - 140px);
-  overflow-y: auto;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255,255,255,0.72),
-      rgba(255,255,255,0.32)
-    );
-  backdrop-filter: blur(22px) saturate(180%);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.65);
-
-  box-shadow:
-    0 8px 22px rgba(0,0,0,0.10),
-    0 0 14px rgba(255,255,255,0.35);
-
-  padding: 9px;
-  box-sizing: border-box;
-}
-
-.notice-toggle {
-  width: 100%;
-  border: none;
-  border-radius: 999px;
-  padding: 10px 12px;
-  cursor: pointer;
-
-  font-size: 0.95rem;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-
-  background: #ff9800;
-  color: white;
-
-  border: 1px solid rgba(255, 255, 255, 0.65);
-
-  box-shadow:
-    0 6px 18px rgba(0,0,0,0.10),
-    0 0 14px rgba(255,255,255,0.75),
-    inset 0 0 10px rgba(255,255,255,0.28);
-}
-
-.notice-toggle:hover {
-  background: #e68900;
-
-  box-shadow:
-    0 7px 20px rgba(0,0,0,0.12),
-    0 0 18px rgba(255,255,255,0.9),
-    inset 0 0 12px rgba(255,255,255,0.34);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 12px 24px;
+  border-radius: 12px;
+  display: inline-block;
 }
 
 
-.notice-content {
-  margin-top: 10px;
-  display: block;
+.title {
+  font-family: 'Clicker Script', cursive;
+  font-size: 90px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: black;
+  margin: 0;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.notice-list {
+.top-circles {
+  position: fixed;
+  top: 130px;
+  right: 50px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
+  z-index: 1000;
 }
 
-.notice-card {
-  position: relative;
-
-  display: block;
-  height: auto !important;
-  min-height: 0 !important;
-
-  background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(255,255,255,0.72);
-  border-radius: 11px;
-
-  padding: 7px 8px 7px 12px;
-
-  font-size: 0.82rem;
-  line-height: 1.25;
-  color: #222;
-
-  white-space: normal;
-
-  box-shadow:
-    0 4px 12px rgba(0,0,0,0.06),
-    inset 0 0 0 1px rgba(255,255,255,0.42);
-}
-
-.notice-card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 4px;
-  border-radius: 999px;
-}
-
-.notice-0::before {
-  background: #feffa3;
-  box-shadow: 0 0 12px rgba(254,255,163,0.9);
-}
-
-.notice-1::before {
-  background: #ffd6ee;
-  box-shadow: 0 0 12px rgba(255,214,238,0.9);
-}
-
-.notice-2::before {
-  background: #dbdcff;
-  box-shadow: 0 0 12px rgba(219,220,255,0.9);
-}
-
-.notice-3::before {
-  background: #f55cff;
-  box-shadow: 0 0 12px rgba(245,92,255,0.7);
-}
-
-.notice-card.empty {
-  text-align: center;
-  color: #555;
-  font-style: italic;
-}
-
-.notice-card-text {
-  margin: 0 0 5px 0;
-  padding: 4px 5px;
-  line-height: 1.3;
-  white-space: pre-wrap;
-  border-radius: 8px;
-  min-height: 18px;
-}
-
-.notice-card-text.editing {
-  background: rgba(255,255,255,0.92);
-  outline: 1px solid rgba(255, 152, 0, 0.55);
-  box-shadow:
-    inset 0 2px 8px rgba(0,0,0,0.04),
-    0 0 10px rgba(255,255,255,0.55);
-  cursor: text;
-}
-
-.notice-actions {
-  justify-content: flex-end;
-  gap: 5px;
-}
-
-.notice-actions button {
-  border: none;
-  border-radius: 999px;
-  padding: 2px 7px;
-
-  font-size: 0.68rem;
-  cursor: pointer;
-
-  background: rgba(255,255,255,0.78);
-  color: #333;
-
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-}
-
-.notice-actions button:hover {
-  background: rgba(254,255,163,0.9);
-}
-
-.notice-editor {
-  margin-top: 12px;
-  display: none;
-}
-
-.notice-editor textarea {
-  width: 100%;
-  min-height: 85px;
-  resize: vertical;
-  box-sizing: border-box;
-
-  padding: 9px;
-  border-radius: 12px;
-  border: 1px solid rgba(180,180,180,0.55);
-
-  font-family: Arial, sans-serif;
-  font-size: 0.85rem;
-
-  background: rgba(255,255,255,0.78);
-  color: #333;
-
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.notice-editor button {
-  width: 100%;
-  margin-top: 7px;
-  font-weight: 700;
-
-  background: #ff9800;
-  color: white;
-
-  box-shadow:
-    0 4px 12px rgba(255, 152, 0, 0.22),
-    0 0 10px rgba(255,255,255,0.45);
-}
-
-.notice-editor button:hover {
-  background: #e68900;
-}
-
-.notice-inline-actions {
+.circle {
+  border-radius: 70%;
+  width: 70px;
+  height: 70px;
   display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.notice-inline-actions button {
-  border: none;
-  border-radius: 999px;
-  padding: 3px 8px;
-  font-size: 0.7rem;
-  cursor: pointer;
-  background: rgba(255,255,255,0.82);
-  color: #333;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-}
-
-.notice-save-edit-btn {
-  background: #ff9800 !important;
-  color: white !important;
-}
-
-.notice-cancel-edit-btn:hover,
-.notice-delete-btn:hover,
-.notice-edit-btn:hover {
-  background: rgba(255, 152, 0, 0.14);
-}
-
-.jump-date-picker {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  width: 1px;
-  height: 1px;
-}
-
-/* Header with logo */
-.main-header {
-  position: relative;
-  display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 12px;
-  background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  border-bottom: 1px solid rgba(200,200,200,0.35);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-}
-
-.main-header .logo {
-  max-height: 70px;
-  object-fit: contain;
-}
-
-/* ===== Auth section ===== */
-.auth-section {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  margin:10px auto 20px auto;
-  text-align:center;
-  font-size:0.85em;
-  padding: 12px;
-  background: rgba(255,255,255,0.25);
-  backdrop-filter: blur(14px) saturate(150%);
-  border-radius: 12px;
-  border: 1px solid rgba(200,200,200,0.3);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-  width: fit-content;
-}
-
-.auth-section input {
-  padding:6px;
-  margin:4px;
-  width:180px;
-  font-size:0.85em;
-  border:1px solid #ccc;
-  border-radius:6px;
-}
-
-.auth-section button {
-  padding:4px 10px;
-  font-size:0.8em;
-  margin: 2px;
-  border:none;
-  border-radius:6px;
-  background: rgba(255,255,255,0.25);
-  backdrop-filter: blur(8px);
-  color:#333;
-  cursor:pointer;
-  transition: 0.2s ease;
-}
-
-.auth-section button:hover {
-  background: rgba(255,255,255,0.4);
-}
-
-.auth-buttons { margin-top: 6px; }
-
-#loginBtn { background: #4cafef; color: white; }
-#loginBtn:hover { background: #369ed8; }
-#logoutBtn { background: #888; color: white; }
-#logoutBtn:hover { background: #666; }
-
-#userStatus {
-  margin-top: 6px;
-  font-size: 0.8em;
-  color: #444;
-}
-.auth-toggle-btn {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  border-radius: 999px;
-  width: 42px;
-  height: 42px;
-  font-size: 1.1rem;
-  cursor: pointer;
-  background: rgba(255,255,255,0.28);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.4);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-}
-
-.auth-toggle-btn:hover {
-  background: rgba(255,255,255,0.42);
-}
-
-.auth-modal.hidden {
-  display: none;
-}
-
-.auth-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 5000;
-}
-
-.auth-modal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.28);
-}
-
-.auth-modal-content {
-  position: absolute;
-  top: 90px;
-  right: 16px;
-  width: min(92vw, 340px);
-  z-index: 2;
-}
-
-.modal-auth-section {
-  width: 100%;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-.close-auth-btn {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  border: none;
-  background: transparent;
-  font-size: 1.4rem;
-  cursor: pointer;
-  color: #444;
-  z-index: 3;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* ===== Layout: Desktop side-by-side ===== */
-.container {
-  position: relative;          /* add this line */
-  display: flex;
   justify-content: center;
-  align-items: flex-start;
-  gap: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+  text-align: center;
+  font-size: 11px; /* from .vitals-circle */
+  font-weight: normal; /* from .vitals-circle */
+  cursor: pointer;
+  padding: 8px;
   box-sizing: border-box;
+  color: #333;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background-color: transparent;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 0 8px rgba(255, 255, 255, 0.2);
+  transition:
+    transform 0.3s ease,
+    backdrop-filter 0.4s ease,
+    -webkit-backdrop-filter 0.4s ease,
+    box-shadow 0.4s ease;
+  position: relative;
+
+  will-change: transform;
+  transform: translateZ(0);
+  animation: pulseGlow 2.2s ease-in-out infinite;
 }
 
-.nurse-list {
-  display: block;
-  position: sticky;    /* fixed so it always stays in place */
-  top: 110px;         /* distance from top of viewport */
-  left: 10px;         /* distance from left of viewport */
-
-  width: var(--nurse-w);
-  max-width: var(--nurse-w);
-
-  max-height: 90vh;          /* scrollable if list is long */
-  overflow-y: auto;
-
-  background: rgba(255, 255, 255, 0.25);
+.circle:hover {
+  transform: scale(1.08);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-radius: 12px;
-  border: 1px solid rgba(200,200,200,0.4);
-
-  padding: 10px;
-  z-index: 1000;  /* keep above calendar */
-}
-body.logged-in .nurse-list {
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
-  height: 100vh;       /* make it fill vertically */
-  overflow-y: auto;
-}
-/* nurse items look draggable */
-.nurse-list .nurse-item {
-  cursor: grab;
-  user-select: none;
-  margin-bottom: 8px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: transform 0.15s ease;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.2),
+    inset 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
-.nurse-list .nurse-item:active {
-  cursor: grabbing;
-  transform: scale(0.95);
-}
-.nurse-list, .calendar {
-  flex-shrink: 0;
-  min-width: 0;
-}
-
-/* Nurse items */
-.nurse {
-  display: flex;
-  align-items: center;
-  margin: 3px 0;
-  justify-content: space-between;
-  position: relative;
-  padding-right: 20px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-.nurse.selected { background: rgba(255, 152, 0, 0.15); }
-
-.nurse-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-grow: 1;
-}
-.nurse-note {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #666;
-  background: #f9f9f9;
-  padding: 6px 8px;
-  border-left: 3px solid #ccc;
-  border-radius: 6px;
-}
-.nurse-note ul {
-  margin: 5px 0 0 15px;
-  padding: 0;
-}
-.nurse-note li {
-  margin: 2px 0;
-}
-
-/* highlight when a nurse is dragged over a day */
-.day.drag-over {
-  outline: 2px dashed #ff9800;
-  background: rgba(255, 152, 0, 0.1);
-}
-
-.color-box {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 1px solid #aaa;
-  opacity: 0.6;
-  transition: opacity 0.2s ease, border-color 0.2s ease;
-}
-.color-box:hover { opacity: 1; border-color: #666; }
-
-.color-picker {
-  position: absolute;
-  left: 70px;
-  top: 1px;
-  display: none;
-}
-
-.shift.leave {
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-}
-
-.shift.leave::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 6px;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,0.30),
-      rgba(255,255,255,0.10)
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255,255,255,0.16) 0px,
-      rgba(255,255,255,0.16) 6px,
-      rgba(255,255,255,0.04) 6px,
-      rgba(255,255,255,0.04) 12px
-    );
-}
-
-
-.add-nurse {
-  margin-top: 10px;
-  display: flex;
-  gap: 5px;
-  align-items: center;
-}
-.add-nurse input {
-  padding: 2px 4px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 152, 0, 0.6);
-  background: rgba(255, 255, 255, 0.6);
+.circle span {
+  text-align: center;
   color: #333;
-  width: 90px;
-  transition: border 0.3s, box-shadow 0.3s;
 }
-.add-nurse input:focus {
-  outline: none;
-  border: 1px solid #ff9800;
-  box-shadow: 0 0 4px rgba(255, 152, 0, 0.7);
-}
-.add-nurse button {
-  padding: 2px 4px;
-  font-size: 0.8rem;
-  border-radius: 6px;
-  border: none;
-  background: #ff9800;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-.add-nurse button:hover { background: #e68900; }
-.roster-status {
+
+.circle::after {
+  content: '';
+  position: absolute;
   width: 100%;
-  box-sizing: border-box;
-  margin: 0 0 8px 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  color: #444;
-  background: rgba(255,255,255,0.7);
-  border: 1px solid rgba(0,0,0,0.08);
+  height: 100%;
+  border-radius: 70%;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.circle:hover::after {
+  opacity: 1;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      inset 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.18),
+      inset 0 0 12px rgba(255, 255, 255, 0.28);
+  }
+}
+
+#vital-signs-table {
   display: none;
-}
+  position: fixed;
+  top: 50%;
+  left: 50%;
 
-.roster-status.show {
-  display: block;
-}
-.calendar {
-  flex: 0 0 var(--cal-w);
-  max-width: var(--cal-w);
-  width: var(--cal-w);
-  margin: 0 auto;
-  padding: 10px;
+  /* animate open/close */
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.98);
+  transition: opacity 140ms ease, transform 180ms ease;
 
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  /* Glassy but NOT transparent */
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.97),
+    rgba(248,249,252,0.95)
+  );
+
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+
+  border: 1px solid rgba(255,255,255,0.6);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 22px;
 
-  justify-self: center;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255,255,255,0.85);
+
+  max-width: 95vw;
+  max-height: none;
   overflow-x: hidden;
+
+  font-family: 'fors', sans-serif;
+  font-size: 14px;
+  z-index: 5000;
+
+  contain: layout paint;
 }
 
-/* Calendar header + buttons */
-.calendar-header {
+#vital-signs-table.open {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+#vital-signs-table table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+#vital-signs-table th,
+#vital-signs-table td {
+  padding: 10px;
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  border: 1px solid rgba(230, 235, 240, 0.8);
+  background-color: rgba(255,255,255,0.75);
+  color: #111;
+
+  transition: background-color 40ms linear;
+}
+
+#vital-signs-table tbody tr:hover td {
+  background-color: rgba(140, 150, 200, 0.18);
+}
+
+
+body.vitals-open .circle{
+  animation: none !important;   /* stops pulseGlow */
+}
+
+/* Optional: reduce blur work on the circles while open */
+body.vitals-open .circle{
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+#close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(147, 176, 172, 0.8);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+}
+
+
+.top-links {
+  margin: 14px auto 0;
+  display: grid;
+  grid-template-columns: repeat(5, max-content);
+  justify-content: center;
+  gap: 10px 12px;
+  position: relative;
+  z-index: 2;
+  top: 8px;
+  max-width: calc(100% - 140px); /* leaves room for right circles */
+}
+
+
+.top-links a {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  color: black;
+  font-size: 12px;
+  font-family: 'fors', sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  text-decoration: none;
+  transition: background-color 0.3s, transform 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+}
+.top-links a:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.15);
+}
+
+
+.icon-stack {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 1;
+}
+.icon-stack img {
+  width: 50px;
+  height: 50px;
+  transition: transform 0.3s ease;
+}
+.icon-stack a:hover img {
+  transform: scale(1.1);
+  background-color: #ebebeb;
+}
+
+.top-boxes {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+.top-box {
+  background-color: #eae0da;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 120px;
+}
+.top-box:hover {
+  background-color: #aca37e;
+}
+
+.content {
+  padding: 100px 20px 20px 20px;
+}
+
+.layout {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+}
+.main-content {
+  flex: 1;
+  max-width: 1000px;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 400;
+  color: black;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #e5d6cd;
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+.card-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+  margin-right: 80px;
+}
+
+.card {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 400;
+  color: black;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+
+footer {
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  margin: 40px 0 20px;
+  display: block;
+  clear: both;
+}
+
+.reminder-pill {
+  position: fixed;
+  top: 88px;
+  right: 44px;
+  z-index: 1001;
+
+  padding: 7px 14px;
+  border-radius: 999px;
+
+  font-family: 'fors', sans-serif;
+  font-size: 12px;
+  color: #111;
+  white-space: nowrap;
+
+  background: rgba(255, 255, 220, 0.28);
+  border: 1px solid rgba(255, 255, 210, 0.65);
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.10),
+    0 0 10px rgba(255, 255, 180, 0.35),
+    inset 0 1px 0 rgba(255,255,255,0.45);
+
+  animation: reminderPulse 2.6s ease-in-out infinite;
+}
+@keyframes reminderPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 8px 20px rgba(0,0,0,0.10),
+      0 0 10px rgba(167, 171, 222, 0.40),
+      inset 0 1px 0 rgba(255,255,255,0.45);
+  }
+
+  50% {
+    transform: scale(1.05);
+    box-shadow:
+      0 10px 24px rgba(0,0,0,0.14),
+      0 0 22px rgba(167, 171, 222, 0.90),
+      0 0 42px rgba(167, 171, 222, 0.65),
+      inset 0 1px 0 rgba(255,255,255,0.70);
+  }
+}
+
+/* === Emoji Picker: sleek slide-out glass === */
+#emojiModal{
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  width: 300px;
+  max-width: calc(100vw - 40px);
+  height: 340px;
+  max-height: calc(100vh - 140px);
+  padding: 12px;
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+
+  z-index: 1200;
+
+  /* hidden state (slide out) */
+  opacity: 0;
+  transform: translateX(18px) translateY(10px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 220ms ease;
+}
+
+#emojiModal.open{
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+  pointer-events: auto;
+}
+
+.emojiHeader{
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
-  font-size: 20px; /* increased from 16px */
-  font-weight: bold; /* optional: makes it more prominent */
 }
 
-.left-buttons {
-  display: flex;
-  gap: 20px;
+.emojiTitle{
+  font-family: 'fors', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  color: #111;
+  opacity: 0.9;
 }
 
-.right-button {
-  display: flex;
-}
-
-.month-label {
-  text-align: center;
-  flex-grow: 2;
-  font-weight: bold;
-  font-size: 1.2em;
-  cursor: pointer;
-}
-.month-label::after {
-  content: " ▾";
-  font-size: 0.8em;
-}
-
-.btn {
-  padding: 8px 16px;
-  font-size: 0.8rem;
+.emojiClose{
   border: none;
-  border-radius: 6px;
-  background: #d8e2dc;
-  color: black;
+  background: rgba(255,255,255,0.30);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 10px;
+  width: 30px;
+  height: 30px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-size: 14px;
+  line-height: 28px;
+  color: #111;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
-.btn:hover { background: #e68900; }
 
-/* Weekdays row */
-.weekdays {
+.emojiGrid{
+  height: calc(100% - 46px);
+  overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  text-align: center;
-  margin-bottom: 5px;
-  width: 100%;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding-right: 4px;
 }
-.weekdays div {
+
+.emojiBtn{
+  border: none;
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 14px;
+  cursor: pointer;
   padding: 8px 0;
-  background: rgba(231, 227, 229, 0.8);
-  border-radius: 4px;
-  border: 1px solid rgba(203, 191, 197, 0.8);
-  font-size: 1rem;
-  font-weight: bold;
+  font-size: 20px;
+  line-height: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 120ms ease, background 120ms ease;
 }
 
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 5px;
-  width: 100%;
+.emojiBtn:hover{
+  background: rgba(255,255,255,0.35);
+  transform: translateY(-1px);
 }
 
-.day {
-  padding: 10px;
-  border: 1px solid rgba(180, 180, 180, 0.6);
-  border-radius: 12px;
-  min-height: 140px;
-  min-width: 0;
-  overflow: hidden;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(10px) saturate(160%);
-  -webkit-backdrop-filter: blur(10px) saturate(160%);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  transition: transform 0.2s, box-shadow 0.2s;
-  color: #333;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+.emojiGrid::-webkit-scrollbar { width: 8px; }
+.emojiGrid::-webkit-scrollbar-track { background: transparent; }
+.emojiGrid::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.30);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
 }
-.day-number,
-.day-note,
-.holiday-badge {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-.day.weekend { background: rgba(245, 245, 245, 0.4); }
+.emojiFab{
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
 
-.day.today {
-  position: relative;
-  z-index: 2;
-  border: 3px solid #000;
-  border-radius: 15px;
-  background: linear-gradient(
-    135deg,
-    rgba(254, 241, 200, 4),
-    rgba(254, 242, 219, 4)
-  );
-  box-shadow: none;
-}
+  border: 1px solid rgba(255,255,255,0.40);
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 
-.day.today::before {
-  content: none;
-}
-
-.day.holiday {
-  background: linear-gradient(
-    135deg,
-    rgba(242, 235, 204, 2),
-    rgba(242, 241, 237, 5)
-  );
-  border: 1px solid rgba(180, 180, 180, 0.6);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.day.holiday::after {
-  content: none;
-}
-
-.holiday-badge {
-  display: inline-block;
-  margin-left: 4px;
-  max-width: 100%;
-  padding: 1px 6px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  border-radius: 999px;
-  background: rgba(255, 0, 0);
-  color: #ffffff;
-  border: 1px solid rgba(255, 0, 0, 0.9);
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-
-.day-number {
-  margin-bottom: 5px;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
   cursor: pointer;
-  color: black;
-  font-size: 1.1rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 1300;
+  transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
 }
 
-.day-note {
-  font-size: 0.8em;
-  color: black;
-  background-color: #feffa3;
-  margin-left: 5px;
-  padding: 2px 5px;
-  border-radius: 5px;
-  user-select: none;
+.emojiFab:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.24);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.16);
 }
 
-.shift {
-  display: block;
-  margin: 2px 0;
-  padding: 5px 22px 5px 8px;
-  border-radius: 6px;
-  font-size: 0.85em;
-  font-weight: 500;
-  text-align: center;
-  color: #fff;
-  background-clip: padding-box;
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  line-height: 1.15;
-}
-.delete-btn {
-  user-select: none;
+.emojiFab:active{
+  transform: translateY(0);
 }
 
-.shift.leave .shift-emoji,
-.shift.leave .shift-name,
-.shift.leave .leave-badge {
+.emojiFabIcon{
+  font-family: 'fors', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: rgba(0,0,0,0.72);
   line-height: 1;
 }
-
-.shift.leave .shift-inline {
-  white-space: nowrap;
-  max-width: 100%;
+.emojiFabDots{
+  position: fixed;
 }
-.shift .delete-btn {
-  position: absolute;
-  top: 4px;
-  right: 5px;
+.emojiFabDots::before{
+  content:"";
   width: 16px;
   height: 16px;
-  line-height: 14px;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.24);
-  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(0,0,0,0.55) 2px, transparent 3px) 0 0/8px 8px;
+  opacity: 0.55;
+  border-radius: 4px;
+}
+
+/* ✅ QUICK CALC (left shortcut panel) */
+/* =========================
+   QUICK CALC (FULL CSS)
+   Smaller + clear selection + inline calc/results
+========================= */
+
+.qc{
+  position: fixed;
+  top: 20px;
+  left: 14px;
+
+  width: 248px;                      /* smaller */
+  max-width: calc(100vw - 28px);
+  z-index: 1400;
+
+  border-radius: 16px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+
+  overflow: hidden;
+  transition: width 180ms ease, left 180ms ease;
+  font-family: Tahoma, sans-serif;
+}
+
+/* collapsed state — arrow only */
+.qc.collapsed{
+  width: 40px;
+  left: 8px;
+}
+
+/* hide calculator content */
+.qc.collapsed .qc-body{ display:none; }
+
+/* hide title */
+.qc.collapsed .qc-title{ display:none; }
+
+/* center arrow */
+.qc.collapsed .qc-head{
+  justify-content: center;
+  padding: 8px;
+  border-bottom: none;
+}
+
+/* make arrow button fill container */
+.qc.collapsed .qc-toggle{
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.qc-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 6px 6px 6px 10px;        /* tighter */
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+}
+
+.qc-title{
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  opacity: 0.95;
+}
+
+.qc-toggle{
+  width: 34px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.14);
+  color: #111;
   cursor: pointer;
+}
+
+/* body spacing (smaller) */
+.qc-body{
+  padding: 8px 10px 10px;
+}
+
+/* tabs */
+.qc-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:8px;
+  width:100%;
+}
+
+.qc-tab{
+   border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+  cursor: pointer;
+  color: #111;
+  flex:1;
+  padding:5px 4px;
+  border-radius:10px;
+  font-size:12px;   /* slightly smaller */
+  white-space:nowrap;
+
+  font-size: 11px;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+/* ACTIVE MEDICINE (white + glow) */
+.qc-tab.active{
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.95);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.55),
+    0 10px 20px rgba(0,0,0,0.12);
+  font-weight: 500; /* normal weight */
+}
+
+.qc-label{
+  display:block;
+  font-size: 11px;
+  margin: 6px 0 4px;
   opacity: 0.9;
-  transition: background 0.2s ease, transform 0.2s ease;
-  z-index: 2;
 }
 
-.shift .delete-btn:hover {
-  background: rgba(0, 0, 0, 0.42);
-  transform: scale(1.05);
-}
-
-.shift.leave {
-  white-space: nowrap;
-}
-
-.day.current-week:not(.today):not(.holiday) {
-  border: 3px solid rgba(200, 200, 200, 0.85);
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-/* Footer */
-footer {
-  text-align: center;
-  font-size: 0.8rem;
-  color: rgba(0, 0, 0, 0.5);
-  padding: 10px 0;
-  flex-shrink: 0;
+/* Weight input: centered */
+.qc-input{
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.26);
+  background: rgba(255,255,255,0.10);
+  outline: none;
+
+  font-size: 11.5px;
+  font-family: 'fors', sans-serif;
+  text-align: center;
   box-sizing: border-box;
-  position: relative;
 }
-@media (max-width: 900px) {
+
+/* Center placeholder too */
+.qc-input::placeholder{
+  text-align: center;
+  opacity: 0.6;
+}
+
+/* Remove number input arrows (spinners) */
+.qc-input::-webkit-outer-spin-button,
+.qc-input::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.qc-input[type="number"]{
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Strength selector (dropdown) */
+.qc-select{
+  width: 100%;
+  padding: 9px 36px 9px 12px;
+  border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.26);
+
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  font-size: 12px;
+  font-family: 'fors', sans-serif;
+  color: #111;
+
+  outline: none;
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* custom arrow */
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.6) 50%),
+    linear-gradient(135deg, rgba(0,0,0,0.6) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+
+  transition: box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.qc-select:focus{
+  background: rgba(255,255,255,0.18);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
+}
+
+/* strength toggle buttons */
+.qc-strength{
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.qc-strength-btn{
+  flex: 1;
+  padding: 6px 6px;
+  border-radius: 11px;
+
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  font-size: 11px;
+  font-family: 'fors', sans-serif;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  opacity: 0.88;
+}
+
+.qc-strength-btn:hover{
+  background: rgba(255,255,255,0.18);
+}
+
+/* SELECTED STRENGTH (white + glowy border) */
+.qc-strength-btn.active{
+  opacity: 1;
+  background: rgba(255,255,255,0.26);
+  border-color: rgba(255,255,255,0.98);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.60),
+    0 0 18px rgba(255,255,255,0.30);
+  color: #0b1a2b;
+  font-weight: 900;
+}
+
+/* rows */
+.qc-row{
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* pills / notes */
+.qc-pill{
+  padding: 6px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.10);
+  font-size: 10px;
+}
+
+.qc-note{
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* =========================
+   Calculate + Results BESIDE
+   Put BOTH inside: <div class="qc-row qc-actions"> ... </div>
+========================= */
+
+.qc-row.qc-actions{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;           /* keep side-by-side */
+  margin-top: 10px;
+}
+
+/* Calculate button: half size */
+.qc-btn{
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.20);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'fors', sans-serif;
+  transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.qc-row.qc-actions .qc-btn{
+  width: auto;                /* override full width */
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-top: 0;              /* remove vertical spacing */
+  min-height: 30px;
+}
+
+.qc-btn:hover{
+  background: rgba(255,255,255,0.24);
+}
+
+.qc-btn:active{
+  transform: translateY(1px);
+}
+
+/* results box beside */
+.qc-results{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.10);
+}
+
+.qc-row.qc-actions .qc-results{
+  margin-top: 0;
+  padding: 8px 10px;
+  border-radius: 14px;
+  flex: 1 1 auto;
+  min-height: 30px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* result typography */
+.qc-big{
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.qc-row.qc-actions .qc-big{
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.qc-sub{
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.35;
+}
+
+.qc-row.qc-actions .qc-sub{
+  margin-top: 0;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+/* highlight chip (optional, now matches white-glow theme) */
+/* Result highlight (pink + green medical tone) */
+.qc-highlight{
+  display:inline-block;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 205, 220, 0.95),   /* soft pink */
+    rgba(205, 240, 210, 0.95)    /* soft green */
+  );
+
+  padding: 2px 7px;
+  border-radius: 10px;
+
+  font-weight: 800;
+  line-height: 1.2;
+
+  border: 1px solid rgba(255,255,255,0.65);
+
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.35),
+    0 4px 10px rgba(0,0,0,0.08);
+}
+/* Mobile handling */
+@media (max-width: 520px){
+  .qc{
+    width: 248px;
+    max-width: 248px;
+    left: 14px;
+    top: 20px;
+  }
+
+  .qc.collapsed{
+    width: 40px;
+    left: 8px;
+    transform: none;
+  }
+}
+
+/* =========================
+   INTELEVIEWER QUICK ACCESS
+========================= */
+
+.qi {
+  position: fixed;
+  top: 78px;
+  left: 14px;
+
+  width: 248px;
+  max-width: calc(100vw - 28px);
+  z-index: 1390;
+
+  border-radius: 16px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+
+  overflow: hidden;
+  transition: width 180ms ease, left 180ms ease;
+  font-family: Tahoma, sans-serif;
+}
+
+.qi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 6px 6px 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+}
+
+.qi-title {
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  opacity: 0.95;
+}
+
+.qi-toggle {
+  width: 34px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.14);
+  color: #111;
+  cursor: pointer;
+}
+
+.qi-body {
+  padding: 9px 10px 11px;
+}
+
+.qi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.qi-row-item {
+  width: 100%;
+  box-sizing: border-box;
+
+  display: grid;
+  grid-template-columns: 0.75fr 1fr 1fr;
+  align-items: center;
+  gap: 7px;
+
+  padding: 8px 9px;
+  border-radius: 12px;
+
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
+  color: #111;
+
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+}
+
+.qi-row-item:hover {
+  background: rgba(255,255,255,0.24);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.35),
+    0 0 14px rgba(255,255,255,0.30);
+}
+
+.qi-name {
+  font-weight: 700;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.qi-copy-mini {
+  min-width: 0;
+  padding: 5px 6px;
+  border-radius: 9px;
+
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+
+  font-family: Tahoma, sans-serif;
+  font-size: 9.5px;
+  color: #111;
+  cursor: pointer;
+
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.qi-copy-mini:hover {
+  background: rgba(255,255,255,0.22);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.30),
+    0 0 12px rgba(255,255,255,0.25);
+}
+
+.qi-empty {
+  font-size: 11px;
+  opacity: 0.75;
+  padding: 8px;
+  text-align: center;
+}
+
+.qi.collapsed {
+  width: 40px;
+  height: 46px;
+  left: 8px;
+}
+
+.qi.collapsed .qi-body,
+.qi.collapsed .qi-title {
+  display: none;
+}
+
+.qi.collapsed .qi-head {
+  justify-content: center;
+  padding: 8px;
+  border-bottom: none;
+}
+
+.qi.collapsed .qi-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .card-group {
+    margin-top: 12px;
+    margin-right: 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  html,
   body {
+    width: 100%;
+    min-height: 100dvh;
     overflow-x: hidden;
-  }
-  
-    .container {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .notice-board {
-    order: -1;
-    position: relative;
-    top: auto;
-
-    width: 100%;
-    max-width: 100%;
-    flex: none;
-
-    max-height: none;
-    margin-bottom: 12px;
-
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  .notice-board {
-  max-height: none;
-  overflow-y: visible;
-}
-
-  .notice-board.open .notice-content {
-    display: block;
-  }
-
-  .calendar {
-    order: 1;
-  }
-
-  .nurse-list {
-    order: 2;
-  }
-
-  .container {
-  padding: 10px;
-  max-width: 100%;
-}
-
-  .main-header {
-    padding: 10px;
-  }
-
-  .main-header .logo {
-    max-height: 48px;
-    max-width: 90%;
-  }
-
-  .auth-section {
-    width: calc(100% - 20px);
-    max-width: 420px;
-    margin: 10px auto 14px auto;
-    box-sizing: border-box;
-  }
-
-  .auth-section input {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  .nurse-list {
-    position: relative;
-    top: auto;
-    left: auto;
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    max-height: none;
-    margin-bottom: 12px;
-    z-index: 1;
-  }
-
-  body.logged-in .nurse-list {
-    position: relative;
-    top: auto;
-    align-self: auto;
-    height: auto;
-    overflow-y: visible;
-  }
-
-  .calendar {
-    width: 100%;
-    max-width: 100%;
-    flex: none;
-    margin: 0;
-    padding: 8px;
-    overflow: visible;
-    position: relative;
-  }
-
-  .calendar-top-sticky {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 0;
-    z-index: 80;
-    background: #fff;
-    padding-bottom: 6px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-  }
-
-  .calendar-header {
-    display: grid;
-    grid-template-columns: auto auto auto;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 6px;
-    padding: 6px 0 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .month-label {
-    grid-column: 1 / -1;
-    order: -1;
-    font-size: 1.18rem;
-    font-weight: 700;
-    text-align: center;
-    margin: 0 0 2px 0;
-  }
-
-  #prevMonth,
-  #todayBtn,
-  #nextMonth {
-    width: auto;
-    min-width: 0;
-    padding: 5px 8px;
-    font-size: 0.76rem;
-    line-height: 1.1;
-  }
-
-  .calendar-scroll-wrapper {
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  .calendar-grid-scroll {
-    margin-top: 6px;
+  body {
+    font-size: 16px;
   }
 
-  .calendar-inner {
-    min-width: 820px;
-    position: relative;
+  body::before {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    min-width: 0;
+    min-height: 0;
+    background: url('2b.png') no-repeat center center;
+    background-size: cover;
+    opacity: 0.8;
   }
 
-  .weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    width: 100%;
+  header {
+    padding: 80px 12px 14px;
+  }
+
+  header h1 {
     margin: 0;
-    padding: 0;
-    background: #fff;
+    line-height: 1;
   }
 
-  .weekdays div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 30px;
-    background: rgba(231, 227, 229, 1);
-    border-radius: 4px;
-    border: 1px solid rgba(203, 191, 197, 1);
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 6px 0;
+  .pageTitle {
+    font-size: clamp(54px, 17vw, 82px);
+    letter-spacing: 2px;
+    padding: 8px 14px;
+    line-height: 0.9;
+    max-width: calc(100vw - 28px);
+    box-sizing: border-box;
   }
 
-  .calendar-grid {
-    gap: 4px;
-    width: 100%;
-  }
-
-  .day {
-    min-height: 92px;
-    padding: 6px;
-    border-radius: 10px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .day-number {
-    font-size: 0.95rem;
-  }
-
-  .shift {
-  font-size: 0.72rem;
-  padding: 4px 18px 4px 6px;
-  line-height: 1.2;
-}
-
-  .add-nurse {
-    flex-wrap: wrap;
-  }
-
-  .add-nurse input,
-  .add-nurse button {
-    width: 100%;
-  }
-
-  body::after,
-  .main-header,
-  .auth-section,
-  .nurse-list,
-  .calendar,
-  .day {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  body::after {
-    background: rgba(255,255,255,0.7);
-  }
-
-  .nurse-list,
-  .calendar,
-  .auth-section,
-  .day {
-    background: rgba(255,255,255,0.85);
-  }
-
-  .auth-toggle-btn {
-    right: 10px;
-    width: 40px;
-    height: 40px;
-  }
-
-  .auth-modal-content {
-    top: 72px;
-    right: 10px;
-    width: calc(100vw - 20px);
-    max-width: 340px;
-  }
-
-  .modal-auth-section {
-    width: 100%;
+  .top-links {
+    margin-top: 14px;
     max-width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 6px 4px 10px;
+    scroll-snap-type: x proximity;
+  }
+
+  .top-links a {
+    flex: 0 0 auto;
+    font-size: 11px;
+    padding: 6px 10px;
+    scroll-snap-align: start;
+  }
+
+  .layout {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    box-sizing: border-box;
+  }
+
+  .main-content {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  h2 {
+    font-size: 16px;
+    margin: 20px 0 10px;
+  }
+
+  .card-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 10px 0 18px;
+  }
+
+  .card {
+    padding: 13px 10px;
+    min-height: 44px;
+    font-size: 12px;
+    border-radius: 14px;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .top-circles {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 10px 12px;
+    margin: 0 auto;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .circle {
+    width: auto;
+    height: 54px;
+    min-width: 0;
+    border-radius: 18px;
+    font-size: 10px;
+    padding: 6px;
+    animation: none;
+  }
+
+  .qc {
+    top: 10px;
+    left: 10px;
+    width: 248px;
+    max-width: calc(100vw - 20px);
+  }
+
+  .qc.collapsed {
+    width: 40px;
+    left: 10px;
+  }
+
+  .qi {
+    top: 10px;
+    left: 58px;
+    width: calc(100vw - 68px);
+    max-width: 300px;
+  }
+
+  .qi.collapsed {
+    width: 40px;
+    left: 58px;
+  }
+
+  .qi-row-item {
+    grid-template-columns: 0.7fr 1fr 1fr;
+    gap: 5px;
+    padding: 7px;
+  }
+
+  .qi-name {
+    font-size: 9px;
+  }
+
+  .qi-copy-mini {
+    font-size: 9px;
+    padding: 5px 4px;
+  }
+
+  .reminder-pill {
+    position: static;
+    display: block;
+    width: fit-content;
+    margin: 8px auto 4px;
+    font-size: 11px;
+  }
+
+  #emojiModal {
+    right: 10px;
+    bottom: 66px;
+    width: calc(100vw - 44px);
+    height: 320px;
+  }
+
+  .emojiFab {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  #vital-signs-table {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    max-height: 80dvh;
+    overflow: auto;
+    padding: 16px;
+    box-sizing: border-box;
+    font-size: 12px;
+  }
+
+  #vital-signs-table table {
+    min-width: 620px;
   }
 
   footer {
-    padding: 14px 10px 24px;
+    font-size: 10px;
+    margin: 26px 0 18px;
   }
 }
 
-
 </style>
-</head>
-<body>
-<div id="zoomRoot">
-  <!-- Header with Logo -->
-  <header class="main-header">
-  <img src="onehealth-logo.png" alt="Onehealth Logo" class="logo">
 
-  <button id="authToggleBtn" class="auth-toggle-btn" aria-label="Open sign in">
-    👤
-  </button>
+</head>
+
+<body>
+
+<header>
+  <h1><span class="pageTitle">XlynEve</span></h1>
+  <div class="top-links">
+    <a href="chatgptx.html" target="_blank">🤖 Questions?</a>
+    <a href="https://www.health.govt.nz/" target="_blank">🏥 Ministry of Health</a>
+    <a href="https://www.health.govt.nz/search?query=cold+chain" target="_blank">❄️ Cold Chain</a>
+    <a href="https://www.medsafe.govt.nz/medicines/infoSearch.asp" target="_blank">💊 Medsafe</a>
+    <a href="https://www.mymedicines.nz/" target="_blank">📋 My Medicines</a>
+    <a href="https://nzf.org.nz/" target="_blank">📚 NZ Formulary</a>
+    <a href="https://healthify.nz/" target="_blank">📙 Healthify</a>
+    <a href="https://www.immune.org.nz/" target="_blank">💉 IMAC</a>
+    <a href="https://aucklandregion.communityhealthpathways.org/" target="_blank">🧭 HealthPathways</a>
+	  <a href="https://tewhatakura.nz/guidelines" target="_blank">🎯TeWhataKura</a>
+	  <a href="https://www.healthnz.govt.nz/health-topics#letter-o" target="_blank">⚕️ Health NZ</a>
+  </div>
 </header>
 
-  <!-- Auth Section (minimal under logo) -->
-  <div id="authModal" class="auth-modal hidden">
-  <div class="auth-modal-backdrop" id="authModalBackdrop"></div>
 
-  <div class="auth-modal-content">
-    <button id="closeAuthModalBtn" class="close-auth-btn" aria-label="Close sign in">×</button>
+ <div class="top-circles">
+    <div class="circle calendar" onclick="window.open('homecal.html', '_blank')">Calendar<br>To Do</div>
+<div class="circle patient" onclick="window.open('forms.html', '_blank')">Information<br>Links</div>
+<div class="circle notes" onclick="window.open('Notes.html', '_blank')">Notes</div>
+<div class="circle calculator" onclick="window.open('Calculator.html', '_blank')">Calculator</div>
+<div class="circle trial" onclick="window.open('https://xlyneve.github.io/OHNRoster/', '_blank')">Roster</div>
+<div class="circle inr" onclick="window.open('https://onedrive.live.com/?view=0', '_blank')">Documents</div>
+<div class="circle timesheet" onclick="window.open('https://onedrive.live.com/edit.aspx?cid=cd58075507480906&page=view&resid=CD58075507480906!660&parId=CD58075507480906!107&app=Excel', '_blank')">Timesheet</div>
+<div class="circle vitals" onclick="showTable()">Vitals</div>
+</div>
 
-    <div id="authSection" class="auth-section modal-auth-section">
-      <label for="emailInput" class="sr-only">Email</label>
-      <input type="email" id="emailInput" placeholder="Email" />
 
-      <label for="passwordInput" class="sr-only">Password</label>
-      <input type="password" id="passwordInput" placeholder="Password" />
+   <div class="layout">
+    <div class="main-content">
+      <h2>Home</h2>
+      <div class="card-group">
+        <div class="card" onclick="window.open('OHcalc.html', '_blank')">Drug Calculator</div>
+  <div class="card" onclick="location.href='vaccine-spacing.html'">Vaccine Spacing</div>
+<div class="card" onclick="location.href='complete-vaccine-info.html'">Vaccine</div>
+<div class="card" onclick="location.href='inteleviewer.html'">Inteleviewer</div>
+	<div class="card" onclick="window.open('CXHPV.html', '_blank')">CX funding</div>
+	<div class="card" onclick="window.open('70cxcalc.html', '_blank')">CX70 Calc</div>
+	<div class="card" onclick="window.open('biosched1.html', '_blank')">Biologics</div>
+		  <div class="card" onclick="window.open('ironfunding.html', '_blank')">Iron funding</div>
+        
+	  </div>
 
-      <div class="auth-buttons">
-        <button id="loginBtn" class="btn">Login</button>
-        <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
+       <h2>Notes</h2>
+      <div class="card-group">
+        <div class="card" onclick="location.href='PN.html'">Nurse Notes</div>
+  <div class="card" onclick="location.href='info.html'">Infos</div>
+<div class="card" onclick="location.href='explain.html'">Templates</div>
+<div class="card" onclick="location.href='practiceN.html'">Practice Nurse</div>
+<div class="card" onclick="location.href='recalls.html'">Recalls</div>
+<div class="card" onclick="location.href='ECG.html'">ECG</div>
+  <div class="card" onclick="window.open('Clinicalnotes.html', '_blank')">Clinical Notes</div>
+	<div class="card" onclick="window.open('recalltracker.html', '_blank')">Recall Tracker</div>
       </div>
 
-      <p id="userStatus">Not signed in</p>
+		 <h2>Prescribing</h2>
+		<div class="card-group">
+		<div class="card" onclick="window.open('Npres.html', '_blank')">Meds lists</div>
+		<div class="card" onclick="window.open('RNCNP.html', '_blank')">OHCon</div>
+		<div class="card" onclick="window.open('templatetick.html', '_blank')">ConsTick</div>
+       </div>
+		
+      <h2>Urgent Care</h2>
+      <div class="card-group">
+        <div class="card" onclick="location.href='AnatomicalD.html'">Anatomical Planes</div>
+<div class="card" onclick="location.href='face.html'">Head</div>
+<div class="card" onclick="location.href='Hand.html'">Hand.Wrist</div>
+<div class="card" onclick="location.href='Sha.html'">Shoulder.Elbow</div>
+<div class="card" onclick="location.href='Abdo.html'">Thorax.Abdomen</div>
+<div class="card" onclick="location.href='Spine.html'">Back.Spine</div>
+<div class="card" onclick="location.href='LF.html'">Foot.Leg</div>
+<div class="card" onclick="window.open('Urgent_Care.html', '_blank')">Urgent Care</div>
+<div class="card" onclick="location.href='trial.html'">Trial</div>
+
+      </div>
+
+
+      <!-- Emoji Search Icon -->
+     <button id="emojiSearchIcon" class="emojiFab emojiFabDots" type="button" aria-label="Open emoji picker"></button>
+
+      <!-- Emoji Picker (Slide-out) -->
+<div id="emojiModal" aria-hidden="true">
+  <div class="emojiHeader">
+    <div class="emojiTitle">Emojis</div>
+    <button class="emojiClose" type="button" aria-label="Close">✕</button>
+  </div>
+  <div id="emojiGrid" class="emojiGrid" role="list"></div>
+</div>
+
+<!-- ✅ Quick Calculator (Left Shortcut Panel) -->
+<div id="quickCalc" class="qc collapsed">
+  <div class="qc-head">
+    <div class="qc-title">Quick Calc</div>
+    <button class="qc-toggle" type="button" aria-label="Toggle Quick Calc">❮</button>
+  </div>
+
+  <div class="qc-body">
+    <div class="qc-tabs" role="tablist" aria-label="Medication shortcuts">
+      <button class="qc-tab active" type="button" data-med="para" role="tab" aria-selected="true">Paracetamol</button>
+      <button class="qc-tab" type="button" data-med="ibu" role="tab" aria-selected="false">Ibuprofen</button>
+      <button class="qc-tab" type="button" data-med="adren" role="tab" aria-selected="false">Adrenaline IM</button>
+    </div>
+
+    <label class="qc-label" for="qcWeight">Weight (kg)</label>
+    <input id="qcWeight" class="qc-input" type="number" inputmode="decimal" min="0" step="0.1" placeholder="e.g., 12.5" />
+
+    <!-- Paracetamol -->
+    <div class="qc-section" data-section="para">
+      <label class="qc-label">Strength</label>
+      <div class="qc-strength" id="qcParaStrength">
+        <button class="qc-strength-btn active" type="button" data-value="24">120 / 5</button>
+        <button class="qc-strength-btn" type="button" data-value="50">250 / 5</button>
+      </div>
+
+      <div class="qc-row">
+        <div class="qc-pill">Dose: <b>15 mg/kg</b></div>
+        <div class="qc-pill">Max: <b>1 g</b> (single dose)</div>
+      </div>
+    </div>
+
+    <!-- Ibuprofen -->
+    <div class="qc-section" data-section="ibu" style="display:none;">
+      <label class="qc-label">Strength</label>
+      <div class="qc-strength" id="qcIbuStrength">
+        <button class="qc-strength-btn active" type="button" data-value="20">100 / 5</button>
+        <button class="qc-strength-btn" type="button" data-value="40">200 / 5</button>
+      </div>
+
+      <div class="qc-row">
+        <div class="qc-pill">Dose: <b>6 mg/kg</b></div>
+        <div class="qc-pill">Max: <b>400 mg</b> (single dose)</div>
+      </div>
+    </div>
+
+    <!-- Adrenaline IM (Anaphylaxis) -->
+    <div class="qc-section" data-section="adren" style="display:none;">
+      <div class="qc-row">
+        <div class="qc-pill">IM: <b>1:1000 (1 mg/mL)</b></div>
+        <div class="qc-pill">Dose: <b>0.01 mg/kg</b> (max 0.5 mg)</div>
+      </div>
+      <div class="qc-row" style="margin-top:8px;">
+        <div class="qc-pill">Volume: <b>0.01 mL/kg</b> (max 0.5 mL)</div>
+      </div>
+      <div class="qc-note">
+        Autoinjector dosing is device-based. Confirm local anaphylaxis guideline.
+      </div>
+    </div>
+
+    <!-- ✅ Calculate + Results BESIDE each other -->
+    <div class="qc-row qc-actions">
+      <button id="qcCalcBtn" class="qc-btn" type="button">Calculate</button>
+
+      <div class="qc-results" aria-live="polite">
+        <div class="qc-big" id="qcMain">—</div>
+        <div class="qc-sub" id="qcSub"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- Inteleviewer Quick Access -->
+<div id="quickInteleviewer" class="qi collapsed">
+  <div class="qi-head">
+    <div class="qi-title">Inteleviewer</div>
+    <button class="qi-toggle" type="button" aria-label="Toggle Inteleviewer">❯</button>
+  </div>
+
+  <div class="qi-body">
+    <div id="qiList" class="qi-list">
+      Loading...
     </div>
   </div>
 </div>
-
-  <div class="container">
-    <!-- Nurse List Section -->
-    <div class="nurse-list">
-      <h3>Nurses / HCA</h3>
-      <div id="nurseContainer"></div>
-<h4>Template Day 1</h4>
-<div id="templateDay1" class="day" style="min-height:120px;"></div>
-
-<h4 style="margin-top:12px;">Template Day 2</h4>
-<div id="templateDay2" class="day" style="min-height:120px;"></div>
-
-      <div class="add-nurse">
-        <input type="text" id="newNurseName" placeholder="Add Nurse">
-        <button id="addNurseBtn" class="btn">Add</button>
-      </div>
-
-      <div class="nurse-note">
-        <p>💡 <b>Tips:</b></p>
-        <ul>
-          <li><b>Shift+Click nurse</b> to delete staff</li>
-<li><b>Shift+Click date</b> to toggle holiday</li>
-<li><b>Click shift</b> to choose AL / SL / Study</li>
-<li><b>Right Click shift</b> to edit time</li>
-<li><b>Click ×</b> to delete shift</li>
-        </ul>
-      </div>
-    </div>
-
-
-    <!-- Calendar Section -->
-   <div class="calendar">
-  <div id="rosterStatus" class="roster-status" aria-live="polite"></div>
-  <div class="calendar-top-sticky">
-    <div class="calendar-header">
-      <button class="btn" id="prevMonth">◀</button>
-      <button class="btn" id="todayBtn">Today</button>
-      <button class="btn" id="nextMonth">▶</button>
-      <h2 id="monthYear" class="month-label" title="Choose date"></h2>
-<input type="date" id="jumpDatePicker" class="jump-date-picker" />
-    </div>
-
-    <div class="calendar-scroll-wrapper" id="weekdaysScroll">
-  <div class="calendar-inner">
-    <div class="weekdays">
-          <div>Mon</div><div>Tue</div><div>Wed</div>
-          <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-    <div class="calendar-scroll-wrapper calendar-grid-scroll" id="gridScroll">
-    <div class="calendar-inner">
-      <div class="calendar-grid" id="calendarGrid"></div>
-    </div>
-  </div>
+</div>
 </div>
 
-<!-- Nurse Reminder Board -->
-<div class="notice-board" id="noticeBoard">
-  <button id="noticeToggleBtn" class="notice-toggle" type="button">
-    📌 Nurse reminders
-  </button>
+  <div class="reminder-pill">💡 Check calendar</div>
 
-  <div id="noticeContent" class="notice-content">
-    <div id="noticeList" class="notice-list">
-      Loading reminders...
-    </div>
+  
+<!-- Vital Signs Table -->
+<div id="vital-signs-table" role="dialog" aria-modal="true" aria-label="Vital signs">
+  <button id="close-btn" type="button" aria-label="Close">✕</button>
 
-    <div id="noticeEditor" class="notice-editor">
-      <textarea id="noticeInput" placeholder="Add reminder for nurses..."></textarea>
-      <button id="addNoticeBtn" class="btn">Add Reminder</button>
-    </div>
-  </div>
+  <h2>Normal Vital Signs by Age Group</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Age</th>
+        <th>WE (kg)</th>
+        <th>Systolic BP</th>
+        <th>HR bpm</th>
+        <th>RR br/min</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Term</td><td>3.5</td><td>60 to 95</td><td>120 to 170</td><td>25 to 60</td></tr>
+      <tr><td>3 months</td><td>6</td><td>60 to 105</td><td>115 to 170</td><td>25 to 60</td></tr>
+      <tr><td>6 months</td><td>8</td><td>75 to 105</td><td>110 to 170</td><td>20 to 55</td></tr>
+      <tr><td>1 year</td><td>10</td><td>70 to 105</td><td>105 to 150</td><td>20 to 45</td></tr>
+      <tr><td>2 years</td><td>12</td><td>70 to 105</td><td>95 to 150</td><td>20 to 40</td></tr>
+      <tr><td>4 years</td><td>15</td><td>75 to 110</td><td>80 to 150</td><td>17 to 30</td></tr>
+      <tr><td>6 years</td><td>20</td><td>80 to 115</td><td>75 to 140</td><td>16 to 30</td></tr>
+      <tr><td>8 years</td><td>25</td><td>80 to 115</td><td>70 to 130</td><td>16 to 30</td></tr>
+      <tr><td>10 years</td><td>30</td><td>85 to 120</td><td>60 to 130</td><td>15 to 25</td></tr>
+      <tr><td>12 years</td><td>40</td><td>90 to 120</td><td>65 to 120</td><td>15 to 25</td></tr>
+      <tr><td>14 years</td><td>50</td><td>90 to 125</td><td>60 to 115</td><td>14 to 25</td></tr>
+      <tr><td>16 years</td><td>60</td><td>90 to 130</td><td>60 to 115</td><td>14 to 25</td></tr>
+      <tr><td>17+ years</td><td>65</td><td>90 to 135</td><td>60 to 115</td><td>14 to 25</td></tr>
+      <tr><td>Adult (18+ years)</td><td>70</td><td>90 to 140</td><td>60 to 100</td><td>12 to 20</td></tr>
+    </tbody>
+  </table>
 </div>
-
+  
+    </div>
   </div>
 
-  <footer>CEP/C 2025</footer>
-</div> <!-- /#zoomRoot -->
+      <footer>© 2025 Xlyn Notes Board</footer>
+ <script>
+  // ===== VITALS POPUP =====
+ function showTable() {
+  const el = document.getElementById('vital-signs-table');
+  if (!el) return;
+
+  document.body.classList.add('vitals-open');
+
+  el.style.display = 'block';
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
+function closeTable() {
+  const el = document.getElementById('vital-signs-table');
+  if (!el) return;
+
+  el.classList.remove('open');
+  setTimeout(() => {
+    el.style.display = 'none';
+    document.body.classList.remove('vitals-open');
+  }, 200);
+}
+
+  // close button
+  document.getElementById('close-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeTable();
+  });
+
+  // click outside closes
+  document.addEventListener('click', (e) => {
+    const popup = document.getElementById('vital-signs-table');
+    if (!popup) return;
+    if (popup.style.display !== 'block') return;
+    if (popup.contains(e.target)) return;
+
+    // don't close if clicking the vitals trigger
+    const vitalsTrigger = e.target.closest('.vitals-circle, .circle.vitals');
+    if (vitalsTrigger) return;
+
+    closeTable();
+  });
+
+  // ===== EMOJI PICKER =====
+  const emojiData = [
+    { name: 'arrowR', symbol: '↪' },
+    { name: 'arrowL', symbol: '↩' },
+    { name: 'right', symbol: '➜' },
+    { name: 'left', symbol: '←' },
+    { name: 'up', symbol: '⤴' },
+    { name: 'down', symbol: '⤵' },
+    { name: 'dd', symbol: '⤹' },
+    { name: 'll', symbol: '⤶' },
+	  { name: 'gg', symbol: '≤' },
+	   { name: 'gt', symbol: '≥' },
+    { name: 'smile', symbol: '😊' },
+    { name: 'laugh', symbol: '😂' },
+    { name: 'tick', symbol: '✅' },
+    { name: 'heart', symbol: '❤️' },
+    { name: 'star', symbol: '⭐️' },
+    { name: 'fire', symbol: '🔥' },
+    { name: 'man', symbol: '👨🏻' },
+    { name: 'thumbs up', symbol: '👍' },
+    { name: 'check', symbol: '✔️' },
+    { name: 'woman', symbol: '👩🏻' },
+    { name: 'yellow', symbol: '🟡' },
+    { name: 'green', symbol: '🟢' },
+    { name: 'blue', symbol: '🔵' },
+    { name: 'orange', symbol: '🟠' },
+    { name: 'tree', symbol: '🌴' },
+    { name: 'injection', symbol: '💉' },
+    { name: 'money', symbol: '🤑' },
+    { name: 'nurse', symbol: '👩🏻‍⚕️' },
+    { name: 'one', symbol: '1️⃣' },
+    { name: 'two', symbol: '2️⃣' },
+    { name: 'arrow', symbol: '➡️' },
+    { name: 'leaf', symbol: '🍂' },
+    { name: 'loud', symbol: '📢' },
+    { name: 'red', symbol: '🔴' },
+    { name: 'alert', symbol: '⚠️' },
+    { name: 'red2', symbol: '‼️' },
+    { name: 'plane', symbol: '✈️' },
+    { name: 'vacay', symbol: '🏖️' },
+    { name: 'med', symbol: '💊' },
+    { name: 'X', symbol: '❌' },
+    { name: 'no', symbol: '🙅🏻‍♀️' },
+    { name: 'mum', symbol: '🤰🏻' },
+    { name: 'flower1', symbol: '🌸' },
+    { name: 'flower2', symbol: '🌼' },
+    { name: 'flower3', symbol: '🌻' },
+    { name: 'earth', symbol: '🌎' },
+    { name: 'sun', symbol: '☀️' },
+    { name: 'moon', symbol: '🌛' },
+    { name: 'food', symbol: '🍔' },
+    { name: 'puzzle', symbol: '🧩' },
+    { name: 'car', symbol: '🚗' },
+    { name: 'hospital', symbol: '🏥' },
+    { name: 'computer', symbol: '🖥️' },
+    { name: 'time', symbol: '⏰' },
+    { name: 'dollar', symbol: '💰' },
+    { name: 'diamond', symbol: '💎' },
+    { name: 'virus', symbol: '🦠' },
+    { name: 'temp', symbol: '🌡️' },
+    { name: 'blood', symbol: '🩸' },
+    { name: 'stet', symbol: '🩺' },
+    { name: 'pencil', symbol: '✏️' },
+    { name: 'pin', symbol: '📌' },
+    { name: 'pen', symbol: '🖋️' },
+    { name: 'lock', symbol: '🔒' },
+    { name: 'book', symbol: '📙' },
+    { name: 'bullet', symbol: '▪️' },
+    { name: 'bullet2', symbol: '🔸' },
+    { name: 'headset', symbol: '🎧' },
+    { name: 'calendar', symbol: '📅' },
+    { name: 'ambulance', symbol: '🚑' },
+    { name: 'phone', symbol: '☎️' },
+    { name: 'phone1', symbol: '📞' },
+    { name: 'dollar2', symbol: '💵' },
+    { name: 'pin2', symbol: '📍' },
+    { name: 'tickbox', symbol: '☐' },
+    { name: 'okay', symbol: '🆗' },
+    { name: 'dollarsign', symbol: '💲' },
+    { name: 'arrowright', symbol: '🡺' },
+    { name: 'email', symbol: '📧' },
+    { name: 'password', symbol: '🔑' },
+    { name: 'sick', symbol: '🤧' },
+    { name: 'male', symbol: '♂️' },
+    { name: 'female', symbol: '♀️' },
+
+  ];
+
+  const emojiModal = document.getElementById("emojiModal");
+  const emojiGrid  = document.getElementById("emojiGrid");
+  const emojiIcon  = document.getElementById("emojiSearchIcon");
+  const emojiClose = document.querySelector(".emojiClose");
+
+  function openEmoji(){
+    emojiModal.classList.add("open");
+    emojiModal.setAttribute("aria-hidden", "false");
+  }
+  function closeEmoji(){
+    emojiModal.classList.remove("open");
+    emojiModal.setAttribute("aria-hidden", "true");
+  }
+  function toggleEmoji(){
+    emojiModal.classList.contains("open") ? closeEmoji() : openEmoji();
+  }
+
+  function renderEmojiGrid(){
+    emojiGrid.innerHTML = emojiData.map(e =>
+      `<button class="emojiBtn" type="button" title="${e.name}" aria-label="${e.name}" data-emoji="${e.symbol}">${e.symbol}</button>`
+    ).join("");
+  }
+  renderEmojiGrid();
+
+  emojiIcon.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleEmoji();
+  });
+
+  emojiClose.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeEmoji();
+  });
+
+  emojiGrid.addEventListener("click", (e) => {
+    const btn = e.target.closest(".emojiBtn");
+    if (!btn) return;
+    const emoji = btn.getAttribute("data-emoji") || btn.textContent;
+
+    navigator.clipboard.writeText(emoji).then(() => {
+      btn.style.transform = "scale(1.06)";
+      setTimeout(() => btn.style.transform = "", 120);
+    }).catch(err => console.error("Failed to copy:", err));
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!emojiModal.classList.contains("open")) return;
+    if (emojiModal.contains(e.target)) return;
+    closeEmoji();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeEmoji();
+      closeTable();
+    }
+  });
+  
+  // ===== QUICK CALC (Left Shortcut Panel) =====
+(() => {
+  const qc = document.getElementById('quickCalc');
+  if (!qc) return;
+
+  const weightEl = qc.querySelector('#qcWeight');
+  const calcBtn  = qc.querySelector('#qcCalcBtn');
+
+  const mainEl = qc.querySelector('#qcMain');
+  const subEl  = qc.querySelector('#qcSub');
+
+  const toggleBtn = qc.querySelector('.qc-toggle');
+  const tabs = [...qc.querySelectorAll('.qc-tab')];
+
+  const paraStrengthWrap = qc.querySelector('#qcParaStrength'); // div container
+  const ibuStrengthWrap  = qc.querySelector('#qcIbuStrength');  // div container
+
+  const sections = {
+    para: qc.querySelector('[data-section="para"]'),
+    ibu: qc.querySelector('[data-section="ibu"]'),
+    adren: qc.querySelector('[data-section="adren"]'),
+  };
+
+  // ---- guards ----
+  const missing = [];
+  if (!weightEl) missing.push('#qcWeight');
+  if (!calcBtn) missing.push('#qcCalcBtn');
+  if (!mainEl) missing.push('#qcMain');
+  if (!subEl) missing.push('#qcSub');
+  if (!toggleBtn) missing.push('.qc-toggle');
+  if (!tabs.length) missing.push('.qc-tab (none found)');
+  if (!paraStrengthWrap) missing.push('#qcParaStrength (container)');
+  if (!ibuStrengthWrap) missing.push('#qcIbuStrength (container)');
+
+  if (missing.length) {
+    console.error('QuickCalc missing elements:', missing.join(', '));
+    return;
+  }
+
+  // ---- state ----
+  let activeMed = 'para';
+
+  // read defaults from the UI (active button), fall back safely
+  const getActiveStrength = (wrap, fallback) => {
+    const btn = wrap.querySelector('.qc-strength-btn.active') || wrap.querySelector('.qc-strength-btn');
+    const v = btn ? Number(btn.dataset.value) : NaN;
+    return Number.isFinite(v) && v > 0 ? v : fallback;
+  };
+
+  let paraStrength = getActiveStrength(paraStrengthWrap, 24); // mg/mL
+  let ibuStrength  = getActiveStrength(ibuStrengthWrap, 20);  // mg/mL
+
+  const highlight = (txt) => `<span class="qc-highlight">${txt}</span>`;
+  const r1 = (x) => (Math.round(x * 10) / 10).toFixed(1); // 0.1 mL
+  const rA = (x) => (Math.round(x * 10) / 10).toFixed(1); // adrenaline rounded to 0.1 mL (as you wanted)
+
+  function setMed(med){
+    activeMed = med;
+
+    tabs.forEach(b => {
+      const on = b.dataset.med === med;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+
+    Object.entries(sections).forEach(([k, el]) => {
+      if (!el) return;
+      el.style.display = (k === med) ? '' : 'none';
+    });
+
+    // keep weight, just refresh output
+    calc();
+  }
+
+  tabs.forEach(b => b.addEventListener('click', () => setMed(b.dataset.med)));
+
+  function resetOutput(){
+    mainEl.textContent = '—';
+    subEl.textContent = '';
+  }
+
+  function calc(){
+    const kg = Number(weightEl.value);
+
+    if (!kg || kg <= 0){
+      resetOutput();
+      return;
+    }
+
+    // Paracetamol
+    if (activeMed === 'para'){
+      // 15 mg/kg; strength is mg/mL (24 = 120/5, 50 = 250/5)
+      const ml = (kg * 15) / paraStrength;
+      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      subEl.textContent = '';
+      return;
+    }
+
+    // Ibuprofen
+    if (activeMed === 'ibu'){
+      // 6 mg/kg capped at 400 mg (matches your reference)
+      let mg = kg * 6;
+      const capped = mg > 400;
+      if (capped) mg = 400;
+
+      const ml = mg / ibuStrength;
+      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      subEl.textContent = capped ? 'Max 400 mg reached' : '';
+      return;
+    }
+
+    // Adrenaline IM (1:1000, 1 mg/mL)
+    if (activeMed === 'adren'){
+      // 0.01 mL/kg, max 0.5 mL
+      const rawMl = 0.01 * kg;
+      const capped = rawMl > 0.5;
+      const ml = Math.min(rawMl, 0.5);
+      const mg = ml; // 1 mg/mL
+
+      mainEl.innerHTML = `${highlight(`${rA(ml)} mL`)} IM`;
+      subEl.textContent = capped ? 'Max 0.5 mL reached' : `${rA(mg)} mg`;
+      return;
+    }
+  }
+
+  function bindStrengthButtons(wrap, onPick){
+    wrap.querySelectorAll('.qc-strength-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        wrap.querySelectorAll('.qc-strength-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        onPick(Number(btn.dataset.value));
+        calc();
+      });
+    });
+  }
+
+  bindStrengthButtons(paraStrengthWrap, (v) => { paraStrength = v; });
+  bindStrengthButtons(ibuStrengthWrap,  (v) => { ibuStrength  = v; });
+
+  // events
+  calcBtn.addEventListener('click', calc);
+
+  // auto-calc + auto-clear
+  weightEl.addEventListener('input', calc);
+
+  // fast overwrite
+  weightEl.addEventListener('focus', () => weightEl.select());
+
+  // keyboard helpers
+  weightEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') calc();
+    if (e.key === 'Escape') {
+      weightEl.value = '';
+      resetOutput();
+      weightEl.blur();
+    }
+  });
+
+  toggleBtn.addEventListener('click', () => {
+    qc.classList.toggle('collapsed');
+    toggleBtn.textContent = qc.classList.contains('collapsed') ? '❯' : '❮';
+  });
+
+    // init
+  resetOutput();
+  setMed('para');
+})();
+// Inteleviewer login/password box
+(() => {
+  const qi = document.getElementById('quickInteleviewer');
+  const toggle = qi?.querySelector('.qi-toggle');
+
+  toggle?.addEventListener('click', () => {
+    qi.classList.toggle('collapsed');
+    toggle.textContent = qi.classList.contains('collapsed') ? '❯' : '❮';
+  });
+
+  qi?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-copy]');
+    if (!btn) return;
+
+    await navigator.clipboard.writeText(btn.dataset.copy);
+
+    const old = btn.innerHTML;
+    btn.textContent = 'Copied ✓';
+
+    setTimeout(() => {
+      btn.innerHTML = old;
+    }, 800);
+  });
+})();
 
 
+</script>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
   import {
-    getFirestore, doc, setDoc, getDoc
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  import {
-    getAuth,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    getFirestore,
+    collection,
+    onSnapshot,
+    query,
+    orderBy
+  } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
   const firebaseConfig = {
-    apiKey: "AIzaSyBZtCGzOb_5klWvVo-2fU7Wp2vnUakA4Rc",
-    authDomain: "ohnurse-43369.firebaseapp.com",
-    projectId: "ohnurse-43369",
-    storageBucket: "ohnurse-43369.firebasestorage.app",
-    messagingSenderId: "1041626418661",
-    appId: "1:1041626418661:web:1d9aeffb23a33baf9c730c",
-    measurementId: "G-ZHKSXSTTXR"
+    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+    authDomain: "cepx-f9d2a.firebaseapp.com",
+    projectId: "cepx-f9d2a",
+    storageBucket: "cepx-f9d2a.appspot.com",
+    messagingSenderId: "840696526325",
+    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  const auth = getAuth(app);
 
-  const emailInput = document.getElementById('emailInput');
-  const passwordInput = document.getElementById('passwordInput');
-  const loginBtn = document.getElementById('loginBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const userStatus = document.getElementById('userStatus');
-  const authToggleBtn = document.getElementById('authToggleBtn');
-const authModal = document.getElementById('authModal');
-const authModalBackdrop = document.getElementById('authModalBackdrop');
-const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+  const qiList = document.getElementById('qiList');
+  const q = query(collection(db, 'inteleviewerData'), orderBy('radiology'));
 
-  const calendarGrid = document.getElementById('calendarGrid');
-  const monthYear = document.getElementById('monthYear');
-  const jumpDatePicker = document.getElementById('jumpDatePicker');
-  const prevMonthBtn = document.getElementById('prevMonth');
-  const nextMonthBtn = document.getElementById('nextMonth');
-  const todayBtn = document.getElementById('todayBtn');
-  const nurseContainer = document.getElementById('nurseContainer');
-  const newNurseName = document.getElementById('newNurseName');
-  const addNurseBtn = document.getElementById('addNurseBtn');
-  const weekdaysScroll = document.getElementById('weekdaysScroll');
-const gridScroll = document.getElementById('gridScroll');
+  onSnapshot(q, (snapshot) => {
+    if (!qiList) return;
 
-const rosterStatus = document.getElementById('rosterStatus');
-const noticeBoard = document.getElementById('noticeBoard');
-const noticeToggleBtn = document.getElementById('noticeToggleBtn');
-const noticeContent = document.getElementById('noticeContent');
-const noticeList = document.getElementById('noticeList');
-const noticeEditor = document.getElementById('noticeEditor');
-const noticeInput = document.getElementById('noticeInput');
-const addNoticeBtn = document.getElementById('addNoticeBtn');
-
-let nurseReminders = [];
-
-  let currentUser = null;
-  let canEdit = false;  // controls if editing is allowed
-
-  // Authorized UIDs for editing rights
-  const authorizedUIDs = [
-    "xEda6HcmfLT16EtTiznHy3FAesj1",  // your UID
-    "OEjMA3NNeFQGP62Yohk5DliXqwH2"   // add staff UIDs here
-  ];
-
-  let roster = {};
-  let nurses = [
-  { name: "Alice", color: "#ff9800", rank: 1 },
-  { name: "Bob", color: "#e65100", rank: 2 },
-  { name: "Carol", color: "#f57c00", rank: 3 }
-];
-  let selectedNurseIndex = null;
-  let currentDate = new Date();
-
-let syncingScroll = false;
-
-monthYear.addEventListener('click', () => {
-  const year = currentDate.getFullYear();
-  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-  const day = String(currentDate.getDate()).padStart(2, '0');
-
-  jumpDatePicker.value = `${year}-${month}-${day}`;
-
-  if (typeof jumpDatePicker.showPicker === 'function') {
-    jumpDatePicker.showPicker();
-  } else {
-    jumpDatePicker.focus();
-    jumpDatePicker.click();
-  }
-});
-
-jumpDatePicker.addEventListener('change', (e) => {
-  if (!e.target.value) return;
-
-  const pickedDate = new Date(e.target.value);
-  if (isNaN(pickedDate.getTime())) return;
-
-  currentDate = pickedDate;
-  renderCalendar();
-});
-
-function syncCalendarScroll() {
-  if (!weekdaysScroll || !gridScroll) return;
-
-  weekdaysScroll.addEventListener('scroll', () => {
-    if (syncingScroll) return;
-    syncingScroll = true;
-    gridScroll.scrollLeft = weekdaysScroll.scrollLeft;
-    syncingScroll = false;
-  });
-
-  gridScroll.addEventListener('scroll', () => {
-    if (syncingScroll) return;
-    syncingScroll = true;
-    weekdaysScroll.scrollLeft = gridScroll.scrollLeft;
-    syncingScroll = false;
-  });
-}
-  /** ---------- Authentication ---------- **/
-  loginBtn.addEventListener('click', async () => {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    if (!email || !password) {
-      alert('Please enter email and password');
+    if (snapshot.empty) {
+      qiList.innerHTML = `<div class="qi-empty">No access saved</div>`;
       return;
     }
-    try {
-     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-currentUser = userCredential.user;
-updateUIOnAuth();
-closeAuthModal();
-    } catch (error) {
-      alert('Login failed: ' + error.message);
-    }
-  });
 
-  logoutBtn.addEventListener('click', async () => {
-    await signOut(auth);
-currentUser = null;
-updateUIOnAuth();
-closeAuthModal();
-  });
+    qiList.innerHTML = '';
 
-  onAuthStateChanged(auth, (user) => {
-    currentUser = user;
-    updateUIOnAuth();
-  });
- 
- function updateUIOnAuth() {
-  if (currentUser) {
-    userStatus.textContent = `Signed in as ${currentUser.email}`;
-    loginBtn.style.display = 'none';
-    emailInput.style.display = 'none';
-    passwordInput.style.display = 'none';
-    logoutBtn.style.display = 'inline-block';
-  } else {
-    userStatus.textContent = 'Not signed in';
-    loginBtn.style.display = 'inline-block';
-    emailInput.style.display = 'inline-block';
-    passwordInput.style.display = 'inline-block';
-    logoutBtn.style.display = 'none';
-  }
+    snapshot.forEach((docSnap) => {
+  const data = docSnap.data();
 
-  authToggleBtn.textContent = currentUser ? '✅' : '👤';
-  authToggleBtn.setAttribute('aria-label', currentUser ? 'Open account menu' : 'Open sign in');
+  const row = document.createElement('div');
+  row.className = 'qi-row-item';
 
-  checkEditPermission();
-}
+  row.innerHTML = `
+    <span class="qi-name">${escapeHtml(data.radiology || 'Untitled')}</span>
 
-  function checkEditPermission() {
-    canEdit = currentUser && authorizedUIDs.includes(currentUser.uid);
-    toggleEditUI();
-  }
-  function openAuthModal() {
-  authModal.classList.remove('hidden');
-}
+    <button class="qi-copy-mini" type="button" data-copy="${escapeHtml(data.username || '')}">
+      ${escapeHtml(data.username || '')}
+    </button>
 
-function closeAuthModal() {
-  authModal.classList.add('hidden');
-}
-
-  function toggleEditUI() {
-  addNurseBtn.disabled = !canEdit;
-  newNurseName.disabled = !canEdit;
-  addNurseBtn.style.opacity = canEdit ? '1' : '0.5';
-  newNurseName.style.opacity = canEdit ? '1' : '0.5';
-
-  const nurseList = document.querySelector('.nurse-list');
-
-  // Left admin panel only appears when signed in
-  nurseList.style.display = currentUser ? 'block' : 'none';
-
-  // Reminder editor only appears for authorised editor
-  if (noticeEditor) {
-    noticeEditor.style.display = canEdit ? 'block' : 'none';
-  }
-
-  document.body.classList.toggle('logged-in', !!currentUser);
-
-  renderNoticeBoard();
-}
-  
-function showRosterStatus(message) {
-  if (!rosterStatus) return;
-  rosterStatus.textContent = message;
-  rosterStatus.classList.add('show');
-}
-
-function hideRosterStatus() {
-  if (!rosterStatus) return;
-  rosterStatus.textContent = '';
-  rosterStatus.classList.remove('show');
-}
-  /** ---------- Firebase Data ---------- **/
- async function loadData() {
-  try {
-    showRosterStatus("Loading roster...");
-
-    const docRef = doc(db, "nursesRoster", "main");
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-
-      roster = data.roster || {};
-      nurses = data.nurses || nurses;
-	  nurseReminders = data.nurseReminders || [];
-
-// Backward compatibility if you previously saved one single reminder
-if (!Array.isArray(nurseReminders)) {
-  nurseReminders = [];
-}
-
-if (nurseReminders.length === 0 && data.nurseNotice) {
-  nurseReminders = [
-    {
-      id: Date.now(),
-      text: data.nurseNotice
-    }
-  ];
-}
-	  
-
-      templateShifts1.length = 0;
-      templateShifts2.length = 0;
-
-      templateShifts1.push(...(data.templateShifts1 || data.templateShifts || []));
-      templateShifts2.push(...(data.templateShifts2 || []));
-    } else {
-  roster = {};
-  nurseReminders = [];
-  templateShifts1.length = 0;
-  templateShifts2.length = 0;
-}
-
-    normalizeNurseRanks();
-    syncShiftColorsWithNurses();
-
-    renderNurseList();
-	renderCalendar();
-	renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
-	renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
-	renderNoticeBoard();
-
-    hideRosterStatus();
-  } catch (error) {
-    console.error("Failed to load data from Firestore:", error);
-
-    roster = roster || {};
-    renderNurseList();
-	renderCalendar();
-	renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
-	renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
-	renderNoticeBoard();
-
-    showRosterStatus("Roster could not be loaded right now.");
-  }
-}
-function normalizeNurseRanks() {
-  nurses.forEach((nurse, index) => {
-    if (typeof nurse.rank !== 'number' || isNaN(nurse.rank)) {
-      nurse.rank = index + 1;
-    }
-  });
-}
-
-function getNurseHierarchyIndex(nurseName) {
-  const index = nurses.findIndex(n => n.name === nurseName);
-  return index === -1 ? 999 : index;
-}
-
-  async function saveData() {
-  if (!canEdit) {
-    alert("You do not have permission to edit.");
-    return;
-  }
-  try {
-    await setDoc(doc(db, "nursesRoster", "main"), { roster, nurses }, { merge: true });
-  } catch (error) {
-    console.error("Error saving data:", error);
-    alert("Failed to save data. Check console.");
-  }
-}
-
-function renderNoticeBoard() {
-  if (!noticeList || !noticeInput || !noticeEditor) return;
-
-  if (!Array.isArray(nurseReminders)) {
-    nurseReminders = [];
-  }
-
-  if (nurseReminders.length === 0) {
-    noticeList.innerHTML = `
-      <div class="notice-card empty">
-        ✨ No reminders at the moment.
-      </div>
-    `;
-  } else {
-    noticeList.innerHTML = nurseReminders.map((reminder, index) => {
-  return `
-    <div class="notice-card notice-${index % 4}" data-id="${reminder.id}">
-      <div class="notice-card-text" id="noticeText-${reminder.id}" contenteditable="false">${escapeHtml(reminder.text)}</div>
-
-      <div class="notice-inline-actions" id="noticeActions-${reminder.id}" style="display:none;">
-        <button type="button" class="notice-save-edit-btn" data-id="${reminder.id}">Save</button>
-        <button type="button" class="notice-cancel-edit-btn" data-id="${reminder.id}">Cancel</button>
-      </div>
-
-      <div class="notice-actions" style="display:${canEdit ? 'flex' : 'none'};">
-        <button type="button" class="notice-edit-btn" data-id="${reminder.id}">Edit</button>
-        <button type="button" class="notice-delete-btn" data-id="${reminder.id}">Delete</button>
-      </div>
-    </div>
+    <button class="qi-copy-mini" type="button" data-copy="${escapeHtml(data.password || '')}">
+      ${escapeHtml(data.password || '')}
+    </button>
   `;
-}).join('');
-  }
 
-  noticeInput.value = '';
-  noticeEditor.style.display = canEdit ? 'block' : 'none';
-
-  document.querySelectorAll('.notice-edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      openInlineReminderEditor(Number(btn.dataset.id));
-    });
-  });
-
-  document.querySelectorAll('.notice-delete-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      deleteReminder(Number(btn.dataset.id));
-    });
-  });
-
-  document.querySelectorAll('.notice-save-edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      saveInlineReminderEdit(Number(btn.dataset.id));
-    });
-  });
-
-  document.querySelectorAll('.notice-cancel-edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      renderNoticeBoard();
-    });
-  });
-}
-
-async function saveReminderList() {
-  if (!canEdit) {
-    alert("You do not have permission to edit reminders.");
-    return;
-  }
-
-  try {
-    await setDoc(doc(db, "nursesRoster", "main"), {
-      nurseReminders
-    }, { merge: true });
-
-    renderNoticeBoard();
-  } catch (error) {
-    console.error("Failed to save reminders:", error);
-    alert("Failed to save reminders. Check console.");
-  }
-}
-
-function addReminder() {
-  if (!canEdit) {
-    alert("You do not have permission to add reminders.");
-    return;
-  }
-
-  const text = noticeInput.value.trim();
-
-  if (!text) {
-    alert("Please type a reminder first.");
-    return;
-  }
-
-  nurseReminders.unshift({
-    id: Date.now(),
-    text
-  });
-
-  noticeInput.value = '';
-  saveReminderList();
-}
-
-function openInlineReminderEditor(id) {
-  if (!canEdit) return;
-
-  const textDiv = document.getElementById(`noticeText-${id}`);
-  const actionDiv = document.getElementById(`noticeActions-${id}`);
-
-  if (!textDiv || !actionDiv) return;
-
-  textDiv.setAttribute('contenteditable', 'true');
-  textDiv.classList.add('editing');
-
-  actionDiv.style.display = 'flex';
-
-  textDiv.focus();
-
-  const range = document.createRange();
-  range.selectNodeContents(textDiv);
-  range.collapse(false);
-
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-}
-
-function saveInlineReminderEdit(id) {
-  if (!canEdit) return;
-
-  const reminder = nurseReminders.find(item => item.id === id);
-  const textDiv = document.getElementById(`noticeText-${id}`);
-
-  if (!reminder || !textDiv) return;
-
-  const trimmed = textDiv.innerText.trim();
-
-  if (!trimmed) {
-    alert("Reminder cannot be empty.");
-    return;
-  }
-
-  reminder.text = trimmed;
-  saveReminderList();
-}
-
-function deleteReminder(id) {
-  if (!canEdit) return;
-
-  if (!confirm("Delete this reminder?")) return;
-
-  nurseReminders = nurseReminders.filter(item => item.id !== id);
-  saveReminderList();
-}
-
-function escapeHtml(text) {
-  return text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function getLeaveDisplay(shift) {
-  const leaveType = shift.leaveType || '';
-
-  if (leaveType === 'AL') {
-    return { text: '🌴 AL', isLeave: true };
-  }
-
-  if (leaveType === 'SL') {
-    return { text: '🤒 SL', isLeave: true };
-  }
-
-  if (leaveType === 'Study') {
-    return { text: '📘 Study', isLeave: true };
-  }
-
-  return {
-    text: shift.time || 'Shift',
-    isLeave: false
-  };
-}
-
-  /** ---------- Nurse List ---------- **/
-  function renderNurseList() {
-    nurseContainer.innerHTML = '';
-    nurses.forEach((nurse, idx) => {
-      const div = document.createElement('div');
-      div.classList.add('nurse');
-      div.draggable = canEdit;  // ✅ make draggable
-      div.dataset.index = idx;
-
-      if (selectedNurseIndex === idx) div.classList.add('selected');
-
-      const infoDiv = document.createElement('div');
-      infoDiv.classList.add('nurse-info');
-
-      const colorBox = document.createElement('div');
-      colorBox.classList.add('color-box');
-      colorBox.style.background = nurse.color;
-
-      const colorPicker = document.createElement('input');
-      colorPicker.type = 'color';
-      colorPicker.value = nurse.color;
-      colorPicker.classList.add('color-picker');
-      colorPicker.style.display = 'none'; 
-
-      colorBox.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!canEdit) return;
-        document.querySelectorAll('.color-picker').forEach(p => {
-          if (p !== colorPicker) p.style.display = 'none';
-        });
-        colorPicker.style.display = colorPicker.style.display === 'block' ? 'none' : 'block';
-      });
-
-      colorPicker.addEventListener('mousedown', e => e.stopPropagation());
-      colorPicker.addEventListener('click', e => e.stopPropagation());
-      colorPicker.addEventListener('dragstart', e => e.stopPropagation());
-
-      colorPicker.addEventListener('input', (e) => {
-        if (!canEdit) return;
-        nurse.color = e.target.value;
-syncShiftColorsWithNurses();
-saveData();
-renderNurseList();
-renderCalendar();
-renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
-renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
-      });
-
-      infoDiv.appendChild(colorBox);
-      infoDiv.appendChild(document.createTextNode(`${nurse.rank}. ${nurse.name}`));
-
-      // ✅ Updated click handler for selection and shift+click deletion
-      infoDiv.addEventListener('click', (e) => {
-        if (!canEdit) return;
-
-        if (e.shiftKey) {
-          // Shift+click → delete nurse
-          if (confirm(`Delete nurse ${nurse.name}?`)) {
-  nurses.splice(idx, 1);
-
-  nurses.forEach((n, i) => {
-    n.rank = i + 1;
-  });
-
-  if (selectedNurseIndex === idx) selectedNurseIndex = null;
-
-  saveData();
-  renderNurseList();
-  renderCalendar();
-  renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
-  renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
-}
-        } else {
-          // Normal click → select nurse
-          selectedNurseIndex = idx;
-          renderNurseList();
-        }
-      });
-
-      div.appendChild(infoDiv);
-      div.appendChild(colorPicker);
-	  
-	 if (canEdit) {
-  const rankInput = document.createElement('input');
-  rankInput.type = 'number';
-  rankInput.min = '1';
-  rankInput.step = '1';
-  rankInput.value = nurse.rank || idx + 1;
-  rankInput.style.width = '52px';
-  rankInput.style.marginLeft = '6px';
-  rankInput.style.borderRadius = '6px';
-  rankInput.style.border = '1px solid #ccc';
-  rankInput.style.padding = '2px 4px';
-  rankInput.style.cursor = 'text';
-
-  ['click', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'dblclick'].forEach(evt => {
-    rankInput.addEventListener(evt, (e) => e.stopPropagation());
-  });
-
-  function applyRankChange() {
-    let newRank = parseInt(rankInput.value, 10);
-    if (isNaN(newRank) || newRank < 1) newRank = 1;
-    if (newRank > nurses.length) newRank = nurses.length;
-
-    const oldIndex = nurses.findIndex(n => n === nurse);
-    if (oldIndex === -1) return;
-
-    const movedNurse = nurses.splice(oldIndex, 1)[0];
-    nurses.splice(newRank - 1, 0, movedNurse);
-
-    nurses.forEach((n, i) => {
-      n.rank = i + 1;
-    });
-
-    saveData();
-    renderNurseList();
-    renderCalendar();
-    renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
-    renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
-  }
-
-  rankInput.addEventListener('keydown', (e) => {
-    e.stopPropagation();
-    if (e.key === 'Enter') {
-      applyRankChange();
-      rankInput.blur();
-    }
-  });
-
-  rankInput.addEventListener('blur', applyRankChange);
-
-  div.appendChild(rankInput);
-}
-      // ✅ Dragstart handler
-      div.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('nurseIndex', idx);
-      });
-
-      nurseContainer.appendChild(div);
-    });
-  }
-
-  /** ---------- Global Listener to Close Color Pickers ---------- **/
-  document.addEventListener('pointerdown', (e) => {
-    const isInside = e.target.closest('.color-picker, .color-box');
-    if (!isInside) {
-      document.querySelectorAll('.color-picker').forEach(p => p.style.display = 'none');
-    }
-  });
-
-  function getRandomColor() {
-    const colors = ['#ff9800', '#e65100', '#f57c00', '#ffb74d', '#ef6c00'];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
-addNurseBtn.addEventListener('click', () => {
-  if (!canEdit) {
-    alert("You do not have permission to add nurses.");
-    return;
-  }
-
-  const name = newNurseName.value.trim();
-  if (name) {
-    nurses.push({
-      name,
-      color: getRandomColor(),
-      rank: nurses.length + 1
-    });
-
-    newNurseName.value = '';
-    saveData();
-    renderNurseList();
-    renderCalendar();
-    renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
-    renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
-  }
+  qiList.appendChild(row);
 });
-  
-
-  /** ---------- Calendar ---------- **/
-  function createShiftElement(shift, key, shiftIndex) {
-  const shiftDiv = document.createElement('div');
-  shiftDiv.classList.add('shift');
-  shiftDiv.style.backgroundColor = shift.color;
-
-  const rgb = parseInt(shift.color.slice(1), 16);
-  const r = (rgb >> 16) & 0xff;
-  const g = (rgb >> 8) & 0xff;
-  const b = rgb & 0xff;
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  shiftDiv.style.color = brightness > 150 ? "#000" : "#fff";
-
-  const leaveDisplay = getLeaveDisplay(shift);
-shiftDiv.innerHTML = `${shift.name}: ${leaveDisplay.text}`;
-
-if (leaveDisplay.isLeave) {
-  shiftDiv.classList.add('leave');
-}
-
-
-  shiftDiv.draggable = canEdit;
-
-  if (canEdit) {
-    shiftDiv.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const currentShift = roster[key].shifts[shiftIndex];
-      if (!currentShift) return;
-
-      const newTime = prompt(
-        `Edit shift time for ${shift.name}:`,
-        currentShift.time || "Shift"
-      );
-
-      if (newTime !== null) {
-        const trimmed = newTime.trim();
-        currentShift.time = trimmed || "Shift";
-        saveData();
-        renderCalendar();
-      }
-    });
-
-    shiftDiv.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', JSON.stringify(shift));
-    });
-  }
-
-  shiftDiv.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!canEdit) return;
-
-    const currentShift = roster[key].shifts[shiftIndex];
-    if (!currentShift) return;
-
-    const currentLeave = currentShift.leaveType || '';
-    const picked = prompt(
-      `Leave type for ${shift.name}\n\nType one of:\nAL\nSL\nStudy\n\nLeave blank to clear`,
-      currentLeave
-    );
-
-    if (picked === null) return;
-
-    const normalized = picked.trim();
-    const valid = ['', 'AL', 'SL', 'Study'];
-
-    if (!valid.includes(normalized)) {
-      alert('Please enter AL, SL, Study, or leave it blank.');
-      return;
-    }
-
-    currentShift.leaveType = normalized;
-    saveData();
-    renderCalendar();
   });
 
-  if (canEdit) {
-    const deleteBtn = document.createElement('span');
-    deleteBtn.textContent = '×';
-    deleteBtn.className = 'delete-btn';
-    deleteBtn.title = 'Delete shift';
-
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!confirm(`Delete shift for ${shift.name}?`)) return;
-
-      roster[key].shifts.splice(shiftIndex, 1);
-      saveData();
-      renderCalendar();
-    });
-
-    shiftDiv.appendChild(deleteBtn);
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
   }
-
-  return shiftDiv;
-}
-
-function renderDayCell(year, month, day) {
-  const key = `${year}-${month}-${day}`;
-  if (!roster[key]) roster[key] = { shifts: [], notes: '', isHoliday: false };
-  if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
-
-  const dayCell = document.createElement('div');
-  dayCell.classList.add('day');
-  dayCell.dataset.dayKey = key;
-
-  const date = new Date(year, month, day);
-  dayCell.dataset.date = date.toDateString();
-
-  if (roster[key].isHoliday) {
-    dayCell.classList.add('holiday');
-  }
-
-  if (date.getDay() === 0 || date.getDay() === 6) {
-    dayCell.classList.add('weekend');
-  }
-
-  const today = new Date();
-  if (date.toDateString() === today.toDateString()) {
-    dayCell.classList.add('today');
-  }
-
-  const dayNumber = document.createElement('div');
-  dayNumber.classList.add('day-number');
-  dayNumber.innerHTML =
-    `${day}` +
-    (roster[key].isHoliday ? ` <span class="holiday-badge">Holiday</span>` : '') +
-    (roster[key].notes ? ` <span class="day-note">${roster[key].notes}</span>` : '');
-
-  dayNumber.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!canEdit) return;
-
-    if (e.shiftKey) {
-      roster[key].isHoliday = !roster[key].isHoliday;
-      saveData();
-      renderCalendar();
-      return;
-    }
-
-    const note = prompt('Enter notes for this day:', roster[key].notes || '');
-    if (note !== null) {
-      roster[key].notes = note;
-      saveData();
-      renderCalendar();
-    }
-  });
-
-  const dragHandle = document.createElement('span');
-  dragHandle.textContent = '⇅';
-  dragHandle.style.cursor = canEdit ? 'grab' : 'default';
-  dragHandle.title = 'Drag all shifts of this day';
-  dragHandle.draggable = canEdit;
-
-  if (canEdit) {
-    dragHandle.addEventListener('dragstart', (e) => {
-      e.stopPropagation();
-      const allShifts = roster[key].shifts || [];
-      e.dataTransfer.setData('text/day-shifts', JSON.stringify(allShifts));
-    });
-  }
-
-  const header = document.createElement('div');
-  header.style.display = 'flex';
-  header.style.justifyContent = 'space-between';
-  header.style.alignItems = 'center';
-  header.appendChild(dayNumber);
-  header.appendChild(dragHandle);
-
-  dayCell.appendChild(header);
-
-  if (canEdit) {
-    dayCell.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dayCell.classList.add('drag-over');
-    });
-
-    dayCell.addEventListener('dragleave', () => {
-      dayCell.classList.remove('drag-over');
-    });
-
-    dayCell.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dayCell.classList.remove('drag-over');
-
-      const nurseIndex = e.dataTransfer.getData('nurseIndex');
-      if (nurseIndex !== '') {
-        const nurse = nurses[nurseIndex];
-        roster[key].shifts.push({
-          name: nurse.name,
-          color: nurse.color,
-          time: "Shift",
-          leaveType: ""
-        });
-        saveData();
-        renderCalendar();
-        return;
-      }
-
-      const dayShiftsData = e.dataTransfer.getData('text/day-shifts');
-      if (dayShiftsData) {
-        const shifts = JSON.parse(dayShiftsData);
-        roster[key].shifts = roster[key].shifts.concat(shifts.map(s => ({ ...s })));
-        saveData();
-        renderCalendar();
-        return;
-      }
-
-      const templateShiftData = e.dataTransfer.getData('text/template-shift');
-      if (templateShiftData) {
-        const shift = JSON.parse(templateShiftData);
-        roster[key].shifts.push(shift);
-        saveData();
-        renderCalendar();
-        return;
-      }
-
-      const allTemplateShiftsData = e.dataTransfer.getData('text/all-template-shifts');
-      if (allTemplateShiftsData) {
-        const shifts = JSON.parse(allTemplateShiftsData);
-        roster[key].shifts = roster[key].shifts.concat(shifts.map(s => ({ ...s })));
-        saveData();
-        renderCalendar();
-        return;
-      }
-
-      const shiftData = e.dataTransfer.getData('text/plain');
-      if (shiftData) {
-        const shift = JSON.parse(shiftData);
-        roster[key].shifts.push(shift);
-        saveData();
-        renderCalendar();
-      }
-    });
-  }
-
-  const sortedShifts = [...roster[key].shifts].sort((a, b) => {
-    const indexA = getNurseHierarchyIndex(a.name);
-    const indexB = getNurseHierarchyIndex(b.name);
-
-    if (indexA !== indexB) return indexA - indexB;
-    return a.name.localeCompare(b.name);
-  });
-
-  sortedShifts.forEach((shift) => {
-    const originalIndex = roster[key].shifts.findIndex(
-      s =>
-        s.name === shift.name &&
-        s.time === shift.time &&
-        s.color === shift.color &&
-        (s.leaveType || '') === (shift.leaveType || '')
-    );
-
-    dayCell.appendChild(createShiftElement(shift, key, originalIndex));
-  });
-
-  return dayCell;
-}
-function renderCalendar() {
-  calendarGrid.innerHTML = '';
-
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-
-  monthYear.textContent =
-    currentDate.toLocaleString('default', { month: 'long' }) + ' ' + year;
-
-  const firstDay = new Date(year, month, 1).getDay();
-  const leadingBlanks = (firstDay === 0 ? 6 : firstDay - 1);
-
-  // Add empty cells for alignment
-  for (let i = 0; i < leadingBlanks; i++) {
-    calendarGrid.appendChild(document.createElement('div'));
-  }
-
-  const today = new Date();
-  const todayStr = today.toDateString();
-
-  // --- Fixed week calculation (Monday–Sunday) ---
-  function getWeekStart(date) {
-  const d = new Date(date);
-  const day = d.getDay(); // 0 = Sunday, 1 = Monday
-  const diff = (day + 6) % 7; // 0=Sunday→6, 1=Monday→0, 2=Tuesday→1 ...
-  d.setDate(d.getDate() - diff);
-  d.setHours(0,0,0,0);
-  return d;
-}
-
-function getWeekEnd(monday) {
-  const d = new Date(monday);
-  d.setDate(d.getDate() + 6);
-  d.setHours(23,59,59,999);
-  return d;
-}
-
-
-  const currentWeekMonday = getWeekStart(today);
-  const currentWeekSunday = getWeekEnd(currentWeekMonday);
-
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dayCell = renderDayCell(year, month, day);
-
-    const cellDate = new Date(year, month, day);
-    const cellStr = cellDate.toDateString();
-
-    // Highlight today
-    if (cellStr === todayStr) {
-      dayCell.classList.add('today');
-    }
-
-    // Highlight current week — check if this day is within the same week as today
-    if (cellDate >= currentWeekMonday && cellDate <= currentWeekSunday) {
-      dayCell.classList.add('current-week');
-    }
-
-    calendarGrid.appendChild(dayCell);
-  }
-}
-
-// Month navigation (FIXED: prevents month skipping)
-prevMonthBtn.addEventListener("click", () => {
-  currentDate.setDate(1);                 // ← ADD THIS
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar();
-});
-
-nextMonthBtn.addEventListener("click", () => {
-  currentDate.setDate(1);                 // ← ADD THIS
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar();
-});
-
-
-// Today button
-todayBtn.addEventListener("click", () => {
-  currentDate = new Date(); // reset to today
-  renderCalendar();
-
-  // Scroll to the current week
-  setTimeout(() => {
-    const todayCell = calendarGrid.querySelector('.today');
-    if (todayCell) {
-      todayCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 50);
-});
-
-function syncShiftColorsWithNurses() {
-  for (const dayKey in roster) {
-    if (!roster[dayKey].shifts) continue;
-    roster[dayKey].shifts.forEach(shift => {
-      const nurse = nurses.find(n => n.name === shift.name);
-      if (nurse) shift.color = nurse.color;
-    });
-  }
-
-  [templateShifts1, templateShifts2].forEach(templateShifts => {
-    templateShifts.forEach(shift => {
-      const nurse = nurses.find(n => n.name === shift.name);
-      if (nurse) shift.color = nurse.color;
-    });
-  });
-}
-
-
-// ------------------- TEMPLATE HANDLING -------------------
-
-// ---------------- Template Drag/Drop ----------------
-const templateDay1 = document.getElementById('templateDay1');
-const templateDay2 = document.getElementById('templateDay2');
-
-let templateShifts1 = [];
-let templateShifts2 = [];
-
-// ---------------- Firestore Template ----------------
-
-
-async function saveTemplate() {
-  try {
-    await setDoc(doc(db, "nursesRoster", "main"), {
-      templateShifts1: templateShifts1.map(s => ({ ...s })),
-      templateShifts2: templateShifts2.map(s => ({ ...s }))
-    }, { merge: true });
-  } catch (err) {
-    console.error("Failed to save template:", err);
-  }
-}
-
-// ---------------- Render Template ----------------
-function renderTemplateDay(templateEl, templateShifts, labelText) {
-  templateEl.innerHTML = '';
-
-  // Make template day draggable like a real day
-  templateEl.draggable = canEdit;
-
-  // allow dragging the ENTIRE template day
-  if (canEdit) {
-    templateEl.addEventListener('dragstart', (e) => {
-      e.stopPropagation();
-      e.dataTransfer.setData(
-        'text/day-shifts',
-        JSON.stringify(templateShifts.map(s => ({ ...s })))
-      );
-    });
-  }
-
-  // ---------- Header ----------
-  const header = document.createElement('div');
-  header.style.display = 'flex';
-  header.style.justifyContent = 'space-between';
-  header.style.alignItems = 'center';
-
-  const label = document.createElement('div');
-  label.className = 'day-number';
-  label.textContent = labelText;
-
-  const dragHandle = document.createElement('span');
-  dragHandle.textContent = '⇅';
-  dragHandle.style.cursor = canEdit ? 'grab' : 'default';
-  dragHandle.draggable = canEdit;
-
-  if (canEdit) {
-    dragHandle.addEventListener('dragstart', (e) => {
-      e.stopPropagation();
-      e.dataTransfer.setData(
-        'text/day-shifts',
-        JSON.stringify(templateShifts.map(s => ({ ...s })))
-      );
-    });
-  }
-
-  header.appendChild(label);
-  header.appendChild(dragHandle);
-  templateEl.appendChild(header);
-
-  // ---------- Sort shifts by nurse rank ----------
-  const sortedTemplateShifts = [...templateShifts].sort((a, b) => {
-  const indexA = getNurseHierarchyIndex(a.name);
-  const indexB = getNurseHierarchyIndex(b.name);
-
-  if (indexA !== indexB) return indexA - indexB;
-  return a.name.localeCompare(b.name);
-});
-
-  // ---------- Shifts ----------
-  sortedTemplateShifts.forEach((shift) => {
-    const idx = templateShifts.findIndex(
-  s =>
-    s.name === shift.name &&
-    s.time === shift.time &&
-    s.color === shift.color &&
-    (s.leaveType || '') === (shift.leaveType || '')
-);
-
-    const shiftDiv = document.createElement('div');
-    shiftDiv.className = 'shift';
-    shiftDiv.style.backgroundColor = shift.color;
-    
-	const leaveDisplay = getLeaveDisplay(shift);
-shiftDiv.innerHTML = `${shift.name}: ${leaveDisplay.text}`;
-
-if (leaveDisplay.isLeave) {
-  shiftDiv.classList.add('leave');
-}
-    shiftDiv.draggable = canEdit;
-
-    // RIGHT CLICK = EDIT
-    shiftDiv.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      if (!canEdit) return;
-
-      const newTime = prompt(
-        `Edit shift for ${shift.name}:`,
-        shift.time || ''
-      );
-
-      if (newTime !== null) {
-        const trimmed = newTime.trim();
-        if (trimmed !== '') {
-          templateShifts[idx].time = trimmed;
-          renderTemplateDay(templateEl, templateShifts, labelText);
-          saveTemplate();
-        }
-      }
-    });
-	shiftDiv.addEventListener('click', (e) => {
-  e.stopPropagation();
-  if (!canEdit) return;
-
-  const currentLeave = templateShifts[idx].leaveType || '';
-  const picked = prompt(
-    `Leave type for ${shift.name}\n\nType one of:\nAL\nSL\nStudy\n\nLeave blank to clear`,
-    currentLeave
-  );
-
-  if (picked === null) return;
-
-  const normalized = picked.trim();
-  const valid = ['', 'AL', 'SL', 'Study'];
-
-  if (!valid.includes(normalized)) {
-    alert('Please enter AL, SL, Study, or leave it blank.');
-    return;
-  }
-
-  templateShifts[idx].leaveType = normalized;
-  saveTemplate();
-  renderTemplateDay(templateEl, templateShifts, labelText);
-});
-
-  if (canEdit) {
-  const deleteBtn = document.createElement('span');
-  deleteBtn.textContent = '×';
-  deleteBtn.className = 'delete-btn';
-  deleteBtn.title = `Delete shift for ${shift.name}`;
-
-  deleteBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!confirm(`Delete shift for ${shift.name} from ${labelText}?`)) return;
-
-    templateShifts.splice(idx, 1);
-    saveTemplate();
-    renderTemplateDay(templateEl, templateShifts, labelText);
-  });
-
-  shiftDiv.appendChild(deleteBtn);
-}
-
-    templateEl.appendChild(shiftDiv);
-  });
-}
-
-
-// ---------------- Template Drag/Drop ----------------
-function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
-  templateEl.addEventListener('dragover', e => {
-    e.preventDefault();
-    templateEl.classList.add('drag-over');
-  });
-
-  templateEl.addEventListener('dragleave', () => {
-    templateEl.classList.remove('drag-over');
-  });
-
-  templateEl.addEventListener('drop', e => {
-    e.preventDefault();
-    templateEl.classList.remove('drag-over');
-    if (!canEdit) return;
-
-    // 1. Nurse dragged from nurse list
-    const nurseIndex = e.dataTransfer.getData('nurseIndex');
-    if (nurseIndex !== '') {
-      const nurse = nurses[nurseIndex];
-      if (!templateShifts.some(s => s.name === nurse.name)) {
-        templateShifts.push({
-          name: nurse.name,
-          color: nurse.color,
-          time: "Shift",
-          leaveType: ""
-        });
-        renderTemplateDay(templateEl, templateShifts, labelText);
-        saveTemplate();
-      }
-      return;
-    }
-
-    // 2. Full day dragged from calendar/template drag handle
-    const dayShiftsData = e.dataTransfer.getData('text/day-shifts');
-    if (dayShiftsData) {
-      const shifts = JSON.parse(dayShiftsData);
-
-      shifts.forEach(shift => {
-        if (!templateShifts.some(
-          s =>
-            s.name === shift.name &&
-            s.time === shift.time &&
-            (s.leaveType || '') === (shift.leaveType || '')
-        )) {
-          templateShifts.push({ ...shift });
-        }
-      });
-
-      renderTemplateDay(templateEl, templateShifts, labelText);
-      saveTemplate();
-      return;
-    }
-
-    // 3. Single template shift dragged
-    const templateShiftData = e.dataTransfer.getData('text/template-shift');
-    if (templateShiftData) {
-      const shift = JSON.parse(templateShiftData);
-      if (!templateShifts.some(
-        s =>
-          s.name === shift.name &&
-          s.time === shift.time &&
-          (s.leaveType || '') === (shift.leaveType || '')
-      )) {
-        templateShifts.push({ ...shift });
-        renderTemplateDay(templateEl, templateShifts, labelText);
-        saveTemplate();
-      }
-      return;
-    }
-
-    // 4. All template shifts dragged
-    const allTemplateShiftsData = e.dataTransfer.getData('text/all-template-shifts');
-    if (allTemplateShiftsData) {
-      const shifts = JSON.parse(allTemplateShiftsData);
-      shifts.forEach(s => {
-        if (!templateShifts.some(
-          t =>
-            t.name === s.name &&
-            t.time === s.time &&
-            (t.leaveType || '') === (s.leaveType || '')
-        )) {
-          templateShifts.push({ ...s });
-        }
-      });
-      renderTemplateDay(templateEl, templateShifts, labelText);
-      saveTemplate();
-      return;
-    }
-
-    // 5. Single shift dragged from calendar
-    const singleShiftData = e.dataTransfer.getData('text/plain');
-    if (singleShiftData) {
-      const shift = JSON.parse(singleShiftData);
-      if (!templateShifts.some(
-        s =>
-          s.name === shift.name &&
-          s.time === shift.time &&
-          (s.leaveType || '') === (shift.leaveType || '')
-      )) {
-        templateShifts.push({ ...shift });
-        renderTemplateDay(templateEl, templateShifts, labelText);
-        saveTemplate();
-      }
-    }
-  });
-}
-setupTemplateDragDrop(templateDay1, templateShifts1, 'Template 1');
-setupTemplateDragDrop(templateDay2, templateShifts2, 'Template 2');
-syncCalendarScroll();
-loadData();
-
-if (addNoticeBtn) {
-  addNoticeBtn.addEventListener('click', () => {
-    addReminder();
-  });
-}
-
-if (noticeToggleBtn && noticeBoard) {
-  noticeToggleBtn.addEventListener('click', () => {
-    noticeBoard.classList.toggle('open');
-  });
-}
-
-/* Desktop = open reminders by default
-   Mobile = collapsed by default */
-function setNoticeDefaultState() {
-  if (!noticeBoard) return;
-
-  if (window.innerWidth > 900) {
-    noticeBoard.classList.add('open');
-  } else {
-    noticeBoard.classList.remove('open');
-  }
-}
-
-setNoticeDefaultState();
-
-window.addEventListener('resize', setNoticeDefaultState);
-
-authToggleBtn.addEventListener('click', () => {
-  openAuthModal();
-});
-
-closeAuthModalBtn.addEventListener('click', () => {
-  closeAuthModal();
-});
-
-authModalBackdrop.addEventListener('click', () => {
-  closeAuthModal();
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    closeAuthModal();
-  }
-});
-
-
 </script>
-
 </body>
 </html>
