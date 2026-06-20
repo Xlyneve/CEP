@@ -148,18 +148,21 @@ body::after {
 .notice-card {
   position: relative;
 
-  background: rgba(255,255,255,0.74);
+  display: block;
+  height: auto !important;
+  min-height: 0 !important;
+
+  background: rgba(255,255,255,0.78);
   border: 1px solid rgba(255,255,255,0.72);
   border-radius: 11px;
 
-  padding: 7px 8px;
-  padding-left: 12px;
+  padding: 7px 8px 7px 12px;
 
   font-size: 0.82rem;
-  line-height: 1.3;
+  line-height: 1.25;
   color: #222;
 
-  white-space: pre-wrap;
+  white-space: normal;
 
   box-shadow:
     0 4px 12px rgba(0,0,0,0.06),
@@ -203,7 +206,21 @@ body::after {
 }
 
 .notice-card-text {
-  margin-bottom: 5px;
+  margin: 0 0 5px 0;
+  padding: 4px 5px;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  border-radius: 8px;
+  min-height: 18px;
+}
+
+.notice-card-text.editing {
+  background: rgba(255,255,255,0.92);
+  outline: 1px solid rgba(255, 152, 0, 0.55);
+  box-shadow:
+    inset 0 2px 8px rgba(0,0,0,0.04),
+    0 0 10px rgba(255,255,255,0.55);
+  cursor: text;
 }
 
 .notice-actions {
@@ -270,40 +287,6 @@ body::after {
   background: #e68900;
 }
 
-.notice-inline-editor {
-  margin-top: 6px;
-}
-
-.notice-edit-textarea {
-  width: 100%;
-  min-height: 130px;
-  resize: vertical;
-  box-sizing: border-box;
-
-  padding: 9px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 152, 0, 0.45);
-
-  font-family: Arial, sans-serif;
-  font-size: 0.86rem;
-  line-height: 1.35;
-
-  background: rgba(255,255,255,0.92);
-  color: #333;
-
-  box-shadow:
-    inset 0 2px 8px rgba(0,0,0,0.04),
-    0 0 10px rgba(255,255,255,0.45);
-}
-
-.notice-edit-textarea:focus {
-  outline: none;
-  border-color: #ff9800;
-  box-shadow:
-    inset 0 2px 8px rgba(0,0,0,0.04),
-    0 0 10px rgba(255, 152, 0, 0.25);
-}
-
 .notice-inline-actions {
   display: flex;
   justify-content: flex-end;
@@ -314,12 +297,12 @@ body::after {
 .notice-inline-actions button {
   border: none;
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.74rem;
+  padding: 3px 8px;
+  font-size: 0.7rem;
   cursor: pointer;
   background: rgba(255,255,255,0.82);
   color: #333;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
 .notice-save-edit-btn {
@@ -1641,28 +1624,22 @@ function renderNoticeBoard() {
     `;
   } else {
     noticeList.innerHTML = nurseReminders.map((reminder, index) => {
-      return `
-        <div class="notice-card notice-${index % 4}" data-id="${reminder.id}">
-          <div class="notice-card-text" id="noticeText-${reminder.id}">
-            ${escapeHtml(reminder.text)}
-          </div>
+  return `
+    <div class="notice-card notice-${index % 4}" data-id="${reminder.id}">
+      <div class="notice-card-text" id="noticeText-${reminder.id}" contenteditable="false">${escapeHtml(reminder.text)}</div>
 
-          <div class="notice-inline-editor" id="noticeEditor-${reminder.id}" style="display:none;">
-            <textarea class="notice-edit-textarea">${escapeHtml(reminder.text)}</textarea>
+      <div class="notice-inline-actions" id="noticeActions-${reminder.id}" style="display:none;">
+        <button type="button" class="notice-save-edit-btn" data-id="${reminder.id}">Save</button>
+        <button type="button" class="notice-cancel-edit-btn" data-id="${reminder.id}">Cancel</button>
+      </div>
 
-            <div class="notice-inline-actions">
-              <button type="button" class="notice-save-edit-btn" data-id="${reminder.id}">Save</button>
-              <button type="button" class="notice-cancel-edit-btn" data-id="${reminder.id}">Cancel</button>
-            </div>
-          </div>
-
-          <div class="notice-actions" style="display:${canEdit ? 'flex' : 'none'};">
-            <button type="button" class="notice-edit-btn" data-id="${reminder.id}">Edit</button>
-            <button type="button" class="notice-delete-btn" data-id="${reminder.id}">Delete</button>
-          </div>
-        </div>
-      `;
-    }).join('');
+      <div class="notice-actions" style="display:${canEdit ? 'flex' : 'none'};">
+        <button type="button" class="notice-edit-btn" data-id="${reminder.id}">Edit</button>
+        <button type="button" class="notice-delete-btn" data-id="${reminder.id}">Delete</button>
+      </div>
+    </div>
+  `;
+}).join('');
   }
 
   noticeInput.value = '';
@@ -1737,32 +1714,35 @@ function openInlineReminderEditor(id) {
   if (!canEdit) return;
 
   const textDiv = document.getElementById(`noticeText-${id}`);
-  const editorDiv = document.getElementById(`noticeEditor-${id}`);
+  const actionDiv = document.getElementById(`noticeActions-${id}`);
 
-  if (!textDiv || !editorDiv) return;
+  if (!textDiv || !actionDiv) return;
 
-  textDiv.style.display = 'none';
-  editorDiv.style.display = 'block';
+  textDiv.setAttribute('contenteditable', 'true');
+  textDiv.classList.add('editing');
 
-  const textarea = editorDiv.querySelector('.notice-edit-textarea');
-  if (textarea) {
-    textarea.focus();
-    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-  }
+  actionDiv.style.display = 'flex';
+
+  textDiv.focus();
+
+  const range = document.createRange();
+  range.selectNodeContents(textDiv);
+  range.collapse(false);
+
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
 
 function saveInlineReminderEdit(id) {
   if (!canEdit) return;
 
   const reminder = nurseReminders.find(item => item.id === id);
-  const editorDiv = document.getElementById(`noticeEditor-${id}`);
+  const textDiv = document.getElementById(`noticeText-${id}`);
 
-  if (!reminder || !editorDiv) return;
+  if (!reminder || !textDiv) return;
 
-  const textarea = editorDiv.querySelector('.notice-edit-textarea');
-  if (!textarea) return;
-
-  const trimmed = textarea.value.trim();
+  const trimmed = textDiv.innerText.trim();
 
   if (!trimmed) {
     alert("Reminder cannot be empty.");
