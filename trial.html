@@ -1,870 +1,2390 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="header-rays.css?v=1">
-  <script src="auth-guard.js"></script>
-  <title>Vaccines</title>
+<meta charset="UTF-8" />
+<!-- Keep zoomable; we'll handle the "fit to phone" with CSS transform -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-  
-  body {
-  position: relative;
-  margin: 0;
-  padding: 90px 40px 40px;
-  font-family: Tahoma, sans-serif;
-  color: #111;
-  background: none;
-  overflow-x: auto;
+<title>Nurses Roster</title>
+<style>
+html {
+  -webkit-text-size-adjust: 100%; /* prevents font resizing on zoom */
+  text-size-adjust: 100%;
 }
 
-body::before {
+:root{
+  --cal-w: 900px;   /* calendar width (keep same as your design) */
+  --nurse-w: 250px; /* nurse panel width */
+  --gap: 20px;      /* visual gap between nurse panel and calendar */
+
+}
+
+/* ===== Base ===== */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #ededed; /* very light gray */
+  color: #333;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Auto-scaling root:
+   - We scale the whole desktop UI down to fit phone width
+   - Width compensation keeps internal layout intact (no wrapping) */
+
+
+
+/* Subtle frosted overlay effect */
+body::after {
   content: "";
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: url('2b.png') no-repeat center center fixed;
-  background-size: cover;
-  filter: blur(15px) brightness(0.9);
-  z-index: -1;
-  pointer-events: none;
-}
-
-    .notes-cell {
-      max-width: 100%;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      padding: 4px;
-    }
-
-    
-    tr:hover {
-      background-color: #f1f1f1;
-    }
-
-
-  #searchBox {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  width: 180px;
-  z-index: 1000;
-  background: rgba(255 255 255 / 0.8);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid rgba(200 200 200 / 0.6);
-  transition: width 0.3s ease;
-}
-
-
-#searchBox:focus {
-  background: rgba(255 255 255 / 0.85);
-  border-color: rgba(160,160,160,0.8);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
-  outline: none;
-}
-
-#vaccineForm {
-  background: rgba(255 255 255 / 0.6);
-  border-radius: 16px;
-  padding: 20px;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.05);
-  user-select: none;
+  z-index: -1;
 }
 
-#vaccineForm input[type="text"] {
-  background: rgba(255 255 255 / 0.75);
-  border-radius: 14px;
-  border: 1px solid rgba(180,180,180,0.5);
-  padding: 12px 14px;
-  font-size: 14px;
-  color: #222;
-  box-shadow: inset 0 0 8px rgba(255 255 255 / 0.6);
-  backdrop-filter: blur(8px);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+/* Glassy panels (applied to nurse-list by default; calendar gets overridden below) */
+.nurse-list,
+.calendar {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 10px;
 }
 
-#vaccineForm input[type="text"]:focus {
-  background: rgba(255 255 255 / 0.9);
-  box-shadow: inset 0 0 12px rgba(220 220 220 / 0.8);
-  outline: none;
+.calendar-inner {
+  width: 100%;
 }
 
-#vaccineFormWrapper {
-  position: fixed;
-  bottom: 82px;
-  right: 22px;
-  width: min(760px, calc(100vw - 44px));
-  padding: 16px;
-  border-radius: 22px;
+/* ===== Nurse Reminder Board ===== */
+.notice-board {
+  flex: 0 0 250px;
+  width: 250px;
+  max-width: 250px;
 
-  background: rgba(255, 255, 255, 0.42);
-  backdrop-filter: blur(22px) saturate(160%);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  position: sticky;
+  top: 110px;
+  align-self: flex-start;
 
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow:
-    0 14px 34px rgba(80, 80, 120, 0.18),
-    inset 0 0 20px rgba(255, 255, 255, 0.24);
+  max-height: 80vh;
+  overflow-y: auto;
 
-  transform: translateY(calc(100% + 120px));
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(18px) saturate(170%);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.notice-toggle {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 10px;
+  cursor: pointer;
+
+  font-size: 0.9rem;
+  font-weight: 700;
+
+  background: rgba(255,255,255,0.55);
+  color: #333;
+
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.notice-content {
+  margin-top: 10px;
+  display: block;
+}
+
+.notice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notice-card {
+  background: rgba(255,255,255,0.68);
+  border: 1px solid rgba(255,255,255,0.65);
+  border-radius: 12px;
+  padding: 9px 10px;
+
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: #333;
+
+  white-space: pre-wrap;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.notice-editor {
+  margin-top: 12px;
+  display: none;
+}
+
+.notice-editor textarea {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  box-sizing: border-box;
+
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(180,180,180,0.6);
+
+  font-family: Arial, sans-serif;
+  font-size: 0.85rem;
+
+  background: rgba(255,255,255,0.75);
+  color: #333;
+}
+
+.notice-editor button {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.jump-date-picker {
+  position: absolute;
   opacity: 0;
   pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
 
-  transition:
-    transform 0.35s ease,
-    opacity 0.35s ease,
-    box-shadow 0.35s ease;
+/* Header with logo */
+.main-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border-bottom: 1px solid rgba(200,200,200,0.35);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
 
+.main-header .logo {
+  max-height: 70px;
+  object-fit: contain;
+}
+
+/* ===== Auth section ===== */
+.auth-section {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  margin:10px auto 20px auto;
+  text-align:center;
+  font-size:0.85em;
+  padding: 12px;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(14px) saturate(150%);
+  border-radius: 12px;
+  border: 1px solid rgba(200,200,200,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  width: fit-content;
+}
+
+.auth-section input {
+  padding:6px;
+  margin:4px;
+  width:180px;
+  font-size:0.85em;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+
+.auth-section button {
+  padding:4px 10px;
+  font-size:0.8em;
+  margin: 2px;
+  border:none;
+  border-radius:6px;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(8px);
+  color:#333;
+  cursor:pointer;
+  transition: 0.2s ease;
+}
+
+.auth-section button:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+.auth-buttons { margin-top: 6px; }
+
+#loginBtn { background: #4cafef; color: white; }
+#loginBtn:hover { background: #369ed8; }
+#logoutBtn { background: #888; color: white; }
+#logoutBtn:hover { background: #666; }
+
+#userStatus {
+  margin-top: 6px;
+  font-size: 0.8em;
+  color: #444;
+}
+.auth-toggle-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 999px;
+  width: 42px;
+  height: 42px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.auth-toggle-btn:hover {
+  background: rgba(255,255,255,0.42);
+}
+
+.auth-modal.hidden {
+  display: none;
+}
+
+.auth-modal {
+  position: fixed;
+  inset: 0;
   z-index: 5000;
 }
 
-#vaccineFormWrapper.show {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: auto;
+.auth-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.28);
 }
 
-#toggleVaccineFormBtn {
-  position: fixed;
-  right: 22px;
-  bottom: 22px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-
-  background: rgba(255, 255, 255, 0.38);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  box-shadow:
-    0 10px 26px rgba(80, 80, 120, 0.18),
-    inset 0 0 14px rgba(255, 255, 255, 0.28);
-
-  font-size: 30px;
-  line-height: 1;
-  color: #111;
-  cursor: pointer;
-  z-index: 5001;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  transition: transform 0.2s ease, background 0.2s ease;
+.auth-modal-content {
+  position: absolute;
+  top: 90px;
+  right: 16px;
+  width: min(92vw, 340px);
+  z-index: 2;
 }
 
-#toggleVaccineFormBtn:hover {
-  transform: scale(1.06);
-  background: rgba(255, 255, 255, 0.55);
-}
-
-.vaccine-notes-input {
+.modal-auth-section {
   width: 100%;
-  min-height: 64px;
-  max-height: 160px;
-  overflow-y: auto;
-  padding: 10px 12px;
-  border-radius: 14px;
-
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow:
-    inset 0 0 10px rgba(255, 255, 255, 0.22);
-
-  font-family: Tahoma, sans-serif;
-  font-size: 13px;
-  color: #222;
-  outline: none;
-}
-
-.add-vaccine-btn {
-  height: 44px;
-  min-width: 110px;
-  border-radius: 14px;
-
-  background: rgba(255, 255, 255, 0.48);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow:
-    0 8px 18px rgba(80, 80, 120, 0.12),
-    inset 0 0 12px rgba(255, 255, 255, 0.24);
-
-  color: #111;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.edit-input {
-  width: 100%;
+  margin: 0;
   box-sizing: border-box;
+}
+
+.close-auth-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #444;
+  z-index: 3;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===== Layout: Desktop side-by-side ===== */
+.container {
+  position: relative;          /* add this line */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.nurse-list {
+  display: block;
+  position: sticky;    /* fixed so it always stays in place */
+  top: 110px;         /* distance from top of viewport */
+  left: 10px;         /* distance from left of viewport */
+
+  width: var(--nurse-w);
+  max-width: var(--nurse-w);
+
+  max-height: 90vh;          /* scrollable if list is long */
+  overflow-y: auto;
+
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  border: 1px solid rgba(200,200,200,0.4);
+
+  padding: 10px;
+  z-index: 1000;  /* keep above calendar */
+}
+body.logged-in .nurse-list {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;       /* make it fill vertically */
+  overflow-y: auto;
+}
+/* nurse items look draggable */
+.nurse-list .nurse-item {
+  cursor: grab;
+  user-select: none;
   margin-bottom: 8px;
   padding: 8px 10px;
-  border-radius: 12px;
-
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-
-  font-family: Tahoma, sans-serif;
-  font-size: 12px;
-  outline: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: transform 0.15s ease;
 }
 
-.edit-notes-box {
-  min-height: 90px;
-  padding: 10px;
-  border-radius: 14px;
-
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-
-  font-family: Tahoma, sans-serif;
-  font-size: 12px;
-  line-height: 1.45;
-  outline: none;
-  white-space: pre-wrap;
+.nurse-list .nurse-item:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+.nurse-list, .calendar {
+  flex-shrink: 0;
+  min-width: 0;
 }
 
-.edit-tools {
+/* Nurse items */
+.nurse {
   display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
+  align-items: center;
+  margin: 3px 0;
+  justify-content: space-between;
+  position: relative;
+  padding-right: 20px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.nurse.selected { background: rgba(255, 152, 0, 0.15); }
+
+.nurse-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-grow: 1;
+}
+.nurse-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #666;
+  background: #f9f9f9;
+  padding: 6px 8px;
+  border-left: 3px solid #ccc;
+  border-radius: 6px;
+}
+.nurse-note ul {
+  margin: 5px 0 0 15px;
+  padding: 0;
+}
+.nurse-note li {
+  margin: 2px 0;
 }
 
-#notes {
-  background: rgba(255 255 255 / 0.75);
-  border-radius: 14px;
-  padding: 12px;
-  height: 64px;
-  overflow-y: auto;
-  box-shadow: inset 0 0 10px rgba(255 255 255 / 0.8);
-  color: #222;
-  border: 1px solid rgba(180,180,180,0.5);
-  user-select: text;
-  resize: none;
+/* highlight when a nurse is dragged over a day */
+.day.drag-over {
+  outline: 2px dashed #ff9800;
+  background: rgba(255, 152, 0, 0.1);
 }
 
-#vaccineForm > div:last-child button[type="button"] {
-  background: rgba(255 255 255 / 0.75);
+.color-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #aaa;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+.color-box:hover { opacity: 1; border-color: #666; }
+
+.color-picker {
+  position: absolute;
+  left: 70px;
+  top: 1px;
+  display: none;
+}
+
+.shift.leave {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.shift.leave::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.30),
+      rgba(255,255,255,0.10)
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,0.16) 0px,
+      rgba(255,255,255,0.16) 6px,
+      rgba(255,255,255,0.04) 6px,
+      rgba(255,255,255,0.04) 12px
+    );
+}
+
+
+.add-nurse {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.add-nurse input {
+  padding: 2px 4px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 152, 0, 0.6);
+  background: rgba(255, 255, 255, 0.6);
+  color: #333;
+  width: 90px;
+  transition: border 0.3s, box-shadow 0.3s;
+}
+.add-nurse input:focus {
+  outline: none;
+  border: 1px solid #ff9800;
+  box-shadow: 0 0 4px rgba(255, 152, 0, 0.7);
+}
+.add-nurse button {
+  padding: 2px 4px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  border: none;
+  background: #ff9800;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.add-nurse button:hover { background: #e68900; }
+.roster-status {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 8px 0;
+  padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid rgba(180,180,180,0.5);
-  padding: 6px 10px;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 0.88rem;
+  color: #444;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.08);
+  display: none;
+}
+
+.roster-status.show {
+  display: block;
+}
+.calendar {
+  flex: 0 0 var(--cal-w);
+  max-width: var(--cal-w);
+  width: var(--cal-w);
+  margin: 0 auto;
+  padding: 10px;
+
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+
+  justify-self: center;
+  overflow-x: hidden;
+}
+
+/* Calendar header + buttons */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 20px; /* increased from 16px */
+  font-weight: bold; /* optional: makes it more prominent */
+}
+
+.left-buttons {
+  display: flex;
+  gap: 20px;
+}
+
+.right-button {
+  display: flex;
+}
+
+.month-label {
+  text-align: center;
+  flex-grow: 2;
+  font-weight: bold;
+  font-size: 1.2em;
   cursor: pointer;
-  color: #222;
-  box-shadow: 0 0 8px rgba(255 255 255 / 0.7);
-  transition: background 0.25s ease, transform 0.15s ease;
-  user-select: none;
+}
+.month-label::after {
+  content: " ▾";
+  font-size: 0.8em;
 }
 
-#vaccineForm > div:last-child button[type="button"]:hover {
-  background: rgba(255 255 255 / 0.9);
-  transform: scale(1.1);
-}
-
-#vaccineForm button[type="submit"] {
-  background: rgba(230, 230, 230, 0.7);
-  color: #222;
-  font-weight: 600;
-  border-radius: 14px;
-  border: 1px solid rgba(190, 190, 190, 0.8);
-  padding: 10px 18px;
+.btn {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 6px;
+  background: #d8e2dc;
+  color: black;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(200, 200, 200, 0.5);
-  transition: background 0.3s ease;
-  user-select: none;
+  transition: background-color 0.3s ease;
+}
+.btn:hover { background: #e68900; }
+
+/* Weekdays row */
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  text-align: center;
+  margin-bottom: 5px;
+  width: 100%;
+}
+.weekdays div {
+  padding: 8px 0;
+  background: rgba(231, 227, 229, 0.8);
+  border-radius: 4px;
+  border: 1px solid rgba(203, 191, 197, 0.8);
+  font-size: 1rem;
+  font-weight: bold;
 }
 
-#vaccineForm button[type="submit"]:hover {
-  background: rgba(230, 230, 230, 0.9);
-  box-shadow: 0 12px 28px rgba(180, 180, 180, 0.7);
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  width: 100%;
 }
 
-
-#highlightMainBtn,
-.edit-highlight-btn {
-  background: rgba(255, 246, 204, 0.45) !important;
+.day {
+  padding: 10px;
+  border: 1px solid rgba(180, 180, 180, 0.6);
+  border-radius: 12px;
+  min-height: 140px;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(10px) saturate(160%);
   -webkit-backdrop-filter: blur(10px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  box-shadow:
-    0 4px 14px rgba(255, 239, 166, 0.25),
-    inset 0 0 10px rgba(255, 255, 255, 0.35);
-  color: #222;
-}
-
-#highlightMainBtn:hover,
-.edit-highlight-btn:hover {
-  background: rgba(255, 246, 204, 0.68) !important;
-  box-shadow:
-    0 6px 18px rgba(255, 239, 166, 0.35),
-    inset 0 0 12px rgba(255, 255, 255, 0.45);
-}
-
-/* Scrollbar for notes */
-#notes::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-#notes::-webkit-scrollbar-thumb {
-  background: rgba(150 150 150 / 0.6);
-  border-radius: 10px;
-}
-
-/* 🌸 Fixed top title */
-.page-title {
-  position: fixed;
-  top: 18px;
-  left: 40px;
-  z-index: 2500;
-  margin: 0;
-  font-family: 'Courier New', sans-serif;
-  font-size: 24px;
-  font-weight: 700;
-  color: #111;
-}
-
-/* Push page content down so fixed title/menu do not overlap */
-.page-content {
-  margin-top: 70px;
-}
-
-.vaccine-card-grid {
-  column-count: 4;
-  column-gap: 16px;
-  width: 100%;
-}
-.vaccine-card-grid.searching {
-  column-count: unset;
-  column-gap: unset;
-
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.vaccine-card-grid.searching .vaccine-card {
-  display: block;
-  width: 100%;
-  margin: 0;
-}
-
-@media (max-width: 1200px) {
-  .vaccine-card-grid.searching {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 850px) {
-  .vaccine-card-grid.searching {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .vaccine-card-grid.searching {
-    grid-template-columns: 1fr;
-  }
-}
-
-
-@media (max-width: 1200px) {
-  .vaccine-card-grid {
-    column-count: 3;
-  }
-}
-
-@media (max-width: 850px) {
-  .vaccine-card-grid {
-    column-count: 2;
-  }
-}
-
-@media (max-width: 560px) {
-  .vaccine-card-grid {
-    column-count: 1;
-  }
-}
-
-.vaccine-card {
+  display: flex;
+  flex-direction: column;
   position: relative;
-  padding: 16px;
-  border-radius: 22px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  color: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.day-number,
+.day-note,
+.holiday-badge {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.day.weekend { background: rgba(245, 245, 245, 0.4); }
 
-  background: rgba(255, 255, 255, 0.32);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
+.day.today {
+  position: relative;
+  z-index: 2;
+  border: 3px solid #000;
+  border-radius: 15px;
+  background: linear-gradient(
+    135deg,
+    rgba(254, 241, 200, 4),
+    rgba(254, 242, 219, 4)
+  );
+  box-shadow: none;
+}
 
-  border: 1px solid rgba(255, 255, 255, 0.58);
-  box-shadow:
-    0 14px 34px rgba(80, 80, 120, 0.12),
-    inset 0 0 18px rgba(255, 255, 255, 0.18);
+.day.today::before {
+  content: none;
+}
 
-  color: #111;
-  word-wrap: break-word;
-  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
-  
+.day.holiday {
+  background: linear-gradient(
+    135deg,
+    rgba(242, 235, 204, 2),
+    rgba(242, 241, 237, 5)
+  );
+  border: 1px solid rgba(180, 180, 180, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.day.holiday::after {
+  content: none;
+}
+
+.holiday-badge {
   display: inline-block;
-width: 100%;
-margin: 0 0 16px;
-break-inside: avoid;
--webkit-column-break-inside: avoid;
-}
-
-.vaccine-card:hover {
-  transform: translateY(-3px);
-  background: rgba(255, 255, 255, 0.42);
-  box-shadow:
-    0 16px 38px rgba(80, 80, 120, 0.16),
-    inset 0 0 20px rgba(255, 255, 255, 0.22);
-}
-
-.vaccine-card-title {
-  font-size: 15px;
+  margin-left: 4px;
+  max-width: 100%;
+  padding: 1px 6px;
+  font-size: 0.68rem;
   font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.vaccine-card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.vaccine-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 8px;
   border-radius: 999px;
-
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.58);
-
-  font-size: 11px;
-  color: rgba(0, 0, 0, 0.72);
+  background: rgba(255, 0, 0);
+  color: #ffffff;
+  border: 1px solid rgba(255, 0, 0, 0.9);
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-.vaccine-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 9px;
-  border-radius: 999px;
 
-  background: rgba(214, 245, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-
-  font-size: 11px;
-  color: #111;
-  text-decoration: none;
-}
-
-.vaccine-card-notes {
-  font-family: Tahoma, sans-serif;
-  font-size: 12px;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  margin-top: 8px;
-}
-
-.vaccine-card-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 12px;
-
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateY(4px);
-  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
-}
-
-.vaccine-card.actions-visible .vaccine-card-actions,
-.vaccine-card.editing-card .vaccine-card-actions {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-
-.vaccine-card-actions button,
-.edit-tools button {
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  padding: 5px 9px;
-  font-size: 12px;
+.day-number {
+  margin-bottom: 5px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.46);
-  box-shadow:
-    0 6px 14px rgba(80, 80, 120, 0.10),
-    inset 0 0 10px rgba(255, 255, 255, 0.24);
+  color: black;
+  font-size: 1.1rem;
 }
 
-.edit-highlight-btn {
-  background: rgba(255, 246, 204, 0.50) !important;
+.day-note {
+  font-size: 0.8em;
+  color: black;
+  background-color: #feffa3;
+  margin-left: 5px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  user-select: none;
 }
 
-  </style>
-</head>
+.shift {
+  display: block;
+  margin: 2px 0;
+  padding: 5px 22px 5px 8px;
+  border-radius: 6px;
+  font-size: 0.85em;
+  font-weight: 500;
+  text-align: center;
+  color: #fff;
+  background-clip: padding-box;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  line-height: 1.15;
+}
+.delete-btn {
+  user-select: none;
+}
 
-<body>
+.shift.leave .shift-emoji,
+.shift.leave .shift-name,
+.shift.leave .leave-badge {
+  line-height: 1;
+}
 
-  <h1 class="page-title">💉 Vaccines</h1>
+.shift.leave .shift-inline {
+  white-space: nowrap;
+  max-width: 100%;
+}
+.shift .delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 16px;
+  height: 16px;
+  line-height: 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.24);
+  border-radius: 999px;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: background 0.2s ease, transform 0.2s ease;
+  z-index: 2;
+}
 
-  <input type="text" id="searchBox" placeholder="Search..." />
+.shift .delete-btn:hover {
+  background: rgba(0, 0, 0, 0.42);
+  transform: scale(1.05);
+}
 
-  <div class="w-full page-content">
+.shift.leave {
+  white-space: nowrap;
+}
 
-  <div id="vaccineFormWrapper">
-    <form id="vaccineForm" class="grid grid-cols-12 gap-x-1 gap-y-2 items-start">
-  <!-- Input fields -->
-  <input id="inj" type="text" placeholder="Inj" class="border p-2 col-span-1 w-full h-16" required />
-  <input id="name" type="text" placeholder="Vaccine Name" class="border p-2 text-sm col-span-2 w-full h-16" required />
-  <input id="price" type="text" placeholder="Price" class="border p-2 col-span-1 w-full h-16" />
-  <input id="url" type="text" placeholder="Medsafe URL" class="border p-2 text-sm col-span-2 w-full h-16" />
+.day.current-week:not(.today):not(.holiday) {
+  border: 3px solid rgba(200, 200, 200, 0.85);
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 
-  <!-- Notes + Add -->
-<div class="col-span-6 flex items-start space-x-2">
-  <div id="notes" contenteditable="true" class="vaccine-notes-input"></div>
-
-  <button type="submit" class="add-vaccine-btn">Add Vaccine</button>
-</div>
-        </form>
-  </div>
-
-  <button id="toggleVaccineFormBtn" type="button">+</button>
-  <div id="vaccineCards" class="vaccine-card-grid"></div>
+/* Footer */
+footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.5);
+  padding: 10px 0;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  position: relative;
+}
+@media (max-width: 900px) {
+  body {
+    overflow-x: hidden;
+  }
   
+    .container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .notice-board {
+    order: -1;
+    position: relative;
+    top: auto;
+
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+
+    max-height: none;
+    margin-bottom: 12px;
+
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .notice-content {
+    display: none;
+  }
+
+  .notice-board.open .notice-content {
+    display: block;
+  }
+
+  .calendar {
+    order: 1;
+  }
+
+  .nurse-list {
+    order: 2;
+  }
+
+  .container {
+    display: block;
+    padding: 10px;
+    max-width: 100%;
+  }
+
+  .main-header {
+    padding: 10px;
+  }
+
+  .main-header .logo {
+    max-height: 48px;
+    max-width: 90%;
+  }
+
+  .auth-section {
+    width: calc(100% - 20px);
+    max-width: 420px;
+    margin: 10px auto 14px auto;
+    box-sizing: border-box;
+  }
+
+  .auth-section input {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .nurse-list {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: none;
+    margin-bottom: 12px;
+    z-index: 1;
+  }
+
+  body.logged-in .nurse-list {
+    position: relative;
+    top: auto;
+    align-self: auto;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .calendar {
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+    margin: 0;
+    padding: 8px;
+    overflow: visible;
+    position: relative;
+  }
+
+  .calendar-top-sticky {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 80;
+    background: #fff;
+    padding-bottom: 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  }
+
+  .calendar-header {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    padding: 6px 0 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .month-label {
+    grid-column: 1 / -1;
+    order: -1;
+    font-size: 1.18rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 0 2px 0;
+  }
+
+  #prevMonth,
+  #todayBtn,
+  #nextMonth {
+    width: auto;
+    min-width: 0;
+    padding: 5px 8px;
+    font-size: 0.76rem;
+    line-height: 1.1;
+  }
+
+  .calendar-scroll-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .calendar-grid-scroll {
+    margin-top: 6px;
+  }
+
+  .calendar-inner {
+    min-width: 820px;
+    position: relative;
+  }
+
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .weekdays div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    background: rgba(231, 227, 229, 1);
+    border-radius: 4px;
+    border: 1px solid rgba(203, 191, 197, 1);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 6px 0;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+    width: 100%;
+  }
+
+  .day {
+    min-height: 92px;
+    padding: 6px;
+    border-radius: 10px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .day-number {
+    font-size: 0.95rem;
+  }
+
+  .shift {
+  font-size: 0.72rem;
+  padding: 4px 18px 4px 6px;
+  line-height: 1.2;
+}
+
+  .add-nurse {
+    flex-wrap: wrap;
+  }
+
+  .add-nurse input,
+  .add-nurse button {
+    width: 100%;
+  }
+
+  body::after,
+  .main-header,
+  .auth-section,
+  .nurse-list,
+  .calendar,
+  .day {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body::after {
+    background: rgba(255,255,255,0.7);
+  }
+
+  .nurse-list,
+  .calendar,
+  .auth-section,
+  .day {
+    background: rgba(255,255,255,0.85);
+  }
+
+  .auth-toggle-btn {
+    right: 10px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .auth-modal-content {
+    top: 72px;
+    right: 10px;
+    width: calc(100vw - 20px);
+    max-width: 340px;
+  }
+
+  .modal-auth-section {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  footer {
+    padding: 14px 10px 24px;
+  }
+}
+
+
+</style>
+</head>
+<body>
+<div id="zoomRoot">
+  <!-- Header with Logo -->
+  <header class="main-header">
+  <img src="onehealth-logo.png" alt="Onehealth Logo" class="logo">
+
+  <button id="authToggleBtn" class="auth-toggle-btn" aria-label="Open sign in">
+    👤
+  </button>
+</header>
+
+  <!-- Auth Section (minimal under logo) -->
+  <div id="authModal" class="auth-modal hidden">
+  <div class="auth-modal-backdrop" id="authModalBackdrop"></div>
+
+  <div class="auth-modal-content">
+    <button id="closeAuthModalBtn" class="close-auth-btn" aria-label="Close sign in">×</button>
+
+    <div id="authSection" class="auth-section modal-auth-section">
+      <label for="emailInput" class="sr-only">Email</label>
+      <input type="email" id="emailInput" placeholder="Email" />
+
+      <label for="passwordInput" class="sr-only">Password</label>
+      <input type="password" id="passwordInput" placeholder="Password" />
+
+      <div class="auth-buttons">
+        <button id="loginBtn" class="btn">Login</button>
+        <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
+      </div>
+
+      <p id="userStatus">Not signed in</p>
+    </div>
+  </div>
+</div>
+
+  <div class="container">
+    <!-- Nurse List Section -->
+    <div class="nurse-list">
+      <h3>Nurses / HCA</h3>
+      <div id="nurseContainer"></div>
+<h4>Template Day 1</h4>
+<div id="templateDay1" class="day" style="min-height:120px;"></div>
+
+<h4 style="margin-top:12px;">Template Day 2</h4>
+<div id="templateDay2" class="day" style="min-height:120px;"></div>
+
+      <div class="add-nurse">
+        <input type="text" id="newNurseName" placeholder="Add Nurse">
+        <button id="addNurseBtn" class="btn">Add</button>
+      </div>
+
+      <div class="nurse-note">
+        <p>💡 <b>Tips:</b></p>
+        <ul>
+          <li><b>Shift+Click nurse</b> to delete staff</li>
+<li><b>Shift+Click date</b> to toggle holiday</li>
+<li><b>Click shift</b> to choose AL / SL / Study</li>
+<li><b>Right Click shift</b> to edit time</li>
+<li><b>Click ×</b> to delete shift</li>
+        </ul>
+      </div>
+    </div>
+
+
+    <!-- Calendar Section -->
+   <div class="calendar">
+  <div id="rosterStatus" class="roster-status" aria-live="polite"></div>
+  <div class="calendar-top-sticky">
+    <div class="calendar-header">
+      <button class="btn" id="prevMonth">◀</button>
+      <button class="btn" id="todayBtn">Today</button>
+      <button class="btn" id="nextMonth">▶</button>
+      <h2 id="monthYear" class="month-label" title="Choose date"></h2>
+<input type="date" id="jumpDatePicker" class="jump-date-picker" />
+    </div>
+
+    <div class="calendar-scroll-wrapper" id="weekdaysScroll">
+  <div class="calendar-inner">
+    <div class="weekdays">
+          <div>Mon</div><div>Tue</div><div>Wed</div>
+          <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    <div class="calendar-scroll-wrapper calendar-grid-scroll" id="gridScroll">
+    <div class="calendar-inner">
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Nurse Reminder Board -->
+<div class="notice-board" id="noticeBoard">
+  <button id="noticeToggleBtn" class="notice-toggle" type="button">
+    📌 Nurse reminders
+  </button>
+
+  <div id="noticeContent" class="notice-content">
+    <div id="noticeList" class="notice-list">
+      Loading reminders...
+    </div>
+
+    <div id="noticeEditor" class="notice-editor">
+      <textarea id="noticeInput" placeholder="Write reminder for nurses..."></textarea>
+      <button id="saveNoticeBtn" class="btn">Save Reminder</button>
+    </div>
+  </div>
+</div>
+
+  </div>
+
+  <footer>CEP/C 2025</footer>
+</div> <!-- /#zoomRoot -->
+
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import {
-    getFirestore, collection, addDoc, onSnapshot,
-    updateDoc, deleteDoc, doc, serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    getFirestore, doc, setDoc, getDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import {
+    getAuth,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-    authDomain: "cepx-f9d2a.firebaseapp.com",
-    projectId: "cepx-f9d2a",
-    storageBucket: "cepx-f9d2a.appspot.com",
-    messagingSenderId: "840696526325",
-    appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    apiKey: "AIzaSyBZtCGzOb_5klWvVo-2fU7Wp2vnUakA4Rc",
+    authDomain: "ohnurse-43369.firebaseapp.com",
+    projectId: "ohnurse-43369",
+    storageBucket: "ohnurse-43369.firebasestorage.app",
+    messagingSenderId: "1041626418661",
+    appId: "1:1041626418661:web:1d9aeffb23a33baf9c730c",
+    measurementId: "G-ZHKSXSTTXR"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  const vaccineRef = collection(db, "vaccines");
+  const auth = getAuth(app);
 
-  const form = document.getElementById("vaccineForm");
-  const vaccineCards = document.getElementById("vaccineCards");
-  const searchBox = document.getElementById("searchBox");
+  const emailInput = document.getElementById('emailInput');
+  const passwordInput = document.getElementById('passwordInput');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const userStatus = document.getElementById('userStatus');
+  const authToggleBtn = document.getElementById('authToggleBtn');
+const authModal = document.getElementById('authModal');
+const authModalBackdrop = document.getElementById('authModalBackdrop');
+const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
 
-  let fullData = [];
-  let latestData = [];
-  let editId = null;
-  let currentSearch = ""; // <-- persist filter
+  const calendarGrid = document.getElementById('calendarGrid');
+  const monthYear = document.getElementById('monthYear');
+  const jumpDatePicker = document.getElementById('jumpDatePicker');
+  const prevMonthBtn = document.getElementById('prevMonth');
+  const nextMonthBtn = document.getElementById('nextMonth');
+  const todayBtn = document.getElementById('todayBtn');
+  const nurseContainer = document.getElementById('nurseContainer');
+  const newNurseName = document.getElementById('newNurseName');
+  const addNurseBtn = document.getElementById('addNurseBtn');
+  const weekdaysScroll = document.getElementById('weekdaysScroll');
+const gridScroll = document.getElementById('gridScroll');
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+const rosterStatus = document.getElementById('rosterStatus');
+const noticeBoard = document.getElementById('noticeBoard');
+const noticeToggleBtn = document.getElementById('noticeToggleBtn');
+const noticeContent = document.getElementById('noticeContent');
+const noticeList = document.getElementById('noticeList');
+const noticeEditor = document.getElementById('noticeEditor');
+const noticeInput = document.getElementById('noticeInput');
+const saveNoticeBtn = document.getElementById('saveNoticeBtn');
 
-    const inj = document.getElementById("inj").value.trim();
-    const name = document.getElementById("name").value.trim();
-    const price = document.getElementById("price").value.trim();
-    const url = document.getElementById("url").value.trim();
-    const notes = document.getElementById("notes").innerHTML.trim();
+let nurseNotice = '';
 
-    if (inj && name) {
-      await addDoc(vaccineRef, {
-        inj, name, price, url, notes,
-        timestamp: serverTimestamp()
-      });
-      form.reset();
-document.getElementById("notes").innerHTML = '';
-closeVaccineForm();
+  let currentUser = null;
+  let canEdit = false;  // controls if editing is allowed
+
+  // Authorized UIDs for editing rights
+  const authorizedUIDs = [
+    "xEda6HcmfLT16EtTiznHy3FAesj1",  // your UID
+    "OEjMA3NNeFQGP62Yohk5DliXqwH2"   // add staff UIDs here
+  ];
+
+  let roster = {};
+  let nurses = [
+  { name: "Alice", color: "#ff9800", rank: 1 },
+  { name: "Bob", color: "#e65100", rank: 2 },
+  { name: "Carol", color: "#f57c00", rank: 3 }
+];
+  let selectedNurseIndex = null;
+  let currentDate = new Date();
+
+let syncingScroll = false;
+
+monthYear.addEventListener('click', () => {
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const day = String(currentDate.getDate()).padStart(2, '0');
+
+  jumpDatePicker.value = `${year}-${month}-${day}`;
+
+  if (typeof jumpDatePicker.showPicker === 'function') {
+    jumpDatePicker.showPicker();
+  } else {
+    jumpDatePicker.focus();
+    jumpDatePicker.click();
+  }
+});
+
+jumpDatePicker.addEventListener('change', (e) => {
+  if (!e.target.value) return;
+
+  const pickedDate = new Date(e.target.value);
+  if (isNaN(pickedDate.getTime())) return;
+
+  currentDate = pickedDate;
+  renderCalendar();
+});
+
+function syncCalendarScroll() {
+  if (!weekdaysScroll || !gridScroll) return;
+
+  weekdaysScroll.addEventListener('scroll', () => {
+    if (syncingScroll) return;
+    syncingScroll = true;
+    gridScroll.scrollLeft = weekdaysScroll.scrollLeft;
+    syncingScroll = false;
+  });
+
+  gridScroll.addEventListener('scroll', () => {
+    if (syncingScroll) return;
+    syncingScroll = true;
+    weekdaysScroll.scrollLeft = gridScroll.scrollLeft;
+    syncingScroll = false;
+  });
+}
+  /** ---------- Authentication ---------- **/
+  loginBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    if (!email || !password) {
+      alert('Please enter email and password');
+      return;
     }
+    try {
+     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+currentUser = userCredential.user;
+updateUIOnAuth();
+closeAuthModal();
+    } catch (error) {
+      alert('Login failed: ' + error.message);
+    }
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    await signOut(auth);
+currentUser = null;
+updateUIOnAuth();
+closeAuthModal();
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    updateUIOnAuth();
   });
  
-function stripHtml(html) {
-  const div = document.createElement("div");
-  div.innerHTML = html || "";
-  return div.textContent || div.innerText || "";
-}
-
-  function applyFilter() {
-  const query = currentSearch.toLowerCase();
-
-  vaccineCards.classList.toggle("searching", !!query);
-
-  if (!query) {
-    latestData = [...fullData];
+ function updateUIOnAuth() {
+  if (currentUser) {
+    userStatus.textContent = `Signed in as ${currentUser.email}`;
+    loginBtn.style.display = 'none';
+    emailInput.style.display = 'none';
+    passwordInput.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
   } else {
-      latestData = fullData.filter(({ data }) => {
-        const v = data;
-        return (
-          (v.inj || '').toLowerCase().includes(query) ||
-          (v.name || '').toLowerCase().includes(query) ||
-          (v.price || '').toLowerCase().includes(query) ||
-          stripHtml(v.notes || '').toLowerCase().includes(query)
-        );
-      });
-    }
+    userStatus.textContent = 'Not signed in';
+    loginBtn.style.display = 'inline-block';
+    emailInput.style.display = 'inline-block';
+    passwordInput.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
   }
+
+  authToggleBtn.textContent = currentUser ? '✅' : '👤';
+  authToggleBtn.setAttribute('aria-label', currentUser ? 'Open account menu' : 'Open sign in');
+
+  checkEditPermission();
+}
+
+  function checkEditPermission() {
+    canEdit = currentUser && authorizedUIDs.includes(currentUser.uid);
+    toggleEditUI();
+  }
+  function openAuthModal() {
+  authModal.classList.remove('hidden');
+}
+
+function closeAuthModal() {
+  authModal.classList.add('hidden');
+}
+
+  function toggleEditUI() {
+  addNurseBtn.disabled = !canEdit;
+  newNurseName.disabled = !canEdit;
+  addNurseBtn.style.opacity = canEdit ? '1' : '0.5';
+  newNurseName.style.opacity = canEdit ? '1' : '0.5';
+
+  const nurseList = document.querySelector('.nurse-list');
+
+  // Left admin panel only appears when signed in
+  nurseList.style.display = currentUser ? 'block' : 'none';
+
+  // Reminder editor only appears for authorised editor
+  if (noticeEditor) {
+    noticeEditor.style.display = canEdit ? 'block' : 'none';
+  }
+
+  document.body.classList.toggle('logged-in', !!currentUser);
+
+  renderNoticeBoard();
+}
   
-  function escapeAttr(value) {
-  return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+function showRosterStatus(message) {
+  if (!rosterStatus) return;
+  rosterStatus.textContent = message;
+  rosterStatus.classList.add('show');
 }
 
-  function renderCards() {
-  vaccineCards.innerHTML = "";
+function hideRosterStatus() {
+  if (!rosterStatus) return;
+  rosterStatus.textContent = '';
+  rosterStatus.classList.remove('show');
+}
+  /** ---------- Firebase Data ---------- **/
+ async function loadData() {
+  try {
+    showRosterStatus("Loading roster...");
 
-  latestData.forEach(docSnap => {
-    const v = docSnap.data;
-    const id = docSnap.id;
+    const docRef = doc(db, "nursesRoster", "main");
+    const docSnap = await getDoc(docRef);
 
-    const card = document.createElement("div");
-    card.className = "vaccine-card";
-    card.dataset.id = id;
+    if (docSnap.exists()) {
+      const data = docSnap.data();
 
-    if (editId === id) {
-      card.classList.add("editing-card");
-    }
+      roster = data.roster || {};
+      nurses = data.nurses || nurses;
+	  nurseNotice = data.nurseNotice || '';
+	  
 
-    let pressTimer;
+      templateShifts1.length = 0;
+      templateShifts2.length = 0;
 
-    card.addEventListener("pointerdown", (e) => {
-      if (e.target.closest("button, a, input, textarea, [contenteditable='true']")) return;
-
-      pressTimer = setTimeout(() => {
-        card.classList.add("actions-visible");
-      }, 600);
-    });
-
-    card.addEventListener("pointerup", () => {
-      clearTimeout(pressTimer);
-    });
-
-    card.addEventListener("pointerleave", () => {
-      clearTimeout(pressTimer);
-    });
-
-    if (editId === id) {
-      card.innerHTML = `
-        <input class="edit-input" id="edit-inj" value="${escapeAttr(v.inj)}" placeholder="Type">
-		<input class="edit-input" id="edit-name" value="${escapeAttr(v.name)}" placeholder="Vaccine name">
-		<input class="edit-input" id="edit-price" value="${escapeAttr(v.price)}" placeholder="Price">
-		<input class="edit-input" id="edit-url" value="${escapeAttr(v.url)}" placeholder="Medsafe URL">
-
-        <div class="edit-tools">
-          <button type="button" class="edit-bold-btn">B</button>
-          <button type="button" class="edit-highlight-btn">Highlight</button>
-        </div>
-
-        <div id="edit-notes"
-             contenteditable="true"
-             class="edit-notes-box">${v.notes || ''}</div>
-
-        <div class="vaccine-card-actions">
-          <button onclick="saveVaccine()">Save</button>
-          <button onclick="cancelEdit()">Cancel</button>
-        </div>
-      `;
-
-      vaccineCards.appendChild(card);
-
-      const editNotes = card.querySelector("#edit-notes");
-      const editBoldBtn = card.querySelector(".edit-bold-btn");
-      const editHighlightBtn = card.querySelector(".edit-highlight-btn");
-
-      editBoldBtn.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        editNotes.focus();
-        document.execCommand("bold");
-      });
-
-      editHighlightBtn.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        editNotes.focus();
-        document.execCommand("hiliteColor", false, "#fff6cc");
-      });
-
+      templateShifts1.push(...(data.templateShifts1 || data.templateShifts || []));
+      templateShifts2.push(...(data.templateShifts2 || []));
     } else {
-      card.innerHTML = `
-        <div class="vaccine-card-title">💉 ${v.name || 'Untitled vaccine'}</div>
+  roster = {};
+  nurseNotice = '';
+  templateShifts1.length = 0;
+  templateShifts2.length = 0;
+}
 
-        <div class="vaccine-card-meta">
-          ${v.inj ? `<span class="vaccine-pill">${v.inj}</span>` : ""}
-          ${v.price ? `<span class="vaccine-pill">${v.price}</span>` : ""}
-          ${v.url ? `<a class="vaccine-link" href="${v.url}" target="_blank">Medsafe</a>` : ""}
-        </div>
+    normalizeNurseRanks();
+    syncShiftColorsWithNurses();
 
-        <div class="vaccine-card-notes">${v.notes || ""}</div>
+    renderNurseList();
+	renderCalendar();
+	renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+	renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+	renderNoticeBoard();
 
-        <div class="vaccine-card-actions">
-          <button onclick="editVaccine('${id}')">Edit</button>
-          <button onclick="deleteVaccine('${id}')">Delete</button>
-        </div>
-      `;
+    hideRosterStatus();
+  } catch (error) {
+    console.error("Failed to load data from Firestore:", error);
 
-      vaccineCards.appendChild(card);
+    roster = roster || {};
+    renderNurseList();
+	renderCalendar();
+	renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+	renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+	renderNoticeBoard();
+
+    showRosterStatus("Roster could not be loaded right now.");
+  }
+}
+function normalizeNurseRanks() {
+  nurses.forEach((nurse, index) => {
+    if (typeof nurse.rank !== 'number' || isNaN(nurse.rank)) {
+      nurse.rank = index + 1;
     }
   });
 }
 
+function getNurseHierarchyIndex(nurseName) {
+  const index = nurses.findIndex(n => n.name === nurseName);
+  return index === -1 ? 999 : index;
+}
 
-  onSnapshot(vaccineRef, snapshot => {
-    fullData = snapshot.docs.map(doc => ({
-      id: doc.id,
-      data: doc.data()
-    }));
+  async function saveData() {
+  if (!canEdit) {
+    alert("You do not have permission to edit.");
+    return;
+  }
+  try {
+    await setDoc(doc(db, "nursesRoster", "main"), { roster, nurses }, { merge: true });
+  } catch (error) {
+    console.error("Error saving data:", error);
+    alert("Failed to save data. Check console.");
+  }
+}
 
-    // preserve current search
-    applyFilter();
-    renderCards();
-  });
+function renderNoticeBoard() {
+  if (!noticeList || !noticeInput || !noticeEditor) return;
 
-  window.editVaccine = (id) => {
-  editId = id;
-  renderCards();
+  const text = nurseNotice.trim();
 
-  requestAnimationFrame(() => {
-    const editedCard = document.querySelector(`.vaccine-card[data-id="${id}"]`);
-    if (editedCard) {
-      editedCard.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
+  if (!text) {
+    noticeList.innerHTML = `
+      <div class="notice-card">
+        No reminders at the moment.
+      </div>
+    `;
+  } else {
+    noticeList.innerHTML = `
+      <div class="notice-card">${escapeHtml(text)}</div>
+    `;
+  }
+
+  noticeInput.value = nurseNotice || '';
+  noticeEditor.style.display = canEdit ? 'block' : 'none';
+}
+
+async function saveNoticeBoard() {
+  if (!canEdit) {
+    alert("You do not have permission to edit reminders.");
+    return;
+  }
+
+  nurseNotice = noticeInput.value.trim();
+
+  try {
+    await setDoc(doc(db, "nursesRoster", "main"), {
+      nurseNotice
+    }, { merge: true });
+
+    renderNoticeBoard();
+  } catch (error) {
+    console.error("Failed to save reminder:", error);
+    alert("Failed to save reminder. Check console.");
+  }
+}
+
+function escapeHtml(text) {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function getLeaveDisplay(shift) {
+  const leaveType = shift.leaveType || '';
+
+  if (leaveType === 'AL') {
+    return { text: '🌴 AL', isLeave: true };
+  }
+
+  if (leaveType === 'SL') {
+    return { text: '🤒 SL', isLeave: true };
+  }
+
+  if (leaveType === 'Study') {
+    return { text: '📘 Study', isLeave: true };
+  }
+
+  return {
+    text: shift.time || 'Shift',
+    isLeave: false
+  };
+}
+
+  /** ---------- Nurse List ---------- **/
+  function renderNurseList() {
+    nurseContainer.innerHTML = '';
+    nurses.forEach((nurse, idx) => {
+      const div = document.createElement('div');
+      div.classList.add('nurse');
+      div.draggable = canEdit;  // ✅ make draggable
+      div.dataset.index = idx;
+
+      if (selectedNurseIndex === idx) div.classList.add('selected');
+
+      const infoDiv = document.createElement('div');
+      infoDiv.classList.add('nurse-info');
+
+      const colorBox = document.createElement('div');
+      colorBox.classList.add('color-box');
+      colorBox.style.background = nurse.color;
+
+      const colorPicker = document.createElement('input');
+      colorPicker.type = 'color';
+      colorPicker.value = nurse.color;
+      colorPicker.classList.add('color-picker');
+      colorPicker.style.display = 'none'; 
+
+      colorBox.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!canEdit) return;
+        document.querySelectorAll('.color-picker').forEach(p => {
+          if (p !== colorPicker) p.style.display = 'none';
+        });
+        colorPicker.style.display = colorPicker.style.display === 'block' ? 'none' : 'block';
       });
 
-      const firstInput = editedCard.querySelector(".edit-input");
-      if (firstInput) firstInput.focus();
-    }
-  });
-};
+      colorPicker.addEventListener('mousedown', e => e.stopPropagation());
+      colorPicker.addEventListener('click', e => e.stopPropagation());
+      colorPicker.addEventListener('dragstart', e => e.stopPropagation());
 
-  window.cancelEdit = () => {
-    editId = null;
-    renderCards();
-  };
+      colorPicker.addEventListener('input', (e) => {
+        if (!canEdit) return;
+        nurse.color = e.target.value;
+syncShiftColorsWithNurses();
+saveData();
+renderNurseList();
+renderCalendar();
+renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+      });
 
-  window.saveVaccine = async () => {
-    if (!editId) return;
+      infoDiv.appendChild(colorBox);
+      infoDiv.appendChild(document.createTextNode(`${nurse.rank}. ${nurse.name}`));
 
-    const inj = document.getElementById("edit-inj").value.trim();
-    const name = document.getElementById("edit-name").value.trim();
-    const price = document.getElementById("edit-price").value.trim();
-    const url = document.getElementById("edit-url").value.trim();
-    const notes = document.getElementById("edit-notes").innerHTML.trim();
+      // ✅ Updated click handler for selection and shift+click deletion
+      infoDiv.addEventListener('click', (e) => {
+        if (!canEdit) return;
 
-    if (inj && name) {
-      const docRef = doc(db, "vaccines", editId);
-      await updateDoc(docRef, { inj, name, price, url, notes, timestamp: serverTimestamp() });
-      editId = null;
-      // reapply current filter after edit
-      applyFilter();
-      renderCards();
-    }
-  };
+        if (e.shiftKey) {
+          // Shift+click → delete nurse
+          if (confirm(`Delete nurse ${nurse.name}?`)) {
+  nurses.splice(idx, 1);
 
-  window.deleteVaccine = async (id) => {
-    await deleteDoc(doc(db, "vaccines", id));
-  };
-
-  searchBox.addEventListener("input", () => {
-    currentSearch = searchBox.value; // store current filter
-    applyFilter();
-    renderCards();
+  nurses.forEach((n, i) => {
+    n.rank = i + 1;
   });
 
-  // Text formatting function
-  window.formatText = function (command, value = null) {
-    document.execCommand(command, false, value);
-  };
+  if (selectedNurseIndex === idx) selectedNurseIndex = null;
 
-    // Keyboard shortcuts for formatting
-  document.addEventListener("keydown", function (e) {
-    if (e.ctrlKey) {
-      const active = document.activeElement;
-      if (active && active.isContentEditable) {
-        switch (e.key.toLowerCase()) {
-          case "b":
-            e.preventDefault();
-            formatText("bold");
-            break;
-          case "u":
-            e.preventDefault();
-            formatText("underline");
-            break;
-          case "h":
-            e.preventDefault();
-            formatText("hiliteColor", "#fff6cc");
-            break;
+  saveData();
+  renderNurseList();
+  renderCalendar();
+  renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+  renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+}
+        } else {
+          // Normal click → select nurse
+          selectedNurseIndex = idx;
+          renderNurseList();
         }
+      });
+
+      div.appendChild(infoDiv);
+      div.appendChild(colorPicker);
+	  
+	 if (canEdit) {
+  const rankInput = document.createElement('input');
+  rankInput.type = 'number';
+  rankInput.min = '1';
+  rankInput.step = '1';
+  rankInput.value = nurse.rank || idx + 1;
+  rankInput.style.width = '52px';
+  rankInput.style.marginLeft = '6px';
+  rankInput.style.borderRadius = '6px';
+  rankInput.style.border = '1px solid #ccc';
+  rankInput.style.padding = '2px 4px';
+  rankInput.style.cursor = 'text';
+
+  ['click', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'dblclick'].forEach(evt => {
+    rankInput.addEventListener(evt, (e) => e.stopPropagation());
+  });
+
+  function applyRankChange() {
+    let newRank = parseInt(rankInput.value, 10);
+    if (isNaN(newRank) || newRank < 1) newRank = 1;
+    if (newRank > nurses.length) newRank = nurses.length;
+
+    const oldIndex = nurses.findIndex(n => n === nurse);
+    if (oldIndex === -1) return;
+
+    const movedNurse = nurses.splice(oldIndex, 1)[0];
+    nurses.splice(newRank - 1, 0, movedNurse);
+
+    nurses.forEach((n, i) => {
+      n.rank = i + 1;
+    });
+
+    saveData();
+    renderNurseList();
+    renderCalendar();
+    renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+    renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+  }
+
+  rankInput.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') {
+      applyRankChange();
+      rankInput.blur();
+    }
+  });
+
+  rankInput.addEventListener('blur', applyRankChange);
+
+  div.appendChild(rankInput);
+}
+      // ✅ Dragstart handler
+      div.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('nurseIndex', idx);
+      });
+
+      nurseContainer.appendChild(div);
+    });
+  }
+
+  /** ---------- Global Listener to Close Color Pickers ---------- **/
+  document.addEventListener('pointerdown', (e) => {
+    const isInside = e.target.closest('.color-picker, .color-box');
+    if (!isInside) {
+      document.querySelectorAll('.color-picker').forEach(p => p.style.display = 'none');
+    }
+  });
+
+  function getRandomColor() {
+    const colors = ['#ff9800', '#e65100', '#f57c00', '#ffb74d', '#ef6c00'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+addNurseBtn.addEventListener('click', () => {
+  if (!canEdit) {
+    alert("You do not have permission to add nurses.");
+    return;
+  }
+
+  const name = newNurseName.value.trim();
+  if (name) {
+    nurses.push({
+      name,
+      color: getRandomColor(),
+      rank: nurses.length + 1
+    });
+
+    newNurseName.value = '';
+    saveData();
+    renderNurseList();
+    renderCalendar();
+    renderTemplateDay(templateDay1, templateShifts1, 'Template 1');
+    renderTemplateDay(templateDay2, templateShifts2, 'Template 2');
+  }
+});
+  
+
+  /** ---------- Calendar ---------- **/
+  function createShiftElement(shift, key, shiftIndex) {
+  const shiftDiv = document.createElement('div');
+  shiftDiv.classList.add('shift');
+  shiftDiv.style.backgroundColor = shift.color;
+
+  const rgb = parseInt(shift.color.slice(1), 16);
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >> 8) & 0xff;
+  const b = rgb & 0xff;
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  shiftDiv.style.color = brightness > 150 ? "#000" : "#fff";
+
+  const leaveDisplay = getLeaveDisplay(shift);
+shiftDiv.innerHTML = `${shift.name}: ${leaveDisplay.text}`;
+
+if (leaveDisplay.isLeave) {
+  shiftDiv.classList.add('leave');
+}
+
+
+  shiftDiv.draggable = canEdit;
+
+  if (canEdit) {
+    shiftDiv.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const currentShift = roster[key].shifts[shiftIndex];
+      if (!currentShift) return;
+
+      const newTime = prompt(
+        `Edit shift time for ${shift.name}:`,
+        currentShift.time || "Shift"
+      );
+
+      if (newTime !== null) {
+        const trimmed = newTime.trim();
+        currentShift.time = trimmed || "Shift";
+        saveData();
+        renderCalendar();
+      }
+    });
+
+    shiftDiv.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', JSON.stringify(shift));
+    });
+  }
+
+  shiftDiv.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!canEdit) return;
+
+    const currentShift = roster[key].shifts[shiftIndex];
+    if (!currentShift) return;
+
+    const currentLeave = currentShift.leaveType || '';
+    const picked = prompt(
+      `Leave type for ${shift.name}\n\nType one of:\nAL\nSL\nStudy\n\nLeave blank to clear`,
+      currentLeave
+    );
+
+    if (picked === null) return;
+
+    const normalized = picked.trim();
+    const valid = ['', 'AL', 'SL', 'Study'];
+
+    if (!valid.includes(normalized)) {
+      alert('Please enter AL, SL, Study, or leave it blank.');
+      return;
+    }
+
+    currentShift.leaveType = normalized;
+    saveData();
+    renderCalendar();
+  });
+
+  if (canEdit) {
+    const deleteBtn = document.createElement('span');
+    deleteBtn.textContent = '×';
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.title = 'Delete shift';
+
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!confirm(`Delete shift for ${shift.name}?`)) return;
+
+      roster[key].shifts.splice(shiftIndex, 1);
+      saveData();
+      renderCalendar();
+    });
+
+    shiftDiv.appendChild(deleteBtn);
+  }
+
+  return shiftDiv;
+}
+
+function renderDayCell(year, month, day) {
+  const key = `${year}-${month}-${day}`;
+  if (!roster[key]) roster[key] = { shifts: [], notes: '', isHoliday: false };
+  if (typeof roster[key].isHoliday !== 'boolean') roster[key].isHoliday = false;
+
+  const dayCell = document.createElement('div');
+  dayCell.classList.add('day');
+  dayCell.dataset.dayKey = key;
+
+  const date = new Date(year, month, day);
+  dayCell.dataset.date = date.toDateString();
+
+  if (roster[key].isHoliday) {
+    dayCell.classList.add('holiday');
+  }
+
+  if (date.getDay() === 0 || date.getDay() === 6) {
+    dayCell.classList.add('weekend');
+  }
+
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) {
+    dayCell.classList.add('today');
+  }
+
+  const dayNumber = document.createElement('div');
+  dayNumber.classList.add('day-number');
+  dayNumber.innerHTML =
+    `${day}` +
+    (roster[key].isHoliday ? ` <span class="holiday-badge">Holiday</span>` : '') +
+    (roster[key].notes ? ` <span class="day-note">${roster[key].notes}</span>` : '');
+
+  dayNumber.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!canEdit) return;
+
+    if (e.shiftKey) {
+      roster[key].isHoliday = !roster[key].isHoliday;
+      saveData();
+      renderCalendar();
+      return;
+    }
+
+    const note = prompt('Enter notes for this day:', roster[key].notes || '');
+    if (note !== null) {
+      roster[key].notes = note;
+      saveData();
+      renderCalendar();
+    }
+  });
+
+  const dragHandle = document.createElement('span');
+  dragHandle.textContent = '⇅';
+  dragHandle.style.cursor = canEdit ? 'grab' : 'default';
+  dragHandle.title = 'Drag all shifts of this day';
+  dragHandle.draggable = canEdit;
+
+  if (canEdit) {
+    dragHandle.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      const allShifts = roster[key].shifts || [];
+      e.dataTransfer.setData('text/day-shifts', JSON.stringify(allShifts));
+    });
+  }
+
+  const header = document.createElement('div');
+  header.style.display = 'flex';
+  header.style.justifyContent = 'space-between';
+  header.style.alignItems = 'center';
+  header.appendChild(dayNumber);
+  header.appendChild(dragHandle);
+
+  dayCell.appendChild(header);
+
+  if (canEdit) {
+    dayCell.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dayCell.classList.add('drag-over');
+    });
+
+    dayCell.addEventListener('dragleave', () => {
+      dayCell.classList.remove('drag-over');
+    });
+
+    dayCell.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dayCell.classList.remove('drag-over');
+
+      const nurseIndex = e.dataTransfer.getData('nurseIndex');
+      if (nurseIndex !== '') {
+        const nurse = nurses[nurseIndex];
+        roster[key].shifts.push({
+          name: nurse.name,
+          color: nurse.color,
+          time: "Shift",
+          leaveType: ""
+        });
+        saveData();
+        renderCalendar();
+        return;
+      }
+
+      const dayShiftsData = e.dataTransfer.getData('text/day-shifts');
+      if (dayShiftsData) {
+        const shifts = JSON.parse(dayShiftsData);
+        roster[key].shifts = roster[key].shifts.concat(shifts.map(s => ({ ...s })));
+        saveData();
+        renderCalendar();
+        return;
+      }
+
+      const templateShiftData = e.dataTransfer.getData('text/template-shift');
+      if (templateShiftData) {
+        const shift = JSON.parse(templateShiftData);
+        roster[key].shifts.push(shift);
+        saveData();
+        renderCalendar();
+        return;
+      }
+
+      const allTemplateShiftsData = e.dataTransfer.getData('text/all-template-shifts');
+      if (allTemplateShiftsData) {
+        const shifts = JSON.parse(allTemplateShiftsData);
+        roster[key].shifts = roster[key].shifts.concat(shifts.map(s => ({ ...s })));
+        saveData();
+        renderCalendar();
+        return;
+      }
+
+      const shiftData = e.dataTransfer.getData('text/plain');
+      if (shiftData) {
+        const shift = JSON.parse(shiftData);
+        roster[key].shifts.push(shift);
+        saveData();
+        renderCalendar();
+      }
+    });
+  }
+
+  const sortedShifts = [...roster[key].shifts].sort((a, b) => {
+    const indexA = getNurseHierarchyIndex(a.name);
+    const indexB = getNurseHierarchyIndex(b.name);
+
+    if (indexA !== indexB) return indexA - indexB;
+    return a.name.localeCompare(b.name);
+  });
+
+  sortedShifts.forEach((shift) => {
+    const originalIndex = roster[key].shifts.findIndex(
+      s =>
+        s.name === shift.name &&
+        s.time === shift.time &&
+        s.color === shift.color &&
+        (s.leaveType || '') === (shift.leaveType || '')
+    );
+
+    dayCell.appendChild(createShiftElement(shift, key, originalIndex));
+  });
+
+  return dayCell;
+}
+function renderCalendar() {
+  calendarGrid.innerHTML = '';
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  monthYear.textContent =
+    currentDate.toLocaleString('default', { month: 'long' }) + ' ' + year;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const leadingBlanks = (firstDay === 0 ? 6 : firstDay - 1);
+
+  // Add empty cells for alignment
+  for (let i = 0; i < leadingBlanks; i++) {
+    calendarGrid.appendChild(document.createElement('div'));
+  }
+
+  const today = new Date();
+  const todayStr = today.toDateString();
+
+  // --- Fixed week calculation (Monday–Sunday) ---
+  function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = Sunday, 1 = Monday
+  const diff = (day + 6) % 7; // 0=Sunday→6, 1=Monday→0, 2=Tuesday→1 ...
+  d.setDate(d.getDate() - diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function getWeekEnd(monday) {
+  const d = new Date(monday);
+  d.setDate(d.getDate() + 6);
+  d.setHours(23,59,59,999);
+  return d;
+}
+
+
+  const currentWeekMonday = getWeekStart(today);
+  const currentWeekSunday = getWeekEnd(currentWeekMonday);
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayCell = renderDayCell(year, month, day);
+
+    const cellDate = new Date(year, month, day);
+    const cellStr = cellDate.toDateString();
+
+    // Highlight today
+    if (cellStr === todayStr) {
+      dayCell.classList.add('today');
+    }
+
+    // Highlight current week — check if this day is within the same week as today
+    if (cellDate >= currentWeekMonday && cellDate <= currentWeekSunday) {
+      dayCell.classList.add('current-week');
+    }
+
+    calendarGrid.appendChild(dayCell);
+  }
+}
+
+// Month navigation (FIXED: prevents month skipping)
+prevMonthBtn.addEventListener("click", () => {
+  currentDate.setDate(1);                 // ← ADD THIS
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar();
+});
+
+nextMonthBtn.addEventListener("click", () => {
+  currentDate.setDate(1);                 // ← ADD THIS
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar();
+});
+
+
+// Today button
+todayBtn.addEventListener("click", () => {
+  currentDate = new Date(); // reset to today
+  renderCalendar();
+
+  // Scroll to the current week
+  setTimeout(() => {
+    const todayCell = calendarGrid.querySelector('.today');
+    if (todayCell) {
+      todayCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 50);
+});
+
+function syncShiftColorsWithNurses() {
+  for (const dayKey in roster) {
+    if (!roster[dayKey].shifts) continue;
+    roster[dayKey].shifts.forEach(shift => {
+      const nurse = nurses.find(n => n.name === shift.name);
+      if (nurse) shift.color = nurse.color;
+    });
+  }
+
+  [templateShifts1, templateShifts2].forEach(templateShifts => {
+    templateShifts.forEach(shift => {
+      const nurse = nurses.find(n => n.name === shift.name);
+      if (nurse) shift.color = nurse.color;
+    });
+  });
+}
+
+
+// ------------------- TEMPLATE HANDLING -------------------
+
+// ---------------- Template Drag/Drop ----------------
+const templateDay1 = document.getElementById('templateDay1');
+const templateDay2 = document.getElementById('templateDay2');
+
+let templateShifts1 = [];
+let templateShifts2 = [];
+
+// ---------------- Firestore Template ----------------
+
+
+async function saveTemplate() {
+  try {
+    await setDoc(doc(db, "nursesRoster", "main"), {
+      templateShifts1: templateShifts1.map(s => ({ ...s })),
+      templateShifts2: templateShifts2.map(s => ({ ...s }))
+    }, { merge: true });
+  } catch (err) {
+    console.error("Failed to save template:", err);
+  }
+}
+
+// ---------------- Render Template ----------------
+function renderTemplateDay(templateEl, templateShifts, labelText) {
+  templateEl.innerHTML = '';
+
+  // Make template day draggable like a real day
+  templateEl.draggable = canEdit;
+
+  // allow dragging the ENTIRE template day
+  if (canEdit) {
+    templateEl.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      e.dataTransfer.setData(
+        'text/day-shifts',
+        JSON.stringify(templateShifts.map(s => ({ ...s })))
+      );
+    });
+  }
+
+  // ---------- Header ----------
+  const header = document.createElement('div');
+  header.style.display = 'flex';
+  header.style.justifyContent = 'space-between';
+  header.style.alignItems = 'center';
+
+  const label = document.createElement('div');
+  label.className = 'day-number';
+  label.textContent = labelText;
+
+  const dragHandle = document.createElement('span');
+  dragHandle.textContent = '⇅';
+  dragHandle.style.cursor = canEdit ? 'grab' : 'default';
+  dragHandle.draggable = canEdit;
+
+  if (canEdit) {
+    dragHandle.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      e.dataTransfer.setData(
+        'text/day-shifts',
+        JSON.stringify(templateShifts.map(s => ({ ...s })))
+      );
+    });
+  }
+
+  header.appendChild(label);
+  header.appendChild(dragHandle);
+  templateEl.appendChild(header);
+
+  // ---------- Sort shifts by nurse rank ----------
+  const sortedTemplateShifts = [...templateShifts].sort((a, b) => {
+  const indexA = getNurseHierarchyIndex(a.name);
+  const indexB = getNurseHierarchyIndex(b.name);
+
+  if (indexA !== indexB) return indexA - indexB;
+  return a.name.localeCompare(b.name);
+});
+
+  // ---------- Shifts ----------
+  sortedTemplateShifts.forEach((shift) => {
+    const idx = templateShifts.findIndex(
+  s =>
+    s.name === shift.name &&
+    s.time === shift.time &&
+    s.color === shift.color &&
+    (s.leaveType || '') === (shift.leaveType || '')
+);
+
+    const shiftDiv = document.createElement('div');
+    shiftDiv.className = 'shift';
+    shiftDiv.style.backgroundColor = shift.color;
+    
+	const leaveDisplay = getLeaveDisplay(shift);
+shiftDiv.innerHTML = `${shift.name}: ${leaveDisplay.text}`;
+
+if (leaveDisplay.isLeave) {
+  shiftDiv.classList.add('leave');
+}
+    shiftDiv.draggable = canEdit;
+
+    // RIGHT CLICK = EDIT
+    shiftDiv.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      if (!canEdit) return;
+
+      const newTime = prompt(
+        `Edit shift for ${shift.name}:`,
+        shift.time || ''
+      );
+
+      if (newTime !== null) {
+        const trimmed = newTime.trim();
+        if (trimmed !== '') {
+          templateShifts[idx].time = trimmed;
+          renderTemplateDay(templateEl, templateShifts, labelText);
+          saveTemplate();
+        }
+      }
+    });
+	shiftDiv.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!canEdit) return;
+
+  const currentLeave = templateShifts[idx].leaveType || '';
+  const picked = prompt(
+    `Leave type for ${shift.name}\n\nType one of:\nAL\nSL\nStudy\n\nLeave blank to clear`,
+    currentLeave
+  );
+
+  if (picked === null) return;
+
+  const normalized = picked.trim();
+  const valid = ['', 'AL', 'SL', 'Study'];
+
+  if (!valid.includes(normalized)) {
+    alert('Please enter AL, SL, Study, or leave it blank.');
+    return;
+  }
+
+  templateShifts[idx].leaveType = normalized;
+  saveTemplate();
+  renderTemplateDay(templateEl, templateShifts, labelText);
+});
+
+  if (canEdit) {
+  const deleteBtn = document.createElement('span');
+  deleteBtn.textContent = '×';
+  deleteBtn.className = 'delete-btn';
+  deleteBtn.title = `Delete shift for ${shift.name}`;
+
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!confirm(`Delete shift for ${shift.name} from ${labelText}?`)) return;
+
+    templateShifts.splice(idx, 1);
+    saveTemplate();
+    renderTemplateDay(templateEl, templateShifts, labelText);
+  });
+
+  shiftDiv.appendChild(deleteBtn);
+}
+
+    templateEl.appendChild(shiftDiv);
+  });
+}
+
+
+// ---------------- Template Drag/Drop ----------------
+function setupTemplateDragDrop(templateEl, templateShifts, labelText) {
+  templateEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    templateEl.classList.add('drag-over');
+  });
+
+  templateEl.addEventListener('dragleave', () => {
+    templateEl.classList.remove('drag-over');
+  });
+
+  templateEl.addEventListener('drop', e => {
+    e.preventDefault();
+    templateEl.classList.remove('drag-over');
+    if (!canEdit) return;
+
+    // 1. Nurse dragged from nurse list
+    const nurseIndex = e.dataTransfer.getData('nurseIndex');
+    if (nurseIndex !== '') {
+      const nurse = nurses[nurseIndex];
+      if (!templateShifts.some(s => s.name === nurse.name)) {
+        templateShifts.push({
+          name: nurse.name,
+          color: nurse.color,
+          time: "Shift",
+          leaveType: ""
+        });
+        renderTemplateDay(templateEl, templateShifts, labelText);
+        saveTemplate();
+      }
+      return;
+    }
+
+    // 2. Full day dragged from calendar/template drag handle
+    const dayShiftsData = e.dataTransfer.getData('text/day-shifts');
+    if (dayShiftsData) {
+      const shifts = JSON.parse(dayShiftsData);
+
+      shifts.forEach(shift => {
+        if (!templateShifts.some(
+          s =>
+            s.name === shift.name &&
+            s.time === shift.time &&
+            (s.leaveType || '') === (shift.leaveType || '')
+        )) {
+          templateShifts.push({ ...shift });
+        }
+      });
+
+      renderTemplateDay(templateEl, templateShifts, labelText);
+      saveTemplate();
+      return;
+    }
+
+    // 3. Single template shift dragged
+    const templateShiftData = e.dataTransfer.getData('text/template-shift');
+    if (templateShiftData) {
+      const shift = JSON.parse(templateShiftData);
+      if (!templateShifts.some(
+        s =>
+          s.name === shift.name &&
+          s.time === shift.time &&
+          (s.leaveType || '') === (shift.leaveType || '')
+      )) {
+        templateShifts.push({ ...shift });
+        renderTemplateDay(templateEl, templateShifts, labelText);
+        saveTemplate();
+      }
+      return;
+    }
+
+    // 4. All template shifts dragged
+    const allTemplateShiftsData = e.dataTransfer.getData('text/all-template-shifts');
+    if (allTemplateShiftsData) {
+      const shifts = JSON.parse(allTemplateShiftsData);
+      shifts.forEach(s => {
+        if (!templateShifts.some(
+          t =>
+            t.name === s.name &&
+            t.time === s.time &&
+            (t.leaveType || '') === (s.leaveType || '')
+        )) {
+          templateShifts.push({ ...s });
+        }
+      });
+      renderTemplateDay(templateEl, templateShifts, labelText);
+      saveTemplate();
+      return;
+    }
+
+    // 5. Single shift dragged from calendar
+    const singleShiftData = e.dataTransfer.getData('text/plain');
+    if (singleShiftData) {
+      const shift = JSON.parse(singleShiftData);
+      if (!templateShifts.some(
+        s =>
+          s.name === shift.name &&
+          s.time === shift.time &&
+          (s.leaveType || '') === (shift.leaveType || '')
+      )) {
+        templateShifts.push({ ...shift });
+        renderTemplateDay(templateEl, templateShifts, labelText);
+        saveTemplate();
       }
     }
   });
-document.addEventListener("pointerdown", (e) => {
-  if (!e.target.closest(".vaccine-card")) {
-    document.querySelectorAll(".vaccine-card.actions-visible").forEach(card => {
-  card.classList.remove("actions-visible");
-});
-  }
-});
-const toggleVaccineFormBtn = document.getElementById("toggleVaccineFormBtn");
-const vaccineFormWrapper = document.getElementById("vaccineFormWrapper");
+}
+setupTemplateDragDrop(templateDay1, templateShifts1, 'Template 1');
+setupTemplateDragDrop(templateDay2, templateShifts2, 'Template 2');
+syncCalendarScroll();
+loadData();
 
-function openVaccineForm() {
-  vaccineFormWrapper.classList.add("show");
-  toggleVaccineFormBtn.textContent = "×";
+if (saveNoticeBtn) {
+  saveNoticeBtn.addEventListener('click', () => {
+    saveNoticeBoard();
+  });
 }
 
-function closeVaccineForm() {
-  vaccineFormWrapper.classList.remove("show");
-  toggleVaccineFormBtn.textContent = "+";
+if (noticeToggleBtn && noticeBoard) {
+  noticeToggleBtn.addEventListener('click', () => {
+    noticeBoard.classList.toggle('open');
+  });
 }
 
-toggleVaccineFormBtn.addEventListener("pointerdown", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+/* Desktop = open reminders by default
+   Mobile = collapsed by default */
+function setNoticeDefaultState() {
+  if (!noticeBoard) return;
 
-  if (vaccineFormWrapper.classList.contains("show")) {
-    closeVaccineForm();
+  if (window.innerWidth > 900) {
+    noticeBoard.classList.add('open');
   } else {
-    openVaccineForm();
+    noticeBoard.classList.remove('open');
+  }
+}
+
+setNoticeDefaultState();
+
+window.addEventListener('resize', setNoticeDefaultState);
+
+authToggleBtn.addEventListener('click', () => {
+  openAuthModal();
+});
+
+closeAuthModalBtn.addEventListener('click', () => {
+  closeAuthModal();
+});
+
+authModalBackdrop.addEventListener('click', () => {
+  closeAuthModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeAuthModal();
   }
 });
 
-vaccineFormWrapper.addEventListener("pointerdown", (e) => {
-  e.stopPropagation();
-});
 
-document.addEventListener("pointerdown", (e) => {
-  if (
-    vaccineFormWrapper.classList.contains("show") &&
-    !vaccineFormWrapper.contains(e.target) &&
-    !toggleVaccineFormBtn.contains(e.target)
-  ) {
-    closeVaccineForm();
-  }
-});
 </script>
-<script src="header-rays.js?v=1"></script>
-<script src="emoji-picker.js?v=1"></script>
+
 </body>
 </html>
