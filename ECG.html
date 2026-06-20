@@ -67,17 +67,39 @@
       const reader = new FileReader();
       reader.onloadend = async () => {
         imageData = reader.result;
-        await addDoc(ecgNotesCollection, { note: noteText, image: imageData });
+        await addDoc(ecgNotesCollection, {
+  note: noteText,
+  image: imageData,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+});
         hideNoteInput();
         loadNotes();
       };
       reader.readAsDataURL(imageFile);
     } else {
-      await addDoc(ecgNotesCollection, { note: noteText, image: "" });
+      await addDoc(ecgNotesCollection, {
+  note: noteText,
+  image: "",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+});
       hideNoteInput();
       loadNotes();
     }
   }
+  
+  function highlightMatches(html, words) {
+  let output = html;
+
+  words.forEach(word => {
+    const safeWord = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${safeWord})`, "gi");
+    output = output.replace(regex, `<mark class="search-hit">$1</mark>`);
+  });
+
+  return output;
+}
 
   // ------------------ Load Notes ------------------
   let isLoadingNotes = false;
@@ -98,6 +120,17 @@
 
       const card = document.createElement("div");
       card.className = "note-card";
+	  
+	  if (data.createdAt) {
+  const dateLine = document.createElement("div");
+  dateLine.className = "note-date";
+  dateLine.textContent = new Date(data.createdAt).toLocaleDateString("en-NZ", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+  card.appendChild(dateLine);
+}
 
       // ------------------ Image ------------------
 		if (data.image) {
@@ -129,10 +162,12 @@
 
       // ------------------ Note text ------------------
       const p = document.createElement("div");
-      p.innerHTML = data.note;
-      p.className = "note-text";
-      p.style.cursor = "text";
-      card.appendChild(p);
+p.innerHTML = searchWords.length
+  ? highlightMatches(data.note, searchWords)
+  : data.note;
+p.className = "note-text";
+p.style.cursor = "text";
+card.appendChild(p);
 
       // ------------------ Buttons ------------------
       const btnContainer = document.createElement("div");
@@ -227,9 +262,28 @@
   }, 300);
 
   // ------------------ Expose globals ------------------
+  window.insertEcgTemplate = () => {
+  const note = document.getElementById("note");
+
+  note.innerHTML += `
+    <b>ECG interpretation:</b><br>
+    Rate: <br>
+    Rhythm: <br>
+    Axis: <br>
+    PR interval: <br>
+    QRS duration: <br>
+    QTc: <br>
+    ST/T-wave changes: <br>
+    Impression: <br>
+    Action / escalation: <br>
+  `;
+
+  note.focus();
+};
   window.saveNote = saveNote;
   window.loadNotes = loadNotes;
   window.onload = () => loadNotes();
+ 
 </script>
 
 
@@ -346,7 +400,14 @@ input[type="file"]::file-selector-button:hover {
   color: white;
 }
 
-
+.search-hit {
+  background: rgba(254, 255, 163, 0.75);
+  border-radius: 4px;
+  padding: 0 2px;
+  box-shadow:
+    0 0 6px rgba(254, 255, 163, 0.9),
+    0 0 12px rgba(245, 92, 255, 0.35);
+}
 
    button {
   margin-top: 10px;
@@ -442,7 +503,11 @@ button:hover {
   background: white;
 }
 
-
+.template-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
 
     .btn-container {
       display: flex;
@@ -451,13 +516,28 @@ button:hover {
       margin-top: 0.5rem;
     }
 
-    #search-container {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    margin: 0;
-    padding: 0;
-   }
+    .top-actions {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.add-note-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  padding: 0;
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 
     #search {
@@ -492,6 +572,14 @@ button:hover {
       transition: background-color 0.2s ease;
       font-weight: bold;
     }
+	
+	.note-date {
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.55);
+  margin-bottom: 8px;
+  text-align: right;
+  font-family: Tahoma, sans-serif;
+}
 
     .home-btn:hover {
       background-color: rgba(255, 255, 255, 0.3);
@@ -551,7 +639,7 @@ button:hover {
   background-color: rgba(255, 255, 255, 0.3);
 }
 
-  }
+
 
   </style>
 </head>
@@ -559,30 +647,12 @@ button:hover {
    <a href="home.html"><button class="home-btn">Home</button></a>
     <h1 class="page-title">Electrocardiogram</h1>
   
-    <button id="addNoteBtn" onclick="showNoteInput()" 
-        style="
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          border: 1px solid rgba(255,255,255,0.5);
-          background: rgba(255,255,255,0.2);
-          color: black;
-          font-size: 2rem;
-          cursor: pointer;
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          box-shadow: inset 0 4px 10px rgba(255,255,255,0.2);
-          transition: background-color 0.3s, color 0.3s;
-        ">+</button>
+    <div class="top-actions">
+  <input type="text" id="search" placeholder="Search ECG notes..." oninput="searchNotes()">
 
-<div id="search-container">
-  <input type="text" id="search" placeholder="Search notes..." oninput="searchNotes()">
+  <button id="addNoteBtn" onclick="showNoteInput()" class="add-note-btn">
+    +
+  </button>
 </div>
 
 <div class="container">
@@ -613,6 +683,9 @@ button:hover {
            ">
       </div>
     </div>
+	<div class="template-row">
+  <button type="button" onclick="insertEcgTemplate()">Insert ECG template</button>
+</div>
 
     <!-- File Input -->
     <input type="file" id="image" accept="image/*" style="margin-bottom:10px;">
