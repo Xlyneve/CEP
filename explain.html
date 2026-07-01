@@ -122,6 +122,20 @@ body::after {
   z-index: 1000;
 }
 
+.note-text a {
+  color: #6f5f8f;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(111, 95, 143, 0.45);
+}
+
+.note-text a:hover {
+  color: #4f3f73;
+  text-decoration-color: rgba(79, 63, 115, 0.75);
+}
+
 .search-input {
   padding: 6px 10px;
   border-radius: 10px;
@@ -417,32 +431,22 @@ button:hover,
   margin-top: 8px;
   white-space: pre-wrap;
 }
+
+.note-text,
+.note-text *,
+.edit-box,
+.edit-box * {
+  font-family: Tahoma, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.35;
+}
+
 .timestamp {
   font-size: 11px;
   color: #777;
   margin-top: 10px;
 }
-.edit-title {
-  width: 80%;
-  min-height: 50px;
-  max-height: 200px;
-  max-width: 400px;
-  font-size: 12px;
-  font-family: Tahoma, sans-serif;
-  font-weight: regular;
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: saturate(180%) blur(8px);
-  -webkit-backdrop-filter: saturate(180%) blur(8px);
-  box-shadow: inset 0 2px 6px rgba(255,255,255,0.2);
-  resize: none;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  overflow-y: auto;
-  transition: all 0.3s ease;
-}
+
 
 /* Auto-resize the title */
 .edit-title:focus {
@@ -497,19 +501,40 @@ mark,
   -webkit-box-decoration-break: clone;
 }
 
+.edit-title,
 .edit-box {
-  font-family: 'fors', sans-serif;
-  font-size: 13px;
-  min-height: 60px;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  margin: 6px 0;
+
+  font-family: Tahoma, sans-serif;
+  font-size: 12px;
+
   border: 1px solid rgba(255, 255, 255, 0.50);
   border-radius: 14px;
-  padding: 8px;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
+  padding: 10px;
+
   background: rgba(255, 255, 255, 0.18);
   backdrop-filter: saturate(180%) blur(10px);
   -webkit-backdrop-filter: saturate(180%) blur(10px);
+
   box-shadow: 0 4px 10px rgba(255, 255, 255, 0.18);
+  color: #222;
+
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.edit-title {
+  min-height: 48px;
+}
+
+.edit-box {
+  min-height: 150px;
+  max-height: 420px;
+  overflow-y: auto;
+  white-space: pre-wrap;
 }
 
 .editable-div b,
@@ -820,21 +845,25 @@ function renderNotes(notesToRender = allNotes) {
         <div class="copied-indicator">✓</div>
       `;
     } else {
-      card.innerHTML = `
-        <div class="note-title">${escapeHTML(note.title)}</div>
-        <div class="note-text">${note.text || ''}</div>
-        <div class="timestamp">Saved on ${formatTS(note.timestamp)}</div>
-        <div class="btn-group">
-          <button class="btn-edit">Edit</button>
-          <button class="btn-delete">Delete</button>
-        </div>
-        <div class="copied-indicator">✓</div>
-      `;
+      const displayText = linkifyUrlsInHTML(
+  removeDuplicateBracketLinks(note.text || '')
+);
+
+card.innerHTML = `
+  <div class="note-title">${escapeHTML(note.title)}</div>
+  <div class="note-text">${displayText}</div>
+  <div class="timestamp">Saved on ${formatTS(note.timestamp)}</div>
+  <div class="btn-group">
+    <button class="btn-edit">Edit</button>
+    <button class="btn-delete">Delete</button>
+  </div>
+  <div class="copied-indicator">✓</div>
+`;
     }
 
     // Click-to-copy note text only
     card.addEventListener('click', (e) => {
-     if (e.target.closest('button, input, textarea, [contenteditable="true"]')) return;
+     if (e.target.closest('button, input, textarea, a, [contenteditable="true"]')) return;
       copyNoteHTML(note, card);
     });
 
@@ -873,52 +902,69 @@ document.getElementById('notesContainer').addEventListener('mousedown', (e) => {
   const id = card.dataset.id;
 
   if (e.target.closest('.btn-edit')) {
-    e.preventDefault();
-    e.stopPropagation();
-    window.toggleEdit(id);
-    return;
-  }
+  e.preventDefault();
+  e.stopPropagation();
+  window.toggleEdit(id);
+  return;
+}
 
-  if (e.target.closest('.btn-delete')) {
-    e.preventDefault();
-    e.stopPropagation();
-    window.deleteNote(id);
-    return;
-  }
+if (e.target.closest('.btn-delete')) {
+  e.preventDefault();
+  e.stopPropagation();
+  window.deleteNote(id);
+  return;
+}
 
-  if (e.target.closest('.btn-save-edit')) {
-    e.preventDefault();
-    e.stopPropagation();
-    window.saveEdit(id);
-    return;
-  }
+if (e.target.closest('.btn-save-edit')) {
+  e.preventDefault();
+  e.stopPropagation();
+  window.saveEdit(id);
+  return;
+}
 
-  if (e.target.closest('.btn-cancel-edit')) {
-    e.preventDefault();
-    e.stopPropagation();
-    window.cancelEdit(id);
-    return;
-  }
+if (e.target.closest('.btn-cancel-edit')) {
+  e.preventDefault();
+  e.stopPropagation();
+  window.cancelEdit(id);
+  return;
+}
 
-  if (e.target.closest('.btn-bold-edit')) {
-    e.preventDefault();
-    e.stopPropagation();
-    window.formatText(id, 'bold');
-    return;
-  }
+if (e.target.closest('.btn-bold-edit')) {
+  e.preventDefault();
+  e.stopPropagation();
+  window.formatText(id, 'bold');
+  return;
+}
 
-  if (e.target.closest('.btn-highlight-edit')) {
-    e.preventDefault();
-    e.stopPropagation();
-    window.formatText(id, 'highlight');
-    return;
-  }
-  if (e.target.closest('.btn-underline-edit')) {
+if (e.target.closest('.btn-underline-edit')) {
   e.preventDefault();
   e.stopPropagation();
   window.formatText(id, 'underline');
   return;
 }
+
+if (e.target.closest('.btn-highlight-edit')) {
+  e.preventDefault();
+  e.stopPropagation();
+  window.formatText(id, 'highlight');
+  return;
+}
+});
+
+document.getElementById('notesContainer').addEventListener('paste', (e) => {
+  const editBox = e.target.closest('.edit-box');
+  if (!editBox) return;
+
+  e.preventDefault();
+
+  const html = e.clipboardData.getData('text/html');
+  const text = e.clipboardData.getData('text/plain');
+
+  const content = html
+    ? cleanPastedHTML(html)
+    : escapeHTML(text).replace(/\n/g, '<br>');
+
+  document.execCommand('insertHTML', false, content);
 });
 
 function formatTS(ts){ try { return new Date(ts).toLocaleString(); } catch { return ''; } }
@@ -1011,14 +1057,165 @@ window.deleteNote = async (id) => {
   }
 };
 
+function cleanPastedHTML(html = '') {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  // Remove unsafe / messy tags
+  tmp.querySelectorAll('script, style, meta, link').forEach(el => el.remove());
+
+  tmp.querySelectorAll('*').forEach(el => {
+    [...el.attributes].forEach(attr => {
+      const name = attr.name.toLowerCase();
+
+      // Remove onclick/onload/etc
+      if (name.startsWith('on')) {
+        el.removeAttribute(attr.name);
+      }
+
+      // Remove pasted font/size/color/spacing styles
+      if (name === 'style') {
+        el.removeAttribute('style');
+      }
+
+      // Remove random pasted classes except your highlight class
+      if (name === 'class' && !el.classList.contains('highlight-gradient')) {
+        el.removeAttribute('class');
+      }
+
+      // Remove Word/Google Docs junk
+      if (name.startsWith('data-') || name.startsWith('aria-')) {
+        el.removeAttribute(attr.name);
+      }
+    });
+  });
+
+  return tmp.innerHTML;
+}
+
+function normalizeUrl(url) {
+  const v = String(url || '').trim();
+  if (!v) return '';
+  if (/^(https?:\/\/|mailto:|tel:)/i.test(v)) return v;
+  return `https://${v}`;
+}
+
+function removeDuplicateBracketLinks(html = '') {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  const normalizeCompare = (url = '') =>
+    normalizeUrl(url)
+      .replace(/\/$/, '')
+      .toLowerCase();
+
+  tmp.querySelectorAll('a').forEach(a => {
+    const href = normalizeCompare(a.getAttribute('href') || a.textContent || '');
+    if (!href) return;
+
+    let node = a.nextSibling;
+    let steps = 0;
+
+    while (node && steps < 6) {
+      steps++;
+
+      // Skip spaces and line breaks between link and duplicate bracket URL
+      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === '') {
+        node = node.nextSibling;
+        continue;
+      }
+
+      if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'BR') {
+        const br = node;
+        node = node.nextSibling;
+        br.remove();
+        continue;
+      }
+
+      if (node.nodeType !== Node.TEXT_NODE) break;
+
+      const text = node.textContent || '';
+
+      const bracketUrlMatch = text.match(/\(\s*(https?:\/\/[^\s)]+)\s*\)/i);
+      if (!bracketUrlMatch) break;
+
+      const bracketUrl = normalizeCompare(bracketUrlMatch[1]);
+
+      if (bracketUrl === href) {
+        node.textContent = text.replace(bracketUrlMatch[0], '').trimStart();
+      }
+
+      break;
+    }
+  });
+
+  return tmp.innerHTML;
+}
+
+function linkifyUrlsInHTML(html = '') {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  const walker = document.createTreeWalker(tmp, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (!node.parentElement.closest('a')) {
+      textNodes.push(node);
+    }
+  }
+
+  const urlRegex = /((https?:\/\/)?(www\.)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s<]*)?)/g;
+
+  textNodes.forEach(node => {
+    const text = node.nodeValue;
+    urlRegex.lastIndex = 0;
+
+    if (!urlRegex.test(text)) return;
+    urlRegex.lastIndex = 0;
+
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+
+    let match;
+
+    while ((match = urlRegex.exec(text)) !== null) {
+      const urlText = match[0];
+      const offset = match.index;
+
+      frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+
+      const a = document.createElement('a');
+      a.href = normalizeUrl(urlText);
+      a.textContent = urlText;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+
+      frag.appendChild(a);
+
+      lastIndex = offset + urlText.length;
+    }
+
+    frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    node.replaceWith(frag);
+  });
+
+  return tmp.innerHTML;
+}
+
 async function copyNoteHTML(note, cardEl){
   const textEl = cardEl.querySelector('.note-text') || document.getElementById(`editText-${note.id}`);
   const html = textEl ? textEl.innerHTML : '';
   if (!html) return;
 
-  const normalizedHTML = removeLeadingIndent(
-    normalizeHighlightWrappers(html)
-  );
+  const normalizedHTML = linkifyUrlsInHTML(
+  removeDuplicateBracketLinks(
+    removeLeadingIndent(
+      normalizeHighlightWrappers(html)
+    )
+  )
+);
 
   const plain = stripHTML(normalizedHTML);
 
