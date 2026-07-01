@@ -537,10 +537,12 @@ mark.highlight-hue {
 }
 
 .edit-title:focus,
+.edit-url:focus,
 .edit-note:focus {
   background: rgba(255, 255, 255, 0.4);
   outline: none;
 }
+
 .btn-group {
   position: absolute;
   top: 8px;
@@ -1336,7 +1338,7 @@ document.getElementById('addBtn').addEventListener('click', async (e) => {
 
   const title = titleEl.value.trim();
   const text = (textEl ? textEl.innerHTML : '').trim();
-  const url = urlEl.value.trim();
+  const url = normalizeUrl(urlEl.value.trim());
 
   if (!title || !text) {
     return alert("Please fill in both Title and Explanation.");
@@ -1888,7 +1890,7 @@ async function saveEdit(card) {
 
   const newText = textEditor.innerHTML.trim();
   const newTitle = titleInput.value.trim();
-  const newUrl = urlInput.value.trim();
+  const newUrl = normalizeUrl(urlInput.value.trim());
 
   if (!newTitle || !newText) {
     return alert("Title and explanation cannot be empty.");
