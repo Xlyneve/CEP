@@ -372,6 +372,74 @@ textarea:focus {
   }
 }
 
+.note-card.show-copied {
+  animation: copiedGlassShine 1500ms ease;
+  overflow: hidden;
+}
+
+.note-card.show-copied::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 20;
+
+  background: linear-gradient(
+  120deg,
+  transparent 0%,
+  rgba(255, 255, 255, 0.16) 25%,
+  rgba(255, 255, 255, 0.95) 45%,
+  rgba(232, 205, 255, 0.35) 58%,
+  transparent 100%
+);
+
+  transform: translateX(-130%);
+  animation: copiedShimmerSweep 1500ms ease forwards;
+}
+
+@keyframes copiedGlassShine {
+  0% {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow:
+      0 8px 32px rgba(100, 100, 150, 0.15),
+      0 0 10px rgba(255, 255, 255, 0.2);
+  }
+
+  40% {
+  background: rgba(255, 255, 255, 0.56);
+  border-color: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    inset 0 0 24px rgba(255, 255, 255, 0.68),
+    0 0 22px rgba(255, 255, 255, 0.82),
+    0 0 38px rgba(232, 205, 255, 0.55),
+    0 0 52px rgba(214, 245, 255, 0.35);
+}
+
+  100% {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow:
+      0 8px 32px rgba(100, 100, 150, 0.15),
+      0 0 10px rgba(255, 255, 255, 0.2);
+  }
+}
+
+@keyframes copiedShimmerSweep {
+  0% {
+    transform: translateX(-130%);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(130%);
+    opacity: 0;
+  }
+}
+
 /* Note contents */
 .note-title {
   font-weight: bold;
@@ -567,21 +635,24 @@ mark.highlight-hue {
 
 .btn-group {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 20;
+  right: 10px;
+  bottom: 10px;
+  z-index: 30;
 
   display: flex;
-  justify-content: flex-end;
-  gap: 5px;
-  margin-top: 0;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
 
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 
-  transition: opacity 160ms ease, transform 160ms ease;
-  transform: translateY(-2px);
+  transform: translateY(4px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    visibility 160ms ease;
 }
 
 .note-card.actions-visible .btn-group,
@@ -590,6 +661,40 @@ mark.highlight-hue {
   visibility: visible;
   pointer-events: auto;
   transform: translateY(0);
+}
+
+.note-card.actions-visible {
+  transform: none !important;
+}
+
+.btn-group button {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  line-height: 1;
+
+  background: rgba(255, 255, 255, 0.34) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+
+  color: #333;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 0 6px rgba(255, 255, 255, 0.25) !important;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.btn-group button:hover {
+  background: rgba(255, 255, 255, 0.55) !important;
+  transform: translateY(-1px);
 }
 
 .note-card.is-editing {
@@ -1567,27 +1672,6 @@ function renderNotes(arr) {
   }, 2600);
 }
 
-    // Soft yellow check (top-right), hidden by default
-    const tick = document.createElement('div');
-    tick.textContent = '✓';
-    Object.assign(tick.style, {
-      position: 'absolute',
-      top: '8px',
-      right: '8px',
-      width: '28px',
-      height: '28px',
-      borderRadius: '50%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '24px',
-	  fontWeight: '990',
-      color: '#ffe700',
-      opacity: '0',
-      transform: 'scale(0.85)',
-      transition: 'opacity 200ms ease, transform 200ms ease'
-    });
-    card.appendChild(tick);
 
     // Title
     const titleEl = document.createElement('div');
@@ -1653,7 +1737,7 @@ urlInput.style.display = 'none';
     btnGroup.style.display = 'flex';
 
     const editBtn = document.createElement('button');
-editBtn.textContent = 'Edit';
+editBtn.textContent = '✎';
 editBtn.title = 'Edit this note';
 editBtn.className = 'mini-btn';
 editBtn.addEventListener('click', (e) => {
@@ -1682,7 +1766,7 @@ cancelBtn.addEventListener('click', (e) => {
 });
 
 const deleteBtn = document.createElement('button');
-deleteBtn.textContent = 'Delete';
+deleteBtn.textContent = '×';
 deleteBtn.title = 'Delete this note';
 deleteBtn.className = 'mini-btn delete-mini';
 deleteBtn.addEventListener('click', (e) => {
@@ -1860,14 +1944,17 @@ card.addEventListener('touchcancel', endPress);
       if (e.target.closest('.note-text table')) return;
 	  const textToCopy = textDisplay.innerText; // plain text only
       copyPlainText(textToCopy, () => {
-        // soft yellow check feedback
-        tick.style.opacity = '1';
-        tick.style.transform = 'scale(1)';
-        setTimeout(() => {
-          tick.style.opacity = '0';
-          tick.style.transform = 'scale(0.85)';
-        }, 900);
-      });
+  card.classList.remove('show-copied');
+
+  // Restart animation every copy
+  void card.offsetWidth;
+
+  card.classList.add('show-copied');
+
+  setTimeout(() => {
+    card.classList.remove('show-copied');
+  }, 1500);
+});
     });
   });
 }
