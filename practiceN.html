@@ -503,20 +503,42 @@ mark.highlight-hue {
 }
 
 .edit-title,
-.edit-url {
+.edit-url,
+.edit-note {
   width: 100%;
-  margin-bottom: 6px;
+  max-width: none;
+  box-sizing: border-box;
+  margin: 6px 0;
+
   padding: 6px 10px;
   font-family: Tahoma, sans-serif;
-  font-size: 11px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.28);
+
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
+
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.22);
   color: #222;
+
   transition: background-color 0.3s ease;
+}
+
+.edit-note {
+  min-height: 80px;
+  max-height: 180px;
+  overflow-y: auto;
+  resize: vertical;
+}
+
+.edit-title:focus,
+.edit-url:focus,
+.edit-note:focus {
+  background: rgba(255, 255, 255, 0.4);
+  outline: none;
 }
 
 .edit-note {
@@ -1587,7 +1609,7 @@ if (note.url) {
   link.href = normalizeUrl(note.url);
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  link.textContent = '↗ Open';
+  link.textContent = '🔗 Open';
   link.title = note.url;
   link.className = 'styled-link';
   urlEl.appendChild(link);
@@ -1613,10 +1635,12 @@ urlInput.style.display = 'none';
     textEditor.contentEditable = true;
     textEditor.style.display = 'none';
     textEditor.innerHTML = html;
-    textEditor.style.minHeight = '60px';
-    textEditor.style.maxHeight = '150px';
-    textEditor.style.overflowY = 'auto';
-    textEditor.style.margin = '8px 0';
+    textEditor.style.minHeight = '80px';
+	textEditor.style.maxHeight = '180px';
+	textEditor.style.overflowY = 'auto';
+	textEditor.style.margin = '6px 0';
+	textEditor.style.width = '100%';
+	textEditor.style.boxSizing = 'border-box';
 
     // Timestamp
     const timeEl = document.createElement('div');
