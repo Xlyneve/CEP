@@ -454,18 +454,69 @@ button:hover,
 }
 
 .btn-group {
-  margin-top: 10px;
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 30;
+
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 4px 6px;
-  color: #222;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
   width: auto;
-  display: none;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transform: translateY(4px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    visibility 160ms ease;
 }
+
 .note-card.show-buttons .btn-group {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
 }
+
+.note-card.show-buttons {
+  transform: none !important;
+}
+
+.btn-group button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+
+  background: rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+
+  color: #333;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 0 6px rgba(255, 255, 255, 0.25);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.btn-group button:hover {
+  background: rgba(255, 255, 255, 0.55);
+  transform: translateY(-1px);
+}
+
 .formatting-buttons {
   display: flex;
   gap: 8px;
@@ -854,8 +905,8 @@ card.innerHTML = `
   <div class="note-text">${displayText}</div>
   <div class="timestamp">Saved on ${formatTS(note.timestamp)}</div>
   <div class="btn-group">
-    <button class="btn-edit">Edit</button>
-    <button class="btn-delete">Delete</button>
+    <button class="btn-edit" title="Edit">✎</button>
+	<button class="btn-delete" title="Delete">×</button>
   </div>
   <div class="copied-indicator">✓</div>
 `;
