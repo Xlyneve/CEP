@@ -1,610 +1,856 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Iron Funding Checker</title>
-  <style>
-    * { box-sizing: border-box; font-family: Tahoma, sans-serif; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at top left, rgba(255, 220, 235, 0.55), transparent 35%),
-        radial-gradient(circle at top right, rgba(210, 232, 255, 0.65), transparent 35%),
-        linear-gradient(135deg, #fff8fb, #f4fbff 45%, #fff8e8);
-      color: #222;
-      padding: 22px;
-    }
-
-    .page {
-      max-width: 980px;
-      margin: 0 auto;
-    }
-
-    .hero {
-      padding: 22px;
-      border-radius: 24px;
-      background: rgba(255,255,255,0.45);
-      border: 1px solid rgba(255,255,255,0.7);
-      box-shadow: 0 16px 45px rgba(120, 130, 160, 0.16);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      margin-bottom: 18px;
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-      letter-spacing: -0.02em;
-    }
-
-    .subtext {
-      margin: 0;
-      line-height: 1.5;
-      font-size: 13px;
-      color: #444;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .card {
-      padding: 16px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.55);
-      border: 1px solid rgba(255,255,255,0.75);
-      box-shadow: 0 10px 28px rgba(120, 130, 160, 0.12);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-
-    .card.full { grid-column: 1 / -1; }
-
-    h2 {
-      margin: 0 0 12px;
-      font-size: 16px;
-    }
-
-    label {
-      display: block;
-      margin: 9px 0;
-      font-size: 13px;
-      line-height: 1.35;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-	
-	.hero-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.created-by {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(70, 70, 90, 0.62);
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  padding: 6px 10px;
-  border-radius: 999px;
-  box-shadow: 0 6px 16px rgba(120, 130, 160, 0.08);
-  white-space: nowrap;
-}
-
-    input[type="number"], input[type="date"], select, textarea {
-      width: 100%;
-      padding: 9px 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(120,120,140,0.22);
-      background: rgba(255,255,255,0.7);
-      font-size: 13px;
-      outline: none;
-    }
-
-    input[type="checkbox"] {
-      transform: translateY(2px);
-      margin-right: 7px;
-    }
-
-    textarea {
-      min-height: 70px;
-      resize: vertical;
-    }
-
-    .buttons {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 14px;
-    }
-
-    button {
-      border: 0;
-      padding: 10px 14px;
-      border-radius: 14px;
-      cursor: pointer;
-      font-weight: 700;
-      background: rgba(199, 217, 255, 0.85);
-      box-shadow: 0 8px 20px rgba(90, 100, 140, 0.14);
-    }
-
-    button.secondary {
-      background: rgba(255, 255, 255, 0.75);
-      border: 1px solid rgba(120,120,140,0.18);
-      font-weight: 600;
-    }
-
-    .result {
-      border-radius: 18px;
-      padding: 14px;
-      margin-top: 12px;
-      border: 1px solid rgba(255,255,255,0.8);
-      background: rgba(255,255,255,0.7);
-      white-space: pre-wrap;
-      line-height: 1.55;
-      font-size: 13px;
-    }
-
-    .status {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .yes { background: #d8f5c8; }
-    .maybe { background: #fff1b8; }
-    .no { background: #ffd1dc; }
-
-    .muted {
-      color: #666;
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .copybox {
-      margin-top: 10px;
-    }
-
-    .hidden { display: none; }
-
-    @media (max-width: 760px) {
-      body { padding: 14px; }
-      .grid { grid-template-columns: 1fr; }
-      .row { grid-template-columns: 1fr; }
-      h1 { font-size: 23px; }
-    }
-
-	.hero-top {
-  align-items: center;
-}
-
-.created-by {
-  font-size: 10px;
-  padding: 5px 8px;
-}
-  </style>
-</head>
-<body>
-  <main class="page">
-    <section class="hero">
-  <div class="hero-top">
-    <h1>Iron Funding Checker</h1>
-    <span class="created-by">Created by Xlyn</span>
-  </div>
-
-  <p class="subtext">
-    Quick screening tool for the updated aligned POAC + Pharmac Ferinject pathway in Metro Auckland. This is a helper only — always confirm against the current POAC form, Pharmac Special Authority, and clinic policy.
-  </p>
-</section>
-
-    <section class="grid">
-      <div class="card">
-  <h2>1. Patient + bloods</h2>
-
-  <label>
-  <input type="checkbox" id="diagnosedAnaemia" onchange="updateFlow()">
-  Patient has been diagnosed with anaemia
-</label>
-
-<div class="row">
-  <label>Hb g/L optional
-    <input type="number" id="hb" placeholder="optional e.g. 102" oninput="updateFlow()">
-  </label>
-
-  <label>Ferritin mcg/L
-    <input type="number" id="ferritin" placeholder="e.g. 12" oninput="updateFlow()">
-  </label>
-</div>
-
-  <div id="crpBox" class="hidden">
-    <label>CRP mg/L
-      <input type="number" id="crp" placeholder="e.g. 7" oninput="updateFlow()">
-    </label>
-    <p class="muted">CRP is only needed when ferritin is between 20–50 mcg/L.</p>
-  </div>
-
-  <label><input type="checkbox" id="symptomaticAnaemia" onchange="updateFlow()"> Symptomatic / clinically anaemic</label>
-
-  <p class="muted">
-  Hb can be entered for documentation, but funding logic is based on documented diagnosis of anaemia.
-</p>
-      </div>
-	  <div class="card">
-  <h2>2. Updated aligned criteria</h2>
-
-  <label><input type="checkbox" id="chronicInflammatory" onchange="updateFlow()"> Chronic inflammatory disease with symptoms of anaemia</label>
-
-  <p class="muted">Additional required criterion — tick ONE if applicable:</p>
-
-  <label><input type="checkbox" id="oralIneffective" onchange="updateFlow()"> Oral iron treatment has proven ineffective</label>
-  <label><input type="checkbox" id="oralIntolerance" onchange="updateFlow()"> Oral iron treatment has resulted in dose-limiting intolerance</label>
-  <label><input type="checkbox" id="rapidCorrection" onchange="updateFlow()"> Rapid correction of anaemia is required</label>
-
-  <p class="muted">
-    Updated pathway: patient has diagnosed anaemia + one qualifying iron pathway + one additional criterion.
-  </p>
-</div>
-<div class="card hidden" id="infusionFundingCard">
-  <h2>3. Forms / admin checks</h2>
-
-  <p class="muted">
-    The updated notice says POAC and Pharmac criteria are now more closely aligned, but both forms still need to be completed.
-  </p>
-
-  <label><input type="checkbox" id="metroAuckland" onchange="updateFlow()"> Metro Auckland region pathway applies</label>
-  <label><input type="checkbox" id="poacForm" onchange="updateFlow()"> POAC referral/funding form completed</label>
-  <label><input type="checkbox" id="pharmacForm" onchange="updateFlow()"> Pharmac Special Authority form completed / to be completed</label>
-
-  <p class="muted">
-    These form/admin items do not replace the clinical funding criteria above.
-  </p>
-</div>
-<div class="card hidden" id="safetyCard">
-  <h2>4. Safety / extra checks</h2>
-
-  <label><input type="checkbox" id="pregnant" onchange="updateFlow()"> Pregnant</label>
-
-  <div id="pregnancyBox" class="hidden">
-    <label><input type="checkbox" id="firstTrimester" onchange="updateFlow()"> First trimester pregnancy</label>
-    <label><input type="checkbox" id="latePregnancy" onchange="updateFlow()"> &gt;37 weeks gestation or severe late pregnancy concern</label>
-  </div>
-
-  <label><input type="checkbox" id="twoInfusions" onchange="updateFlow()"> Two or more iron infusions in preceding 6 months</label>
-  <label><input type="checkbox" id="hypophosphateRisk" onchange="updateFlow()"> Hypophosphataemia risk: BMI &lt;18, poor nutrition, chronic diarrhoea, etc.</label>
-
-  <div id="phosphateBox" class="hidden">
-    <label><input type="checkbox" id="phosphateDone" onchange="updateFlow()"> Baseline phosphate checked</label>
-  </div>
-
-  <label>Notes
-    <textarea id="notes" placeholder="Optional: oral iron issue, specialist advice, reason for rapid correction, etc."></textarea>
-  </label>
-</div>
-<div class="card full">
-  <h2>Result</h2>
-
-  <div class="buttons">
-    <button onclick="checkFunding()">Check updated funding</button>
-    <button class="secondary" onclick="copySummary()">Copy clinical summary</button>
-    <button class="secondary" onclick="copyPatientExplanation()">Copy patient explanation</button>
-    <button class="secondary" onclick="resetForm()">Clear</button>
-  </div>
-
-  <div id="result" class="result">Enter details, then click Check funding.</div>
-
-  <p class="muted">
-    Updated notice: POAC Ferinject infusion funding criteria are now more closely aligned with Pharmac criteria.
-    Both POAC and Pharmac Special Authority forms are still required for eligible patients.
-  </p>
-</div>
-    </section>
-  </main>
-
-  <script>
-    function checked(id) {
-      const el = document.getElementById(id);
-      return el ? el.checked : false;
-    }
-
-    function valueNum(id) {
-      const el = document.getElementById(id);
-      if (!el || el.value === '') return null;
-      const num = Number(el.value);
-      return Number.isFinite(num) ? num : null;
-    }
-
-function getAnaemiaStatus() {
-  const hasAnaemia = checked('diagnosedAnaemia');
-
-  return {
-    hasAnaemia,
-    thresholdText: hasAnaemia
-      ? 'Patient diagnosed with anaemia has been confirmed.'
-      : 'Patient diagnosed with anaemia has not been confirmed.'
-  };
-}
-    
-
-    function getLabPathway() {
-      const ferritin = valueNum('ferritin');
-      const crp = valueNum('crp');
-      const anaemia = getAnaemiaStatus();
-      const hasAnaemia = anaemia.hasAnaemia;
-
-      if (ferritin !== null && ferritin <= 20 && hasAnaemia) {
-        return 'Anaemia and ferritin ≤20 mcg/L';
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iron Funding Checker</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: Tahoma, sans-serif;
       }
 
-      if (ferritin !== null && ferritin > 20 && ferritin <= 50 && crp !== null && crp >= 5 && hasAnaemia) {
-        return 'Anaemia and ferritin 20–50 mcg/L AND CRP ≥5 mg/L';
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(
+            circle at top left,
+            rgba(255, 220, 235, 0.55),
+            transparent 35%
+          ),
+          radial-gradient(circle at top right, rgba(210, 232, 255, 0.65), transparent 35%),
+          linear-gradient(135deg, #fff8fb, #f4fbff 45%, #fff8e8);
+        color: #222;
+        padding: 22px;
       }
 
-      if (checked('chronicInflammatory') && hasAnaemia) {
-        return 'Chronic inflammatory disease with symptoms of anaemia';
+      .page {
+        max-width: 980px;
+        margin: 0 auto;
       }
 
-      return '';
-    }
-
-    function getAdditionalCriteria() {
-      const reasons = [];
-      if (checked('oralIneffective')) reasons.push('oral iron treatment has proven ineffective');
-      if (checked('oralIntolerance')) reasons.push('oral iron treatment resulted in dose-limiting intolerance');
-      if (checked('rapidCorrection')) reasons.push('rapid correction of anaemia is required');
-      return reasons;
-    }
-
-    function buildFundingAssessment() {
-      const hb = valueNum('hb');
-      const ferritin = valueNum('ferritin');
-      const crp = valueNum('crp');
-     const anaemia = getAnaemiaStatus();
-	const hasAnaemia = anaemia.hasAnaemia;
-
-      const labPathway = getLabPathway();
-      const additionalCriteria = getAdditionalCriteria();
-
-      const clinicalCriteriaMet =
-        hasAnaemia &&
-        Boolean(labPathway) &&
-        additionalCriteria.length > 0;
-
-      const formsReady =
-        checked('metroAuckland') &&
-        checked('poacForm') &&
-        checked('pharmacForm');
-
-      const missingClinical = [];
-      const missingForms = [];
-      const safetyFlags = [];
-
-      if (!hasAnaemia) {
-        missingClinical.push('Patient diagnosed with anaemia has not been confirmed.');
+      .hero {
+        padding: 22px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 16px 45px rgba(120, 130, 160, 0.16);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        margin-bottom: 18px;
       }
 
-      if (!labPathway) {
-        missingClinical.push('No qualifying pathway selected: ferritin ≤20, ferritin 20–50 with CRP ≥5, or chronic inflammatory disease with symptoms of anaemia.');
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
       }
 
-      if (additionalCriteria.length === 0) {
-        missingClinical.push('One additional criterion is required: oral iron ineffective, oral iron dose-limiting intolerance, or rapid correction required.');
+      .subtext {
+        margin: 0;
+        line-height: 1.5;
+        font-size: 13px;
+        color: #444;
       }
 
-      if (!checked('metroAuckland')) {
-        missingForms.push('Metro Auckland POAC pathway not confirmed.');
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
       }
 
-      if (!checked('poacForm')) {
-        missingForms.push('POAC referral/funding form not confirmed as completed.');
+      .card {
+        padding: 16px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        box-shadow: 0 10px 28px rgba(120, 130, 160, 0.12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
       }
 
-      if (!checked('pharmacForm')) {
-        missingForms.push('Pharmac Special Authority form not confirmed as completed / to be completed.');
+      .card.full {
+        grid-column: 1 / -1;
       }
 
-      const needsPhosphate = checked('twoInfusions') || checked('hypophosphateRisk');
-      if (needsPhosphate && !checked('phosphateDone')) {
-        safetyFlags.push('Baseline phosphate appears indicated but has not been checked.');
+      h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
       }
 
-      if (checked('pregnant') && (checked('firstTrimester') || checked('latePregnancy'))) {
-        safetyFlags.push('Pregnancy flag: clinician / obstetric review may be required.');
+      label {
+        display: block;
+        margin: 9px 0;
+        font-size: 13px;
+        line-height: 1.35;
       }
 
-      const notesEl = document.getElementById('notes');
-
-      return {
-        hb,
-        ferritin,
-        crp,
-        anaemia,
-        labPathway: labPathway || 'Not met',
-        additionalCriteria,
-        clinicalCriteriaMet,
-        formsReady,
-        missingClinical,
-        missingForms,
-        safetyFlags,
-        userNotes: notesEl ? notesEl.value.trim() : ''
-      };
-    }
-
-    function updateFlow() {
-      const ferritin = valueNum('ferritin');
-
-      const crpBox = document.getElementById('crpBox');
-      const infusionFundingCard = document.getElementById('infusionFundingCard');
-      const safetyCard = document.getElementById('safetyCard');
-      const pregnancyBox = document.getElementById('pregnancyBox');
-      const phosphateBox = document.getElementById('phosphateBox');
-
-      if (crpBox) {
-        crpBox.classList.toggle('hidden', !(ferritin !== null && ferritin > 20 && ferritin <= 50));
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
       }
 
-      const a = buildFundingAssessment();
-
-      if (infusionFundingCard) {
-        infusionFundingCard.classList.toggle('hidden', !a.clinicalCriteriaMet);
+      .hero-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
       }
 
-      if (safetyCard) {
-        safetyCard.classList.toggle(
-          'hidden',
-          !(a.clinicalCriteriaMet || checked('pregnant') || checked('twoInfusions') || checked('hypophosphateRisk'))
+      .created-by {
+        font-size: 11px;
+        font-weight: 700;
+        color: rgba(70, 70, 90, 0.62);
+        background: rgba(255, 255, 255, 0.42);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        padding: 6px 10px;
+        border-radius: 999px;
+        box-shadow: 0 6px 16px rgba(120, 130, 160, 0.08);
+        white-space: nowrap;
+      }
+
+      input[type="number"],
+      input[type="date"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 9px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(120, 120, 140, 0.22);
+        background: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        outline: none;
+      }
+
+      input[type="checkbox"] {
+        transform: translateY(2px);
+        margin-right: 7px;
+      }
+
+      textarea {
+        min-height: 70px;
+        resize: vertical;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      button {
+        border: 0;
+        padding: 10px 14px;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 700;
+
+        background: rgba(199, 217, 255, 0.85);
+        color: #111;
+        -webkit-text-fill-color: #111;
+        opacity: 1;
+
+        box-shadow: 0 8px 20px rgba(90, 100, 140, 0.14);
+      }
+
+      button.secondary {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(120, 120, 140, 0.18);
+
+        color: #111;
+        -webkit-text-fill-color: #111;
+        font-weight: 600;
+      }
+
+      .result {
+        border-radius: 18px;
+        padding: 14px;
+        margin-top: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.7);
+        white-space: pre-wrap;
+        line-height: 1.55;
+        font-size: 13px;
+      }
+
+      .status {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .yes {
+        background: #d8f5c8;
+      }
+      .maybe {
+        background: #fff1b8;
+      }
+      .no {
+        background: #ffd1dc;
+      }
+
+      .muted {
+        color: #666;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .criteria-summary {
+        display: grid;
+        gap: 7px;
+        margin: 10px 0 14px;
+        padding: 12px;
+
+        border-radius: 14px;
+        border: 1px solid rgba(120, 120, 140, 0.14);
+        background: rgba(255, 255, 255, 0.42);
+
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .criteria-summary div::before {
+        content: "•";
+        margin-right: 7px;
+      }
+
+      .copybox {
+        margin-top: 10px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 760px) {
+        body {
+          padding: 14px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .row {
+          grid-template-columns: 1fr;
+        }
+        h1 {
+          font-size: 23px;
+        }
+      }
+
+      .record-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+
+      .record-row > div:nth-child(4),
+      .record-row-actions {
+        grid-column: 1 / -1;
+      }
+
+      .hero-top {
+        align-items: center;
+      }
+
+      .created-by {
+        font-size: 10px;
+        padding: 5px 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div class="hero-top">
+          <h1>Iron Funding Checker</h1>
+          <span class="created-by">Created by Xlyn</span>
+        </div>
+
+        <p class="subtext">
+          Quick screening tool for the updated aligned POAC + Pharmac Ferinject pathway in
+          Metro Auckland. This is a helper only — always confirm against the current POAC
+          form, Pharmac Special Authority, and clinic policy.
+        </p>
+      </section>
+
+      <section class="grid">
+        <div class="card">
+          <h2>1. Patient + bloods</h2>
+
+          <label>
+            <input type="checkbox" id="diagnosedAnaemia" onchange="updateFlow()" />
+            Patient has been diagnosed with anaemia
+          </label>
+
+          <div class="row">
+            <label
+              >Hb g/L optional
+              <input
+                type="number"
+                id="hb"
+                min="0"
+                placeholder="optional e.g. 102"
+                oninput="updateFlow()"
+              />
+            </label>
+
+            <label
+              >Ferritin mcg/L
+              <input
+                type="number"
+                id="ferritin"
+                min="0"
+                placeholder="e.g. 12"
+                oninput="updateFlow()"
+              />
+            </label>
+          </div>
+
+          <div id="crpBox" class="hidden">
+            <label
+              >CRP mg/L
+              <input
+                type="number"
+                id="crp"
+                min="0"
+                placeholder="e.g. 7"
+                oninput="updateFlow()"
+              />
+            </label>
+            <p class="muted">
+              CRP is required when ferritin is above 20 and up to 50 mcg/L.
+            </p>
+          </div>
+
+          <p class="muted">
+            Hb can be entered for documentation, but funding logic is based on documented
+            diagnosis of anaemia.
+          </p>
+        </div>
+        <div class="card">
+          <h2>2. Updated aligned criteria</h2>
+
+          <p class="muted">
+            The patient must have diagnosed anaemia and meet at least one qualifying
+            pathway:
+          </p>
+
+          <div class="criteria-summary">
+            <div>Ferritin ≤20 mcg/L</div>
+            <div>Ferritin &gt;20–50 mcg/L and CRP ≥5 mg/L</div>
+            <div>Chronic inflammatory disease with symptoms of anaemia</div>
+          </div>
+
+          <label>
+            <input type="checkbox" id="chronicInflammatory" onchange="updateFlow()" />
+            Chronic inflammatory disease with symptoms of anaemia
+          </label>
+
+          <p class="muted">
+            The patient must also meet at least one additional criterion:
+          </p>
+
+          <label
+            ><input type="checkbox" id="oralIneffective" onchange="updateFlow()" /> Oral
+            iron treatment has proven ineffective</label
+          >
+          <label
+            ><input type="checkbox" id="oralIntolerance" onchange="updateFlow()" /> Oral
+            iron treatment has resulted in dose-limiting intolerance</label
+          >
+          <label
+            ><input type="checkbox" id="rapidCorrection" onchange="updateFlow()" /> Rapid
+            correction of anaemia is required</label
+          >
+
+          <p class="muted">
+            Updated pathway: patient has diagnosed anaemia + one qualifying iron pathway +
+            one additional criterion.
+          </p>
+        </div>
+        <div class="card" id="infusionFundingCard">
+          <h2>3. Forms / admin checks</h2>
+
+          <p class="muted">
+            The updated notice says POAC and Pharmac criteria are now more closely
+            aligned, but both forms still need to be completed.
+          </p>
+
+          <label
+            ><input type="checkbox" id="metroAuckland" onchange="updateFlow()" /> Metro
+            Auckland region pathway applies</label
+          >
+          <label
+            ><input type="checkbox" id="poacForm" onchange="updateFlow()" /> POAC
+            referral/funding form completed</label
+          >
+          <label
+            ><input type="checkbox" id="pharmacForm" onchange="updateFlow()" /> Pharmac
+            Special Authority form completed / to be completed</label
+          >
+
+          <p class="muted">
+            These form/admin items do not replace the clinical funding criteria above.
+          </p>
+        </div>
+        <div class="card hidden" id="safetyCard">
+          <h2>4. Safety / extra checks</h2>
+
+          <label
+            ><input type="checkbox" id="pregnant" onchange="updateFlow()" />
+            Pregnant</label
+          >
+
+          <div id="pregnancyBox" class="hidden">
+            <label
+              ><input type="checkbox" id="firstTrimester" onchange="updateFlow()" /> First
+              trimester pregnancy</label
+            >
+            <label
+              ><input type="checkbox" id="latePregnancy" onchange="updateFlow()" /> &gt;37
+              weeks gestation or severe late pregnancy concern</label
+            >
+          </div>
+
+          <label
+            ><input type="checkbox" id="twoInfusions" onchange="updateFlow()" /> Two or
+            more iron infusions in preceding 6 months</label
+          >
+          <label
+            ><input type="checkbox" id="hypophosphateRisk" onchange="updateFlow()" />
+            Hypophosphataemia risk: BMI &lt;18, poor nutrition, chronic diarrhoea,
+            etc.</label
+          >
+
+          <div id="phosphateBox" class="hidden">
+            <label
+              ><input type="checkbox" id="phosphateDone" onchange="updateFlow()" />
+              Baseline phosphate checked</label
+            >
+          </div>
+
+          <label
+            >Notes
+            <textarea
+              id="notes"
+              placeholder="Optional: oral iron issue, specialist advice, reason for rapid correction, etc."
+            ></textarea>
+          </label>
+        </div>
+        <div class="card full">
+          <h2>Result</h2>
+
+          <div class="buttons">
+            <button onclick="checkFunding()">Check updated funding</button>
+            <button class="secondary" onclick="copySummary()">
+              Copy clinical summary
+            </button>
+            <button class="secondary" onclick="copyPatientExplanation()">
+              Copy patient explanation
+            </button>
+            <button class="secondary" onclick="resetForm()">Clear</button>
+          </div>
+
+          <div id="result" class="result">Enter details, then click Check funding.</div>
+
+          <p class="muted">
+            Updated notice: POAC Ferinject infusion funding criteria are now more closely
+            aligned with Pharmac criteria. Both POAC and Pharmac Special Authority forms
+            are still required for eligible patients.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      function checked(id) {
+        const el = document.getElementById(id);
+        return el ? el.checked : false;
+      }
+
+      function valueNum(id) {
+        const el = document.getElementById(id);
+
+        if (!el || el.value === "") {
+          return null;
+        }
+
+        const num = Number(el.value);
+
+        if (!Number.isFinite(num) || num < 0) {
+          return null;
+        }
+
+        return num;
+      }
+
+      function getAnaemiaStatus() {
+        const hasAnaemia = checked("diagnosedAnaemia");
+
+        return {
+          hasAnaemia,
+          thresholdText: hasAnaemia
+            ? "Patient diagnosed with anaemia has been confirmed."
+            : "Patient diagnosed with anaemia has not been confirmed.",
+        };
+      }
+
+      function getLabPathway() {
+        const ferritin = valueNum("ferritin");
+        const crp = valueNum("crp");
+        const hasAnaemia = checked("diagnosedAnaemia");
+
+        if (!hasAnaemia) {
+          return "";
+        }
+
+        if (ferritin !== null && ferritin <= 20) {
+          return "Diagnosed anaemia and ferritin ≤20 mcg/L";
+        }
+
+        if (
+          ferritin !== null &&
+          ferritin > 20 &&
+          ferritin <= 50 &&
+          crp !== null &&
+          crp >= 5
+        ) {
+          return "Diagnosed anaemia, ferritin >20–50 mcg/L and CRP ≥5 mg/L";
+        }
+
+        if (checked("chronicInflammatory")) {
+          return "Diagnosed anaemia with chronic inflammatory disease and symptoms of anaemia";
+        }
+
+        return "";
+      }
+
+      function getAdditionalCriteria() {
+        const reasons = [];
+        if (checked("oralIneffective"))
+          reasons.push("oral iron treatment has proven ineffective");
+        if (checked("oralIntolerance"))
+          reasons.push("oral iron treatment resulted in dose-limiting intolerance");
+        if (checked("rapidCorrection"))
+          reasons.push("rapid correction of anaemia is required");
+        return reasons;
+      }
+
+      function buildFundingAssessment() {
+        const hb = valueNum("hb");
+        const ferritin = valueNum("ferritin");
+        const crp = valueNum("crp");
+        const anaemia = getAnaemiaStatus();
+        const hasAnaemia = anaemia.hasAnaemia;
+
+        const labPathway = getLabPathway();
+        const additionalCriteria = getAdditionalCriteria();
+
+        const clinicalCriteriaMet =
+          hasAnaemia && Boolean(labPathway) && additionalCriteria.length > 0;
+
+        const pathwayApplicable = checked("metroAuckland");
+
+        const formsReady = checked("poacForm") && checked("pharmacForm");
+
+        const missingClinical = [];
+        const missingForms = [];
+        const safetyFlags = [];
+
+        if (!pathwayApplicable) {
+          safetyFlags.push(
+            "This checker is based on the Metropolitan Auckland POAC pathway. Confirm that this regional pathway applies.",
+          );
+        }
+
+        if (!hasAnaemia) {
+          missingClinical.push("Patient diagnosed with anaemia has not been confirmed.");
+        }
+
+        if (!labPathway) {
+          if (ferritin === null && !checked("chronicInflammatory")) {
+            missingClinical.push(
+              "Enter ferritin or confirm chronic inflammatory disease with symptoms of anaemia.",
+            );
+          } else if (
+            ferritin !== null &&
+            ferritin > 20 &&
+            ferritin <= 50 &&
+            crp === null
+          ) {
+            missingClinical.push(
+              "CRP is required because ferritin is above 20 and up to 50 mcg/L.",
+            );
+          } else if (
+            ferritin !== null &&
+            ferritin > 20 &&
+            ferritin <= 50 &&
+            crp !== null &&
+            crp < 5
+          ) {
+            missingClinical.push(
+              "Ferritin is above 20 and up to 50 mcg/L, but CRP is below 5 mg/L.",
+            );
+          } else {
+            missingClinical.push(
+              "No qualifying pathway is confirmed: ferritin ≤20 mcg/L; ferritin >20–50 mcg/L with CRP ≥5 mg/L; or chronic inflammatory disease with symptoms of anaemia.",
+            );
+          }
+        }
+
+        if (additionalCriteria.length === 0) {
+          missingClinical.push(
+            "One additional criterion is required: oral iron ineffective, oral iron dose-limiting intolerance, or rapid correction required.",
+          );
+        }
+
+        if (!checked("poacForm")) {
+          missingForms.push("POAC referral/funding form not confirmed as completed.");
+        }
+
+        if (!checked("pharmacForm")) {
+          missingForms.push(
+            "Pharmac Special Authority form not confirmed as completed / to be completed.",
+          );
+        }
+
+        const needsPhosphate = checked("twoInfusions") || checked("hypophosphateRisk");
+        if (needsPhosphate && !checked("phosphateDone")) {
+          safetyFlags.push(
+            "Baseline phosphate appears indicated but has not been checked.",
+          );
+        }
+
+        if (
+          checked("pregnant") &&
+          (checked("firstTrimester") || checked("latePregnancy"))
+        ) {
+          safetyFlags.push(
+            "Pregnancy flag: clinician / obstetric review may be required.",
+          );
+        }
+
+        const notesEl = document.getElementById("notes");
+
+        return {
+          hb,
+          ferritin,
+          crp,
+          pathwayApplicable,
+          anaemia,
+          labPathway: labPathway || "Not met",
+          additionalCriteria,
+          clinicalCriteriaMet,
+          formsReady,
+          missingClinical,
+          missingForms,
+          safetyFlags,
+          userNotes: notesEl ? notesEl.value.trim() : "",
+        };
+      }
+
+      function updateFlow() {
+        const ferritin = valueNum("ferritin");
+
+        const crpBox = document.getElementById("crpBox");
+        const infusionFundingCard = document.getElementById("infusionFundingCard");
+        const safetyCard = document.getElementById("safetyCard");
+        const pregnancyBox = document.getElementById("pregnancyBox");
+        const phosphateBox = document.getElementById("phosphateBox");
+
+        if (crpBox) {
+          crpBox.classList.toggle(
+            "hidden",
+            !(ferritin !== null && ferritin > 20 && ferritin <= 50),
+          );
+        }
+
+        const a = buildFundingAssessment();
+
+        if (safetyCard) {
+          safetyCard.classList.toggle(
+            "hidden",
+            !(
+              a.clinicalCriteriaMet ||
+              checked("pregnant") ||
+              checked("twoInfusions") ||
+              checked("hypophosphateRisk")
+            ),
+          );
+        }
+
+        if (pregnancyBox) {
+          pregnancyBox.classList.toggle("hidden", !checked("pregnant"));
+        }
+
+        if (phosphateBox) {
+          phosphateBox.classList.toggle(
+            "hidden",
+            !(checked("twoInfusions") || checked("hypophosphateRisk")),
+          );
+        }
+      }
+
+      function checkFunding() {
+        const result = document.getElementById("result");
+        const a = buildFundingAssessment();
+
+        const pharmacEligible = a.clinicalCriteriaMet;
+
+        const poacEligible = a.clinicalCriteriaMet && a.pathwayApplicable;
+
+        const pharmacStatus = pharmacEligible
+          ? '<span class="status yes">Pharmac funding criteria: likely met</span>'
+          : '<span class="status no">Pharmac funding criteria: not met</span>';
+
+        let poacStatus;
+
+        if (!a.pathwayApplicable) {
+          poacStatus =
+            '<span class="status maybe">POAC funding: Metro Auckland pathway not confirmed</span>';
+        } else if (poacEligible) {
+          poacStatus =
+            '<span class="status yes">POAC funding criteria: likely met</span>';
+        } else {
+          poacStatus = '<span class="status no">POAC funding criteria: not met</span>';
+        }
+
+        const formsStatus = a.formsReady
+          ? '<span class="status yes">Required forms: completed</span>'
+          : '<span class="status maybe">Required forms: incomplete</span>';
+
+        const details = [
+          pharmacStatus,
+          poacStatus,
+          formsStatus,
+          "",
+          `Qualifying pathway: ${a.labPathway}`,
+          `Additional criterion: ${a.additionalCriteria.join(", ") || "not entered"}`,
+          "",
+          a.missingClinical.length
+            ? `Missing clinical criteria:\n- ${a.missingClinical.join("\n- ")}`
+            : "Clinical criteria: complete.",
+          "",
+          a.missingForms.length
+            ? `Missing paperwork:\n- ${a.missingForms.join("\n- ")}`
+            : "Paperwork: both forms confirmed.",
+          "",
+          a.safetyFlags.length
+            ? `Safety / review flags:\n- ${a.safetyFlags.join("\n- ")}`
+            : "Safety flags: none entered.",
+        ].join("\n");
+
+        result.innerHTML = details;
+      }
+
+      function copySummary() {
+        checkFunding();
+
+        const result = document.getElementById("result");
+        const plain = result.innerText || result.textContent;
+
+        navigator.clipboard.writeText(plain).then(() => {
+          const old = result.innerHTML;
+          result.innerHTML = old + "\n\nCopied clinical summary.";
+          setTimeout(() => (result.innerHTML = old), 900);
+        });
+      }
+
+      function copyPatientExplanation() {
+        const a = buildFundingAssessment();
+        const explanation = [];
+
+        explanation.push("Iron infusion funding criteria");
+        explanation.push("");
+
+        if (
+          a.clinicalCriteriaMet &&
+          a.formsReady &&
+          a.pathwayApplicable &&
+          a.missingClinical.length === 0 &&
+          a.missingForms.length === 0
+        ) {
+          explanation.push(
+            "Based on the information entered, the clinical criteria and required form checks appear consistent with the Metropolitan Auckland funded Ferinject pathway.",
+          );
+          explanation.push("");
+          explanation.push("This is because:");
+          explanation.push(
+            `- The entered blood/clinical information meets this pathway: ${a.labPathway}.`,
+          );
+          explanation.push(
+            `- The additional required criterion is: ${a.additionalCriteria.join(", ")}.`,
+          );
+          explanation.push(
+            "- The POAC and Pharmac forms/admin checks have been ticked as confirmed.",
+          );
+        } else {
+          explanation.push(
+            "Based on the information entered, funding cannot be clearly confirmed yet.",
+          );
+          explanation.push("");
+          explanation.push("Reason/s:");
+
+          if (a.missingClinical.length) {
+            explanation.push("");
+            explanation.push("Clinical criteria:");
+            a.missingClinical.forEach((item) => explanation.push(`- ${item}`));
+          }
+
+          if (a.missingForms.length) {
+            explanation.push("");
+            explanation.push("Forms/admin:");
+            a.missingForms.forEach((item) => explanation.push(`- ${item}`));
+          }
+
+          if (!a.missingClinical.length && !a.missingForms.length) {
+            explanation.push(
+              "- The entered information needs clinician review before funding can be confirmed.",
+            );
+          }
+        }
+
+        explanation.push("");
+        explanation.push("Entered results:");
+        explanation.push(
+          `- Metro Auckland pathway applies: ${a.pathwayApplicable ? "Yes" : "Not confirmed"}`,
         );
-      }
+        explanation.push(`- Diagnosed anaemia: ${a.anaemia.hasAnaemia ? "Yes" : "No"}`);
+        explanation.push(`- Haemoglobin: ${a.hb ?? "not entered"} g/L optional`);
+        explanation.push(`- Ferritin: ${a.ferritin ?? "not entered"} mcg/L`);
+        explanation.push(`- CRP: ${a.crp ?? "not entered / not required"} mg/L`);
+        explanation.push(`- Pathway: ${a.labPathway}`);
 
-      if (pregnancyBox) {
-        pregnancyBox.classList.toggle('hidden', !checked('pregnant'));
-      }
-
-      if (phosphateBox) {
-        phosphateBox.classList.toggle('hidden', !(checked('twoInfusions') || checked('hypophosphateRisk')));
-      }
-    }
-
-    function checkFunding() {
-      const result = document.getElementById('result');
-      const a = buildFundingAssessment();
-
-      const clinicalStatus = a.clinicalCriteriaMet
-        ? '<span class="status yes">Clinical criteria: likely meets updated aligned POAC + Pharmac criteria</span>'
-        : '<span class="status no">Clinical criteria: not clearly met from entered info</span>';
-
-      const formsStatus = a.formsReady
-        ? '<span class="status yes">Forms/admin: POAC + Pharmac forms confirmed</span>'
-        : '<span class="status maybe">Forms/admin: still needs form/admin confirmation</span>';
-
-      const overallStatus = a.clinicalCriteriaMet && a.formsReady
-        ? 'Overall: likely ready for funded Ferinject pathway, subject to clinician/policy confirmation.'
-        : 'Overall: not ready to confirm funded pathway yet. See missing items below.';
-
-      const summary = [
-        clinicalStatus,
-        formsStatus,
-        '',
-        overallStatus,
-        '',
-        'Entered results:',
-        `Diagnosed anaemia: ${a.anaemia.hasAnaemia ? 'Yes' : 'No'}`,
-		`Hb: ${a.hb ?? 'not entered'} g/L optional`,
-        `Ferritin: ${a.ferritin ?? 'not entered'} mcg/L`,
-        `CRP: ${a.crp ?? 'not entered / not required'} mg/L`,
-        `Anaemia status: ${a.anaemia.thresholdText}`,
-        '',
-        `Qualifying pathway: ${a.labPathway}`,
-        `Additional criterion: ${a.additionalCriteria.join(', ') || 'not entered'}`,
-        '',
-        a.missingClinical.length
-          ? `Clinical funding issues:\n- ${a.missingClinical.join('\n- ')}`
-          : 'Clinical criteria: no obvious missing items from entered information.',
-        '',
-        a.missingForms.length
-          ? `Forms/admin issues:\n- ${a.missingForms.join('\n- ')}`
-          : 'Forms/admin: no obvious missing items from entered information.',
-        '',
-        a.safetyFlags.length
-          ? `Safety / review flags:\n- ${a.safetyFlags.join('\n- ')}`
-          : 'Safety flags: none entered.',
-        a.userNotes ? `\nNotes:\n${a.userNotes}` : ''
-      ].join('\n');
-
-      result.innerHTML = summary;
-    }
-
-    function copySummary() {
-      checkFunding();
-
-      const result = document.getElementById('result');
-      const plain = result.innerText || result.textContent;
-
-      navigator.clipboard.writeText(plain).then(() => {
-        const old = result.innerHTML;
-        result.innerHTML = old + '\n\nCopied clinical summary.';
-        setTimeout(() => result.innerHTML = old, 900);
-      });
-    }
-
-    function copyPatientExplanation() {
-      const a = buildFundingAssessment();
-      const explanation = [];
-
-      explanation.push('Iron infusion funding criteria');
-      explanation.push('');
-
-      if (a.clinicalCriteriaMet && a.formsReady && a.missingClinical.length === 0 && a.missingForms.length === 0) {
-        explanation.push('Based on the information entered, you appear to meet the updated aligned criteria for the funded Ferinject pathway.');
-        explanation.push('');
-        explanation.push('This is because:');
-        explanation.push(`- The entered blood/clinical information meets this pathway: ${a.labPathway}.`);
-        explanation.push(`- The additional required criterion is: ${a.additionalCriteria.join(', ')}.`);
-        explanation.push('- The POAC and Pharmac forms/admin checks have been ticked as confirmed.');
-      } else {
-        explanation.push('Based on the information entered, funding cannot be clearly confirmed yet.');
-        explanation.push('');
-        explanation.push('Reason/s:');
-
-        if (a.missingClinical.length) {
-          explanation.push('');
-          explanation.push('Clinical criteria:');
-          a.missingClinical.forEach(item => explanation.push(`- ${item}`));
+        if (a.userNotes) {
+          explanation.push("");
+          explanation.push(`Additional notes: ${a.userNotes}`);
         }
 
-        if (a.missingForms.length) {
-          explanation.push('');
-          explanation.push('Forms/admin:');
-          a.missingForms.forEach(item => explanation.push(`- ${item}`));
-        }
-
-        if (!a.missingClinical.length && !a.missingForms.length) {
-          explanation.push('- The entered information needs clinician review before funding can be confirmed.');
-        }
+        navigator.clipboard.writeText(explanation.join("\n")).then(() => {
+          const result = document.getElementById("result");
+          const old = result.innerHTML;
+          result.innerHTML = old + "\n\nCopied patient explanation.";
+          setTimeout(() => (result.innerHTML = old), 900);
+        });
       }
 
-      explanation.push('');
-      explanation.push('Entered results:');
-      explanation.push(`- Diagnosed anaemia: ${a.anaemia.hasAnaemia ? 'Yes' : 'No'}`);
-	  explanation.push(`- Haemoglobin: ${a.hb ?? 'not entered'} g/L optional`);
-      explanation.push(`- Ferritin: ${a.ferritin ?? 'not entered'} mcg/L`);
-      explanation.push(`- CRP: ${a.crp ?? 'not entered / not required'} mg/L`);
-      explanation.push(`- Pathway: ${a.labPathway}`);
+      function resetForm() {
+        document
+          .querySelectorAll('input[type="checkbox"]')
+          .forEach((input) => (input.checked = false));
+        document
+          .querySelectorAll('input[type="number"], input[type="date"], textarea, select')
+          .forEach((input) => (input.value = ""));
 
-      if (a.userNotes) {
-        explanation.push('');
-        explanation.push(`Additional notes: ${a.userNotes}`);
+        document.getElementById("result").textContent =
+          "Enter details, then click Check funding.";
+
+        updateFlow();
       }
-
-      navigator.clipboard.writeText(explanation.join('\n')).then(() => {
-        const result = document.getElementById('result');
-        const old = result.innerHTML;
-        result.innerHTML = old + '\n\nCopied patient explanation.';
-        setTimeout(() => result.innerHTML = old, 900);
-      });
-    }
-
-    function resetForm() {
-      document.querySelectorAll('input[type="checkbox"]').forEach(input => input.checked = false);
-      document.querySelectorAll('input[type="number"], input[type="date"], textarea, select').forEach(input => input.value = '');
-
-      document.getElementById('result').textContent = 'Enter details, then click Check funding.';
-
-      updateFlow();
-    }
-  </script>
-</body>
+    </script>
+  </body>
 </html>
