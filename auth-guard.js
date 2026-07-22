@@ -16,12 +16,13 @@
   document.documentElement.style.visibility = "hidden";
 
   window.CEP_AUTH_READY = (async () => {
-    const [{ initializeApp, getApp, getApps }, authSdk] = await Promise.all([
+    const [{ initializeApp, getApps }, authSdk] = await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
       import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js")
     ]);
 
-    const app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
+    const app = getApps().find(candidate => candidate.name === "[DEFAULT]") ||
+      initializeApp(FIREBASE_CONFIG);
     const auth = authSdk.getAuth(app);
     await authSdk.setPersistence(auth, authSdk.browserLocalPersistence);
 
