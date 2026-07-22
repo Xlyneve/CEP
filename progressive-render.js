@@ -20,6 +20,14 @@ function schedule(callback) {
   };
 }
 
+function reveal(element) {
+  if (!element?.animate) return;
+  element.animate(
+    [{ opacity: 0.72 }, { opacity: 1 }],
+    { duration: 140, easing: "ease-out" }
+  );
+}
+
 export function renderInBatches(container, items, createElement, options = {}) {
   const {
     initialBatchSize = 12,
@@ -45,7 +53,10 @@ export function renderInBatches(container, items, createElement, options = {}) {
     while (index < end) {
       const element = createElement(items[index], index);
       index += 1;
-      if (element) fragment.appendChild(element);
+      if (element) {
+        fragment.appendChild(element);
+        reveal(element);
+      }
     }
 
     container.appendChild(fragment);

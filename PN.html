@@ -1028,6 +1028,7 @@ button:focus,
 <script type="module">
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { renderInBatches } from "./progressive-render.js";
+import { uploadReferenceImage, deleteReferenceImage } from "./image-storage.js";
 import {
   getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -1040,7 +1041,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
   authDomain: "cepx-f9d2a.firebaseapp.com",
   projectId: "cepx-f9d2a",
-  storageBucket: "cepx-f9d2a.appspot.com",
+    storageBucket: "cepx-f9d2a.firebasestorage.app",
   messagingSenderId: "840696526325",
   appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
 };
@@ -1065,17 +1066,15 @@ async function addNote() {
   const createdAt = new Date().toISOString();
   pendingNewNoteTime = createdAt;
 
-  let imageBase64 = "";
-
-  if (file) {
-    imageBase64 = await resizeImage(file, 700, 0.7);
-  }
+  const imageUrl = file
+    ? await uploadReferenceImage(app, file, "nurse-notes")
+    : "";
 
   const newDoc = await addDoc(notesCol, {
     title: title || "Untitled",
     note,
     url: url || "",
-    image: imageBase64 || "",
+    image: imageUrl,
     time: createdAt
   });
 
@@ -1096,9 +1095,14 @@ function resetAddForm() {
   if (nurseForm) nurseForm.classList.remove('show');
   if (toggleBtn) toggleBtn.textContent = '+';
 }
-async function deleteNote(id) {
+async function deleteNote(id, imageUrl = "") {
   if (confirm("Delete this note?")) {
     await deleteDoc(doc(db, "nurseNotes", id));
+    try {
+      await deleteReferenceImage(app, imageUrl);
+    } catch (error) {
+      console.warn("The note was deleted, but its image cleanup failed.", error);
+    }
   }
 }
 
@@ -1472,7 +1476,7 @@ function buildNoteCards(snapshot) {
     });
 
     div.querySelector('.delete-btn').addEventListener('click', () => {
-      deleteNote(id);
+      deleteNote(id, image);
     });
 
     const img = div.querySelector('.note-image');

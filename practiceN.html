@@ -1254,6 +1254,7 @@ mark.highlight-hue {
 <script type="module">
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { renderInBatches } from "./progressive-render.js";
+import { uploadReferenceImage, deleteReferenceImagesFromHTML } from "./image-storage.js";
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ---------------- Firebase ---------------- */
@@ -1264,12 +1265,14 @@ const firebaseConfig = {
   apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
   authDomain: "cepx-f9d2a.firebaseapp.com",
   projectId: "cepx-f9d2a",
-  storageBucket: "cepx-f9d2a.appspot.com",
+    storageBucket: "cepx-f9d2a.firebasestorage.app",
   messagingSenderId: "840696526325",
   appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
 };
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+window.uploadPracticeNReferenceImage = file =>
+  uploadReferenceImage(app, file, "practice-nurse");
 
 /* ---------------- State ---------------- */
 let notes = [];
@@ -2054,7 +2057,13 @@ async function saveEdit(card) {
 
 async function deleteNote(id) {
   if (!confirm("Are you sure you want to delete this note?")) return;
+  const existing = notes.find(note => note.id === id);
   await deleteDoc(doc(db, "practiceNNotes", id));
+  try {
+    await deleteReferenceImagesFromHTML(app, existing?.text);
+  } catch (error) {
+    console.warn("The note was deleted, but its image cleanup failed.", error);
+  }
 }
 
 /* ---------------- Search ---------------- */
@@ -2109,20 +2118,18 @@ document.getElementById("uploadPhotoBtn").addEventListener("click", () => {
 });
 
 // Convert uploaded image to Base64 and insert into #noteText
-document.getElementById("photoInput").addEventListener("change", function () {
+document.getElementById("photoInput").addEventListener("change", async function () {
     const file = this.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-
-    reader.onload = function (e) {
-        const base64 = e.target.result;
-
-        // Insert image at caret position inside the contenteditable area
-        insertImageAtCursor(base64);
-    };
-
-    reader.readAsDataURL(file); // → Base64
+    try {
+      const imageUrl = await window.uploadPracticeNReferenceImage(file);
+      insertImageAtCursor(imageUrl);
+    } catch (error) {
+      alert(error.message || "The image could not be uploaded.");
+    } finally {
+      this.value = "";
+    }
 });
 
 function insertImageAtCursor(base64) {

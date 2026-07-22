@@ -775,6 +775,7 @@ textarea:focus {
 <script type="module">
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { renderInBatches } from "./progressive-render.js";
+import { uploadReferenceImage, deleteReferenceImage } from "./image-storage.js";
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ---------------- Firebase ---------------- */
@@ -785,7 +786,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
   authDomain: "cepx-f9d2a.firebaseapp.com",
   projectId: "cepx-f9d2a",
-  storageBucket: "cepx-f9d2a.appspot.com",
+    storageBucket: "cepx-f9d2a.firebasestorage.app",
   messagingSenderId: "840696526325",
   appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
 };
@@ -953,35 +954,19 @@ pendingNewNoteTimestamp = createdAt;
   const file = fileInput ? fileInput.files[0] : null;
   if (!title || !text) return alert("Please fill in both Title and Explanation.");
 
-  let imageBase64 = "";
-  if (file) {
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      imageBase64 = reader.result;
-      const newDoc = await addDoc(collection(db, "informationNotes"), {
-  title,
-  text,
-  url,
-  image: imageBase64,
-  timestamp: createdAt
-});
+  const imageUrl = file
+    ? await uploadReferenceImage(app, file, "information-notes")
+    : "";
+  const newDoc = await addDoc(collection(db, "informationNotes"), {
+    title,
+    text,
+    url,
+    image: imageUrl,
+    timestamp: createdAt
+  });
 
-newestNoteId = newDoc.id;
-resetAddForm();
-    };
-    reader.readAsDataURL(file);
-  } else {
-    const newDoc = await addDoc(collection(db, "informationNotes"), {
-  title,
-  text,
-  url,
-  image: "",
-timestamp: createdAt
-});
-
-newestNoteId = newDoc.id;
-resetAddForm();
-  }
+  newestNoteId = newDoc.id;
+  resetAddForm();
 });
 
 function resetAddForm() {
@@ -1251,7 +1236,13 @@ async function saveEdit(card){
 
 async function deleteNote(id){
   if(!confirm("Are you sure you want to delete this note?")) return;
+  const existing = notes.find(note => note.id === id);
   await deleteDoc(doc(db,"informationNotes",id));
+  try {
+    await deleteReferenceImage(app, existing?.image);
+  } catch (error) {
+    console.warn("The note was deleted, but its image cleanup failed.", error);
+  }
 }
 
 /* ---------------- Search ---------------- */
