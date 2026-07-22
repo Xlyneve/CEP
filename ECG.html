@@ -75,14 +75,16 @@ const firebaseConfig = {
     const imageUrl = imageFile
       ? await uploadReferenceImage(app, imageFile, "ecg", { maxDimension: 1600, quality: 0.78 })
       : "";
-    await addDoc(ecgNotesCollection, {
+    const noteData = {
       note: noteText,
       image: imageUrl,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
-    });
+    };
+    const newDoc = await addDoc(ecgNotesCollection, noteData);
+    cachedNoteDocs?.push(createCachedNote(newDoc.id, noteData));
     hideNoteInput();
-    loadNotes("", true);
+    loadNotes();
   }
   
   function highlightMatches(html, words) {
@@ -100,6 +102,14 @@ const firebaseConfig = {
   // ------------------ Load Notes ------------------
   let isLoadingNotes = false;
   let cachedNoteDocs = null;
+  const createCachedNote = (id, data) => ({ id, data: () => data });
+  const updateCachedNote = (id, updates) => {
+    cachedNoteDocs = cachedNoteDocs?.map(noteDoc =>
+      noteDoc.id === id
+        ? createCachedNote(id, { ...noteDoc.data(), ...updates })
+        : noteDoc
+    );
+  };
   async function loadNotes(filter = "", forceRefresh = false) {
     if (isLoadingNotes) return;
     isLoadingNotes = true;
@@ -180,12 +190,11 @@ card.appendChild(p);
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
         await deleteDoc(doc(ecgNotesCollection, docSnap.id));
-        try {
-          await deleteReferenceImage(app, data.image);
-        } catch (error) {
+        cachedNoteDocs = cachedNoteDocs?.filter(noteDoc => noteDoc.id !== docSnap.id);
+        loadNotes(filter);
+        deleteReferenceImage(app, data.image).catch(error => {
           console.warn("The note was deleted, but its image cleanup failed.", error);
-        }
-        loadNotes(filter, true);
+        });
       };
 
       // Edit
@@ -224,7 +233,8 @@ card.appendChild(p);
         saveBtn.onclick = async () => {
           const newNote = editDiv.innerHTML;
           await updateDoc(doc(ecgNotesCollection, docSnap.id), { note: newNote });
-          loadNotes(filter, true);
+          updateCachedNote(docSnap.id, { note: newNote, updatedAt: new Date().toISOString() });
+          loadNotes(filter);
         };
 
         card.insertBefore(formatContainer, editDiv.nextSibling);
