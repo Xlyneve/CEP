@@ -59,12 +59,25 @@ export async function uploadReferenceImage(app, file, folder, options = {}) {
   return getDownloadURL(imageRef);
 }
 
+export function getStorageObjectPath(imageUrl) {
+  if (imageUrl.startsWith("gs://")) return imageUrl;
+  const parsedUrl = new URL(imageUrl);
+  const encodedPath = parsedUrl.pathname.match(/\/o\/(.+)$/)?.[1];
+  if (!encodedPath) throw new Error("The Storage image path could not be read.");
+  return decodeURIComponent(encodedPath);
+}
+
 export async function deleteReferenceImage(app, imageUrl) {
   if (!imageUrl || imageUrl.startsWith("data:")) return;
   if (!imageUrl.startsWith("gs://") && !imageUrl.includes("firebasestorage.googleapis.com")) return;
   try {
     const { getStorage, ref, deleteObject } = await getStorageModule();
-    await deleteObject(ref(getStorage(app), imageUrl));
+    const storage = getStorage(app);
+    let imageRef;
+
+    imageRef = ref(storage, getStorageObjectPath(imageUrl));
+
+    await deleteObject(imageRef);
   } catch (error) {
     if (error?.code !== "storage/object-not-found") throw error;
   }
