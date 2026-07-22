@@ -15,7 +15,7 @@
 import { renderInBatches } from "./progressive-render.js";
 import { uploadReferenceImage, deleteReferenceImage } from "./image-storage.js";
   import {
-    getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+    initializeFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // ------------------ Firebase config ------------------
@@ -33,7 +33,7 @@ const firebaseConfig = {
 
   // ------------------ Init ------------------
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const db = initializeFirestore(app, { experimentalForceLongPolling: true });
   const urgentCareCollection = collection(db, "urgentCareNotes");
 
   // ------------------ Show/hide note input ------------------
@@ -102,7 +102,16 @@ const firebaseConfig = {
     const searchWords = filter.toLowerCase().trim().split(/\s+/).filter(Boolean);
 
     if (forceRefresh || !cachedNoteDocs) {
-      cachedNoteDocs = (await getDocs(urgentCareCollection)).docs;
+      notesContainer.innerHTML = "<p>Loading notes…</p>";
+      try {
+        cachedNoteDocs = (await getDocs(urgentCareCollection)).docs;
+      } catch (error) {
+        console.error("Urgent Care notes failed to load.", error);
+        notesContainer.innerHTML = "<p>Notes could not load. Please refresh and try again.</p>";
+        isLoadingNotes = false;
+        return;
+      }
+      notesContainer.innerHTML = "";
     }
     const matchingDocs = cachedNoteDocs.filter((docSnap) => {
       const noteText = docSnap.data().note?.toLowerCase() || "";
