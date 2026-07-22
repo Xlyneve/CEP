@@ -1,0 +1,183 @@
+/* Shared Practice Nurse layout for the approved notes pages. */
+
+.header,
+.topbar {
+  min-height: 70px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, rgba(192, 183, 187, 0.7), rgba(235, 232, 233, 0.58)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 10px 28px rgba(92, 72, 82, 0.15) !important;
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+
+.container,
+.app {
+  width: min(1280px, calc(100% - 32px));
+  max-width: 1280px;
+  margin-inline: auto;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+.cards-container,
+.note-list,
+.card-grid {
+  display: block !important;
+  width: 100%;
+  padding: 10px 0;
+  column-count: 4;
+  column-gap: 16px;
+  box-sizing: border-box;
+}
+
+.cards-container > .note-card,
+.note-list > .note-card,
+.card-grid > .note-card {
+  position: relative;
+  display: inline-block !important;
+  width: 100% !important;
+  margin: 0 0 16px !important;
+  padding: 15px !important;
+  box-sizing: border-box;
+  break-inside: avoid;
+  border-radius: 14px !important;
+  vertical-align: top;
+}
+
+@media (hover: hover) {
+  .note-card:not(.is-editing):not(.actions-visible):hover {
+    transform: translateY(-2px) scale(1.015);
+    box-shadow:
+      0 14px 34px rgba(92, 72, 82, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.86) !important;
+  }
+}
+
+/* Copy feedback: Ashen Rose glass colour, never a white shine sweep. */
+.note-card.show-copied,
+.note-card.copied-feedback {
+  overflow: hidden;
+  animation: ashenRoseCopied 900ms ease both !important;
+  background: rgba(158, 137, 147, 0.84) !important;
+  border-color: rgba(235, 232, 233, 0.9) !important;
+}
+
+.note-card.show-copied::before,
+.note-card.show-copied::after,
+.note-card.copied-feedback::before,
+.note-card.copied-feedback::after {
+  display: none !important;
+  animation: none !important;
+  content: none !important;
+}
+
+@keyframes ashenRoseCopied {
+  0%, 100% {
+    color: var(--theme-ink, #40363b);
+    box-shadow: 0 12px 30px rgba(92, 72, 82, 0.18);
+  }
+  35%, 70% {
+    color: #fff;
+    box-shadow:
+      0 0 0 3px rgba(173, 159, 166, 0.42),
+      0 14px 34px rgba(92, 72, 82, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  }
+}
+
+/* Replace the circle-and-square menu with a small blinking light button. */
+.center-toggle {
+  width: 46px !important;
+  height: 26px !important;
+}
+
+.toggle-icon {
+  width: 46px !important;
+  height: 26px !important;
+  box-sizing: border-box;
+  border-radius: 999px !important;
+  font-size: 0 !important;
+  transform: none !important;
+  color: transparent !important;
+  background: var(--ashen-rose, #9e8993) !important;
+  border: 1px solid rgba(235, 232, 233, 0.86) !important;
+  animation: noteMenuLight 1.7s ease-in-out infinite;
+}
+
+.toggle-icon::before {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--first-light, #ebe8e9);
+  box-shadow: 0 0 10px rgba(235, 232, 233, 0.9);
+}
+
+.toggle-icon:hover {
+  color: transparent !important;
+  background: var(--morning-fog, #c0b7bb) !important;
+  animation-play-state: paused;
+}
+
+.toggle-icon:active,
+.toggle-icon.active,
+.center-toggle.active .toggle-icon {
+  color: transparent !important;
+  background: var(--pale-heather, #d5d0d3) !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+@keyframes noteMenuLight {
+  0%, 100% {
+    background: var(--ashen-rose, #9e8993);
+    box-shadow: 0 0 7px rgba(158, 137, 147, 0.36);
+  }
+  50% {
+    background: var(--iced-petal, #ad9fa6);
+    box-shadow: 0 0 15px rgba(173, 159, 166, 0.72);
+  }
+}
+
+@media (max-width: 1050px) {
+  .cards-container,
+  .note-list,
+  .card-grid { column-count: 3; }
+}
+
+@media (max-width: 780px) {
+  html,
+  body {
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  .header,
+  .topbar {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .cards-container,
+  .note-list,
+  .card-grid { column-count: 2; }
+}
+
+@media (max-width: 520px) {
+  .container,
+  .app { width: min(100% - 20px, 1280px); }
+
+  .cards-container,
+  .note-list,
+  .card-grid { column-count: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle-icon,
+  .note-card.show-copied,
+  .note-card.copied-feedback {
+    animation: none !important;
+  }
+}
