@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
   <script src="auth-guard.js"></script>
+  <script src="security.js"></script>
+  <meta charset="UTF-8" />
   <link rel="stylesheet" href="header-rays.css?v=1">
   <title>Notes</title>
 <style>
@@ -280,7 +281,7 @@ h1 {
 
 <div class="note-grid" id="noteGrid"></div>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import {
   getFirestore, collection, query, orderBy,
   onSnapshot, doc, updateDoc, deleteDoc, addDoc, serverTimestamp
@@ -296,7 +297,7 @@ const firebaseConfig = {
   appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const notesRef = collection(db, "notebookNotes");
 

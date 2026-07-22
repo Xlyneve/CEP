@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="auth-guard.js"></script>
+  <script src="security.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Recall Tracker</title>
@@ -754,10 +756,11 @@ const firebaseConfig = {
   appId: "1:550249186610:web:5ee5b585ac686021be432b",
 };
 
-firebase.initializeApp(firebaseConfig);
+const recallTrackerApp = firebase.apps.find(app => app.name === "recall-tracker") ||
+  firebase.initializeApp(firebaseConfig, "recall-tracker");
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth = firebase.auth(recallTrackerApp);
+const db = firebase.firestore(recallTrackerApp);
 
 let currentUserEmail = null;
 let stateLoaded = false;

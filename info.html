@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="auth-guard.js"></script>
+  <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-	<script src="auth-guard.js"></script>
 	<link rel="stylesheet" href="header-rays.css?v=1">
   <title>INFORMATIONS</title>
   <style>
@@ -768,7 +769,7 @@ textarea:focus {
 <button id="toggleInputBtn">+</button>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 /* ---------------- Firebase ---------------- */
@@ -780,7 +781,7 @@ const firebaseConfig = {
   messagingSenderId: "840696526325",
   appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
 };
-const app = initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 /* ---------------- State ---------------- */
@@ -1092,12 +1093,12 @@ urlInput.style.display = 'none';
     // Text display
     const textDisplay = document.createElement('div');
     textDisplay.className = 'note-text';
-    textDisplay.innerHTML = maybeParseLegacy(note.text || '');
+    CEPSecurity.setHTML(textDisplay, maybeParseLegacy(note.text || ''));
 
     // Text editor
     const textEditor = document.createElement('div');
     textEditor.className = 'edit-note'; textEditor.contentEditable = true;
-    textEditor.style.display = 'none'; textEditor.innerHTML = maybeParseLegacy(note.text || '');
+    textEditor.style.display = 'none'; CEPSecurity.setHTML(textEditor, maybeParseLegacy(note.text || ''));
     textEditor.style.minHeight = '60px'; textEditor.style.maxHeight = '200px'; textEditor.style.overflowY = 'auto'; textEditor.style.margin = '8px 0';
 
     // Optional image
