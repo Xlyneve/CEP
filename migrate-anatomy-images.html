@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ECG Image Migration</title>
+  <title>Anatomy Image Migration</title>
   <script src="auth-guard.js"></script>
   <style>
     body {
@@ -22,15 +22,18 @@
       box-shadow: 0 12px 32px rgba(24, 55, 45, 0.08);
     }
     h1 { margin-top: 0; font-size: 24px; }
-    button {
+    button, select {
       margin-right: 10px;
       padding: 10px 16px;
       border: 0;
       border-radius: 9px;
+    }
+    button {
       color: #fff;
       background: #2f6957;
       cursor: pointer;
     }
+    select { margin-bottom: 16px; color: #24302d; background: #eef4f1; }
     button:disabled { opacity: 0.45; cursor: wait; }
     progress { width: 100%; height: 16px; margin: 20px 0 8px; }
     #status { min-height: 48px; white-space: pre-line; }
@@ -39,9 +42,18 @@
 </head>
 <body>
   <main>
-    <h1>ECG image migration</h1>
+    <h1>Anatomy image migration</h1>
     <p>This temporary tool converts only existing Base64 images into compressed WebP files in Firebase Storage. Notes already using Storage are skipped.</p>
-    <p class="warning">Keep this tab open during migration. Do not edit ECG notes until it finishes.</p>
+    <p class="warning">Choose and migrate one category at a time. Keep this tab open and do not edit that category until it finishes.</p>
+    <label for="category">Category</label><br>
+    <select id="category">
+      <option value="hand">Hand / Wrist</option>
+      <option value="abdo">Abdo / Thorax</option>
+      <option value="face">Face / Head</option>
+      <option value="lowerLimb">Lower Limb</option>
+      <option value="upperArm">Shoulder / Upper Arm</option>
+      <option value="spine">Spine / Back</option>
+    </select><br>
     <button id="scanBtn">Scan images</button>
     <button id="migrateBtn" disabled>Migrate scanned images</button>
     <progress id="progress" value="0" max="1"></progress>
@@ -68,12 +80,21 @@
 
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const collectionName = "ecgNotes";
+    const categories = {
+      hand: { label: "Hand / Wrist", collection: "handNotes", folder: "hand-wrist" },
+      abdo: { label: "Abdo / Thorax", collection: "abdominisNotes", folder: "abdo" },
+      face: { label: "Face / Head", collection: "faceNotes", folder: "face" },
+      lowerLimb: { label: "Lower Limb", collection: "footlegNotes", folder: "lower-limb" },
+      upperArm: { label: "Shoulder / Upper Arm", collection: "upperArmNotes", folder: "upper-arm" },
+      spine: { label: "Spine / Back", collection: "spineNotes", folder: "spine" }
+    };
+    const category = document.getElementById("category");
     const scanBtn = document.getElementById("scanBtn");
     const migrateBtn = document.getElementById("migrateBtn");
     const progress = document.getElementById("progress");
     const status = document.getElementById("status");
     let pendingDocs = [];
+    let scannedCategory = "";
 
     function approximateBytes(dataUrl) {
       const comma = dataUrl.indexOf(",");
@@ -91,9 +112,12 @@
     scanBtn.addEventListener("click", async () => {
       scanBtn.disabled = true;
       migrateBtn.disabled = true;
-      status.textContent = "Scanning ECG notes…";
+      const selected = categories[category.value];
+      scannedCategory = category.value;
+      category.disabled = true;
+      status.textContent = `Scanning ${selected.label} notes…`;
       try {
-        const snapshot = await getDocs(collection(db, collectionName));
+        const snapshot = await getDocs(collection(db, selected.collection));
         pendingDocs = snapshot.docs.filter(noteDoc =>
           String(noteDoc.data().image || "").startsWith("data:image/")
         );
@@ -104,18 +128,30 @@
         progress.max = Math.max(1, pendingDocs.length);
         status.textContent = pendingDocs.length
           ? `Found ${pendingDocs.length} Base64 images (${(bytes / 1024 / 1024).toFixed(1)} MB before compression).`
-          : "No Base64 images remain. ECG is already migrated.";
+          : `No Base64 images remain. ${selected.label} is already migrated.`;
         migrateBtn.disabled = pendingDocs.length === 0;
       } catch (error) {
         status.textContent = `Scan failed: ${error.message}`;
       } finally {
         scanBtn.disabled = false;
+        category.disabled = false;
       }
+    });
+
+    category.addEventListener("change", () => {
+      pendingDocs = [];
+      scannedCategory = "";
+      migrateBtn.disabled = true;
+      progress.value = 0;
+      progress.max = 1;
+      status.textContent = "Ready to scan.";
     });
 
     migrateBtn.addEventListener("click", async () => {
       scanBtn.disabled = true;
       migrateBtn.disabled = true;
+      category.disabled = true;
+      const selected = categories[scannedCategory];
       let completed = 0;
       const failures = [];
 
@@ -124,11 +160,8 @@
         status.textContent = `Migrating image ${completed + 1} of ${pendingDocs.length}…`;
         try {
           const file = await dataUrlToFile(noteDoc.data().image, noteDoc.id);
-          imageUrl = await uploadReferenceImage(app, file, "ecg", {
-            maxDimension: 1600,
-            quality: 0.78
-          });
-          await updateDoc(doc(db, collectionName, noteDoc.id), { image: imageUrl });
+          imageUrl = await uploadReferenceImage(app, file, selected.folder);
+          await updateDoc(doc(db, selected.collection, noteDoc.id), { image: imageUrl });
           completed += 1;
           progress.value = completed;
         } catch (error) {
@@ -144,6 +177,7 @@
         ? `Migrated ${completed} images. ${failures.length} failed and remain unchanged.\n${failures.join("\n")}`
         : `Migration complete: ${completed} images converted successfully.`;
       scanBtn.disabled = false;
+      category.disabled = false;
     });
   </script>
 </body>
