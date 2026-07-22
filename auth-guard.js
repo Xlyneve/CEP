@@ -12,8 +12,25 @@
     appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
   };
 
-  // Do not reveal protected content while Firebase restores the signed-in user.
-  document.documentElement.style.visibility = "hidden";
+  // Keep protected content hidden while showing a lightweight loading state.
+  const loadingStyle = document.createElement("style");
+  loadingStyle.textContent = `
+    html.cep-auth-pending body { visibility: hidden !important; }
+    html.cep-auth-pending::before {
+      content: "Loading secure data…";
+      position: fixed;
+      inset: 0;
+      z-index: 2147483647;
+      display: grid;
+      place-items: center;
+      visibility: visible;
+      background: #f7f7f8;
+      color: #3f4650;
+      font: 600 14px/1.4 system-ui, sans-serif;
+    }
+  `;
+  document.head.appendChild(loadingStyle);
+  document.documentElement.classList.add("cep-auth-pending");
 
   window.CEP_AUTH_READY = (async () => {
     const [{ initializeApp, getApps }, authSdk] = await Promise.all([
@@ -24,7 +41,11 @@
     const app = getApps().find(candidate => candidate.name === "[DEFAULT]") ||
       initializeApp(FIREBASE_CONFIG);
     const auth = authSdk.getAuth(app);
-    await authSdk.setPersistence(auth, authSdk.browserLocalPersistence);
+
+    // The login page already establishes durable persistence. Rewriting the
+    // persistence setting on every navigation adds an unnecessary IndexedDB wait.
+    window.CEP_FIREBASE_APP = app;
+    window.CEP_FIREBASE_AUTH = auth;
 
     const user = await new Promise(resolve => {
       const unsubscribe = authSdk.onAuthStateChanged(auth, currentUser => {
@@ -45,7 +66,8 @@
       return false;
     }
 
-    document.documentElement.style.visibility = "";
+    document.documentElement.classList.remove("cep-auth-pending");
+    loadingStyle.remove();
     window.CEP_CURRENT_USER = user;
     return true;
   })().catch(error => {
