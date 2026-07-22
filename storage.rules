@@ -8,8 +8,11 @@ service firebase.storage {
         && request.auth.token.email == 'xeve06@gmail.com';
     }
 
-    match /{allPaths=**} {
-      allow read, write: if isAuthorizedUser();
+    match /reference-images/{allPaths=**} {
+      allow read, delete: if isAuthorizedUser();
+      allow create, update: if isAuthorizedUser()
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType == 'image/webp';
     }
   }
 }

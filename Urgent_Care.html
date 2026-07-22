@@ -12,7 +12,8 @@
   <title>Urgent Care</title>
 <script type="module">
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { renderInBatches } from "./progressive-render.js";
+import { renderInBatches } from "./progressive-render.js";
+import { uploadReferenceImage, deleteReferenceImage } from "./image-storage.js";
   import {
     getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -25,7 +26,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
     authDomain: "cepx-f9d2a.firebaseapp.com",
     projectId: "cepx-f9d2a",
-    storageBucket: "cepx-f9d2a.appspot.com",
+    storageBucket: "cepx-f9d2a.firebasestorage.app",
     messagingSenderId: "840696526325",
     appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
   };
@@ -71,26 +72,18 @@ const firebaseConfig = {
     const imageFile = document.getElementById("image").files[0];
     if (!noteText && !imageFile) return;
 
-    let imageData = "";
-    if (imageFile) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        imageData = reader.result;
-        await addDoc(urgentCareCollection, { note: noteText, image: imageData });
-        hideNoteInput();
-        loadNotes();
-      };
-      reader.readAsDataURL(imageFile);
-    } else {
-      await addDoc(urgentCareCollection, { note: noteText, image: "" });
-      hideNoteInput();
-      loadNotes();
-    }
+    const imageUrl = imageFile
+      ? await uploadReferenceImage(app, imageFile, "urgent-care")
+      : "";
+    await addDoc(urgentCareCollection, { note: noteText, image: imageUrl });
+    hideNoteInput();
+    loadNotes("", true);
   }
 
   // ------------------ Load Notes ------------------
   let isLoadingNotes = false;
-  async function loadNotes(filter = "") {
+  let cachedNoteDocs = null;
+  async function loadNotes(filter = "", forceRefresh = false) {
     if (isLoadingNotes) return;
     isLoadingNotes = true;
 
@@ -98,8 +91,10 @@ const firebaseConfig = {
     notesContainer.innerHTML = "";
     const searchWords = filter.toLowerCase().trim().split(/\s+/).filter(Boolean);
 
-    const querySnapshot = await getDocs(urgentCareCollection);
-    const matchingDocs = querySnapshot.docs.filter((docSnap) => {
+    if (forceRefresh || !cachedNoteDocs) {
+      cachedNoteDocs = (await getDocs(urgentCareCollection)).docs;
+    }
+    const matchingDocs = cachedNoteDocs.filter((docSnap) => {
       const noteText = docSnap.data().note?.toLowerCase() || "";
       return !searchWords.length || searchWords.every(w => noteText.includes(w));
     });
@@ -157,7 +152,12 @@ const firebaseConfig = {
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
         await deleteDoc(doc(urgentCareCollection, docSnap.id));
-        loadNotes(filter);
+        try {
+          await deleteReferenceImage(app, data.image);
+        } catch (error) {
+          console.warn("The note was deleted, but its image cleanup failed.", error);
+        }
+        loadNotes(filter, true);
       };
 
       // Edit
@@ -196,7 +196,7 @@ const firebaseConfig = {
         saveBtn.onclick = async () => {
           const newNote = editDiv.innerHTML;
           await updateDoc(doc(urgentCareCollection, docSnap.id), { note: newNote });
-          loadNotes(filter);
+          loadNotes(filter, true);
         };
 
         card.insertBefore(formatContainer, editDiv.nextSibling);
