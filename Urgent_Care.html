@@ -15,8 +15,8 @@
 import { renderInBatches } from "./progressive-render.js";
 import { uploadReferenceImage, deleteReferenceImage } from "./image-storage.js";
   import {
-    initializeFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-lite.js";
 
   // ------------------ Firebase config ------------------
   // Avoid an unauthenticated Firestore request and retry on page load.
@@ -33,7 +33,7 @@ const firebaseConfig = {
 
   // ------------------ Init ------------------
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-  const db = initializeFirestore(app, { experimentalForceLongPolling: true });
+  const db = getFirestore(app);
   const urgentCareCollection = collection(db, "urgentCareNotes");
 
   // ------------------ Show/hide note input ------------------
