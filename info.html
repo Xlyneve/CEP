@@ -774,6 +774,7 @@ textarea:focus {
 
 <script type="module">
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { renderInBatches } from "./progressive-render.js";
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ---------------- Firebase ---------------- */
@@ -1029,7 +1030,7 @@ if (!newestNoteId && pendingNewNoteTimestamp) {
 function renderNotes(arr) {
   notesContainer.innerHTML = '';
   if (!arr.length) { notesContainer.innerHTML = '<p>No notes found.</p>'; return; }
-  arr.forEach(note => {
+  renderInBatches(notesContainer, arr, note => {
     const card = document.createElement('div');
     card.className = 'note-card';
     card.dataset.id = note.id;
@@ -1113,6 +1114,8 @@ urlInput.style.display = 'none';
     if (note.image) {
       imgEl = document.createElement('img');
       imgEl.src = note.image;
+      imgEl.loading = 'lazy';
+      imgEl.decoding = 'async';
       imgEl.style.maxWidth = '100%';
       imgEl.style.marginTop = '10px';
       imgEl.style.borderRadius = '6px';
@@ -1146,7 +1149,6 @@ urlInput.style.display = 'none';
 
     // Assemble card
     card.append(titleEl, titleInput, urlEl, urlInput, textDisplay, textEditor, editorBtns, timeEl, btnGroup);
-    notesContainer.appendChild(card);
 
     // Long press
     let pressTimer = null, longPressed=false;
@@ -1170,7 +1172,8 @@ urlInput.style.display = 'none';
         setTimeout(()=>{ tick.style.opacity='0'; tick.style.transform='scale(0.85)'; },900);
       });
     });
-  });
+    return card;
+  }, { initialBatchSize: 12, batchSize: 8 });
 }
 
 /* ---------------- Edit / Save / Delete ---------------- */

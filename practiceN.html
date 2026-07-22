@@ -1253,6 +1253,7 @@ mark.highlight-hue {
 
 <script type="module">
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { renderInBatches } from "./progressive-render.js";
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ---------------- Firebase ---------------- */
@@ -1653,7 +1654,7 @@ function renderNotes(arr) {
   notesContainer.innerHTML = '';
   if (!arr.length) { notesContainer.innerHTML = '<p>No notes found.</p>'; return; }
 
-  arr.forEach(note => {
+  renderInBatches(notesContainer, arr, note => {
     const card = document.createElement('div');
     card.className = 'note-card';
     card.dataset.id = note.id;
@@ -1898,7 +1899,6 @@ editorBtns.append(mainEditActions, tableTools);
 
     // Assemble card
     card.append(titleEl, titleInput, urlEl, urlInput, textDisplay, textEditor, editorBtns, timeEl, btnGroup);
-    notesContainer.appendChild(card);
 
     /* ---------- Interactions ---------- */
     // Long-press to reveal edit/delete
@@ -1964,7 +1964,8 @@ card.addEventListener('touchcancel', endPress);
   }, 1500);
 });
     });
-  });
+    return card;
+  }, { initialBatchSize: 12, batchSize: 8 });
 }
 
 function renderFilteredNotes() {

@@ -1027,6 +1027,7 @@ button:focus,
 
 <script type="module">
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { renderInBatches } from "./progressive-render.js";
 import {
   getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -1426,7 +1427,7 @@ function buildNoteCards(snapshot) {
   const list = document.getElementById('nurseNotesList');
   list.innerHTML = '';
 
-  snapshot.forEach(docSnap => {
+  renderInBatches(list, snapshot.docs, docSnap => {
     const { title, note, time, url, image } = docSnap.data();
     const id = docSnap.id;
 
@@ -1457,7 +1458,7 @@ function buildNoteCards(snapshot) {
     div.innerHTML = `
       <div class="note-title">${title}</div>
       <div class="note-content">${note}</div>
-      ${image ? `<img src="${image}" class="note-image" style="width:65%; max-width:220px; margin-top:10px; border-radius:6px; cursor:pointer; display:block;" />` : ""}
+      ${image ? `<img src="${image}" loading="lazy" decoding="async" class="note-image" style="width:65%; max-width:220px; margin-top:10px; border-radius:6px; cursor:pointer; display:block;" />` : ""}
       <div style="font-size:12px; margin-top:10px; color:#555;">${new Date(time).toLocaleString()}</div>
       ${url ? `<div class="note-url"><a href="${url}" target="_blank"><span class="icon">🔗</span>Open URL</a></div>` : ""}
       <div class="note-actions">
@@ -1486,12 +1487,14 @@ div.querySelectorAll('.note-content table').forEach(table => {
   });
 });
 
-list.appendChild(div);
+return div;
+  }, {
+    initialBatchSize: 12,
+    batchSize: 8,
+    onBatch: () => {
+      if (currentSearchQuery.trim() !== "") applySearchFilter(currentSearchQuery);
+    }
   });
-
-  if (currentSearchQuery.trim() !== "") {
-    applySearchFilter(currentSearchQuery);
-  }
 }
 
 function renderNotes() {
