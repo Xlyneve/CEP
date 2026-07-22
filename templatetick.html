@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="auth-guard.js"></script>
+  <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Consultation Templates</title>
@@ -1509,7 +1511,7 @@ select option {
 
   <script src="calculator.js"></script>
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
@@ -1534,7 +1536,8 @@ let userTemplates = [];
 let activeTemplateId = 'general';
 
 try {
-  app = initializeApp(firebaseConfig);
+  app = getApps().find(candidate => candidate.name === 'template-tick') ||
+    initializeApp(firebaseConfig, 'template-tick');
   auth = getAuth(app);
   db = getFirestore(app);
   templatesRef = collection(db, 'consultationTemplates');

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="auth-guard.js"></script>
+  <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Clinical Notes</title>
@@ -809,10 +811,8 @@ body::after {
 
   <!-- LOGIN PANEL -->
   <div id="loginDiv" class="login-container">
-    <h2>Login</h2>
-    <input type="email" id="loginEmail" placeholder="Email"><br>
-    <input type="password" id="loginPass" placeholder="Password"><br>
-    <button id="loginBtn">Login</button>
+    <h2>Secure sign in</h2>
+    <button id="loginBtn">Sign in with Google</button>
     <div id="loginError" style="color:red; margin-top:5px;"></div>
   </div>
 
@@ -859,12 +859,12 @@ body::after {
   <div class="notes-panel" id="notesList"></div>
 </div>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import {
   getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import {
-  getAuth, signInWithEmailAndPassword, onAuthStateChanged
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 // --- Firebase config ---
@@ -878,9 +878,11 @@ const firebaseConfig = {
   measurementId: "G-SFWTJF4XVG"
 };
 
-const app  = initializeApp(firebaseConfig);
+const app = getApps().find(candidate => candidate.name === "clinical-notes") ||
+  initializeApp(firebaseConfig, "clinical-notes");
 const db   = getFirestore(app);
 const auth = getAuth(app);
+const allowedEmail = "xeve06@gmail.com";
 const notesCol = collection(db, "clinicalNotes");
 let ALL_NOTES = [];
 let PINNED_EDIT_MODE = false;
@@ -926,22 +928,22 @@ noteTextEl.addEventListener('keydown', function(e) {
 });
 
 // --- Auth flow ---
-onAuthStateChanged(auth, user => {
-  if (user) {
+onAuthStateChanged(auth, async user => {
+  const authorized = user && user.emailVerified && user.email.toLowerCase() === allowedEmail;
+  if (authorized) {
     document.getElementById('loginDiv').style.display  = 'none';
     document.getElementById('notesDiv').style.display  = 'flex';
     renderNotes();
   } else {
+    if (user) await signOut(auth);
     document.getElementById('loginDiv').style.display  = 'block';
     document.getElementById('notesDiv').style.display  = 'none';
   }
 });
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
-  const email = document.getElementById('loginEmail').value;
-  const pass  = document.getElementById('loginPass').value;
   try {
-    await signInWithEmailAndPassword(auth, email, pass);
+    await signInWithPopup(auth, new GoogleAuthProvider());
   } catch (err) {
     document.getElementById('loginError').textContent = err.message;
   }
@@ -1037,9 +1039,9 @@ function renderPinnedNotes() {
     preview.className = 'pinned-note-preview';
 
     const tmp = document.createElement('div');
-	tmp.innerHTML = note.note || '';
+	CEPSecurity.setHTML(tmp, note.note || '');
 
-	preview.innerHTML = note.note || '';
+	CEPSecurity.setHTML(preview, note.note || '');
 
     const unpin = document.createElement('button');
 	unpin.className = 'unpin-btn';
@@ -1097,7 +1099,7 @@ function drawNotes(notesArray) {
     // --- Content ---
     const contentEl = document.createElement('div');
     contentEl.className = 'note-content';
-    contentEl.innerHTML = data.note || "";
+    CEPSecurity.setHTML(contentEl, data.note || "");
 
     // --- Actions (Edit/Delete) ---
     const actions = document.createElement('div');

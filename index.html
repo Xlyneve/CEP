@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Enter Password</title>
+  <title>Secure sign in</title>
   <style>
   
   @font-face {
@@ -170,15 +170,14 @@ button:hover {
 </div>
 
   <div class="password-container">
-    <h2 style="color: black;">Enter Password</h2>
-    <input type="password" id="password" placeholder="Password">
-    <br>
-    <button onclick="checkPassword()">Submit</button>
+    <h2 style="color: black;">Secure sign in</h2>
+    <p id="signInStatus" style="font-size: 14px; color: #2f2f6d;">Use the approved Google account to continue.</p>
+    <button id="googleSignIn" type="button">Sign in with Google</button>
   </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
 
   <script>
     // Live date & time display
@@ -207,35 +206,43 @@ updateDateTime();
     };
 
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const auth = firebase.auth();
+    const allowedEmail = "xeve06@gmail.com";
+    const params = new URLSearchParams(location.search);
+    const requestedPage = params.get("returnTo") || "home.html";
+    const safeReturnTo = /^[A-Za-z0-9 _.-]+\.html$/.test(requestedPage)
+      ? requestedPage
+      : "home.html";
+    const status = document.getElementById("signInStatus");
+    const signInButton = document.getElementById("googleSignIn");
 
-    async function checkPassword() {
-      const inputPassword = document.getElementById('password').value;
+    auth.onAuthStateChanged(async user => {
+      if (!user) return;
+
+      if (user.emailVerified && String(user.email || "").toLowerCase() === allowedEmail) {
+        location.replace(safeReturnTo);
+        return;
+      }
+
+      await auth.signOut();
+      status.textContent = `Access is restricted to ${allowedEmail}.`;
+      signInButton.disabled = false;
+    });
+
+    signInButton.addEventListener("click", async () => {
+      signInButton.disabled = true;
+      status.textContent = "Opening Google sign in…";
 
       try {
-        const doc = await db.collection('settings').doc('password').get();
-        if (!doc.exists) {
-          alert('Password setting not found.');
-          return;
-        }
-        const correctPassword = doc.data().value;
-
-        if (inputPassword === correctPassword) {
-          sessionStorage.setItem('authenticated', 'true');
-          window.location.href = "home.html";
-        } else {
-          alert("Incorrect password. Try again.");
-        }
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ login_hint: allowedEmail });
+        await auth.signInWithPopup(provider);
       } catch (error) {
-        console.error("Error checking password:", error);
-        alert("Something went wrong. Try again later.");
+        console.error("Google sign in failed.", error);
+        status.textContent = "Sign in failed. Please try again.";
+        signInButton.disabled = false;
       }
-    }
-	document.getElementById("password").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      checkPassword();
-    }
-  });
+    });
   </script>
 </body>
 </html>

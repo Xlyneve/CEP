@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="auth-guard.js"></script>
+  <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="calculator.css">
@@ -591,8 +593,9 @@
 
 
  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC1a4YDhJ3LAlqxIs9u5LrZ64Dp--jbIYM",
@@ -604,8 +607,51 @@
     measurementId: "G-540TZ8HK1G"
   };
 
-  const app = initializeApp(firebaseConfig);
+  const app = getApps().find(candidate => candidate.name === "nurse-prescribing") ||
+    initializeApp(firebaseConfig, "nurse-prescribing");
   const db = getFirestore(app);
+  const auth = getAuth(app);
+  const allowedEmail = "xeve06@gmail.com";
+
+  const currentUser = await new Promise(resolve => {
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+
+  if (!currentUser || !currentUser.emailVerified || currentUser.email.toLowerCase() !== allowedEmail) {
+    if (currentUser) await signOut(auth);
+
+    const signInOverlay = document.createElement("div");
+    signInOverlay.style.cssText = "position:fixed;inset:0;z-index:100000;display:grid;place-items:center;background:rgba(255,255,255,.88);backdrop-filter:blur(12px)";
+    const signInButton = document.createElement("button");
+    signInButton.type = "button";
+    signInButton.textContent = "Sign in with Google to open prescribing notes";
+    signInButton.style.cssText = "padding:14px 20px;border-radius:12px;border:1px solid #aaa;background:white;cursor:pointer";
+    signInOverlay.appendChild(signInButton);
+    document.body.appendChild(signInOverlay);
+
+    await new Promise(resolve => {
+      signInButton.addEventListener("click", async () => {
+        signInButton.disabled = true;
+        try {
+          const result = await signInWithPopup(auth, new GoogleAuthProvider());
+          const user = result.user;
+          if (!user.emailVerified || user.email.toLowerCase() !== allowedEmail) {
+            await signOut(auth);
+            throw new Error("This Google account is not authorized.");
+          }
+          signInOverlay.remove();
+          resolve();
+        } catch (error) {
+          alert(error.message || "Sign in failed.");
+          signInButton.disabled = false;
+        }
+      });
+    });
+  }
+
   const medicationsCollection = collection(db, "medications");
 
   window.firebaseDB = db;

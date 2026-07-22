@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="auth-guard.js"></script>
+  <script src="security.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Minimal Chat with Full Features</title>
@@ -1331,11 +1333,12 @@ const firebaseConfig = {
   measurementId: "G-YQD63H7L5T"
 };
 
-firebase.initializeApp(firebaseConfig);
+const notesChatApp = firebase.apps.find(app => app.name === "notes-chat") ||
+  firebase.initializeApp(firebaseConfig, "notes-chat");
 
-const db = firebase.firestore();
-const storage = firebase.storage();
-const auth = firebase.auth();
+const db = firebase.firestore(notesChatApp);
+const storage = firebase.storage(notesChatApp);
+const auth = firebase.auth(notesChatApp);
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 /* =========================
@@ -4043,7 +4046,7 @@ function displayNotesInto(targetEl, notes) {
 
     const bubble = document.createElement('div');
     bubble.className = 'chatBubble';
-    bubble.innerHTML = '🤖 ' + conceptLinkifyHTML(stripLegacyTableControls(note.content || ''));
+    CEPSecurity.setHTML(bubble, '🤖 ' + conceptLinkifyHTML(stripLegacyTableControls(note.content || '')));
     setTableCellsEditable(bubble, false);
     div.appendChild(bubble);
 
@@ -4080,7 +4083,7 @@ function displayNotesInto(targetEl, notes) {
 
       const editable = document.createElement('div');
       editable.contentEditable = true;
-      editable.innerHTML = (note.content || '').replace(/<mark class="underlineMatch">([\s\S]*?)<\/mark>/gi, '$1');
+      CEPSecurity.setHTML(editable, (note.content || '').replace(/<mark class="underlineMatch">([\s\S]*?)<\/mark>/gi, '$1'));
       setTableCellsEditable(editable, true);
       editable.className = 'editableNote';
       activeEditable = editable;

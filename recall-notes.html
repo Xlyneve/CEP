@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="auth-guard.js"></script>
+  <script src="security.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Recall Notes</title>
@@ -365,10 +367,11 @@ const firebaseConfig = {
   appId: "1:550249186610:web:5ee5b585ac686021be432b",
 };
 
-firebase.initializeApp(firebaseConfig);
+const recallApp = firebase.apps.find(app => app.name === "recall-notes") ||
+  firebase.initializeApp(firebaseConfig, "recall-notes");
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth = firebase.auth(recallApp);
+const db = firebase.firestore(recallApp);
 
 let notes = [];
 let editingId = null;
