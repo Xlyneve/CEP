@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" class="cep-auth-pending">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urgent Care Image Migration</title>
+  <script src="auth-guard.js"></script>
+  <style>
+    body {
+      max-width: 720px;
+      margin: 48px auto;
+      padding: 0 20px;
+      color: #24302d;
+      font: 15px/1.55 system-ui, sans-serif;
+      background: #f6f8f7;
+    }
+    main {
+      padding: 28px;
+      border: 1px solid #dce5e1;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 12px 32px rgba(24, 55, 45, 0.08);
+    }
+    h1 { margin-top: 0; font-size: 24px; }
+    button {
+      margin-right: 10px;
+      padding: 10px 16px;
+      border: 0;
+      border-radius: 9px;
+      color: #fff;
+      background: #2f6957;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.45; cursor: wait; }
+    progress { width: 100%; height: 16px; margin: 20px 0 8px; }
+    #status { min-height: 48px; white-space: pre-line; }
+    .warning { color: #754d18; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Urgent Care image migration</h1>
+    <p>This temporary tool converts only existing Base64 images into compressed WebP files in Firebase Storage. Notes already using Storage are skipped.</p>
+    <p class="warning">Keep this tab open during migration. Do not edit Urgent Care notes until it finishes.</p>
+    <button id="scanBtn">Scan images</button>
+    <button id="migrateBtn" disabled>Migrate scanned images</button>
+    <progress id="progress" value="0" max="1"></progress>
+    <div id="status">Ready to scan.</div>
+  </main>
+
+  <script type="module">
+    import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, updateDoc, doc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { uploadReferenceImage, deleteReferenceImage } from "./image-storage.js";
+
+    await window.CEP_AUTH_READY;
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
+      authDomain: "cepx-f9d2a.firebaseapp.com",
+      projectId: "cepx-f9d2a",
+      storageBucket: "cepx-f9d2a.firebasestorage.app",
+      messagingSenderId: "840696526325",
+      appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
+    };
+
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const collectionName = "urgentCareNotes";
+    const scanBtn = document.getElementById("scanBtn");
+    const migrateBtn = document.getElementById("migrateBtn");
+    const progress = document.getElementById("progress");
+    const status = document.getElementById("status");
+    let pendingDocs = [];
+
+    function approximateBytes(dataUrl) {
+      const comma = dataUrl.indexOf(",");
+      return comma < 0 ? 0 : Math.floor((dataUrl.length - comma - 1) * 0.75);
+    }
+
+    async function dataUrlToFile(dataUrl, id) {
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      return new File([blob], `${id}.${blob.type.split("/")[1] || "jpg"}`, {
+        type: blob.type || "image/jpeg"
+      });
+    }
+
+    scanBtn.addEventListener("click", async () => {
+      scanBtn.disabled = true;
+      migrateBtn.disabled = true;
+      status.textContent = "Scanning Urgent Care notes…";
+      try {
+        const snapshot = await getDocs(collection(db, collectionName));
+        pendingDocs = snapshot.docs.filter(noteDoc =>
+          String(noteDoc.data().image || "").startsWith("data:image/")
+        );
+        const bytes = pendingDocs.reduce(
+          (total, noteDoc) => total + approximateBytes(noteDoc.data().image), 0
+        );
+        progress.value = 0;
+        progress.max = Math.max(1, pendingDocs.length);
+        status.textContent = pendingDocs.length
+          ? `Found ${pendingDocs.length} Base64 images (${(bytes / 1024 / 1024).toFixed(1)} MB before compression).`
+          : "No Base64 images remain. Urgent Care is already migrated.";
+        migrateBtn.disabled = pendingDocs.length === 0;
+      } catch (error) {
+        status.textContent = `Scan failed: ${error.message}`;
+      } finally {
+        scanBtn.disabled = false;
+      }
+    });
+
+    migrateBtn.addEventListener("click", async () => {
+      scanBtn.disabled = true;
+      migrateBtn.disabled = true;
+      let completed = 0;
+      const failures = [];
+
+      for (const noteDoc of pendingDocs) {
+        let imageUrl = "";
+        status.textContent = `Migrating image ${completed + 1} of ${pendingDocs.length}…`;
+        try {
+          const file = await dataUrlToFile(noteDoc.data().image, noteDoc.id);
+          imageUrl = await uploadReferenceImage(app, file, "urgent-care");
+          await updateDoc(doc(db, collectionName, noteDoc.id), { image: imageUrl });
+          completed += 1;
+          progress.value = completed;
+        } catch (error) {
+          failures.push(`${noteDoc.id}: ${error.message}`);
+          if (imageUrl) {
+            try { await deleteReferenceImage(app, imageUrl); } catch (_) {}
+          }
+        }
+      }
+
+      pendingDocs = [];
+      status.textContent = failures.length
+        ? `Migrated ${completed} images. ${failures.length} failed and remain unchanged.\n${failures.join("\n")}`
+        : `Migration complete: ${completed} images converted successfully.`;
+      scanBtn.disabled = false;
+    });
+  </script>
+</body>
+</html>
