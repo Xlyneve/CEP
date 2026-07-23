@@ -2383,11 +2383,15 @@ header h1 {
       return searchIndex;
     }
     window.addUniversalSearchPages = entries => {
-      dynamicSearchEntries = entries.map(entry => ({
+      const incoming = entries.map(entry => ({
         ...entry,
         searchable: `${entry.title} ${entry.text}`.toLocaleLowerCase(),
         dynamic: true
       }));
+      const incomingFiles = new Set(incoming.map(entry => entry.file));
+      dynamicSearchEntries = dynamicSearchEntries
+        .filter(entry => !incomingFiles.has(entry.file))
+        .concat(incoming);
       if (searchIndex.length) {
         searchIndex = searchIndex.filter(page => !page.dynamic).concat(dynamicSearchEntries);
         if (input.value.trim()) runSearch();
@@ -2419,7 +2423,9 @@ header h1 {
       const index = await (indexPromise ||= buildIndex());
       if (input.value.trim().toLocaleLowerCase() !== query) return;
       const matches = index.filter(page => terms.every(term => page.searchable.includes(term))).slice(0, 30);
-      status.textContent = matches.length ? `${matches.length}${matches.length === 30 ? '+' : ''} page${matches.length === 1 ? '' : 's'} found` : 'No matching notes found.';
+      status.textContent = matches.length
+        ? `${matches.length}${matches.length === 30 ? '+' : ''} page${matches.length === 1 ? '' : 's'} found`
+        : `No matching notes found · ${dynamicSearchEntries.length} saved-note section${dynamicSearchEntries.length === 1 ? '' : 's'} loaded`;
       matches.forEach(page => {
         const link = document.createElement('a');
         link.className = 'universal-search-result';
@@ -3131,21 +3137,19 @@ const firebaseConfig = {
   ];
   const htmlToText = html =>
     new DOMParser().parseFromString(String(html || ''), 'text/html').body.textContent || '';
-  const searchLoads = await Promise.allSettled(
-    searchSources.map(source => getDocs(collection(db, source.collection)))
-  );
-  const searchableSections = searchLoads.flatMap((result, index) => {
-    const source = searchSources[index];
-    if (result.status === 'rejected') {
-      console.warn(`Universal search could not load ${source.collection}.`, result.reason);
-      return [];
+  searchSources.forEach(async source => {
+    try {
+      const snapshot = await getDocs(collection(db, source.collection));
+      const text = snapshot.docs
+        .map(note => source.fields.map(field => htmlToText(note.data()[field])).join(' '))
+        .join(' ');
+      window.addUniversalSearchPages?.([
+        { file: source.file, title: source.title, text }
+      ]);
+    } catch (error) {
+      console.warn(`Universal search could not load ${source.collection}.`, error);
     }
-    const text = result.value.docs
-      .map(note => source.fields.map(field => htmlToText(note.data()[field])).join(' '))
-      .join(' ');
-    return [{ file: source.file, title: source.title, text }];
   });
-  window.addUniversalSearchPages?.(searchableSections);
 
   const qiList = document.getElementById('qiList');
   const q = query(collection(db, 'inteleviewerData'), orderBy('radiology'));
