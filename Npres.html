@@ -188,6 +188,18 @@
   background: var(--first-light);
 }
 
+.treatment-section {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.treatment-section > .med-section-content {
+  padding: 0;
+}
+
 
 .med-section-content {
   min-height: 16px;
@@ -738,6 +750,18 @@
         >－</button>
       ` : "";
 
+      const treatmentSection = (className, fieldName, content) => {
+        if (!cardEditable && !String(content || "").trim()) return "";
+        return `
+          <div class="med-section treatment-section ${className}">
+            <div class="med-section-header">
+              ${tableControls(fieldName)}
+            </div>
+            <div class="med-section-content" contenteditable="${cardEditable}" data-field="${fieldName}">${content}</div>
+          </div>
+        `;
+      };
+
      card.innerHTML = `
   <div class="med-card-main">
     <div class="med-name" contenteditable="${cardEditable}" data-field="medication">${rowData.medication || "Untitled Medication"}</div>
@@ -746,37 +770,14 @@
 
     <div class="med-mechanism" contenteditable="${cardEditable}" data-field="mechanism">${mechanism}</div>
 
-    <div class="med-section first-line-section">
-      <div class="med-section-header">
-        ${tableControls("firstLine")}
-      </div>
-      <div class="med-section-content" contenteditable="${cardEditable}" data-field="firstLine">${firstLine}</div>
-    </div>
+    ${treatmentSection("first-line-section", "firstLine", firstLine)}
+    ${treatmentSection("second-line-section", "secondLine", secondLine)}
+    ${treatmentSection("allergy-first-section", "allergyFirstLine", allergyFirstLine)}
+    ${treatmentSection("allergy-second-section", "allergySecondLine", allergySecondLine)}
 
-    <div class="med-section second-line-section">
-      <div class="med-section-header">
-        ${tableControls("secondLine")}
-      </div>
-      <div class="med-section-content" contenteditable="${cardEditable}" data-field="secondLine">${secondLine}</div>
-    </div>
-
-    <div class="med-section allergy-first-section">
-      <div class="med-section-header">
-        ${tableControls("allergyFirstLine")}
-      </div>
-      <div class="med-section-content" contenteditable="${cardEditable}" data-field="allergyFirstLine">${allergyFirstLine}</div>
-    </div>
-
-    <div class="med-section allergy-second-section">
-      <div class="med-section-header">
-        ${tableControls("allergySecondLine")}
-      </div>
-      <div class="med-section-content" contenteditable="${cardEditable}" data-field="allergySecondLine">${allergySecondLine}</div>
-    </div>
-
-    <div class="med-section notes-section">
+    ${cardEditable || String(extraNotes || "").trim() ? `<div class="med-section notes-section">
       <div class="med-section-content" contenteditable="${cardEditable}" data-field="notes">${extraNotes}</div>
-    </div>
+    </div>` : ""}
 	
 	<div class="med-card-bottom-actions">
   ${!rowData.isEditing ? `<button class="card-edit-btn" title="Edit" onclick="editSingleCard(${index})">✎</button>` : ""}
