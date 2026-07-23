@@ -561,39 +561,9 @@
 
   <h1>Medications Lists</h1>
 
-  <div class="controls">
+<div class="controls">
     <input type="text" id="searchInput" placeholder="Search medications..." />
 <button id="addCardBtn" onclick="addRow()" title="Add Card">＋</button>
-
-<div id="emojiCopyMenu">
- <div class="emojiLine">
-  <button title="First-line treatment" onclick="copyEmoji(this, '🔴')">🔴</button>
-  <span>1st</span>
-  <span class="copiedMsg">✅</span>
-</div>
-
-<div class="emojiLine">
-  <button title="Second-line treatment" onclick="copyEmoji(this, '🟡')">🟡</button>
-  <span>2nd</span>
-  <span class="copiedMsg">✅</span>
-</div>
-
-<div class="emojiLine">
-  <button title="1st line if allergic to first-line group" onclick="copyEmoji(this, '🔵')">🔵</button>
-  <span>1stX</span>
-  <span class="copiedMsg">✅</span>
-</div>
-
-<div class="emojiLine">
-  <button title="2nd in line/ or no improvement to first line group " onclick="copyEmoji(this, '🟢')">🟢</button>
-  <span>2ndX</span>
-  <span class="copiedMsg">✅</span>
-</div>
-
-</div>
-
-
-
   </div>
 
 
@@ -604,7 +574,7 @@
  <script type="module">
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC1a4YDhJ3LAlqxIs9u5LrZ64Dp--jbIYM",
@@ -622,42 +592,30 @@
   const auth = getAuth(app);
   const allowedEmail = "xeve06@gmail.com";
 
-  const currentUser = await new Promise(resolve => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      unsubscribe();
-      resolve(user);
-    });
-  });
-
-  if (!currentUser || !currentUser.emailVerified || currentUser.email.toLowerCase() !== allowedEmail) {
-    if (currentUser) await signOut(auth);
-
-    const signInOverlay = document.createElement("div");
-    signInOverlay.style.cssText = "position:fixed;inset:0;z-index:100000;display:grid;place-items:center;background:rgba(255,255,255,.88);backdrop-filter:blur(12px)";
+  function showPrescribingSignIn() {
+    const status = document.getElementById("medicationStatus");
+    if (!status || status.querySelector("button")) return;
+    status.textContent = "Sign in to the prescribing database to load medications. ";
     const signInButton = document.createElement("button");
     signInButton.type = "button";
-    signInButton.textContent = "Sign in with Google to open prescribing notes";
-    signInButton.style.cssText = "padding:14px 20px;border-radius:12px;border:1px solid #aaa;background:white;cursor:pointer";
-    signInOverlay.appendChild(signInButton);
-    document.body.appendChild(signInOverlay);
+    signInButton.textContent = "Sign in with Google";
+    signInButton.style.cssText = "margin-left:8px;padding:8px 12px;border-radius:10px;border:1px solid #ad9fa6;background:#d5d0d3;color:#40363b;cursor:pointer";
+    status.appendChild(signInButton);
 
-    await new Promise(resolve => {
-      signInButton.addEventListener("click", async () => {
-        signInButton.disabled = true;
-        try {
-          const result = await signInWithPopup(auth, new GoogleAuthProvider());
-          const user = result.user;
-          if (!user.emailVerified || user.email.toLowerCase() !== allowedEmail) {
-            await signOut(auth);
-            throw new Error("This Google account is not authorized.");
-          }
-          signInOverlay.remove();
-          resolve();
-        } catch (error) {
-          alert(error.message || "Sign in failed.");
-          signInButton.disabled = false;
+    signInButton.addEventListener("click", async () => {
+      signInButton.disabled = true;
+      try {
+        const result = await signInWithPopup(auth, new GoogleAuthProvider());
+        const user = result.user;
+        if (!user.emailVerified || user.email.toLowerCase() !== allowedEmail) {
+          await signOut(auth);
+          throw new Error("This Google account is not authorized.");
         }
-      });
+        await loadTableFromFirebase();
+      } catch (error) {
+        status.textContent = error.message || "Sign in failed.";
+        showPrescribingSignIn();
+      }
     });
   }
 
@@ -1072,9 +1030,7 @@ async function deleteCard(index) {
       }
     } catch (error) {
       console.error("Load failed:", error);
-      if (status) {
-        status.textContent = "Medication data could not load. Sign in to the prescribing database and refresh.";
-      }
+      showPrescribingSignIn();
     }
   }
 
