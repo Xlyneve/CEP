@@ -1036,15 +1036,14 @@ footer {
   line-height: 1.25;
 }
 
-/* highlight chip (optional, now matches white-glow theme) */
-/* Result highlight (pink + green medical tone) */
+/* Result highlight in the pale-heather theme. */
 .qc-highlight{
   display:inline-block;
 
   background: linear-gradient(
     135deg,
-    rgba(255, 205, 220, 0.95),   /* soft pink */
-    rgba(205, 240, 210, 0.95)    /* soft green */
+    rgba(230, 220, 237, 0.98),
+    rgba(202, 184, 214, 0.96)
   );
 
   padding: 2px 7px;
@@ -1578,6 +1577,43 @@ footer {
   opacity: 0.68;
 }
 
+/* Pale-heather glass for all expanded Quickies panels. */
+.qc,
+.qi,
+.qt,
+.qs {
+  background: linear-gradient(
+    145deg,
+    rgba(228, 218, 235, 0.9),
+    rgba(209, 194, 220, 0.82)
+  );
+  border-color: rgba(244, 237, 248, 0.78);
+  box-shadow:
+    0 16px 42px rgba(77, 58, 89, 0.22),
+    inset 0 1px 0 rgba(247, 242, 249, 0.74);
+}
+
+.qc-results {
+  width: 100%;
+  background: rgba(235, 227, 241, 0.84);
+  border-color: rgba(250, 246, 252, 0.92);
+  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.qc-results.has-value {
+  background: linear-gradient(
+    135deg,
+    rgba(243, 237, 247, 0.98),
+    rgba(205, 185, 219, 0.98)
+  );
+  box-shadow:
+    0 0 0 2px rgba(246, 239, 250, 0.88),
+    0 0 26px rgba(158, 126, 180, 0.9),
+    0 9px 22px rgba(83, 61, 97, 0.3),
+    inset 0 1px 8px rgba(255, 255, 255, 0.66);
+  transform: translateY(-1px);
+}
+
 /* Collapsed syrup calculator */
 .qs.collapsed {
   width: 40px;
@@ -2062,10 +2098,8 @@ header h1 {
       </div>
     </div>
 
-    <!-- ✅ Calculate + Results BESIDE each other -->
+    <!-- Automatic result -->
     <div class="qc-row qc-actions">
-      <button id="qcCalcBtn" class="qc-btn" type="button">Calculate</button>
-
       <div class="qc-results" aria-live="polite">
         <div class="qc-big" id="qcMain">—</div>
         <div class="qc-sub" id="qcSub"></div>
@@ -2673,10 +2707,10 @@ function closeTable() {
   if (!qc) return;
 
   const weightEl = qc.querySelector('#qcWeight');
-  const calcBtn  = qc.querySelector('#qcCalcBtn');
 
   const mainEl = qc.querySelector('#qcMain');
   const subEl  = qc.querySelector('#qcSub');
+  const resultsEl = qc.querySelector('.qc-results');
 
   const toggleBtn = qc.querySelector('.qc-toggle');
   const tabs = [...qc.querySelectorAll('.qc-tab')];
@@ -2693,9 +2727,9 @@ function closeTable() {
   // ---- guards ----
   const missing = [];
   if (!weightEl) missing.push('#qcWeight');
-  if (!calcBtn) missing.push('#qcCalcBtn');
   if (!mainEl) missing.push('#qcMain');
   if (!subEl) missing.push('#qcSub');
+  if (!resultsEl) missing.push('.qc-results');
   if (!toggleBtn) missing.push('.qc-toggle');
   if (!tabs.length) missing.push('.qc-tab (none found)');
   if (!paraStrengthWrap) missing.push('#qcParaStrength (container)');
@@ -2746,6 +2780,7 @@ function closeTable() {
   function resetOutput(){
     mainEl.textContent = '—';
     subEl.textContent = '';
+    resultsEl.classList.remove('has-value');
   }
 
   function calc(){
@@ -2762,6 +2797,7 @@ function closeTable() {
       const ml = (kg * 15) / paraStrength;
       mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
       subEl.textContent = '';
+      resultsEl.classList.add('has-value');
       return;
     }
 
@@ -2775,6 +2811,7 @@ function closeTable() {
       const ml = mg / ibuStrength;
       mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
       subEl.textContent = capped ? 'Max 400 mg reached' : '';
+      resultsEl.classList.add('has-value');
       return;
     }
 
@@ -2788,6 +2825,7 @@ function closeTable() {
 
       mainEl.innerHTML = `${highlight(`${rA(ml)} mL`)} IM`;
       subEl.textContent = capped ? 'Max 0.5 mL reached' : `${rA(mg)} mg`;
+      resultsEl.classList.add('has-value');
       return;
     }
   }
@@ -2805,9 +2843,6 @@ function closeTable() {
 
   bindStrengthButtons(paraStrengthWrap, (v) => { paraStrength = v; });
   bindStrengthButtons(ibuStrengthWrap,  (v) => { ibuStrength  = v; });
-
-  // events
-  calcBtn.addEventListener('click', calc);
 
   // auto-calc + auto-clear
   weightEl.addEventListener('input', calc);
