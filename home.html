@@ -2360,7 +2360,7 @@ header h1 {
     const close = document.getElementById('universalSearchClose');
     const status = document.getElementById('universalSearchStatus');
     const results = document.getElementById('universalSearchResults');
-    let indexPromise, searchIndex = [], timer;
+    let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer;
 
     const readableName = file => decodeURIComponent(file).replace(/\.html$/i, '').replace(/[-_]+/g, ' ');
     function extractPage(html, file) {
@@ -2378,10 +2378,21 @@ header h1 {
           return response.ok ? extractPage(await response.text(), file) : null;
         } catch (_) { return null; }
       }));
-      searchIndex = loaded.filter(Boolean);
+      searchIndex = loaded.filter(Boolean).concat(dynamicSearchEntries);
       status.textContent = 'Type a word to search.';
       return searchIndex;
     }
+    window.addUniversalSearchPages = entries => {
+      dynamicSearchEntries = entries.map(entry => ({
+        ...entry,
+        searchable: `${entry.title} ${entry.text}`.toLocaleLowerCase(),
+        dynamic: true
+      }));
+      if (searchIndex.length) {
+        searchIndex = searchIndex.filter(page => !page.dynamic).concat(dynamicSearchEntries);
+        if (input.value.trim()) runSearch();
+      }
+    };
     function addHighlightedText(parent, text, terms) {
       const escaped = terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
       const pattern = new RegExp(`(${escaped.join('|')})`, 'gi');
@@ -3086,6 +3097,7 @@ function closeTable() {
   import {
     getFirestore,
     collection,
+    getDocs,
     onSnapshot,
     query,
     orderBy
@@ -3105,6 +3117,29 @@ const firebaseConfig = {
 
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
+  // Add Firestore-backed Notes and Urgent Care content to universal search.
+  try {
+    const [notebookSnapshot, urgentSnapshot] = await Promise.all([
+      getDocs(collection(db, 'notebookNotes')),
+      getDocs(collection(db, 'urgentCareNotes'))
+    ]);
+    const notebookText = notebookSnapshot.docs
+      .map(note => note.data().text || '')
+      .join(' ');
+    const urgentText = urgentSnapshot.docs
+      .map(note => {
+        const html = note.data().note || '';
+        return new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+      })
+      .join(' ');
+    window.addUniversalSearchPages?.([
+      { file: 'Notes.html', title: 'Notes', text: notebookText },
+      { file: 'Urgent_Care.html', title: 'Urgent Care', text: urgentText }
+    ]);
+  } catch (error) {
+    console.warn('Firestore notes were not added to universal search.', error);
+  }
 
   const qiList = document.getElementById('qiList');
   const q = query(collection(db, 'inteleviewerData'), orderBy('radiology'));
