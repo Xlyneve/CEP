@@ -24,6 +24,12 @@
   }
 
   :root {
+    --ashen-rose: #9e8993;
+    --iced-petal: #ad9fa6;
+    --morning-fog: #c0b7bb;
+    --pale-heather: #d5d0d3;
+    --first-light: #ebe8e9;
+    --theme-ink: #40363b;
     --text: #333;
     --text-soft: rgba(60, 60, 60, 0.72);
     --text-faint: rgba(70, 70, 70, 0.66);
@@ -50,7 +56,7 @@
     font-family: 'Tahoma', sans-serif;
     font-size: 12px;
     color: var(--text);
-    background: linear-gradient(to bottom right, #fefefe, #f8f8f8);
+    background: var(--first-light);
   }
 
   h1 {
@@ -59,13 +65,11 @@
     font-family: 'Adelicia', serif;
     font-size: 2.6em;
     font-weight: 600;
-    color: #d94f71;
-    background-image: linear-gradient(90deg, #d94f71, #f8718f, #fbc1cc);
-    background-size: 300% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: roseGlow 4s ease-in-out infinite;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    color: var(--theme-ink);
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    animation: none;
+    text-shadow: 1px 1px 0 var(--first-light), 2px 2px 4px rgba(64, 54, 59, 0.2);
   }
 
   .controls {
@@ -127,11 +131,11 @@
 
  .med-card {
   padding: 12px 12px 10px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: var(--pale-heather);
+  border: 1px solid var(--morning-fog);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: var(--shadow-soft);
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
 }
@@ -172,16 +176,16 @@
 .med-section {
   margin-bottom: 7px;
   padding: 5px 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--morning-fog);
   border-radius: var(--radius-md);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.09);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--first-light);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .notes-section {
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--first-light);
 }
 
 
@@ -552,7 +556,6 @@
   }
 </style>
   
-  <link rel="stylesheet" href="site-background.css">
 </head>
 <body>
 
@@ -595,11 +598,12 @@
 
 
 <div id="cardContainer" class="card-container"></div>
+<div id="medicationStatus" role="status" aria-live="polite" style="padding:18px 4px;color:#675b61;">Loading medication data…</div>
 
 
  <script type="module">
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, getDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
@@ -663,7 +667,7 @@
   window.firebaseCollection = medicationsCollection;
   window.firebaseDoc = doc;
   window.firebaseSetDoc = setDoc;
-  window.firebaseGetDocs = getDocs;
+  window.firebaseGetDoc = getDoc;
 
   let medicationRows = [];
   let selectedCardIndex = null;
@@ -1037,40 +1041,40 @@ async function deleteCard(index) {
 }
 
   async function loadTableFromFirebase() {
+    const status = document.getElementById("medicationStatus");
     try {
-      const snapshot = await getDocs(medicationsCollection);
+      if (status) status.textContent = "Loading medication data…";
+      const medTableSnapshot = await getDoc(doc(db, "medications", "medTable"));
       medicationRows = [];
 
-      let found = false;
-
-      snapshot.forEach(docSnap => {
-        if (docSnap.id === "medTable") {
-          found = true;
-          const data = docSnap.data();
-
-          if (data.rows && Array.isArray(data.rows)) {
-            medicationRows = data.rows.map(row => ({
-              medication: row.medication || "",
-              subtitle: row.subtitle || row.typeCategory || "",
-              mechanism: row.mechanism || row.restrictions || "",
-              firstLine: row.firstLine || row.dosage || "",
-              secondLine: row.secondLine || "",
-              allergyFirstLine: row.allergyFirstLine || "",
-              allergySecondLine: row.allergySecondLine || "",
-              notes: row.notes || "",
-              isEditing: false
-            }));
-          }
+      if (medTableSnapshot.exists()) {
+        const data = medTableSnapshot.data();
+        if (data.rows && Array.isArray(data.rows)) {
+          medicationRows = data.rows.map(row => ({
+            medication: row.medication || "",
+            subtitle: row.subtitle || row.typeCategory || "",
+            mechanism: row.mechanism || row.restrictions || "",
+            firstLine: row.firstLine || row.dosage || "",
+            secondLine: row.secondLine || "",
+            allergyFirstLine: row.allergyFirstLine || "",
+            allergySecondLine: row.allergySecondLine || "",
+            notes: row.notes || "",
+            isEditing: false
+          }));
         }
-      });
-
-      if (!found) {
-        console.log("No saved data found");
       }
 
       renderCards(medicationRows);
+      if (status) {
+        status.textContent = medicationRows.length
+          ? `${medicationRows.length} medications loaded`
+          : "No medication data was found in medications/medTable.";
+      }
     } catch (error) {
       console.error("Load failed:", error);
+      if (status) {
+        status.textContent = "Medication data could not load. Sign in to the prescribing database and refresh.";
+      }
     }
   }
 
