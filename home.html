@@ -112,6 +112,47 @@ header h1 {
   z-index: 1000;
 }
 
+/* Universal search */
+.circle.search-circle {
+  appearance: none;
+  font-family: inherit;
+  line-height: 1.15;
+}
+
+.search-circle svg { width: 24px; height: 24px; pointer-events: none; }
+.universal-search {
+  position: fixed; top: 130px; right: 136px;
+  width: min(430px, calc(100vw - 230px)); z-index: 5100; padding: 14px;
+  border: 1px solid rgba(255,255,255,.72); border-radius: 20px;
+  background: rgba(250,251,244,.96); backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  box-shadow: 0 18px 48px rgba(55,45,50,.2);
+}
+.universal-search[hidden] { display: none; }
+.universal-search-row { display: flex; gap: 8px; }
+#universalSearchInput {
+  width: 100%; min-width: 0; padding: 11px 13px;
+  border: 1px solid rgba(64,54,59,.22); border-radius: 13px;
+  background: rgba(255,255,255,.92); color: #292327;
+  font: 14px 'fors', sans-serif; outline: none;
+}
+#universalSearchInput:focus { border-color: rgba(64,54,59,.55); box-shadow: 0 0 0 3px rgba(64,54,59,.09); }
+.universal-search-close {
+  flex: 0 0 40px; border: 0; border-radius: 12px;
+  background: rgba(64,54,59,.08); color: #40363b; cursor: pointer; font-size: 22px;
+}
+.universal-search-status { margin: 9px 3px 5px; color: #6c6166; font-size: 11px; }
+.universal-search-results { display: grid; gap: 7px; max-height: min(58vh,520px); overflow-y: auto; }
+.universal-search-result {
+  display: block; padding: 10px 11px; border: 1px solid rgba(64,54,59,.1);
+  border-radius: 13px; background: rgba(255,255,255,.78); color: #292327;
+  text-decoration: none; transition: transform 120ms ease, background 120ms ease;
+}
+.universal-search-result:hover, .universal-search-result:focus-visible { transform: translateY(-1px); background: #fff; }
+.universal-search-title { display: block; margin-bottom: 3px; font-size: 14px; font-weight: 700; }
+.universal-search-snippet { display: block; color: #655b60; font: 11px/1.45 Arial,sans-serif; }
+.universal-search-snippet mark { border-radius: 3px; background: #fff0a8; color: inherit; }
+
 .circle {
   border-radius: 70%;
   width: 70px;
@@ -1675,6 +1716,13 @@ header h1 {
     animation: none;
   }
 
+  .universal-search {
+    top: 76px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+
   .qc {
   top: 8px;
   left: 12px;
@@ -1816,6 +1864,10 @@ header h1 {
 
 
  <div class="top-circles">
+    <button class="circle search-circle" id="universalSearchButton" type="button" aria-label="Search all Xlyneve notes" aria-expanded="false" aria-controls="universalSearchPanel">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Search</span>
+    </button>
     <div class="circle calendar" onclick="window.open('homecal.html', '_blank')">Calendar<br>To Do</div>
 <div class="circle patient" onclick="window.open('forms.html', '_blank')">Information<br>Links</div>
 <div class="circle notes" onclick="window.open('Notes.html', '_blank')">Notes</div>
@@ -1825,6 +1877,15 @@ header h1 {
 <div class="circle timesheet" onclick="window.open('https://onedrive.live.com/edit.aspx?cid=cd58075507480906&page=view&resid=CD58075507480906!660&parId=CD58075507480906!107&app=Excel', '_blank')">Timesheet</div>
 <div class="circle vitals" onclick="showTable()">Vitals</div>
 </div>
+
+<section class="universal-search" id="universalSearchPanel" aria-label="Universal search" hidden>
+  <div class="universal-search-row">
+    <input id="universalSearchInput" type="search" autocomplete="off" spellcheck="false" placeholder="Search all notes and pages…" aria-label="Words to search for">
+    <button class="universal-search-close" id="universalSearchClose" type="button" aria-label="Close search">×</button>
+  </div>
+  <div class="universal-search-status" id="universalSearchStatus" aria-live="polite">Type a word to search.</div>
+  <div class="universal-search-results" id="universalSearchResults"></div>
+</section>
 
 
    <div class="layout">
@@ -2281,6 +2342,104 @@ header h1 {
 
       <footer>© 2025 Xlyn Notes Board</footer>
  <script>
+  // ===== UNIVERSAL SITE SEARCH =====
+  (() => {
+    const pages = [
+      '70cxcalc.html','Abdo.html','AnatomicalD.html','biosched1.html','Calculator.html',
+      'chatgptx.html','Clinicalnotes.html','complete-vaccine-info.html','CXHPV.html',
+      'Depo.html','ECG.html','explain.html','face.html','forms.html','Hand.html','home.html',
+      'homecal.html','index.html','info.html','INR Calc.html','inteleviewer.html','ironfunding.html',
+      'LF.html','Notes.html','Npres.html','OHcalc.html','OHsharecalc.html','PN.html',
+      'practiceN.html','recall-notes.html','recalls.html','recalltracker.html','RNCNP.html',
+      'Sha.html','Spine.html','templatetick.html','Urgent_Care.html','vaccine-info-page.html',
+      'vaccine-info-with-inj-types.html','vaccine-spacing.html','VS.html'
+    ];
+    const button = document.getElementById('universalSearchButton');
+    const panel = document.getElementById('universalSearchPanel');
+    const input = document.getElementById('universalSearchInput');
+    const close = document.getElementById('universalSearchClose');
+    const status = document.getElementById('universalSearchStatus');
+    const results = document.getElementById('universalSearchResults');
+    let indexPromise, searchIndex = [], timer;
+
+    const readableName = file => decodeURIComponent(file).replace(/\.html$/i, '').replace(/[-_]+/g, ' ');
+    function extractPage(html, file) {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('script,style,noscript,svg').forEach(el => el.remove());
+      const title = (doc.querySelector('title')?.textContent || readableName(file)).trim();
+      const text = (doc.body?.innerText || doc.body?.textContent || '').replace(/\s+/g, ' ').trim();
+      return { file, title, text, searchable: `${title} ${text}`.toLocaleLowerCase() };
+    }
+    async function buildIndex() {
+      status.textContent = `Preparing search across ${pages.length} pages…`;
+      const loaded = await Promise.all(pages.map(async file => {
+        try {
+          const response = await fetch(encodeURI(file), { cache: 'force-cache' });
+          return response.ok ? extractPage(await response.text(), file) : null;
+        } catch (_) { return null; }
+      }));
+      searchIndex = loaded.filter(Boolean);
+      status.textContent = 'Type a word to search.';
+      return searchIndex;
+    }
+    function addHighlightedText(parent, text, terms) {
+      const escaped = terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const pattern = new RegExp(`(${escaped.join('|')})`, 'gi');
+      text.split(pattern).forEach(part => {
+        if (terms.includes(part.toLocaleLowerCase())) {
+          const mark = document.createElement('mark');
+          mark.textContent = part;
+          parent.appendChild(mark);
+        } else parent.appendChild(document.createTextNode(part));
+      });
+    }
+    function makeSnippet(page, terms) {
+      const lower = page.text.toLocaleLowerCase();
+      const positions = terms.map(term => lower.indexOf(term)).filter(pos => pos >= 0);
+      const start = Math.max(0, Math.min(...positions) - 70);
+      const end = Math.min(page.text.length, start + 230);
+      return `${start ? '…' : ''}${page.text.slice(start, end)}${end < page.text.length ? '…' : ''}`;
+    }
+    async function runSearch() {
+      const query = input.value.trim().toLocaleLowerCase();
+      results.replaceChildren();
+      if (!query) { status.textContent = 'Type a word to search.'; return; }
+      const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
+      const index = await (indexPromise ||= buildIndex());
+      if (input.value.trim().toLocaleLowerCase() !== query) return;
+      const matches = index.filter(page => terms.every(term => page.searchable.includes(term))).slice(0, 30);
+      status.textContent = matches.length ? `${matches.length}${matches.length === 30 ? '+' : ''} page${matches.length === 1 ? '' : 's'} found` : 'No matching notes found.';
+      matches.forEach(page => {
+        const link = document.createElement('a');
+        link.className = 'universal-search-result';
+        link.href = encodeURI(page.file); link.target = '_blank'; link.rel = 'noopener';
+        const title = document.createElement('span');
+        title.className = 'universal-search-title'; title.textContent = page.title;
+        const snippet = document.createElement('span');
+        snippet.className = 'universal-search-snippet';
+        addHighlightedText(snippet, makeSnippet(page, terms), terms);
+        link.append(title, snippet); results.appendChild(link);
+      });
+    }
+    function openSearch() {
+      panel.hidden = false; button.setAttribute('aria-expanded', 'true'); input.focus();
+      indexPromise ||= buildIndex();
+    }
+    function closeSearch() {
+      panel.hidden = true; button.setAttribute('aria-expanded', 'false'); button.focus();
+    }
+    button.addEventListener('click', () => panel.hidden ? openSearch() : closeSearch());
+    close.addEventListener('click', closeSearch);
+    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 180); });
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeSearch();
+      if (event.key === 'Enter') results.querySelector('.universal-search-result')?.click();
+    });
+    document.addEventListener('click', event => {
+      if (!panel.hidden && !panel.contains(event.target) && !button.contains(event.target)) closeSearch();
+    });
+  })();
+
   // ===== VITALS POPUP =====
  function showTable() {
   const el = document.getElementById('vital-signs-table');
