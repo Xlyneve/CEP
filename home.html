@@ -2425,9 +2425,12 @@ header h1 {
       const matches = searchIndex
         .filter(page => terms.every(term => page.searchable.includes(term)))
         .slice(0, 30);
+      const loadedSectionCount = new Set(
+        dynamicSearchEntries.map(entry => entry.file)
+      ).size;
       status.textContent = matches.length
-        ? `${matches.length}${matches.length === 30 ? '+' : ''} page${matches.length === 1 ? '' : 's'} found`
-        : `No matching notes found · ${dynamicSearchEntries.length} saved-note section${dynamicSearchEntries.length === 1 ? '' : 's'} loaded`;
+        ? `${matches.length}${matches.length === 30 ? '+' : ''} result${matches.length === 1 ? '' : 's'} found`
+        : `No matching notes found · ${loadedSectionCount} saved-note section${loadedSectionCount === 1 ? '' : 's'} loaded`;
       matches.forEach(page => {
         const link = document.createElement('a');
         link.className = 'universal-search-result';
@@ -3137,17 +3140,32 @@ const firebaseConfig = {
     { collection: 'practiceNNotes', file: 'practiceN.html', title: 'Practice Nurse', fields: ['title', 'text', 'url'] },
     { collection: 'recallNotes', file: 'recalls.html', title: 'Recalls', fields: ['title', 'note', 'url'] }
   ];
-  const htmlToText = html =>
-    new DOMParser().parseFromString(String(html || ''), 'text/html').body.textContent || '';
+  const htmlToText = html => {
+    const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    parsed.body
+      .querySelectorAll('br,p,div,li,tr,h1,h2,h3,h4,h5,h6')
+      .forEach(element => element.append(' '));
+    return (parsed.body.textContent || '').replace(/\s+/g, ' ').trim();
+  };
   searchSources.forEach(async source => {
     try {
       const snapshot = await getDocs(collection(db, source.collection));
-      const text = snapshot.docs
-        .map(note => source.fields.map(field => htmlToText(note.data()[field])).join(' '))
-        .join(' ');
-      window.addUniversalSearchPages?.([
-        { file: source.file, title: source.title, text }
-      ]);
+      const entries = snapshot.docs.map(note => {
+        const data = note.data();
+        const savedTitle = htmlToText(data.title).trim();
+        const text = source.fields
+          .map(field => htmlToText(data[field]))
+          .filter(Boolean)
+          .join(' · ');
+        return {
+          file: source.file,
+          title: savedTitle ? `${source.title} — ${savedTitle}` : source.title,
+          text
+        };
+      });
+      window.addUniversalSearchPages?.(
+        entries.length ? entries : [{ file: source.file, title: source.title, text: '' }]
+      );
     } catch (error) {
       console.warn(`Universal search could not load ${source.collection}.`, error);
     }
