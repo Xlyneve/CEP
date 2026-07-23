@@ -573,7 +573,7 @@
 
  <script type="module">
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, getDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, getDoc, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
@@ -626,6 +626,7 @@
   window.firebaseDoc = doc;
   window.firebaseSetDoc = setDoc;
   window.firebaseGetDoc = getDoc;
+  window.firebaseGetDocs = getDocs;
 
   let medicationRows = [];
   let selectedCardIndex = null;
@@ -1005,28 +1006,44 @@ async function deleteCard(index) {
       const medTableSnapshot = await getDoc(doc(db, "medications", "medTable"));
       medicationRows = [];
 
-      if (medTableSnapshot.exists()) {
-        const data = medTableSnapshot.data();
-        if (data.rows && Array.isArray(data.rows)) {
-          medicationRows = data.rows.map(row => ({
-            medication: row.medication || "",
-            subtitle: row.subtitle || row.typeCategory || "",
-            mechanism: row.mechanism || row.restrictions || "",
-            firstLine: row.firstLine || row.dosage || "",
-            secondLine: row.secondLine || "",
-            allergyFirstLine: row.allergyFirstLine || "",
-            allergySecondLine: row.allergySecondLine || "",
-            notes: row.notes || "",
-            isEditing: false
-          }));
-        }
+      let savedRows = [];
+      if (medTableSnapshot.exists() && Array.isArray(medTableSnapshot.data().rows)) {
+        savedRows = medTableSnapshot.data().rows;
+      } else {
+        const collectionSnapshot = await getDocs(medicationsCollection);
+        collectionSnapshot.forEach(documentSnapshot => {
+          const data = documentSnapshot.data();
+          if (Array.isArray(data.rows)) {
+            savedRows.push(...data.rows);
+          } else if (
+            data.medication ||
+            data.title ||
+            data.firstLine ||
+            data.dosage ||
+            data.notes
+          ) {
+            savedRows.push(data);
+          }
+        });
       }
+
+      medicationRows = savedRows.map(row => ({
+        medication: row.medication || row.title || "",
+        subtitle: row.subtitle || row.typeCategory || "",
+        mechanism: row.mechanism || row.restrictions || "",
+        firstLine: row.firstLine || row.dosage || "",
+        secondLine: row.secondLine || "",
+        allergyFirstLine: row.allergyFirstLine || "",
+        allergySecondLine: row.allergySecondLine || "",
+        notes: row.notes || "",
+        isEditing: false
+      }));
 
       renderCards(medicationRows);
       if (status) {
         status.textContent = medicationRows.length
           ? `${medicationRows.length} medications loaded`
-          : "No medication data was found in medications/medTable.";
+          : "No medication documents were found in the prescribing database.";
       }
     } catch (error) {
       console.error("Load failed:", error);
