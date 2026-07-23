@@ -3118,43 +3118,34 @@ const firebaseConfig = {
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // Add all Firestore-backed note sections to universal search.
-  try {
-    const [
-      notebookSnapshot,
-      urgentSnapshot,
-      nurseSnapshot,
-      informationSnapshot,
-      templatesSnapshot,
-      practiceSnapshot,
-      recallsSnapshot
-    ] = await Promise.all([
-      getDocs(collection(db, 'notebookNotes')),
-      getDocs(collection(db, 'urgentCareNotes')),
-      getDocs(collection(db, 'nurseNotes')),
-      getDocs(collection(db, 'informationNotes')),
-      getDocs(collection(db, 'explainNotes')),
-      getDocs(collection(db, 'practiceNNotes')),
-      getDocs(collection(db, 'recallNotes'))
-    ]);
-    const htmlToText = html =>
-      new DOMParser().parseFromString(String(html || ''), 'text/html').body.textContent || '';
-    const combineFields = (snapshot, fields) => snapshot.docs
-      .map(note => fields.map(field => htmlToText(note.data()[field])).join(' '))
+  // Add Firestore-backed sections independently, so one failed collection
+  // cannot prevent every other notes section from being searchable.
+  const searchSources = [
+    { collection: 'notebookNotes', file: 'Notes.html', title: 'Notes', fields: ['text'] },
+    { collection: 'urgentCareNotes', file: 'Urgent_Care.html', title: 'Urgent Care', fields: ['note'] },
+    { collection: 'nurseNotes', file: 'PN.html', title: 'Nurse Notes', fields: ['title', 'note', 'url'] },
+    { collection: 'informationNotes', file: 'info.html', title: 'Infos', fields: ['title', 'text', 'url'] },
+    { collection: 'explainNotes', file: 'explain.html', title: 'Templates', fields: ['title', 'text'] },
+    { collection: 'practiceNNotes', file: 'practiceN.html', title: 'Practice Nurse', fields: ['title', 'text', 'url'] },
+    { collection: 'recallNotes', file: 'recalls.html', title: 'Recalls', fields: ['title', 'note', 'url'] }
+  ];
+  const htmlToText = html =>
+    new DOMParser().parseFromString(String(html || ''), 'text/html').body.textContent || '';
+  const searchLoads = await Promise.allSettled(
+    searchSources.map(source => getDocs(collection(db, source.collection)))
+  );
+  const searchableSections = searchLoads.flatMap((result, index) => {
+    const source = searchSources[index];
+    if (result.status === 'rejected') {
+      console.warn(`Universal search could not load ${source.collection}.`, result.reason);
+      return [];
+    }
+    const text = result.value.docs
+      .map(note => source.fields.map(field => htmlToText(note.data()[field])).join(' '))
       .join(' ');
-
-    window.addUniversalSearchPages?.([
-      { file: 'Notes.html', title: 'Notes', text: combineFields(notebookSnapshot, ['text']) },
-      { file: 'Urgent_Care.html', title: 'Urgent Care', text: combineFields(urgentSnapshot, ['note']) },
-      { file: 'PN.html', title: 'Nurse Notes', text: combineFields(nurseSnapshot, ['title', 'note', 'url']) },
-      { file: 'info.html', title: 'Infos', text: combineFields(informationSnapshot, ['title', 'text', 'url']) },
-      { file: 'explain.html', title: 'Templates', text: combineFields(templatesSnapshot, ['title', 'text']) },
-      { file: 'practiceN.html', title: 'Practice Nurse', text: combineFields(practiceSnapshot, ['title', 'text', 'url']) },
-      { file: 'recalls.html', title: 'Recalls', text: combineFields(recallsSnapshot, ['title', 'note', 'url']) }
-    ]);
-  } catch (error) {
-    console.warn('Firestore note sections were not added to universal search.', error);
-  }
+    return [{ file: source.file, title: source.title, text }];
+  });
+  window.addUniversalSearchPages?.(searchableSections);
 
   const qiList = document.getElementById('qiList');
   const q = query(collection(db, 'inteleviewerData'), orderBy('radiology'));
