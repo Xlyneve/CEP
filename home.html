@@ -2420,9 +2420,11 @@ header h1 {
       results.replaceChildren();
       if (!query) { status.textContent = 'Type a word to search.'; return; }
       const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
-      const index = await (indexPromise ||= buildIndex());
+      await (indexPromise ||= buildIndex());
       if (input.value.trim().toLocaleLowerCase() !== query) return;
-      const matches = index.filter(page => terms.every(term => page.searchable.includes(term))).slice(0, 30);
+      const matches = searchIndex
+        .filter(page => terms.every(term => page.searchable.includes(term)))
+        .slice(0, 30);
       status.textContent = matches.length
         ? `${matches.length}${matches.length === 30 ? '+' : ''} page${matches.length === 1 ? '' : 's'} found`
         : `No matching notes found · ${dynamicSearchEntries.length} saved-note section${dynamicSearchEntries.length === 1 ? '' : 's'} loaded`;
