@@ -987,7 +987,7 @@ button:focus,
 
   <div class="header-right">
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchNotes(event)">
+      <input type="text" id="searchInput" placeholder="Search...">
     </div>
   </div>
 </div>
@@ -1057,6 +1057,7 @@ let currentSearchQuery = "";
 let newestNoteId = null;
 let pendingNewNoteTime = null;
 let unsubscribeNotes = null;
+let latestNotesSnapshot = null;
 /* ---------------- CRUD ---------------- */
 async function addNote() {
   const title = nurseTitle.value.trim();
@@ -1433,7 +1434,17 @@ function buildNoteCards(snapshot) {
   const list = document.getElementById('nurseNotesList');
   list.innerHTML = '';
 
-  renderInBatches(list, snapshot.docs, docSnap => {
+  const searchTerms = currentSearchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  const matchingDocs = snapshot.docs.filter(docSnap => {
+    const data = docSnap.data();
+    const noteText = new DOMParser()
+      .parseFromString(String(data.note || ''), 'text/html')
+      .body.textContent || '';
+    const searchable = `${data.title || ''} ${noteText} ${data.url || ''}`.toLowerCase();
+    return searchTerms.every(term => searchable.includes(term));
+  });
+
+  renderInBatches(list, matchingDocs, docSnap => {
     const { title, note, time, url, image } = docSnap.data();
     const id = docSnap.id;
 
@@ -1507,6 +1518,7 @@ function renderNotes() {
   if (unsubscribeNotes) return;
 
   unsubscribeNotes = onSnapshot(notesCol, snapshot => {
+    latestNotesSnapshot = snapshot;
     buildNoteCards(snapshot);
   });
 }
@@ -1628,15 +1640,15 @@ function applySearchFilter(query) {
 }
 
 function searchNotes(event) {
-  currentSearchQuery = event.target.value; // remember filter text
-  applySearchFilter(currentSearchQuery);
+  currentSearchQuery = event.target.value;
+  if (latestNotesSnapshot) buildNoteCards(latestNotesSnapshot);
 }
 
 /* ---------------- Setup ---------------- */
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('searchInput');
   if (searchInput) {
-    searchInput.addEventListener('keyup', searchNotes);
+    searchInput.addEventListener('input', searchNotes);
   }
 });
 document.getElementById('mainBoldBtn').addEventListener('mousedown', (e) => {

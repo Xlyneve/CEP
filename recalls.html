@@ -1036,6 +1036,7 @@ const firebaseConfig = {
 	let newestNoteId = null;
 	let pendingNewNoteTime = null;
 	let unsubscribeNotes = null;
+	let latestNotesSnapshot = null;
 
   async function addNote() {
   const title = nurseTitle.value.trim();
@@ -1406,6 +1407,7 @@ function renderNotes() {
   if (unsubscribeNotes) return;
 
   unsubscribeNotes = onSnapshot(notesCol, snapshot => {
+    latestNotesSnapshot = snapshot;
     buildNoteCards(snapshot);
   });
 }
@@ -1436,14 +1438,14 @@ function setupImageZoom() {
   };
 }
   function searchNotes(event) {
-  currentSearch = event.target.value.toLowerCase();
-  renderNotesOnce();
+  currentSearch = event.target.value.toLowerCase().trim();
+  if (latestNotesSnapshot) buildNoteCards(latestNotesSnapshot);
 }
 
   document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-      searchInput.addEventListener('keyup', searchNotes);
+      searchInput.addEventListener('input', searchNotes);
     }
   });
 
