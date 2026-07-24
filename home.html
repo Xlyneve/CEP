@@ -1890,92 +1890,12 @@ header h1 {
   overflow: visible;
 }
 
-/* =========================
-   GLOWING X CURSOR
-========================= */
-
-.x-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-
-  width: 30px;
-  height: 30px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-family: Arial, sans-serif;
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1;
-
-  color: #9e8993;
-
-  pointer-events: none;
-  user-select: none;
-
-  z-index: 99999;
-
-  opacity: 0;
-
-  transform:
-  translate(6px, 10px)
-  scale(0.85)
-  rotate(-4deg);
-
-  text-shadow:
-    0 0 4px rgba(235, 232, 233, 0.95),
-    0 0 8px rgba(213, 208, 211, 0.9),
-    0 0 14px rgba(173, 159, 166, 0.75),
-    0 0 24px rgba(158, 137, 147, 0.45);
-
-  filter:
-    drop-shadow(0 0 3px rgba(235, 232, 233, 0.85))
-    drop-shadow(0 0 8px rgba(158, 137, 147, 0.48));
-
-  transition:
-    opacity 160ms ease,
-    transform 160ms ease,
-    color 160ms ease,
-    text-shadow 160ms ease;
-}
-
-.x-cursor.visible {
-  opacity: 1;
-}
-
-.x-cursor.active {
-  color: #ebe8e9;
-
-  transform:
-  translate(10px, 14px)
-  scale(1.18)
-  rotate(7deg);
-
-  text-shadow:
-    0 0 5px rgba(235, 232, 233, 1),
-    0 0 11px rgba(213, 208, 211, 1),
-    0 0 20px rgba(173, 159, 166, 0.95),
-    0 0 32px rgba(158, 137, 147, 0.7);
-}
-
-/* Hide on touchscreens and mobile devices */
-@media (hover: none), (pointer: coarse) {
-  .x-cursor {
-    display: none;
-  }
-}	
-
 </style>
 
   <link rel="stylesheet" href="site-background.css">
 </head>
 
 <body>
-
-  <div class="x-cursor" aria-hidden="true">XLYN</div>
 
 <header>
  <h1><span class="pageTitle">XlynEve</span></h1>
@@ -3345,69 +3265,6 @@ const firebaseConfig = {
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
   }
-</script>
-	<script>
-  (() => {
-    const xCursor = document.querySelector('.x-cursor');
-
-    if (!xCursor) return;
-
-    const canHover = window.matchMedia(
-      '(hover: hover) and (pointer: fine)'
-    ).matches;
-
-    if (!canHover) {
-      xCursor.style.display = 'none';
-      return;
-    }
-
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
-
-    let cursorX = mouseX;
-    let cursorY = mouseY;
-
-    let animationFrameId;
-
-    const followCursor = () => {
-      cursorX += (mouseX - cursorX) * 0.16;
-      cursorY += (mouseY - cursorY) * 0.16;
-
-      xCursor.style.left = `${cursorX}px`;
-      xCursor.style.top = `${cursorY}px`;
-
-      animationFrameId = requestAnimationFrame(followCursor);
-    };
-
-    document.addEventListener('mousemove', event => {
-      mouseX = event.clientX;
-      mouseY = event.clientY;
-
-      xCursor.classList.add('visible');
-    });
-
-    document.addEventListener('mousedown', () => {
-      xCursor.classList.add('active');
-    });
-
-    document.addEventListener('mouseup', () => {
-      xCursor.classList.remove('active');
-    });
-
-    document.addEventListener('mouseleave', () => {
-      xCursor.classList.remove('visible');
-    });
-
-    document.addEventListener('mouseenter', () => {
-      xCursor.classList.add('visible');
-    });
-
-    animationFrameId = requestAnimationFrame(followCursor);
-
-    window.addEventListener('beforeunload', () => {
-      cancelAnimationFrame(animationFrameId);
-    });
-  })();
 </script>
 </body>
 </html>
