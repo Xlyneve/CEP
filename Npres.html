@@ -754,41 +754,41 @@
       }
 
       .note-card-light-btn {
-	position: absolute;
-  right: 12px;
-  bottom: 10px;
+        position: absolute;
+        right: 12px;
+        bottom: 10px;
 
-  width: 15px;
-  height: 15px;
-  padding: 0;
+        width: 15px;
+        height: 15px;
+        padding: 0;
 
-  background: rgba(255, 255, 255, 0.96);
-  border: none;
-  border-radius: 50%;
+        background: rgba(255, 255, 255, 0.96);
+        border: none;
+        border-radius: 50%;
 
-  box-shadow:
-    0 0 7px rgba(255, 255, 255, 0.95),
-    0 0 14px rgba(255, 255, 255, 0.7);
+        box-shadow:
+          0 0 7px rgba(255, 255, 255, 0.95),
+          0 0 14px rgba(255, 255, 255, 0.7);
 
-  cursor: pointer;
+        cursor: pointer;
 
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    opacity 0.18s ease;
-}
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease,
+          opacity 0.18s ease;
+      }
 
-.note-card-light-btn:hover {
-  transform: scale(1.12);
+      .note-card-light-btn:hover {
+        transform: scale(1.12);
 
-  box-shadow:
-    0 0 9px rgba(255, 255, 255, 1),
-    0 0 18px rgba(255, 255, 255, 0.85);
-}
+        box-shadow:
+          0 0 9px rgba(255, 255, 255, 1),
+          0 0 18px rgba(255, 255, 255, 0.85);
+      }
 
-.note-card-light-btn:active {
-  transform: scale(0.92);
-}
+      .note-card-light-btn:active {
+        transform: scale(0.92);
+      }
 
       .note-card-actions {
         position: absolute;
@@ -1054,6 +1054,22 @@
         };
       }
 
+      function sortMedicationRowsAlphabetically() {
+        medicationRows.sort((a, b) => {
+          const nameA = String(a.medication || "")
+            .replace(/<[^>]*>/g, "")
+            .trim();
+          const nameB = String(b.medication || "")
+            .replace(/<[^>]*>/g, "")
+            .trim();
+
+          return nameA.localeCompare(nameB, undefined, {
+            sensitivity: "base",
+            numeric: true,
+          });
+        });
+      }
+
       function addRow() {
         const newRow = {
           medication: "New Medication",
@@ -1273,12 +1289,19 @@
         renderCards(medicationRows);
       }
 
-      function saveSingleCard(index) {
+      async function saveSingleCard(index) {
         if (!medicationRows[index]) return;
 
         medicationRows[index].isEditing = false;
+        medicationRows[index].isNew = false;
+
         delete editSnapshots[index];
-        saveTableToFirebase();
+
+        sortMedicationRowsAlphabetically();
+        selectedCardIndex = null;
+        editSnapshots = {};
+
+        await saveTableToFirebase();
         renderCards(medicationRows);
       }
 
@@ -1444,6 +1467,7 @@
             isEditing: false,
           }));
 
+          sortMedicationRowsAlphabetically();
           renderCards(medicationRows);
           if (status) {
             status.textContent = medicationRows.length
