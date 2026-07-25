@@ -1894,6 +1894,8 @@ select option {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
+
 	  
   </style>
   <link rel="stylesheet" href="site-background.css">
@@ -3373,32 +3375,36 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
 
   const row = document.createElement('div');
   row.className = 'checklist-row';
+  row.dataset.selected = checked ? 'true' : 'false';
   row.dataset.lineBreak = lineBreak ? 'true' : 'false';
+
+  if (checked) {
+    row.classList.add('selected');
+  }
+
   setupChecklistRowDrag(row);
 
-  const label = document.createElement('label');
-  label.className = 'check-item';
+  const note = document.createElement('div');
+  note.className = 'check-item';
+  note.tabIndex = 0;
+  note.setAttribute('role', 'button');
+  note.setAttribute(
+    'aria-pressed',
+    checked ? 'true' : 'false'
+  );
 
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.checked = checked;
-
-  const input = document.createElement('textarea');
-  input.value = text;
-  input.placeholder = 'Edit item';
-  input.rows = 1;
-
-  const isExamChecklist = container.id && container.id.startsWith('exam');
-
-  label.appendChild(checkbox);
+  const isExamChecklist =
+    container.id &&
+    container.id.startsWith('exam');
 
   if (isExamChecklist) {
-    label.classList.add('exam-check-item');
+    note.classList.add('exam-check-item');
 
     const lineBreakBtn = document.createElement('button');
     lineBreakBtn.type = 'button';
     lineBreakBtn.className = 'line-break-toggle';
-    lineBreakBtn.title = 'Start this item on a new line in the generated summary';
+    lineBreakBtn.title = 'Start this item on a new line';
+    lineBreakBtn.setAttribute('aria-label', 'Start on next line');
     lineBreakBtn.textContent = '↩';
     lineBreakBtn.dataset.lineBreak = lineBreak ? 'true' : 'false';
 
@@ -3407,45 +3413,199 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     }
 
     lineBreakBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
 
-  const isActive = lineBreakBtn.dataset.lineBreak === 'true';
-  const nextValue = isActive ? 'false' : 'true';
+      const nextValue =
+        lineBreakBtn.dataset.lineBreak === 'true'
+          ? 'false'
+          : 'true';
 
-  lineBreakBtn.dataset.lineBreak = nextValue;
-  row.dataset.lineBreak = nextValue;
-  lineBreakBtn.classList.toggle('active', nextValue === 'true');
+      lineBreakBtn.dataset.lineBreak = nextValue;
+      row.dataset.lineBreak = nextValue;
 
-  // If using ↩, also include this item in the generated summary
-  if (nextValue === 'true') {
-    checkbox.checked = true;
+      lineBreakBtn.classList.toggle(
+        'active',
+        nextValue === 'true'
+      );
+    });
+
+    note.appendChild(lineBreakBtn);
   }
-});
 
-    label.appendChild(lineBreakBtn);
-  }
+  const input = document.createElement('textarea');
+  input.className = 'checklist-note-text';
+  input.value = text;
+  input.placeholder = 'Note';
+  input.rows = 1;
+  input.readOnly = true;
 
-  label.appendChild(input);
+  note.appendChild(input);
 
-  const delBtn = document.createElement('button');
-  delBtn.type = 'button';
-  delBtn.className = 'checklist-delete';
-  delBtn.textContent = '';
- delBtn.title = 'Delete';
-delBtn.setAttribute('aria-label', 'Delete item');
- delBtn.addEventListener('click', () => {
-  const shouldDelete = confirm('Delete?');
+  const optionsWrap = document.createElement('div');
+  optionsWrap.className = 'checklist-options-wrap';
 
-  if (shouldDelete) {
-    row.remove();
-  }
-});
+  const optionsBtn = document.createElement('button');
+  optionsBtn.type = 'button';
+  optionsBtn.className = 'checklist-options-btn';
+  optionsBtn.textContent = '';
+  optionsBtn.title = 'Note options';
+  optionsBtn.setAttribute('aria-label', 'Note options');
+  optionsBtn.setAttribute('aria-expanded', 'false');
 
-  input.addEventListener('input', () => autoGrowChecklistTextarea(input));
+  const optionsMenu = document.createElement('div');
+  optionsMenu.className = 'checklist-options-menu';
+  optionsMenu.hidden = true;
 
-  row.appendChild(label);
-  row.appendChild(delBtn);
+  const editBtn = document.createElement('button');
+  editBtn.type = 'button';
+  editBtn.className = 'checklist-menu-action';
+  editBtn.textContent = 'Edit';
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.type = 'button';
+  deleteBtn.className =
+    'checklist-menu-action checklist-menu-delete';
+  deleteBtn.textContent = 'Delete';
+
+  optionsMenu.appendChild(editBtn);
+  optionsMenu.appendChild(deleteBtn);
+
+  optionsWrap.appendChild(optionsBtn);
+  optionsWrap.appendChild(optionsMenu);
+
+  const setSelected = (selected) => {
+    row.dataset.selected = selected ? 'true' : 'false';
+    row.classList.toggle('selected', selected);
+
+    note.setAttribute(
+      'aria-pressed',
+      selected ? 'true' : 'false'
+    );
+  };
+
+  const toggleSelected = () => {
+    if (row.classList.contains('editing')) return;
+
+    const currentlySelected =
+      row.dataset.selected === 'true';
+
+    setSelected(!currentlySelected);
+  };
+
+  note.addEventListener('click', (e) => {
+    if (
+      e.target.closest(
+        'button, textarea, .checklist-options-menu'
+      )
+    ) {
+      return;
+    }
+
+    toggleSelected();
+  });
+
+  note.addEventListener('keydown', (e) => {
+    if (
+      (e.key === 'Enter' || e.key === ' ') &&
+      !row.classList.contains('editing')
+    ) {
+      e.preventDefault();
+      toggleSelected();
+    }
+  });
+
+  input.addEventListener('click', (e) => {
+    if (input.readOnly) {
+      e.preventDefault();
+      toggleSelected();
+    }
+
+    e.stopPropagation();
+  });
+
+  optionsBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    document
+      .querySelectorAll('.checklist-options-menu')
+      .forEach(menu => {
+        if (menu !== optionsMenu) {
+          menu.hidden = true;
+        }
+      });
+
+    const willOpen = optionsMenu.hidden;
+
+    optionsMenu.hidden = !willOpen;
+
+    optionsBtn.setAttribute(
+      'aria-expanded',
+      willOpen ? 'true' : 'false'
+    );
+  });
+
+  editBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    optionsMenu.hidden = true;
+    optionsBtn.setAttribute('aria-expanded', 'false');
+
+    row.classList.add('editing');
+    input.readOnly = false;
+
+    input.focus();
+    input.setSelectionRange(
+      input.value.length,
+      input.value.length
+    );
+  });
+
+  const finishEditing = () => {
+    input.readOnly = true;
+    row.classList.remove('editing');
+
+    autoGrowChecklistTextarea(input);
+  };
+
+  input.addEventListener('blur', finishEditing);
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      input.blur();
+    }
+
+    if (
+      e.key === 'Enter' &&
+      !e.shiftKey
+    ) {
+      e.preventDefault();
+      input.blur();
+    }
+  });
+
+  deleteBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    optionsMenu.hidden = true;
+
+    const shouldDelete = confirm('Delete this note?');
+
+    if (shouldDelete) {
+      row.remove();
+    }
+  });
+
+  input.addEventListener('input', () => {
+    autoGrowChecklistTextarea(input);
+  });
+
+  row.appendChild(note);
+  row.appendChild(optionsWrap);
   list.appendChild(row);
 
   autoGrowChecklistTextarea(input);
@@ -3508,18 +3668,24 @@ function getChecklistItems(id) {
 
   return [...container.querySelectorAll('.checklist-row')]
     .map(row => {
-      const checkbox = row.querySelector('.check-item > input[type="checkbox"]');
-      const lineBreakButton = row.querySelector('.line-break-toggle');
-      const input = row.querySelector('textarea');
+      const lineBreakButton =
+        row.querySelector('.line-break-toggle');
+
+      const input =
+        row.querySelector('.checklist-note-text');
 
       const hasLineBreak =
         row.dataset.lineBreak === 'true' ||
         lineBreakButton?.dataset.lineBreak === 'true' ||
         lineBreakButton?.classList.contains('active');
 
+      const isSelected =
+        row.dataset.selected === 'true' ||
+        row.classList.contains('selected');
+
       return {
         text: input?.value.trim() || '',
-        checked: !!checkbox?.checked,
+        checked: isSelected,
         lineBreak: hasLineBreak
       };
     })
@@ -5303,5 +5469,212 @@ if (firebaseReady) {
 }
 
 </script>
+<style>
+/* =========================================
+   CLICKABLE CHECKLIST NOTES
+   ========================================= */
+
+.card .checklist-row {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+
+.card .check-item {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 8px !important;
+
+  min-width: 0;
+  padding: 8px 10px !important;
+
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+
+  background: transparent !important;
+  background-image: none !important;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.card .check-item.exam-check-item {
+  grid-template-columns: auto minmax(0, 1fr) !important;
+}
+
+.card .check-item:hover {
+  background: rgba(255, 255, 255, 0.42) !important;
+  border-color: rgba(20, 20, 20, 0.07) !important;
+}
+
+/* Selected whole note */
+.card .checklist-row.selected .check-item {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(225, 242, 255, 0.94),
+      rgba(204, 229, 255, 0.80)
+    ) !important;
+
+  border-color: rgba(75, 125, 180, 0.22) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 4px 13px rgba(70, 110, 160, 0.09) !important;
+}
+
+/* Remove old checkbox */
+.card .check-item > input[type="checkbox"] {
+  display: none !important;
+}
+
+/* Note text */
+.card .checklist-note-text {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 30px !important;
+
+  padding: 4px 0 !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+
+  color: #111 !important;
+  cursor: pointer;
+  line-height: 1.45;
+}
+
+/* Editing mode */
+.card .checklist-row.editing .check-item {
+  background: rgba(255, 253, 225, 0.88) !important;
+  border-color: rgba(175, 145, 60, 0.22) !important;
+}
+
+.card .checklist-row.editing .checklist-note-text {
+  cursor: text;
+  user-select: text;
+}
+
+/* Light options button */
+.card .checklist-options-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card .checklist-options-btn {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+
+  padding: 0 !important;
+  margin: 0 2px !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.92) !important;
+  border-radius: 50% !important;
+
+  background: rgba(255, 255, 255, 0.94) !important;
+  background-image: none !important;
+
+  color: transparent !important;
+  font-size: 0 !important;
+
+  box-shadow:
+    0 0 7px rgba(255, 255, 255, 0.98),
+    0 2px 5px rgba(0, 0, 0, 0.10) !important;
+
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.card .checklist-options-btn:hover {
+  transform: scale(1.16);
+
+  box-shadow:
+    0 0 10px rgba(255, 255, 255, 1),
+    0 3px 7px rgba(0, 0, 0, 0.14) !important;
+}
+
+/* Edit/delete popup */
+.card .checklist-options-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 100;
+
+  width: 105px;
+  padding: 5px;
+
+  border: 1px solid rgba(20, 20, 20, 0.10);
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(245, 247, 250, 0.92)
+    );
+
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.card .checklist-options-menu[hidden] {
+  display: none !important;
+}
+
+.card .checklist-menu-action {
+  display: block;
+  width: 100%;
+
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+  color: #111;
+
+  text-align: left;
+  cursor: pointer;
+}
+
+.card .checklist-menu-action:hover {
+  background: rgba(214, 236, 255, 0.75);
+}
+
+.card .checklist-menu-delete:hover {
+  background: rgba(255, 215, 215, 0.78);
+}
+
+/* Keep arrow separate from selection */
+.card .line-break-toggle {
+  flex-shrink: 0;
+  cursor: pointer;
+}
+</style>
 </body>
 </html>
