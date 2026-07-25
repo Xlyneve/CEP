@@ -480,6 +480,140 @@
         -webkit-user-select: none;
         user-select: none;
       }
+
+      /* ================================
+   MEDICATION CARD TAG
+================================ */
+
+      .med-card {
+        position: relative;
+      }
+
+      .med-card-tag-display {
+        display: inline-flex;
+        align-items: center;
+
+        margin-top: 7px;
+        padding: 4px 8px;
+
+        font-family: Tahoma, sans-serif;
+        font-size: 10px;
+        line-height: 1.2;
+        color: var(--theme-ink);
+
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 999px;
+
+        overflow-wrap: anywhere;
+      }
+
+      .med-card-tag-controls {
+        position: absolute;
+        left: 12px;
+        bottom: 11px;
+
+        display: flex;
+        align-items: center;
+        gap: 7px;
+
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+
+        transition:
+          opacity 0.18s ease,
+          visibility 0.18s ease;
+      }
+
+      .med-card.selected .med-card-tag-controls,
+      .med-card:focus-within .med-card-tag-controls {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .med-card-tag-btn {
+        width: 27px;
+        height: 27px;
+        padding: 0;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 13px;
+        line-height: 1;
+        color: rgba(40, 40, 40, 0.82);
+
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 999px;
+
+        cursor: pointer;
+
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      }
+
+      .med-card-tag-btn:hover {
+        background: rgba(255, 255, 255, 0.24);
+        border-color: rgba(255, 255, 255, 0.34);
+      }
+
+      .med-card-tag-editor {
+        display: none;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .med-card.tag-editor-open .med-card-tag-editor {
+        display: flex;
+      }
+
+      .med-card-tag-input {
+        width: 130px;
+        height: 28px;
+        padding: 5px 8px;
+
+        font-family: Tahoma, sans-serif;
+        font-size: 11px;
+        color: var(--text);
+
+        background: rgba(255, 255, 255, 0.28);
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        border-radius: 9px;
+
+        outline: none;
+      }
+
+      .med-card-tag-input:focus {
+        background: rgba(255, 255, 255, 0.4);
+        border-color: rgba(255, 255, 255, 0.6);
+      }
+
+      .med-card-tag-save,
+      .med-card-tag-close {
+        width: 27px;
+        height: 27px;
+        padding: 0;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 11px;
+        color: var(--theme-ink);
+
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 999px;
+
+        cursor: pointer;
+      }
+
       #emojiCopyMenu {
         position: fixed;
         top: 6px;
@@ -951,1107 +1085,1286 @@
     </div>
 
     <script type="module">
-      import {
-        initializeApp,
-        getApp,
-        getApps,
-      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-      import {
-        getFirestore,
-        collection,
-        getDoc,
-        getDocs,
-        setDoc,
-        doc,
-      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-      import {
-        getAuth,
-        GoogleAuthProvider,
-        signInWithPopup,
-        signOut,
-      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+            import {
+              initializeApp,
+              getApp,
+              getApps,
+            } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+            import {
+              getFirestore,
+              collection,
+              getDoc,
+              getDocs,
+              setDoc,
+              doc,
+            } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+            import {
+              getAuth,
+              GoogleAuthProvider,
+              signInWithPopup,
+              signOut,
+            } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyC1a4YDhJ3LAlqxIs9u5LrZ64Dp--jbIYM",
-        authDomain: "nurse-prescribing-notes.firebaseapp.com",
-        projectId: "nurse-prescribing-notes",
-        storageBucket: "nurse-prescribing-notes.firebasestorage.app",
-        messagingSenderId: "12133511320",
-        appId: "1:12133511320:web:114f6eb1c28ea2813b20ed",
-        measurementId: "G-540TZ8HK1G",
-      };
+            const firebaseConfig = {
+              apiKey: "AIzaSyC1a4YDhJ3LAlqxIs9u5LrZ64Dp--jbIYM",
+              authDomain: "nurse-prescribing-notes.firebaseapp.com",
+              projectId: "nurse-prescribing-notes",
+              storageBucket: "nurse-prescribing-notes.firebasestorage.app",
+              messagingSenderId: "12133511320",
+              appId: "1:12133511320:web:114f6eb1c28ea2813b20ed",
+              measurementId: "G-540TZ8HK1G",
+            };
 
-      const app =
-        getApps().find((candidate) => candidate.name === "nurse-prescribing") ||
-        initializeApp(firebaseConfig, "nurse-prescribing");
-      const db = getFirestore(app);
-      const auth = getAuth(app);
-      const allowedEmail = "xeve06@gmail.com";
+            const app =
+              getApps().find((candidate) => candidate.name === "nurse-prescribing") ||
+              initializeApp(firebaseConfig, "nurse-prescribing");
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+            const allowedEmail = "xeve06@gmail.com";
 
-      function showPrescribingSignIn() {
-        const status = document.getElementById("medicationStatus");
-        if (!status || status.querySelector("button")) return;
-        status.textContent = "Sign in to the prescribing database to load medications. ";
-        const signInButton = document.createElement("button");
-        signInButton.type = "button";
-        signInButton.textContent = "Sign in with Google";
-        signInButton.style.cssText =
-          "margin-left:8px;padding:8px 12px;border-radius:10px;border:1px solid #ad9fa6;background:#d5d0d3;color:#40363b;cursor:pointer";
-        status.appendChild(signInButton);
+            function showPrescribingSignIn() {
+              const status = document.getElementById("medicationStatus");
+              if (!status || status.querySelector("button")) return;
+              status.textContent = "Sign in to the prescribing database to load medications. ";
+              const signInButton = document.createElement("button");
+              signInButton.type = "button";
+              signInButton.textContent = "Sign in with Google";
+              signInButton.style.cssText =
+                "margin-left:8px;padding:8px 12px;border-radius:10px;border:1px solid #ad9fa6;background:#d5d0d3;color:#40363b;cursor:pointer";
+              status.appendChild(signInButton);
 
-        signInButton.addEventListener("click", async () => {
-          signInButton.disabled = true;
-          try {
-            const result = await signInWithPopup(auth, new GoogleAuthProvider());
-            const user = result.user;
-            if (!user.emailVerified || user.email.toLowerCase() !== allowedEmail) {
-              await signOut(auth);
-              throw new Error("This Google account is not authorized.");
+              signInButton.addEventListener("click", async () => {
+                signInButton.disabled = true;
+                try {
+                  const result = await signInWithPopup(auth, new GoogleAuthProvider());
+                  const user = result.user;
+                  if (!user.emailVerified || user.email.toLowerCase() !== allowedEmail) {
+                    await signOut(auth);
+                    throw new Error("This Google account is not authorized.");
+                  }
+                  await loadTableFromFirebase();
+                } catch (error) {
+                  status.textContent = error.message || "Sign in failed.";
+                  showPrescribingSignIn();
+                }
+              });
             }
-            await loadTableFromFirebase();
-          } catch (error) {
-            status.textContent = error.message || "Sign in failed.";
-            showPrescribingSignIn();
-          }
-        });
-      }
 
-      const medicationsCollection = collection(db, "medications");
+            const medicationsCollection = collection(db, "medications");
 
-      window.firebaseDB = db;
-      window.firebaseCollection = medicationsCollection;
-      window.firebaseDoc = doc;
-      window.firebaseSetDoc = setDoc;
-      window.firebaseGetDoc = getDoc;
-      window.firebaseGetDocs = getDocs;
+            window.firebaseDB = db;
+            window.firebaseCollection = medicationsCollection;
+            window.firebaseDoc = doc;
+            window.firebaseSetDoc = setDoc;
+            window.firebaseGetDoc = getDoc;
+            window.firebaseGetDocs = getDocs;
 
-      let medicationRows = [];
-      let selectedCardIndex = null;
-      let longPressTimer = null;
-      const LONG_PRESS_MS = 500;
+            let medicationRows = [];
+            let selectedCardIndex = null;
+            let longPressTimer = null;
+            const LONG_PRESS_MS = 500;
 
-      let currentSearchTerm = "";
-      let searchDebounceTimer = null;
+            let currentSearchTerm = "";
+            let searchDebounceTimer = null;
 
-      let editSnapshots = {};
+            let editSnapshots = {};
+      	  let defaultMedicationTag = "";
 
-      let panelNotes = [];
-      let editingPanelNoteId = null;
+            let panelNotes = [];
+            let editingPanelNoteId = null;
 
-      const notesDocumentReference = doc(db, "personalNotes", "notesPanel");
+            const notesDocumentReference = doc(db, "personalNotes", "notesPanel");
 
-      function cloneMedicationRow(row) {
-        return {
-          medication: row.medication || "",
-          subtitle: row.subtitle || "",
-          mechanism: row.mechanism || "",
-          firstLine: row.firstLine || "",
-          secondLine: row.secondLine || "",
-          allergyFirstLine: row.allergyFirstLine || "",
-          allergySecondLine: row.allergySecondLine || "",
-          notes: row.notes || "",
-          isEditing: !!row.isEditing,
-        };
-      }
+            function cloneMedicationRow(row) {
+              return {
+                medication: row.medication || "",
+                subtitle: row.subtitle || "",
+                mechanism: row.mechanism || "",
+                firstLine: row.firstLine || "",
+                secondLine: row.secondLine || "",
+                allergyFirstLine: row.allergyFirstLine || "",
+                allergySecondLine: row.allergySecondLine || "",
+                notes: row.notes || "",
+      		  tag: row.tag || "",
+      	      isEditing: !!row.isEditing,
+              };
+            }
 
-      function sortMedicationRowsAlphabetically() {
-        medicationRows.sort((a, b) => {
-          const nameA = String(a.medication || "")
-            .replace(/<[^>]*>/g, "")
-            .trim();
-          const nameB = String(b.medication || "")
-            .replace(/<[^>]*>/g, "")
-            .trim();
+            function sortMedicationRowsAlphabetically() {
+              medicationRows.sort((a, b) => {
+                const nameA = String(a.medication || "")
+                  .replace(/<[^>]*>/g, "")
+                  .trim();
+                const nameB = String(b.medication || "")
+                  .replace(/<[^>]*>/g, "")
+                  .trim();
 
-          return nameA.localeCompare(nameB, undefined, {
-            sensitivity: "base",
-            numeric: true,
-          });
-        });
-      }
+                return nameA.localeCompare(nameB, undefined, {
+                  sensitivity: "base",
+                  numeric: true,
+                });
+              });
+            }
 
-      function addRow() {
-        const newRow = {
-          medication: "New Medication",
-          subtitle: "",
-          mechanism: "",
-          firstLine: "",
-          secondLine: "",
-          allergyFirstLine: "",
-          allergySecondLine: "",
-          notes: "",
-          isEditing: true,
-          isNew: true,
-        };
+            function addRow() {
+              const newRow = {
+                medication: "New Medication",
+                subtitle: "",
+                mechanism: "",
+                firstLine: "",
+                secondLine: "",
+                allergyFirstLine: "",
+                allergySecondLine: "",
+                notes: "",
+      	      tag: defaultMedicationTag,
+      		  isEditing: true,
+      		  isNew: true,
+              };
 
-        medicationRows.unshift(newRow);
-        editSnapshots[0] = cloneMedicationRow(newRow);
+              medicationRows.unshift(newRow);
+              editSnapshots[0] = cloneMedicationRow(newRow);
 
-        selectedCardIndex = 0;
-        renderCards(medicationRows);
-      }
+              selectedCardIndex = 0;
+              renderCards(medicationRows);
+            }
 
-      async function saveTableToFirebase() {
+            async function saveTableToFirebase() {
         try {
-          await setDoc(doc(db, "medications", "medTable"), { rows: medicationRows });
+          await setDoc(
+            doc(db, "medications", "medTable"),
+            {
+              rows: medicationRows,
+              defaultTag: defaultMedicationTag,
+            },
+            { merge: true },
+          );
         } catch (error) {
           console.error("Save failed:", error);
           alert("Save failed! See console.");
         }
       }
 
-      function buildSearchBlob(row) {
-        const subtitle = row.subtitle || row.typeCategory || "";
-        const mechanism = row.mechanism || row.restrictions || "";
-        const firstLine = row.firstLine || row.dosage || "";
-        const secondLine = row.secondLine || "";
-        const allergyFirstLine = row.allergyFirstLine || "";
-        const allergySecondLine = row.allergySecondLine || "";
-        const extraNotes = row.notes || "";
+            function buildSearchBlob(row) {
+              const subtitle = row.subtitle || row.typeCategory || "";
+              const mechanism = row.mechanism || row.restrictions || "";
+              const firstLine = row.firstLine || row.dosage || "";
+              const secondLine = row.secondLine || "";
+              const allergyFirstLine = row.allergyFirstLine || "";
+              const allergySecondLine = row.allergySecondLine || "";
+              const extraNotes = row.notes || "";
+      		const medicationTag = row.tag || "";
 
-        return [
-          row.medication || "",
-          subtitle,
-          mechanism,
-          firstLine,
-          secondLine,
-          allergyFirstLine,
-          allergySecondLine,
-          extraNotes,
-        ]
-          .join(" ")
-          .toLowerCase();
-      }
-
-      function renderCards(rowsData) {
-        const container = document.getElementById("cardContainer");
-        container.innerHTML = "";
-
-        rowsData.forEach((rowData, index) => {
-          const card = document.createElement("div");
-          card.className = "med-card";
-          card.dataset.index = index;
-
-          const subtitle = rowData.subtitle || rowData.typeCategory || "";
-          const mechanism = rowData.mechanism || rowData.restrictions || "";
-          const firstLine = rowData.firstLine || rowData.dosage || "";
-          const secondLine = rowData.secondLine || "";
-          const allergyFirstLine = rowData.allergyFirstLine || "";
-          const allergySecondLine = rowData.allergySecondLine || "";
-          const extraNotes = rowData.notes || "";
-          const cardEditable = !!rowData.isEditing;
-
-          card.dataset.search = buildSearchBlob(rowData);
-
-          const tableControls = (fieldName) =>
-            cardEditable
-              ? `
-        <button
-          class="mini-table-btn icon-btn"
-          type="button"
-          title="Add table"
-          onclick="insertTreatmentTable(${index}, '${fieldName}')"
-        >＋</button>
-        <button
-          class="mini-table-btn icon-btn delete-table-btn"
-          type="button"
-          title="Remove table"
-          onclick="deleteTreatmentTable(${index}, '${fieldName}')"
-        >－</button>
-      `
-              : "";
-
-          const treatmentSection = (className, fieldName, content) => {
-            if (!cardEditable && !String(content || "").trim()) return "";
-            return `
-          <div class="med-section treatment-section ${className}">
-            <div class="med-section-header">
-              ${tableControls(fieldName)}
-            </div>
-            <div class="med-section-content" contenteditable="${cardEditable}" data-field="${fieldName}">${content}</div>
-          </div>
-        `;
-          };
-
-          card.innerHTML = `
-  <div class="med-card-main">
-    <div class="med-name" contenteditable="${cardEditable}" data-field="medication">${rowData.medication || "Untitled Medication"}</div>
-
-    <div class="med-subtitle" contenteditable="${cardEditable}" data-field="subtitle">${subtitle}</div>
-
-    <div class="med-mechanism" contenteditable="${cardEditable}" data-field="mechanism">${mechanism}</div>
-
-    ${treatmentSection("first-line-section", "firstLine", firstLine)}
-    ${treatmentSection("second-line-section", "secondLine", secondLine)}
-    ${treatmentSection("allergy-first-section", "allergyFirstLine", allergyFirstLine)}
-    ${treatmentSection("allergy-second-section", "allergySecondLine", allergySecondLine)}
-
-    ${
-      cardEditable || String(extraNotes || "").trim()
-        ? `<div class="med-section notes-section">
-      <div class="med-section-content" contenteditable="${cardEditable}" data-field="notes">${extraNotes}</div>
-    </div>`
-        : ""
-    }
-	
-	<div class="med-card-bottom-actions">
-  ${!rowData.isEditing ? `<button class="card-edit-btn" title="Edit" onclick="editSingleCard(${index})">✎</button>` : ""}
-  ${rowData.isEditing ? `<button class="card-save-btn" title="Save" onclick="saveSingleCard(${index})">✓</button>` : ""}
-  ${rowData.isEditing ? `<button class="card-bold-btn" title="Bold" onmousedown="event.preventDefault()" onclick="toggleCardBold(${index})">B</button>` : ""}
-  ${rowData.isEditing ? `<button class="card-cancel-btn" title="Close" onclick="cancelSingleCardEdit(${index})">×</button>` : ""}
-  <button class="card-cancel-btn" title="Delete" onclick="deleteCard(${index})">⌫</button>
-</div>
-  </div>
-`;
-
-          if (selectedCardIndex === index) {
-            card.classList.add("selected");
-          }
-
-          setupCardLongPress(card, index);
-          container.appendChild(card);
-        });
-
-        attachCardEditors();
-        applySearchFilter();
-      }
-
-      function setupCardLongPress(card, index) {
-        const start = (e) => {
-          if (e.target.closest("button")) return;
-
-          longPressTimer = setTimeout(() => {
-            const sel = window.getSelection();
-            const hasSelection = sel && sel.toString().trim().length > 0;
-            if (!hasSelection) {
-              editSingleCard(index);
+              return [
+        row.medication || "",
+        subtitle,
+        mechanism,
+        firstLine,
+        secondLine,
+        allergyFirstLine,
+        allergySecondLine,
+        extraNotes,
+        medicationTag,
+      ]
+        .join(" ")
+        .toLowerCase();
+                .join(" ")
+                .toLowerCase();
             }
-          }, LONG_PRESS_MS);
-        };
 
-        const cancel = () => {
-          clearTimeout(longPressTimer);
-        };
+      	  function escapeMedicationTagHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
 
-        card.addEventListener("mousedown", start);
-        card.addEventListener("touchstart", start, { passive: true });
+      function escapeMedicationTagAttribute(value) {
+        return escapeMedicationTagHtml(value);
+      }
 
-        card.addEventListener("mouseup", cancel);
-        card.addEventListener("mouseleave", cancel);
-        card.addEventListener("touchend", cancel);
-        card.addEventListener("touchcancel", cancel);
+            function renderCards(rowsData) {
+              const container = document.getElementById("cardContainer");
+              container.innerHTML = "";
 
-        card.addEventListener("click", () => {
-          const sel = window.getSelection();
-          const hasSelection = sel && sel.toString().trim().length > 0;
-          if (!hasSelection) {
-            selectCard(index);
+              rowsData.forEach((rowData, index) => {
+                const card = document.createElement("div");
+                card.className = "med-card";
+                card.dataset.index = index;
+
+                const subtitle = rowData.subtitle || rowData.typeCategory || "";
+                const mechanism = rowData.mechanism || rowData.restrictions || "";
+                const firstLine = rowData.firstLine || rowData.dosage || "";
+                const secondLine = rowData.secondLine || "";
+                const allergyFirstLine = rowData.allergyFirstLine || "";
+                const allergySecondLine = rowData.allergySecondLine || "";
+                const extraNotes = rowData.notes || "";
+      const medicationTag = rowData.tag || "";
+      const cardEditable = !!rowData.isEditing;
+
+                card.dataset.search = buildSearchBlob(rowData);
+
+                const tableControls = (fieldName) =>
+                  cardEditable
+                    ? `
+              <button
+                class="mini-table-btn icon-btn"
+                type="button"
+                title="Add table"
+                onclick="insertTreatmentTable(${index}, '${fieldName}')"
+              >＋</button>
+              <button
+                class="mini-table-btn icon-btn delete-table-btn"
+                type="button"
+                title="Remove table"
+                onclick="deleteTreatmentTable(${index}, '${fieldName}')"
+              >－</button>
+            `
+                    : "";
+
+                const treatmentSection = (className, fieldName, content) => {
+                  if (!cardEditable && !String(content || "").trim()) return "";
+                  return `
+                <div class="med-section treatment-section ${className}">
+                  <div class="med-section-header">
+                    ${tableControls(fieldName)}
+                  </div>
+                  <div class="med-section-content" contenteditable="${cardEditable}" data-field="${fieldName}">${content}</div>
+                </div>
+              `;
+                };
+
+                card.innerHTML = `
+        <div class="med-card-main">
+          <div class="med-name" contenteditable="${cardEditable}" data-field="medication">${rowData.medication || "Untitled Medication"}</div>
+
+          <div class="med-subtitle" contenteditable="${cardEditable}" data-field="subtitle">${subtitle}</div>
+
+          <div class="med-mechanism" contenteditable="${cardEditable}" data-field="mechanism">${mechanism}</div>
+
+          ${treatmentSection("first-line-section", "firstLine", firstLine)}
+          ${treatmentSection("second-line-section", "secondLine", secondLine)}
+          ${treatmentSection("allergy-first-section", "allergyFirstLine", allergyFirstLine)}
+          ${treatmentSection("allergy-second-section", "allergySecondLine", allergySecondLine)}
+
+          ${
+            cardEditable || String(extraNotes || "").trim()
+              ? `<div class="med-section notes-section">
+            <div class="med-section-content" contenteditable="${cardEditable}" data-field="notes">${extraNotes}</div>
+          </div>`
+              : ""
           }
-        });
+      	${
+        String(medicationTag).trim()
+          ? `<div class="med-card-tag-display">${escapeMedicationTagHtml(medicationTag)}</div>`
+          : ""
       }
 
-      async function deleteCard(index) {
-        const medName = medicationRows[index]?.medication || "this card";
-        const confirmed = confirm(`Delete ${medName}?`);
+      <div class="med-card-tag-controls">
+        <button
+          class="med-card-tag-btn"
+          type="button"
+          title="Add or edit tag"
+          aria-label="Add or edit tag"
+          onclick="toggleMedicationTagEditor(event, ${index})"
+        >
+          ♢
+        </button>
 
-        if (!confirmed) return;
+        <div class="med-card-tag-editor">
+          <input
+            class="med-card-tag-input"
+            type="text"
+            value="${escapeMedicationTagAttribute(medicationTag)}"
+            placeholder="Type tag..."
+            maxlength="60"
+            aria-label="Medication tag"
+            onclick="event.stopPropagation()"
+            onkeydown="handleMedicationTagKeydown(event, ${index})"
+          />
 
-        medicationRows.splice(index, 1);
+          <button
+            class="med-card-tag-save"
+            type="button"
+            title="Save tag"
+            onclick="saveMedicationTag(event, ${index})"
+          >
+            ✓
+          </button>
 
-        const shiftedSnapshots = {};
-        Object.keys(editSnapshots).forEach((key) => {
-          const oldIndex = Number(key);
-          if (oldIndex === index) return;
-          shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] =
-            editSnapshots[key];
-        });
-        editSnapshots = shiftedSnapshots;
+          <button
+            class="med-card-tag-close"
+            type="button"
+            title="Close"
+            onclick="closeMedicationTagEditor(event, ${index})"
+          >
+            ×
+          </button>
+        </div>
+      </div>
 
-        if (selectedCardIndex === index) {
-          selectedCardIndex = null;
-        } else if (selectedCardIndex !== null && selectedCardIndex > index) {
-          selectedCardIndex -= 1;
-        }
+      	<div class="med-card-bottom-actions">
+        ${!rowData.isEditing ? `<button class="card-edit-btn" title="Edit" onclick="editSingleCard(${index})">✎</button>` : ""}
+        ${rowData.isEditing ? `<button class="card-save-btn" title="Save" onclick="saveSingleCard(${index})">✓</button>` : ""}
+        ${rowData.isEditing ? `<button class="card-bold-btn" title="Bold" onmousedown="event.preventDefault()" onclick="toggleCardBold(${index})">B</button>` : ""}
+        ${rowData.isEditing ? `<button class="card-cancel-btn" title="Close" onclick="cancelSingleCardEdit(${index})">×</button>` : ""}
+        <button class="card-cancel-btn" title="Delete" onclick="deleteCard(${index})">⌫</button>
+      </div>
+        </div>
+      `;
 
-        await saveTableToFirebase();
-        renderCards(medicationRows);
-      }
+                if (selectedCardIndex === index) {
+                  card.classList.add("selected");
+                }
 
-      function editSingleCard(index) {
-        if (!medicationRows[index]) return;
+                setupCardLongPress(card, index);
+                container.appendChild(card);
+              });
 
-        if (!editSnapshots[index]) {
-          editSnapshots[index] = cloneMedicationRow(medicationRows[index]);
-        }
-
-        medicationRows[index].isEditing = true;
-        selectedCardIndex = index;
-        renderCards(medicationRows);
-      }
-
-      async function saveSingleCard(index) {
-        if (!medicationRows[index]) return;
-
-        medicationRows[index].isEditing = false;
-        medicationRows[index].isNew = false;
-
-        delete editSnapshots[index];
-
-        sortMedicationRowsAlphabetically();
-        selectedCardIndex = null;
-        editSnapshots = {};
-
-        await saveTableToFirebase();
-        renderCards(medicationRows);
-      }
-
-      function cancelSingleCardEdit(index) {
-        if (!medicationRows[index]) return;
-
-        if (medicationRows[index].isNew) {
-          medicationRows.splice(index, 1);
-          delete editSnapshots[index];
-
-          const shiftedSnapshots = {};
-          Object.keys(editSnapshots).forEach((key) => {
-            const oldIndex = Number(key);
-            shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] =
-              editSnapshots[key];
-          });
-          editSnapshots = shiftedSnapshots;
-
-          if (selectedCardIndex === index) {
-            selectedCardIndex = null;
-          } else if (selectedCardIndex !== null && selectedCardIndex > index) {
-            selectedCardIndex -= 1;
-          }
-
-          renderCards(medicationRows);
-          return;
-        }
-
-        const snapshot = editSnapshots[index];
-
-        if (snapshot) {
-          medicationRows[index] = {
-            ...cloneMedicationRow(snapshot),
-            isEditing: false,
-          };
-          delete editSnapshots[index];
-        } else {
-          medicationRows[index].isEditing = false;
-        }
-
-        renderCards(medicationRows);
-      }
-
-      function attachCardEditors() {
-        const editableFields = document.querySelectorAll(
-          '.med-card [contenteditable="true"]',
-        );
-
-        editableFields.forEach((field) => {
-          field.addEventListener("mousedown", function (e) {
-            e.stopPropagation();
-          });
-
-          field.addEventListener("click", function (e) {
-            e.stopPropagation();
-          });
-
-          field.addEventListener("input", function () {
-            const card = this.closest(".med-card");
-            if (!card) return;
-
-            const index = parseInt(card.dataset.index, 10);
-            const key = this.dataset.field;
-
-            if (!medicationRows[index] || !key) return;
-            medicationRows[index][key] = this.innerHTML.trim();
-
-            card.dataset.search = buildSearchBlob(medicationRows[index]);
-
-            if (currentSearchTerm.trim()) {
+              attachCardEditors();
               applySearchFilter();
             }
-          });
 
-          field.addEventListener("keydown", function (e) {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              insertLineBreakAtCursor();
+            function setupCardLongPress(card, index) {
+              const start = (e) => {
+                if (e.target.closest("button")) return;
+
+                longPressTimer = setTimeout(() => {
+                  const sel = window.getSelection();
+                  const hasSelection = sel && sel.toString().trim().length > 0;
+                  if (!hasSelection) {
+                    editSingleCard(index);
+                  }
+                }, LONG_PRESS_MS);
+              };
+
+              const cancel = () => {
+                clearTimeout(longPressTimer);
+              };
+
+              card.addEventListener("mousedown", start);
+              card.addEventListener("touchstart", start, { passive: true });
+
+              card.addEventListener("mouseup", cancel);
+              card.addEventListener("mouseleave", cancel);
+              card.addEventListener("touchend", cancel);
+              card.addEventListener("touchcancel", cancel);
+
+              card.addEventListener("click", () => {
+                const sel = window.getSelection();
+                const hasSelection = sel && sel.toString().trim().length > 0;
+                if (!hasSelection) {
+                  selectCard(index);
+                }
+              });
             }
-          });
-        });
 
-        const tableCells = document.querySelectorAll(".mini-treatment-table td");
+            async function deleteCard(index) {
+              const medName = medicationRows[index]?.medication || "this card";
+              const confirmed = confirm(`Delete ${medName}?`);
 
-        tableCells.forEach((cell) => {
-          cell.setAttribute("contenteditable", "true");
+              if (!confirmed) return;
 
-          cell.addEventListener("mousedown", function (e) {
-            e.stopPropagation();
-          });
+              medicationRows.splice(index, 1);
 
-          cell.addEventListener("click", function (e) {
-            e.stopPropagation();
-          });
+              const shiftedSnapshots = {};
+              Object.keys(editSnapshots).forEach((key) => {
+                const oldIndex = Number(key);
+                if (oldIndex === index) return;
+                shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] =
+                  editSnapshots[key];
+              });
+              editSnapshots = shiftedSnapshots;
 
-          cell.addEventListener("input", function () {
-            const card = this.closest(".med-card");
-            if (!card) return;
-
-            const index = parseInt(card.dataset.index, 10);
-            const sectionContent =
-              this.closest(".med-section")?.querySelector(".med-section-content");
-            const key = sectionContent?.dataset.field;
-
-            if (!medicationRows[index] || !sectionContent || !key) return;
-            medicationRows[index][key] = sectionContent.innerHTML.trim();
-
-            card.dataset.search = buildSearchBlob(medicationRows[index]);
-
-            if (currentSearchTerm.trim()) {
-              applySearchFilter();
-            }
-          });
-
-          cell.addEventListener("keydown", function (e) {
-            if (e.key === "Tab") return;
-
-            if (e.key === "Enter") {
-              e.preventDefault();
-              insertLineBreakAtCursor();
-            }
-          });
-        });
-      }
-
-      async function loadTableFromFirebase() {
-        const status = document.getElementById("medicationStatus");
-        try {
-          if (status) status.textContent = "Loading medication data…";
-          const medTableSnapshot = await getDoc(doc(db, "medications", "medTable"));
-          medicationRows = [];
-
-          let savedRows = [];
-          if (medTableSnapshot.exists() && Array.isArray(medTableSnapshot.data().rows)) {
-            savedRows = medTableSnapshot.data().rows;
-          } else {
-            const collectionSnapshot = await getDocs(medicationsCollection);
-            collectionSnapshot.forEach((documentSnapshot) => {
-              const data = documentSnapshot.data();
-              if (Array.isArray(data.rows)) {
-                savedRows.push(...data.rows);
-              } else if (
-                data.medication ||
-                data.title ||
-                data.firstLine ||
-                data.dosage ||
-                data.notes
-              ) {
-                savedRows.push(data);
+              if (selectedCardIndex === index) {
+                selectedCardIndex = null;
+              } else if (selectedCardIndex !== null && selectedCardIndex > index) {
+                selectedCardIndex -= 1;
               }
-            });
-          }
 
-          medicationRows = savedRows.map((row) => ({
-            medication: row.medication || row.title || "",
-            subtitle: row.subtitle || row.typeCategory || "",
-            mechanism: row.mechanism || row.restrictions || "",
-            firstLine: row.firstLine || row.dosage || "",
-            secondLine: row.secondLine || "",
-            allergyFirstLine: row.allergyFirstLine || "",
-            allergySecondLine: row.allergySecondLine || "",
-            notes: row.notes || "",
-            isEditing: false,
-          }));
+              await saveTableToFirebase();
+              renderCards(medicationRows);
+            }
 
-          sortMedicationRowsAlphabetically();
-          renderCards(medicationRows);
-          if (status) {
-            status.textContent = medicationRows.length
-              ? `${medicationRows.length} medications loaded`
-              : "No medication documents were found in the prescribing database.";
-          }
-        } catch (error) {
-          console.error("Load failed:", error);
-          showPrescribingSignIn();
+            function editSingleCard(index) {
+              if (!medicationRows[index]) return;
+
+              if (!editSnapshots[index]) {
+                editSnapshots[index] = cloneMedicationRow(medicationRows[index]);
+              }
+
+              medicationRows[index].isEditing = true;
+              selectedCardIndex = index;
+              renderCards(medicationRows);
+            }
+
+            async function saveSingleCard(index) {
+              if (!medicationRows[index]) return;
+
+              medicationRows[index].isEditing = false;
+              medicationRows[index].isNew = false;
+
+              delete editSnapshots[index];
+
+              sortMedicationRowsAlphabetically();
+              selectedCardIndex = null;
+              editSnapshots = {};
+
+              await saveTableToFirebase();
+              renderCards(medicationRows);
+            }
+
+            function cancelSingleCardEdit(index) {
+              if (!medicationRows[index]) return;
+
+              if (medicationRows[index].isNew) {
+                medicationRows.splice(index, 1);
+                delete editSnapshots[index];
+
+                const shiftedSnapshots = {};
+                Object.keys(editSnapshots).forEach((key) => {
+                  const oldIndex = Number(key);
+                  shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] =
+                    editSnapshots[key];
+                });
+                editSnapshots = shiftedSnapshots;
+
+                if (selectedCardIndex === index) {
+                  selectedCardIndex = null;
+                } else if (selectedCardIndex !== null && selectedCardIndex > index) {
+                  selectedCardIndex -= 1;
+                }
+
+                renderCards(medicationRows);
+                return;
+              }
+
+              const snapshot = editSnapshots[index];
+
+              if (snapshot) {
+                medicationRows[index] = {
+                  ...cloneMedicationRow(snapshot),
+                  isEditing: false,
+                };
+                delete editSnapshots[index];
+              } else {
+                medicationRows[index].isEditing = false;
+              }
+
+              renderCards(medicationRows);
+            }
+
+            function attachCardEditors() {
+              const editableFields = document.querySelectorAll(
+                '.med-card [contenteditable="true"]',
+              );
+
+              editableFields.forEach((field) => {
+                field.addEventListener("mousedown", function (e) {
+                  e.stopPropagation();
+                });
+
+                field.addEventListener("click", function (e) {
+                  e.stopPropagation();
+                });
+
+                field.addEventListener("input", function () {
+                  const card = this.closest(".med-card");
+                  if (!card) return;
+
+                  const index = parseInt(card.dataset.index, 10);
+                  const key = this.dataset.field;
+
+                  if (!medicationRows[index] || !key) return;
+                  medicationRows[index][key] = this.innerHTML.trim();
+
+                  card.dataset.search = buildSearchBlob(medicationRows[index]);
+
+                  if (currentSearchTerm.trim()) {
+                    applySearchFilter();
+                  }
+                });
+
+                field.addEventListener("keydown", function (e) {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    insertLineBreakAtCursor();
+                  }
+                });
+              });
+
+              const tableCells = document.querySelectorAll(".mini-treatment-table td");
+
+              tableCells.forEach((cell) => {
+                cell.setAttribute("contenteditable", "true");
+
+                cell.addEventListener("mousedown", function (e) {
+                  e.stopPropagation();
+                });
+
+                cell.addEventListener("click", function (e) {
+                  e.stopPropagation();
+                });
+
+                cell.addEventListener("input", function () {
+                  const card = this.closest(".med-card");
+                  if (!card) return;
+
+                  const index = parseInt(card.dataset.index, 10);
+                  const sectionContent =
+                    this.closest(".med-section")?.querySelector(".med-section-content");
+                  const key = sectionContent?.dataset.field;
+
+                  if (!medicationRows[index] || !sectionContent || !key) return;
+                  medicationRows[index][key] = sectionContent.innerHTML.trim();
+
+                  card.dataset.search = buildSearchBlob(medicationRows[index]);
+
+                  if (currentSearchTerm.trim()) {
+                    applySearchFilter();
+                  }
+                });
+
+                cell.addEventListener("keydown", function (e) {
+                  if (e.key === "Tab") return;
+
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    insertLineBreakAtCursor();
+                  }
+                });
+              });
+            }
+
+            async function loadTableFromFirebase() {
+              const status = document.getElementById("medicationStatus");
+              try {
+                if (status) status.textContent = "Loading medication data…";
+                const medTableSnapshot = await getDoc(doc(db, "medications", "medTable"));
+                medicationRows = [];
+
+      		  if (medTableSnapshot.exists()) {
+        defaultMedicationTag = String(
+          medTableSnapshot.data().defaultTag || "",
+        );
+      }
+
+                let savedRows = [];
+                if (medTableSnapshot.exists() && Array.isArray(medTableSnapshot.data().rows)) {
+                  savedRows = medTableSnapshot.data().rows;
+                } else {
+                  const collectionSnapshot = await getDocs(medicationsCollection);
+                  collectionSnapshot.forEach((documentSnapshot) => {
+                    const data = documentSnapshot.data();
+                    if (Array.isArray(data.rows)) {
+                      savedRows.push(...data.rows);
+                    } else if (
+                      data.medication ||
+                      data.title ||
+                      data.firstLine ||
+                      data.dosage ||
+                      data.notes
+                    ) {
+                      savedRows.push(data);
+                    }
+                  });
+                }
+
+                medicationRows = savedRows.map((row) => ({
+        medication: row.medication || row.title || "",
+        subtitle: row.subtitle || row.typeCategory || "",
+        mechanism: row.mechanism || row.restrictions || "",
+        firstLine: row.firstLine || row.dosage || "",
+        secondLine: row.secondLine || "",
+        allergyFirstLine: row.allergyFirstLine || "",
+        allergySecondLine: row.allergySecondLine || "",
+        notes: row.notes || "",
+        tag: row.tag || "",
+        isEditing: false,
+      }));
+
+                sortMedicationRowsAlphabetically();
+                renderCards(medicationRows);
+                if (status) {
+                  status.textContent = medicationRows.length
+                    ? `${medicationRows.length} medications loaded`
+                    : "No medication documents were found in the prescribing database.";
+                }
+              } catch (error) {
+                console.error("Load failed:", error);
+                showPrescribingSignIn();
+              }
+            }
+
+            function applySearchFilter() {
+              const cards = document.querySelectorAll(".med-card");
+              const term = currentSearchTerm.trim().toLowerCase();
+
+              cards.forEach((card) => {
+                const searchable = card.dataset.search || "";
+                const match = !term || searchable.includes(term);
+                card.classList.toggle("hidden-card", !match);
+              });
+            }
+
+            function filterTable() {
+              const inputEl = document.getElementById("searchInput");
+              currentSearchTerm = inputEl ? inputEl.value : "";
+              applySearchFilter();
+            }
+
+      	  function getMedicationCard(index) {
+        return document.querySelector(
+          `.med-card[data-index="${index}"]`,
+        );
+      }
+
+      function toggleMedicationTagEditor(event, index) {
+        event.stopPropagation();
+
+        const card = getMedicationCard(index);
+        if (!card || !medicationRows[index]) return;
+
+        document
+          .querySelectorAll(".med-card.tag-editor-open")
+          .forEach((openCard) => {
+            if (openCard !== card) {
+              openCard.classList.remove("tag-editor-open");
+            }
+          });
+
+        const isOpen = card.classList.toggle("tag-editor-open");
+
+        if (isOpen) {
+          const input = card.querySelector(".med-card-tag-input");
+
+          requestAnimationFrame(() => {
+            input?.focus();
+            input?.select();
+          });
         }
       }
 
-      function applySearchFilter() {
-        const cards = document.querySelectorAll(".med-card");
-        const term = currentSearchTerm.trim().toLowerCase();
+      function closeMedicationTagEditor(event, index) {
+        event.stopPropagation();
 
-        cards.forEach((card) => {
-          const searchable = card.dataset.search || "";
-          const match = !term || searchable.includes(term);
-          card.classList.toggle("hidden-card", !match);
-        });
-      }
-
-      function filterTable() {
-        const inputEl = document.getElementById("searchInput");
-        currentSearchTerm = inputEl ? inputEl.value : "";
-        applySearchFilter();
-      }
-
-      function selectCard(index) {
-        selectedCardIndex = index;
-
-        document.querySelectorAll(".med-card").forEach((card) => {
-          card.classList.remove("selected");
-        });
-
-        const selected = document.querySelector(`.med-card[data-index="${index}"]`);
-        if (selected) selected.classList.add("selected");
-      }
-
-      function toggleCardBold(index) {
-        const card = document.querySelector(`.med-card[data-index="${index}"]`);
+        const card = getMedicationCard(index);
         if (!card) return;
 
-        const sel = window.getSelection();
-        if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+        const input = card.querySelector(".med-card-tag-input");
 
-        const range = sel.getRangeAt(0);
-        const selectedNode = range.commonAncestorContainer;
-
-        if (!card.contains(selectedNode)) return;
-
-        document.execCommand("bold", false, null);
-
-        const editableFields = card.querySelectorAll("[data-field]");
-        editableFields.forEach((field) => {
-          const key = field.dataset.field;
-          if (key && medicationRows[index]) {
-            medicationRows[index][key] = field.innerHTML.trim();
-          }
-        });
-
-        card.dataset.search = buildSearchBlob(medicationRows[index]);
-      }
-
-      function insertTreatmentTable(index, fieldName) {
-        const labelMap = {
-          firstLine: "1st line treatment",
-          secondLine: "2nd line treatment",
-          allergyFirstLine: "1st line if allergic to 1st line group",
-          allergySecondLine: "2nd line if allergic to 1st line group",
-        };
-
-        const existing = medicationRows[index][fieldName] || "";
-        const sectionLabel = labelMap[fieldName] || "Treatment";
-
-        if (existing.includes("mini-treatment-table")) {
-          const wrapper = document.createElement("div");
-          wrapper.innerHTML = existing;
-
-          const table = wrapper.querySelector(".mini-treatment-table");
-          if (table) {
-            const hasTitleRow = table.querySelector(".table-section-title-row");
-
-            if (!hasTitleRow) {
-              const titleRow = table.insertRow(0);
-              titleRow.className = "table-section-title-row";
-              titleRow.innerHTML = `<th colspan="2">${sectionLabel}</th>`;
-            }
-
-            const hasColumnHeadings = table.querySelector(".table-column-headings");
-            if (!hasColumnHeadings) {
-              const headingRow = table.insertRow(1);
-              headingRow.className = "table-column-headings";
-              headingRow.innerHTML = `
-            <th>Used for</th>
-            <th>Dose</th>
-          `;
-            } else {
-              const newRow = table.insertRow();
-              newRow.innerHTML = `
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-          `;
-            }
-
-            medicationRows[index][fieldName] = wrapper.innerHTML;
-          }
-        } else {
-          medicationRows[index][fieldName] = `
-        <table class="mini-treatment-table">
-          <tr class="table-section-title-row">
-            <th colspan="2">${sectionLabel}</th>
-          </tr>
-          <tr class="table-column-headings">
-            <th>Used for</th>
-            <th>Dose</th>
-          </tr>
-          <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-          </tr>
-        </table>
-      `;
+        if (input) {
+          input.value = medicationRows[index]?.tag || "";
         }
 
+        card.classList.remove("tag-editor-open");
+      }
+
+      async function saveMedicationTag(event, index) {
+        event.stopPropagation();
+
+        const card = getMedicationCard(index);
+        const row = medicationRows[index];
+
+        if (!card || !row) return;
+
+        const input = card.querySelector(".med-card-tag-input");
+        if (!input) return;
+
+        const newTag = input.value.trim();
+
+        row.tag = newTag;
+
+        if (newTag) {
+          defaultMedicationTag = newTag;
+        }
+
+        card.classList.remove("tag-editor-open");
+
+        await saveTableToFirebase();
         renderCards(medicationRows);
+
+        selectedCardIndex = index;
+
+        const refreshedCard = getMedicationCard(index);
+        refreshedCard?.classList.add("selected");
       }
 
-      function deleteTreatmentTable(index, fieldName) {
-        if (!medicationRows[index]) return;
+      function handleMedicationTagKeydown(event, index) {
+        event.stopPropagation();
 
-        const existing = medicationRows[index][fieldName] || "";
-        if (!existing.includes("mini-treatment-table")) return;
-
-        const wrapper = document.createElement("div");
-        wrapper.innerHTML = existing;
-
-        const table = wrapper.querySelector(".mini-treatment-table");
-        if (!table) return;
-
-        const bodyRows = Array.from(table.querySelectorAll("tr")).filter((row) => {
-          return (
-            !row.classList.contains("table-section-title-row") &&
-            !row.classList.contains("table-column-headings")
-          );
-        });
-
-        if (bodyRows.length > 1) {
-          bodyRows[bodyRows.length - 1].remove();
-        } else if (bodyRows.length === 1) {
-          const cells = bodyRows[0].querySelectorAll("td");
-          cells.forEach((cell) => {
-            cell.innerHTML = "&nbsp;";
-          });
-        }
-
-        medicationRows[index][fieldName] = wrapper.innerHTML;
-        renderCards(medicationRows);
-      }
-
-      function insertLineBreakAtCursor() {
-        const sel = window.getSelection();
-        if (!sel || sel.rangeCount === 0) return;
-
-        const range = sel.getRangeAt(0);
-        range.deleteContents();
-
-        const br = document.createElement("br");
-        range.insertNode(br);
-
-        const nbsp = document.createTextNode("\u00A0");
-        br.parentNode.insertBefore(nbsp, br.nextSibling);
-
-        range.setStartAfter(nbsp);
-        range.setEndAfter(nbsp);
-
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-
-      /* ================================
-   NOTES / REMINDERS PANEL
-================================ */
-
-      function createPanelNoteId() {
-        if (window.crypto && typeof window.crypto.randomUUID === "function") {
-          return window.crypto.randomUUID();
-        }
-
-        return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      }
-
-      function normalisePanelNote(note) {
-        return {
-          id: String(note?.id || createPanelNoteId()),
-          title: String(note?.title || ""),
-          body: String(note?.body || ""),
-          createdAt: Number(note?.createdAt || Date.now()),
-          updatedAt: Number(note?.updatedAt || Date.now()),
-        };
-      }
-
-      async function loadPanelNotes() {
-        const notesList = document.getElementById("notesList");
-
-        try {
-          if (notesList) {
-            notesList.innerHTML = `
-        <div class="notes-empty-message">
-          Loading notes…
-        </div>
-      `;
-          }
-
-          const notesSnapshot = await getDoc(notesDocumentReference);
-
-          if (notesSnapshot.exists() && Array.isArray(notesSnapshot.data().notes)) {
-            panelNotes = notesSnapshot.data().notes.map(normalisePanelNote);
-          } else {
-            panelNotes = [];
-          }
-
-          renderPanelNotes();
-        } catch (error) {
-          console.error("Could not load notes:", error);
-
-          if (notesList) {
-            notesList.innerHTML = `
-        <div class="notes-empty-message">
-          Notes could not be loaded.
-        </div>
-      `;
-          }
-        }
-      }
-
-      async function savePanelNotesToFirebase() {
-        try {
-          await setDoc(
-            notesDocumentReference,
-            {
-              notes: panelNotes,
-              updatedAt: Date.now(),
-            },
-            { merge: true },
-          );
-        } catch (error) {
-          console.error("Could not save notes:", error);
-          alert("The note could not be saved. Please try again.");
-          throw error;
-        }
-      }
-
-      function renderPanelNotes() {
-        const notesList = document.getElementById("notesList");
-        const searchInput = document.getElementById("notesSearchInput");
-
-        if (!notesList) return;
-
-        const searchTerm = String(searchInput?.value || "")
-          .trim()
-          .toLowerCase();
-
-        const filteredNotes = panelNotes.filter((note) => {
-          const searchableText = `${note.title} ${note.body}`.toLowerCase();
-          return !searchTerm || searchableText.includes(searchTerm);
-        });
-
-        notesList.innerHTML = "";
-
-        if (!filteredNotes.length) {
-          const emptyMessage = document.createElement("div");
-          emptyMessage.className = "notes-empty-message";
-
-          emptyMessage.textContent = searchTerm
-            ? "No matching notes."
-            : "No notes saved yet.";
-
-          notesList.appendChild(emptyMessage);
+        if (event.key === "Enter") {
+          event.preventDefault();
+          saveMedicationTag(event, index);
           return;
         }
 
-        filteredNotes
-          .slice()
-          .sort((a, b) => b.updatedAt - a.updatedAt)
-          .forEach((note) => {
-            const noteCard = document.createElement("article");
-            noteCard.className = "note-card";
-            noteCard.dataset.noteId = note.id;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeMedicationTagEditor(event, index);
+        }
+      }
 
-            const titleElement = document.createElement("div");
-            titleElement.className = "note-card-title";
-            titleElement.textContent = note.title || "Untitled";
+            function selectCard(index) {
+              selectedCardIndex = index;
 
-            const bodyElement = document.createElement("div");
-            bodyElement.className = "note-card-body";
-            bodyElement.textContent = note.body;
+              document.querySelectorAll(".med-card").forEach((card) => {
+                card.classList.remove("selected");
+              });
 
-            const actions = document.createElement("div");
-            actions.className = "note-card-actions";
+              const selected = document.querySelector(`.med-card[data-index="${index}"]`);
+              if (selected) selected.classList.add("selected");
+            }
 
-            const editButton = document.createElement("button");
-            editButton.type = "button";
-            editButton.textContent = "Edit";
-            editButton.title = "Edit note";
+            function toggleCardBold(index) {
+              const card = document.querySelector(`.med-card[data-index="${index}"]`);
+              if (!card) return;
 
-            editButton.addEventListener("click", (event) => {
-              event.stopPropagation();
-              beginPanelNoteEdit(note.id);
-            });
+              const sel = window.getSelection();
+              if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
 
-            const deleteButton = document.createElement("button");
-            deleteButton.type = "button";
-            deleteButton.textContent = "Delete";
-            deleteButton.title = "Delete note";
+              const range = sel.getRangeAt(0);
+              const selectedNode = range.commonAncestorContainer;
 
-            deleteButton.addEventListener("click", (event) => {
-              event.stopPropagation();
-              deletePanelNote(note.id);
-            });
+              if (!card.contains(selectedNode)) return;
 
-            actions.append(editButton, deleteButton);
+              document.execCommand("bold", false, null);
 
-            const lightButton = document.createElement("button");
-            lightButton.type = "button";
-            lightButton.className = "note-card-light-btn";
-            lightButton.textContent = "";
-            lightButton.title = "Show or hide actions";
-            lightButton.setAttribute("aria-label", "Show or hide note actions");
-            lightButton.setAttribute("aria-expanded", "false");
-
-            lightButton.addEventListener("click", (event) => {
-              event.stopPropagation();
-
-              document.querySelectorAll(".note-card.actions-open").forEach((openCard) => {
-                if (openCard !== noteCard) {
-                  openCard.classList.remove("actions-open");
-
-                  const otherButton = openCard.querySelector(".note-card-light-btn");
-
-                  otherButton?.setAttribute("aria-expanded", "false");
+              const editableFields = card.querySelectorAll("[data-field]");
+              editableFields.forEach((field) => {
+                const key = field.dataset.field;
+                if (key && medicationRows[index]) {
+                  medicationRows[index][key] = field.innerHTML.trim();
                 }
               });
 
-              const isOpen = noteCard.classList.toggle("actions-open");
-              lightButton.setAttribute("aria-expanded", String(isOpen));
-            });
+              card.dataset.search = buildSearchBlob(medicationRows[index]);
+            }
 
-            noteCard.append(titleElement, bodyElement, actions, lightButton);
+            function insertTreatmentTable(index, fieldName) {
+              const labelMap = {
+                firstLine: "1st line treatment",
+                secondLine: "2nd line treatment",
+                allergyFirstLine: "1st line if allergic to 1st line group",
+                allergySecondLine: "2nd line if allergic to 1st line group",
+              };
 
-            notesList.appendChild(noteCard);
-          });
-      }
+              const existing = medicationRows[index][fieldName] || "";
+              const sectionLabel = labelMap[fieldName] || "Treatment";
 
-      async function savePanelNote() {
-        const titleInput = document.getElementById("noteTitleInput");
-        const bodyInput = document.getElementById("noteBodyInput");
-        const saveButton = document.getElementById("saveNoteBtn");
+              if (existing.includes("mini-treatment-table")) {
+                const wrapper = document.createElement("div");
+                wrapper.innerHTML = existing;
 
-        if (!titleInput || !bodyInput || !saveButton) return;
+                const table = wrapper.querySelector(".mini-treatment-table");
+                if (table) {
+                  const hasTitleRow = table.querySelector(".table-section-title-row");
 
-        const title = titleInput.value.trim();
-        const body = bodyInput.value.trim();
+                  if (!hasTitleRow) {
+                    const titleRow = table.insertRow(0);
+                    titleRow.className = "table-section-title-row";
+                    titleRow.innerHTML = `<th colspan="2">${sectionLabel}</th>`;
+                  }
 
-        if (!title && !body) {
-          alert("Write a title or note first.");
-          titleInput.focus();
-          return;
-        }
+                  const hasColumnHeadings = table.querySelector(".table-column-headings");
+                  if (!hasColumnHeadings) {
+                    const headingRow = table.insertRow(1);
+                    headingRow.className = "table-column-headings";
+                    headingRow.innerHTML = `
+                  <th>Used for</th>
+                  <th>Dose</th>
+                `;
+                  } else {
+                    const newRow = table.insertRow();
+                    newRow.innerHTML = `
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                `;
+                  }
 
-        saveButton.disabled = true;
-        saveButton.textContent = "Saving…";
+                  medicationRows[index][fieldName] = wrapper.innerHTML;
+                }
+              } else {
+                medicationRows[index][fieldName] = `
+              <table class="mini-treatment-table">
+                <tr class="table-section-title-row">
+                  <th colspan="2">${sectionLabel}</th>
+                </tr>
+                <tr class="table-column-headings">
+                  <th>Used for</th>
+                  <th>Dose</th>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+              </table>
+            `;
+              }
 
-        const previousNotes = panelNotes.map((note) => ({ ...note }));
+              renderCards(medicationRows);
+            }
 
-        try {
-          if (editingPanelNoteId) {
-            const noteIndex = panelNotes.findIndex(
-              (note) => note.id === editingPanelNoteId,
-            );
+            function deleteTreatmentTable(index, fieldName) {
+              if (!medicationRows[index]) return;
 
-            if (noteIndex !== -1) {
-              panelNotes[noteIndex] = {
-                ...panelNotes[noteIndex],
-                title,
-                body,
-                updatedAt: Date.now(),
+              const existing = medicationRows[index][fieldName] || "";
+              if (!existing.includes("mini-treatment-table")) return;
+
+              const wrapper = document.createElement("div");
+              wrapper.innerHTML = existing;
+
+              const table = wrapper.querySelector(".mini-treatment-table");
+              if (!table) return;
+
+              const bodyRows = Array.from(table.querySelectorAll("tr")).filter((row) => {
+                return (
+                  !row.classList.contains("table-section-title-row") &&
+                  !row.classList.contains("table-column-headings")
+                );
+              });
+
+              if (bodyRows.length > 1) {
+                bodyRows[bodyRows.length - 1].remove();
+              } else if (bodyRows.length === 1) {
+                const cells = bodyRows[0].querySelectorAll("td");
+                cells.forEach((cell) => {
+                  cell.innerHTML = "&nbsp;";
+                });
+              }
+
+              medicationRows[index][fieldName] = wrapper.innerHTML;
+              renderCards(medicationRows);
+            }
+
+            function insertLineBreakAtCursor() {
+              const sel = window.getSelection();
+              if (!sel || sel.rangeCount === 0) return;
+
+              const range = sel.getRangeAt(0);
+              range.deleteContents();
+
+              const br = document.createElement("br");
+              range.insertNode(br);
+
+              const nbsp = document.createTextNode("\u00A0");
+              br.parentNode.insertBefore(nbsp, br.nextSibling);
+
+              range.setStartAfter(nbsp);
+              range.setEndAfter(nbsp);
+
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+
+            /* ================================
+         NOTES / REMINDERS PANEL
+      ================================ */
+
+            function createPanelNoteId() {
+              if (window.crypto && typeof window.crypto.randomUUID === "function") {
+                return window.crypto.randomUUID();
+              }
+
+              return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            }
+
+            function normalisePanelNote(note) {
+              return {
+                id: String(note?.id || createPanelNoteId()),
+                title: String(note?.title || ""),
+                body: String(note?.body || ""),
+                createdAt: Number(note?.createdAt || Date.now()),
+                updatedAt: Number(note?.updatedAt || Date.now()),
               };
             }
-          } else {
-            const now = Date.now();
 
-            panelNotes.push({
-              id: createPanelNoteId(),
-              title,
-              body,
-              createdAt: now,
-              updatedAt: now,
-            });
-          }
+            async function loadPanelNotes() {
+              const notesList = document.getElementById("notesList");
 
-          await savePanelNotesToFirebase();
+              try {
+                if (notesList) {
+                  notesList.innerHTML = `
+              <div class="notes-empty-message">
+                Loading notes…
+              </div>
+            `;
+                }
 
-          editingPanelNoteId = null;
-          titleInput.value = "";
-          bodyInput.value = "";
-          saveButton.textContent = "Save";
+                const notesSnapshot = await getDoc(notesDocumentReference);
 
-          renderPanelNotes();
-          titleInput.focus();
-        } catch (error) {
-          panelNotes = previousNotes;
-          renderPanelNotes();
-        } finally {
-          saveButton.disabled = false;
+                if (notesSnapshot.exists() && Array.isArray(notesSnapshot.data().notes)) {
+                  panelNotes = notesSnapshot.data().notes.map(normalisePanelNote);
+                } else {
+                  panelNotes = [];
+                }
 
-          if (saveButton.textContent === "Saving…") {
-            saveButton.textContent = editingPanelNoteId ? "Update" : "Save";
-          }
-        }
-      }
+                renderPanelNotes();
+              } catch (error) {
+                console.error("Could not load notes:", error);
 
-      function beginPanelNoteEdit(noteId) {
-        const note = panelNotes.find((item) => item.id === noteId);
-        const titleInput = document.getElementById("noteTitleInput");
-        const bodyInput = document.getElementById("noteBodyInput");
-        const saveButton = document.getElementById("saveNoteBtn");
-
-        if (!note || !titleInput || !bodyInput || !saveButton) return;
-
-        editingPanelNoteId = noteId;
-
-        titleInput.value = note.title;
-        bodyInput.value = note.body;
-        saveButton.textContent = "Update";
-
-        document
-          .querySelectorAll(".note-card.actions-open")
-          .forEach((card) => card.classList.remove("actions-open"));
-
-        titleInput.focus();
-      }
-
-      async function deletePanelNote(noteId) {
-        const note = panelNotes.find((item) => item.id === noteId);
-
-        if (!note) return;
-
-        const noteName = note.title || "this note";
-        const confirmed = confirm(`Delete "${noteName}"?`);
-
-        if (!confirmed) return;
-
-        const previousNotes = panelNotes.map((item) => ({ ...item }));
-
-        panelNotes = panelNotes.filter((item) => item.id !== noteId);
-
-        if (editingPanelNoteId === noteId) {
-          editingPanelNoteId = null;
-
-          const titleInput = document.getElementById("noteTitleInput");
-          const bodyInput = document.getElementById("noteBodyInput");
-          const saveButton = document.getElementById("saveNoteBtn");
-
-          if (titleInput) titleInput.value = "";
-          if (bodyInput) bodyInput.value = "";
-          if (saveButton) saveButton.textContent = "Save";
-        }
-
-        renderPanelNotes();
-
-        try {
-          await savePanelNotesToFirebase();
-        } catch (error) {
-          panelNotes = previousNotes;
-          renderPanelNotes();
-        }
-      }
-
-      function openNotesPanel() {
-        const panel = document.getElementById("notesPanel");
-        const toggleButton = document.getElementById("notesPanelToggle");
-
-        panel?.classList.add("open");
-        toggleButton?.setAttribute("aria-expanded", "true");
-      }
-
-      function closeNotesPanel() {
-        const panel = document.getElementById("notesPanel");
-        const toggleButton = document.getElementById("notesPanelToggle");
-
-        panel?.classList.remove("open");
-        toggleButton?.setAttribute("aria-expanded", "false");
-      }
-
-      function setupNotesPanel() {
-        const panel = document.getElementById("notesPanel");
-        const toggleButton = document.getElementById("notesPanelToggle");
-        const closeButton = document.getElementById("closeNotesPanelBtn");
-        const saveButton = document.getElementById("saveNoteBtn");
-        const searchInput = document.getElementById("notesSearchInput");
-        const titleInput = document.getElementById("noteTitleInput");
-        const bodyInput = document.getElementById("noteBodyInput");
-
-        toggleButton?.addEventListener("click", () => {
-          if (panel?.classList.contains("open")) {
-            closeNotesPanel();
-          } else {
-            openNotesPanel();
-          }
-        });
-
-        closeButton?.addEventListener("click", closeNotesPanel);
-        saveButton?.addEventListener("click", savePanelNote);
-        searchInput?.addEventListener("input", renderPanelNotes);
-
-        titleInput?.addEventListener("keydown", (event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            bodyInput?.focus();
-          }
-        });
-
-        bodyInput?.addEventListener("keydown", (event) => {
-          if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-            event.preventDefault();
-            savePanelNote();
-          }
-        });
-
-        document.addEventListener("keydown", (event) => {
-          if (event.key === "Escape" && panel?.classList.contains("open")) {
-            closeNotesPanel();
-          }
-        });
-      }
-
-      window.onload = function () {
-        setupNotesPanel();
-        loadPanelNotes();
-
-        const searchInput = document.getElementById("searchInput");
-        if (searchInput) {
-          searchInput.addEventListener("input", () => {
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(() => {
-              currentSearchTerm = searchInput.value || "";
-              applySearchFilter();
-            }, 120);
-          });
-        }
-
-        loadTableFromFirebase();
-      };
-
-      window.selectCard = selectCard;
-      window.addRow = addRow;
-      window.saveTableToFirebase = saveTableToFirebase;
-      window.filterTable = filterTable;
-      window.insertTreatmentTable = insertTreatmentTable;
-      window.editSingleCard = editSingleCard;
-      window.saveSingleCard = saveSingleCard;
-      window.cancelSingleCardEdit = cancelSingleCardEdit;
-      window.deleteTreatmentTable = deleteTreatmentTable;
-      window.toggleCardBold = toggleCardBold;
-      window.deleteCard = deleteCard;
-
-      window.copyEmoji = function (button, emoji) {
-        navigator.clipboard
-          .writeText(emoji)
-          .then(() => {
-            const copiedSpan = button.parentElement.querySelector(".copiedMsg");
-            if (copiedSpan) {
-              copiedSpan.classList.add("show");
-              setTimeout(() => {
-                copiedSpan.classList.remove("show");
-              }, 1000);
+                if (notesList) {
+                  notesList.innerHTML = `
+              <div class="notes-empty-message">
+                Notes could not be loaded.
+              </div>
+            `;
+                }
+              }
             }
-          })
-          .catch((err) => {
-            console.error("Failed to copy emoji:", err);
-          });
-      };
+
+            async function savePanelNotesToFirebase() {
+              try {
+                await setDoc(
+                  notesDocumentReference,
+                  {
+                    notes: panelNotes,
+                    updatedAt: Date.now(),
+                  },
+                  { merge: true },
+                );
+              } catch (error) {
+                console.error("Could not save notes:", error);
+                alert("The note could not be saved. Please try again.");
+                throw error;
+              }
+            }
+
+            function renderPanelNotes() {
+              const notesList = document.getElementById("notesList");
+              const searchInput = document.getElementById("notesSearchInput");
+
+              if (!notesList) return;
+
+              const searchTerm = String(searchInput?.value || "")
+                .trim()
+                .toLowerCase();
+
+              const filteredNotes = panelNotes.filter((note) => {
+                const searchableText = `${note.title} ${note.body}`.toLowerCase();
+                return !searchTerm || searchableText.includes(searchTerm);
+              });
+
+              notesList.innerHTML = "";
+
+              if (!filteredNotes.length) {
+                const emptyMessage = document.createElement("div");
+                emptyMessage.className = "notes-empty-message";
+
+                emptyMessage.textContent = searchTerm
+                  ? "No matching notes."
+                  : "No notes saved yet.";
+
+                notesList.appendChild(emptyMessage);
+                return;
+              }
+
+              filteredNotes
+                .slice()
+                .sort((a, b) => b.updatedAt - a.updatedAt)
+                .forEach((note) => {
+                  const noteCard = document.createElement("article");
+                  noteCard.className = "note-card";
+                  noteCard.dataset.noteId = note.id;
+
+                  const titleElement = document.createElement("div");
+                  titleElement.className = "note-card-title";
+                  titleElement.textContent = note.title || "Untitled";
+
+                  const bodyElement = document.createElement("div");
+                  bodyElement.className = "note-card-body";
+                  bodyElement.textContent = note.body;
+
+                  const actions = document.createElement("div");
+                  actions.className = "note-card-actions";
+
+                  const editButton = document.createElement("button");
+                  editButton.type = "button";
+                  editButton.textContent = "Edit";
+                  editButton.title = "Edit note";
+
+                  editButton.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    beginPanelNoteEdit(note.id);
+                  });
+
+                  const deleteButton = document.createElement("button");
+                  deleteButton.type = "button";
+                  deleteButton.textContent = "Delete";
+                  deleteButton.title = "Delete note";
+
+                  deleteButton.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    deletePanelNote(note.id);
+                  });
+
+                  actions.append(editButton, deleteButton);
+
+                  const lightButton = document.createElement("button");
+                  lightButton.type = "button";
+                  lightButton.className = "note-card-light-btn";
+                  lightButton.textContent = "";
+                  lightButton.title = "Show or hide actions";
+                  lightButton.setAttribute("aria-label", "Show or hide note actions");
+                  lightButton.setAttribute("aria-expanded", "false");
+
+                  lightButton.addEventListener("click", (event) => {
+                    event.stopPropagation();
+
+                    document.querySelectorAll(".note-card.actions-open").forEach((openCard) => {
+                      if (openCard !== noteCard) {
+                        openCard.classList.remove("actions-open");
+
+                        const otherButton = openCard.querySelector(".note-card-light-btn");
+
+                        otherButton?.setAttribute("aria-expanded", "false");
+                      }
+                    });
+
+                    const isOpen = noteCard.classList.toggle("actions-open");
+                    lightButton.setAttribute("aria-expanded", String(isOpen));
+                  });
+
+                  noteCard.append(titleElement, bodyElement, actions, lightButton);
+
+                  notesList.appendChild(noteCard);
+                });
+            }
+
+            async function savePanelNote() {
+              const titleInput = document.getElementById("noteTitleInput");
+              const bodyInput = document.getElementById("noteBodyInput");
+              const saveButton = document.getElementById("saveNoteBtn");
+
+              if (!titleInput || !bodyInput || !saveButton) return;
+
+              const title = titleInput.value.trim();
+              const body = bodyInput.value.trim();
+
+              if (!title && !body) {
+                alert("Write a title or note first.");
+                titleInput.focus();
+                return;
+              }
+
+              saveButton.disabled = true;
+              saveButton.textContent = "Saving…";
+
+              const previousNotes = panelNotes.map((note) => ({ ...note }));
+
+              try {
+                if (editingPanelNoteId) {
+                  const noteIndex = panelNotes.findIndex(
+                    (note) => note.id === editingPanelNoteId,
+                  );
+
+                  if (noteIndex !== -1) {
+                    panelNotes[noteIndex] = {
+                      ...panelNotes[noteIndex],
+                      title,
+                      body,
+                      updatedAt: Date.now(),
+                    };
+                  }
+                } else {
+                  const now = Date.now();
+
+                  panelNotes.push({
+                    id: createPanelNoteId(),
+                    title,
+                    body,
+                    createdAt: now,
+                    updatedAt: now,
+                  });
+                }
+
+                await savePanelNotesToFirebase();
+
+                editingPanelNoteId = null;
+                titleInput.value = "";
+                bodyInput.value = "";
+                saveButton.textContent = "Save";
+
+                renderPanelNotes();
+                titleInput.focus();
+              } catch (error) {
+                panelNotes = previousNotes;
+                renderPanelNotes();
+              } finally {
+                saveButton.disabled = false;
+
+                if (saveButton.textContent === "Saving…") {
+                  saveButton.textContent = editingPanelNoteId ? "Update" : "Save";
+                }
+              }
+            }
+
+            function beginPanelNoteEdit(noteId) {
+              const note = panelNotes.find((item) => item.id === noteId);
+              const titleInput = document.getElementById("noteTitleInput");
+              const bodyInput = document.getElementById("noteBodyInput");
+              const saveButton = document.getElementById("saveNoteBtn");
+
+              if (!note || !titleInput || !bodyInput || !saveButton) return;
+
+              editingPanelNoteId = noteId;
+
+              titleInput.value = note.title;
+              bodyInput.value = note.body;
+              saveButton.textContent = "Update";
+
+              document
+                .querySelectorAll(".note-card.actions-open")
+                .forEach((card) => card.classList.remove("actions-open"));
+
+              titleInput.focus();
+            }
+
+            async function deletePanelNote(noteId) {
+              const note = panelNotes.find((item) => item.id === noteId);
+
+              if (!note) return;
+
+              const noteName = note.title || "this note";
+              const confirmed = confirm(`Delete "${noteName}"?`);
+
+              if (!confirmed) return;
+
+              const previousNotes = panelNotes.map((item) => ({ ...item }));
+
+              panelNotes = panelNotes.filter((item) => item.id !== noteId);
+
+              if (editingPanelNoteId === noteId) {
+                editingPanelNoteId = null;
+
+                const titleInput = document.getElementById("noteTitleInput");
+                const bodyInput = document.getElementById("noteBodyInput");
+                const saveButton = document.getElementById("saveNoteBtn");
+
+                if (titleInput) titleInput.value = "";
+                if (bodyInput) bodyInput.value = "";
+                if (saveButton) saveButton.textContent = "Save";
+              }
+
+              renderPanelNotes();
+
+              try {
+                await savePanelNotesToFirebase();
+              } catch (error) {
+                panelNotes = previousNotes;
+                renderPanelNotes();
+              }
+            }
+
+            function openNotesPanel() {
+              const panel = document.getElementById("notesPanel");
+              const toggleButton = document.getElementById("notesPanelToggle");
+
+              panel?.classList.add("open");
+              toggleButton?.setAttribute("aria-expanded", "true");
+            }
+
+            function closeNotesPanel() {
+              const panel = document.getElementById("notesPanel");
+              const toggleButton = document.getElementById("notesPanelToggle");
+
+              panel?.classList.remove("open");
+              toggleButton?.setAttribute("aria-expanded", "false");
+            }
+
+            function setupNotesPanel() {
+              const panel = document.getElementById("notesPanel");
+              const toggleButton = document.getElementById("notesPanelToggle");
+              const closeButton = document.getElementById("closeNotesPanelBtn");
+              const saveButton = document.getElementById("saveNoteBtn");
+              const searchInput = document.getElementById("notesSearchInput");
+              const titleInput = document.getElementById("noteTitleInput");
+              const bodyInput = document.getElementById("noteBodyInput");
+
+              toggleButton?.addEventListener("click", () => {
+                if (panel?.classList.contains("open")) {
+                  closeNotesPanel();
+                } else {
+                  openNotesPanel();
+                }
+              });
+
+              closeButton?.addEventListener("click", closeNotesPanel);
+              saveButton?.addEventListener("click", savePanelNote);
+              searchInput?.addEventListener("input", renderPanelNotes);
+
+              titleInput?.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  bodyInput?.focus();
+                }
+              });
+
+              bodyInput?.addEventListener("keydown", (event) => {
+                if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                  event.preventDefault();
+                  savePanelNote();
+                }
+              });
+
+              document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape" && panel?.classList.contains("open")) {
+                  closeNotesPanel();
+                }
+              });
+            }
+
+            window.onload = function () {
+              setupNotesPanel();
+              loadPanelNotes();
+
+              const searchInput = document.getElementById("searchInput");
+              if (searchInput) {
+                searchInput.addEventListener("input", () => {
+                  clearTimeout(searchDebounceTimer);
+                  searchDebounceTimer = setTimeout(() => {
+                    currentSearchTerm = searchInput.value || "";
+                    applySearchFilter();
+                  }, 120);
+                });
+              }
+
+              loadTableFromFirebase();
+            };
+
+            window.selectCard = selectCard;
+            window.addRow = addRow;
+            window.saveTableToFirebase = saveTableToFirebase;
+            window.filterTable = filterTable;
+            window.insertTreatmentTable = insertTreatmentTable;
+            window.editSingleCard = editSingleCard;
+            window.saveSingleCard = saveSingleCard;
+            window.cancelSingleCardEdit = cancelSingleCardEdit;
+            window.deleteTreatmentTable = deleteTreatmentTable;
+            window.toggleCardBold = toggleCardBold;
+            window.deleteCard = deleteCard;
+      	  window.toggleMedicationTagEditor = toggleMedicationTagEditor;
+      window.closeMedicationTagEditor = closeMedicationTagEditor;
+      window.saveMedicationTag = saveMedicationTag;
+      window.handleMedicationTagKeydown = handleMedicationTagKeydown;
+
+            window.copyEmoji = function (button, emoji) {
+              navigator.clipboard
+                .writeText(emoji)
+                .then(() => {
+                  const copiedSpan = button.parentElement.querySelector(".copiedMsg");
+                  if (copiedSpan) {
+                    copiedSpan.classList.add("show");
+                    setTimeout(() => {
+                      copiedSpan.classList.remove("show");
+                    }, 1000);
+                  }
+                })
+                .catch((err) => {
+                  console.error("Failed to copy emoji:", err);
+                });
+            };
     </script>
 
     <script src="calculator.js" defer></script>
