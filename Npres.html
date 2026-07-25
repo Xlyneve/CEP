@@ -490,6 +490,10 @@
       }
 
       .med-card-tag-display {
+  position: absolute;
+  left: 12px;
+  bottom: 13px;
+
   display: inline-flex;
   align-items: center;
 
@@ -510,32 +514,37 @@
   white-space: nowrap;
 }
 
+.med-card-tag-controls {
+  position: absolute;
+  left: 12px;
+  bottom: 11px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition:
+    opacity 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.med-card.selected .med-card-tag-controls,
+.med-card:focus-within .med-card-tag-controls {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.med-card.has-medication-tag.selected .med-card-tag-controls,
+.med-card.has-medication-tag:focus-within .med-card-tag-controls {
+  left: 180px;
+}
 
 
-      .med-card-tag-controls {
-        position: absolute;
-        left: 12px;
-        bottom: 11px;
-
-        display: flex;
-        align-items: center;
-        gap: 7px;
-
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-
-        transition:
-          opacity 0.18s ease,
-          visibility 0.18s ease;
-      }
-
-      .med-card.selected .med-card-tag-controls,
-      .med-card:focus-within .med-card-tag-controls {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-      }
 
       .med-card-tag-btn {
         width: 27px;
@@ -1293,7 +1302,11 @@
               rowsData.forEach((rowData, index) => {
                 const card = document.createElement("div");
                 card.className = "med-card";
-                card.dataset.index = index;
+card.dataset.index = index;
+
+if (String(rowData.tag || "").trim()) {
+  card.classList.add("has-medication-tag");
+}
 
                 const subtitle = rowData.subtitle || rowData.typeCategory || "";
                 const mechanism = rowData.mechanism || rowData.restrictions || "";
@@ -1358,56 +1371,55 @@
               : ""
           }
       	
-
-      <div class="med-card-tag-controls">
-	  
-	  ${
+${
   String(medicationTag).trim()
     ? `<div class="med-card-tag-display">${escapeMedicationTagHtml(medicationTag)}</div>`
     : ""
 }
-	  
-        <button
-          class="med-card-tag-btn"
-          type="button"
-          title="Add or edit tag"
-          aria-label="Add or edit tag"
-          onclick="toggleMedicationTagEditor(event, ${index})"
-        >
-          ♢
-        </button>
 
-        <div class="med-card-tag-editor">
-          <input
-            class="med-card-tag-input"
-            type="text"
-            value="${escapeMedicationTagAttribute(medicationTag)}"
-            placeholder="Type tag..."
-            maxlength="60"
-            aria-label="Medication tag"
-            onclick="event.stopPropagation()"
-            onkeydown="handleMedicationTagKeydown(event, ${index})"
-          />
+<div class="med-card-tag-controls">
+  <button
+    class="med-card-tag-btn"
+    type="button"
+    title="Add or edit tag"
+    aria-label="Add or edit tag"
+    onclick="toggleMedicationTagEditor(event, ${index})"
+  >
+    ♢
+  </button>
 
-          <button
-            class="med-card-tag-save"
-            type="button"
-            title="Save tag"
-            onclick="saveMedicationTag(event, ${index})"
-          >
-            ✓
-          </button>
+  <div class="med-card-tag-editor">
+    <input
+      class="med-card-tag-input"
+      type="text"
+      value="${escapeMedicationTagAttribute(medicationTag)}"
+      placeholder="Type tag..."
+      maxlength="60"
+      aria-label="Medication tag"
+      onclick="event.stopPropagation()"
+      onkeydown="handleMedicationTagKeydown(event, ${index})"
+    />
 
-          <button
-            class="med-card-tag-close"
-            type="button"
-            title="Close"
-            onclick="closeMedicationTagEditor(event, ${index})"
-          >
-            ×
-          </button>
-        </div>
-      </div>
+    <button
+      class="med-card-tag-save"
+      type="button"
+      title="Save tag"
+      onclick="saveMedicationTag(event, ${index})"
+    >
+      ✓
+    </button>
+
+    <button
+      class="med-card-tag-close"
+      type="button"
+      title="Close"
+      onclick="closeMedicationTagEditor(event, ${index})"
+    >
+      ×
+    </button>
+  </div>
+</div>
+      
 
       	<div class="med-card-bottom-actions">
         ${!rowData.isEditing ? `<button class="card-edit-btn" title="Edit" onclick="editSingleCard(${index})">✎</button>` : ""}
@@ -1787,13 +1799,10 @@
 
         card.classList.remove("tag-editor-open");
 
-        await saveTableToFirebase();
-        renderCards(medicationRows);
-
         selectedCardIndex = index;
 
-        const refreshedCard = getMedicationCard(index);
-        refreshedCard?.classList.add("selected");
+await saveTableToFirebase();
+renderCards(medicationRows);
       }
 
       function handleMedicationTagKeydown(event, index) {
