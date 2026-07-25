@@ -1,742 +1,1126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
-  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js"></script>
-  <script src="security.js"></script>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="calculator.css">
-  <title>Prescribable Medications</title>
- 
- <style>
-  @font-face {
-    font-family: 'Adelicia';
-    src: url('AdeliciaRegular.ttf');
-  }
-
-  @font-face {
-    font-family: 'Simplicity';
-    src: url('Simplicity.ttf');
-  }
-
-  :root {
-    --ashen-rose: #9e8993;
-    --iced-petal: #ad9fa6;
-    --morning-fog: #c0b7bb;
-    --pale-heather: #d5d0d3;
-    --first-light: #ebe8e9;
-    --theme-ink: #40363b;
-    --text: #333;
-    --text-soft: rgba(60, 60, 60, 0.72);
-    --text-faint: rgba(70, 70, 70, 0.66);
-
-    --glass: rgba(255, 255, 255, 0.14);
-    --glass-strong: rgba(255, 255, 255, 0.2);
-    --glass-border: rgba(255, 255, 255, 0.28);
-
-    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.06);
-
-    --radius-lg: 22px;
-    --radius-md: 16px;
-    --radius-sm: 12px;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    padding: 30px;
-    font-family: 'Tahoma', sans-serif;
-    font-size: 12px;
-    color: var(--text);
-    background: var(--first-light);
-  }
-
-  h1 {
-    margin: 0 0 20px;
-    text-align: center;
-    font-family: 'Adelicia', serif;
-    font-size: 2.6em;
-    font-weight: 600;
-    color: var(--theme-ink);
-    background: none;
-    -webkit-text-fill-color: currentColor;
-    animation: none;
-    text-shadow: 1px 1px 0 var(--first-light), 2px 2px 4px rgba(64, 54, 59, 0.2);
-  }
-
-  .controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 12px;
-    background: transparent;
-    border: none;
-    padding: 0;
-    box-shadow: none;
-  }
-
-  .controls input,
-  .controls button {
-    margin: 0;
-    padding: 8px 14px;
-    font-size: 1em;
-    color: var(--text);
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
-  }
-
-  .controls input::placeholder {
-    color: rgba(51, 51, 51, 0.5);
-  }
-
-  .controls button {
-    cursor: pointer;
-  }
-
-  .controls button:hover,
-  .controls input:hover {
-    background-color: var(--glass-strong);
-    border-color: rgba(255, 255, 255, 0.42);
-  }
-
-  .controls button:active {
-    transform: translateY(1px);
-  }
-
-  .hidden,
-  .hidden-card {
-    display: none !important;
-  }
-
-  .card-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 16px;
-    margin-top: 18px;
-  }
-
- .med-card {
-  padding: 12px 12px 10px;
-  background: var(--pale-heather);
-  border: 1px solid var(--morning-fog);
-  border-radius: var(--radius-lg);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: var(--shadow-soft);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
-}
-
-.med-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-hover);
-}
-
-.med-card.selected {
-  border-color: rgba(170, 170, 170, 0.24);
-  box-shadow: 0 0 0 2px rgba(170, 170, 170, 0.07);
-}
-
-.med-name {
-  margin-bottom: 1px;
-  font-size: 1.32rem;
-  font-weight: 700;
-  line-height: 1.18;
-  color: #111;
-}
-
-.med-subtitle {
-  margin-bottom: 1px;
-  font-size: 0.8rem;
-  line-height: 1.28;
-  font-style: italic;
-  color: var(--text-soft);
-}
-
-.med-mechanism {
-  margin-bottom: 6px;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: var(--text-faint);
-}
-
-.med-section {
-  margin-bottom: 7px;
-  padding: 5px 6px;
-  border: 1px solid var(--morning-fog);
-  border-radius: var(--radius-md);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: var(--first-light);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.notes-section {
-  background: var(--first-light);
-}
-
-.treatment-section {
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.treatment-section > .med-section-content {
-  padding: 0;
-}
-
-
-.med-section-content {
-  min-height: 16px;
-  padding: 1px 0;
-  font-size: 0.88rem;
-  line-height: 1.3;
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.med-name[contenteditable="true"],
-.med-subtitle[contenteditable="true"],
-.med-mechanism[contenteditable="true"],
-.med-section-content[contenteditable="true"] {
-  padding: 4px 6px;
-  background: rgba(255, 255, 255, 0.13);
-  border-radius: 9px;
-  outline: none;
-}
-
-.med-name[contenteditable="true"]:focus,
-.med-subtitle[contenteditable="true"]:focus,
-.med-mechanism[contenteditable="true"]:focus,
-.med-section-content[contenteditable="true"]:focus {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-
-.mini-treatment-table {
-  width: 100%;
-  margin-top: 2px;
-  font-size: 0.86rem;
-  color: #000;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 11px;
-  overflow: hidden;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 2px 8px rgba(0, 0, 0, 0.025);
-}
-
-.mini-treatment-table th,
-.mini-treatment-table td {
-  padding: 6px 8px;
-  text-align: left;
-  vertical-align: top;
-  color: #000;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  white-space: pre-wrap;
-  word-break: normal;
-  overflow-wrap: break-word;
-}
-
-.mini-treatment-table th:last-child,
-.mini-treatment-table td:last-child {
-  border-right: none;
-}
-
-.mini-treatment-table tr:last-child td {
-  border-bottom: none;
-}
-
-.mini-treatment-table td {
-  background: rgba(255, 255, 255, 0.10);
-  color: #000;
-}
-
-.mini-treatment-table th {
-  font-weight: 700;
-  color: #000;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.table-section-title-row th {
-  font-size: 0.85rem;
-  letter-spacing: 0.01em;
-  text-align: left;
-}
-
-.table-column-headings th {
-  background: rgba(255, 255, 255, 0.16);
-  font-weight: 400;
-}
-
-/* neutral body for all tables */
-.first-line-section .mini-treatment-table,
-.second-line-section .mini-treatment-table,
-.allergy-first-section .mini-treatment-table,
-.allergy-second-section .mini-treatment-table {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.first-line-section .mini-treatment-table td,
-.second-line-section .mini-treatment-table td,
-.allergy-first-section .mini-treatment-table td,
-.allergy-second-section .mini-treatment-table td {
-  background: rgba(255, 255, 255, 0.10);
-}
-
-/* only the top title row carries the section color */
-.first-line-section .table-section-title-row th {
-  background: rgba(94, 11, 21, 0.80);
-  color: #fff !important;
-}
-
-.second-line-section .table-section-title-row th {
-  background: rgba(144, 50, 61, 0.42);
-}
-
-.allergy-first-section .table-section-title-row th {
-  background: rgba(188, 128, 52, 0.80);
-}
-
-.allergy-second-section .table-section-title-row th {
-  background: rgba(217, 202, 179, 0.46);
-}
-
-.mini-treatment-table td[contenteditable="true"] {
-  outline: none;
-}
-
-.mini-treatment-table td[contenteditable="true"]:focus {
-  background: rgba(255, 255, 255, 0.16);
-  color: #000;
-}
-
-.med-section-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 2px;
-  min-height: 0;
-}
-
-#addCardBtn {
-  position: relative;
-  left: 24px;
-  width: 42px;
-  height: 42px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  line-height: 1;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 12px;
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
-}
-
-#addCardBtn:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.42);
-}
-
-#addCardBtn:active {
-  transform: translateY(1px);
-}
-
-.icon-btn {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  line-height: 1;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: rgba(40, 40, 40, 0.8);
-}
-
-.icon-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #000;
-}
-
-.delete-table-btn {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.delete-table-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.med-card-bottom-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin-top: 8px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s ease;
-}
-
-.med-card.selected .med-card-bottom-actions,
-.med-card:focus-within .med-card-bottom-actions {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.med-card-bottom-actions button {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  line-height: 1;
-  color: rgba(40, 40, 40, 0.82);
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-}
-
-.med-card-bottom-actions button:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #111;
-}
-
-.med-card-bottom-actions button:active {
-  transform: translateY(1px);
-}
-
-.card-bold-btn {
-  font-weight: 700;
-  font-size: 12px;
-}
-.med-card,
-.med-card * {
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-.med-card button {
-  -webkit-user-select: none;
-  user-select: none;
-}
-  #emojiCopyMenu {
-    position: fixed;
-    top: 6px;
-    right: -4px;
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    font-size: 10px;
-    font-family: 'Tahoma', sans-serif;
-    line-height: 1;
-  }
-
-  .emojiLine {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    margin: 1px;
-    padding: 1px;
-  }
-
-  #emojiCopyMenu button {
-    margin: 0;
-    padding: 0;
-    font-size: 12px;
-    line-height: 1;
-    color: var(--text);
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-
-  #emojiCopyMenu button:hover {
-    background: rgba(0, 0, 0, 0.05);
-  }
-
-  #emojiCopyMenu span {
-    margin: 0;
-    padding: 0;
-    font-size: 10px;
-    line-height: 1;
-    color: #555;
-  }
-
-  .copiedMsg {
-    font-size: 10px;
-    color: green;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-
-  .copiedMsg.show {
-    opacity: 1;
-  }
-
-
-
-  @keyframes roseGlow {
-    0% {
-      background-position: 0% center;
-    }
-    50% {
-      background-position: 100% center;
-    }
-    100% {
-      background-position: 0% center;
-    }
-  }
-
-  @media (max-width: 768px) {
-    body {
-      padding: 16px;
-    }
-
-    h1 {
-      font-size: 2.1em;
-    }
-
-    .controls {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .controls input,
-    .controls button {
-      width: 100%;
-    }
-
-    .icon-buttons {
-      justify-content: flex-start;
-    }
-
-    .card-container {
-      grid-template-columns: 1fr;
-    }
-
-    #emojiCopyMenu {
-      position: static;
-      flex-direction: row;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-  }
-</style>
-  
-  <link rel="stylesheet" href="palette-background.css">
-</head>
-<body>
-
-  <h1>Medications Lists</h1>
-
-<div class="controls">
-    <input type="text" id="searchInput" placeholder="Search medications..." />
-<button id="addCardBtn" onclick="addRow()" title="Add Card">＋</button>
-  </div>
-
-
-<div id="cardContainer" class="card-container"></div>
-<div id="medicationStatus" role="status" aria-live="polite" style="padding:18px 4px;color:#675b61;">Loading medication data…</div>
-
-
- <script type="module">
-  import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, getDoc, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyC1a4YDhJ3LAlqxIs9u5LrZ64Dp--jbIYM",
-    authDomain: "nurse-prescribing-notes.firebaseapp.com",
-    projectId: "nurse-prescribing-notes",
-    storageBucket: "nurse-prescribing-notes.firebasestorage.app",
-    messagingSenderId: "12133511320",
-    appId: "1:12133511320:web:114f6eb1c28ea2813b20ed",
-    measurementId: "G-540TZ8HK1G"
-  };
-
-  const app = getApps().find(candidate => candidate.name === "nurse-prescribing") ||
-    initializeApp(firebaseConfig, "nurse-prescribing");
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-  const allowedEmail = "xeve06@gmail.com";
-
-  function showPrescribingSignIn() {
-    const status = document.getElementById("medicationStatus");
-    if (!status || status.querySelector("button")) return;
-    status.textContent = "Sign in to the prescribing database to load medications. ";
-    const signInButton = document.createElement("button");
-    signInButton.type = "button";
-    signInButton.textContent = "Sign in with Google";
-    signInButton.style.cssText = "margin-left:8px;padding:8px 12px;border-radius:10px;border:1px solid #ad9fa6;background:#d5d0d3;color:#40363b;cursor:pointer";
-    status.appendChild(signInButton);
-
-    signInButton.addEventListener("click", async () => {
-      signInButton.disabled = true;
-      try {
-        const result = await signInWithPopup(auth, new GoogleAuthProvider());
-        const user = result.user;
-        if (!user.emailVerified || user.email.toLowerCase() !== allowedEmail) {
-          await signOut(auth);
-          throw new Error("This Google account is not authorized.");
-        }
-        await loadTableFromFirebase();
-      } catch (error) {
-        status.textContent = error.message || "Sign in failed.";
-        showPrescribingSignIn();
+  <head>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+    <link
+      rel="modulepreload"
+      href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
+    />
+    <link
+      rel="modulepreload"
+      href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
+    />
+    <script src="auth-guard.js"></script>
+    <script src="security.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="calculator.css" />
+    <title>Prescribable Medications</title>
+
+    <style>
+      @font-face {
+        font-family: "Adelicia";
+        src: url("AdeliciaRegular.ttf");
       }
-    });
-  }
 
-  const medicationsCollection = collection(db, "medications");
+      @font-face {
+        font-family: "Simplicity";
+        src: url("Simplicity.ttf");
+      }
 
-  window.firebaseDB = db;
-  window.firebaseCollection = medicationsCollection;
-  window.firebaseDoc = doc;
-  window.firebaseSetDoc = setDoc;
-  window.firebaseGetDoc = getDoc;
-  window.firebaseGetDocs = getDocs;
+      :root {
+        --ashen-rose: #9e8993;
+        --iced-petal: #ad9fa6;
+        --morning-fog: #c0b7bb;
+        --pale-heather: #d5d0d3;
+        --first-light: #ebe8e9;
+        --theme-ink: #40363b;
+        --text: #333;
+        --text-soft: rgba(60, 60, 60, 0.72);
+        --text-faint: rgba(70, 70, 70, 0.66);
 
-  let medicationRows = [];
-  let selectedCardIndex = null;
-  let longPressTimer = null;
-  const LONG_PRESS_MS = 500;
+        --glass: rgba(255, 255, 255, 0.14);
+        --glass-strong: rgba(255, 255, 255, 0.2);
+        --glass-border: rgba(255, 255, 255, 0.28);
 
-  let currentSearchTerm = "";
-  let searchDebounceTimer = null;
-  
-  let editSnapshots = {};
+        --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.05);
+        --shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.06);
 
-  function cloneMedicationRow(row) {
-  return {
-    medication: row.medication || "",
-    subtitle: row.subtitle || "",
-    mechanism: row.mechanism || "",
-    firstLine: row.firstLine || "",
-    secondLine: row.secondLine || "",
-    allergyFirstLine: row.allergyFirstLine || "",
-    allergySecondLine: row.allergySecondLine || "",
-    notes: row.notes || "",
-    isEditing: !!row.isEditing
-  };
-}
+        --radius-lg: 22px;
+        --radius-md: 16px;
+        --radius-sm: 12px;
+      }
 
-  function addRow() {
-  const newRow = {
-    medication: "New Medication",
-    subtitle: "",
-    mechanism: "",
-    firstLine: "",
-    secondLine: "",
-    allergyFirstLine: "",
-    allergySecondLine: "",
-    notes: "",
-    isEditing: true,
-    isNew: true
-  };
+      * {
+        box-sizing: border-box;
+      }
 
-  medicationRows.unshift(newRow);
-  editSnapshots[0] = cloneMedicationRow(newRow);
+      body {
+        margin: 0;
+        padding: 30px;
+        font-family: "Tahoma", sans-serif;
+        font-size: 12px;
+        color: var(--text);
+        background: var(--first-light);
+      }
 
-  selectedCardIndex = 0;
-  renderCards(medicationRows);
-}
+      h1 {
+        margin: 0 0 20px;
+        text-align: center;
+        font-family: "Adelicia", serif;
+        font-size: 2.6em;
+        font-weight: 600;
+        color: var(--theme-ink);
+        background: none;
+        -webkit-text-fill-color: currentColor;
+        animation: none;
+        text-shadow:
+          1px 1px 0 var(--first-light),
+          2px 2px 4px rgba(64, 54, 59, 0.2);
+      }
 
- async function saveTableToFirebase() {
-  try {
-    await setDoc(doc(db, "medications", "medTable"), { rows: medicationRows });
-  } catch (error) {
-    console.error("Save failed:", error);
-    alert("Save failed! See console.");
-  }
-}
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
+        background: transparent;
+        border: none;
+        padding: 0;
+        box-shadow: none;
+      }
 
-  function buildSearchBlob(row) {
-    const subtitle = row.subtitle || row.typeCategory || "";
-    const mechanism = row.mechanism || row.restrictions || "";
-    const firstLine = row.firstLine || row.dosage || "";
-    const secondLine = row.secondLine || "";
-    const allergyFirstLine = row.allergyFirstLine || "";
-    const allergySecondLine = row.allergySecondLine || "";
-    const extraNotes = row.notes || "";
+      .controls input,
+      .controls button {
+        margin: 0;
+        padding: 8px 14px;
+        font-size: 1em;
+        color: var(--text);
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transition:
+          background-color 0.25s ease,
+          border-color 0.25s ease,
+          transform 0.2s ease;
+      }
 
-    return [
-      row.medication || "",
-      subtitle,
-      mechanism,
-      firstLine,
-      secondLine,
-      allergyFirstLine,
-      allergySecondLine,
-      extraNotes
-    ].join(" ").toLowerCase();
-  }
+      .controls input::placeholder {
+        color: rgba(51, 51, 51, 0.5);
+      }
 
-  function renderCards(rowsData) {
-    const container = document.getElementById("cardContainer");
-    container.innerHTML = "";
+      .controls button {
+        cursor: pointer;
+      }
 
-    rowsData.forEach((rowData, index) => {
-      const card = document.createElement("div");
-      card.className = "med-card";
-      card.dataset.index = index;
+      .controls button:hover,
+      .controls input:hover {
+        background-color: var(--glass-strong);
+        border-color: rgba(255, 255, 255, 0.42);
+      }
 
-      const subtitle = rowData.subtitle || rowData.typeCategory || "";
-      const mechanism = rowData.mechanism || rowData.restrictions || "";
-      const firstLine = rowData.firstLine || rowData.dosage || "";
-      const secondLine = rowData.secondLine || "";
-      const allergyFirstLine = rowData.allergyFirstLine || "";
-      const allergySecondLine = rowData.allergySecondLine || "";
-      const extraNotes = rowData.notes || "";
-      const cardEditable = !!rowData.isEditing;
+      .controls button:active {
+        transform: translateY(1px);
+      }
 
-      card.dataset.search = buildSearchBlob(rowData);
+      .hidden,
+      .hidden-card {
+        display: none !important;
+      }
 
-      const tableControls = (fieldName) => cardEditable ? `
+      .card-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .med-card {
+        padding: 12px 12px 10px;
+        background: var(--pale-heather);
+        border: 1px solid var(--morning-fog);
+        border-radius: var(--radius-lg);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        box-shadow: var(--shadow-soft);
+        transition:
+          transform 0.16s ease,
+          box-shadow 0.16s ease,
+          border-color 0.16s ease;
+      }
+
+      .med-card:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-hover);
+      }
+
+      .med-card.selected {
+        border-color: rgba(170, 170, 170, 0.24);
+        box-shadow: 0 0 0 2px rgba(170, 170, 170, 0.07);
+      }
+
+      .med-name {
+        margin-bottom: 1px;
+        font-size: 1.32rem;
+        font-weight: 700;
+        line-height: 1.18;
+        color: #111;
+      }
+
+      .med-subtitle {
+        margin-bottom: 1px;
+        font-size: 0.8rem;
+        line-height: 1.28;
+        font-style: italic;
+        color: var(--text-soft);
+      }
+
+      .med-mechanism {
+        margin-bottom: 6px;
+        font-size: 0.78rem;
+        line-height: 1.35;
+        color: var(--text-faint);
+      }
+
+      .med-section {
+        margin-bottom: 7px;
+        padding: 5px 6px;
+        border: 1px solid var(--morning-fog);
+        border-radius: var(--radius-md);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: var(--first-light);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      }
+
+      .notes-section {
+        background: var(--first-light);
+      }
+
+      .treatment-section {
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .treatment-section > .med-section-content {
+        padding: 0;
+      }
+
+      .med-section-content {
+        min-height: 16px;
+        padding: 1px 0;
+        font-size: 0.88rem;
+        line-height: 1.3;
+        color: var(--text);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .med-name[contenteditable="true"],
+      .med-subtitle[contenteditable="true"],
+      .med-mechanism[contenteditable="true"],
+      .med-section-content[contenteditable="true"] {
+        padding: 4px 6px;
+        background: rgba(255, 255, 255, 0.13);
+        border-radius: 9px;
+        outline: none;
+      }
+
+      .med-name[contenteditable="true"]:focus,
+      .med-subtitle[contenteditable="true"]:focus,
+      .med-mechanism[contenteditable="true"]:focus,
+      .med-section-content[contenteditable="true"]:focus {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .mini-treatment-table {
+        width: 100%;
+        margin-top: 2px;
+        font-size: 0.86rem;
+        color: #000;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 11px;
+        overflow: hidden;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.16),
+          0 2px 8px rgba(0, 0, 0, 0.025);
+      }
+
+      .mini-treatment-table th,
+      .mini-treatment-table td {
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+        color: #000;
+        border-right: 1px solid rgba(255, 255, 255, 0.12);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        white-space: pre-wrap;
+        word-break: normal;
+        overflow-wrap: break-word;
+      }
+
+      .mini-treatment-table th:last-child,
+      .mini-treatment-table td:last-child {
+        border-right: none;
+      }
+
+      .mini-treatment-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .mini-treatment-table td {
+        background: rgba(255, 255, 255, 0.1);
+        color: #000;
+      }
+
+      .mini-treatment-table th {
+        font-weight: 700;
+        color: #000;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .table-section-title-row th {
+        font-size: 0.85rem;
+        letter-spacing: 0.01em;
+        text-align: left;
+      }
+
+      .table-column-headings th {
+        background: rgba(255, 255, 255, 0.16);
+        font-weight: 400;
+      }
+
+      /* neutral body for all tables */
+      .first-line-section .mini-treatment-table,
+      .second-line-section .mini-treatment-table,
+      .allergy-first-section .mini-treatment-table,
+      .allergy-second-section .mini-treatment-table {
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .first-line-section .mini-treatment-table td,
+      .second-line-section .mini-treatment-table td,
+      .allergy-first-section .mini-treatment-table td,
+      .allergy-second-section .mini-treatment-table td {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* only the top title row carries the section color */
+      .first-line-section .table-section-title-row th {
+        background: rgba(94, 11, 21, 0.8);
+        color: #fff !important;
+      }
+
+      .second-line-section .table-section-title-row th {
+        background: rgba(144, 50, 61, 0.42);
+      }
+
+      .allergy-first-section .table-section-title-row th {
+        background: rgba(188, 128, 52, 0.8);
+      }
+
+      .allergy-second-section .table-section-title-row th {
+        background: rgba(217, 202, 179, 0.46);
+      }
+
+      .mini-treatment-table td[contenteditable="true"] {
+        outline: none;
+      }
+
+      .mini-treatment-table td[contenteditable="true"]:focus {
+        background: rgba(255, 255, 255, 0.16);
+        color: #000;
+      }
+
+      .med-section-header {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 2px;
+        min-height: 0;
+      }
+
+      #addCardBtn {
+        position: relative;
+        left: 24px;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        line-height: 1;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 12px;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        transition:
+          background-color 0.25s ease,
+          border-color 0.25s ease,
+          transform 0.2s ease;
+      }
+
+      #addCardBtn:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.42);
+      }
+
+      #addCardBtn:active {
+        transform: translateY(1px);
+      }
+
+      .icon-btn {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        line-height: 1;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: rgba(40, 40, 40, 0.8);
+      }
+
+      .icon-btn:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #000;
+      }
+
+      .delete-table-btn {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .delete-table-btn:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .med-card-bottom-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 6px;
+        margin-top: 8px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s ease;
+      }
+
+      .med-card.selected .med-card-bottom-actions,
+      .med-card:focus-within .med-card-bottom-actions {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .med-card-bottom-actions button {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        line-height: 1;
+        color: rgba(40, 40, 40, 0.82);
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 999px;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+        transition:
+          background 0.18s ease,
+          transform 0.18s ease,
+          border-color 0.18s ease;
+      }
+
+      .med-card-bottom-actions button:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #111;
+      }
+
+      .med-card-bottom-actions button:active {
+        transform: translateY(1px);
+      }
+
+      .card-bold-btn {
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .med-card,
+      .med-card * {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+
+      .med-card button {
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      #emojiCopyMenu {
+        position: fixed;
+        top: 6px;
+        right: -4px;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        font-size: 10px;
+        font-family: "Tahoma", sans-serif;
+        line-height: 1;
+      }
+
+      .emojiLine {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        margin: 1px;
+        padding: 1px;
+      }
+
+      #emojiCopyMenu button {
+        margin: 0;
+        padding: 0;
+        font-size: 12px;
+        line-height: 1;
+        color: var(--text);
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
+
+      #emojiCopyMenu button:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      #emojiCopyMenu span {
+        margin: 0;
+        padding: 0;
+        font-size: 10px;
+        line-height: 1;
+        color: #555;
+      }
+
+      .copiedMsg {
+        font-size: 10px;
+        color: green;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .copiedMsg.show {
+        opacity: 1;
+      }
+
+      @keyframes roseGlow {
+        0% {
+          background-position: 0% center;
+        }
+        50% {
+          background-position: 100% center;
+        }
+        100% {
+          background-position: 0% center;
+        }
+      }
+
+      /* ================================
+   LEFT NOTES / REMINDERS PANEL
+================================ */
+
+      .notes-panel-toggle {
+        position: fixed;
+        left: 12px;
+        bottom: 18px;
+        z-index: 1101;
+
+        width: 38px;
+        height: 38px;
+        padding: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-family: Tahoma, sans-serif;
+        font-size: 17px;
+        color: var(--theme-ink);
+
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.34);
+        border-radius: 12px;
+
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+
+        box-shadow: 0 7px 20px rgba(0, 0, 0, 0.07);
+        cursor: pointer;
+
+        transition:
+          left 0.25s ease,
+          background 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      .notes-panel-toggle:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .notes-panel-toggle:active {
+        transform: translateY(1px);
+      }
+
+      .notes-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1100;
+
+        width: min(340px, 88vw);
+        padding: 18px 14px;
+
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        background: rgba(235, 232, 233, 0.92);
+        border-right: 1px solid rgba(255, 255, 255, 0.42);
+
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+
+        box-shadow: 12px 0 34px rgba(0, 0, 0, 0.08);
+
+        transform: translateX(-102%);
+        transition: transform 0.25s ease;
+      }
+
+      .notes-panel.open {
+        transform: translateX(0);
+      }
+
+      .notes-panel.open + .notes-panel-toggle {
+        left: min(352px, calc(88vw + 12px));
+      }
+
+      .notes-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .notes-panel-heading {
+        margin: 0;
+        font-family: Tahoma, sans-serif;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--theme-ink);
+      }
+
+      .notes-panel-close {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        color: var(--theme-ink);
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        cursor: pointer;
+      }
+
+      .notes-panel input,
+      .notes-panel textarea {
+        width: 100%;
+        padding: 10px 11px;
+
+        font-family: Tahoma, sans-serif;
+        font-size: 12px;
+        color: var(--text);
+
+        background: rgba(255, 255, 255, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.38);
+        border-radius: 12px;
+
+        outline: none;
+        resize: vertical;
+      }
+
+      .notes-panel input:focus,
+      .notes-panel textarea:focus {
+        background: rgba(255, 255, 255, 0.34);
+        border-color: rgba(255, 255, 255, 0.58);
+      }
+
+      .notes-panel textarea {
+        min-height: 80px;
+        max-height: 180px;
+        line-height: 1.4;
+      }
+
+      .notes-save-btn {
+        align-self: flex-end;
+        padding: 8px 14px;
+
+        font-family: Tahoma, sans-serif;
+        font-size: 12px;
+        color: var(--theme-ink);
+
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.34);
+        border-radius: 11px;
+
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .notes-save-btn:hover {
+        background: rgba(255, 255, 255, 0.32);
+      }
+
+      .notes-list {
+        flex: 1;
+        min-height: 0;
+        padding-right: 3px;
+
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        overflow-y: auto;
+      }
+
+      .note-card {
+        position: relative;
+        padding: 12px 12px 42px;
+
+        background: var(--pale-heather);
+        border: 1px solid var(--morning-fog);
+        border-radius: 17px;
+
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.045);
+      }
+
+      .note-card-title {
+        margin-bottom: 5px;
+        padding-right: 6px;
+
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: #111;
+
+        word-break: break-word;
+      }
+
+      .note-card-body {
+        font-size: 12px;
+        line-height: 1.45;
+        color: var(--text);
+
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .note-card-light-btn {
+        position: absolute;
+        right: 9px;
+        bottom: 8px;
+
+        width: 25px;
+        height: 25px;
+        padding: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 12px;
+        color: var(--theme-ink);
+
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.34);
+        border-radius: 999px;
+
+        cursor: pointer;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+      }
+
+      .note-card-light-btn:hover {
+        background: rgba(255, 255, 255, 0.34);
+      }
+
+      .note-card-actions {
+        position: absolute;
+        right: 41px;
+        bottom: 8px;
+
+        display: flex;
+        gap: 5px;
+
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+
+        transform: translateX(5px);
+        transition:
+          opacity 0.16s ease,
+          transform 0.16s ease,
+          visibility 0.16s ease;
+      }
+
+      .note-card.actions-open .note-card-actions {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateX(0);
+      }
+
+      .note-card-actions button {
+        min-width: 29px;
+        height: 25px;
+        padding: 0 8px;
+
+        font-family: Tahoma, sans-serif;
+        font-size: 10px;
+        color: var(--theme-ink);
+
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.34);
+        border-radius: 999px;
+
+        cursor: pointer;
+      }
+
+      .note-card-actions button:hover {
+        background: rgba(255, 255, 255, 0.34);
+      }
+
+      .notes-empty-message {
+        padding: 20px 8px;
+        text-align: center;
+        color: var(--text-faint);
+        font-size: 11px;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 16px;
+        }
+
+        h1 {
+          font-size: 2.1em;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .controls input,
+        .controls button {
+          width: 100%;
+        }
+
+        .icon-buttons {
+          justify-content: flex-start;
+        }
+
+        .card-container {
+          grid-template-columns: 1fr;
+        }
+
+        #emojiCopyMenu {
+          position: static;
+          flex-direction: row;
+          flex-wrap: wrap;
+          margin-top: 8px;
+        }
+      }
+    </style>
+
+    <link rel="stylesheet" href="palette-background.css" />
+  </head>
+  <body>
+    <aside id="notesPanel" class="notes-panel" aria-label="Notes and reminders">
+      <div class="notes-panel-header">
+        <h2 class="notes-panel-heading">Notes & Reminders</h2>
+
+        <button
+          id="closeNotesPanelBtn"
+          class="notes-panel-close"
+          type="button"
+          title="Close notes panel"
+          aria-label="Close notes panel"
+        >
+          ×
+        </button>
+      </div>
+
+      <input
+        id="notesSearchInput"
+        type="search"
+        placeholder="Search notes..."
+        autocomplete="off"
+      />
+
+      <input
+        id="noteTitleInput"
+        type="text"
+        placeholder="Title"
+        maxlength="120"
+        autocomplete="off"
+      />
+
+      <textarea
+        id="noteBodyInput"
+        placeholder="Write your note or reminder..."
+      ></textarea>
+
+      <button id="saveNoteBtn" class="notes-save-btn" type="button">Save</button>
+
+      <div id="notesList" class="notes-list"></div>
+    </aside>
+
+    <button
+      id="notesPanelToggle"
+      class="notes-panel-toggle"
+      type="button"
+      title="Open notes and reminders"
+      aria-label="Open notes and reminders"
+      aria-expanded="false"
+    >
+      ◐
+    </button>
+
+    <h1>Medications Lists</h1>
+
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search medications..." />
+      <button id="addCardBtn" onclick="addRow()" title="Add Card">＋</button>
+    </div>
+
+    <div id="cardContainer" class="card-container"></div>
+    <div
+      id="medicationStatus"
+      role="status"
+      aria-live="polite"
+      style="padding: 18px 4px; color: #675b61"
+    >
+      Loading medication data…
+    </div>
+
+    <script type="module">
+      import {
+        initializeApp,
+        getApp,
+        getApps,
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        getDoc,
+        getDocs,
+        setDoc,
+        doc,
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+      import {
+        getAuth,
+        GoogleAuthProvider,
+        signInWithPopup,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyC1a4YDhJ3LAlqxIs9u5LrZ64Dp--jbIYM",
+        authDomain: "nurse-prescribing-notes.firebaseapp.com",
+        projectId: "nurse-prescribing-notes",
+        storageBucket: "nurse-prescribing-notes.firebasestorage.app",
+        messagingSenderId: "12133511320",
+        appId: "1:12133511320:web:114f6eb1c28ea2813b20ed",
+        measurementId: "G-540TZ8HK1G",
+      };
+
+      const app =
+        getApps().find((candidate) => candidate.name === "nurse-prescribing") ||
+        initializeApp(firebaseConfig, "nurse-prescribing");
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+      const allowedEmail = "xeve06@gmail.com";
+
+      function showPrescribingSignIn() {
+        const status = document.getElementById("medicationStatus");
+        if (!status || status.querySelector("button")) return;
+        status.textContent = "Sign in to the prescribing database to load medications. ";
+        const signInButton = document.createElement("button");
+        signInButton.type = "button";
+        signInButton.textContent = "Sign in with Google";
+        signInButton.style.cssText =
+          "margin-left:8px;padding:8px 12px;border-radius:10px;border:1px solid #ad9fa6;background:#d5d0d3;color:#40363b;cursor:pointer";
+        status.appendChild(signInButton);
+
+        signInButton.addEventListener("click", async () => {
+          signInButton.disabled = true;
+          try {
+            const result = await signInWithPopup(auth, new GoogleAuthProvider());
+            const user = result.user;
+            if (!user.emailVerified || user.email.toLowerCase() !== allowedEmail) {
+              await signOut(auth);
+              throw new Error("This Google account is not authorized.");
+            }
+            await loadTableFromFirebase();
+          } catch (error) {
+            status.textContent = error.message || "Sign in failed.";
+            showPrescribingSignIn();
+          }
+        });
+      }
+
+      const medicationsCollection = collection(db, "medications");
+
+      window.firebaseDB = db;
+      window.firebaseCollection = medicationsCollection;
+      window.firebaseDoc = doc;
+      window.firebaseSetDoc = setDoc;
+      window.firebaseGetDoc = getDoc;
+      window.firebaseGetDocs = getDocs;
+
+      let medicationRows = [];
+      let selectedCardIndex = null;
+      let longPressTimer = null;
+      const LONG_PRESS_MS = 500;
+
+      let currentSearchTerm = "";
+      let searchDebounceTimer = null;
+
+      let editSnapshots = {};
+
+      let panelNotes = [];
+      let editingPanelNoteId = null;
+
+      const notesDocumentReference = doc(db, "personalNotes", "notesPanel");
+
+      function cloneMedicationRow(row) {
+        return {
+          medication: row.medication || "",
+          subtitle: row.subtitle || "",
+          mechanism: row.mechanism || "",
+          firstLine: row.firstLine || "",
+          secondLine: row.secondLine || "",
+          allergyFirstLine: row.allergyFirstLine || "",
+          allergySecondLine: row.allergySecondLine || "",
+          notes: row.notes || "",
+          isEditing: !!row.isEditing,
+        };
+      }
+
+      function addRow() {
+        const newRow = {
+          medication: "New Medication",
+          subtitle: "",
+          mechanism: "",
+          firstLine: "",
+          secondLine: "",
+          allergyFirstLine: "",
+          allergySecondLine: "",
+          notes: "",
+          isEditing: true,
+          isNew: true,
+        };
+
+        medicationRows.unshift(newRow);
+        editSnapshots[0] = cloneMedicationRow(newRow);
+
+        selectedCardIndex = 0;
+        renderCards(medicationRows);
+      }
+
+      async function saveTableToFirebase() {
+        try {
+          await setDoc(doc(db, "medications", "medTable"), { rows: medicationRows });
+        } catch (error) {
+          console.error("Save failed:", error);
+          alert("Save failed! See console.");
+        }
+      }
+
+      function buildSearchBlob(row) {
+        const subtitle = row.subtitle || row.typeCategory || "";
+        const mechanism = row.mechanism || row.restrictions || "";
+        const firstLine = row.firstLine || row.dosage || "";
+        const secondLine = row.secondLine || "";
+        const allergyFirstLine = row.allergyFirstLine || "";
+        const allergySecondLine = row.allergySecondLine || "";
+        const extraNotes = row.notes || "";
+
+        return [
+          row.medication || "",
+          subtitle,
+          mechanism,
+          firstLine,
+          secondLine,
+          allergyFirstLine,
+          allergySecondLine,
+          extraNotes,
+        ]
+          .join(" ")
+          .toLowerCase();
+      }
+
+      function renderCards(rowsData) {
+        const container = document.getElementById("cardContainer");
+        container.innerHTML = "";
+
+        rowsData.forEach((rowData, index) => {
+          const card = document.createElement("div");
+          card.className = "med-card";
+          card.dataset.index = index;
+
+          const subtitle = rowData.subtitle || rowData.typeCategory || "";
+          const mechanism = rowData.mechanism || rowData.restrictions || "";
+          const firstLine = rowData.firstLine || rowData.dosage || "";
+          const secondLine = rowData.secondLine || "";
+          const allergyFirstLine = rowData.allergyFirstLine || "";
+          const allergySecondLine = rowData.allergySecondLine || "";
+          const extraNotes = rowData.notes || "";
+          const cardEditable = !!rowData.isEditing;
+
+          card.dataset.search = buildSearchBlob(rowData);
+
+          const tableControls = (fieldName) =>
+            cardEditable
+              ? `
         <button
           class="mini-table-btn icon-btn"
           type="button"
@@ -749,11 +1133,12 @@
           title="Remove table"
           onclick="deleteTreatmentTable(${index}, '${fieldName}')"
         >－</button>
-      ` : "";
+      `
+              : "";
 
-      const treatmentSection = (className, fieldName, content) => {
-        if (!cardEditable && !String(content || "").trim()) return "";
-        return `
+          const treatmentSection = (className, fieldName, content) => {
+            if (!cardEditable && !String(content || "").trim()) return "";
+            return `
           <div class="med-section treatment-section ${className}">
             <div class="med-section-header">
               ${tableControls(fieldName)}
@@ -761,9 +1146,9 @@
             <div class="med-section-content" contenteditable="${cardEditable}" data-field="${fieldName}">${content}</div>
           </div>
         `;
-      };
+          };
 
-     card.innerHTML = `
+          card.innerHTML = `
   <div class="med-card-main">
     <div class="med-name" contenteditable="${cardEditable}" data-field="medication">${rowData.medication || "Untitled Medication"}</div>
 
@@ -776,9 +1161,13 @@
     ${treatmentSection("allergy-first-section", "allergyFirstLine", allergyFirstLine)}
     ${treatmentSection("allergy-second-section", "allergySecondLine", allergySecondLine)}
 
-    ${cardEditable || String(extraNotes || "").trim() ? `<div class="med-section notes-section">
+    ${
+      cardEditable || String(extraNotes || "").trim()
+        ? `<div class="med-section notes-section">
       <div class="med-section-content" contenteditable="${cardEditable}" data-field="notes">${extraNotes}</div>
-    </div>` : ""}
+    </div>`
+        : ""
+    }
 	
 	<div class="med-card-bottom-actions">
   ${!rowData.isEditing ? `<button class="card-edit-btn" title="Edit" onclick="editSingleCard(${index})">✎</button>` : ""}
@@ -790,368 +1179,372 @@
   </div>
 `;
 
-      if (selectedCardIndex === index) {
-        card.classList.add("selected");
-      }
+          if (selectedCardIndex === index) {
+            card.classList.add("selected");
+          }
 
-      setupCardLongPress(card, index);
-      container.appendChild(card);
-    });
+          setupCardLongPress(card, index);
+          container.appendChild(card);
+        });
 
-    attachCardEditors();
-    applySearchFilter();
-  }
-
-  function setupCardLongPress(card, index) {
-    const start = (e) => {
-      if (e.target.closest("button")) return;
-
-      longPressTimer = setTimeout(() => {
-        const sel = window.getSelection();
-        const hasSelection = sel && sel.toString().trim().length > 0;
-        if (!hasSelection) {
-          editSingleCard(index);
-        }
-      }, LONG_PRESS_MS);
-    };
-
-    const cancel = () => {
-      clearTimeout(longPressTimer);
-    };
-
-    card.addEventListener("mousedown", start);
-    card.addEventListener("touchstart", start, { passive: true });
-
-    card.addEventListener("mouseup", cancel);
-    card.addEventListener("mouseleave", cancel);
-    card.addEventListener("touchend", cancel);
-    card.addEventListener("touchcancel", cancel);
-
-    card.addEventListener("click", () => {
-      const sel = window.getSelection();
-      const hasSelection = sel && sel.toString().trim().length > 0;
-      if (!hasSelection) {
-        selectCard(index);
-      }
-    });
-  }
-  
-async function deleteCard(index) {
-  const medName = medicationRows[index]?.medication || "this card";
-  const confirmed = confirm(`Delete ${medName}?`);
-
-  if (!confirmed) return;
-
-  medicationRows.splice(index, 1);
-
-  const shiftedSnapshots = {};
-  Object.keys(editSnapshots).forEach(key => {
-    const oldIndex = Number(key);
-    if (oldIndex === index) return;
-    shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] = editSnapshots[key];
-  });
-  editSnapshots = shiftedSnapshots;
-
-  if (selectedCardIndex === index) {
-    selectedCardIndex = null;
-  } else if (selectedCardIndex !== null && selectedCardIndex > index) {
-    selectedCardIndex -= 1;
-  }
-
-  await saveTableToFirebase();
-  renderCards(medicationRows);
-}
-
-  function editSingleCard(index) {
-  if (!medicationRows[index]) return;
-
-  if (!editSnapshots[index]) {
-    editSnapshots[index] = cloneMedicationRow(medicationRows[index]);
-  }
-
-  medicationRows[index].isEditing = true;
-  selectedCardIndex = index;
-  renderCards(medicationRows);
-}
-
-  function saveSingleCard(index) {
-  if (!medicationRows[index]) return;
-
-  medicationRows[index].isEditing = false;
-  delete editSnapshots[index];
-  saveTableToFirebase();
-  renderCards(medicationRows);
-}
-
-  function cancelSingleCardEdit(index) {
-  if (!medicationRows[index]) return;
-
-  if (medicationRows[index].isNew) {
-    medicationRows.splice(index, 1);
-    delete editSnapshots[index];
-
-    const shiftedSnapshots = {};
-    Object.keys(editSnapshots).forEach(key => {
-      const oldIndex = Number(key);
-      shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] = editSnapshots[key];
-    });
-    editSnapshots = shiftedSnapshots;
-
-    if (selectedCardIndex === index) {
-      selectedCardIndex = null;
-    } else if (selectedCardIndex !== null && selectedCardIndex > index) {
-      selectedCardIndex -= 1;
-    }
-
-    renderCards(medicationRows);
-    return;
-  }
-
-  const snapshot = editSnapshots[index];
-
-  if (snapshot) {
-    medicationRows[index] = {
-      ...cloneMedicationRow(snapshot),
-      isEditing: false
-    };
-    delete editSnapshots[index];
-  } else {
-    medicationRows[index].isEditing = false;
-  }
-
-  renderCards(medicationRows);
-}
-
- function attachCardEditors() {
-  const editableFields = document.querySelectorAll('.med-card [contenteditable="true"]');
-
-  editableFields.forEach(field => {
-    field.addEventListener("mousedown", function (e) {
-      e.stopPropagation();
-    });
-
-    field.addEventListener("click", function (e) {
-      e.stopPropagation();
-    });
-
-    field.addEventListener("input", function () {
-      const card = this.closest(".med-card");
-      if (!card) return;
-
-      const index = parseInt(card.dataset.index, 10);
-      const key = this.dataset.field;
-
-      if (!medicationRows[index] || !key) return;
-      medicationRows[index][key] = this.innerHTML.trim();
-
-      card.dataset.search = buildSearchBlob(medicationRows[index]);
-
-      if (currentSearchTerm.trim()) {
+        attachCardEditors();
         applySearchFilter();
       }
-    });
 
-    field.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        insertLineBreakAtCursor();
-      }
-    });
-  });
+      function setupCardLongPress(card, index) {
+        const start = (e) => {
+          if (e.target.closest("button")) return;
 
-  const tableCells = document.querySelectorAll(".mini-treatment-table td");
+          longPressTimer = setTimeout(() => {
+            const sel = window.getSelection();
+            const hasSelection = sel && sel.toString().trim().length > 0;
+            if (!hasSelection) {
+              editSingleCard(index);
+            }
+          }, LONG_PRESS_MS);
+        };
 
-  tableCells.forEach(cell => {
-    cell.setAttribute("contenteditable", "true");
+        const cancel = () => {
+          clearTimeout(longPressTimer);
+        };
 
-    cell.addEventListener("mousedown", function (e) {
-      e.stopPropagation();
-    });
+        card.addEventListener("mousedown", start);
+        card.addEventListener("touchstart", start, { passive: true });
 
-    cell.addEventListener("click", function (e) {
-      e.stopPropagation();
-    });
+        card.addEventListener("mouseup", cancel);
+        card.addEventListener("mouseleave", cancel);
+        card.addEventListener("touchend", cancel);
+        card.addEventListener("touchcancel", cancel);
 
-    cell.addEventListener("input", function () {
-      const card = this.closest(".med-card");
-      if (!card) return;
-
-      const index = parseInt(card.dataset.index, 10);
-      const sectionContent = this.closest(".med-section")?.querySelector(".med-section-content");
-      const key = sectionContent?.dataset.field;
-
-      if (!medicationRows[index] || !sectionContent || !key) return;
-      medicationRows[index][key] = sectionContent.innerHTML.trim();
-
-      card.dataset.search = buildSearchBlob(medicationRows[index]);
-
-      if (currentSearchTerm.trim()) {
-        applySearchFilter();
-      }
-    });
-
-    cell.addEventListener("keydown", function (e) {
-      if (e.key === "Tab") return;
-
-      if (e.key === "Enter") {
-        e.preventDefault();
-        insertLineBreakAtCursor();
-      }
-    });
-  });
-}
-
-  async function loadTableFromFirebase() {
-    const status = document.getElementById("medicationStatus");
-    try {
-      if (status) status.textContent = "Loading medication data…";
-      const medTableSnapshot = await getDoc(doc(db, "medications", "medTable"));
-      medicationRows = [];
-
-      let savedRows = [];
-      if (medTableSnapshot.exists() && Array.isArray(medTableSnapshot.data().rows)) {
-        savedRows = medTableSnapshot.data().rows;
-      } else {
-        const collectionSnapshot = await getDocs(medicationsCollection);
-        collectionSnapshot.forEach(documentSnapshot => {
-          const data = documentSnapshot.data();
-          if (Array.isArray(data.rows)) {
-            savedRows.push(...data.rows);
-          } else if (
-            data.medication ||
-            data.title ||
-            data.firstLine ||
-            data.dosage ||
-            data.notes
-          ) {
-            savedRows.push(data);
+        card.addEventListener("click", () => {
+          const sel = window.getSelection();
+          const hasSelection = sel && sel.toString().trim().length > 0;
+          if (!hasSelection) {
+            selectCard(index);
           }
         });
       }
 
-      medicationRows = savedRows.map(row => ({
-        medication: row.medication || row.title || "",
-        subtitle: row.subtitle || row.typeCategory || "",
-        mechanism: row.mechanism || row.restrictions || "",
-        firstLine: row.firstLine || row.dosage || "",
-        secondLine: row.secondLine || "",
-        allergyFirstLine: row.allergyFirstLine || "",
-        allergySecondLine: row.allergySecondLine || "",
-        notes: row.notes || "",
-        isEditing: false
-      }));
+      async function deleteCard(index) {
+        const medName = medicationRows[index]?.medication || "this card";
+        const confirmed = confirm(`Delete ${medName}?`);
 
-      renderCards(medicationRows);
-      if (status) {
-        status.textContent = medicationRows.length
-          ? `${medicationRows.length} medications loaded`
-          : "No medication documents were found in the prescribing database.";
-      }
-    } catch (error) {
-      console.error("Load failed:", error);
-      showPrescribingSignIn();
-    }
-  }
+        if (!confirmed) return;
 
-  function applySearchFilter() {
-    const cards = document.querySelectorAll(".med-card");
-    const term = currentSearchTerm.trim().toLowerCase();
+        medicationRows.splice(index, 1);
 
-    cards.forEach(card => {
-      const searchable = card.dataset.search || "";
-      const match = !term || searchable.includes(term);
-      card.classList.toggle("hidden-card", !match);
-    });
-  }
+        const shiftedSnapshots = {};
+        Object.keys(editSnapshots).forEach((key) => {
+          const oldIndex = Number(key);
+          if (oldIndex === index) return;
+          shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] =
+            editSnapshots[key];
+        });
+        editSnapshots = shiftedSnapshots;
 
-  function filterTable() {
-    const inputEl = document.getElementById("searchInput");
-    currentSearchTerm = inputEl ? inputEl.value : "";
-    applySearchFilter();
-  }
-
-  function selectCard(index) {
-    selectedCardIndex = index;
-
-    document.querySelectorAll(".med-card").forEach(card => {
-      card.classList.remove("selected");
-    });
-
-    const selected = document.querySelector(`.med-card[data-index="${index}"]`);
-    if (selected) selected.classList.add("selected");
-  }
-
-
- function toggleCardBold(index) {
-  const card = document.querySelector(`.med-card[data-index="${index}"]`);
-  if (!card) return;
-
-  const sel = window.getSelection();
-  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-
-  const range = sel.getRangeAt(0);
-  const selectedNode = range.commonAncestorContainer;
-
-  if (!card.contains(selectedNode)) return;
-
-  document.execCommand("bold", false, null);
-
-  const editableFields = card.querySelectorAll('[data-field]');
-  editableFields.forEach(field => {
-    const key = field.dataset.field;
-    if (key && medicationRows[index]) {
-      medicationRows[index][key] = field.innerHTML.trim();
-    }
-  });
-
-  card.dataset.search = buildSearchBlob(medicationRows[index]);
-}
-
-  function insertTreatmentTable(index, fieldName) {
-    const labelMap = {
-      firstLine: "1st line treatment",
-      secondLine: "2nd line treatment",
-      allergyFirstLine: "1st line if allergic to 1st line group",
-      allergySecondLine: "2nd line if allergic to 1st line group"
-    };
-
-    const existing = medicationRows[index][fieldName] || "";
-    const sectionLabel = labelMap[fieldName] || "Treatment";
-
-    if (existing.includes("mini-treatment-table")) {
-      const wrapper = document.createElement("div");
-      wrapper.innerHTML = existing;
-
-      const table = wrapper.querySelector(".mini-treatment-table");
-      if (table) {
-        const hasTitleRow = table.querySelector(".table-section-title-row");
-
-        if (!hasTitleRow) {
-          const titleRow = table.insertRow(0);
-          titleRow.className = "table-section-title-row";
-          titleRow.innerHTML = `<th colspan="2">${sectionLabel}</th>`;
+        if (selectedCardIndex === index) {
+          selectedCardIndex = null;
+        } else if (selectedCardIndex !== null && selectedCardIndex > index) {
+          selectedCardIndex -= 1;
         }
 
-        const hasColumnHeadings = table.querySelector(".table-column-headings");
-        if (!hasColumnHeadings) {
-          const headingRow = table.insertRow(1);
-          headingRow.className = "table-column-headings";
-          headingRow.innerHTML = `
+        await saveTableToFirebase();
+        renderCards(medicationRows);
+      }
+
+      function editSingleCard(index) {
+        if (!medicationRows[index]) return;
+
+        if (!editSnapshots[index]) {
+          editSnapshots[index] = cloneMedicationRow(medicationRows[index]);
+        }
+
+        medicationRows[index].isEditing = true;
+        selectedCardIndex = index;
+        renderCards(medicationRows);
+      }
+
+      function saveSingleCard(index) {
+        if (!medicationRows[index]) return;
+
+        medicationRows[index].isEditing = false;
+        delete editSnapshots[index];
+        saveTableToFirebase();
+        renderCards(medicationRows);
+      }
+
+      function cancelSingleCardEdit(index) {
+        if (!medicationRows[index]) return;
+
+        if (medicationRows[index].isNew) {
+          medicationRows.splice(index, 1);
+          delete editSnapshots[index];
+
+          const shiftedSnapshots = {};
+          Object.keys(editSnapshots).forEach((key) => {
+            const oldIndex = Number(key);
+            shiftedSnapshots[oldIndex > index ? oldIndex - 1 : oldIndex] =
+              editSnapshots[key];
+          });
+          editSnapshots = shiftedSnapshots;
+
+          if (selectedCardIndex === index) {
+            selectedCardIndex = null;
+          } else if (selectedCardIndex !== null && selectedCardIndex > index) {
+            selectedCardIndex -= 1;
+          }
+
+          renderCards(medicationRows);
+          return;
+        }
+
+        const snapshot = editSnapshots[index];
+
+        if (snapshot) {
+          medicationRows[index] = {
+            ...cloneMedicationRow(snapshot),
+            isEditing: false,
+          };
+          delete editSnapshots[index];
+        } else {
+          medicationRows[index].isEditing = false;
+        }
+
+        renderCards(medicationRows);
+      }
+
+      function attachCardEditors() {
+        const editableFields = document.querySelectorAll(
+          '.med-card [contenteditable="true"]',
+        );
+
+        editableFields.forEach((field) => {
+          field.addEventListener("mousedown", function (e) {
+            e.stopPropagation();
+          });
+
+          field.addEventListener("click", function (e) {
+            e.stopPropagation();
+          });
+
+          field.addEventListener("input", function () {
+            const card = this.closest(".med-card");
+            if (!card) return;
+
+            const index = parseInt(card.dataset.index, 10);
+            const key = this.dataset.field;
+
+            if (!medicationRows[index] || !key) return;
+            medicationRows[index][key] = this.innerHTML.trim();
+
+            card.dataset.search = buildSearchBlob(medicationRows[index]);
+
+            if (currentSearchTerm.trim()) {
+              applySearchFilter();
+            }
+          });
+
+          field.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              insertLineBreakAtCursor();
+            }
+          });
+        });
+
+        const tableCells = document.querySelectorAll(".mini-treatment-table td");
+
+        tableCells.forEach((cell) => {
+          cell.setAttribute("contenteditable", "true");
+
+          cell.addEventListener("mousedown", function (e) {
+            e.stopPropagation();
+          });
+
+          cell.addEventListener("click", function (e) {
+            e.stopPropagation();
+          });
+
+          cell.addEventListener("input", function () {
+            const card = this.closest(".med-card");
+            if (!card) return;
+
+            const index = parseInt(card.dataset.index, 10);
+            const sectionContent =
+              this.closest(".med-section")?.querySelector(".med-section-content");
+            const key = sectionContent?.dataset.field;
+
+            if (!medicationRows[index] || !sectionContent || !key) return;
+            medicationRows[index][key] = sectionContent.innerHTML.trim();
+
+            card.dataset.search = buildSearchBlob(medicationRows[index]);
+
+            if (currentSearchTerm.trim()) {
+              applySearchFilter();
+            }
+          });
+
+          cell.addEventListener("keydown", function (e) {
+            if (e.key === "Tab") return;
+
+            if (e.key === "Enter") {
+              e.preventDefault();
+              insertLineBreakAtCursor();
+            }
+          });
+        });
+      }
+
+      async function loadTableFromFirebase() {
+        const status = document.getElementById("medicationStatus");
+        try {
+          if (status) status.textContent = "Loading medication data…";
+          const medTableSnapshot = await getDoc(doc(db, "medications", "medTable"));
+          medicationRows = [];
+
+          let savedRows = [];
+          if (medTableSnapshot.exists() && Array.isArray(medTableSnapshot.data().rows)) {
+            savedRows = medTableSnapshot.data().rows;
+          } else {
+            const collectionSnapshot = await getDocs(medicationsCollection);
+            collectionSnapshot.forEach((documentSnapshot) => {
+              const data = documentSnapshot.data();
+              if (Array.isArray(data.rows)) {
+                savedRows.push(...data.rows);
+              } else if (
+                data.medication ||
+                data.title ||
+                data.firstLine ||
+                data.dosage ||
+                data.notes
+              ) {
+                savedRows.push(data);
+              }
+            });
+          }
+
+          medicationRows = savedRows.map((row) => ({
+            medication: row.medication || row.title || "",
+            subtitle: row.subtitle || row.typeCategory || "",
+            mechanism: row.mechanism || row.restrictions || "",
+            firstLine: row.firstLine || row.dosage || "",
+            secondLine: row.secondLine || "",
+            allergyFirstLine: row.allergyFirstLine || "",
+            allergySecondLine: row.allergySecondLine || "",
+            notes: row.notes || "",
+            isEditing: false,
+          }));
+
+          renderCards(medicationRows);
+          if (status) {
+            status.textContent = medicationRows.length
+              ? `${medicationRows.length} medications loaded`
+              : "No medication documents were found in the prescribing database.";
+          }
+        } catch (error) {
+          console.error("Load failed:", error);
+          showPrescribingSignIn();
+        }
+      }
+
+      function applySearchFilter() {
+        const cards = document.querySelectorAll(".med-card");
+        const term = currentSearchTerm.trim().toLowerCase();
+
+        cards.forEach((card) => {
+          const searchable = card.dataset.search || "";
+          const match = !term || searchable.includes(term);
+          card.classList.toggle("hidden-card", !match);
+        });
+      }
+
+      function filterTable() {
+        const inputEl = document.getElementById("searchInput");
+        currentSearchTerm = inputEl ? inputEl.value : "";
+        applySearchFilter();
+      }
+
+      function selectCard(index) {
+        selectedCardIndex = index;
+
+        document.querySelectorAll(".med-card").forEach((card) => {
+          card.classList.remove("selected");
+        });
+
+        const selected = document.querySelector(`.med-card[data-index="${index}"]`);
+        if (selected) selected.classList.add("selected");
+      }
+
+      function toggleCardBold(index) {
+        const card = document.querySelector(`.med-card[data-index="${index}"]`);
+        if (!card) return;
+
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
+        const range = sel.getRangeAt(0);
+        const selectedNode = range.commonAncestorContainer;
+
+        if (!card.contains(selectedNode)) return;
+
+        document.execCommand("bold", false, null);
+
+        const editableFields = card.querySelectorAll("[data-field]");
+        editableFields.forEach((field) => {
+          const key = field.dataset.field;
+          if (key && medicationRows[index]) {
+            medicationRows[index][key] = field.innerHTML.trim();
+          }
+        });
+
+        card.dataset.search = buildSearchBlob(medicationRows[index]);
+      }
+
+      function insertTreatmentTable(index, fieldName) {
+        const labelMap = {
+          firstLine: "1st line treatment",
+          secondLine: "2nd line treatment",
+          allergyFirstLine: "1st line if allergic to 1st line group",
+          allergySecondLine: "2nd line if allergic to 1st line group",
+        };
+
+        const existing = medicationRows[index][fieldName] || "";
+        const sectionLabel = labelMap[fieldName] || "Treatment";
+
+        if (existing.includes("mini-treatment-table")) {
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = existing;
+
+          const table = wrapper.querySelector(".mini-treatment-table");
+          if (table) {
+            const hasTitleRow = table.querySelector(".table-section-title-row");
+
+            if (!hasTitleRow) {
+              const titleRow = table.insertRow(0);
+              titleRow.className = "table-section-title-row";
+              titleRow.innerHTML = `<th colspan="2">${sectionLabel}</th>`;
+            }
+
+            const hasColumnHeadings = table.querySelector(".table-column-headings");
+            if (!hasColumnHeadings) {
+              const headingRow = table.insertRow(1);
+              headingRow.className = "table-column-headings";
+              headingRow.innerHTML = `
             <th>Used for</th>
             <th>Dose</th>
           `;
-        } else {
-          const newRow = table.insertRow();
-          newRow.innerHTML = `
+            } else {
+              const newRow = table.insertRow();
+              newRow.innerHTML = `
             <td>&nbsp;</td>
             <td>&nbsp;</td>
           `;
-        }
+            }
 
-        medicationRows[index][fieldName] = wrapper.innerHTML;
-      }
-    } else {
-      medicationRows[index][fieldName] = `
+            medicationRows[index][fieldName] = wrapper.innerHTML;
+          }
+        } else {
+          medicationRows[index][fieldName] = `
         <table class="mini-treatment-table">
           <tr class="table-section-title-row">
             <th colspan="2">${sectionLabel}</th>
@@ -1166,102 +1559,468 @@ async function deleteCard(index) {
           </tr>
         </table>
       `;
-    }
+        }
 
-    renderCards(medicationRows);
-  }
-
-  function deleteTreatmentTable(index, fieldName) {
-  if (!medicationRows[index]) return;
-
-  const existing = medicationRows[index][fieldName] || "";
-  if (!existing.includes("mini-treatment-table")) return;
-
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = existing;
-
-  const table = wrapper.querySelector(".mini-treatment-table");
-  if (!table) return;
-
-  const bodyRows = Array.from(table.querySelectorAll("tr")).filter(row => {
-    return !row.classList.contains("table-section-title-row") &&
-           !row.classList.contains("table-column-headings");
-  });
-
-  if (bodyRows.length > 1) {
-    bodyRows[bodyRows.length - 1].remove();
-  } else if (bodyRows.length === 1) {
-    const cells = bodyRows[0].querySelectorAll("td");
-    cells.forEach(cell => {
-      cell.innerHTML = "&nbsp;";
-    });
-  }
-
-  medicationRows[index][fieldName] = wrapper.innerHTML;
-  renderCards(medicationRows);
-}
-
-function insertLineBreakAtCursor() {
-  const sel = window.getSelection();
-  if (!sel || sel.rangeCount === 0) return;
-
-  const range = sel.getRangeAt(0);
-  range.deleteContents();
-
-  const br = document.createElement("br");
-  range.insertNode(br);
-
-  const nbsp = document.createTextNode("\u00A0");
-  br.parentNode.insertBefore(nbsp, br.nextSibling);
-
-  range.setStartAfter(nbsp);
-  range.setEndAfter(nbsp);
-
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
-window.onload = function () {
-  const searchInput = document.getElementById("searchInput");
-  if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(() => {
-        currentSearchTerm = searchInput.value || "";
-        applySearchFilter();
-      }, 120);
-    });
-  }
-
-  loadTableFromFirebase();
-};
-
-  window.selectCard = selectCard;
-  window.addRow = addRow;
-  window.saveTableToFirebase = saveTableToFirebase;
-  window.filterTable = filterTable;
-  window.insertTreatmentTable = insertTreatmentTable;
-  window.editSingleCard = editSingleCard;
-  window.saveSingleCard = saveSingleCard;
-  window.cancelSingleCardEdit = cancelSingleCardEdit;
-  window.deleteTreatmentTable = deleteTreatmentTable;
-  window.toggleCardBold = toggleCardBold;
-  window.deleteCard = deleteCard;
-
-  window.copyEmoji = function(button, emoji) {
-    navigator.clipboard.writeText(emoji).then(() => {
-      const copiedSpan = button.parentElement.querySelector('.copiedMsg');
-      if (copiedSpan) {
-        copiedSpan.classList.add('show');
-        setTimeout(() => {
-          copiedSpan.classList.remove('show');
-        }, 1000);
+        renderCards(medicationRows);
       }
-    }).catch(err => {
-      console.error("Failed to copy emoji:", err);
-    });
-  };
-</script>
 
-<script src="calculator.js" defer></script>
-</body>
+      function deleteTreatmentTable(index, fieldName) {
+        if (!medicationRows[index]) return;
+
+        const existing = medicationRows[index][fieldName] || "";
+        if (!existing.includes("mini-treatment-table")) return;
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = existing;
+
+        const table = wrapper.querySelector(".mini-treatment-table");
+        if (!table) return;
+
+        const bodyRows = Array.from(table.querySelectorAll("tr")).filter((row) => {
+          return (
+            !row.classList.contains("table-section-title-row") &&
+            !row.classList.contains("table-column-headings")
+          );
+        });
+
+        if (bodyRows.length > 1) {
+          bodyRows[bodyRows.length - 1].remove();
+        } else if (bodyRows.length === 1) {
+          const cells = bodyRows[0].querySelectorAll("td");
+          cells.forEach((cell) => {
+            cell.innerHTML = "&nbsp;";
+          });
+        }
+
+        medicationRows[index][fieldName] = wrapper.innerHTML;
+        renderCards(medicationRows);
+      }
+
+      function insertLineBreakAtCursor() {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+
+        const br = document.createElement("br");
+        range.insertNode(br);
+
+        const nbsp = document.createTextNode("\u00A0");
+        br.parentNode.insertBefore(nbsp, br.nextSibling);
+
+        range.setStartAfter(nbsp);
+        range.setEndAfter(nbsp);
+
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+
+      /* ================================
+   NOTES / REMINDERS PANEL
+================================ */
+
+      function createPanelNoteId() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID();
+        }
+
+        return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function normalisePanelNote(note) {
+        return {
+          id: String(note?.id || createPanelNoteId()),
+          title: String(note?.title || ""),
+          body: String(note?.body || ""),
+          createdAt: Number(note?.createdAt || Date.now()),
+          updatedAt: Number(note?.updatedAt || Date.now()),
+        };
+      }
+
+      async function loadPanelNotes() {
+        const notesList = document.getElementById("notesList");
+
+        try {
+          if (notesList) {
+            notesList.innerHTML = `
+        <div class="notes-empty-message">
+          Loading notes…
+        </div>
+      `;
+          }
+
+          const notesSnapshot = await getDoc(notesDocumentReference);
+
+          if (notesSnapshot.exists() && Array.isArray(notesSnapshot.data().notes)) {
+            panelNotes = notesSnapshot.data().notes.map(normalisePanelNote);
+          } else {
+            panelNotes = [];
+          }
+
+          renderPanelNotes();
+        } catch (error) {
+          console.error("Could not load notes:", error);
+
+          if (notesList) {
+            notesList.innerHTML = `
+        <div class="notes-empty-message">
+          Notes could not be loaded.
+        </div>
+      `;
+          }
+        }
+      }
+
+      async function savePanelNotesToFirebase() {
+        try {
+          await setDoc(
+            notesDocumentReference,
+            {
+              notes: panelNotes,
+              updatedAt: Date.now(),
+            },
+            { merge: true },
+          );
+        } catch (error) {
+          console.error("Could not save notes:", error);
+          alert("The note could not be saved. Please try again.");
+          throw error;
+        }
+      }
+
+      function renderPanelNotes() {
+        const notesList = document.getElementById("notesList");
+        const searchInput = document.getElementById("notesSearchInput");
+
+        if (!notesList) return;
+
+        const searchTerm = String(searchInput?.value || "")
+          .trim()
+          .toLowerCase();
+
+        const filteredNotes = panelNotes.filter((note) => {
+          const searchableText = `${note.title} ${note.body}`.toLowerCase();
+          return !searchTerm || searchableText.includes(searchTerm);
+        });
+
+        notesList.innerHTML = "";
+
+        if (!filteredNotes.length) {
+          const emptyMessage = document.createElement("div");
+          emptyMessage.className = "notes-empty-message";
+
+          emptyMessage.textContent = searchTerm
+            ? "No matching notes."
+            : "No notes saved yet.";
+
+          notesList.appendChild(emptyMessage);
+          return;
+        }
+
+        filteredNotes
+          .slice()
+          .sort((a, b) => b.updatedAt - a.updatedAt)
+          .forEach((note) => {
+            const noteCard = document.createElement("article");
+            noteCard.className = "note-card";
+            noteCard.dataset.noteId = note.id;
+
+            const titleElement = document.createElement("div");
+            titleElement.className = "note-card-title";
+            titleElement.textContent = note.title || "Untitled";
+
+            const bodyElement = document.createElement("div");
+            bodyElement.className = "note-card-body";
+            bodyElement.textContent = note.body;
+
+            const actions = document.createElement("div");
+            actions.className = "note-card-actions";
+
+            const editButton = document.createElement("button");
+            editButton.type = "button";
+            editButton.textContent = "Edit";
+            editButton.title = "Edit note";
+
+            editButton.addEventListener("click", (event) => {
+              event.stopPropagation();
+              beginPanelNoteEdit(note.id);
+            });
+
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.textContent = "Delete";
+            deleteButton.title = "Delete note";
+
+            deleteButton.addEventListener("click", (event) => {
+              event.stopPropagation();
+              deletePanelNote(note.id);
+            });
+
+            actions.append(editButton, deleteButton);
+
+            const lightButton = document.createElement("button");
+            lightButton.type = "button";
+            lightButton.className = "note-card-light-btn";
+            lightButton.textContent = "●";
+            lightButton.title = "Show or hide actions";
+            lightButton.setAttribute("aria-label", "Show or hide note actions");
+            lightButton.setAttribute("aria-expanded", "false");
+
+            lightButton.addEventListener("click", (event) => {
+              event.stopPropagation();
+
+              document.querySelectorAll(".note-card.actions-open").forEach((openCard) => {
+                if (openCard !== noteCard) {
+                  openCard.classList.remove("actions-open");
+
+                  const otherButton = openCard.querySelector(".note-card-light-btn");
+
+                  otherButton?.setAttribute("aria-expanded", "false");
+                }
+              });
+
+              const isOpen = noteCard.classList.toggle("actions-open");
+              lightButton.setAttribute("aria-expanded", String(isOpen));
+            });
+
+            noteCard.append(titleElement, bodyElement, actions, lightButton);
+
+            notesList.appendChild(noteCard);
+          });
+      }
+
+      async function savePanelNote() {
+        const titleInput = document.getElementById("noteTitleInput");
+        const bodyInput = document.getElementById("noteBodyInput");
+        const saveButton = document.getElementById("saveNoteBtn");
+
+        if (!titleInput || !bodyInput || !saveButton) return;
+
+        const title = titleInput.value.trim();
+        const body = bodyInput.value.trim();
+
+        if (!title && !body) {
+          alert("Write a title or note first.");
+          titleInput.focus();
+          return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving…";
+
+        const previousNotes = panelNotes.map((note) => ({ ...note }));
+
+        try {
+          if (editingPanelNoteId) {
+            const noteIndex = panelNotes.findIndex(
+              (note) => note.id === editingPanelNoteId,
+            );
+
+            if (noteIndex !== -1) {
+              panelNotes[noteIndex] = {
+                ...panelNotes[noteIndex],
+                title,
+                body,
+                updatedAt: Date.now(),
+              };
+            }
+          } else {
+            const now = Date.now();
+
+            panelNotes.push({
+              id: createPanelNoteId(),
+              title,
+              body,
+              createdAt: now,
+              updatedAt: now,
+            });
+          }
+
+          await savePanelNotesToFirebase();
+
+          editingPanelNoteId = null;
+          titleInput.value = "";
+          bodyInput.value = "";
+          saveButton.textContent = "Save";
+
+          renderPanelNotes();
+          titleInput.focus();
+        } catch (error) {
+          panelNotes = previousNotes;
+          renderPanelNotes();
+        } finally {
+          saveButton.disabled = false;
+
+          if (saveButton.textContent === "Saving…") {
+            saveButton.textContent = editingPanelNoteId ? "Update" : "Save";
+          }
+        }
+      }
+
+      function beginPanelNoteEdit(noteId) {
+        const note = panelNotes.find((item) => item.id === noteId);
+        const titleInput = document.getElementById("noteTitleInput");
+        const bodyInput = document.getElementById("noteBodyInput");
+        const saveButton = document.getElementById("saveNoteBtn");
+
+        if (!note || !titleInput || !bodyInput || !saveButton) return;
+
+        editingPanelNoteId = noteId;
+
+        titleInput.value = note.title;
+        bodyInput.value = note.body;
+        saveButton.textContent = "Update";
+
+        document
+          .querySelectorAll(".note-card.actions-open")
+          .forEach((card) => card.classList.remove("actions-open"));
+
+        titleInput.focus();
+      }
+
+      async function deletePanelNote(noteId) {
+        const note = panelNotes.find((item) => item.id === noteId);
+
+        if (!note) return;
+
+        const noteName = note.title || "this note";
+        const confirmed = confirm(`Delete "${noteName}"?`);
+
+        if (!confirmed) return;
+
+        const previousNotes = panelNotes.map((item) => ({ ...item }));
+
+        panelNotes = panelNotes.filter((item) => item.id !== noteId);
+
+        if (editingPanelNoteId === noteId) {
+          editingPanelNoteId = null;
+
+          const titleInput = document.getElementById("noteTitleInput");
+          const bodyInput = document.getElementById("noteBodyInput");
+          const saveButton = document.getElementById("saveNoteBtn");
+
+          if (titleInput) titleInput.value = "";
+          if (bodyInput) bodyInput.value = "";
+          if (saveButton) saveButton.textContent = "Save";
+        }
+
+        renderPanelNotes();
+
+        try {
+          await savePanelNotesToFirebase();
+        } catch (error) {
+          panelNotes = previousNotes;
+          renderPanelNotes();
+        }
+      }
+
+      function openNotesPanel() {
+        const panel = document.getElementById("notesPanel");
+        const toggleButton = document.getElementById("notesPanelToggle");
+
+        panel?.classList.add("open");
+        toggleButton?.setAttribute("aria-expanded", "true");
+      }
+
+      function closeNotesPanel() {
+        const panel = document.getElementById("notesPanel");
+        const toggleButton = document.getElementById("notesPanelToggle");
+
+        panel?.classList.remove("open");
+        toggleButton?.setAttribute("aria-expanded", "false");
+      }
+
+      function setupNotesPanel() {
+        const panel = document.getElementById("notesPanel");
+        const toggleButton = document.getElementById("notesPanelToggle");
+        const closeButton = document.getElementById("closeNotesPanelBtn");
+        const saveButton = document.getElementById("saveNoteBtn");
+        const searchInput = document.getElementById("notesSearchInput");
+        const titleInput = document.getElementById("noteTitleInput");
+        const bodyInput = document.getElementById("noteBodyInput");
+
+        toggleButton?.addEventListener("click", () => {
+          if (panel?.classList.contains("open")) {
+            closeNotesPanel();
+          } else {
+            openNotesPanel();
+          }
+        });
+
+        closeButton?.addEventListener("click", closeNotesPanel);
+        saveButton?.addEventListener("click", savePanelNote);
+        searchInput?.addEventListener("input", renderPanelNotes);
+
+        titleInput?.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            bodyInput?.focus();
+          }
+        });
+
+        bodyInput?.addEventListener("keydown", (event) => {
+          if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            event.preventDefault();
+            savePanelNote();
+          }
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && panel?.classList.contains("open")) {
+            closeNotesPanel();
+          }
+        });
+      }
+
+      window.onload = function () {
+        setupNotesPanel();
+        loadPanelNotes();
+
+        const searchInput = document.getElementById("searchInput");
+        if (searchInput) {
+          searchInput.addEventListener("input", () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+              currentSearchTerm = searchInput.value || "";
+              applySearchFilter();
+            }, 120);
+          });
+        }
+
+        loadTableFromFirebase();
+      };
+
+      window.selectCard = selectCard;
+      window.addRow = addRow;
+      window.saveTableToFirebase = saveTableToFirebase;
+      window.filterTable = filterTable;
+      window.insertTreatmentTable = insertTreatmentTable;
+      window.editSingleCard = editSingleCard;
+      window.saveSingleCard = saveSingleCard;
+      window.cancelSingleCardEdit = cancelSingleCardEdit;
+      window.deleteTreatmentTable = deleteTreatmentTable;
+      window.toggleCardBold = toggleCardBold;
+      window.deleteCard = deleteCard;
+
+      window.copyEmoji = function (button, emoji) {
+        navigator.clipboard
+          .writeText(emoji)
+          .then(() => {
+            const copiedSpan = button.parentElement.querySelector(".copiedMsg");
+            if (copiedSpan) {
+              copiedSpan.classList.add("show");
+              setTimeout(() => {
+                copiedSpan.classList.remove("show");
+              }, 1000);
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to copy emoji:", err);
+          });
+      };
+    </script>
+
+    <script src="calculator.js" defer></script>
+  </body>
 </html>
