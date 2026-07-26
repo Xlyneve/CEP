@@ -655,31 +655,34 @@ editBar.className = "edit-bar";
   btn.className = `color-btn ${cls}`;
 
   btn.onclick = async e => {
-    e.stopPropagation();
+  e.stopPropagation();
 
-    const bg =
-      window.getComputedStyle(btn).backgroundColor;
+  const bg = window.getComputedStyle(btn).backgroundColor;
 
-    tile.style.background = bg;
+  // If currently editing, preserve whatever has been typed
+  const currentText = tile.classList.contains("editing")
+    ? textarea.value
+    : note.text || "";
 
-    try {
+  tile.style.background = bg;
 
-      await updateDoc(
-        doc(notesRef, note.id),
-        { color: bg }
-      );
+  try {
+    await updateDoc(
+      doc(notesRef, note.id),
+      {
+        color: bg,
+        text: currentText
+      }
+    );
 
-      note.color = bg;
+    // Keep local copy in sync
+    note.color = bg;
+    note.text = currentText;
 
-    } catch (err) {
-
-      console.error(
-        "Failed to update color:",
-        err
-      );
-
-    }
-  };
+  } catch (err) {
+    console.error("Failed to update note:", err);
+  }
+};
 
   editBar.appendChild(btn);
 });
