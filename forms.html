@@ -187,19 +187,32 @@ body {
 }
 
 .file-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 220px));
-  gap: 12px;
-
+  column-count: 6;
+  column-gap: 12px;
   margin-top: 24px;
-
-  justify-content: start;
-  align-items: start;
 }
 
-@media (max-width: 650px) {
+@media (max-width: 1200px) {
   .file-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    column-count: 5;
+  }
+}
+
+@media (max-width: 950px) {
+  .file-grid {
+    column-count: 4;
+  }
+}
+
+@media (max-width: 700px) {
+  .file-grid {
+    column-count: 3;
+  }
+}
+
+@media (max-width: 500px) {
+  .file-grid {
+    column-count: 2;
   }
 }
 
@@ -230,15 +243,22 @@ body {
 .file-item {
   position: relative;
 
+  display: inline-block;
+  vertical-align: top;
+
   width: 100%;
-  min-height: 82px;
+
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+
+  margin-bottom: 12px;
 
   padding: 13px 16px 24px;
   border-radius: 18px;
 
   cursor: pointer;
 
-  background: #EBE8E9;
+  background: #D5D0D3;
   border: 1px solid rgba(255, 255, 255, 0.55);
 
   box-shadow:
@@ -262,47 +282,7 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
-.file-item:nth-child(5n + 1) {
-  background: #9E8993;
-  color: white;
-}
 
-.file-item:nth-child(5n + 2) {
-  background: #AD9FA6;
-}
-
-.file-item:nth-child(5n + 3) {
-  background: #C0B7BB;
-}
-
-.file-item:nth-child(5n + 4) {
-  background: #D5D0D3;
-}
-
-.file-item:nth-child(5n + 5) {
-  background: #EBE8E9;
-}
-
-.file-item:nth-child(5n + 1) strong,
-.file-item:nth-child(5n + 1) em {
-  color: white;
-}
-
-.file-item:hover {
-  transform: translateY(-4px);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.42),
-      rgba(255, 255, 255, 0.14)
-    );
-
-  box-shadow:
-    0 24px 58px rgba(70, 88, 110, 0.20),
-    0 0 24px rgba(219, 220, 255, 0.36),
-    inset 0 1px 0 rgba(255, 255, 255, 0.86);
-}
 
 /* Glassy style for text inputs and textarea */
 input[type="text"],
@@ -394,7 +374,7 @@ input[type="date"]:focus {
   display: block;
 
   font-size: 13px;
-  line-height: 1.25;
+  line-height: 1.15;
   font-weight: 700;
 
   color: #282328;
@@ -404,7 +384,6 @@ input[type="date"]:focus {
 
 .file-item em {
   display: block;
-
   margin-top: 4px;
 
   font-size: 10px;
@@ -414,6 +393,7 @@ input[type="date"]:focus {
   color: rgba(40, 35, 40, 0.68);
 
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .file-item small {
@@ -656,6 +636,7 @@ fetchURLs(document.getElementById('searchInput').value);
 
       const div = document.createElement('div');
       div.className = 'file-item';
+	  
       div.innerHTML = `
         <div class="view-mode" id="view-${doc.id}">
   <strong>${data.title || 'Untitled'}</strong>
@@ -708,6 +689,7 @@ fetchURLs(document.getElementById('searchInput').value);
 
 </div>
       `;
+	  
 const controls = div.querySelector('.card-controls');
 const light = div.querySelector('.card-light');
 
@@ -820,6 +802,7 @@ function toggleAddForm() {
     btn.textContent = '+';
   }
 }
+
 
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.card-controls')) {
