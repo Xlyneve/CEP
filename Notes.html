@@ -221,71 +221,156 @@ h1 {
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
 }
 
-/* Footer buttons */
-.note-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin-top: 8px;
-  align-items: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
+/* -------------------------
+   CARD CONTROL BUTTON
+------------------------- */
+
+.note-tile {
+  padding-bottom: 42px;
 }
 
-.note-footer button {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  padding: 4px 8px;
-  color: black;
-  font-size: 10px;
-  font-weight: 500;
+/* Small light button bottom-right */
+.note-menu-toggle {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+
+  width: 19px;
+  height: 19px;
+
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  box-shadow:
+    0 0 5px rgba(255, 255, 255, 0.8),
+    0 1px 5px rgba(0, 0, 0, 0.08);
+
   cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: all 0.3s ease;
+  z-index: 5;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.note-footer button:hover {
-  background: rgba(255, 255, 255, 0.30);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
-  transform: scale(1.05);
+.note-menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.8);
+
+  box-shadow:
+    0 0 7px rgba(255, 255, 255, 1),
+    0 1px 6px rgba(0, 0, 0, 0.1);
+
+  transform: scale(1.08);
 }
 
-.note-footer button:active {
-  transform: scale(0.98);
+.note-menu-toggle:active {
+  transform: scale(0.95);
 }
 
-.note-footer button:first-child {
-  background: rgba(255, 255, 255, 0.3);
-  font-size: 12px;
+
+/* Hidden controls */
+.note-controls {
+  position: absolute;
+
+  right: 10px;
+  bottom: 36px;
+
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+
+  padding: 8px;
+
+  background: rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 10px;
+
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+
+  z-index: 4;
 }
 
-.note-tile:hover .note-footer,
-.note-tile.editing .note-footer {
-  opacity: 1;
-  pointer-events: auto;
+.note-tile.menu-open {
+  padding-bottom: 105px;
 }
 
+.note-tile.menu-open .note-controls {
+  display: flex;
+}
+
+
+/* Edit / Save / Cancel / Delete */
+.note-action-row {
+  display: flex;
+  gap: 5px;
+}
+
+.note-action-row button {
+  padding: 4px 8px;
+
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 6px;
+
+  background: rgba(255, 255, 255, 0.42);
+
+  font-size: 10px;
+  color: #111;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.note-action-row button:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+
+/* Card colour choices */
 .edit-bar {
-  margin-top: 6px;
   display: flex;
   justify-content: flex-end;
   gap: 6px;
+  margin: 0;
 }
 
 .color-btn {
   width: 16px;
   height: 16px;
-  border: none;
+
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 50%;
+
   cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.color1 { background: #9E8993; } /* Ashen Rose */
-.color2 { background: #AD9FA6; } /* Iced Petal */
-.color3 { background: #C0B7BB; } /* Morning Fog */
-.color4 { background: #D5D0D3; } /* Pale Heather */
+.color-btn:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+}
+
+.color1 { background: #9E8993; }
+.color2 { background: #AD9FA6; }
+.color3 { background: #C0B7BB; }
+.color4 { background: #D5D0D3; }
 
 .note-date {
   font-size: 10px;
@@ -412,84 +497,250 @@ textarea.style.display = "none";
       hour: '2-digit', minute: '2-digit', hour12: false
     });
 
-    // EDIT BAR COLORS
-    const editBar = document.createElement("div");
-    editBar.className = "edit-bar";
-    ["color1", "color2", "color3", "color4"].forEach(cls => {
-      const btn = document.createElement("button");
-      btn.className = `color-btn ${cls}`;
-      btn.onclick = async e => {
-        e.stopPropagation();
-        const bg = window.getComputedStyle(btn).backgroundColor;
-        tile.style.background = bg;
-        try {
-          // Only update color, keep text intact
-          await updateDoc(doc(notesRef, note.id), { color: bg });
-        } catch (err) {
-          console.error("Failed to update color:", err);
-        }
-      };
-      editBar.appendChild(btn);
-    });
+   // -------------------------
+// CARD CONTROLS
+// -------------------------
 
-    // FOOTER BUTTONS
-    const footer = document.createElement("div");
-    footer.className = "note-footer";
+const controls = document.createElement("div");
+controls.className = "note-controls";
 
-    const editButton = document.createElement("button");
-    editButton.innerText = "✏️";
-    editButton.onclick = e => {
+
+// ACTION ROW
+const actionRow = document.createElement("div");
+actionRow.className = "note-action-row";
+
+
+// EDIT
+const editButton = document.createElement("button");
+editButton.innerText = "Edit";
+
+
+// SAVE
+const saveButton = document.createElement("button");
+saveButton.innerText = "Save";
+saveButton.style.display = "none";
+
+
+// CANCEL
+const cancelButton = document.createElement("button");
+cancelButton.innerText = "Cancel";
+cancelButton.style.display = "none";
+
+
+// DELETE
+const deleteButton = document.createElement("button");
+deleteButton.innerText = "Delete";
+
+
+// EDIT ACTION
+editButton.onclick = e => {
   e.stopPropagation();
+
   tile.classList.add("editing");
 
   displayText.style.display = "none";
   textarea.style.display = "block";
 
+  textarea.value = note.text || "";
+
   textarea.removeAttribute("readonly");
   textarea.style.pointerEvents = "auto";
+
+  editButton.style.display = "none";
+  deleteButton.style.display = "none";
+
+  saveButton.style.display = "";
+  cancelButton.style.display = "";
+
   textarea.focus();
+
   autoResize(textarea);
+  resizeTiles();
 };
 
-    const saveButton = document.createElement("button");
-    saveButton.innerText = "Save";
-    saveButton.onclick = async e => {
-      e.stopPropagation();
-      try {
-        await updateDoc(doc(notesRef, note.id), { text: textarea.value });
-        textarea.setAttribute("readonly", true);
-textarea.style.pointerEvents = "none";
-textarea.style.display = "none";
 
-displayText.innerHTML = highlightSearchText(textarea.value, document.getElementById("searchInput").value);
-displayText.style.display = "block";
+// SAVE ACTION
+saveButton.onclick = async e => {
+  e.stopPropagation();
 
-tile.classList.remove("editing");
-autoResize(textarea);
-resizeTiles();
-      } catch(err) {
-        console.error("Failed to save note:", err);
+  try {
+    const newText = textarea.value;
+
+    await updateDoc(
+      doc(notesRef, note.id),
+      { text: newText }
+    );
+
+    note.text = newText;
+
+    textarea.setAttribute("readonly", true);
+    textarea.style.pointerEvents = "none";
+    textarea.style.display = "none";
+
+    displayText.innerHTML = highlightSearchText(
+      newText,
+      document.getElementById("searchInput").value
+    );
+
+    displayText.style.display = "block";
+
+    tile.classList.remove("editing");
+    tile.classList.remove("menu-open");
+
+    editButton.style.display = "";
+    deleteButton.style.display = "";
+
+    saveButton.style.display = "none";
+    cancelButton.style.display = "none";
+
+    autoResize(textarea);
+    resizeTiles();
+
+  } catch (err) {
+    console.error("Failed to save note:", err);
+  }
+};
+
+
+// CANCEL ACTION
+cancelButton.onclick = e => {
+  e.stopPropagation();
+
+  textarea.value = note.text || "";
+
+  textarea.setAttribute("readonly", true);
+  textarea.style.pointerEvents = "none";
+  textarea.style.display = "none";
+
+  displayText.style.display = "block";
+
+  tile.classList.remove("editing");
+  tile.classList.remove("menu-open");
+
+  editButton.style.display = "";
+  deleteButton.style.display = "";
+
+  saveButton.style.display = "none";
+  cancelButton.style.display = "none";
+
+  autoResize(textarea);
+  resizeTiles();
+};
+
+
+// DELETE ACTION
+deleteButton.onclick = async e => {
+  e.stopPropagation();
+
+  await deleteDoc(
+    doc(notesRef, note.id)
+  );
+};
+
+
+// ADD ACTION BUTTONS
+actionRow.appendChild(editButton);
+actionRow.appendChild(saveButton);
+actionRow.appendChild(cancelButton);
+actionRow.appendChild(deleteButton);
+
+controls.appendChild(actionRow);
+
+
+// -------------------------
+// COLOUR OPTIONS
+// -------------------------
+
+const editBar = document.createElement("div");
+editBar.className = "edit-bar";
+
+["color1", "color2", "color3", "color4"].forEach(cls => {
+
+  const btn = document.createElement("button");
+
+  btn.className = `color-btn ${cls}`;
+
+  btn.onclick = async e => {
+    e.stopPropagation();
+
+    const bg =
+      window.getComputedStyle(btn).backgroundColor;
+
+    tile.style.background = bg;
+
+    try {
+
+      await updateDoc(
+        doc(notesRef, note.id),
+        { color: bg }
+      );
+
+      note.color = bg;
+
+    } catch (err) {
+
+      console.error(
+        "Failed to update color:",
+        err
+      );
+
+    }
+  };
+
+  editBar.appendChild(btn);
+});
+
+controls.appendChild(editBar);
+
+
+// -------------------------
+// LIGHT BUTTON
+// -------------------------
+
+const menuToggle =
+  document.createElement("button");
+
+menuToggle.className = "note-menu-toggle";
+
+menuToggle.setAttribute(
+  "aria-label",
+  "Note options"
+);
+
+menuToggle.onclick = e => {
+  e.stopPropagation();
+
+  const opening =
+    !tile.classList.contains("menu-open");
+
+  // Close other cards
+  document
+    .querySelectorAll(".note-tile.menu-open")
+    .forEach(otherTile => {
+
+      if (otherTile !== tile) {
+        otherTile.classList.remove("menu-open");
       }
-    };
 
-    const deleteButton = document.createElement("button");
-    deleteButton.innerText = "Delete";
-    deleteButton.onclick = e => {
-      e.stopPropagation();
-      deleteDoc(doc(notesRef, note.id));
-    };
+    });
 
-    footer.appendChild(editButton);
-    footer.appendChild(saveButton);
-    footer.appendChild(deleteButton);
+  tile.classList.toggle(
+    "menu-open",
+    opening
+  );
+
+  resizeTiles();
+};
 
     // ASSEMBLE TILE
     tile.appendChild(displayText);
 tile.appendChild(textarea);
 tile.appendChild(dateElem);
-    tile.appendChild(editBar);
-    tile.appendChild(footer);
-    grid.appendChild(tile);
+
+tile.appendChild(controls);
+tile.appendChild(menuToggle);
+
+grid.appendChild(tile);
 
     // Resize after appending
     requestAnimationFrame(() => {
@@ -517,10 +768,30 @@ document.getElementById("searchInput")?.addEventListener("input", e => {
 function enableTileClickZoom() {
   document.querySelectorAll('.note-tile').forEach(tile => {
     tile.onclick = e => {
-      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
-      const isZoomed = tile.classList.contains('zoomed');
-      document.querySelectorAll('.note-tile.zoomed').forEach(t => t.classList.remove('zoomed'));
-      if (!isZoomed) tile.classList.add('zoomed');
+
+      if (
+        e.target.closest("button") ||
+        e.target.closest("textarea") ||
+        e.target.closest(".note-controls")
+      ) {
+        return;
+      }
+
+      const isZoomed = tile.classList.contains("zoomed");
+
+      document
+        .querySelectorAll(".note-tile.zoomed")
+        .forEach(t => {
+          if (t !== tile) {
+            t.classList.remove("zoomed");
+          }
+        });
+
+      if (!isZoomed) {
+        tile.classList.add("zoomed");
+      } else {
+        tile.classList.remove("zoomed");
+      }
     };
   });
 }
@@ -550,11 +821,13 @@ const mainHeight =
     ? textarea.scrollHeight
     : display.scrollHeight;
 
+const extraSpace =
+  tile.classList.contains("menu-open") ? 110 : 46;
+
 const contentHeight =
   mainHeight +
   tile.querySelector('.note-date').offsetHeight +
-  tile.querySelector('.edit-bar').offsetHeight +
-  tile.querySelector('.note-footer').offsetHeight + 24;
+  extraSpace;
 
     const rowSpan = Math.ceil((contentHeight + rowGap) / (rowHeight + rowGap));
     tile.style.gridRowEnd = `span ${rowSpan}`;
