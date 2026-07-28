@@ -255,12 +255,27 @@ updateDateTime();
       return `${prefix}${code}: ${message}`;
     }
 
+    function openSignedInPage() {
+      const destination = new URL(safeReturnTo, window.location.href).href;
+      status.textContent = "Signed in. Opening XlynEve…";
+
+      // Normal assignment is more reliable than replacing the current entry
+      // after an OAuth redirect in an iOS Home Screen web app.
+      window.location.assign(destination);
+
+      // If standalone Safari does not unload after the first navigation,
+      // retry once using href assignment.
+      window.setTimeout(() => {
+        window.location.href = destination;
+      }, 500);
+    }
+
     async function finishSignIn(user) {
       if (!user || authCompletionStarted) return;
       authCompletionStarted = true;
 
       if (user.emailVerified && String(user.email || "").toLowerCase() === allowedEmail) {
-        location.replace(safeReturnTo);
+        openSignedInPage();
         return;
       }
 
@@ -271,6 +286,7 @@ updateDateTime();
 
     auth.onAuthStateChanged((user) => {
       if (user) finishSignIn(user).catch((error) => {
+        authCompletionStarted = false;
         console.error("Authentication state validation failed.", error);
         status.textContent = authErrorText("Authentication failed", error);
         signInButton.disabled = false;
