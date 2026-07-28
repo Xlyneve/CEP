@@ -108,6 +108,7 @@
   if (!query) return;
 
   const hint = params.get("cepHint") || "";
+  const focusId = params.get("cepId") || "";
   const normalize = value => String(value || "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -167,6 +168,11 @@
   function matchingCard() {
     if (!queryTerms.length) return null;
 
+    if (focusId) {
+      return [...document.querySelectorAll("[data-id]")]
+        .find(candidate => candidate.dataset.id === focusId) || null;
+    }
+
     const candidates = [...new Set(document.querySelectorAll(cardSelector))];
     let best = null;
     let bestScore = -Infinity;
@@ -207,10 +213,15 @@
 
     installFocusStyle();
     card.classList.add("cep-search-focus");
-    card.scrollIntoView({
-      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      block: "center",
-      inline: "nearest"
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const centerCard = behavior => {
+      if (!card.isConnected) return;
+      card.scrollIntoView({ behavior, block: "center", inline: "nearest" });
+    };
+
+    centerCard(reduceMotion ? "auto" : "smooth");
+    [350, 1100, 2500].forEach(delay => {
+      setTimeout(() => centerCard("auto"), delay);
     });
 
     setTimeout(() => card.classList.remove("cep-search-focus"), 5500);
