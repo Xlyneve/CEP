@@ -53,6 +53,9 @@
     const strengthMg = parseFloat(selections.customStrengthMg);
     const strengthMl = parseFloat(selections.customStrengthMl);
     const maxDose = parseFloat(selections.customMaxDose);
+    const durationDays = parseFloat(selections.customDays);
+    const hasDuration = String(selections.customDays || "").trim() !== "";
+    const hasValidDuration = isFinite(durationDays) && durationDays > 0;
 
     if (!isFinite(weightKg) || weightKg <= 0 || !isFinite(mgPerKg) || mgPerKg <= 0) {
       return {
@@ -93,17 +96,18 @@
     if (isFinite(maxDose) && maxDose > 0 && rawDose > maxDose) {
       warnings.push(`Dose capped at max single dose of ${formatMg(maxDose)}.`);
     }
+    if (hasDuration && !hasValidDuration) {
+      warnings.push("Enter a positive duration in days.");
+    }
 
     return {
       mode: "single",
-      frequency: selections.customDays
-        ? `${frequency} for ${selections.customDays} days`
+      frequency: hasValidDuration
+        ? `${frequency} for ${durationDays} days`
         : frequency,
       sigFrequency,
       dosesPerDay,
-      defaultDurationDays: isFinite(parseFloat(selections.customDays))
-        ? parseFloat(selections.customDays)
-        : null,
+      defaultDurationDays: hasValidDuration ? durationDays : null,
       doseMg,
       maxDailyMg: doseMg * dosesPerDay,
       warnings,
@@ -1603,7 +1607,14 @@ if (type === "bites") {
       label: "Benzathine Penicillin IM",
       age: { minMonths: 1, maxYears: 120 },
       strengths: [
-        { id: "inj1200000", value: 1016.6, label: "1,200,000 units / 2.3 mL prefilled syringe" }
+        {
+          id: "inj1200000",
+          type: "liquid",
+          strengthMg: 900,
+          volumeMl: 2.3,
+          doseStepMl: 0.01,
+          label: "1,200,000 units / 2.3 mL prefilled syringe"
+        }
       ],
       note: `
         <strong>Note:</strong> Strep A intramuscular treatment.<br><br>
@@ -1696,7 +1707,6 @@ if (type === "bites") {
       if (
         e.target.id === "medicationSelect" ||
         e.target.id === "dosingType" ||
-        e.target.id === "roxMode" ||
         e.target.id === "patientType"
       ) {
         renderMedicationOptions();
@@ -1760,7 +1770,7 @@ if (type === "bites") {
         if (opt.type === "hidden") return;
 
         const defaultChoice =
-          opt.id === "doseLevel" || opt.id === "roxDoseLevel"
+          opt.id === "doseLevel"
             ? "low"
             : (opt.choices?.length ? opt.choices[0].value : "");
 
@@ -1877,6 +1887,8 @@ if (opt.type === "number") {
       type: "liquid",
       mgPerMl: result.customStrength.mg / result.customStrength.ml,
       strengthMg: result.customStrength.mg,
+      volumeMl: result.customStrength.ml,
+      doseStepMl: 0.5,
       label: `${result.customStrength.mg} mg / ${result.customStrength.ml} mL`
     };
   }
@@ -1887,18 +1899,35 @@ if (opt.type === "number") {
   function calculateDose() {
     const medKey = document.getElementById("medicationSelect")?.value;
     const patientType = document.getElementById("patientType")?.value || "child";
-    const ageMonths = parseFloat(document.getElementById("ageMonths")?.value);
-    const weightKg = parseFloat(document.getElementById("weight")?.value);
-    const durationDaysInput = parseFloat(document.getElementById("durationDays")?.value);
+    const ageValue = document.getElementById("ageMonths")?.value?.trim() || "";
+    const weightValue = document.getElementById("weight")?.value?.trim() || "";
+    const durationValue = document.getElementById("durationDays")?.value?.trim() || "";
+    const ageMonths = parseFloat(ageValue);
+    const weightKg = parseFloat(weightValue);
+    const durationDaysInput = parseFloat(durationValue);
     const resultBox = document.getElementById("result");
     const noteDiv = document.getElementById("medicationNote");
 
     if (!resultBox || !noteDiv) return;
 
+    window.lastDoseForPlan = null;
     noteDiv.innerHTML = medKey ? getMedicationNote(medKey) : "";
 
     if (!medKey || !MEDS[medKey]) {
       resultBox.innerHTML = "";
+      return;
+    }
+
+    if (
+      (ageValue && (!isFinite(ageMonths) || ageMonths < 0)) ||
+      (weightValue && (!isFinite(weightKg) || weightKg <= 0)) ||
+      (durationValue && (!isFinite(durationDaysInput) || durationDaysInput <= 0))
+    ) {
+      resultBox.innerHTML = `
+        <div class="calcWarnings">
+          <div>⚠ Enter positive numeric values for weight and duration, and a non-negative age.</div>
+        </div>
+      `;
       return;
     }
 
@@ -1961,11 +1990,10 @@ if (canUseAdultFixedDose) {
     patientType
   });
 } else {
-  resultBox.innerHTML = isTabletFormulation
-    ? `<div class="calcWarnings"><div>⚠ Weight is still required for this selection unless an adult fixed-dose or child tablet rule exists for this medicine.</div></div>`
+  resultBox.innerHTML = weightValue || isTabletFormulation
+    ? `<div class="calcWarnings"><div>⚠ A valid weight is required for this selection unless an adult fixed-dose or child tablet rule exists for this medicine.</div></div>`
     : "";
 
-  window.lastDoseForPlan = null;
   return;
 }
 
@@ -1997,7 +2025,13 @@ if (
 
 if (
   result.mode === "range" &&
-  (!isFinite(result.lowDoseMg) || !isFinite(result.highDoseMg))
+  (
+    !isFinite(result.lowDoseMg) ||
+    !isFinite(result.highDoseMg) ||
+    result.lowDoseMg <= 0 ||
+    result.highDoseMg <= 0 ||
+    result.lowDoseMg > result.highDoseMg
+  )
 ) {
   resultBox.innerHTML = `
     <div class="calcWarnings">
@@ -2008,6 +2042,16 @@ if (
 }
 
 const effectiveFormulation = getEffectiveFormulation(medKey, result, selectedStrength);
+
+if (medKey === "customMgKg" && effectiveFormulation?.type !== "liquid") {
+  resultBox.innerHTML = `
+    <div class="calcWarnings">
+      <div>⚠ Enter a valid suspension strength in mg and mL to calculate the administration volume.</div>
+    </div>
+  `;
+  return;
+}
+
 resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, durationDaysInput);
 
 window.lastDoseForPlan = {
@@ -2138,6 +2182,7 @@ window.lastDoseForPlan = {
       mgPerMl: strengthMg / volumeMl,
       strengthMg,
       volumeMl,
+      doseStepMl: Number(strength.doseStepMl) || 0.5,
       label: strength.label
     };
   }
@@ -2265,7 +2310,7 @@ window.lastDoseForPlan = {
     if (!isFinite(quantity)) return null;
 
     if (formulation.type === "liquid") {
-      return `Dispense ${formatMlQuantity(quantity)}`;
+      return `Dispense ${formatMlQuantity(quantity, formulation.doseStepMl)}`;
     }
 
     if (formulation.type === "tablet") {
@@ -2279,7 +2324,7 @@ window.lastDoseForPlan = {
     if (!isFinite(minQty) || !isFinite(maxQty)) return "-";
 
     if (formulation.type === "liquid") {
-      return `${formatMlQuantity(minQty)} to ${formatMlQuantity(maxQty)}`;
+      return `${formatMlQuantity(minQty, formulation.doseStepMl)} to ${formatMlQuantity(maxQty, formulation.doseStepMl)}`;
     }
 
     if (formulation.type === "tablet") {
@@ -2294,12 +2339,14 @@ window.lastDoseForPlan = {
     if (!formulation) return formatMg(doseMg);
 
     if (formulation.type === "liquid") {
+      if (!isFinite(formulation.mgPerMl) || formulation.mgPerMl <= 0) return "-";
       const rawMl = doseMg / formulation.mgPerMl;
-      const roundedMl = roundLiquidDoseMl(rawMl);
-      return `${stripTrailingZero(roundedMl)} mL`;
+      const roundedMl = roundLiquidDoseMl(rawMl, formulation.doseStepMl);
+      return `${formatNumberForStep(roundedMl, formulation.doseStepMl)} mL`;
     }
 
     if (formulation.type === "tablet") {
+      if (!isFinite(formulation.mgPerUnit) || formulation.mgPerUnit <= 0) return "-";
       const rawUnits = doseMg / formulation.mgPerUnit;
       const roundedUnits = roundTabletDose(rawUnits);
       const unitLabel = formulation.label.toLowerCase().includes("capsule") ? "capsule" : "tablet";
@@ -2313,11 +2360,17 @@ window.lastDoseForPlan = {
     if (!formulation || !isFinite(doseMg)) return { value: NaN, unit: null };
 
     if (formulation.type === "liquid") {
+      if (!isFinite(formulation.mgPerMl) || formulation.mgPerMl <= 0) {
+        return { value: NaN, unit: "mL" };
+      }
       const rawMl = doseMg / formulation.mgPerMl;
-      return { value: roundLiquidDoseMl(rawMl), unit: "mL" };
+      return { value: roundLiquidDoseMl(rawMl, formulation.doseStepMl), unit: "mL" };
     }
 
     if (formulation.type === "tablet") {
+      if (!isFinite(formulation.mgPerUnit) || formulation.mgPerUnit <= 0) {
+        return { value: NaN, unit: "tablet" };
+      }
       const rawUnits = doseMg / formulation.mgPerUnit;
       return { value: roundTabletDose(rawUnits), unit: "tablet" };
     }
@@ -2325,9 +2378,9 @@ window.lastDoseForPlan = {
     return { value: NaN, unit: null };
   }
 
-  function roundLiquidDoseMl(value) {
-    if (!isFinite(value)) return NaN;
-    return Math.round(value * 2) / 2;
+  function roundLiquidDoseMl(value, doseStepMl = 0.5) {
+    if (!isFinite(value) || !isFinite(doseStepMl) || doseStepMl <= 0) return NaN;
+    return Math.round(value / doseStepMl) * doseStepMl;
   }
 
   function roundTabletDose(value) {
@@ -2341,10 +2394,12 @@ window.lastDoseForPlan = {
     return `${value.toFixed(1)} mg`;
   }
 
-  function formatMlQuantity(value) {
+  function formatMlQuantity(value, doseStepMl = 0.5) {
     if (!isFinite(value)) return "-";
-    const rounded = roundToOne(value);
-    return `${stripTrailingZero(rounded)} mL`;
+    const rounded = doseStepMl < 0.1
+      ? roundLiquidDoseMl(value, doseStepMl)
+      : roundToOne(value);
+    return `${formatNumberForStep(rounded, doseStepMl < 0.1 ? doseStepMl : 0.1)} mL`;
   }
 
   function formatTabletQuantity(value, formulation) {
@@ -2364,6 +2419,12 @@ window.lastDoseForPlan = {
 
   function stripTrailingZero(value) {
     return Number.isInteger(value) ? String(value) : String(value.toFixed(1));
+  }
+
+  function formatNumberForStep(value, step) {
+    if (!isFinite(value)) return "-";
+    const decimalPlaces = step < 0.1 ? 2 : 1;
+    return value.toFixed(decimalPlaces).replace(/\.?0+$/, "");
   }
 
   function roundToNearest75(value) {
