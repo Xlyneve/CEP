@@ -2484,12 +2484,18 @@ header h1 {
       matches.forEach(page => {
         const link = document.createElement('a');
         link.className = 'universal-search-result';
-        link.href = encodeURI(page.file); link.target = '_blank'; link.rel = 'noopener';
+        const snippetText = makeSnippet(page, terms);
+        const destination = new URL(page.file, location.href);
+        destination.hash = new URLSearchParams({
+          cepSearch: query,
+          cepHint: snippetText
+        }).toString();
+        link.href = destination.href; link.target = '_blank'; link.rel = 'noopener';
         const title = document.createElement('span');
         title.className = 'universal-search-title'; title.textContent = page.title;
         const snippet = document.createElement('span');
         snippet.className = 'universal-search-snippet';
-        addHighlightedText(snippet, makeSnippet(page, terms), terms);
+        addHighlightedText(snippet, snippetText, terms);
         link.append(title, snippet); results.appendChild(link);
       });
     }
