@@ -250,6 +250,7 @@ updateDateTime();
     const useRedirectAuth = isMobile && !isStandalone;
     const persistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     let authCompletionStarted = false;
+    let interactiveSignInStarted = false;
 
     function authErrorText(prefix, error) {
       const code = error?.code ? ` (${error.code})` : "";
@@ -287,6 +288,10 @@ updateDateTime();
     }
 
     auth.onAuthStateChanged((user) => {
+      // During popup sign-in, wait for signInWithPopup() to resolve so Firebase
+      // finishes persisting the user before this page navigates away.
+      if (interactiveSignInStarted) return;
+
       if (user) finishSignIn(user).catch((error) => {
         authCompletionStarted = false;
         console.error("Authentication state validation failed.", error);
@@ -311,6 +316,7 @@ updateDateTime();
 
     signInButton.addEventListener("click", async () => {
       signInButton.disabled = true;
+      interactiveSignInStarted = true;
       status.textContent = "Opening Google sign in…";
 
       try {
@@ -325,8 +331,11 @@ updateDateTime();
         }
 
         const result = await auth.signInWithPopup(provider);
+        await result.user.getIdToken();
+        interactiveSignInStarted = false;
         await finishSignIn(result.user);
       } catch (error) {
+        interactiveSignInStarted = false;
         console.error("Google sign in failed.", error);
         status.textContent = authErrorText("Sign in failed", error);
         signInButton.disabled = false;
