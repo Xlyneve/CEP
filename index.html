@@ -245,7 +245,9 @@ updateDateTime();
     const isMobile = isIOS
       || /Android|Mobile/i.test(navigator.userAgent)
       || navigator.userAgentData?.mobile === true;
-    const useRedirectAuth = isMobile || isStandalone;
+    // iOS Home Screen apps have a separate storage context from Safari.
+    // Keep the OAuth result in the installed app by using the popup flow there.
+    const useRedirectAuth = isMobile && !isStandalone;
     const persistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     let authCompletionStarted = false;
 
