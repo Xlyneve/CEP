@@ -776,6 +776,11 @@ footer {
   gap:6px;
   margin-bottom:8px;
   width:100%;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scrollbar-width:thin;
+  scroll-snap-type:x proximity;
+  padding:2px 2px 5px;
 }
 
 .qc-tab{
@@ -783,7 +788,7 @@ footer {
   background: rgba(255,255,255,0.12);
   cursor: pointer;
   color: #111;
-  flex:1;
+  flex:0 0 auto;
   padding:5px 4px;
   border-radius:10px;
   font-size:12px;   /* slightly smaller */
@@ -791,6 +796,7 @@ footer {
 
   font-size: 11px;
   transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+  scroll-snap-align:start;
 }
 
 /* ACTIVE MEDICINE (white + glow) */
@@ -2056,6 +2062,9 @@ header h1 {
       <button class="qc-tab active" type="button" data-med="para" role="tab" aria-selected="true">Paracetamol</button>
       <button class="qc-tab" type="button" data-med="ibu" role="tab" aria-selected="false">Ibuprofen</button>
       <button class="qc-tab" type="button" data-med="adren" role="tab" aria-selected="false">Adrenaline IM</button>
+      <button class="qc-tab" type="button" data-med="adren-neb" role="tab" aria-selected="false">Adrenaline Neb</button>
+      <button class="qc-tab" type="button" data-med="redipred" role="tab" aria-selected="false">Redipred</button>
+      <button class="qc-tab" type="button" data-med="fentanyl" role="tab" aria-selected="false">Fentanyl</button>
     </div>
 
     <label class="qc-label" for="qcWeight">Weight (kg)</label>
@@ -2100,6 +2109,39 @@ header h1 {
       </div>
       <div class="qc-note">
         Autoinjector dosing is device-based. Confirm local anaphylaxis guideline.
+      </div>
+    </div>
+
+    <!-- Nebulised Adrenaline (Severe Croup) -->
+    <div class="qc-section" data-section="adren-neb" style="display:none;">
+      <div class="qc-row">
+        <div class="qc-pill">Neb: <b>1:1000 (1 mg/mL)</b></div>
+        <div class="qc-pill">Dose: <b>0.5 mL/kg</b> (max 5 mL)</div>
+      </div>
+      <div class="qc-note">
+        Severe croup: make up to at least 4 mL with 0.9% saline and run with O₂ at 6 L/min. Urgent paediatric assessment and ambulance transfer are required.
+      </div>
+    </div>
+
+    <!-- Redipred for Croup -->
+    <div class="qc-section" data-section="redipred" style="display:none;">
+      <div class="qc-row">
+        <div class="qc-pill">Stock: <b>5 mg/mL</b></div>
+        <div class="qc-pill">Dose: <b>1 mg/kg</b></div>
+      </div>
+      <div class="qc-note">
+        Prednisolone for croup. Often given once daily for 2 days when prednisolone is used.
+      </div>
+    </div>
+
+    <!-- Fentanyl IV -->
+    <div class="qc-section" data-section="fentanyl" style="display:none;">
+      <div class="qc-row">
+        <div class="qc-pill">Stock: <b>100 mcg / 2 mL</b></div>
+        <div class="qc-pill">Dose 1: <b>1.5 mcg/kg</b></div>
+      </div>
+      <div class="qc-note">
+        Minimum 21 mcg; maximum 100 mcg. Confirm local monitoring and administration requirements.
       </div>
     </div>
 
@@ -2735,6 +2777,9 @@ function closeTable() {
     para: qc.querySelector('[data-section="para"]'),
     ibu: qc.querySelector('[data-section="ibu"]'),
     adren: qc.querySelector('[data-section="adren"]'),
+    'adren-neb': qc.querySelector('[data-section="adren-neb"]'),
+    redipred: qc.querySelector('[data-section="redipred"]'),
+    fentanyl: qc.querySelector('[data-section="fentanyl"]'),
   };
 
   // ---- guards ----
@@ -2777,6 +2822,7 @@ function closeTable() {
       const on = b.dataset.med === med;
       b.classList.toggle('active', on);
       b.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on) b.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     });
 
     Object.entries(sections).forEach(([k, el]) => {
@@ -2838,6 +2884,44 @@ function closeTable() {
 
       mainEl.innerHTML = `${highlight(`${rA(ml)} mL`)} IM`;
       subEl.textContent = capped ? 'Max 0.5 mL reached' : `${rA(mg)} mg`;
+      resultsEl.classList.add('has-value');
+      return;
+    }
+
+    // Nebulised adrenaline for severe croup (1:1000, 1 mg/mL)
+    if (activeMed === 'adren-neb'){
+      const rawMl = 0.5 * kg;
+      const capped = rawMl > 5;
+      const ml = Math.min(rawMl, 5);
+      const salineMl = Math.max(0, 4 - ml);
+
+      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      subEl.textContent = capped
+        ? `Max 5 mL reached • O₂ 6 L/min`
+        : `Saline to add: ${r1(salineMl)} mL • O₂ 6 L/min`;
+      resultsEl.classList.add('has-value');
+      return;
+    }
+
+    // Redipred for croup: 1 mg/kg using 5 mg/mL stock
+    if (activeMed === 'redipred'){
+      const mg = kg;
+      const ml = mg / 5;
+
+      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      subEl.textContent = `${r1(mg)} mg`;
+      resultsEl.classList.add('has-value');
+      return;
+    }
+
+    // Fentanyl IV dose 1: 1.5 mcg/kg, minimum 21 mcg, maximum 100 mcg
+    if (activeMed === 'fentanyl'){
+      const rawMcg = kg * 1.5;
+      const mcg = Math.min(Math.max(rawMcg, 21), 100);
+      const ml = mcg / 50;
+
+      mainEl.innerHTML = `Dose 1: ${highlight(`${ml.toFixed(2)} mL`)}`;
+      subEl.textContent = `${Math.round(mcg)} mcg${rawMcg < 21 ? ' • minimum dose' : rawMcg > 100 ? ' • maximum dose' : ''}`;
       resultsEl.classList.add('has-value');
       return;
     }
