@@ -248,7 +248,10 @@ updateDateTime();
     // iOS Home Screen apps have a separate storage context from Safari.
     // Keep the OAuth result in the installed app by using the popup flow there.
     const useRedirectAuth = isMobile && !isStandalone;
-    const persistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    const persistenceMode = isStandalone
+      ? firebase.auth.Auth.Persistence.SESSION
+      : firebase.auth.Auth.Persistence.LOCAL;
+    const persistenceReady = auth.setPersistence(persistenceMode);
     let authCompletionStarted = false;
     let interactiveSignInStarted = false;
 
