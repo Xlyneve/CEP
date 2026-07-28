@@ -1384,7 +1384,7 @@ let liveTimer = null;
 let lastLiveQuery = '';
 let tagIndexSorted = [];            // [{tag,count}, ...]
 let conceptCountMap = new Map();    // normalizedConcept -> countOfNotesContainingIt
-let notesDerived = new Map();       // noteId -> { cleanedHtml, textNorm, tags }
+let notesDerived = new Map();       // noteId -> { cleanedHtml, plainText, textNorm, tags }
 
 function clearLiveResults() {
   liveResults.innerHTML = '';
@@ -2389,7 +2389,7 @@ function buildDerivedCachesFromNotes() {
       conceptCountMap.set(c, (conceptCountMap.get(c) || 0) + 1);
     }
 
-    notesDerived.set(n.id, { cleanedHtml, textNorm, tags });
+    notesDerived.set(n.id, { cleanedHtml, plainText, textNorm, tags });
   }
 
   tagIndexSorted = [...tagMap.entries()]
@@ -2402,9 +2402,30 @@ function deLinkifyConceptAnchors(html) {
   div.innerHTML = html || '';
 
   div.querySelectorAll('a.conceptLink').forEach(a => {
-    const concept = (a.getAttribute('data-concept') || a.textContent || '').trim();
+    let concept = (a.getAttribute('data-concept') || '').trim();
+
+    if (!concept) {
+      const label = a.querySelector('.conceptLabel');
+      if (label) {
+        concept = (label.textContent || '').trim();
+      } else {
+        const fallback = a.cloneNode(true);
+        fallback.querySelectorAll(
+          '.conceptCount, .conceptDefIndicator, .definitionIndicator, ' +
+          '.conceptMediaIndicator, .mediaIndicator, [data-presentation-only], [aria-hidden="true"]'
+        ).forEach(el => el.remove());
+        concept = (fallback.textContent || '').trim();
+      }
+    }
+
     a.replaceWith(document.createTextNode(`[[${concept}]]`));
   });
+
+  div.querySelectorAll('mark').forEach(mark => mark.replaceWith(...mark.childNodes));
+  div.querySelectorAll(
+    '.conceptCount, .conceptDefIndicator, .definitionIndicator, ' +
+    '.conceptMediaIndicator, .mediaIndicator, [data-presentation-only]'
+  ).forEach(el => el.remove());
 
   return div.innerHTML;
 }
@@ -2988,12 +3009,9 @@ function queryNotesSync(rawQuery) {
   const results = [];
 
   for (const data of notesCache) {
-    const originalHtml = data.content || '';
-    const cleanedHtml = stripLegacyTableControls(originalHtml);
-
-    const plainText = htmlToText(cleanedHtml);
-    const textNorm = normalizeText(plainText);
-    const tags = extractTagsFromHtml(cleanedHtml);
+    const derived = notesDerived.get(data.id);
+    if (!derived) continue;
+    const { cleanedHtml, plainText, textNorm, tags } = derived;
 
     const ok = terms.every(term => {
       if (!term?.norm) return true;
@@ -3019,13 +3037,10 @@ function queryNotesSync(rawQuery) {
 
     if (!ok) continue;
 
-    const withConcepts = conceptLinkifyHTML(cleanedHtml);
-    const withHighlights = highlightHTML(withConcepts, terms);
-
     results.push({
       id: data.id,
       createdAt: data.createdAt,
-      content: withHighlights,
+      content: cleanedHtml,
       score: scoreDoc(plainText, textNorm, terms)
     });
   }
@@ -3038,7 +3053,10 @@ function queryNotesSync(rawQuery) {
     return tb - ta;
   });
 
-  return results.slice(0, 30);
+  return results.slice(0, 30).map(result => ({
+    ...result,
+    content: highlightHTML(conceptLinkifyHTML(result.content), terms)
+  }));
 }
 
 /* =========================
@@ -3994,6 +4012,7 @@ function conceptLinkifyHTML(html) {
       a.dataset.concept = concept;
 
       const label = document.createElement('span');
+      label.className = 'conceptLabel';
       label.textContent = concept;
       a.appendChild(label);
 
@@ -4013,6 +4032,8 @@ function conceptLinkifyHTML(html) {
       if (count > 0) {
         const badge = document.createElement('span');
         badge.className = 'conceptCount';
+        badge.setAttribute('data-presentation-only', 'true');
+        badge.setAttribute('aria-hidden', 'true');
         badge.textContent = String(count);
         a.appendChild(badge);
       }
@@ -4088,7 +4109,9 @@ function displayNotesInto(targetEl, notes) {
 
       const editable = document.createElement('div');
       editable.contentEditable = true;
-      CEPSecurity.setHTML(editable, (note.content || '').replace(/<mark class="underlineMatch">([\s\S]*?)<\/mark>/gi, '$1'));
+      const canonicalNote = notesCache.find(cached => cached.id === note.id);
+      const canonicalContent = canonicalNote?.content ?? note.content ?? '';
+      CEPSecurity.setHTML(editable, deLinkifyConceptAnchors(canonicalContent));
       setTableCellsEditable(editable, true);
       editable.className = 'editableNote';
       activeEditable = editable;
