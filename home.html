@@ -1164,6 +1164,12 @@ footer {
   font-weight: 700;
   font-size: 10px;
   overflow-wrap: anywhere;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.qi-name:hover {
+  text-decoration: underline;
 }
 
 .qi-copy-mini {
@@ -3250,8 +3256,13 @@ const firebaseConfig = {
   const row = document.createElement('div');
   row.className = 'qi-row-item';
 
+  const url = normaliseInteleviewerUrl(data.url || '');
+  const name = escapeHtml(data.radiology || 'Untitled');
+
   row.innerHTML = `
-    <span class="qi-name">${escapeHtml(data.radiology || 'Untitled')}</span>
+    ${url
+      ? `<a class="qi-name" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${name}</a>`
+      : `<span class="qi-name">${name}</span>`}
 
     <button class="qi-copy-mini" type="button" data-copy="${escapeHtml(data.username || '')}">
       ${escapeHtml(data.username || '')}
@@ -3273,6 +3284,18 @@ const firebaseConfig = {
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+  function normaliseInteleviewerUrl(value) {
+    const url = String(value || '').trim();
+    if (!url) return '';
+    const candidate = /^[a-z][a-z\d+.-]*:/i.test(url) ? url : `https://${url}`;
+    try {
+      const parsed = new URL(candidate);
+      return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
+    } catch {
+      return '';
+    }
   }
 </script>
 </body>

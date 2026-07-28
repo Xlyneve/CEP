@@ -286,6 +286,29 @@ td:first-child input {
   letter-spacing: 0.01em;
 }
 
+.radiology-link {
+  display: inline-block;
+  color: #242424;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  padding: 8px 6px;
+}
+
+.radiology-link:hover {
+  text-decoration: underline;
+}
+
+.url-editor {
+  display: none;
+  margin-top: 4px;
+  font-size: 12px !important;
+}
+
+body.edit-mode .url-editor {
+  display: block;
+}
+
 
 .btn {
   background: rgba(255, 255, 255, 0.62);
@@ -471,6 +494,7 @@ body.edit-mode td:nth-child(4) {
   <div class="add-section">
     <h3>Add New Access</h3>
     <input type="text" id="newRadiology" placeholder="Radiology">
+    <input type="text" id="newUrl" placeholder="Website URL (optional)">
     <input type="text" id="newUsername" placeholder="Username">
     <input type="text" id="newPassword" placeholder="Password">
     <button class="btn" onclick="addEntry()">Add</button>
@@ -504,22 +528,29 @@ const firebaseConfig = {
     function createRow(docSnap) {
       const data = docSnap.data();
       const id = docSnap.id;
+      const radiology = escapeHtml(data.radiology || '');
+      const url = normaliseUrl(data.url || '');
+      const radiologyDisplay = url
+        ? `<a class="radiology-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${radiology}</a>`
+        : '';
 
       const tr = document.createElement('tr');
 
       tr.innerHTML = `
   <td>
-    <input type="text" value="${data.radiology || ''}" id="rad-${id}" disabled>
+    ${radiologyDisplay}
+    <input type="text" value="${radiology}" id="rad-${id}" disabled ${url ? 'style="display:none"' : ''}>
+    <input type="text" value="${escapeHtml(data.url || '')}" id="url-${id}" class="url-editor" placeholder="Website URL (optional)" disabled>
   </td>
 
   <td>
-    <input type="text" value="${data.username || ''}" id="user-${id}" disabled>
+    <input type="text" value="${escapeHtml(data.username || '')}" id="user-${id}" disabled>
   </td>
 
   <td>
   <input
     type="text"
-    value="${data.password || ''}"
+    value="${escapeHtml(data.password || '')}"
     id="pass-${id}"
     class="password-click"
     onclick="if (this.readOnly) copyToClipboard(this.value)"
@@ -562,6 +593,27 @@ const firebaseConfig = {
   }, 1400);
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function normaliseUrl(value) {
+  const url = String(value || '').trim();
+  if (!url) return '';
+  const candidate = /^[a-z][a-z\d+.-]*:/i.test(url) ? url : `https://${url}`;
+  try {
+    const parsed = new URL(candidate);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
+  } catch {
+    return '';
+  }
+}
+
 window.copyToClipboard = (text) => {
   navigator.clipboard.writeText(text).then(() => {
     showToast("Copied");
@@ -571,7 +623,12 @@ window.copyToClipboard = (text) => {
 
 
     window.enableEdit = (id) => {
+      const radiologyInput = document.getElementById(`rad-${id}`);
+      const radiologyLink = radiologyInput.parentElement.querySelector('.radiology-link');
+      if (radiologyLink) radiologyLink.style.display = 'none';
+      radiologyInput.style.display = 'block';
       document.getElementById(`rad-${id}`).disabled = false;
+      document.getElementById(`url-${id}`).disabled = false;
       document.getElementById(`user-${id}`).disabled = false;
       document.getElementById(`pass-${id}`).readOnly = false;
       document.getElementById(`save-${id}`).style.display = 'inline-block';
@@ -587,14 +644,18 @@ window.copyToClipboard = (text) => {
 
     window.saveEntry = async (id) => {
       const radiology = document.getElementById(`rad-${id}`).value.trim();
+      const urlInput = document.getElementById(`url-${id}`).value.trim();
+      const url = normaliseUrl(urlInput);
       const username = document.getElementById(`user-${id}`).value.trim();
       const password = document.getElementById(`pass-${id}`).value.trim();
 
       if (!radiology || !username || !password) return alert("All fields are required");
+      if (urlInput && !url) return alert("Please enter a valid website URL");
 
-      await updateDoc(doc(db, 'inteleviewerData', id), { radiology, username, password });
+      await updateDoc(doc(db, 'inteleviewerData', id), { radiology, url, username, password });
 
       document.getElementById(`rad-${id}`).disabled = true;
+      document.getElementById(`url-${id}`).disabled = true;
       document.getElementById(`user-${id}`).disabled = true;
       document.getElementById(`pass-${id}`).readOnly = true;
       document.getElementById(`save-${id}`).style.display = 'none';
@@ -602,14 +663,18 @@ window.copyToClipboard = (text) => {
 
     window.addEntry = async () => {
       const radiology = document.getElementById('newRadiology').value.trim();
+      const urlInput = document.getElementById('newUrl').value.trim();
+      const url = normaliseUrl(urlInput);
       const username = document.getElementById('newUsername').value.trim();
       const password = document.getElementById('newPassword').value.trim();
 
       if (!radiology || !username || !password) return alert("All fields required");
+      if (urlInput && !url) return alert("Please enter a valid website URL");
 
-      await addDoc(collectionRef, { radiology, username, password });
+      await addDoc(collectionRef, { radiology, url, username, password });
 
       document.getElementById('newRadiology').value = '';
+document.getElementById('newUrl').value = '';
 document.getElementById('newUsername').value = '';
 document.getElementById('newPassword').value = '';
 
@@ -635,6 +700,7 @@ window.deleteEntry = async (id) => {
         const data = doc.data();
         return (
           data.radiology.toLowerCase().includes(searchTerm) ||
+          (data.url || '').toLowerCase().includes(searchTerm) ||
           data.username.toLowerCase().includes(searchTerm) ||
           data.password.toLowerCase().includes(searchTerm)
         );
