@@ -2486,10 +2486,12 @@ header h1 {
         link.className = 'universal-search-result';
         const snippetText = makeSnippet(page, terms);
         const destination = new URL(page.file, location.href);
-        destination.hash = new URLSearchParams({
+        const focusParams = new URLSearchParams({
           cepSearch: query,
           cepHint: snippetText
-        }).toString();
+        });
+        if (page.focusId) focusParams.set('cepId', page.focusId);
+        destination.hash = focusParams.toString();
         link.href = destination.href; link.target = '_blank'; link.rel = 'noopener';
         const title = document.createElement('span');
         title.className = 'universal-search-title'; title.textContent = page.title;
@@ -3217,7 +3219,8 @@ const firebaseConfig = {
         return {
           file: source.file,
           title: savedTitle ? `${source.title} — ${savedTitle}` : source.title,
-          text
+          text,
+          focusId: note.id
         };
       });
       window.addUniversalSearchPages?.(
