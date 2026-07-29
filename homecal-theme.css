@@ -383,3 +383,42 @@ body {
 .calendar-header > div:last-child select:hover {
   background: #c0b7bb !important;
 }
+
+/*
+ * Keep the full-width header unchanged. In a narrowed desktop window, switch
+ * to two intentional rows instead of allowing the flex items to wrap wherever
+ * they happen to run out of space.
+ */
+@media (min-width: 601px) and (max-width: 900px) {
+  .calendar-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas:
+      "search title empty"
+      "tools tools tools";
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 8px;
+    padding: 10px 16px 9px;
+    border-radius: 44px;
+  }
+
+  .calendar-header-left {
+    grid-area: search;
+    min-width: 0;
+  }
+
+  .calendar-header h2#monthLabel {
+    grid-area: title;
+    justify-self: center;
+    white-space: nowrap;
+    font-size: clamp(46px, 7vw, 58px) !important;
+  }
+
+  .calendar-header > div:last-child {
+    grid-area: tools;
+    justify-self: center;
+    flex-wrap: nowrap;
+    max-width: 100%;
+  }
+}
