@@ -3,13 +3,9 @@
 
   const ALLOWED_EMAIL = "xeve06@gmail.com";
   const LOGIN_PAGE = "index.html";
-  const FIREBASE_AUTH_DOMAIN =
-    /(?:^|\.)web\.app$|(?:^|\.)firebaseapp\.com$/i.test(location.hostname)
-      ? location.hostname
-      : "cepx-f9d2a.firebaseapp.com";
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q",
-    authDomain: FIREBASE_AUTH_DOMAIN,
+    authDomain: "cepx-f9d2a.firebaseapp.com",
     projectId: "cepx-f9d2a",
     storageBucket: "cepx-f9d2a.firebasestorage.app",
     messagingSenderId: "840696526325",
