@@ -3330,10 +3330,26 @@ async function deleteDefinition(concept) {
   await db.collection('concept_defs').doc(k).delete();
 }
 
+function getConceptFromLink(link) {
+  if (!link) return '';
+
+  const storedConcept = (link.getAttribute('data-concept') || '').trim();
+  const labelConcept = (link.querySelector('.conceptLabel')?.textContent || '').trim();
+  const concept = storedConcept || labelConcept || (link.textContent || '').trim();
+
+  // Security sanitization removes data-* attributes from freshly rendered
+  // search results. Restore the canonical concept name from its label.
+  if (concept && storedConcept !== concept) {
+    link.setAttribute('data-concept', concept);
+  }
+
+  return concept;
+}
+
 function refreshConceptDefBadges(root = document) {
   const links = root.querySelectorAll('a.conceptLink');
   links.forEach(a => {
-    const concept = (a.getAttribute('data-concept') || a.textContent || '').trim();
+    const concept = getConceptFromLink(a);
     const def = (getDefinition(concept) || '').trim();
     const why = (getWhy(concept) || '').trim();
 
@@ -3378,7 +3394,7 @@ function refreshConceptMediaBadges(root = document) {
   const links = root.querySelectorAll('a.conceptLink');
 
   links.forEach(a => {
-    const concept = (a.getAttribute('data-concept') || a.textContent || '').trim();
+    const concept = getConceptFromLink(a);
     const media = getConceptMedia(concept);
 
     if (media?.imageUrl) {
@@ -4484,7 +4500,7 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   e.stopPropagation();
 
-  let topic = (a.getAttribute('data-concept') || a.textContent || '').trim();
+  let topic = getConceptFromLink(a);
   topic = topic.replace(/^\[\[\s*/, '').replace(/\s*\]\]$/, '').trim();
   if (!topic) return;
 
