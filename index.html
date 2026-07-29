@@ -247,7 +247,10 @@ updateDateTime();
       || navigator.userAgentData?.mobile === true;
     // iOS Home Screen apps have a separate storage context from Safari.
     // Keep the OAuth result in the installed app by using the popup flow there.
-    const useRedirectAuth = isMobile && !isStandalone;
+    // Firebase redirect auth can return without a result in iOS Safari when
+    // its cross-site auth storage is partitioned. Use the popup flow on iOS
+    // whether this page is running standalone or in a Safari web clip.
+    const useRedirectAuth = isMobile && !isIOS && !isStandalone;
     // LOCAL persistence is important on iOS: opening Google can temporarily
     // background/recreate the Home Screen web app, which clears SESSION auth.
     const persistenceReady = auth.setPersistence(
