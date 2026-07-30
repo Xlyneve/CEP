@@ -391,6 +391,24 @@ textarea:focus {
   cursor: zoom-in;
 }
 
+#highlightToolbar button,
+#highlightToolbar select {
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#highlightToolbar input[type="color"] {
+  width: 34px;
+  height: 30px;
+  padding: 1px;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
 .note-text mark {
   background: linear-gradient(
     90deg,
@@ -1289,9 +1307,13 @@ function initImageZoomModal(){
   const stage = document.getElementById("imgStage");
   const zoomWrap = document.getElementById("zoomWrap");
   const canvas = document.getElementById("rulerCanvas");
-  const ctx = canvas.getContext("2d");
   const closeModalBtn = document.getElementById("closeModalBtn");
   const rulerToggleBtn = document.getElementById("rulerToggleBtn");
+  const highlightDirection = document.getElementById("highlightDirection");
+  const highlightColor = document.getElementById("highlightColor");
+  const clearHighlightsBtn = document.getElementById("clearHighlightsBtn");
+  const panModeBtn = document.getElementById("panModeBtn");
+  const highlightToolbar = document.getElementById("highlightToolbar");
 
  const header = document.querySelector(".header");
 
@@ -1302,6 +1324,12 @@ function initImageZoomModal(){
 
   if (!modal || !modalImg || !stage || !zoomWrap || !canvas || !closeModalBtn) {
     console.warn("Zoom modal elements not found. Make sure modal HTML exists.");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    console.warn("The image highlighter canvas is unavailable.");
     return;
   }
 
@@ -1320,6 +1348,8 @@ function initImageZoomModal(){
 
   let isDrawing = false;
   let startX = 0, startY = 0;
+  let activeHighlight = null;
+  let highlightStrokes = [];
 
   let isPinching = false;
   let pinchStartDist = 0;
@@ -1327,6 +1357,7 @@ function initImageZoomModal(){
   let pinchMid = { x: 0, y: 0 };
 
   let rulerMode = false;
+  let panMode = false;
 
   // prevent double-tap zoom from firing when user clicks the toggle button
   let lastTap = 0;
@@ -1335,8 +1366,54 @@ function initImageZoomModal(){
 
   function setRulerMode(on){
     rulerMode = !!on;
+    if (rulerMode) panMode = false;
     canvas.style.pointerEvents = rulerMode ? "auto" : "none";
-    if (rulerToggleBtn) rulerToggleBtn.textContent = `Ruler: ${rulerMode ? "ON" : "OFF"}`;
+    if (rulerToggleBtn) rulerToggleBtn.textContent = `Highlight: ${rulerMode ? "ON" : "OFF"}`;
+    if (panModeBtn) panModeBtn.textContent = `Pan: ${panMode ? "ON" : "OFF"}`;
+    stage.style.cursor = rulerMode ? "crosshair" : (panMode ? "grab" : "default");
+  }
+
+  function setPanMode(on){
+    panMode = !!on;
+    if (panMode) rulerMode = false;
+    canvas.style.pointerEvents = rulerMode ? "auto" : "none";
+    if (rulerToggleBtn) rulerToggleBtn.textContent = `Highlight: ${rulerMode ? "ON" : "OFF"}`;
+    if (panModeBtn) panModeBtn.textContent = `Pan: ${panMode ? "ON" : "OFF"}`;
+    stage.style.cursor = panMode ? "grab" : (rulerMode ? "crosshair" : "default");
+  }
+
+  function hexToRgba(hex, alpha = 0.34){
+    const value = String(hex || "#ffe278").replace("#", "");
+    const full = value.length === 3
+      ? value.split("").map(char => char + char).join("")
+      : value.padEnd(6, "0").slice(0, 6);
+    const number = Number.parseInt(full, 16);
+    return `rgba(${(number >> 16) & 255}, ${(number >> 8) & 255}, ${number & 255}, ${alpha})`;
+  }
+
+  function drawHighlight(stroke){
+    let endX = stroke.endX;
+    let endY = stroke.endY;
+    if (stroke.direction === "horizontal") endY = stroke.startY;
+    if (stroke.direction === "vertical") endX = stroke.startX;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "multiply";
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = stroke.width;
+    ctx.strokeStyle = hexToRgba(stroke.color);
+    ctx.beginPath();
+    ctx.moveTo(stroke.startX, stroke.startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function redrawHighlights(previewStroke = null){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    highlightStrokes.forEach(drawHighlight);
+    if (previewStroke) drawHighlight(previewStroke);
   }
 
   function applyTransform(){
@@ -1383,6 +1460,7 @@ function initImageZoomModal(){
     canvas.height = stage.clientHeight;
     canvas.style.width = stage.clientWidth + "px";
     canvas.style.height = stage.clientHeight + "px";
+    redrawHighlights();
   }
 
   function resetZoom(){
@@ -1390,7 +1468,9 @@ function initImageZoomModal(){
     tx = 0; ty = 0;
     applyTransform();
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    highlightStrokes = [];
     setRulerMode(false);
+    setPanMode(false);
   }
 
   // Expose an opener used by note images
@@ -1413,6 +1493,32 @@ function initImageZoomModal(){
       setRulerMode(!rulerMode);
     });
   }
+
+  if (panModeBtn) {
+    panModeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setPanMode(!panMode);
+    });
+  }
+
+  if (clearHighlightsBtn) {
+    clearHighlightsBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      highlightStrokes = [];
+      activeHighlight = null;
+      redrawHighlights();
+    });
+  }
+
+  highlightToolbar?.querySelectorAll("[data-highlight-color]").forEach(button => {
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (highlightColor) highlightColor.value = button.dataset.highlightColor;
+    });
+  });
 
   // Close
   closeModalBtn.addEventListener("click", (e) => {
@@ -1460,7 +1566,8 @@ function initImageZoomModal(){
   // Double tap / double click zoom (ignore if clicking on buttons)
   stage.addEventListener("pointerdown", (e) => {
     // If user taps the toggle/close buttons, don't treat it as zoom gesture
-    if (e.target === rulerToggleBtn || e.target === closeModalBtn) return;
+    if (e.target.closest("#highlightToolbar") || e.target === closeModalBtn) return;
+    if (rulerMode || panMode) return;
 
     const now = Date.now();
     const dt = now - lastTap;
@@ -1475,7 +1582,7 @@ function initImageZoomModal(){
   // Pan + Draw
   stage.addEventListener("pointerdown", (e) => {
     // Don't start gestures when clicking UI buttons
-    if (e.target === rulerToggleBtn || e.target === closeModalBtn) return;
+    if (e.target.closest("#highlightToolbar") || e.target === closeModalBtn) return;
 
     stage.setPointerCapture(e.pointerId);
 
@@ -1487,11 +1594,21 @@ function initImageZoomModal(){
       const imgP = toImageSpace(p.x, p.y);
       startX = imgP.x;
       startY = imgP.y;
+      activeHighlight = {
+        startX,
+        startY,
+        endX: startX,
+        endY: startY,
+        direction: highlightDirection?.value || "horizontal",
+        color: highlightColor?.value || "#ffe278",
+        width: 24
+      };
       return;
     }
 
-    if (scale > 1.001) {
+    if (panMode && scale > 1.001) {
       isPanning = true;
+      stage.style.cursor = "grabbing";
       panStartX = e.clientX;
       panStartY = e.clientY;
       panOriginX = tx;
@@ -1499,88 +1616,15 @@ function initImageZoomModal(){
     }
   });
 
-function getAverageLumaAt(imgX, imgY, sample = 18){
-  // sample a small square around the point
-  const sx = Math.max(0, Math.floor(imgX - sample/2));
-  const sy = Math.max(0, Math.floor(imgY - sample/2));
-  const sw = Math.max(1, Math.floor(sample));
-  const sh = Math.max(1, Math.floor(sample));
-
-  const tmp = document.createElement("canvas");
-  tmp.width = sw;
-  tmp.height = sh;
-  const tctx = tmp.getContext("2d", { willReadFrequently: true });
-
-  // draw the CURRENT displayed image into tmp (scaled to its natural pixels)
-  // Use modalImg because it has the image loaded.
-  // We map img-space (stage/zoom space) to modalImg displayed pixels via contain math:
-  // Easiest robust trick: draw the whole image into tmp using the DOM image directly.
-  // We'll sample by converting our img-space to the displayed image pixel.
-  // For your setup (img fills zoomWrap with object-fit: contain), the "img-space"
-  // matches stage space. We'll sample from a full-stage raster of the image.
-  const raster = document.createElement("canvas");
-  raster.width = stage.clientWidth;
-  raster.height = stage.clientHeight;
-  const rctx = raster.getContext("2d", { willReadFrequently: true });
-  rctx.clearRect(0,0,raster.width,raster.height);
-  rctx.drawImage(modalImg, 0, 0, raster.width, raster.height);
-
-  const imageData = rctx.getImageData(sx, sy, Math.min(sw, raster.width - sx), Math.min(sh, raster.height - sy)).data;
-
-  let sum = 0;
-  const n = imageData.length / 4;
-  for (let i=0;i<imageData.length;i+=4){
-    const r = imageData[i], g = imageData[i+1], b = imageData[i+2];
-    // perceived luminance
-    sum += 0.2126*r + 0.7152*g + 0.0722*b;
-  }
-  return sum / Math.max(1,n);
-}
-
   stage.addEventListener("pointermove", (e) => {
-  if (isDrawing) {
-    const rect = stage.getBoundingClientRect();
-    const sx = e.clientX - rect.left;
-    const sy = e.clientY - rect.top;
-    const imgP = toImageSpace(sx, sy);
-
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-	ctx.save();
-	ctx.globalCompositeOperation = "multiply";
-	ctx.lineCap = "round";
-	ctx.lineJoin = "round";
-	ctx.lineWidth = 24;
-
-// horizontal gradient
-const horizontalGradient = ctx.createLinearGradient(startX, startY, imgP.x, startY);
-horizontalGradient.addColorStop(0, "rgba(255, 226, 120, 0.28)");
-horizontalGradient.addColorStop(0.5, "rgba(126, 218, 255, 0.24)");
-horizontalGradient.addColorStop(1, "rgba(172, 246, 135, 0.24)");
-
-ctx.strokeStyle = horizontalGradient;
-ctx.beginPath();
-ctx.moveTo(startX, startY);
-ctx.lineTo(imgP.x, startY);
-ctx.stroke();
-
-// vertical gradient
-const verticalGradient = ctx.createLinearGradient(startX, startY, startX, imgP.y);
-verticalGradient.addColorStop(0, "rgba(255, 226, 120, 0.28)");
-verticalGradient.addColorStop(0.5, "rgba(126, 218, 255, 0.24)");
-verticalGradient.addColorStop(1, "rgba(172, 246, 135, 0.24)");
-
-ctx.strokeStyle = verticalGradient;
-ctx.beginPath();
-ctx.moveTo(startX, startY);
-ctx.lineTo(startX, imgP.y);
-ctx.stroke();
-
-ctx.restore();
-
-return;
-  }
+    if (isDrawing && activeHighlight) {
+      const p = stagePointFromEvent(e);
+      const imgP = toImageSpace(p.x, p.y);
+      activeHighlight.endX = imgP.x;
+      activeHighlight.endY = imgP.y;
+      redrawHighlights(activeHighlight);
+      return;
+    }
 
     if (isPanning) {
       const dx = e.clientX - panStartX;
@@ -1592,8 +1636,23 @@ return;
     }
   });
 
-  stage.addEventListener("pointerup", () => { isPanning = false; isDrawing = false; });
-  stage.addEventListener("pointercancel", () => { isPanning = false; isDrawing = false; });
+  function finishPointerGesture(){
+    if (isDrawing && activeHighlight) {
+      const distance = Math.hypot(
+        activeHighlight.endX - activeHighlight.startX,
+        activeHighlight.endY - activeHighlight.startY
+      );
+      if (distance > 3) highlightStrokes.push(activeHighlight);
+      activeHighlight = null;
+      redrawHighlights();
+    }
+    isPanning = false;
+    isDrawing = false;
+    stage.style.cursor = rulerMode ? "crosshair" : (panMode ? "grab" : "default");
+  }
+
+  stage.addEventListener("pointerup", finishPointerGesture);
+  stage.addEventListener("pointercancel", finishPointerGesture);
 
   // Pinch zoom (touch)
   function dist(a,b){
@@ -1691,16 +1750,35 @@ if (document.readyState === "loading") {
       z-index:10;
     ">×</button>
 	
-	<button id="rulerToggleBtn" type="button" style="
-  position:absolute;
-  top:10px; left:10px;
-  font-size:12px;
-  background: rgba(255,255,255,0.5);
-  border:none; border-radius:10px;
-  padding:6px 10px;
-  cursor:pointer;
-  z-index:10;
-">Ruler: OFF</button>
+    <div id="highlightToolbar" style="
+      position:absolute;
+      top:10px; left:10px; right:56px;
+      display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+      padding:7px;
+      background:rgba(20,20,20,0.72);
+      border:1px solid rgba(255,255,255,0.28);
+      border-radius:12px;
+      z-index:20;
+      color:white;
+      font:12px Tahoma, sans-serif;
+    ">
+      <button id="rulerToggleBtn" type="button">Highlight: OFF</button>
+      <select id="highlightDirection" aria-label="Highlight direction">
+        <option value="horizontal">Horizontal</option>
+        <option value="vertical">Vertical</option>
+        <option value="free">Free angle</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:4px;">
+        Color
+        <input id="highlightColor" type="color" value="#ffe278" aria-label="Highlight color">
+      </label>
+      <button type="button" data-highlight-color="#ffe278" title="Yellow" style="background:#ffe278;">Y</button>
+      <button type="button" data-highlight-color="#7edaff" title="Blue" style="background:#7edaff;">B</button>
+      <button type="button" data-highlight-color="#acf687" title="Green" style="background:#acf687;">G</button>
+      <button type="button" data-highlight-color="#ff9fd2" title="Pink" style="background:#ff9fd2;">P</button>
+      <button id="clearHighlightsBtn" type="button">Clear</button>
+      <button id="panModeBtn" type="button">Pan: OFF</button>
+    </div>
 
     <!-- Optional mini hint -->
     <div style="
@@ -1711,7 +1789,7 @@ if (document.readyState === "loading") {
       z-index:10;
       user-select:none;
       pointer-events:none;
-    ">Pinch / scroll to zoom • Drag to pan • Double tap</div>
+    ">Highlight: drag over text • Pan: zoom, then drag • Pinch / scroll to zoom</div>
   </div>
 </div>
 	<script src="header-rays.js?v=2"></script>
