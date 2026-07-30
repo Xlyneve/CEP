@@ -391,8 +391,57 @@ textarea:focus {
   cursor: zoom-in;
 }
 
-#highlightToolbar button,
-#highlightToolbar select {
+#highlightToolbar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font: 12px Tahoma, sans-serif;
+}
+
+#highlightMenuBtn,
+#highlightControls {
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.24);
+  backdrop-filter: blur(14px) saturate(145%);
+  -webkit-backdrop-filter: blur(14px) saturate(145%);
+}
+
+#highlightMenuBtn {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  color: white;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+#highlightMenuBtn[aria-expanded="true"] {
+  background: rgba(255,226,120,0.42);
+  box-shadow: 0 0 0 2px rgba(255,226,120,0.52), 0 8px 24px rgba(0,0,0,0.24);
+}
+
+#highlightControls {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  max-width: min(76vw, 720px);
+  padding: 7px;
+  border-radius: 13px;
+}
+
+#highlightToolbar.open #highlightControls {
+  display: flex;
+}
+
+#highlightControls button,
+#highlightControls select {
   min-height: 30px;
   padding: 5px 8px;
   border: 1px solid rgba(255,255,255,0.35);
@@ -400,7 +449,19 @@ textarea:focus {
   cursor: pointer;
 }
 
-#highlightToolbar input[type="color"] {
+#highlightControls button {
+  background: rgba(255,255,255,0.72);
+}
+
+#highlightControls .color-preset {
+  width: 29px;
+  min-width: 29px;
+  padding: 0;
+  border-radius: 50%;
+  color: transparent;
+}
+
+#highlightControls input[type="color"] {
   width: 34px;
   height: 30px;
   padding: 1px;
@@ -1314,6 +1375,7 @@ function initImageZoomModal(){
   const clearHighlightsBtn = document.getElementById("clearHighlightsBtn");
   const panModeBtn = document.getElementById("panModeBtn");
   const highlightToolbar = document.getElementById("highlightToolbar");
+  const highlightMenuBtn = document.getElementById("highlightMenuBtn");
 
  const header = document.querySelector(".header");
 
@@ -1368,8 +1430,8 @@ function initImageZoomModal(){
     rulerMode = !!on;
     if (rulerMode) panMode = false;
     canvas.style.pointerEvents = rulerMode ? "auto" : "none";
-    if (rulerToggleBtn) rulerToggleBtn.textContent = `Highlight: ${rulerMode ? "ON" : "OFF"}`;
-    if (panModeBtn) panModeBtn.textContent = `Pan: ${panMode ? "ON" : "OFF"}`;
+    if (rulerToggleBtn) rulerToggleBtn.textContent = `🖍️ Highlight: ${rulerMode ? "ON" : "OFF"}`;
+    if (panModeBtn) panModeBtn.textContent = `✋ Pan: ${panMode ? "ON" : "OFF"}`;
     stage.style.cursor = rulerMode ? "crosshair" : (panMode ? "grab" : "default");
   }
 
@@ -1377,9 +1439,14 @@ function initImageZoomModal(){
     panMode = !!on;
     if (panMode) rulerMode = false;
     canvas.style.pointerEvents = rulerMode ? "auto" : "none";
-    if (rulerToggleBtn) rulerToggleBtn.textContent = `Highlight: ${rulerMode ? "ON" : "OFF"}`;
-    if (panModeBtn) panModeBtn.textContent = `Pan: ${panMode ? "ON" : "OFF"}`;
+    if (rulerToggleBtn) rulerToggleBtn.textContent = `🖍️ Highlight: ${rulerMode ? "ON" : "OFF"}`;
+    if (panModeBtn) panModeBtn.textContent = `✋ Pan: ${panMode ? "ON" : "OFF"}`;
     stage.style.cursor = panMode ? "grab" : (rulerMode ? "crosshair" : "default");
+  }
+
+  function setHighlightMenuOpen(open){
+    highlightToolbar?.classList.toggle("open", !!open);
+    highlightMenuBtn?.setAttribute("aria-expanded", String(!!open));
   }
 
   function hexToRgba(hex, alpha = 0.34){
@@ -1469,8 +1536,11 @@ function initImageZoomModal(){
     applyTransform();
     ctx.clearRect(0,0,canvas.width,canvas.height);
     highlightStrokes = [];
+    if (highlightColor) highlightColor.value = "#ffe278";
+    if (highlightDirection) highlightDirection.value = "horizontal";
     setRulerMode(false);
     setPanMode(false);
+    setHighlightMenuOpen(false);
   }
 
   // Expose an opener used by note images
@@ -1491,6 +1561,14 @@ function initImageZoomModal(){
       e.preventDefault();
       e.stopPropagation();
       setRulerMode(!rulerMode);
+    });
+  }
+
+  if (highlightMenuBtn) {
+    highlightMenuBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setHighlightMenuOpen(!highlightToolbar?.classList.contains("open"));
     });
   }
 
@@ -1750,34 +1828,32 @@ if (document.readyState === "loading") {
       z-index:10;
     ">×</button>
 	
-    <div id="highlightToolbar" style="
-      position:absolute;
-      top:10px; left:10px; right:56px;
-      display:flex; flex-wrap:wrap; align-items:center; gap:6px;
-      padding:7px;
-      background:rgba(20,20,20,0.72);
-      border:1px solid rgba(255,255,255,0.28);
-      border-radius:12px;
-      z-index:20;
-      color:white;
-      font:12px Tahoma, sans-serif;
-    ">
-      <button id="rulerToggleBtn" type="button">Highlight: OFF</button>
-      <select id="highlightDirection" aria-label="Highlight direction">
-        <option value="horizontal">Horizontal</option>
-        <option value="vertical">Vertical</option>
-        <option value="free">Free angle</option>
-      </select>
-      <label style="display:flex;align-items:center;gap:4px;">
-        Color
-        <input id="highlightColor" type="color" value="#ffe278" aria-label="Highlight color">
-      </label>
-      <button type="button" data-highlight-color="#ffe278" title="Yellow" style="background:#ffe278;">Y</button>
-      <button type="button" data-highlight-color="#7edaff" title="Blue" style="background:#7edaff;">B</button>
-      <button type="button" data-highlight-color="#acf687" title="Green" style="background:#acf687;">G</button>
-      <button type="button" data-highlight-color="#ff9fd2" title="Pink" style="background:#ff9fd2;">P</button>
-      <button id="clearHighlightsBtn" type="button">Clear</button>
-      <button id="panModeBtn" type="button">Pan: OFF</button>
+    <div id="highlightToolbar">
+      <button
+        id="highlightMenuBtn"
+        type="button"
+        aria-label="Open image highlighter tools"
+        aria-expanded="false"
+        title="Highlighter tools"
+      >🖍️</button>
+      <div id="highlightControls">
+        <button id="rulerToggleBtn" type="button" title="Turn highlighting on or off">🖍️ Highlight: OFF</button>
+        <select id="highlightDirection" aria-label="Highlight direction">
+          <option value="horizontal">↔ Horizontal</option>
+          <option value="vertical">↕ Vertical</option>
+          <option value="free">↗ Free angle</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;color:white;">
+          🎨
+          <input id="highlightColor" type="color" value="#ffe278" aria-label="Custom highlight color">
+        </label>
+        <button class="color-preset" type="button" data-highlight-color="#ffe278" aria-label="Yellow highlight" title="Yellow" style="background:#ffe278;">●</button>
+        <button class="color-preset" type="button" data-highlight-color="#7edaff" aria-label="Blue highlight" title="Blue" style="background:#7edaff;">●</button>
+        <button class="color-preset" type="button" data-highlight-color="#acf687" aria-label="Green highlight" title="Green" style="background:#acf687;">●</button>
+        <button class="color-preset" type="button" data-highlight-color="#ff9fd2" aria-label="Pink highlight" title="Pink" style="background:#ff9fd2;">●</button>
+        <button id="clearHighlightsBtn" type="button" title="Clear all highlights">🧹 Clear</button>
+        <button id="panModeBtn" type="button" title="Pan the zoomed image">✋ Pan: OFF</button>
+      </div>
     </div>
 
     <!-- Optional mini hint -->
