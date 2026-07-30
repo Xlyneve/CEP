@@ -1275,7 +1275,11 @@ toggleBtn.addEventListener('click', () => {
    Fixes: button not clickable (script ran before modal HTML)
    Also avoids multiple close listeners.
 ========================================================= */
+let imageZoomModalInitialized = false;
+
 function initImageZoomModal(){
+  if (imageZoomModalInitialized) return;
+
   const modal = document.getElementById("imgModal");
   const modalImg = document.getElementById("modalImg");
   const stage = document.getElementById("imgStage");
@@ -1296,6 +1300,8 @@ function initImageZoomModal(){
     console.warn("Zoom modal elements not found. Make sure modal HTML exists.");
     return;
   }
+
+  imageZoomModalInitialized = true;
 
   const ZOOM_MIN = 1;
   const ZOOM_MAX = 8;
@@ -1619,7 +1625,11 @@ return;
 }
 
 // ✅ init AFTER modal HTML exists (because your modal is below this script tag)
-window.addEventListener("DOMContentLoaded", initImageZoomModal);
+if (document.readyState === "loading") {
+  window.addEventListener("DOMContentLoaded", initImageZoomModal, { once: true });
+} else {
+  initImageZoomModal();
+}
 </script>
 <!-- Image Zoom Modal -->
 <!-- Image Zoom Modal (upgraded: pinch/drag/zoom) -->
