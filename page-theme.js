@@ -74,6 +74,7 @@
 
   function start() {
     document.querySelectorAll(headerSelector).forEach((header) => {
+      if (pageName === "home.html" && header.matches("body > header")) return;
       header.style.setProperty("background", `rgba(${pageColor.rgb}, 0.78)`, "important");
       header.style.setProperty("background-image", "none", "important");
       header.style.setProperty("color", pageColor.ink, "important");
