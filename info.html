@@ -387,6 +387,10 @@ textarea:focus {
   font-weight: bold;
 }
 
+.note-card img {
+  cursor: zoom-in;
+}
+
 .note-text mark {
   background: linear-gradient(
     90deg,
@@ -801,6 +805,20 @@ let newestNoteId = null;
 let pendingNewNoteTimestamp = null;
 
 const notesContainer = document.getElementById('notesContainer');
+
+// Images can come from either the note's dedicated image field or the saved
+// rich-text HTML. Handle both (including images rendered in future batches).
+notesContainer.addEventListener('click', (event) => {
+  const image = event.target.closest('.note-card img');
+  if (!image) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (typeof window.__imgZoom?.open === 'function') {
+    window.__imgZoom.open(image.currentSrc || image.src);
+  }
+}, true);
 const LONG_PRESS_MS = 600;
 
 /* ---------------- Utilities ---------------- */
@@ -1097,9 +1115,6 @@ urlInput.style.display = 'none';
       imgEl.style.cursor = 'zoom-in';
       card.appendChild(imgEl);
 
-      imgEl.addEventListener("click", () => {
-        if (window.__imgZoom?.open) window.__imgZoom.open(imgEl.src);
-      });
     }
 
     // Timestamp
@@ -1685,7 +1700,7 @@ window.addEventListener("DOMContentLoaded", initImageZoomModal);
     ">Pinch / scroll to zoom • Drag to pan • Double tap</div>
   </div>
 </div>
-	<script src="header-rays.js?v=1"></script>
+	<script src="header-rays.js?v=2"></script>
 	<script src="emoji-picker.js?v=1"></script>
 </body>
 </html>

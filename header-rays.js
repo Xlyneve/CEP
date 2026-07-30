@@ -16,8 +16,6 @@ const menuContainer = centerToggle.querySelector(".rays");
 
 if (!toggleIcon || !menuContainer) return;
 
-  const basePath = "https://xlyneve.github.io/CEP/";
-
   const menuGroups = [
     {
       name: "Main",
@@ -28,27 +26,27 @@ if (!toggleIcon || !menuContainer) return;
         { text: "Templates", link: "explain.html" },
         { text: "Practice Nurse", link: "practiceN.html" },
         { text: "Recalls", link: "recalls.html" },
-         { text: "Clinical Notes", link: "https://xlyneve.github.io/CEP/Clinicalnotes.html" }
+        { text: "Clinical Notes", link: "Clinicalnotes.html" }
       ]
     },
     {
       name: "Clinical",
       links: [
-         { text: "Xgpt", link: "https://xlyneve.github.io/CEP/chatgptx.html" },
-        { text: "Links", link: "https://xlyneve.github.io/CEP/forms.html" },
+        { text: "Xgpt", link: "chatgptx.html" },
+        { text: "Links", link: "forms.html" },
         { text: "Drug Calc", link: "OHcalc.html" },
          { text: "Vaccines", link: "complete-vaccine-info.html" },
         { text: "Vaccine Calc", link: "vaccine-spacing.html" },
         { text: "Meds", link: "Npres.html" },
-         { text: "Consult", link: "https://xlyneve.github.io/CEP/RNCNP.html" }
+        { text: "Consult", link: "RNCNP.html" }
       ]
     },
     {
       name: "Admin",
       links: [
-        { text: "Inteleviewer", link: "https://xlyneve.github.io/CEP/inteleviewer.html" },
+        { text: "Inteleviewer", link: "inteleviewer.html" },
         { text: "Roster", link: "https://xlyneve.github.io/OHNRoster/" },
-        { text: "Notes", link: "https://xlyneve.github.io/CEP/Notes.html" },
+        { text: "Notes", link: "Notes.html" },
         { text: "Timesheet", link: "timesheet.html" }
       ]
     }
@@ -72,7 +70,7 @@ if (!toggleIcon || !menuContainer) return;
     group.links.forEach((item) => {
       const link = document.createElement("a");
       link.className = "glass-pill-link";
-      link.href = item.link.startsWith("http") ? item.link : basePath + item.link;
+      link.href = item.link;
       link.textContent = item.text;
       pill.appendChild(link);
     });
