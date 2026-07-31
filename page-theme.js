@@ -7,7 +7,7 @@
     { rgb: "225, 226, 195", solid: "#e1e2c3", ink: "#39190f" },
     { rgb: "239, 237, 232", solid: "#efede8", ink: "#39190f" },
     { rgb: "219, 158, 131", solid: "#db9e83", ink: "#39190f" },
-    { rgb: "57, 25, 15", solid: "#39190f", ink: "#ffffff" }
+
   ];
 
   const pageName = (location.pathname.split("/").pop() || "index.html").toLowerCase();
