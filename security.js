@@ -109,6 +109,9 @@
 
   const hint = params.get("cepHint") || "";
   const focusId = params.get("cepId") || "";
+  const cardIndex = Number.parseInt(params.get("cepCard") || "", 10);
+  const previewMode = params.get("cepPreview") === "card";
+  const previewKey = params.get("cepPreviewKey") || "";
   const normalize = value => String(value || "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -173,7 +176,9 @@
         .find(candidate => candidate.dataset.id === focusId) || null;
     }
 
-    const candidates = [...new Set(document.querySelectorAll(cardSelector))];
+    const candidates = [...new Set(document.querySelectorAll(cardSelector))]
+      .filter(card => !card.parentElement?.closest(cardSelector));
+    if (Number.isInteger(cardIndex) && candidates[cardIndex]) return candidates[cardIndex];
     let best = null;
     let bestScore = -Infinity;
 
@@ -210,6 +215,35 @@
     const panel = accordion?.querySelector(".acc-panel");
     const toggle = accordion?.querySelector(".acc-title");
     if (panel && toggle && !panel.classList.contains("open")) toggle.click();
+
+    if (previewMode) {
+      document.documentElement.classList.add("cep-card-preview");
+      const style = document.createElement("style");
+      style.textContent = `
+        html.cep-card-preview { scrollbar-width: none; }
+        html.cep-card-preview::-webkit-scrollbar { display: none; }
+        html.cep-card-preview body { overflow: hidden !important; }
+        html.cep-card-preview body > header,
+        html.cep-card-preview body > nav,
+        html.cep-card-preview .top-circles { visibility: hidden !important; }
+      `;
+      document.head.appendChild(style);
+      const reportPreview = () => {
+        if (!card.isConnected) return;
+        const rect = card.getBoundingClientRect();
+        window.scrollTo({ top: rect.top + window.scrollY, left: Math.max(0, rect.left + window.scrollX), behavior: "auto" });
+        const measured = card.getBoundingClientRect();
+        parent.postMessage({
+          type: "cep-card-preview-size",
+          key: previewKey,
+          height: Math.ceil(Math.max(card.scrollHeight, measured.height))
+        }, location.origin);
+      };
+      requestAnimationFrame(() => requestAnimationFrame(reportPreview));
+      [250, 800, 1800].forEach(delay => setTimeout(reportPreview, delay));
+      if (window.ResizeObserver) new ResizeObserver(reportPreview).observe(card);
+      return;
+    }
 
     installFocusStyle();
     card.classList.add("cep-search-focus");
