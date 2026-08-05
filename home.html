@@ -158,9 +158,9 @@ header h1 {
 .universal-search-results { position: relative; display: grid; gap: 12px; max-height: min(68vh,680px); overflow-y: auto; overflow-x: hidden; }
 .global-search-loading { padding: 18px 8px; color: #655b60; text-align: center; font: 600 12px/1.4 Arial,sans-serif; }
 .universal-search-render-stage { display: grid; gap: 12px; min-width: 0; }
-.universal-search-result-group { display: none; gap: 7px; min-width: 0; }
+.universal-search-result-group { display: none; gap: 6px; min-width: 0; }
 .universal-search-result-group.has-ready-results { display: grid; }
-.universal-search-source-title { margin: 0 3px; color: #655b60; font: 700 12px/1.3 Arial,sans-serif; text-decoration: none; }
+.universal-search-source-title { margin: 0 6%; color: #655b60; font: 700 10.5px/1.3 Arial,sans-serif; text-decoration: none; }
 .universal-search-source-title:hover, .universal-search-source-title:focus-visible { color: #292327; }
 .universal-search-result { min-width: 0; min-height: 72px; overflow: hidden; border-radius: 14px; cursor: pointer; }
 .universal-search-result .global-search-loading { padding: 12px 8px; }
@@ -2620,16 +2620,6 @@ html body > header {
  <script>
   // ===== UNIVERSAL SITE SEARCH =====
   (() => {
-    const pages = [
-      '70cxcalc.html','Abdo.html','AnatomicalD.html','biosched1.html','Calculator.html',
-      'chatgptx.html','Clinicalnotes.html','complete-vaccine-info.html','CXHPV.html',
-      'Depo.html','ECG.html','explain.html','face.html','forms.html','Hand.html','home.html',
-      'homecal.html','index.html','info.html','INR Calc.html','inteleviewer.html','ironfunding.html',
-      'LF.html','Notes.html','Npres.html','OHcalc.html','OHsharecalc.html','PN.html',
-      'practiceN.html','recall-notes.html','recalls.html','recalltracker.html','RNCNP.html',
-      'Sha.html','Spine.html','templatetick.html','Urgent_Care.html','vaccine-info-page.html',
-      'vaccine-info-with-inj-types.html','vaccine-spacing.html','VS.html'
-    ];
     const button = document.getElementById('universalSearchButton');
     const panel = document.getElementById('universalSearchPanel');
     const input = document.getElementById('universalSearchInput');
@@ -2644,33 +2634,9 @@ html body > header {
     panel.appendChild(previewCacheHost);
 
     const readableName = file => decodeURIComponent(file).replace(/\.html$/i, '').replace(/[-_]+/g, ' ');
-    function extractPage(html, file) {
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('script,style,noscript,svg').forEach(el => el.remove());
-      const title = (doc.querySelector('title')?.textContent || readableName(file)).trim();
-      const cardSelector = '.note-card,.note-tile,.calculator,.vaccine-section,.acc-item,.med-section,.message,.info-box,.content-box,.treatment-section,.dose-card,.card,article';
-      const cards = [...doc.querySelectorAll(cardSelector)].filter(card => !card.parentElement?.closest(cardSelector));
-      const candidates = cards.length ? cards : [doc.body];
-      return candidates.filter(Boolean).map((card, cardIndex) => {
-        const text = (card.innerText || card.textContent || '').replace(/\s+/g, ' ').trim();
-        const heading = card.querySelector('h1,h2,h3,h4,.note-title,.title')?.textContent?.replace(/\s+/g, ' ').trim();
-        return {
-          file, sourcePage: file, title: heading ? `${title} — ${heading}` : title, text, cardIndex,
-          cardType: card.className || card.tagName.toLocaleLowerCase(), renderer: 'source-page',
-          searchable: `${title} ${text}`.toLocaleLowerCase()
-        };
-      }).filter(entry => entry.text);
-    }
     async function buildIndex() {
-      status.textContent = `Preparing search across ${pages.length} pages…`;
-      const loaded = await Promise.all(pages.map(async file => {
-        try {
-          const response = await fetch(encodeURI(file), { cache: 'force-cache' });
-          return response.ok ? extractPage(await response.text(), file) : null;
-        } catch (_) { return null; }
-      }));
-      const dynamicFiles = new Set(dynamicSearchEntries.map(entry => entry.file));
-      searchIndex = loaded.flat().filter(entry => entry && !dynamicFiles.has(entry.file)).concat(dynamicSearchEntries);
+      status.textContent = 'Preparing approved note-card sources…';
+      searchIndex = [...dynamicSearchEntries];
       status.textContent = 'Type a word to search.';
       return searchIndex;
     }
@@ -2684,11 +2650,8 @@ html body > header {
       dynamicSearchEntries = dynamicSearchEntries
         .filter(entry => !incomingFiles.has(entry.file))
         .concat(incoming);
-      if (searchIndex.length) {
-        searchIndex = searchIndex.filter(page => !page.dynamic).concat(dynamicSearchEntries);
-        searchIndex = searchIndex.filter(page => page.dynamic || !incomingFiles.has(page.file));
-        if (input.value.trim()) runSearch();
-      }
+      searchIndex = [...dynamicSearchEntries];
+      if (input.value.trim()) runSearch();
     };
     function addHighlightedText(parent, text, terms) {
       const escaped = terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -3606,13 +3569,20 @@ const firebaseConfig = {
   // Add Firestore-backed sections independently, so one failed collection
   // cannot prevent every other notes section from being searchable.
   const searchSources = [
-    { collection: 'notebookNotes', file: 'Notes.html', title: 'Notes', fields: ['text'] },
-    { collection: 'urgentCareNotes', file: 'Urgent_Care.html', title: 'Urgent Care', fields: ['note'] },
-    { collection: 'nurseNotes', file: 'PN.html', title: 'Nurse Notes', fields: ['title', 'note', 'url'] },
-    { collection: 'informationNotes', file: 'info.html', title: 'Infos', fields: ['title', 'text', 'url'] },
-    { collection: 'explainNotes', file: 'explain.html', title: 'Templates', fields: ['title', 'text'] },
-    { collection: 'practiceNNotes', file: 'practiceN.html', title: 'Practice Nurse', fields: ['title', 'text', 'url'] },
-    { collection: 'recallNotes', file: 'recalls.html', title: 'Recalls', fields: ['title', 'note', 'url'] }
+    { collection: 'nurseNotes', file: 'PN.html', title: 'PN', fields: ['title', 'note', 'url'], cardClass: 'note-card', renderer: 'pn' },
+    { collection: 'informationNotes', file: 'info.html', title: 'Info', fields: ['title', 'text', 'url'], cardClass: 'note-card', renderer: 'info' },
+    { collection: 'explainNotes', file: 'explain.html', title: 'Explain', fields: ['title', 'text'], cardClass: 'note-card', renderer: 'explain' },
+    { collection: 'recallNotes', file: 'recalls.html', title: 'Recall', fields: ['title', 'note', 'url'], cardClass: 'note-card', renderer: 'recall' },
+    { collection: 'practiceNNotes', file: 'practiceN.html', title: 'Practice Notes', fields: ['title', 'text', 'url'], cardClass: 'note-card', renderer: 'practice' },
+    { collection: 'notebookNotes', file: 'Notes.html', title: 'Nurse Notes', fields: ['text'], cardClass: 'note-tile', renderer: 'notes' },
+    { collection: 'ecgNotes', file: 'ECG.html', title: 'ECG', fields: ['note'], cardClass: 'note-card', renderer: 'ecg' },
+    { collection: 'urgentCareNotes', file: 'Urgent_Care.html', title: 'Urgent Care', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
+    { collection: 'faceNotes', file: 'face.html', title: 'Urgent Care — Head', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
+    { collection: 'handNotes', file: 'Hand.html', title: 'Urgent Care — Hand & Wrist', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
+    { collection: 'upperArmNotes', file: 'Sha.html', title: 'Urgent Care — Shoulder & Elbow', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
+    { collection: 'abdominisNotes', file: 'Abdo.html', title: 'Urgent Care — Thorax & Abdomen', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
+    { collection: 'spineNotes', file: 'Spine.html', title: 'Urgent Care — Back & Spine', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
+    { collection: 'footlegNotes', file: 'LF.html', title: 'Urgent Care — Lower Limb & Foot', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' }
   ];
   const htmlToText = html => {
     const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html');
@@ -3638,8 +3608,10 @@ const firebaseConfig = {
           text,
           focusId: note.id,
           sourceTitle: source.title,
-          cardType: source.collection,
+          cardType: source.renderer,
           renderer: 'source-page',
+          sourceCardClass: source.cardClass,
+          destinationUrl: `${source.file}#cepId=${encodeURIComponent(note.id)}`,
           record: { id: note.id, data }
         };
       });

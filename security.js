@@ -230,21 +230,16 @@
       card.setAttribute("role", "link");
       card.setAttribute("aria-label", `Open ${normalize(card.textContent).slice(0, 80) || "search result"}`);
       const sourceParent = card.parentElement;
-      const sourceChildIndex = sourceParent ? [...sourceParent.children].indexOf(card) : 0;
       const previewRoot = document.createElement("main");
       previewRoot.className = "global-search-card-root";
       sourceParent?.classList.forEach(className => previewRoot.classList.add(className));
       if (sourceParent?.id) previewRoot.id = sourceParent.id;
       const cardStyles = getComputedStyle(card);
+      ["background", "border", "box-shadow", "backdrop-filter", "-webkit-backdrop-filter", "opacity"]
+        .forEach(property => card.style.setProperty(property, cardStyles.getPropertyValue(property), "important"));
       for (let index = 0; index < cardStyles.length; index += 1) {
         const property = cardStyles.item(index);
         if (property.startsWith("--")) previewRoot.style.setProperty(property, cardStyles.getPropertyValue(property));
-      }
-      for (let index = 0; index < sourceChildIndex; index += 1) {
-        const sourceSlot = document.createElement("span");
-        sourceSlot.className = "global-search-card-source-slot";
-        sourceSlot.hidden = true;
-        previewRoot.appendChild(sourceSlot);
       }
       previewRoot.appendChild(card);
       document.body.appendChild(previewRoot);
@@ -268,11 +263,10 @@
           margin: 0 !important; padding: 3px !important; box-sizing: border-box !important;
           overflow: hidden !important; background: transparent !important;
         }
-        .global-search-card-source-slot { display: none !important; }
         .global-search-card.global-search-card--compact {
-          width: 100% !important; max-width: none !important; min-width: 0 !important;
-          margin: 0 !important; padding: clamp(10px, 3vw, 16px) !important;
-          box-sizing: border-box !important; font-size: 90% !important;
+          width: 88% !important; max-width: none !important; min-width: 0 !important;
+          margin: 0 auto !important; padding: clamp(8px, 2.4vw, 14px) !important;
+          box-sizing: border-box !important; font-size: 80% !important; line-height: 1.35 !important;
           overflow-wrap: anywhere !important; word-break: normal !important;
           cursor: pointer !important;
         }
