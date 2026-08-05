@@ -218,30 +218,50 @@
 
     if (previewMode) {
       document.documentElement.classList.add("cep-card-preview");
+      card.classList.add("global-search-card", "global-search-card--compact");
+      const previewRoot = document.createElement("main");
+      previewRoot.className = "global-search-card-root";
+      previewRoot.appendChild(card);
+      document.body.replaceChildren(previewRoot);
       const style = document.createElement("style");
       style.textContent = `
-        html.cep-card-preview { scrollbar-width: none; }
+        html.cep-card-preview { min-height: 0 !important; background: transparent !important; scrollbar-width: none; }
         html.cep-card-preview::-webkit-scrollbar { display: none; }
-        html.cep-card-preview body { overflow: hidden !important; }
-        html.cep-card-preview body > header,
-        html.cep-card-preview body > nav,
-        html.cep-card-preview .top-circles { visibility: hidden !important; }
+        html.cep-card-preview body {
+          min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+          overflow: hidden !important; background: transparent !important;
+        }
+        html.cep-card-preview::before,
+        html.cep-card-preview::after,
+        html.cep-card-preview body::before,
+        html.cep-card-preview body::after { display: none !important; content: none !important; }
+        .global-search-card-root {
+          display: block !important; width: 100% !important; min-width: 0 !important;
+          margin: 0 !important; padding: 3px !important; box-sizing: border-box !important;
+          overflow: hidden !important; background: transparent !important;
+        }
+        .global-search-card.global-search-card--compact {
+          width: 100% !important; max-width: none !important; min-width: 0 !important;
+          margin: 0 !important; padding: clamp(10px, 3vw, 16px) !important;
+          box-sizing: border-box !important; font-size: 90% !important;
+          overflow-wrap: anywhere !important; word-break: normal !important;
+        }
+        .global-search-card.global-search-card--compact img,
+        .global-search-card.global-search-card--compact table,
+        .global-search-card.global-search-card--compact pre { max-width: 100% !important; }
       `;
       document.head.appendChild(style);
       const reportPreview = () => {
         if (!card.isConnected) return;
-        const rect = card.getBoundingClientRect();
-        window.scrollTo({ top: rect.top + window.scrollY, left: Math.max(0, rect.left + window.scrollX), behavior: "auto" });
-        const measured = card.getBoundingClientRect();
         parent.postMessage({
           type: "cep-card-preview-size",
           key: previewKey,
-          height: Math.ceil(Math.max(card.scrollHeight, measured.height))
+          height: Math.ceil(Math.max(previewRoot.scrollHeight, card.getBoundingClientRect().height) + 6)
         }, location.origin);
       };
       requestAnimationFrame(() => requestAnimationFrame(reportPreview));
       [250, 800, 1800].forEach(delay => setTimeout(reportPreview, delay));
-      if (window.ResizeObserver) new ResizeObserver(reportPreview).observe(card);
+      if (window.ResizeObserver) new ResizeObserver(reportPreview).observe(previewRoot);
       return;
     }
 
