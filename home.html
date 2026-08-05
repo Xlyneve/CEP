@@ -155,11 +155,14 @@ header h1 {
   background: rgba(64,54,59,.08); color: #40363b; cursor: pointer; font-size: 22px;
 }
 .universal-search-status { margin: 9px 3px 5px; color: #6c6166; font-size: 11px; }
-.universal-search-results { display: grid; gap: 12px; max-height: min(68vh,680px); overflow-y: auto; overflow-x: hidden; }
+.universal-search-results { position: relative; display: grid; gap: 12px; max-height: min(68vh,680px); overflow-y: auto; overflow-x: hidden; }
+.global-search-loading { padding: 18px 8px; color: #655b60; text-align: center; font: 600 12px/1.4 Arial,sans-serif; }
+.universal-search-render-stage { position: absolute; inset: 0 auto auto 0; width: 100%; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+.universal-search-render-stage.is-ready { position: static; display: grid; gap: 12px; height: auto; overflow: visible; visibility: visible; pointer-events: auto; }
 .universal-search-result-group { display: grid; gap: 7px; min-width: 0; }
 .universal-search-source-title { margin: 0 3px; color: #655b60; font: 700 12px/1.3 Arial,sans-serif; text-decoration: none; }
 .universal-search-source-title:hover, .universal-search-source-title:focus-visible { color: #292327; }
-.universal-search-result { min-width: 0; overflow: hidden; border-radius: 14px; }
+.universal-search-result { min-width: 0; overflow: hidden; border-radius: 14px; cursor: pointer; }
 .universal-search-card-frame { display: block; width: 100%; height: 120px; box-sizing: border-box; overflow: hidden; border: 0; border-radius: 13px; background: transparent; }
 
 .circle {
@@ -2628,7 +2631,7 @@ html body > header {
     const close = document.getElementById('universalSearchClose');
     const status = document.getElementById('universalSearchStatus');
     const results = document.getElementById('universalSearchResults');
-    let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer;
+    let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer, searchRequestId = 0;
     const previewFrames = new Map();
 
     const readableName = file => decodeURIComponent(file).replace(/\.html$/i, '').replace(/[-_]+/g, ' ');
@@ -2643,7 +2646,7 @@ html body > header {
         const text = (card.innerText || card.textContent || '').replace(/\s+/g, ' ').trim();
         const heading = card.querySelector('h1,h2,h3,h4,.note-title,.title')?.textContent?.replace(/\s+/g, ' ').trim();
         return {
-          file, title: heading ? `${title} — ${heading}` : title, text, cardIndex,
+          file, sourcePage: file, title: heading ? `${title} — ${heading}` : title, text, cardIndex,
           cardType: card.className || card.tagName.toLocaleLowerCase(), renderer: 'source-page',
           searchable: `${title} ${text}`.toLocaleLowerCase()
         };
@@ -2697,13 +2700,17 @@ html body > header {
       return `${start ? '…' : ''}${page.text.slice(start, end)}${end < page.text.length ? '…' : ''}`;
     }
     async function runSearch() {
+      const requestId = ++searchRequestId;
       const query = input.value.trim().toLocaleLowerCase();
       results.replaceChildren();
       previewFrames.clear();
       if (!query) { status.textContent = 'Type a word to search.'; return; }
+      const loading = document.createElement('div');
+      loading.className = 'global-search-loading'; loading.textContent = 'Loading results…';
+      results.appendChild(loading);
       const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
       await (indexPromise ||= buildIndex());
-      if (input.value.trim().toLocaleLowerCase() !== query) return;
+      if (requestId !== searchRequestId || input.value.trim().toLocaleLowerCase() !== query) return;
       const matches = searchIndex
         .filter(page => terms.every(term => page.searchable.includes(term)))
         .slice(0, 30);
@@ -2713,6 +2720,11 @@ html body > header {
       status.textContent = matches.length
         ? `${matches.length}${matches.length === 30 ? '+' : ''} result${matches.length === 1 ? '' : 's'} found`
         : `No matching notes found · ${loadedSectionCount} saved-note section${loadedSectionCount === 1 ? '' : 's'} loaded`;
+      if (!matches.length) { results.replaceChildren(); return; }
+      const stage = document.createElement('div');
+      stage.className = 'universal-search-render-stage';
+      results.appendChild(stage);
+      const renderBatch = { requestId, pending: matches.length, loading, stage };
       const groups = new Map();
       matches.forEach((page, resultIndex) => {
         const sourceTitle = page.sourceTitle || readableName(page.file);
@@ -2724,16 +2736,17 @@ html body > header {
           const groupTitle = document.createElement('a');
           groupTitle.className = 'universal-search-source-title';
           groupTitle.textContent = sourceTitle;
-          groupTitle.href = new URL(page.file, location.href).href;
+          groupTitle.href = new URL(page.sourcePage || page.file, location.href).href;
           groupTitle.target = '_blank'; groupTitle.rel = 'noopener';
           group.appendChild(groupTitle);
           groups.set(groupKey, group);
-          results.appendChild(group);
+          stage.appendChild(group);
         }
         const result = document.createElement('article');
         result.className = 'universal-search-result';
         const snippetText = makeSnippet(page, terms);
-        const destination = new URL(page.file, location.href);
+        const sourcePage = page.sourcePage || page.file;
+        const destination = new URL(sourcePage, location.href);
         const focusParams = new URLSearchParams({
           cepSearch: query,
           cepHint: snippetText
@@ -2744,11 +2757,11 @@ html body > header {
         const previewKey = `${Date.now()}-${resultIndex}-${Math.random().toString(36).slice(2)}`;
         const previewParams = new URLSearchParams(focusParams);
         previewParams.set('cepPreview', 'card'); previewParams.set('cepPreviewKey', previewKey);
-        const previewUrl = new URL(page.file, location.href); previewUrl.hash = previewParams.toString();
+        const previewUrl = new URL(sourcePage, location.href); previewUrl.hash = previewParams.toString();
         const frame = document.createElement('iframe');
         frame.className = 'universal-search-card-frame'; frame.title = `${page.title} search result`;
-        frame.src = previewUrl.href; frame.loading = 'lazy';
-        previewFrames.set(previewKey, frame);
+        frame.src = previewUrl.href; frame.loading = 'eager';
+        previewFrames.set(previewKey, { frame, result, destination: destination.href, batch: renderBatch, ready: false });
         result.appendChild(frame); group.appendChild(result);
       });
     }
@@ -2770,10 +2783,25 @@ html body > header {
       if (!panel.hidden && !panel.contains(event.target) && !button.contains(event.target)) closeSearch();
     });
     window.addEventListener('message', event => {
-      if (event.origin !== location.origin || event.data?.type !== 'cep-card-preview-size') return;
-      const frame = previewFrames.get(event.data.key);
-      if (!frame || frame.contentWindow !== event.source) return;
-      frame.style.height = `${Math.max(72, Number(event.data.height) || 120)}px`;
+      if (event.origin !== location.origin || !String(event.data?.type || '').startsWith('cep-card-preview-')) return;
+      const preview = previewFrames.get(event.data.key);
+      if (!preview || preview.frame.contentWindow !== event.source || preview.batch.requestId !== searchRequestId) return;
+      if (event.data.type === 'cep-card-preview-open') {
+        location.assign(preview.destination);
+        return;
+      }
+      if (preview.ready) return;
+      preview.ready = true;
+      if (event.data.type === 'cep-card-preview-error') preview.result.remove();
+      else preview.frame.style.height = `${Math.max(72, Number(event.data.height) || 120)}px`;
+      preview.batch.pending -= 1;
+      if (preview.batch.pending === 0 && preview.batch.requestId === searchRequestId) {
+        preview.batch.stage.querySelectorAll('.universal-search-result-group').forEach(group => {
+          if (!group.querySelector('.universal-search-result')) group.remove();
+        });
+        preview.batch.loading.remove();
+        preview.batch.stage.classList.add('is-ready');
+      }
     });
   })();
 
@@ -3517,6 +3545,7 @@ const firebaseConfig = {
           .join(' · ');
         return {
           file: source.file,
+          sourcePage: source.file,
           title: savedTitle ? `${source.title} — ${savedTitle}` : source.title,
           text,
           focusId: note.id,
