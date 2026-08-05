@@ -154,16 +154,14 @@ header h1 {
   background: rgba(64,54,59,.08); color: #40363b; cursor: pointer; font-size: 22px;
 }
 .universal-search-status { margin: 9px 3px 5px; color: #6c6166; font-size: 11px; }
-.universal-search-results { display: grid; gap: 7px; max-height: min(58vh,520px); overflow-y: auto; }
+.universal-search-results { display: grid; gap: 12px; max-height: min(68vh,680px); overflow-y: auto; overflow-x: hidden; }
 .universal-search-result {
-  display: block; padding: 10px 11px; border: 1px solid rgba(64,54,59,.1);
-  border-radius: 13px; background: rgba(255,255,255,.78); color: #292327;
-  text-decoration: none; transition: transform 120ms ease, background 120ms ease;
+  min-width: 0; overflow: hidden; border-radius: 14px;
 }
-.universal-search-result:hover, .universal-search-result:focus-visible { transform: translateY(-1px); background: #fff; }
-.universal-search-title { display: block; margin-bottom: 3px; font-size: 14px; font-weight: 700; }
-.universal-search-snippet { display: block; color: #655b60; font: 11px/1.45 Arial,sans-serif; }
-.universal-search-snippet mark { border-radius: 3px; background: #fff0a8; color: inherit; }
+.universal-search-source { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 3px 5px; color: #655b60; font: 700 11px/1.3 Arial,sans-serif; }
+.universal-search-open { color: inherit; text-decoration: none; border-bottom: 1px solid currentColor; }
+.universal-search-open:hover, .universal-search-open:focus-visible { color: #292327; }
+.universal-search-card-frame { display: block; width: 100%; height: 180px; box-sizing: border-box; overflow: auto; border: 0; border-radius: 13px; background: transparent; }
 
 .circle {
   border-radius: 70%;
@@ -2632,14 +2630,25 @@ html body > header {
     const status = document.getElementById('universalSearchStatus');
     const results = document.getElementById('universalSearchResults');
     let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer;
+    const previewFrames = new Map();
 
     const readableName = file => decodeURIComponent(file).replace(/\.html$/i, '').replace(/[-_]+/g, ' ');
     function extractPage(html, file) {
       const doc = new DOMParser().parseFromString(html, 'text/html');
       doc.querySelectorAll('script,style,noscript,svg').forEach(el => el.remove());
       const title = (doc.querySelector('title')?.textContent || readableName(file)).trim();
-      const text = (doc.body?.innerText || doc.body?.textContent || '').replace(/\s+/g, ' ').trim();
-      return { file, title, text, searchable: `${title} ${text}`.toLocaleLowerCase() };
+      const cardSelector = '.note-card,.note-tile,.calculator,.vaccine-section,.acc-item,.med-section,.message,.info-box,.content-box,.treatment-section,.dose-card,.card,article';
+      const cards = [...doc.querySelectorAll(cardSelector)].filter(card => !card.parentElement?.closest(cardSelector));
+      const candidates = cards.length ? cards : [doc.body];
+      return candidates.filter(Boolean).map((card, cardIndex) => {
+        const text = (card.innerText || card.textContent || '').replace(/\s+/g, ' ').trim();
+        const heading = card.querySelector('h1,h2,h3,h4,.note-title,.title')?.textContent?.replace(/\s+/g, ' ').trim();
+        return {
+          file, title: heading ? `${title} — ${heading}` : title, text, cardIndex,
+          cardType: card.className || card.tagName.toLocaleLowerCase(), renderer: 'source-page',
+          searchable: `${title} ${text}`.toLocaleLowerCase()
+        };
+      }).filter(entry => entry.text);
     }
     async function buildIndex() {
       status.textContent = `Preparing search across ${pages.length} pages…`;
@@ -2649,7 +2658,8 @@ html body > header {
           return response.ok ? extractPage(await response.text(), file) : null;
         } catch (_) { return null; }
       }));
-      searchIndex = loaded.filter(Boolean).concat(dynamicSearchEntries);
+      const dynamicFiles = new Set(dynamicSearchEntries.map(entry => entry.file));
+      searchIndex = loaded.flat().filter(entry => entry && !dynamicFiles.has(entry.file)).concat(dynamicSearchEntries);
       status.textContent = 'Type a word to search.';
       return searchIndex;
     }
@@ -2665,6 +2675,7 @@ html body > header {
         .concat(incoming);
       if (searchIndex.length) {
         searchIndex = searchIndex.filter(page => !page.dynamic).concat(dynamicSearchEntries);
+        searchIndex = searchIndex.filter(page => page.dynamic || !incomingFiles.has(page.file));
         if (input.value.trim()) runSearch();
       }
     };
@@ -2689,6 +2700,7 @@ html body > header {
     async function runSearch() {
       const query = input.value.trim().toLocaleLowerCase();
       results.replaceChildren();
+      previewFrames.clear();
       if (!query) { status.textContent = 'Type a word to search.'; return; }
       const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
       await (indexPromise ||= buildIndex());
@@ -2702,9 +2714,9 @@ html body > header {
       status.textContent = matches.length
         ? `${matches.length}${matches.length === 30 ? '+' : ''} result${matches.length === 1 ? '' : 's'} found`
         : `No matching notes found · ${loadedSectionCount} saved-note section${loadedSectionCount === 1 ? '' : 's'} loaded`;
-      matches.forEach(page => {
-        const link = document.createElement('a');
-        link.className = 'universal-search-result';
+      matches.forEach((page, resultIndex) => {
+        const result = document.createElement('article');
+        result.className = 'universal-search-result';
         const snippetText = makeSnippet(page, terms);
         const destination = new URL(page.file, location.href);
         const focusParams = new URLSearchParams({
@@ -2712,14 +2724,25 @@ html body > header {
           cepHint: snippetText
         });
         if (page.focusId) focusParams.set('cepId', page.focusId);
+        if (Number.isInteger(page.cardIndex)) focusParams.set('cepCard', String(page.cardIndex));
         destination.hash = focusParams.toString();
-        link.href = destination.href; link.target = '_blank'; link.rel = 'noopener';
-        const title = document.createElement('span');
-        title.className = 'universal-search-title'; title.textContent = page.title;
-        const snippet = document.createElement('span');
-        snippet.className = 'universal-search-snippet';
-        addHighlightedText(snippet, snippetText, terms);
-        link.append(title, snippet); results.appendChild(link);
+        const source = document.createElement('div');
+        source.className = 'universal-search-source';
+        const sourceName = document.createElement('span');
+        sourceName.textContent = `From ${page.sourceTitle || readableName(page.file)}`;
+        const open = document.createElement('a');
+        open.className = 'universal-search-open'; open.textContent = 'Open original ↗';
+        open.href = destination.href; open.target = '_blank'; open.rel = 'noopener';
+        source.append(sourceName, open);
+        const previewKey = `${Date.now()}-${resultIndex}-${Math.random().toString(36).slice(2)}`;
+        const previewParams = new URLSearchParams(focusParams);
+        previewParams.set('cepPreview', 'card'); previewParams.set('cepPreviewKey', previewKey);
+        const previewUrl = new URL(page.file, location.href); previewUrl.hash = previewParams.toString();
+        const frame = document.createElement('iframe');
+        frame.className = 'universal-search-card-frame'; frame.title = `${page.title} search result`;
+        frame.src = previewUrl.href; frame.loading = 'lazy';
+        previewFrames.set(previewKey, frame);
+        result.append(source, frame); results.appendChild(result);
       });
     }
     function openSearch() {
@@ -2734,10 +2757,16 @@ html body > header {
     input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 180); });
     input.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeSearch();
-      if (event.key === 'Enter') results.querySelector('.universal-search-result')?.click();
+      if (event.key === 'Enter') results.querySelector('.universal-search-open')?.click();
     });
     document.addEventListener('click', event => {
       if (!panel.hidden && !panel.contains(event.target) && !button.contains(event.target)) closeSearch();
+    });
+    window.addEventListener('message', event => {
+      if (event.origin !== location.origin || event.data?.type !== 'cep-card-preview-size') return;
+      const frame = previewFrames.get(event.data.key);
+      if (!frame || frame.contentWindow !== event.source) return;
+      frame.style.height = `${Math.min(440, Math.max(80, Number(event.data.height) || 180))}px`;
     });
   })();
 
@@ -3483,7 +3512,11 @@ const firebaseConfig = {
           file: source.file,
           title: savedTitle ? `${source.title} — ${savedTitle}` : source.title,
           text,
-          focusId: note.id
+          focusId: note.id,
+          sourceTitle: source.title,
+          cardType: source.collection,
+          renderer: 'source-page',
+          record: { id: note.id, data }
         };
       });
       window.addUniversalSearchPages?.(
