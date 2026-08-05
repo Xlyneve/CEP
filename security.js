@@ -288,18 +288,18 @@
         if (isInternalControl(event.target)) return;
         event.preventDefault();
         event.stopImmediatePropagation();
-        parent.postMessage({ type: "cep-card-preview-open", key: previewKey }, location.origin);
+        window.parent.postMessage({ type: "cep-card-preview-open", key: previewKey }, location.origin);
       }, true);
       card.addEventListener("keydown", event => {
         if (isInternalControl(event.target) || (event.key !== "Enter" && event.key !== " ")) return;
         event.preventDefault();
         event.stopImmediatePropagation();
-        parent.postMessage({ type: "cep-card-preview-open", key: previewKey }, location.origin);
+        window.parent.postMessage({ type: "cep-card-preview-open", key: previewKey }, location.origin);
       }, true);
       document.documentElement.classList.remove("cep-card-preview-pending");
       const reportPreview = () => {
         if (!card.isConnected) return;
-        parent.postMessage({
+        window.parent.postMessage({
           type: "cep-card-preview-size",
           key: previewKey,
           height: Math.ceil(Math.max(previewRoot.scrollHeight, card.getBoundingClientRect().height) + 6)
@@ -344,7 +344,7 @@
       const card = matchingCard();
       if (card) { revealCard(card); return; }
       if (Date.now() - startedAt < 15000) { requestAnimationFrame(awaitCard); return; }
-      if (previewMode) parent.postMessage({ type: "cep-card-preview-error", key: previewKey }, location.origin);
+      if (previewMode) window.parent.postMessage({ type: "cep-card-preview-error", key: previewKey }, location.origin);
     };
     requestAnimationFrame(awaitCard);
   }
