@@ -157,13 +157,18 @@ header h1 {
 .universal-search-status { margin: 9px 3px 5px; color: #6c6166; font-size: 11px; }
 .universal-search-results { position: relative; display: grid; gap: 12px; max-height: min(68vh,680px); overflow-y: auto; overflow-x: hidden; }
 .global-search-loading { padding: 18px 8px; color: #655b60; text-align: center; font: 600 12px/1.4 Arial,sans-serif; }
-.universal-search-render-stage { position: absolute; inset: 0 auto auto 0; width: 100%; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
-.universal-search-render-stage.is-ready { position: static; display: grid; gap: 12px; height: auto; overflow: visible; visibility: visible; pointer-events: auto; }
-.universal-search-result-group { display: grid; gap: 7px; min-width: 0; }
+.universal-search-render-stage { display: grid; gap: 12px; min-width: 0; }
+.universal-search-result-group { display: none; gap: 7px; min-width: 0; }
+.universal-search-result-group.has-ready-results { display: grid; }
 .universal-search-source-title { margin: 0 3px; color: #655b60; font: 700 12px/1.3 Arial,sans-serif; text-decoration: none; }
 .universal-search-source-title:hover, .universal-search-source-title:focus-visible { color: #292327; }
-.universal-search-result { min-width: 0; overflow: hidden; border-radius: 14px; cursor: pointer; }
-.universal-search-card-frame { display: block; width: 100%; height: 120px; box-sizing: border-box; overflow: hidden; border: 0; border-radius: 13px; background: transparent; }
+.universal-search-result { min-width: 0; min-height: 72px; overflow: hidden; border-radius: 14px; cursor: pointer; }
+.universal-search-result .global-search-loading { padding: 12px 8px; }
+.universal-search-card-frame { display: block; visibility: hidden; width: 100%; height: 120px; box-sizing: border-box; overflow: hidden; border: 0; border-radius: 13px; background: transparent; }
+.universal-search-result.is-ready { min-height: 0; }
+.universal-search-result.is-ready .universal-search-card-frame { visibility: visible; }
+.global-search-more-sentinel { height: 1px; }
+.global-search-preview-cache { display: none !important; }
 
 .circle {
   border-radius: 70%;
@@ -2633,6 +2638,10 @@ html body > header {
     const results = document.getElementById('universalSearchResults');
     let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer, searchRequestId = 0;
     const previewFrames = new Map();
+    const previewCache = new Map();
+    const previewCacheHost = document.createElement('div');
+    previewCacheHost.className = 'global-search-preview-cache';
+    panel.appendChild(previewCacheHost);
 
     const readableName = file => decodeURIComponent(file).replace(/\.html$/i, '').replace(/[-_]+/g, ' ');
     function extractPage(html, file) {
@@ -2702,6 +2711,19 @@ html body > header {
     async function runSearch() {
       const requestId = ++searchRequestId;
       const query = input.value.trim().toLocaleLowerCase();
+      previewFrames.forEach(preview => {
+        if (!preview.ready || preview.failed) return;
+        previewCache.get(preview.cacheKey)?.frame.remove();
+        previewCache.set(preview.cacheKey, {
+          frame: preview.frame, previewKey: preview.previewKey, height: preview.height
+        });
+        previewCacheHost.appendChild(preview.frame);
+      });
+      while (previewCache.size > 40) {
+        const oldestKey = previewCache.keys().next().value;
+        previewCache.get(oldestKey)?.frame.remove();
+        previewCache.delete(oldestKey);
+      }
       results.replaceChildren();
       previewFrames.clear();
       if (!query) { status.textContent = 'Type a word to search.'; return; }
@@ -2724,9 +2746,38 @@ html body > header {
       const stage = document.createElement('div');
       stage.className = 'universal-search-render-stage';
       results.appendChild(stage);
-      const renderBatch = { requestId, pending: matches.length, loading, stage };
       const groups = new Map();
-      matches.forEach((page, resultIndex) => {
+      const sentinel = document.createElement('div');
+      sentinel.className = 'global-search-more-sentinel'; sentinel.hidden = true;
+      results.appendChild(sentinel);
+      let nextIndex = 0;
+      const renderBatch = { requestId, loading, stage, sentinel, observer: null, anyReady: false, chunkPending: 0 };
+      const settlePreview = preview => {
+        preview.batch.chunkPending = Math.max(0, preview.batch.chunkPending - 1);
+        if (preview.batch.chunkPending === 0 && preview.batch.anyReady && nextIndex < matches.length) {
+          preview.batch.sentinel.hidden = false;
+          preview.batch.observer.observe(preview.batch.sentinel);
+        } else if (preview.batch.chunkPending === 0 && !preview.batch.anyReady && nextIndex < matches.length) {
+          renderNextBatch();
+        } else if (preview.batch.chunkPending === 0 && !preview.batch.anyReady) {
+          preview.batch.loading.remove();
+          status.textContent = 'No matching cards could be loaded.';
+        }
+      };
+      const revealPreview = preview => {
+        if (preview.ready || preview.batch.requestId !== searchRequestId) return;
+        preview.ready = true;
+        preview.frame.style.height = `${preview.height}px`;
+        preview.result.querySelector('.global-search-loading')?.remove();
+        preview.result.classList.add('is-ready');
+        preview.group.classList.add('has-ready-results');
+        if (!preview.batch.anyReady) {
+          preview.batch.anyReady = true;
+          preview.batch.loading.remove();
+        }
+        settlePreview(preview);
+      };
+      const renderResult = (page, resultIndex) => {
         const sourceTitle = page.sourceTitle || readableName(page.file);
         const groupKey = `${page.file}\u0000${sourceTitle}`;
         let group = groups.get(groupKey);
@@ -2744,6 +2795,9 @@ html body > header {
         }
         const result = document.createElement('article');
         result.className = 'universal-search-result';
+        const cardLoading = document.createElement('div');
+        cardLoading.className = 'global-search-loading'; cardLoading.textContent = 'Loading card…';
+        result.appendChild(cardLoading);
         const snippetText = makeSnippet(page, terms);
         const sourcePage = page.sourcePage || page.file;
         const destination = new URL(sourcePage, location.href);
@@ -2754,6 +2808,20 @@ html body > header {
         if (page.focusId) focusParams.set('cepId', page.focusId);
         if (Number.isInteger(page.cardIndex)) focusParams.set('cepCard', String(page.cardIndex));
         destination.hash = focusParams.toString();
+        const cacheKey = `${sourcePage}|${page.focusId || ''}|${Number.isInteger(page.cardIndex) ? page.cardIndex : ''}`;
+        const cached = previewCache.get(cacheKey);
+        if (cached) {
+          previewCache.delete(cacheKey);
+          const preview = {
+            frame: cached.frame, previewKey: cached.previewKey, cacheKey, result, group,
+            destination: destination.href, batch: renderBatch, ready: false, failed: false,
+            height: cached.height, settlePreview
+          };
+          previewFrames.set(cached.previewKey, preview);
+          result.appendChild(cached.frame); group.appendChild(result);
+          revealPreview(preview);
+          return;
+        }
         const previewKey = `${Date.now()}-${resultIndex}-${Math.random().toString(36).slice(2)}`;
         const previewParams = new URLSearchParams(focusParams);
         previewParams.set('cepPreview', 'card'); previewParams.set('cepPreviewKey', previewKey);
@@ -2761,9 +2829,32 @@ html body > header {
         const frame = document.createElement('iframe');
         frame.className = 'universal-search-card-frame'; frame.title = `${page.title} search result`;
         frame.src = previewUrl.href; frame.loading = 'eager';
-        previewFrames.set(previewKey, { frame, result, destination: destination.href, batch: renderBatch, ready: false });
+        previewFrames.set(previewKey, {
+          frame, previewKey, cacheKey, result, group, destination: destination.href,
+          batch: renderBatch, ready: false, failed: false, height: 120,
+          revealPreview, settlePreview
+        });
         result.appendChild(frame); group.appendChild(result);
-      });
+      };
+      const renderNextBatch = () => {
+        sentinel.hidden = true;
+        renderBatch.observer.disconnect();
+        const end = Math.min(matches.length, nextIndex + 8);
+        renderBatch.chunkPending += end - nextIndex;
+        while (nextIndex < end) {
+          const resultIndex = nextIndex++;
+          renderResult(matches[resultIndex], resultIndex);
+        }
+        if (nextIndex >= matches.length) {
+          sentinel.hidden = true;
+          renderBatch.observer?.disconnect();
+        }
+      };
+      renderBatch.observer = new IntersectionObserver(entries => {
+        if (requestId !== searchRequestId || !entries.some(entry => entry.isIntersecting)) return;
+        renderNextBatch();
+      }, { root: results, rootMargin: '120px 0px' });
+      renderNextBatch();
     }
     function openSearch() {
       panel.hidden = false; button.setAttribute('aria-expanded', 'true'); input.focus();
@@ -2791,17 +2882,14 @@ html body > header {
         return;
       }
       if (preview.ready) return;
-      preview.ready = true;
-      if (event.data.type === 'cep-card-preview-error') preview.result.remove();
-      else preview.frame.style.height = `${Math.max(72, Number(event.data.height) || 120)}px`;
-      preview.batch.pending -= 1;
-      if (preview.batch.pending === 0 && preview.batch.requestId === searchRequestId) {
-        preview.batch.stage.querySelectorAll('.universal-search-result-group').forEach(group => {
-          if (!group.querySelector('.universal-search-result')) group.remove();
-        });
-        preview.batch.loading.remove();
-        preview.batch.stage.classList.add('is-ready');
+      if (event.data.type === 'cep-card-preview-error') {
+        preview.failed = true; preview.ready = true; preview.result.remove();
+        if (!preview.group.querySelector('.universal-search-result')) preview.group.remove();
+        preview.settlePreview(preview);
+        return;
       }
+      preview.height = Math.max(72, Number(event.data.height) || 120);
+      preview.revealPreview(preview);
     });
   })();
 
