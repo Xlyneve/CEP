@@ -112,6 +112,13 @@
   const cardIndex = Number.parseInt(params.get("cepCard") || "", 10);
   const previewMode = params.get("cepPreview") === "card";
   const previewKey = params.get("cepPreviewKey") || "";
+  if (previewMode) {
+    document.documentElement.classList.add("cep-card-preview-pending");
+    const pendingStyle = document.createElement("style");
+    pendingStyle.id = "cepCardPreviewPendingStyle";
+    pendingStyle.textContent = "html.cep-card-preview-pending body{visibility:hidden!important}";
+    document.head.appendChild(pendingStyle);
+  }
   const normalize = value => String(value || "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -219,10 +226,16 @@
     if (previewMode) {
       document.documentElement.classList.add("cep-card-preview");
       card.classList.add("global-search-card", "global-search-card--compact");
+      card.tabIndex = 0;
+      card.setAttribute("role", "link");
+      card.setAttribute("aria-label", `Open ${normalize(card.textContent).slice(0, 80) || "search result"}`);
       const previewRoot = document.createElement("main");
       previewRoot.className = "global-search-card-root";
       previewRoot.appendChild(card);
-      document.body.replaceChildren(previewRoot);
+      document.body.appendChild(previewRoot);
+      [...document.body.children].forEach(child => {
+        if (child !== previewRoot) child.remove();
+      });
       const style = document.createElement("style");
       style.textContent = `
         html.cep-card-preview { min-height: 0 !important; background: transparent !important; scrollbar-width: none; }
@@ -245,12 +258,29 @@
           margin: 0 !important; padding: clamp(10px, 3vw, 16px) !important;
           box-sizing: border-box !important; font-size: 90% !important;
           overflow-wrap: anywhere !important; word-break: normal !important;
+          cursor: pointer !important;
         }
         .global-search-card.global-search-card--compact img,
         .global-search-card.global-search-card--compact table,
         .global-search-card.global-search-card--compact pre { max-width: 100% !important; }
       `;
       document.head.appendChild(style);
+      const isInternalControl = target => target instanceof Element && Boolean(
+        target.closest("button,a,input,textarea,select,summary,[contenteditable='true'],[role='button']")
+      );
+      card.addEventListener("click", event => {
+        if (isInternalControl(event.target)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        parent.postMessage({ type: "cep-card-preview-open", key: previewKey }, location.origin);
+      }, true);
+      card.addEventListener("keydown", event => {
+        if (isInternalControl(event.target) || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        parent.postMessage({ type: "cep-card-preview-open", key: previewKey }, location.origin);
+      }, true);
+      document.documentElement.classList.remove("cep-card-preview-pending");
       const reportPreview = () => {
         if (!card.isConnected) return;
         parent.postMessage({
@@ -283,22 +313,24 @@
   }
 
   function startSearchFocus() {
+    if (!document.body) {
+      document.addEventListener("DOMContentLoaded", startSearchFocus, { once: true });
+      return;
+    }
     const immediate = matchingCard();
     if (immediate) {
       revealCard(immediate);
       return;
     }
 
-    const observer = new MutationObserver(() => {
+    const startedAt = Date.now();
+    const awaitCard = () => {
       const card = matchingCard();
-      if (!card) return;
-      observer.disconnect();
-      clearTimeout(timeout);
-      revealCard(card);
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-    const timeout = setTimeout(() => observer.disconnect(), 15000);
+      if (card) { revealCard(card); return; }
+      if (Date.now() - startedAt < 15000) { requestAnimationFrame(awaitCard); return; }
+      if (previewMode) parent.postMessage({ type: "cep-card-preview-error", key: previewKey }, location.origin);
+    };
+    requestAnimationFrame(awaitCard);
   }
 
   if (document.readyState === "loading") {
