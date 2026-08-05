@@ -257,6 +257,7 @@
           width: 100% !important; max-width: none !important; min-width: 0 !important;
           margin: 0 !important; padding: clamp(10px, 3vw, 16px) !important;
           box-sizing: border-box !important; font-size: 90% !important;
+          background-color: rgba(240, 241, 239, 0.94) !important;
           overflow-wrap: anywhere !important; word-break: normal !important;
           cursor: pointer !important;
         }
