@@ -61,6 +61,23 @@ body{
   margin:0 auto;
 }
 
+[hidden]{ display:none !important; }
+
+.recall-loading{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.sync-status{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:.76rem;
+  font-weight:700;
+}
+
 .topbar{
   position:sticky;
   top:10px;
@@ -710,7 +727,9 @@ body.edit-mode .tick-row{
 </head>
 
 <body>
-<section id="recallLogin" class="recall-login" aria-labelledby="recallLoginTitle">
+<div id="recallLoading" class="recall-loading" role="status">Checking access…</div>
+
+<section id="authView" class="recall-login" aria-labelledby="recallLoginTitle" hidden>
   <form id="recallLoginForm" class="recall-login-card">
     <h1 id="recallLoginTitle">Recall Tracker</h1>
     <p>Sign in to continue.</p>
@@ -726,10 +745,11 @@ body.edit-mode .tick-row{
   </form>
 </section>
 
-<div id="recallTrackerApp" class="app" hidden>
+<div id="appView" class="app" hidden>
   <div class="topbar">
     <div class="left-top">
       <h1 id="title">Recall Tracker</h1>
+      <p id="syncStatus" class="sync-status" role="status" aria-live="polite">Connecting…</p>
       <label class="month-check">
         <input id="wholeMonth" type="checkbox">
         <span>Check<br>whole month</span>
@@ -756,8 +776,6 @@ body.edit-mode .tick-row{
     <div id="calendar" class="calendar"></div>
     <p class="settings-note">Swipe sideways on phone. Tick rows autosave on this device.</p>
   </div>
-</div>
-
 <div id="sheetBackdrop" class="sheet-backdrop">
   <div class="sheet">
     <h2>Manage ticks</h2>
@@ -805,6 +823,7 @@ body.edit-mode .tick-row{
 </div>
   </div>
 </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -847,17 +866,20 @@ const title = document.getElementById("title");
 const monthSelect = document.getElementById("monthSelect");
 const yearSelect = document.getElementById("yearSelect");
 const wholeMonth = document.getElementById("wholeMonth");
-const trackerApp = document.getElementById("recallTrackerApp");
-const loginScreen = document.getElementById("recallLogin");
+const loadingView = document.getElementById("recallLoading");
+const trackerApp = document.getElementById("appView");
+const loginScreen = document.getElementById("authView");
 const loginForm = document.getElementById("recallLoginForm");
 const usernameInput = document.getElementById("recallUsername");
 const passwordInput = document.getElementById("recallPassword");
 const passwordToggle = document.getElementById("recallPasswordToggle");
 const loginSubmit = document.getElementById("recallLoginSubmit");
 const loginStatus = document.getElementById("recallLoginStatus");
+const syncStatus = document.getElementById("syncStatus");
 const ALLOWED_EMAIL = "onehealthgpuc@gmail.com";
 const ALLOWED_USERS = Object.freeze({ onehealthgpuc: ALLOWED_EMAIL });
 let trackerInitialized = false;
+let firestoreUnsubscribe = null;
 let pendingAuthMessage = "";
 
 function withTimeout(promise, timeoutMs, message){
@@ -872,12 +894,70 @@ function key(){
   return `${currentYear}-${String(currentMonth+1).padStart(2,"0")}`;
 }
 
+function setSyncStatus(message){
+  syncStatus.textContent = message;
+}
+
+function applyTrackerState(nextState){
+  state = nextState || {};
+  weeklyTasks = state.weeklyTasks || ["QB", "Cx + CxSO", "Mammo"];
+  monthlyRows = (state.monthlyRows || ["CEP"]).map(x => x === "Me" ? "CEP" : x);
+  Object.values(state.months || {}).forEach(month => {
+    Object.values(month.days || {}).forEach(dayObj => {
+      if("Me" in dayObj){
+        dayObj["CEP"] = dayObj["Me"];
+        delete dayObj["Me"];
+      }
+    });
+  });
+  currentMonth = state.currentMonth ?? today.getMonth();
+  currentYear = state.currentYear ?? today.getFullYear();
+  stateLoaded = true;
+}
+
+function startFirestoreSync(){
+  if(firestoreUnsubscribe) return;
+  console.info("Recall Tracker Firestore listener starting.");
+  setSyncStatus("Connecting…");
+  firestoreUnsubscribe = db.collection("recallTrackers").doc(SHARED_RECALL_DOC).onSnapshot(
+    { includeMetadataChanges:true },
+    snapshot => {
+      console.info("Recall Tracker snapshot received:", {
+        fromCache:snapshot.metadata.fromCache,
+        pendingWrites:snapshot.metadata.hasPendingWrites
+      });
+      if(snapshot.exists && snapshot.data().state){
+        applyTrackerState(snapshot.data().state);
+        if(trackerInitialized) render();
+      }
+      setSyncStatus(snapshot.metadata.fromCache ? "Offline — saved data" : "Synced");
+    },
+    error => {
+      console.error("Recall Tracker Firestore listener failed:", { code:error.code, message:error.message });
+      setSyncStatus("Sync error");
+    }
+  );
+}
+
+function stopRecallTracker(){
+  if(firestoreUnsubscribe){
+    try { firestoreUnsubscribe(); } catch(error) { console.warn("Recall Tracker listener cleanup failed:", error); }
+    firestoreUnsubscribe = null;
+  }
+  console.info("Recall Tracker cleanup complete.");
+  trackerInitialized = false;
+  stateLoaded = false;
+  currentUserEmail = null;
+  calendar.replaceChildren();
+}
+
 async function save(){
   if(!stateLoaded || !currentUserEmail) return;
 
   state.currentMonth = currentMonth;
   state.currentYear = currentYear;
   state.weeklyTasks = weeklyTasks;
+  setSyncStatus("Saving…");
 
   try{
     await db.collection("recallTrackers").doc(SHARED_RECALL_DOC).set({
@@ -886,6 +966,7 @@ async function save(){
     }, { merge:true });
   }catch(err){
     console.error("Firestore save failed:", err);
+    setSyncStatus("Offline — saved data");
 
     // emergency local backup only
     localStorage.setItem("recallTrackerStateV2_BACKUP", JSON.stringify(state));
@@ -926,24 +1007,7 @@ if(sharedDoc.exists && sharedDoc.data().state){
   }
 }
 
-        weeklyTasks = state.weeklyTasks || ["QB", "Cx + CxSO", "Mammo"];
-        monthlyRows = state.monthlyRows || ["CEP"];
-
-        monthlyRows = monthlyRows.map(x => x === "Me" ? "CEP" : x);
-
-        Object.values(state.months || {}).forEach(month => {
-          Object.values(month.days || {}).forEach(dayObj => {
-            if("Me" in dayObj){
-              dayObj["CEP"] = dayObj["Me"];
-              delete dayObj["Me"];
-            }
-          });
-        });
-
-        currentMonth = state.currentMonth ?? today.getMonth();
-        currentYear = state.currentYear ?? today.getFullYear();
-
-        stateLoaded = true;
+        applyTrackerState(state);
 
       }catch(err){
         console.error("Firestore load failed:", err);
@@ -951,12 +1015,7 @@ if(sharedDoc.exists && sharedDoc.data().state){
         const backup = localStorage.getItem("recallTrackerStateV2_BACKUP");
         state = backup ? JSON.parse(backup) : {};
 
-        weeklyTasks = state.weeklyTasks || ["QB", "Cx + CxSO", "Mammo"];
-        monthlyRows = state.monthlyRows || ["CEP"];
-        currentMonth = state.currentMonth ?? today.getMonth();
-        currentYear = state.currentYear ?? today.getFullYear();
-
-        stateLoaded = true;
+        applyTrackerState(state);
       }
 }
 
@@ -1631,12 +1690,30 @@ document.getElementById("editModeBtn").onclick = () => {
 };
 
 function showLogin(message = ""){
+  loadingView.hidden = true;
   trackerApp.hidden = true;
   loginScreen.hidden = false;
   loginStatus.textContent = message;
-  stateLoaded = false;
-  currentUserEmail = null;
   document.getElementById("signInBtn").textContent = "Sign out";
+}
+
+async function startRecallTracker(user){
+  if(trackerInitialized){
+    console.info("Recall Tracker startup skipped: already started.");
+    return;
+  }
+  console.info("Recall Tracker startup:", { projectId:firebaseConfig.projectId, email:user.email });
+  currentUserEmail = user.email;
+  document.getElementById("signInBtn").textContent = "Sign out";
+  populateControls();
+  trackerInitialized = true;
+  render();
+  loadingView.hidden = true;
+  loginScreen.hidden = true;
+  trackerApp.hidden = false;
+  startFirestoreSync();
+  await loadFromFirestore(user);
+  if(trackerInitialized) render();
 }
 
 function signInErrorMessage(error){
@@ -1698,7 +1775,13 @@ document.getElementById("signInBtn").onclick = async () => {
 };
 
 auth.onAuthStateChanged(async user => {
+  console.info("Recall Tracker authentication state resolved:", {
+    signedIn:Boolean(user),
+    email:user?.email || null,
+    authorised:String(user?.email || "").toLowerCase() === ALLOWED_EMAIL
+  });
   if(!user){
+    stopRecallTracker();
     usernameInput.value = "";
     passwordInput.value = "";
     showLogin(pendingAuthMessage);
@@ -1708,22 +1791,17 @@ auth.onAuthStateChanged(async user => {
 
   if(String(user.email || "").toLowerCase() !== ALLOWED_EMAIL){
     pendingAuthMessage = "This account is not authorised to access Recall Tracker.";
+    stopRecallTracker();
     await auth.signOut();
     return;
   }
 
   try{
-    await loadFromFirestore(user);
-    if(!trackerInitialized){
-      populateControls();
-      trackerInitialized = true;
-    }
-    render();
-    loginScreen.hidden = true;
-    trackerApp.hidden = false;
+    await startRecallTracker(user);
   }catch(error){
     console.error("Recall Tracker authentication state failed:", error);
     pendingAuthMessage = "Unable to connect. Check the internet connection and try again.";
+    stopRecallTracker();
     await auth.signOut();
   }
 });
