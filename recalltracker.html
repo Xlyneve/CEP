@@ -860,6 +860,14 @@ const ALLOWED_USERS = Object.freeze({ onehealthgpuc: ALLOWED_EMAIL });
 let trackerInitialized = false;
 let pendingAuthMessage = "";
 
+function withTimeout(promise, timeoutMs, message){
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
+}
+
 function key(){
   return `${currentYear}-${String(currentMonth+1).padStart(2,"0")}`;
 }
@@ -889,22 +897,30 @@ async function loadFromFirestore(user){
       document.getElementById("signInBtn").textContent = "Sign out";
 
       try{
-        const sharedDoc = await db.collection("recallTrackers").doc(SHARED_RECALL_DOC).get();
+        const sharedDoc = await withTimeout(
+          db.collection("recallTrackers").doc(SHARED_RECALL_DOC).get(),
+          12000,
+          "Recall data took too long to load."
+        );
 
 if(sharedDoc.exists && sharedDoc.data().state){
   state = sharedDoc.data().state;
 }else{
   // migration fallback: load old personal tracker once
-  const oldDoc = await db.collection("recallTrackers").doc(currentUserEmail).get();
+  const oldDoc = await withTimeout(
+    db.collection("recallTrackers").doc(currentUserEmail).get(),
+    12000,
+    "Recall data took too long to load."
+  );
 
   if(oldDoc.exists && oldDoc.data().state){
     state = oldDoc.data().state;
 
-    await db.collection("recallTrackers").doc(SHARED_RECALL_DOC).set({
+    await withTimeout(db.collection("recallTrackers").doc(SHARED_RECALL_DOC).set({
       state,
       migratedFrom: currentUserEmail,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge:true });
+    }, { merge:true }), 12000, "Recall data took too long to save.");
   }else{
     state = {};
   }
@@ -1624,6 +1640,9 @@ function showLogin(message = ""){
 }
 
 function signInErrorMessage(error){
+  if(error?.message === "Sign-in took too long."){
+    return "Sign-in is taking too long. Please check the connection and try again.";
+  }
   if(error?.code === "auth/network-request-failed"){
     return "Unable to connect. Check the internet connection and try again.";
   }
@@ -1655,7 +1674,11 @@ loginForm.addEventListener("submit", async event => {
   loginSubmit.textContent = "Signing in…";
   loginStatus.textContent = "";
   try{
-    await auth.signInWithEmailAndPassword(email, password);
+    await withTimeout(
+      auth.signInWithEmailAndPassword(email, password),
+      15000,
+      "Sign-in took too long."
+    );
   }catch(error){
     console.error("Recall Tracker sign-in failed:", error.code || error);
     loginStatus.textContent = signInErrorMessage(error);
