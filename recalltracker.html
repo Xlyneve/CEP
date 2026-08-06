@@ -6,7 +6,6 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js"></script>
   <script src="security.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -623,6 +622,34 @@ body.edit-mode .tick-row{
   display:none;
 }
 
+.recall-login{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:20px;
+}
+
+.recall-login-card{
+  width:min(100%, 360px);
+  padding:22px;
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:26px;
+  background:linear-gradient(145deg, rgba(255,255,255,.8), rgba(225,232,255,.54));
+  backdrop-filter:blur(28px) saturate(160%);
+  -webkit-backdrop-filter:blur(28px) saturate(160%);
+  box-shadow:var(--shadow);
+}
+
+.recall-login-card h1{ margin:0 0 6px; font-size:1.55rem; }
+.recall-login-card p{ margin:0 0 16px; color:var(--muted); font-size:.9rem; }
+.recall-login-card label{ display:block; margin:11px 0 6px; font-size:.85rem; font-weight:700; }
+.recall-login-card input{ width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.78); color:var(--ink); }
+.recall-password-row{ display:flex; gap:8px; align-items:center; }
+.recall-password-row input{ min-width:0; }
+.recall-password-toggle{ flex:0 0 auto; padding:9px 10px; font-size:.8rem; }
+.recall-login-submit{ width:100%; margin-top:16px; }
+.recall-login-status{ min-height:1.3em; margin:11px 0 0; color:#8d3d3d; font-size:.84rem; }
+
 @media(max-width:760px){
   body{padding:10px}
 
@@ -683,7 +710,23 @@ body.edit-mode .tick-row{
 </head>
 
 <body>
-<div class="app">
+<section id="recallLogin" class="recall-login" aria-labelledby="recallLoginTitle">
+  <form id="recallLoginForm" class="recall-login-card">
+    <h1 id="recallLoginTitle">Recall Tracker</h1>
+    <p>Sign in to continue.</p>
+    <label for="recallUsername">Username</label>
+    <input id="recallUsername" name="username" autocomplete="username" required>
+    <label for="recallPassword">Password</label>
+    <div class="recall-password-row">
+      <input id="recallPassword" name="password" type="password" autocomplete="current-password" required>
+      <button id="recallPasswordToggle" class="recall-password-toggle" type="button" aria-label="Show password">Show</button>
+    </div>
+    <button id="recallLoginSubmit" class="primary recall-login-submit" type="submit">Sign In</button>
+    <p id="recallLoginStatus" class="recall-login-status" role="status" aria-live="polite"></p>
+  </form>
+</section>
+
+<div id="recallTrackerApp" class="app" hidden>
   <div class="topbar">
     <div class="left-top">
       <h1 id="title">Recall Tracker</h1>
@@ -804,6 +847,18 @@ const title = document.getElementById("title");
 const monthSelect = document.getElementById("monthSelect");
 const yearSelect = document.getElementById("yearSelect");
 const wholeMonth = document.getElementById("wholeMonth");
+const trackerApp = document.getElementById("recallTrackerApp");
+const loginScreen = document.getElementById("recallLogin");
+const loginForm = document.getElementById("recallLoginForm");
+const usernameInput = document.getElementById("recallUsername");
+const passwordInput = document.getElementById("recallPassword");
+const passwordToggle = document.getElementById("recallPasswordToggle");
+const loginSubmit = document.getElementById("recallLoginSubmit");
+const loginStatus = document.getElementById("recallLoginStatus");
+const ALLOWED_EMAIL = "onehealthgpuc@gmail.com";
+const ALLOWED_USERS = Object.freeze({ onehealthgpuc: ALLOWED_EMAIL });
+let trackerInitialized = false;
+let pendingAuthMessage = "";
 
 function key(){
   return `${currentYear}-${String(currentMonth+1).padStart(2,"0")}`;
@@ -829,19 +884,9 @@ async function save(){
   }
 }
 
-async function loadFromFirestore(){
-  return new Promise((resolve) => {
-    auth.onAuthStateChanged(async user => {
-
-      if(!user){
-        document.getElementById("signInBtn").textContent = "Sign in";
-        stateLoaded = true;
-        resolve();
-        return;
-      }
-
+async function loadFromFirestore(user){
       currentUserEmail = user.email;
-      document.getElementById("signInBtn").textContent = `Signed in`;
+      document.getElementById("signInBtn").textContent = "Sign out";
 
       try{
         const sharedDoc = await db.collection("recallTrackers").doc(SHARED_RECALL_DOC).get();
@@ -883,7 +928,6 @@ if(sharedDoc.exists && sharedDoc.data().state){
         currentYear = state.currentYear ?? today.getFullYear();
 
         stateLoaded = true;
-        resolve();
 
       }catch(err){
         console.error("Firestore load failed:", err);
@@ -897,10 +941,7 @@ if(sharedDoc.exists && sharedDoc.data().state){
         currentYear = state.currentYear ?? today.getFullYear();
 
         stateLoaded = true;
-        resolve();
       }
-    });
-  });
 }
 
 function monthData(){
@@ -1573,20 +1614,95 @@ document.getElementById("editModeBtn").onclick = () => {
   document.getElementById("editModeBtn").textContent = editMode ? "Done" : "Edit";
 };
 
-document.getElementById("signInBtn").onclick = async () => {
-  const provider = new firebase.auth.GoogleAuthProvider();
+function showLogin(message = ""){
+  trackerApp.hidden = true;
+  loginScreen.hidden = false;
+  loginStatus.textContent = message;
+  stateLoaded = false;
+  currentUserEmail = null;
+  document.getElementById("signInBtn").textContent = "Sign out";
+}
 
+function signInErrorMessage(error){
+  if(error?.code === "auth/network-request-failed"){
+    return "Unable to connect. Check the internet connection and try again.";
+  }
+  if(error?.code === "auth/too-many-requests"){
+    return "Too many login attempts. Please try again later.";
+  }
+  return "Invalid username or password.";
+}
+
+passwordToggle.addEventListener("click", () => {
+  const showing = passwordInput.type === "text";
+  passwordInput.type = showing ? "password" : "text";
+  passwordToggle.textContent = showing ? "Show" : "Hide";
+  passwordToggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+});
+
+loginForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  const username = usernameInput.value.trim().toLowerCase();
+  const email = ALLOWED_USERS[username];
+  const password = passwordInput.value;
+
+  if(!email){
+    loginStatus.textContent = "Invalid username or password.";
+    return;
+  }
+
+  loginSubmit.disabled = true;
+  loginSubmit.textContent = "Signing in…";
+  loginStatus.textContent = "";
   try{
-    await auth.signInWithPopup(provider);
-  }catch(err){
-    console.error("Sign-in failed:", err);
-    alert("Sign-in failed: " + err.message);
+    await auth.signInWithEmailAndPassword(email, password);
+  }catch(error){
+    console.error("Recall Tracker sign-in failed:", error.code || error);
+    loginStatus.textContent = signInErrorMessage(error);
+  }finally{
+    passwordInput.value = "";
+    loginSubmit.disabled = false;
+    loginSubmit.textContent = "Sign In";
+  }
+});
+
+document.getElementById("signInBtn").onclick = async () => {
+  try{
+    await auth.signOut();
+  }catch(error){
+    console.error("Recall Tracker sign-out failed:", error.code || error);
   }
 };
 
-loadFromFirestore().then(() => {
-  populateControls();
-  render();
+auth.onAuthStateChanged(async user => {
+  if(!user){
+    usernameInput.value = "";
+    passwordInput.value = "";
+    showLogin(pendingAuthMessage);
+    pendingAuthMessage = "";
+    return;
+  }
+
+  if(String(user.email || "").toLowerCase() !== ALLOWED_EMAIL){
+    pendingAuthMessage = "This account is not authorised to access Recall Tracker.";
+    await auth.signOut();
+    return;
+  }
+
+  try{
+    await loadFromFirestore(user);
+    if(!trackerInitialized){
+      populateControls();
+      trackerInitialized = true;
+    }
+    render();
+    loginScreen.hidden = true;
+    trackerApp.hidden = false;
+  }catch(error){
+    console.error("Recall Tracker authentication state failed:", error);
+    pendingAuthMessage = "Unable to connect. Check the internet connection and try again.";
+    await auth.signOut();
+  }
 });
 </script>
 </body>
