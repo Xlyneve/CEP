@@ -1,4 +1,12 @@
 (function () {
+  const IMPETIGO_CARE_NOTE = `
+    <br><br><strong>If not settling:</strong><br>
+    Consider bleach baths, topical antiseptic such as hydrogen peroxide cream, and oral antibiotics when indicated.<br><br>
+    One or two sores: clean with a moist clean cloth or running tap water.<br>
+    Large sores: soak daily for at least 15 minutes in a full bath with a quarter cup of bleach added, for up to 7 days.<br><br>
+    <strong>Not included in this calculator:</strong> trimethoprim + sulfamethoxazole 24 mg/kg per dose twice daily for 5 days.
+  `;
+
   const MEDS = {
 	  customMgKg: {
   label: "Custom mg/kg calculator",
@@ -305,9 +313,10 @@
     if (selections.dosingType === "impetigo") {
       return `
         <strong>Note:</strong> Impetigo dosing.<br><br>
-        25 mg/kg/dose four times daily (maximum 1 g per dose) for 5 days.<br><br>
-        Can be taken with fruit juice.<br><br>
+        Child able to take capsules: 25 mg/kg per dose four times daily for 5 days (maximum 1 g per dose).<br>
+        Adult: 1 g four times daily for 5 days with food.<br><br>
         <strong>Source:</strong> tewhatakura.nz
+        ${IMPETIGO_CARE_NOTE}
         ${capsuleNotice}
       `;
     }
@@ -327,8 +336,8 @@
     if (type === "impetigo") {
       return {
         mode: "single",
-        frequency: "4 times daily for 5 days",
-        sigFrequency: "four times daily",
+        frequency: "4 times daily with food for 5 days",
+        sigFrequency: "four times daily with food",
         dosesPerDay: 4,
         defaultDurationDays: 5,
         doseMg: 1000,
@@ -893,6 +902,15 @@
       ]
     },
     {
+      id: "cefalexinImpetigoSchedule",
+      label: "Child impetigo indication",
+      type: "select",
+      choices: [
+        { value: "extensive", label: "Extensive / topical treatment ineffective" },
+        { value: "surroundingCellulitis", label: "Cellulitis surrounding lesion" }
+      ]
+    },
+    {
       id: "doseLevel",
       label: "Dose Level",
       type: "select",
@@ -911,11 +929,20 @@
       : "";
 
     if (selections.dosingType === "impetigo") {
+      if (patientType === "adult") {
+        return `
+          <strong>Note:</strong> For the requested adult impetigo pathway, select flucloxacillin 1 g four times daily with food for 5 days.
+          ${IMPETIGO_CARE_NOTE}
+        `;
+      }
+
       return `
-        <strong>Note:</strong> Impetigo dosing.<br><br>
-        25 mg/kg twice daily (maximum 1 g per dose) for 5 days.<br><br>
+        <strong>Note:</strong> Child impetigo dosing.<br><br>
+        Extensive disease or topical treatment ineffective: cefalexin 25 mg/kg per dose twice daily for 5 days.<br>
+        Cellulitis surrounding the lesion: cefalexin 25 mg/kg per dose three times daily for 5 days.<br><br>
         Palatable suspension, well tolerated, funded.<br><br>
         <strong>Source:</strong> tewhatakura.nz
+        ${IMPETIGO_CARE_NOTE}
         ${tabletNotice}
       `;
     }
@@ -963,6 +990,7 @@
     if (type === "impetigo") {
       const rawDose = weightKg * 25;
       const doseMg = Math.min(rawDose, 1000);
+      const dosesPerDay = selections.cefalexinImpetigoSchedule === "surroundingCellulitis" ? 3 : 2;
       const warnings = [];
 
       if (rawDose > 1000) {
@@ -971,15 +999,16 @@
 
       return {
         mode: "single",
-        frequency: "Twice daily for 5 days",
-        sigFrequency: "twice daily",
-        dosesPerDay: 2,
+        frequency: `${dosesPerDay === 3 ? "Three times" : "Twice"} daily for 5 days`,
+        sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
+        dosesPerDay,
         defaultDurationDays: 5,
         doseMg,
-        maxDailyMg: doseMg * 2,
+        maxDailyMg: doseMg * dosesPerDay,
         warnings,
         extra: [
-          `Daily total: ${formatMg(doseMg * 2)}`,
+          dosesPerDay === 3 ? "Cellulitis surrounding lesion pathway selected." : "Extensive/topical ineffective pathway selected.",
+          `Daily total: ${formatMg(doseMg * dosesPerDay)}`,
           "Source: tewhatakura.nz"
         ]
       };
@@ -1077,15 +1106,6 @@
             { value: "high", label: "High dose" },
             { value: "range", label: "Show both" }
           ]
-        },
-        {
-          id: "eryImpFreq",
-          label: "Impetigo Schedule",
-          type: "select",
-          choices: [
-            { value: "qid", label: "4 times daily" },
-            { value: "bid", label: "2 divided doses" }
-          ]
         }
       ],
       note: ({ selections, formulation, patientType }) => {
@@ -1107,8 +1127,8 @@
         if (selections.dosingType === "impetigo") {
           return `
             <strong>Note:</strong> Penicillin allergy option for impetigo.<br><br>
-            10 to 12.5 mg/kg/dose four times a day (maximum 400 mg per dose).<br>
-            Total daily dose may be given in 2 divided doses.
+            10 to 12.5 mg/kg per dose four times daily for 5 days (maximum 400 mg per dose).
+            ${IMPETIGO_CARE_NOTE}
             ${tabletNotice}
           `;
         }
@@ -1141,10 +1161,10 @@
         if (type === "impetigo") {
           return {
             mode: "single",
-            frequency: "Four times daily",
+            frequency: "Four times daily for 5 days",
             sigFrequency: "four times daily",
             dosesPerDay: 4,
-            defaultDurationDays: null,
+            defaultDurationDays: 5,
             doseMg: 400,
             maxDailyMg: 1600,
             warnings: [],
@@ -1194,7 +1214,6 @@
 
         if (type === "impetigo") {
           const doseLevel = selections.doseLevel || "low";
-          const impFreq = selections.eryImpFreq || "qid";
 
           const lowRaw = weightKg * 10;
           const highRaw = weightKg * 12.5;
@@ -1206,24 +1225,20 @@
             warnings.push("Dose capped at max single dose of 400 mg.");
           }
 
-          const frequency = impFreq === "bid"
-            ? "Twice daily (using total daily dose split into 2 doses)"
-            : "Four times daily";
-
-          const sigFrequency = impFreq === "bid" ? "twice daily" : "four times daily";
-          const dosesPerDay = impFreq === "bid" ? 2 : 4;
+          const frequency = "Four times daily for 5 days";
+          const sigFrequency = "four times daily";
+          const dosesPerDay = 4;
 
           if (doseLevel === "low") {
             const totalDaily = lowDose * 4;
-            const shownDose = impFreq === "bid" ? totalDaily / 2 : lowDose;
 
             return {
               mode: "single",
               frequency,
               sigFrequency,
               dosesPerDay,
-              defaultDurationDays: null,
-              doseMg: shownDose,
+              defaultDurationDays: 5,
+              doseMg: lowDose,
               maxDailyMg: totalDaily,
               warnings,
               extra: [`Daily total: ${formatMg(totalDaily)}`]
@@ -1232,15 +1247,14 @@
 
           if (doseLevel === "high") {
             const totalDaily = highDose * 4;
-            const shownDose = impFreq === "bid" ? totalDaily / 2 : highDose;
 
             return {
               mode: "single",
               frequency,
               sigFrequency,
               dosesPerDay,
-              defaultDurationDays: null,
-              doseMg: shownDose,
+              defaultDurationDays: 5,
+              doseMg: highDose,
               maxDailyMg: totalDaily,
               warnings,
               extra: [`Daily total: ${formatMg(totalDaily)}`]
@@ -1249,17 +1263,15 @@
 
           const lowTotalDaily = lowDose * 4;
           const highTotalDaily = highDose * 4;
-          const lowShownDose = impFreq === "bid" ? lowTotalDaily / 2 : lowDose;
-          const highShownDose = impFreq === "bid" ? highTotalDaily / 2 : highDose;
 
           return {
             mode: "range",
             frequency,
             sigFrequency,
             dosesPerDay,
-            defaultDurationDays: null,
-            lowDoseMg: lowShownDose,
-            highDoseMg: highShownDose,
+            defaultDurationDays: 5,
+            lowDoseMg: lowDose,
+            highDoseMg: highDose,
             maxDailyMg: highTotalDaily,
             warnings,
             extra: [
@@ -1807,9 +1819,24 @@ if (type === "bites") {
           return;
         }
 
+        if (
+          medKey === "cefalexin" &&
+          opt.id === "cefalexinImpetigoSchedule" &&
+          (selections.dosingType !== "impetigo" || patientType === "adult")
+        ) {
+          return;
+        }
+
+        if (
+          medKey === "cefalexin" &&
+          opt.id === "doseLevel" &&
+          selections.dosingType === "impetigo"
+        ) {
+          return;
+        }
+
         if (medKey === "erythromycin") {
           if (opt.id === "doseLevel" && selections.dosingType === "strepA") return;
-          if (opt.id === "eryImpFreq" && selections.dosingType !== "impetigo") return;
         }
 
         
@@ -1961,6 +1988,19 @@ if (opt.type === "number") {
       resultBox.innerHTML = `
         <div class="calcWarnings">
           <div>Adult Strep A first line: select Penicillin V 500 mg twice daily for 10 days.</div>
+        </div>
+      `;
+      return;
+    }
+
+    if (
+      patientType === "adult" &&
+      medKey === "cefalexin" &&
+      selections.dosingType === "impetigo"
+    ) {
+      resultBox.innerHTML = `
+        <div class="calcWarnings">
+          <div>Adult impetigo pathway: select flucloxacillin 1 g four times daily with food for 5 days.</div>
         </div>
       `;
       return;
