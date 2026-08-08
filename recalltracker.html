@@ -1107,6 +1107,7 @@ let editingTickId = null;
 let manualSaveTimer = null;
 let editMode = false;
 let tickDefinitionsNeedSave = false;
+const LOCAL_BACKUP_KEY = "recallTrackerStateV2_BACKUP";
 
 const calendar = document.getElementById("calendar");
 const title = document.getElementById("title");
@@ -1143,6 +1144,24 @@ function key(){
 
 function setSyncStatus(message){
   syncStatus.textContent = message;
+}
+
+function readLocalBackup(){
+  try{
+    const saved = localStorage.getItem(LOCAL_BACKUP_KEY);
+    return saved ? JSON.parse(saved) : null;
+  }catch(error){
+    console.warn("Recall Tracker local backup could not be read:", error);
+    return null;
+  }
+}
+
+function persistLocalBackup(){
+  try{
+    localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(state));
+  }catch(error){
+    console.warn("Recall Tracker local backup could not be saved:", error);
+  }
 }
 
 function makeTickId(){
@@ -1214,7 +1233,15 @@ function startFirestoreSync(){
         pendingWrites:snapshot.metadata.hasPendingWrites
       });
       if(snapshot.exists && snapshot.data().state){
-        applyTrackerState(snapshot.data().state);
+        const incomingState = snapshot.data().state;
+        const localVersion = Number(state.clientUpdatedAt) || 0;
+        const incomingVersion = Number(incomingState.clientUpdatedAt) || 0;
+        if(localVersion > incomingVersion){
+          setSyncStatus("Saving…");
+          return;
+        }
+        applyTrackerState(incomingState);
+        persistLocalBackup();
         if(trackerInitialized && !document.activeElement?.classList.contains("daily-manual-text")) render();
       }
       setSyncStatus(snapshot.metadata.fromCache ? "Offline — saved data" : "Synced");
@@ -1244,25 +1271,27 @@ async function save(){
   state.currentMonth = currentMonth;
   state.currentYear = currentYear;
   state.weeklyTasks = weeklyTasks;
+  state.clientUpdatedAt = Date.now();
+  persistLocalBackup();
+  const stateToSave = JSON.parse(JSON.stringify(state));
   setSyncStatus("Saving…");
 
   try{
     await db.collection("recallTrackers").doc(SHARED_RECALL_DOC).set({
-      state,
+      state:stateToSave,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge:true });
+    if(state.clientUpdatedAt === stateToSave.clientUpdatedAt) setSyncStatus("Synced");
   }catch(err){
     console.error("Firestore save failed:", err);
     setSyncStatus("Offline — saved data");
-
-    // emergency local backup only
-    localStorage.setItem("recallTrackerStateV2_BACKUP", JSON.stringify(state));
   }
 }
 
 async function loadFromFirestore(user){
       currentUserEmail = user.email;
       document.getElementById("signInBtn").textContent = "Sign out";
+      const localBackup = readLocalBackup();
 
       try{
         const sharedDoc = await withTimeout(
@@ -1272,7 +1301,10 @@ async function loadFromFirestore(user){
         );
 
 if(sharedDoc.exists && sharedDoc.data().state){
-  state = sharedDoc.data().state;
+  const remoteState = sharedDoc.data().state;
+  const localVersion = Number(localBackup?.clientUpdatedAt) || 0;
+  const remoteVersion = Number(remoteState.clientUpdatedAt) || 0;
+  state = localVersion > remoteVersion ? localBackup : remoteState;
 }else{
   // migration fallback: load old personal tracker once
   const oldDoc = await withTimeout(
@@ -1294,13 +1326,15 @@ if(sharedDoc.exists && sharedDoc.data().state){
   }
 }
 
+        const loadedLocalBackup = localBackup && state === localBackup;
         applyTrackerState(state);
+        persistLocalBackup();
+        if(loadedLocalBackup) save();
 
       }catch(err){
         console.error("Firestore load failed:", err);
 
-        const backup = localStorage.getItem("recallTrackerStateV2_BACKUP");
-        state = backup ? JSON.parse(backup) : {};
+        state = localBackup || {};
 
         applyTrackerState(state);
       }
