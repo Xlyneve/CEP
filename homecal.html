@@ -739,7 +739,7 @@ button:hover,
 .day-checklist-item input[type="checkbox"] {
   flex: 0 0 auto;
   margin: 1px 0 0;
-  accent-color: #cfaeb4;
+  accent-color: #f3d96b;
 }
 
 .day-checklist-item input[type="checkbox"]:disabled {
@@ -768,6 +768,26 @@ button:hover,
 .day-checklist-item.done .day-checklist-text {
   opacity: 0.55;
   text-decoration: line-through;
+}
+
+.day-note-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 110px;
+}
+
+.day textarea.day-note-segment {
+  min-height: 1.35em;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .day.today {
@@ -1121,6 +1141,23 @@ select option {
     html.theme-homecal input.day-checklist-text:hover,
     html.theme-homecal input.day-checklist-text:focus,
     html.theme-homecal input.day-checklist-text:active {
+      background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      outline: 0 !important;
+      color: #000 !important;
+      -webkit-text-fill-color: #000 !important;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    html.theme-homecal .day-note-flow,
+    html.theme-homecal textarea.day-note-segment,
+    html.theme-homecal textarea.day-note-segment:hover,
+    html.theme-homecal textarea.day-note-segment:focus {
       background: transparent !important;
       background-color: transparent !important;
       background-image: none !important;
@@ -1522,11 +1559,11 @@ if (note.trim()) {
       day.classList.add('today');
     }
 
-    day.innerHTML = `<div class="date-number" role="button" tabindex="0" aria-expanded="false">${getDayName(year, month, i)} ${i}</div><textarea>${note}</textarea>`;
+    day.innerHTML = `<div class="date-number" role="button" tabindex="0" aria-expanded="false">${getDayName(year, month, i)} ${i}</div>`;
     const dateNumber = day.querySelector('.date-number');
-    const textarea = day.querySelector('textarea');
     const checklist = createDayChecklist(year, month + 1, i);
-    day.insertBefore(checklist, textarea);
+    checklist._noteText = note;
+    day.appendChild(checklist);
     loadDayChecklist(checklist, year, month + 1, i);
 
     const toggleChecklistEditing = async () => {
@@ -1534,7 +1571,10 @@ if (note.trim()) {
       const isEditing = checklist.dataset.editing !== 'true';
 
       if (isEditing) {
-        ensureBlankChecklistItem(checklist._checklistItems);
+        const position = Number.isFinite(checklist._lastCaretPosition)
+          ? checklist._lastCaretPosition
+          : checklist._noteText.length;
+        ensureBlankChecklistItem(checklist._checklistItems, position);
       } else {
         checklist._checklistItems = checklist._checklistItems.filter(item =>
           String(item.text || '').trim()
@@ -1561,13 +1601,7 @@ if (note.trim()) {
       }
     });
 
-    textarea.addEventListener('input', e => {
-      autoResizeTextarea(e.target);
-      saveCalendar(year, month + 1, i, e.target.value);
-    });
-
     calendarEl.appendChild(day);
-    autoResizeTextarea(textarea);
   }
 autoResizeAllDayTextareas();
 
@@ -1599,23 +1633,27 @@ function createDayChecklist(year, month, day) {
   panel.dataset.editing = 'false';
 
   const itemsEl = document.createElement('div');
-  itemsEl.className = 'day-checklist-items';
+  itemsEl.className = 'day-checklist-items day-note-flow';
   panel.appendChild(itemsEl);
   return panel;
 }
 
-function createBlankChecklistItem() {
+function createBlankChecklistItem(position = 0) {
   return {
     id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
     text: '',
-    checked: false
+    checked: false,
+    position
   };
 }
 
-function ensureBlankChecklistItem(items) {
-  if (!items.some(item => !String(item.text || '').trim())) {
-    items.push(createBlankChecklistItem());
+function ensureBlankChecklistItem(items, position) {
+  const existingBlank = items.find(item => !String(item.text || '').trim());
+  if (existingBlank) {
+    existingBlank.position = position;
+    return;
   }
+  items.push(createBlankChecklistItem(position));
 }
 
 function loadDayChecklist(panel, year, month, day) {
@@ -1628,6 +1666,9 @@ function loadDayChecklist(panel, year, month, day) {
       const snap = await getDoc(ref);
       const data = snap.exists() ? snap.data() : {};
       panel._checklistItems = Array.isArray(data.items) ? data.items : [];
+      panel._checklistItems.forEach(item => {
+        if (!Number.isFinite(item.position)) item.position = panel._noteText.length;
+      });
       panel.dataset.loaded = 'true';
       renderDayChecklistItems(panel, year, month, day);
     } catch (error) {
@@ -1646,7 +1687,12 @@ async function saveDayChecklist(year, month, day, items) {
   try {
     const savedItems = items
       .filter(item => String(item.text || '').trim())
-      .map(item => ({ id: item.id, text: item.text, checked: !!item.checked }));
+      .map(item => ({
+        id: item.id,
+        text: item.text,
+        checked: !!item.checked,
+        position: Number.isFinite(item.position) ? item.position : 0
+      }));
     await setDoc(ref, { items: savedItems, updatedAt: Date.now() }, { merge: true });
   } catch (error) {
     console.error('Unable to save day checklist:', error);
@@ -1657,14 +1703,74 @@ function renderDayChecklistItems(panel, year, month, day) {
   const itemsEl = panel.querySelector('.day-checklist-items');
   const items = panel._checklistItems || [];
   const isEditing = panel.dataset.editing === 'true';
+  const noteText = panel._noteText || '';
   itemsEl.innerHTML = '';
 
-  items.forEach((item, itemIndex) => {
-    if (!isEditing && !String(item.text || '').trim()) return;
+  const orderedItems = items
+    .map((item, originalIndex) => ({ item, originalIndex }))
+    .filter(({ item }) => isEditing || String(item.text || '').trim())
+    .sort((a, b) => {
+      const positionDifference = a.item.position - b.item.position;
+      return positionDifference || a.originalIndex - b.originalIndex;
+    });
+
+  const getAbsoluteCaretPosition = textarea => {
+    let position = 0;
+    for (const child of itemsEl.children) {
+      if (child === textarea) return position + textarea.selectionStart;
+      if (child.classList.contains('day-note-segment')) position += child.value.length;
+    }
+    return noteText.length;
+  };
+
+  const syncNoteAndPositions = () => {
+    let combinedNote = '';
+    for (const child of itemsEl.children) {
+      if (child.classList.contains('day-note-segment')) {
+        combinedNote += child.value;
+      } else if (child._checklistItem) {
+        child._checklistItem.position = combinedNote.length;
+      }
+    }
+    panel._noteText = combinedNote;
+  };
+
+  const appendNoteSegment = value => {
+    const segment = document.createElement('textarea');
+    segment.className = 'day-note-segment';
+    segment.value = value;
+    segment.setAttribute('aria-label', 'Day note');
+
+    const rememberCaret = () => {
+      panel._lastCaretPosition = getAbsoluteCaretPosition(segment);
+    };
+
+    segment.addEventListener('focus', rememberCaret);
+    segment.addEventListener('click', rememberCaret);
+    segment.addEventListener('keyup', rememberCaret);
+    segment.addEventListener('select', rememberCaret);
+    segment.addEventListener('input', () => {
+      syncNoteAndPositions();
+      rememberCaret();
+      autoResizeTextarea(segment);
+      void saveCalendar(year, month, day, panel._noteText);
+      void saveDayChecklist(year, month, day, items);
+    });
+
+    itemsEl.appendChild(segment);
+    autoResizeTextarea(segment);
+  };
+
+  let noteCursor = 0;
+  orderedItems.forEach(({ item, originalIndex }) => {
+    const itemPosition = Math.max(noteCursor, Math.min(noteText.length, item.position));
+    appendNoteSegment(noteText.slice(noteCursor, itemPosition));
 
     const row = document.createElement('div');
     row.className = 'day-checklist-item';
     row.classList.toggle('done', !!item.checked);
+    row._checklistItem = item;
+    noteCursor = itemPosition;
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -1698,13 +1804,13 @@ function renderDayChecklistItems(panel, year, month, day) {
       deletingRow = true;
       event.preventDefault();
 
-      const previousIndex = itemIndex - 1;
-      items.splice(itemIndex, 1);
+      const previousItemIndex = originalIndex - 1;
+      items.splice(originalIndex, 1);
       renderDayChecklistItems(panel, year, month, day);
       void saveDayChecklist(year, month, day, items);
 
       const inputs = panel.querySelectorAll('.day-checklist-text');
-      const target = previousIndex >= 0 ? inputs[previousIndex] : inputs[0];
+      const target = previousItemIndex >= 0 ? inputs[previousItemIndex] : inputs[0];
       if (target) {
         target.focus();
         target.setSelectionRange(target.value.length, target.value.length);
@@ -1721,10 +1827,10 @@ function renderDayChecklistItems(panel, year, month, day) {
       if (e.key !== 'Enter') return;
       e.preventDefault();
       item.text = text.value;
-      items.splice(itemIndex + 1, 0, createBlankChecklistItem());
+      items.splice(originalIndex + 1, 0, createBlankChecklistItem(item.position));
       renderDayChecklistItems(panel, year, month, day);
       void saveDayChecklist(year, month, day, items);
-      const nextInput = panel.querySelectorAll('.day-checklist-text')[itemIndex + 1];
+      const nextInput = panel.querySelectorAll('.day-checklist-text')[originalIndex + 1];
       if (nextInput) nextInput.focus();
     });
     text.addEventListener('beforeinput', e => {
@@ -1740,6 +1846,8 @@ function renderDayChecklistItems(panel, year, month, day) {
     row.append(checkbox, text);
     itemsEl.appendChild(row);
   });
+
+  appendNoteSegment(noteText.slice(noteCursor));
 }
 
 
