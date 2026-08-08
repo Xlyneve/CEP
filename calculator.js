@@ -1908,10 +1908,19 @@ if (opt.type === "number") {
       return;
     }
 
+    const med = MEDS[medKey];
+    const selections = getMedicationSelections(medKey);
+    const selectedStrength = getSelectedStrengthForMed(medKey);
+    const formulation = getFormulationInfo(selectedStrength);
+    const isTabletFormulation = formulation && formulation.type === "tablet";
+    const canUseAdultFixedDose =
+      patientType === "adult" &&
+      typeof med.adultCalc === "function";
+
     if (
-      (ageValue && (!isFinite(ageMonths) || ageMonths < 0)) ||
-      (weightValue && (!isFinite(weightKg) || weightKg <= 0)) ||
-      (durationValue && (!isFinite(durationDaysInput) || durationDaysInput <= 0))
+      (patientType !== "adult" && ageValue && (!isFinite(ageMonths) || ageMonths < 0)) ||
+      (!canUseAdultFixedDose && weightValue && (!isFinite(weightKg) || weightKg <= 0)) ||
+      (!canUseAdultFixedDose && durationValue && (!isFinite(durationDaysInput) || durationDaysInput <= 0))
     ) {
       resultBox.innerHTML = `
         <div class="calcWarnings">
@@ -1921,14 +1930,9 @@ if (opt.type === "number") {
       return;
     }
 
-    const med = MEDS[medKey];
-    const selections = getMedicationSelections(medKey);
-    const selectedStrength = getSelectedStrengthForMed(medKey);
-    const formulation = getFormulationInfo(selectedStrength);
-
     const warnings = [];
 
-    if (!isNaN(ageMonths) && med.age) {
+    if (patientType !== "adult" && !isNaN(ageMonths) && med.age) {
       const minMonths = med.age.minMonths ?? 0;
       const maxMonths = med.age.maxYears != null ? med.age.maxYears * 12 : Infinity;
 
@@ -1940,20 +1944,11 @@ if (opt.type === "number") {
     }
 
     const hasValidWeight = isFinite(weightKg) && weightKg > 0;
-    const isTabletFormulation = formulation && formulation.type === "tablet";
 
     const canUseChildTabletRule =
       patientType === "child" &&
       isTabletFormulation &&
       typeof med.tabletAgeCalc === "function";
-
-    const canUseAdultFixedDose =
-      patientType === "adult" &&
-      typeof med.adultCalc === "function" &&
-      (
-        isTabletFormulation ||
-        (medKey === "penicillinV" && selections.dosingType === "strepA")
-      );
 
     let result = null;
 
@@ -2467,18 +2462,16 @@ window.lastDoseForPlan = {
     const ageLabel = document.getElementById("ageMonths")?.closest("label");
     const weightLabel = document.getElementById("weight")?.closest("label");
     const medKey = document.getElementById("medicationSelect")?.value || "";
-    const dosingType = document.getElementById("dosingType")?.value || "";
-    const isAdultStrepPenV =
+    const hasAdultFixedDose =
       patientType === "adult" &&
-      medKey === "penicillinV" &&
-      dosingType === "strepA";
+      typeof MEDS[medKey]?.adultCalc === "function";
 
     if (!ageLabel || !weightLabel) return;
 
     if (patientType === "adult") {
       ageLabel.style.display = "none";
-      weightLabel.style.display = isAdultStrepPenV ? "none" : "";
-      weightLabel.style.opacity = isAdultStrepPenV ? "1" : "0.7";
+      weightLabel.style.display = hasAdultFixedDose ? "none" : "";
+      weightLabel.style.opacity = hasAdultFixedDose ? "1" : "0.7";
     } else {
       ageLabel.style.display = "";
       weightLabel.style.display = "";
