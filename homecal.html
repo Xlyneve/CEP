@@ -715,15 +715,10 @@ button:hover,
 }
 
 .day-checklist {
-  display: none;
-  margin: 0 0 6px;
-  padding: 5px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.day-checklist.open {
   display: block;
+  margin: 0 0 6px;
+  padding: 0;
+  background: transparent;
 }
 
 .day-checklist-items {
@@ -747,6 +742,17 @@ button:hover,
   accent-color: #cfaeb4;
 }
 
+.day-checklist-item input[type="checkbox"]:disabled {
+  opacity: 1;
+}
+
+.day-checklist-label {
+  flex: 1;
+  min-width: 0;
+  color: #111;
+  overflow-wrap: anywhere;
+}
+
 .day-checklist-text {
   flex: 1;
   min-width: 0;
@@ -758,11 +764,7 @@ button:hover,
   font: inherit;
 }
 
-.day-checklist-item.done {
-  border-radius: 4px;
-  background: rgba(207, 174, 180, 0.18);
-}
-
+.day-checklist-item.done .day-checklist-label,
 .day-checklist-item.done .day-checklist-text {
   opacity: 0.55;
   text-decoration: line-through;
@@ -1095,6 +1097,24 @@ select option {
   <link rel="stylesheet" href="homecal-theme.css?v=9">
   <link rel="stylesheet" href="affected-pages-theme.css?v=17">
   <style>
+    /* Keep the always-visible checklist visually part of the day card. */
+    html.theme-homecal .day-checklist {
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+
+    html.theme-homecal .day-checklist-text,
+    html.theme-homecal .day-checklist-text:focus {
+      background: transparent !important;
+      background-image: none !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      outline: 0 !important;
+    }
+
     /* Softly raised calendar days; placed after shared theme overrides. */
     html.theme-homecal .day:not(.empty) {
       border: 1px solid rgba(255, 255, 255, 0.88) !important;
@@ -1488,18 +1508,37 @@ if (note.trim()) {
     const textarea = day.querySelector('textarea');
     const checklist = createDayChecklist(year, month + 1, i);
     day.insertBefore(checklist, textarea);
+    loadDayChecklist(checklist, year, month + 1, i);
 
-    const toggleChecklist = () => {
-      const isOpen = checklist.classList.toggle('open');
-      dateNumber.setAttribute('aria-expanded', String(isOpen));
-      if (isOpen) loadDayChecklist(checklist, year, month + 1, i);
+    const toggleChecklistEditing = async () => {
+      await loadDayChecklist(checklist, year, month + 1, i);
+      const isEditing = checklist.dataset.editing !== 'true';
+
+      if (isEditing) {
+        ensureBlankChecklistItem(checklist._checklistItems);
+      } else {
+        checklist._checklistItems = checklist._checklistItems.filter(item =>
+          String(item.text || '').trim()
+        );
+        await saveDayChecklist(year, month + 1, i, checklist._checklistItems);
+      }
+
+      checklist.dataset.editing = String(isEditing);
+      dateNumber.setAttribute('aria-expanded', String(isEditing));
+      renderDayChecklistItems(checklist, year, month + 1, i);
+
+      if (isEditing) {
+        const blankInput = [...checklist.querySelectorAll('.day-checklist-text')]
+          .find(input => !input.value);
+        if (blankInput) blankInput.focus();
+      }
     };
 
-    dateNumber.addEventListener('click', toggleChecklist);
+    dateNumber.addEventListener('click', toggleChecklistEditing);
     dateNumber.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        toggleChecklist();
+        toggleChecklistEditing();
       }
     });
 
@@ -1538,6 +1577,7 @@ function getChecklistDateKey(year, month, day) {
 function createDayChecklist(year, month, day) {
   const panel = document.createElement('div');
   panel.className = 'day-checklist';
+  panel.dataset.editing = 'false';
 
   const itemsEl = document.createElement('div');
   itemsEl.className = 'day-checklist-items';
@@ -1559,23 +1599,27 @@ function ensureBlankChecklistItem(items) {
   }
 }
 
-async function loadDayChecklist(panel, year, month, day) {
-  if (panel.dataset.loaded === 'true' || panel.dataset.loading === 'true') return;
-  panel.dataset.loading = 'true';
+function loadDayChecklist(panel, year, month, day) {
+  if (panel.dataset.loaded === 'true') return Promise.resolve();
+  if (panel._loadPromise) return panel._loadPromise;
 
-  try {
-    const ref = doc(db, 'dayChecklists', getChecklistDateKey(year, month, day));
-    const snap = await getDoc(ref);
-    const data = snap.exists() ? snap.data() : {};
-    panel._checklistItems = Array.isArray(data.items) ? data.items : [];
-    ensureBlankChecklistItem(panel._checklistItems);
-    panel.dataset.loaded = 'true';
-    renderDayChecklistItems(panel, year, month, day);
-  } catch (error) {
-    console.error('Unable to load day checklist:', error);
-  } finally {
-    delete panel.dataset.loading;
-  }
+  panel._loadPromise = (async () => {
+    try {
+      const ref = doc(db, 'dayChecklists', getChecklistDateKey(year, month, day));
+      const snap = await getDoc(ref);
+      const data = snap.exists() ? snap.data() : {};
+      panel._checklistItems = Array.isArray(data.items) ? data.items : [];
+      panel.dataset.loaded = 'true';
+      renderDayChecklistItems(panel, year, month, day);
+    } catch (error) {
+      panel._checklistItems = [];
+      console.error('Unable to load day checklist:', error);
+    } finally {
+      panel._loadPromise = null;
+    }
+  })();
+
+  return panel._loadPromise;
 }
 
 async function saveDayChecklist(year, month, day, items) {
@@ -1593,9 +1637,12 @@ async function saveDayChecklist(year, month, day, items) {
 function renderDayChecklistItems(panel, year, month, day) {
   const itemsEl = panel.querySelector('.day-checklist-items');
   const items = panel._checklistItems || [];
+  const isEditing = panel.dataset.editing === 'true';
   itemsEl.innerHTML = '';
 
-  items.forEach(item => {
+  items.forEach((item, itemIndex) => {
+    if (!isEditing && !String(item.text || '').trim()) return;
+
     const row = document.createElement('div');
     row.className = 'day-checklist-item';
     row.classList.toggle('done', !!item.checked);
@@ -1603,11 +1650,26 @@ function renderDayChecklistItems(panel, year, month, day) {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = !!item.checked;
-    checkbox.addEventListener('change', async () => {
-      item.checked = checkbox.checked;
-      row.classList.toggle('done', item.checked);
-      await saveDayChecklist(year, month, day, items);
-    });
+    if (isEditing) {
+      checkbox.addEventListener('change', async () => {
+        item.checked = checkbox.checked;
+        row.classList.toggle('done', item.checked);
+        await saveDayChecklist(year, month, day, items);
+      });
+    } else {
+      checkbox.tabIndex = -1;
+      checkbox.setAttribute('aria-disabled', 'true');
+      checkbox.addEventListener('click', e => e.preventDefault());
+    }
+
+    if (!isEditing) {
+      const label = document.createElement('span');
+      label.className = 'day-checklist-label';
+      label.textContent = item.text || '';
+      row.append(checkbox, label);
+      itemsEl.appendChild(row);
+      return;
+    }
 
     const text = document.createElement('input');
     text.type = 'text';
@@ -1617,24 +1679,48 @@ function renderDayChecklistItems(panel, year, month, day) {
     text.addEventListener('input', () => {
       item.text = text.value;
     });
-    text.addEventListener('keydown', e => {
+    let deletingRow = false;
+    const deleteEmptyRow = async event => {
+      if (deletingRow || text.value !== '') return false;
+      deletingRow = true;
+      event.preventDefault();
+
+      const previousIndex = itemIndex - 1;
+      items.splice(itemIndex, 1);
+      await saveDayChecklist(year, month, day, items);
+      renderDayChecklistItems(panel, year, month, day);
+
+      const inputs = panel.querySelectorAll('.day-checklist-text');
+      const target = previousIndex >= 0 ? inputs[previousIndex] : inputs[0];
+      if (target) {
+        target.focus();
+        target.setSelectionRange(target.value.length, target.value.length);
+      }
+      return true;
+    };
+
+    text.addEventListener('keydown', async e => {
+      if (e.key === 'Backspace' && text.value === '') {
+        await deleteEmptyRow(e);
+        return;
+      }
+
       if (e.key !== 'Enter') return;
       e.preventDefault();
       item.text = text.value;
-      ensureBlankChecklistItem(items);
-      saveDayChecklist(year, month, day, items);
+      items.splice(itemIndex + 1, 0, createBlankChecklistItem());
+      await saveDayChecklist(year, month, day, items);
       renderDayChecklistItems(panel, year, month, day);
-      const blankInput = [...panel.querySelectorAll('.day-checklist-text')].at(-1);
-      if (blankInput) blankInput.focus();
+      const nextInput = panel.querySelectorAll('.day-checklist-text')[itemIndex + 1];
+      if (nextInput) nextInput.focus();
+    });
+    text.addEventListener('beforeinput', async e => {
+      if (e.inputType === 'deleteContentBackward' && text.value === '') {
+        await deleteEmptyRow(e);
+      }
     });
     text.addEventListener('blur', async () => {
       item.text = text.value;
-      if (!item.text.trim()) {
-        const index = items.findIndex(candidate => candidate.id === item.id);
-        if (index !== -1) items.splice(index, 1);
-        ensureBlankChecklistItem(items);
-        renderDayChecklistItems(panel, year, month, day);
-      }
       await saveDayChecklist(year, month, day, items);
     });
 
