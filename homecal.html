@@ -724,26 +724,45 @@ button:hover,
 .day-checklist-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
 }
 
 .day-checklist-item {
   display: flex;
-  align-items: flex-start;
-  gap: 4px;
-  font-family: Tahoma, sans-serif;
-  font-size: 8.5pt;
+  align-items: baseline;
+  gap: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  font-family: 'champ', sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.35em;
   color: #111;
 }
 
-.day-checklist-item input[type="checkbox"] {
+.day-checklist-symbol {
+  position: relative;
   flex: 0 0 auto;
-  margin: 1px 0 0;
-  accent-color: #f3d96b;
+  margin: 0 0.25em 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
 }
 
-.day-checklist-item input[type="checkbox"]:disabled {
-  opacity: 1;
+.day-checklist-symbol::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.day-checklist-symbol.checked {
+  color: #e2bd35;
 }
 
 .day-checklist-label {
@@ -757,6 +776,7 @@ button:hover,
   flex: 1;
   min-width: 0;
   padding: 0;
+  margin: 0;
   border: 0;
   outline: 0;
   background: transparent;
@@ -1150,6 +1170,8 @@ select option {
       outline: 0 !important;
       color: #000 !important;
       -webkit-text-fill-color: #000 !important;
+      padding: 0 !important;
+      margin: 0 !important;
       -webkit-appearance: none;
       appearance: none;
     }
@@ -1772,13 +1794,29 @@ function renderDayChecklistItems(panel, year, month, day) {
     row._checklistItem = item;
     noteCursor = itemPosition;
 
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.checked = !!item.checked;
-    checkbox.addEventListener('change', () => {
-      item.checked = checkbox.checked;
+    const checkbox = document.createElement('span');
+    checkbox.className = 'day-checklist-symbol';
+    checkbox.classList.toggle('checked', !!item.checked);
+    checkbox.textContent = item.checked ? '☑' : '☐';
+    checkbox.setAttribute('role', 'checkbox');
+    checkbox.setAttribute('tabindex', '0');
+    checkbox.setAttribute('aria-checked', String(!!item.checked));
+
+    const toggleCheckbox = () => {
+      item.checked = !item.checked;
+      checkbox.textContent = item.checked ? '☑' : '☐';
+      checkbox.classList.toggle('checked', item.checked);
+      checkbox.setAttribute('aria-checked', String(item.checked));
       row.classList.toggle('done', item.checked);
       void saveDayChecklist(year, month, day, items);
+    };
+
+    checkbox.addEventListener('click', toggleCheckbox);
+    checkbox.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleCheckbox();
+      }
     });
 
     if (!isEditing) {
