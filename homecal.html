@@ -714,36 +714,27 @@ button:hover,
   user-select: none;
 }
 
-.day-checklist {
-  display: block;
-  margin: 0 0 6px;
-  padding: 0;
-  background: transparent;
-}
-
-.day-checklist-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.day-checklist-item {
-  display: flex;
-  align-items: baseline;
-  gap: 0;
-  min-height: 0;
+.day-note-editor {
+  width: 100%;
+  min-height: 1.35em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   margin: 0;
   padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  color: #000;
   font-family: 'champ', sans-serif;
   font-size: 9.5pt;
-  line-height: 1.35em;
-  color: #111;
+  line-height: normal;
 }
 
-.day-checklist-symbol {
-  position: relative;
-  flex: 0 0 auto;
-  margin: 0 0.25em 0 0;
+.day-note-tick {
+  display: inline;
+  margin: 0;
   padding: 0;
   border: 0;
   background: transparent;
@@ -751,63 +742,10 @@ button:hover,
   font: inherit;
   line-height: inherit;
   cursor: pointer;
-  touch-action: manipulation;
-  user-select: none;
 }
 
-.day-checklist-symbol::before {
-  content: "";
-  position: absolute;
-  inset: -6px;
-}
-
-.day-checklist-symbol.checked {
-  color: #e2bd35;
-}
-
-.day-checklist-label {
-  flex: 1;
-  min-width: 0;
-  color: #111;
-  overflow-wrap: anywhere;
-}
-
-.day-checklist-text {
-  flex: 1;
-  min-width: 0;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #111;
-  font: inherit;
-}
-
-.day-checklist-item.done .day-checklist-label,
-.day-checklist-item.done .day-checklist-text {
-  opacity: 0.55;
-  text-decoration: line-through;
-}
-
-.day-note-flow {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 110px;
-}
-
-.day textarea.day-note-segment {
-  min-height: 1.35em;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+.day-note-tick.checked {
+  color: #d4ad22;
 }
 
 .day.today {
@@ -1137,30 +1075,10 @@ select option {
   <link rel="stylesheet" href="homecal-theme.css?v=9">
   <link rel="stylesheet" href="affected-pages-theme.css?v=17">
   <style>
-    /* Keep the always-visible checklist visually part of the day card. */
-    html.theme-homecal .day-checklist {
-      background: transparent !important;
-      background-color: transparent !important;
-      background-image: none !important;
-      border: 0 !important;
-      box-shadow: none !important;
-      padding: 0 !important;
-    }
-
-    html.theme-homecal .day-checklist-items,
-    html.theme-homecal .day-checklist-item,
-    html.theme-homecal .day-checklist-item.done {
-      background: transparent !important;
-      background-color: transparent !important;
-      background-image: none !important;
-      border: 0 !important;
-      box-shadow: none !important;
-    }
-
-    html.theme-homecal input.day-checklist-text,
-    html.theme-homecal input.day-checklist-text:hover,
-    html.theme-homecal input.day-checklist-text:focus,
-    html.theme-homecal input.day-checklist-text:active {
+    /* The entire day note is one transparent editable text surface. */
+    html.theme-homecal .day-note-editor,
+    html.theme-homecal .day-note-editor:hover,
+    html.theme-homecal .day-note-editor:focus {
       background: transparent !important;
       background-color: transparent !important;
       background-image: none !important;
@@ -1172,25 +1090,6 @@ select option {
       -webkit-text-fill-color: #000 !important;
       padding: 0 !important;
       margin: 0 !important;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-
-    html.theme-homecal .day-note-flow,
-    html.theme-homecal textarea.day-note-segment,
-    html.theme-homecal textarea.day-note-segment:hover,
-    html.theme-homecal textarea.day-note-segment:focus {
-      background: transparent !important;
-      background-color: transparent !important;
-      background-image: none !important;
-      border: 0 !important;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      outline: 0 !important;
-      color: #000 !important;
-      -webkit-text-fill-color: #000 !important;
-      -webkit-appearance: none;
-      appearance: none;
     }
 
     /* Softly raised calendar days; placed after shared theme overrides. */
@@ -1581,47 +1480,21 @@ if (note.trim()) {
       day.classList.add('today');
     }
 
-    day.innerHTML = `<div class="date-number" role="button" tabindex="0" aria-expanded="false">${getDayName(year, month, i)} ${i}</div>`;
+    day.innerHTML = `<div class="date-number" role="button" tabindex="0">${getDayName(year, month, i)} ${i}</div>`;
     const dateNumber = day.querySelector('.date-number');
-    const checklist = createDayChecklist(year, month + 1, i);
-    checklist._noteText = note;
-    day.appendChild(checklist);
-    loadDayChecklist(checklist, year, month + 1, i);
+    const editor = createDayNoteEditor(note, year, month + 1, i, day);
+    day.appendChild(editor);
 
-    const toggleChecklistEditing = async () => {
-      await loadDayChecklist(checklist, year, month + 1, i);
-      const isEditing = checklist.dataset.editing !== 'true';
-
-      if (isEditing) {
-        const position = Number.isFinite(checklist._lastCaretPosition)
-          ? checklist._lastCaretPosition
-          : checklist._noteText.length;
-        ensureBlankChecklistItem(checklist._checklistItems, position);
-      } else {
-        checklist._checklistItems = checklist._checklistItems.filter(item =>
-          String(item.text || '').trim()
-        );
-        void saveDayChecklist(year, month + 1, i, checklist._checklistItems);
-      }
-
-      checklist.dataset.editing = String(isEditing);
-      dateNumber.setAttribute('aria-expanded', String(isEditing));
-      renderDayChecklistItems(checklist, year, month + 1, i);
-
-      if (isEditing) {
-        const blankInput = [...checklist.querySelectorAll('.day-checklist-text')]
-          .find(input => !input.value);
-        if (blankInput) blankInput.focus();
-      }
-    };
-
-    dateNumber.addEventListener('click', toggleChecklistEditing);
+    const insertTick = () => insertTickAtCaret(editor, year, month + 1, i, day);
+    dateNumber.addEventListener('click', insertTick);
     dateNumber.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        toggleChecklistEditing();
+        insertTick();
       }
     });
+
+    void migrateLegacyChecklist(editor, year, month + 1, i, day);
 
     calendarEl.appendChild(day);
   }
@@ -1649,246 +1522,246 @@ function getChecklistDateKey(year, month, day) {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-function createDayChecklist(year, month, day) {
-  const panel = document.createElement('div');
-  panel.className = 'day-checklist';
-  panel.dataset.editing = 'false';
-
-  const itemsEl = document.createElement('div');
-  itemsEl.className = 'day-checklist-items day-note-flow';
-  panel.appendChild(itemsEl);
-  return panel;
+function getDayNoteText(editor) {
+  return editor.innerText.replace(/\r/g, '');
 }
 
-function createBlankChecklistItem(position = 0) {
-  return {
-    id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
-    text: '',
-    checked: false,
-    position
-  };
+function getNodeTextLength(node) {
+  if (node.nodeType === Node.TEXT_NODE) return node.nodeValue.length;
+  if (node.nodeName === 'BR') return 1;
+  return [...node.childNodes].reduce((total, child) => total + getNodeTextLength(child), 0);
 }
 
-function ensureBlankChecklistItem(items, position) {
-  const existingBlank = items.find(item => !String(item.text || '').trim());
-  if (existingBlank) {
-    existingBlank.position = position;
-    return;
+function getCaretOffset(editor) {
+  const selection = window.getSelection();
+  if (!selection.rangeCount || !editor.contains(selection.focusNode)) {
+    return editor._lastCaretPosition ?? getDayNoteText(editor).length;
   }
-  items.push(createBlankChecklistItem(position));
-}
 
-function loadDayChecklist(panel, year, month, day) {
-  if (panel.dataset.loaded === 'true') return Promise.resolve();
-  if (panel._loadPromise) return panel._loadPromise;
+  let offset = 0;
+  const targetNode = selection.focusNode;
+  const targetOffset = selection.focusOffset;
+  let found = false;
 
-  panel._loadPromise = (async () => {
-    try {
-      const ref = doc(db, 'dayChecklists', getChecklistDateKey(year, month, day));
-      const snap = await getDoc(ref);
-      const data = snap.exists() ? snap.data() : {};
-      panel._checklistItems = Array.isArray(data.items) ? data.items : [];
-      panel._checklistItems.forEach(item => {
-        if (!Number.isFinite(item.position)) item.position = panel._noteText.length;
-      });
-      panel.dataset.loaded = 'true';
-      renderDayChecklistItems(panel, year, month, day);
-    } catch (error) {
-      panel._checklistItems = [];
-      console.error('Unable to load day checklist:', error);
-    } finally {
-      panel._loadPromise = null;
-    }
-  })();
+  const visit = node => {
+    if (found) return;
 
-  return panel._loadPromise;
-}
-
-async function saveDayChecklist(year, month, day, items) {
-  const ref = doc(db, 'dayChecklists', getChecklistDateKey(year, month, day));
-  try {
-    const savedItems = items
-      .filter(item => String(item.text || '').trim())
-      .map(item => ({
-        id: item.id,
-        text: item.text,
-        checked: !!item.checked,
-        position: Number.isFinite(item.position) ? item.position : 0
-      }));
-    await setDoc(ref, { items: savedItems, updatedAt: Date.now() }, { merge: true });
-  } catch (error) {
-    console.error('Unable to save day checklist:', error);
-  }
-}
-
-function renderDayChecklistItems(panel, year, month, day) {
-  const itemsEl = panel.querySelector('.day-checklist-items');
-  const items = panel._checklistItems || [];
-  const isEditing = panel.dataset.editing === 'true';
-  const noteText = panel._noteText || '';
-  itemsEl.innerHTML = '';
-
-  const orderedItems = items
-    .map((item, originalIndex) => ({ item, originalIndex }))
-    .filter(({ item }) => isEditing || String(item.text || '').trim())
-    .sort((a, b) => {
-      const positionDifference = a.item.position - b.item.position;
-      return positionDifference || a.originalIndex - b.originalIndex;
-    });
-
-  const getAbsoluteCaretPosition = textarea => {
-    let position = 0;
-    for (const child of itemsEl.children) {
-      if (child === textarea) return position + textarea.selectionStart;
-      if (child.classList.contains('day-note-segment')) position += child.value.length;
-    }
-    return noteText.length;
-  };
-
-  const syncNoteAndPositions = () => {
-    let combinedNote = '';
-    for (const child of itemsEl.children) {
-      if (child.classList.contains('day-note-segment')) {
-        combinedNote += child.value;
-      } else if (child._checklistItem) {
-        child._checklistItem.position = combinedNote.length;
+    if (node === targetNode) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        offset += Math.min(targetOffset, node.nodeValue.length);
+      } else {
+        for (let index = 0; index < targetOffset; index++) {
+          offset += getNodeTextLength(node.childNodes[index]);
+        }
       }
-    }
-    panel._noteText = combinedNote;
-  };
-
-  const appendNoteSegment = value => {
-    const segment = document.createElement('textarea');
-    segment.className = 'day-note-segment';
-    segment.value = value;
-    segment.setAttribute('aria-label', 'Day note');
-
-    const rememberCaret = () => {
-      panel._lastCaretPosition = getAbsoluteCaretPosition(segment);
-    };
-
-    segment.addEventListener('focus', rememberCaret);
-    segment.addEventListener('click', rememberCaret);
-    segment.addEventListener('keyup', rememberCaret);
-    segment.addEventListener('select', rememberCaret);
-    segment.addEventListener('input', () => {
-      syncNoteAndPositions();
-      rememberCaret();
-      autoResizeTextarea(segment);
-      void saveCalendar(year, month, day, panel._noteText);
-      void saveDayChecklist(year, month, day, items);
-    });
-
-    itemsEl.appendChild(segment);
-    autoResizeTextarea(segment);
-  };
-
-  let noteCursor = 0;
-  orderedItems.forEach(({ item, originalIndex }) => {
-    const itemPosition = Math.max(noteCursor, Math.min(noteText.length, item.position));
-    appendNoteSegment(noteText.slice(noteCursor, itemPosition));
-
-    const row = document.createElement('div');
-    row.className = 'day-checklist-item';
-    row.classList.toggle('done', !!item.checked);
-    row._checklistItem = item;
-    noteCursor = itemPosition;
-
-    const checkbox = document.createElement('span');
-    checkbox.className = 'day-checklist-symbol';
-    checkbox.classList.toggle('checked', !!item.checked);
-    checkbox.textContent = item.checked ? '☑' : '☐';
-    checkbox.setAttribute('role', 'checkbox');
-    checkbox.setAttribute('tabindex', '0');
-    checkbox.setAttribute('aria-checked', String(!!item.checked));
-
-    const toggleCheckbox = () => {
-      item.checked = !item.checked;
-      checkbox.textContent = item.checked ? '☑' : '☐';
-      checkbox.classList.toggle('checked', item.checked);
-      checkbox.setAttribute('aria-checked', String(item.checked));
-      row.classList.toggle('done', item.checked);
-      void saveDayChecklist(year, month, day, items);
-    };
-
-    checkbox.addEventListener('click', toggleCheckbox);
-    checkbox.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        toggleCheckbox();
-      }
-    });
-
-    if (!isEditing) {
-      const label = document.createElement('span');
-      label.className = 'day-checklist-label';
-      label.textContent = item.text || '';
-      row.append(checkbox, label);
-      itemsEl.appendChild(row);
+      found = true;
       return;
     }
 
-    const text = document.createElement('input');
-    text.type = 'text';
-    text.className = 'day-checklist-text';
-    text.value = item.text || '';
-    text.setAttribute('aria-label', 'Checklist item');
-    text.addEventListener('input', () => {
-      item.text = text.value;
-    });
-    let deletingRow = false;
-    const deleteEmptyRow = event => {
-      if (deletingRow || text.value !== '') return false;
-      deletingRow = true;
-      event.preventDefault();
+    if (node.nodeType === Node.TEXT_NODE) {
+      offset += node.nodeValue.length;
+      return;
+    }
 
-      const previousItemIndex = originalIndex - 1;
-      items.splice(originalIndex, 1);
-      renderDayChecklistItems(panel, year, month, day);
-      void saveDayChecklist(year, month, day, items);
+    if (node.nodeName === 'BR') {
+      offset += 1;
+      return;
+    }
 
-      const inputs = panel.querySelectorAll('.day-checklist-text');
-      const target = previousItemIndex >= 0 ? inputs[previousItemIndex] : inputs[0];
-      if (target) {
-        target.focus();
-        target.setSelectionRange(target.value.length, target.value.length);
-      }
-      return true;
-    };
+    [...node.childNodes].forEach(visit);
+  };
 
-    text.addEventListener('keydown', e => {
-      if (e.key === 'Backspace' && text.value === '') {
-        deleteEmptyRow(e);
-        return;
-      }
-
-      if (e.key !== 'Enter') return;
-      e.preventDefault();
-      item.text = text.value;
-      items.splice(originalIndex + 1, 0, createBlankChecklistItem(item.position));
-      renderDayChecklistItems(panel, year, month, day);
-      void saveDayChecklist(year, month, day, items);
-      const nextInput = panel.querySelectorAll('.day-checklist-text')[originalIndex + 1];
-      if (nextInput) nextInput.focus();
-    });
-    text.addEventListener('beforeinput', e => {
-      if (e.inputType === 'deleteContentBackward' && text.value === '') {
-        deleteEmptyRow(e);
-      }
-    });
-    text.addEventListener('blur', () => {
-      item.text = text.value;
-      void saveDayChecklist(year, month, day, items);
-    });
-
-    row.append(checkbox, text);
-    itemsEl.appendChild(row);
-  });
-
-  appendNoteSegment(noteText.slice(noteCursor));
+  visit(editor);
+  return found ? offset : getDayNoteText(editor).length;
 }
 
+function setCaretOffset(editor, requestedOffset) {
+  const selection = window.getSelection();
+  const range = document.createRange();
+  let remaining = Math.max(0, requestedOffset);
+  let placed = false;
 
+  const visit = node => {
+    if (placed) return;
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (remaining <= node.nodeValue.length) {
+        range.setStart(node, remaining);
+        placed = true;
+      } else {
+        remaining -= node.nodeValue.length;
+      }
+      return;
+    }
+
+    if (node.nodeName === 'BR') {
+      const parent = node.parentNode;
+      const index = [...parent.childNodes].indexOf(node);
+      if (remaining === 0) {
+        range.setStart(parent, index);
+        placed = true;
+      } else {
+        remaining -= 1;
+      }
+      return;
+    }
+
+    [...node.childNodes].forEach(visit);
+  };
+
+  visit(editor);
+  if (!placed) range.selectNodeContents(editor), range.collapse(false);
+  else range.collapse(true);
+
+  selection.removeAllRanges();
+  selection.addRange(range);
+  editor._lastCaretPosition = requestedOffset;
+}
+
+function renderDayNoteText(editor, text, caretOffset = null) {
+  const fragment = document.createDocumentFragment();
+  const parts = String(text).split(/([☐☑]|\n)/);
+
+  parts.forEach(part => {
+    if (!part) return;
+
+    if (part === '\n') {
+      fragment.appendChild(document.createElement('br'));
+      return;
+    }
+
+    if (part === '☐' || part === '☑') {
+      const tick = document.createElement('span');
+      tick.className = 'day-note-tick';
+      tick.classList.toggle('checked', part === '☑');
+      tick.textContent = part;
+      tick.setAttribute('contenteditable', 'false');
+      tick.setAttribute('role', 'checkbox');
+      tick.setAttribute('aria-checked', String(part === '☑'));
+      fragment.appendChild(tick);
+      return;
+    }
+
+    fragment.appendChild(document.createTextNode(part));
+  });
+
+  editor.replaceChildren(fragment);
+  if (caretOffset !== null) setCaretOffset(editor, caretOffset);
+}
+
+function updateDayNoteState(editor, year, month, day, dayElement) {
+  const note = getDayNoteText(editor);
+  dayElement.classList.toggle('has-note', !!note.trim());
+  void saveCalendar(year, month, day, note);
+}
+
+function createDayNoteEditor(note, year, month, day, dayElement) {
+  const editor = document.createElement('div');
+  editor.className = 'day-note-editor';
+  editor.contentEditable = 'true';
+  editor.spellcheck = true;
+  editor.setAttribute('role', 'textbox');
+  editor.setAttribute('aria-multiline', 'true');
+  editor.setAttribute('aria-label', 'Day note');
+  editor._lastCaretPosition = String(note).length;
+  editor._dirty = false;
+
+  renderDayNoteText(editor, note);
+
+  const rememberCaret = () => {
+    editor._lastCaretPosition = getCaretOffset(editor);
+  };
+
+  editor.addEventListener('focus', rememberCaret);
+  editor.addEventListener('keyup', rememberCaret);
+  editor.addEventListener('pointerup', rememberCaret);
+  editor.addEventListener('input', event => {
+    editor._dirty = true;
+    rememberCaret();
+
+    if (event.data && /[☐☑]/.test(event.data)) {
+      const text = getDayNoteText(editor);
+      const caret = editor._lastCaretPosition;
+      renderDayNoteText(editor, text, caret);
+    }
+
+    updateDayNoteState(editor, year, month, day, dayElement);
+  });
+
+  editor.addEventListener('blur', () => {
+    const text = getDayNoteText(editor);
+    renderDayNoteText(editor, text);
+  });
+
+  editor.addEventListener('click', event => {
+    const tick = event.target.closest('.day-note-tick');
+    if (!tick || !editor.contains(tick)) return;
+
+    event.preventDefault();
+    const checked = tick.textContent === '☑';
+    tick.textContent = checked ? '☐' : '☑';
+    tick.classList.toggle('checked', !checked);
+    tick.setAttribute('aria-checked', String(!checked));
+    editor._dirty = true;
+    updateDayNoteState(editor, year, month, day, dayElement);
+  });
+
+  return editor;
+}
+
+function insertTickAtCaret(editor, year, month, day, dayElement) {
+  const note = getDayNoteText(editor);
+  const position = Math.max(0, Math.min(note.length, editor._lastCaretPosition ?? note.length));
+  const needsLeadingNewline = position > 0 && note[position - 1] !== '\n';
+  const needsTrailingNewline = position < note.length && note[position] !== '\n';
+  const insertion = `${needsLeadingNewline ? '\n' : ''}☐ ${needsTrailingNewline ? '\n' : ''}`;
+  const updatedNote = note.slice(0, position) + insertion + note.slice(position);
+  const newCaretPosition = position + insertion.length;
+
+  editor._dirty = true;
+  renderDayNoteText(editor, updatedNote, newCaretPosition);
+  editor.focus();
+  setCaretOffset(editor, newCaretPosition);
+  updateDayNoteState(editor, year, month, day, dayElement);
+}
+
+async function migrateLegacyChecklist(editor, year, month, day, dayElement) {
+  try {
+    const ref = doc(db, 'dayChecklists', getChecklistDateKey(year, month, day));
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    const items = Array.isArray(data.items) ? data.items : [];
+    if (data.migratedToNote || items.length === 0 || editor._dirty) return;
+
+    let note = getDayNoteText(editor);
+    const positionedItems = items
+      .map((item, index) => ({
+        ...item,
+        index,
+        position: Number.isFinite(item.position) ? item.position : note.length
+      }))
+      .filter(item => String(item.text || '').trim())
+      .sort((a, b) => b.position - a.position || b.index - a.index);
+
+    positionedItems.forEach(item => {
+      const position = Math.max(0, Math.min(note.length, item.position));
+      const line = `${item.checked ? '☑' : '☐'} ${String(item.text).trim()}`;
+      const leading = position > 0 && note[position - 1] !== '\n' ? '\n' : '';
+      const trailing = position < note.length && note[position] !== '\n' ? '\n' : '';
+      note = note.slice(0, position) + leading + line + trailing + note.slice(position);
+    });
+
+    if (editor._dirty) return;
+    renderDayNoteText(editor, note);
+    dayElement.classList.toggle('has-note', !!note.trim());
+    void saveCalendar(year, month, day, note);
+    await setDoc(ref, { migratedToNote: true, migratedAt: Date.now() }, { merge: true });
+  } catch (error) {
+    console.error('Unable to migrate legacy day checklist:', error);
+  }
+}
 // Auto resize textareas
 function autoResizeTextarea(textarea) {
   textarea.style.height = 'auto';
