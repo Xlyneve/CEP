@@ -1557,9 +1557,12 @@ function definitionAppearsOn(definition, dateNum){
     const date = new Date(currentYear, currentMonth, dateNum);
     const weekday = mondayIndex(date);
     if(!(definition.weekdays || []).includes(weekday)) return false;
-    const ordinal = String(Math.floor((dateNum - 1) / 7) + 1);
-    const isLast = dateNum + 7 > new Date(currentYear, currentMonth + 1, 0).getDate();
-    return (definition.weekPositions || []).includes(ordinal) || (isLast && (definition.weekPositions || []).includes("last"));
+    const calendarWeek = weekRowForDate(dateNum);
+    const firstOffset = mondayIndex(new Date(currentYear, currentMonth, 1));
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const lastCalendarWeek = Math.ceil((firstOffset + daysInMonth) / 7);
+    return (definition.weekPositions || []).includes(String(calendarWeek)) ||
+      (calendarWeek === lastCalendarWeek && (definition.weekPositions || []).includes("last"));
   }
   if(definition.repeat === "dates") return (definition.dates || []).includes(dateKeyForDay(dateNum));
   return definition.repeat === "monthly" && Number(definition.dayOfMonth) === dateNum;
