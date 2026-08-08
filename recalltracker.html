@@ -725,6 +725,83 @@ body.edit-mode .tick-row{
   gap:5px;
 }
 
+.week-position-selectors{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:5px;
+}
+
+.week-position-choice{
+  display:grid !important;
+  place-items:center;
+  min-width:0;
+  margin:0 !important;
+  padding:7px 2px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.46);
+  color:var(--ink) !important;
+  cursor:pointer;
+}
+
+.week-position-choice input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.week-position-choice:has(input:checked){
+  background:rgba(142,167,255,.3);
+  border-color:rgba(142,167,255,.48);
+}
+
+.specific-date-row{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.specific-date-row input{
+  min-width:0;
+  flex:1;
+}
+
+.specific-date-row button{
+  flex:0 0 auto;
+}
+
+.specific-date-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:8px;
+}
+
+.specific-date-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:5px 7px;
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:999px;
+  background:rgba(255,255,255,.44);
+  color:var(--ink);
+  font-size:.72rem;
+}
+
+.specific-date-chip button{
+  width:16px;
+  height:16px;
+  padding:0;
+  display:grid;
+  place-items:center;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  color:#9a4747;
+  font-size:.75rem;
+}
+
 .weekday-choice{
   display:grid !important;
   place-items:center;
@@ -1014,11 +1091,24 @@ body.edit-mode .tick-row{
       </div>
 
       <div class="field">
-        <label>Repeat</label>
+        <label>Schedule</label>
         <div class="repeat-options">
           <label class="repeat-option"><input type="radio" name="tickRepeat" value="daily" checked> Every day</label>
-          <label class="repeat-option"><input type="radio" name="tickRepeat" value="weekdays"> Days of week</label>
-          <label class="repeat-option"><input type="radio" name="tickRepeat" value="monthly"> Monthly</label>
+          <label class="repeat-option"><input type="radio" name="tickRepeat" value="weekdays"> Specific weekdays</label>
+          <label class="repeat-option"><input type="radio" name="tickRepeat" value="weekOfMonth"> Week of month</label>
+          <label class="repeat-option"><input type="radio" name="tickRepeat" value="monthly"> Date of month</label>
+          <label class="repeat-option"><input type="radio" name="tickRepeat" value="dates"> Specific date(s)</label>
+        </div>
+      </div>
+
+      <div id="weekPositionField" class="field hidden">
+        <label>Week position</label>
+        <div class="week-position-selectors">
+          <label class="week-position-choice"><input type="checkbox" value="1">First</label>
+          <label class="week-position-choice"><input type="checkbox" value="2">Second</label>
+          <label class="week-position-choice"><input type="checkbox" value="3">Third</label>
+          <label class="week-position-choice"><input type="checkbox" value="4">Fourth</label>
+          <label class="week-position-choice"><input type="checkbox" value="last">Last</label>
         </div>
       </div>
 
@@ -1038,6 +1128,15 @@ body.edit-mode .tick-row{
       <div id="monthlyField" class="field hidden">
         <label for="monthDaySelect">Day of month</label>
         <select id="monthDaySelect"></select>
+      </div>
+
+      <div id="specificDatesField" class="field hidden">
+        <label for="specificDateInput">Exact date(s)</label>
+        <div class="specific-date-row">
+          <input id="specificDateInput" type="date">
+          <button id="addSpecificDateBtn" type="button">Add date</button>
+        </div>
+        <div id="specificDateList" class="specific-date-list"></div>
       </div>
 
       <div class="field">
@@ -1107,6 +1206,7 @@ let editingTickId = null;
 let manualSaveTimer = null;
 let editMode = false;
 let tickDefinitionsNeedSave = false;
+let selectedSpecificDates = [];
 const LOCAL_BACKUP_KEY = "recallTrackerStateV2_BACKUP";
 
 const calendar = document.getElementById("calendar");
@@ -1176,7 +1276,7 @@ function definitionColour(definition){
 }
 
 function ensureTickDefinitions(){
-  if(state.tickDefinitionsVersion === 1 && Array.isArray(state.tickDefinitions)){
+  if(state.tickDefinitionsVersion >= 2 && Array.isArray(state.tickDefinitions)){
     let changed = false;
     state.tickDefinitions.forEach(definition => {
       if(tickColours.includes(definition.color)) return;
@@ -1200,7 +1300,7 @@ function ensureTickDefinitions(){
   });
 
   state.tickDefinitions = existing;
-  state.tickDefinitionsVersion = 1;
+  state.tickDefinitionsVersion = 2;
   return true;
 }
 
@@ -1372,9 +1472,29 @@ function recurrenceSummary(definition){
     const selected = (definition.weekdays || []).map(index => days[index]).filter(Boolean);
     return selected.join(", ") || "No weekdays selected";
   }
+  if(definition.repeat === "weekOfMonth"){
+    const positionNames = { "1":"First", "2":"Second", "3":"Third", "4":"Fourth", last:"Last" };
+    const positions = (definition.weekPositions || []).map(position => positionNames[position]).filter(Boolean);
+    const selectedDays = (definition.weekdays || []).map(index => days[index]).filter(Boolean);
+    return `${positions.join(" + ")} · ${selectedDays.join(", ")}`;
+  }
+  if(definition.repeat === "dates"){
+    return (definition.dates || []).map(formatExactDate).join(", ") || "No dates selected";
+  }
   const day = Number(definition.dayOfMonth) || 1;
   const suffix = day % 10 === 1 && day !== 11 ? "st" : day % 10 === 2 && day !== 12 ? "nd" : day % 10 === 3 && day !== 13 ? "rd" : "th";
   return `Monthly · ${day}${suffix}`;
+}
+
+function formatExactDate(isoDate){
+  const [year, month, day] = String(isoDate).split("-").map(Number);
+  if(!year || !month || !day) return isoDate;
+  return new Intl.DateTimeFormat("en-NZ", { day:"numeric", month:"short", year:"numeric" })
+    .format(new Date(year, month - 1, day));
+}
+
+function dateKeyForDay(dateNum){
+  return `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(dateNum).padStart(2, "0")}`;
 }
 
 function definitionAppearsOn(definition, dateNum){
@@ -1383,13 +1503,56 @@ function definitionAppearsOn(definition, dateNum){
     const weekday = mondayIndex(new Date(currentYear, currentMonth, dateNum));
     return (definition.weekdays || []).includes(weekday);
   }
+  if(definition.repeat === "weekOfMonth"){
+    const date = new Date(currentYear, currentMonth, dateNum);
+    const weekday = mondayIndex(date);
+    if(!(definition.weekdays || []).includes(weekday)) return false;
+    const ordinal = String(Math.floor((dateNum - 1) / 7) + 1);
+    const isLast = dateNum + 7 > new Date(currentYear, currentMonth + 1, 0).getDate();
+    return (definition.weekPositions || []).includes(ordinal) || (isLast && (definition.weekPositions || []).includes("last"));
+  }
+  if(definition.repeat === "dates") return (definition.dates || []).includes(dateKeyForDay(dateNum));
   return definition.repeat === "monthly" && Number(definition.dayOfMonth) === dateNum;
 }
 
 function updateRecurrenceFields(){
   const repeat = document.querySelector('input[name="tickRepeat"]:checked')?.value || "daily";
-  document.getElementById("weekdayField").classList.toggle("hidden", repeat !== "weekdays");
+  document.getElementById("weekPositionField").classList.toggle("hidden", repeat !== "weekOfMonth");
+  document.getElementById("weekdayField").classList.toggle("hidden", repeat !== "weekdays" && repeat !== "weekOfMonth");
   document.getElementById("monthlyField").classList.toggle("hidden", repeat !== "monthly");
+  document.getElementById("specificDatesField").classList.toggle("hidden", repeat !== "dates");
+}
+
+function renderSpecificDateList(){
+  const list = document.getElementById("specificDateList");
+  list.replaceChildren();
+  selectedSpecificDates.forEach(date => {
+    const chip = document.createElement("span");
+    chip.className = "specific-date-chip";
+    const text = document.createElement("span");
+    text.textContent = formatExactDate(date);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.setAttribute("aria-label", `Remove ${formatExactDate(date)}`);
+    remove.textContent = "×";
+    remove.onclick = () => {
+      selectedSpecificDates = selectedSpecificDates.filter(item => item !== date);
+      renderSpecificDateList();
+    };
+    chip.append(text, remove);
+    list.appendChild(chip);
+  });
+}
+
+function addSpecificDate(){
+  const input = document.getElementById("specificDateInput");
+  if(!input.value) return;
+  if(!selectedSpecificDates.includes(input.value)){
+    selectedSpecificDates.push(input.value);
+    selectedSpecificDates.sort();
+  }
+  input.value = "";
+  renderSpecificDateList();
 }
 
 function resetTickForm(){
@@ -1397,6 +1560,10 @@ function resetTickForm(){
   document.getElementById("tickNameInput").value = "";
   document.querySelector('input[name="tickRepeat"][value="daily"]').checked = true;
   document.querySelectorAll(".weekday-choice input").forEach(input => { input.checked = false; });
+  document.querySelectorAll(".week-position-choice input").forEach(input => { input.checked = false; });
+  selectedSpecificDates = [];
+  document.getElementById("specificDateInput").value = "";
+  renderSpecificDateList();
   document.querySelector('input[name="tickColour"][value="yellow"]').checked = true;
   document.getElementById("monthDaySelect").value = "1";
   document.getElementById("saveTickBtn").textContent = "Save";
@@ -1413,6 +1580,11 @@ function showTickForm(definition = null){
     document.querySelectorAll(".weekday-choice input").forEach(input => {
       input.checked = (definition.weekdays || []).includes(Number(input.value));
     });
+    document.querySelectorAll(".week-position-choice input").forEach(input => {
+      input.checked = (definition.weekPositions || []).includes(input.value);
+    });
+    selectedSpecificDates = [...(definition.dates || [])].sort();
+    renderSpecificDateList();
     document.querySelector(`input[name="tickColour"][value="${definitionColour(definition)}"]`).checked = true;
     document.getElementById("monthDaySelect").value = String(definition.dayOfMonth || 1);
     updateRecurrenceFields();
@@ -1485,6 +1657,7 @@ function saveTickDefinition(){
   const name = document.getElementById("tickNameInput").value.trim();
   const repeat = document.querySelector('input[name="tickRepeat"]:checked')?.value || "daily";
   const weekdays = [...document.querySelectorAll(".weekday-choice input:checked")].map(input => Number(input.value));
+  const weekPositions = [...document.querySelectorAll(".week-position-choice input:checked")].map(input => input.value);
   const dayOfMonth = Number(document.getElementById("monthDaySelect").value);
   const color = document.querySelector('input[name="tickColour"]:checked')?.value || "yellow";
 
@@ -1492,8 +1665,16 @@ function saveTickDefinition(){
     document.getElementById("tickNameInput").focus();
     return;
   }
-  if(repeat === "weekdays" && !weekdays.length){
+  if((repeat === "weekdays" || repeat === "weekOfMonth") && !weekdays.length){
     alert("Select at least one weekday.");
+    return;
+  }
+  if(repeat === "weekOfMonth" && !weekPositions.length){
+    alert("Select at least one week position.");
+    return;
+  }
+  if(repeat === "dates" && !selectedSpecificDates.length){
+    alert("Add at least one exact date.");
     return;
   }
 
@@ -1507,8 +1688,10 @@ function saveTickDefinition(){
     id: editingTickId || makeTickId(),
     name,
     repeat,
-    weekdays:repeat === "weekdays" ? weekdays : [],
+    weekdays:repeat === "weekdays" || repeat === "weekOfMonth" ? weekdays : [],
+    weekPositions:repeat === "weekOfMonth" ? weekPositions : [],
     dayOfMonth:repeat === "monthly" ? dayOfMonth : 1,
+    dates:repeat === "dates" ? [...selectedSpecificDates] : [],
     color:tickColours.includes(color) ? color : "yellow"
   };
   const index = state.tickDefinitions.findIndex(item => item.id === editingTickId);
@@ -1867,7 +2050,7 @@ function dayCell(dateNum){
   const hiddenForWeek = data.hiddenMonthRows.weeks?.[weekRow] || [];
   const hiddenForDay = data.hiddenMonthRows.days?.[dateNum] || [];
   const recurringNames = new Set(state.tickDefinitions.map(definition => definition.name.toLowerCase()));
-  const visibleMonthlyRows = state.tickDefinitionsVersion === 1 ? [] : monthlyRows.filter(name => {
+  const visibleMonthlyRows = state.tickDefinitionsVersion >= 1 ? [] : monthlyRows.filter(name => {
     return !recurringNames.has(name.toLowerCase()) && !hiddenForWeek.includes(name) && !hiddenForDay.includes(name);
   });
   const allRows = [...visibleMonthlyRows, ...weekRows, ...dayRows];
@@ -1961,6 +2144,7 @@ document.querySelectorAll('input[name="tickRepeat"]').forEach(input => {
 });
 
 document.getElementById("addTickBtn").onclick = () => showTickForm();
+document.getElementById("addSpecificDateBtn").onclick = addSpecificDate;
 document.getElementById("cancelTickEdit").onclick = hideTickForm;
 document.getElementById("saveTickBtn").onclick = saveTickDefinition;
 document.getElementById("cancelSheet").onclick = () => {
