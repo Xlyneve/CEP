@@ -541,6 +541,33 @@ body.edit-mode .tick-row{
   gap:6px;
 }
 
+.daily-manual-text{
+  min-height:1.2em;
+  margin-top:5px;
+  padding:0;
+  border:0;
+  outline:none;
+  background:transparent;
+  box-shadow:none;
+  color:var(--ink);
+  font:inherit;
+  font-size:.82rem;
+  line-height:1.45;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  cursor:text;
+}
+
+.daily-manual-text:empty::before{
+  content:"";
+  color:rgba(75,86,104,.38);
+  pointer-events:none;
+}
+
+.daily-manual-text:focus:empty::before{
+  content:attr(data-placeholder);
+}
+
 
 .soft-line{
   border:0;
@@ -583,6 +610,8 @@ body.edit-mode .tick-row{
   backdrop-filter:blur(42px) saturate(220%);
   -webkit-backdrop-filter:blur(42px) saturate(220%);
   box-shadow:0 24px 80px rgba(60,70,100,.22);
+  max-height:calc(100vh - 32px);
+  overflow:auto;
 }
 
 .sheet h2{
@@ -617,29 +646,118 @@ body.edit-mode .tick-row{
   padding:11px 12px;
 }
 
-.scope-row{
+.tick-form{
+  padding:12px;
+  margin-bottom:12px;
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:20px;
+  background:rgba(255,255,255,.3);
+}
+
+.repeat-options{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:8px;
+  gap:7px;
   margin-bottom:12px;
 }
 
-.scope-btn{
-  border-radius:16px;
-  padding:11px 8px;
+.repeat-option{
+  display:flex !important;
+  align-items:center;
+  gap:8px;
+  margin:0 !important;
+  color:var(--ink) !important;
+  cursor:pointer;
 }
 
-.scope-btn.active{
-  background:rgba(142,167,255,.28);
-  border-color:rgba(142,167,255,.42);
+.repeat-option input{
+  width:17px;
+  height:17px;
+  margin:0;
 }
 
-.delete-option{
-  width:100%;
-  text-align:left;
-  margin-bottom:7px;
+.weekday-selectors{
+  display:grid;
+  grid-template-columns:repeat(7, 1fr);
+  gap:5px;
+}
+
+.weekday-choice{
+  display:grid !important;
+  place-items:center;
+  min-width:0;
+  margin:0 !important;
+  padding:7px 2px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.46);
+  color:var(--ink) !important;
+  cursor:pointer;
+}
+
+.weekday-choice input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.weekday-choice:has(input:checked){
+  background:rgba(142,167,255,.3);
+  border-color:rgba(142,167,255,.48);
+}
+
+.tick-form-actions,
+.tick-definition-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:7px;
+}
+
+.tick-definitions{
+  display:grid;
+  gap:8px;
+  max-height:230px;
+  overflow:auto;
+}
+
+.tick-definition{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:9px 10px;
+  border:1px solid rgba(255,255,255,.68);
   border-radius:16px;
-  background:rgba(255,245,245,.75);
+  background:rgba(255,255,255,.34);
+}
+
+.tick-definition-symbol{
+  flex:0 0 auto;
+  font-size:.9rem;
+}
+
+.tick-definition-copy{
+  min-width:0;
+  flex:1;
+}
+
+.tick-definition-name,
+.tick-definition-repeat{
+  display:block;
+}
+
+.tick-definition-name{
+  font-size:.86rem;
+  font-weight:700;
+}
+
+.tick-definition-repeat{
+  margin-top:2px;
+  color:var(--muted);
+  font-size:.75rem;
+}
+
+.tick-definition-actions button{
+  padding:6px 9px;
+  font-size:.75rem;
 }
 
 .sheet-actions{
@@ -780,7 +898,6 @@ body.edit-mode .tick-row{
       <select id="yearSelect"></select>
       <button id="nextBtn">›</button>
 	  <button id="manageTicksBtn">Manage Ticks</button>
-<button id="editModeBtn">Edit</button>
 <button id="editWeeklyBtn">First column</button>
 
 <button id="helpBtn" class="icon-btn" title="Recall notes">?</button>
@@ -797,48 +914,59 @@ body.edit-mode .tick-row{
 <div id="sheetBackdrop" class="sheet-backdrop">
   <div class="sheet">
     <h2>Manage ticks</h2>
-    <p>Add new ticks or delete existing ones for this month.</p>
+    <p>Create one reusable tick and choose when it appears.</p>
+
+    <button id="addTickBtn" class="primary">Add Tick</button>
+
+    <div id="tickForm" class="tick-form hidden">
+      <div class="field">
+        <label for="tickNameInput">Tick name</label>
+        <input id="tickNameInput" placeholder="e.g. CEP" maxlength="80">
+      </div>
+
+      <div class="field">
+        <label>Repeat</label>
+        <div class="repeat-options">
+          <label class="repeat-option"><input type="radio" name="tickRepeat" value="daily" checked> Every day</label>
+          <label class="repeat-option"><input type="radio" name="tickRepeat" value="weekdays"> Days of week</label>
+          <label class="repeat-option"><input type="radio" name="tickRepeat" value="monthly"> Monthly</label>
+        </div>
+      </div>
+
+      <div id="weekdayField" class="field hidden">
+        <label>Weekdays</label>
+        <div class="weekday-selectors">
+          <label class="weekday-choice"><input type="checkbox" value="0">Mon</label>
+          <label class="weekday-choice"><input type="checkbox" value="1">Tue</label>
+          <label class="weekday-choice"><input type="checkbox" value="2">Wed</label>
+          <label class="weekday-choice"><input type="checkbox" value="3">Thu</label>
+          <label class="weekday-choice"><input type="checkbox" value="4">Fri</label>
+          <label class="weekday-choice"><input type="checkbox" value="5">Sat</label>
+          <label class="weekday-choice"><input type="checkbox" value="6">Sun</label>
+        </div>
+      </div>
+
+      <div id="monthlyField" class="field hidden">
+        <label for="monthDaySelect">Day of month</label>
+        <select id="monthDaySelect"></select>
+      </div>
+
+      <div class="tick-form-actions">
+        <button id="cancelTickEdit" type="button">Cancel</button>
+        <button id="saveTickBtn" class="primary" type="button">Save</button>
+      </div>
+    </div>
+
+    <hr class="soft-line">
 
     <div class="field">
-      <label>Add tick label</label>
-      <input id="tickNameInput" placeholder="e.g. Work">
+      <label>Existing ticks</label>
+      <div id="tickDefinitions" class="tick-definitions"></div>
     </div>
-
-    <div class="scope-row">
-      <button class="scope-btn active" data-scope="month">Month</button>
-      <button class="scope-btn" data-scope="week">Week</button>
-      <button class="scope-btn" data-scope="day">Day</button>
-    </div>
-
-    <div id="weekField" class="field hidden">
-      <label>Week row</label>
-      <select id="weekSelect">
-        <option value="1">Week row 1</option>
-        <option value="2">Week row 2</option>
-        <option value="3">Week row 3</option>
-        <option value="4">Week row 4</option>
-        <option value="5">Week row 5</option>
-        <option value="6">Week row 6</option>
-      </select>
-    </div>
-
-    <div id="dayField" class="field hidden">
-      <label>Date number</label>
-      <input id="dayInput" type="number" min="1" max="31" placeholder="e.g. 8">
-    </div>
-
 
     <div class="sheet-actions">
-  <button id="cancelSheet">Close</button>
-  <button id="saveTickBtn" class="primary">Add tick</button>
-</div>
-
-<hr class="soft-line">
-
-<div id="deleteList" class="field">
-  <label>Delete existing tick</label>
-  <div id="deleteOptions"></div>
-</div>
+      <button id="cancelSheet">Close</button>
+    </div>
   </div>
 </div>
 </div>
@@ -871,13 +999,14 @@ const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
 let state = {};
 let weeklyTasks = ["QB", "Cx + CxSO", "Mammo"];
-let monthlyRows = ["CEP"];
 
 const today = new Date();
 let currentMonth = today.getMonth();
 let currentYear = today.getFullYear();
-let activeScope = "month";
+let editingTickId = null;
+let manualSaveTimer = null;
 let editMode = false;
+let tickDefinitionsNeedSave = false;
 
 const calendar = document.getElementById("calendar");
 const title = document.getElementById("title");
@@ -916,10 +1045,34 @@ function setSyncStatus(message){
   syncStatus.textContent = message;
 }
 
+function makeTickId(){
+  return `tick-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function ensureTickDefinitions(){
+  if(state.tickDefinitionsVersion === 1 && Array.isArray(state.tickDefinitions)) return false;
+
+  const existing = Array.isArray(state.tickDefinitions) ? state.tickDefinitions : [];
+  const migratedNames = new Set(state.monthlyRows || ["CEP"]);
+
+  Object.values(state.months || {}).forEach(month => {
+    (month.monthlyRows || []).forEach(name => migratedNames.add(name === "Me" ? "CEP" : name));
+  });
+
+  migratedNames.forEach(name => {
+    const cleanName = String(name || "").trim();
+    if(!cleanName || existing.some(item => item.name.toLowerCase() === cleanName.toLowerCase())) return;
+    existing.push({ id:makeTickId(), name:cleanName, repeat:"daily", weekdays:[], dayOfMonth:1 });
+  });
+
+  state.tickDefinitions = existing;
+  state.tickDefinitionsVersion = 1;
+  return true;
+}
+
 function applyTrackerState(nextState){
   state = nextState || {};
   weeklyTasks = state.weeklyTasks || ["QB", "Cx + CxSO", "Mammo"];
-  monthlyRows = (state.monthlyRows || ["CEP"]).map(x => x === "Me" ? "CEP" : x);
   Object.values(state.months || {}).forEach(month => {
     Object.values(month.days || {}).forEach(dayObj => {
       if("Me" in dayObj){
@@ -928,6 +1081,7 @@ function applyTrackerState(nextState){
       }
     });
   });
+  tickDefinitionsNeedSave = ensureTickDefinitions() || tickDefinitionsNeedSave;
   currentMonth = state.currentMonth ?? today.getMonth();
   currentYear = state.currentYear ?? today.getFullYear();
   stateLoaded = true;
@@ -946,7 +1100,7 @@ function startFirestoreSync(){
       });
       if(snapshot.exists && snapshot.data().state){
         applyTrackerState(snapshot.data().state);
-        if(trackerInitialized) render();
+        if(trackerInitialized && !document.activeElement?.classList.contains("daily-manual-text")) render();
       }
       setSyncStatus(snapshot.metadata.fromCache ? "Offline — saved data" : "Synced");
     },
@@ -1047,7 +1201,9 @@ function monthData(){
     customWeekRows:{},
     monthlyRows:["CEP"],
     hiddenMonthRows:{ weeks:{}, days:{} },
-    hiddenWeekRows:{}
+    hiddenWeekRows:{},
+    tickCompletions:{},
+    manualText:{}
   };
 
   state.months[key()].monthlyRows ||= ["CEP"];
@@ -1055,184 +1211,176 @@ function monthData(){
   state.months[key()].customWeekRows ||= {};
   state.months[key()].hiddenMonthRows ||= { weeks:{}, days:{} };
   state.months[key()].hiddenWeekRows ||= {};
+  state.months[key()].tickCompletions ||= {};
+  state.months[key()].manualText ||= {};
 
   return state.months[key()];
 }
 
-function showDeleteChoices(){
-  const data = monthData();
-  const monthlyRows = data.monthlyRows || ["CEP"];
-  const box = document.getElementById("deleteOptions");
+function recurrenceSummary(definition){
+  if(definition.repeat === "daily") return "Every day";
+  if(definition.repeat === "weekdays"){
+    const selected = (definition.weekdays || []).map(index => days[index]).filter(Boolean);
+    return selected.join(", ") || "No weekdays selected";
+  }
+  const day = Number(definition.dayOfMonth) || 1;
+  const suffix = day % 10 === 1 && day !== 11 ? "st" : day % 10 === 2 && day !== 12 ? "nd" : day % 10 === 3 && day !== 13 ? "rd" : "th";
+  return `Monthly · ${day}${suffix}`;
+}
 
-  box.innerHTML = "";
+function definitionAppearsOn(definition, dateNum){
+  if(definition.repeat === "daily") return true;
+  if(definition.repeat === "weekdays"){
+    const weekday = mondayIndex(new Date(currentYear, currentMonth, dateNum));
+    return (definition.weekdays || []).includes(weekday);
+  }
+  return definition.repeat === "monthly" && Number(definition.dayOfMonth) === dateNum;
+}
 
-  let items = [];
+function updateRecurrenceFields(){
+  const repeat = document.querySelector('input[name="tickRepeat"]:checked')?.value || "daily";
+  document.getElementById("weekdayField").classList.toggle("hidden", repeat !== "weekdays");
+  document.getElementById("monthlyField").classList.toggle("hidden", repeat !== "monthly");
+}
 
-  monthlyRows.forEach(name => {
-  items.push({
-    name,
-    scope:"month",
-    label:`Delete "${name}" from whole month`
-  });
+function resetTickForm(){
+  editingTickId = null;
+  document.getElementById("tickNameInput").value = "";
+  document.querySelector('input[name="tickRepeat"][value="daily"]').checked = true;
+  document.querySelectorAll(".weekday-choice input").forEach(input => { input.checked = false; });
+  document.getElementById("monthDaySelect").value = "1";
+  document.getElementById("saveTickBtn").textContent = "Save";
+  updateRecurrenceFields();
+}
 
-  items.push({
-    name,
-    scope:"hideMonthWeek",
-    label:`Hide "${name}" from one week row`
-  });
-
-  items.push({
-    name,
-    scope:"hideMonthDay",
-    label:`Hide "${name}" from selected day/s`
-  });
-});
-
-  Object.entries(data.customWeekRows || {}).forEach(([week, rows]) => {
-    rows.forEach(name => {
-      items.push({
-        name,
-        scope:"week",
-        week,
-        label:`Delete "${name}" from week row ${week} only`
-      });
+function showTickForm(definition = null){
+  resetTickForm();
+  if(definition){
+    editingTickId = definition.id;
+    document.getElementById("tickNameInput").value = definition.name;
+    const repeatInput = document.querySelector(`input[name="tickRepeat"][value="${definition.repeat}"]`);
+    if(repeatInput) repeatInput.checked = true;
+    document.querySelectorAll(".weekday-choice input").forEach(input => {
+      input.checked = (definition.weekdays || []).includes(Number(input.value));
     });
-  });
+    document.getElementById("monthDaySelect").value = String(definition.dayOfMonth || 1);
+    updateRecurrenceFields();
+  }
+  document.getElementById("tickForm").classList.remove("hidden");
+  document.getElementById("addTickBtn").classList.add("hidden");
+  document.getElementById("tickNameInput").focus();
+}
 
-  Object.entries(data.customDayRows || {}).forEach(([day, rows]) => {
-  rows.forEach(name => {
-    items.push({
-      name,
-      scope:"day",
-      day,
-      label:`Delete "${name}" from selected day/s`
-    });
-  });
-});
+function hideTickForm(){
+  resetTickForm();
+  document.getElementById("tickForm").classList.add("hidden");
+  document.getElementById("addTickBtn").classList.remove("hidden");
+}
 
-  if(!items.length){
-    box.innerHTML = `<p style="margin:0;color:var(--muted);font-size:.85rem;">No ticks to delete yet.</p>`;
+function renderTickDefinitions(){
+  const box = document.getElementById("tickDefinitions");
+  box.replaceChildren();
+
+  if(!state.tickDefinitions.length){
+    const empty = document.createElement("p");
+    empty.textContent = "No recurring ticks yet.";
+    box.appendChild(empty);
     return;
   }
 
-  items.forEach(item => {
-    const btn = document.createElement("button");
-    btn.className = "delete-option";
-    btn.textContent = item.label;
+  state.tickDefinitions.forEach(definition => {
+    const item = document.createElement("div");
+    item.className = "tick-definition";
 
-    btn.onclick = () => {
-      if(confirm(item.label + "?")){
-        deleteTickItem(item);
-      }
+    const symbol = document.createElement("span");
+    symbol.className = "tick-definition-symbol";
+    symbol.textContent = "☐";
+
+    const copy = document.createElement("div");
+    copy.className = "tick-definition-copy";
+    const name = document.createElement("span");
+    name.className = "tick-definition-name";
+    name.textContent = definition.name;
+    const repeat = document.createElement("span");
+    repeat.className = "tick-definition-repeat";
+    repeat.textContent = recurrenceSummary(definition);
+    copy.append(name, repeat);
+
+    const actions = document.createElement("div");
+    actions.className = "tick-definition-actions";
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.textContent = "Edit";
+    edit.onclick = () => showTickForm(definition);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "danger";
+    remove.textContent = "Delete";
+    remove.onclick = () => {
+      if(!confirm(`Delete recurring tick "${definition.name}"? Completed history will be kept.`)) return;
+      state.tickDefinitions = state.tickDefinitions.filter(item => item.id !== definition.id);
+      hideTickForm();
+      renderTickDefinitions();
+      render();
+      save();
     };
-
-    box.appendChild(btn);
+    actions.append(edit, remove);
+    item.append(symbol, copy, actions);
+    box.appendChild(item);
   });
 }
 
-function parseDayNumbers(input){
-  return input
-    .split(",")
-    .map(x => x.trim())
-    .filter(Boolean)
-    .map(Number)
-    .filter(n => Number.isInteger(n) && n >= 1 && n <= 31);
-}
+function saveTickDefinition(){
+  const name = document.getElementById("tickNameInput").value.trim();
+  const repeat = document.querySelector('input[name="tickRepeat"]:checked')?.value || "daily";
+  const weekdays = [...document.querySelectorAll(".weekday-choice input:checked")].map(input => Number(input.value));
+  const dayOfMonth = Number(document.getElementById("monthDaySelect").value);
 
-function deleteTickItem(item){
-  const data = monthData();
-  data.monthlyRows ||= ["CEP"];
-  data.customDayRows ||= {};
-  data.customWeekRows ||= {};
-  data.hiddenMonthRows ||= {
-    weeks:{},
-    days:{}
+  if(!name){
+    document.getElementById("tickNameInput").focus();
+    return;
+  }
+  if(repeat === "weekdays" && !weekdays.length){
+    alert("Select at least one weekday.");
+    return;
+  }
+
+  const duplicate = state.tickDefinitions.find(item => item.id !== editingTickId && item.name.toLowerCase() === name.toLowerCase());
+  if(duplicate){
+    alert("A tick with that name already exists.");
+    return;
+  }
+
+  const definition = {
+    id: editingTickId || makeTickId(),
+    name,
+    repeat,
+    weekdays:repeat === "weekdays" ? weekdays : [],
+    dayOfMonth:repeat === "monthly" ? dayOfMonth : 1
   };
-
-  if(item.scope === "month"){
-  data.monthlyRows = data.monthlyRows.filter(x => x !== item.name);
-
-  Object.values(data.days || {}).forEach(dayObj => {
-    delete dayObj[item.name];
-  });
-}
-
-  if(item.scope === "week"){
-    data.customWeekRows[item.week] =
-      (data.customWeekRows[item.week] || []).filter(x => x !== item.name);
-
-    Object.keys(data.days || {}).forEach(dayNum => {
-      if(weekRowForDate(Number(dayNum)) === Number(item.week)){
-        delete data.days[dayNum][item.name];
-      }
-    });
+  const index = state.tickDefinitions.findIndex(item => item.id === editingTickId);
+  if(index >= 0){
+    const previous = state.tickDefinitions[index];
+    if(previous.name !== name){
+      Object.values(state.months || {}).forEach(month => {
+        month.tickCompletions ||= {};
+        Object.entries(month.days || {}).forEach(([day, values]) => {
+          if(!(previous.name in values)) return;
+          month.tickCompletions[day] ||= {};
+          if(!(definition.id in month.tickCompletions[day])){
+            month.tickCompletions[day][definition.id] = !!values[previous.name];
+          }
+        });
+      });
+    }
+    state.tickDefinitions[index] = definition;
   }
+  else state.tickDefinitions.push(definition);
 
-  if(item.scope === "day"){
-  const input = prompt("Which date number/s? Example: 1, 2, 6, 7", item.day || "");
-  if(!input) return;
-
-  const daysToDelete = parseDayNumbers(input);
-  if(!daysToDelete.length) return;
-
-  daysToDelete.forEach(day => {
-    data.customDayRows[day] =
-      (data.customDayRows[day] || []).filter(x => x !== item.name);
-
-    if(data.days[day]){
-      delete data.days[day][item.name];
-    }
-  });
-}
-
-if(item.scope === "singleDay"){
-  data.customDayRows[item.day] =
-    (data.customDayRows[item.day] || []).filter(x => x !== item.name);
-
-  if(data.days[item.day]){
-    delete data.days[item.day][item.name];
-  }
-}
-
-  if(item.scope === "hideMonthWeek"){
-    const week = prompt("Which week row? 1, 2, 3, 4, 5, or 6");
-    if(!week) return;
-
-    data.hiddenMonthRows.weeks[week] ||= [];
-    if(!data.hiddenMonthRows.weeks[week].includes(item.name)){
-      data.hiddenMonthRows.weeks[week].push(item.name);
-    }
-
-    Object.keys(data.days || {}).forEach(dayNum => {
-      if(weekRowForDate(Number(dayNum)) === Number(week)){
-        delete data.days[dayNum][item.name];
-      }
-    });
-  }
-
-  if(item.scope === "hideMonthDay"){
-  const input = prompt("Which date number/s? Example: 1, 2, 6, 7");
-  if(!input) return;
-
-  const daysToHide = parseDayNumbers(input);
-  if(!daysToHide.length) return;
-
-  daysToHide.forEach(day => {
-    data.hiddenMonthRows.days[day] ||= [];
-
-    if(!data.hiddenMonthRows.days[day].includes(item.name)){
-      data.hiddenMonthRows.days[day].push(item.name);
-    }
-
-    if(data.days[day]){
-      delete data.days[day][item.name];
-    }
-  });
-}
-
-  save();
+  hideTickForm();
+  renderTickDefinitions();
   render();
-  showDeleteChoices();
+  save();
 }
 
 function populateControls(){
@@ -1240,6 +1388,10 @@ function populateControls(){
   const years = [];
   for(let y=today.getFullYear()-2; y<=today.getFullYear()+4; y++) years.push(y);
   yearSelect.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join("");
+  document.getElementById("monthDaySelect").innerHTML = Array.from({length:31}, (_, index) => {
+    const day = index + 1;
+    return `<option value="${day}">${day}</option>`;
+  }).join("");
 }
 
 function mondayIndex(date){
@@ -1477,20 +1629,68 @@ label.onclick = () => {
   return row;
 }
 
+function recurringRowElement(definition, dateNum){
+  const data = monthData();
+  data.tickCompletions[dateNum] ||= {};
+
+  const row = document.createElement("div");
+  row.className = "tick-row recurring-tick";
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  const label = document.createElement("span");
+  label.textContent = definition.name;
+
+  const legacyValue = data.days?.[dateNum]?.[definition.name];
+  cb.checked = definition.id in data.tickCompletions[dateNum]
+    ? !!data.tickCompletions[dateNum][definition.id]
+    : !!legacyValue;
+
+  cb.onchange = () => {
+    data.tickCompletions[dateNum][definition.id] = cb.checked;
+    save();
+  };
+
+  row.append(cb, label);
+  return row;
+}
+
+function scheduleManualTextSave(dateNum, editor){
+  const data = monthData();
+  data.manualText[dateNum] = editor.innerText.replace(/\r/g, "").replace(/\n+$/, "");
+  window.clearTimeout(manualSaveTimer);
+  manualSaveTimer = window.setTimeout(() => save(), 250);
+}
+
+function manualTextElement(dateNum){
+  const data = monthData();
+  const editor = document.createElement("div");
+  editor.className = "daily-manual-text";
+  editor.contentEditable = "plaintext-only";
+  editor.setAttribute("role", "textbox");
+  editor.setAttribute("aria-label", `One-off notes for ${monthNames[currentMonth]} ${dateNum}`);
+  editor.dataset.placeholder = "Add one-off text";
+  editor.textContent = data.manualText[dateNum] || "";
+  editor.addEventListener("input", () => scheduleManualTextSave(dateNum, editor));
+  editor.addEventListener("blur", () => {
+    scheduleManualTextSave(dateNum, editor);
+    window.clearTimeout(manualSaveTimer);
+    save();
+  });
+  return editor;
+}
+
 function dayCell(dateNum){
   const data = monthData();
   const monthlyRows = data.monthlyRows || ["CEP"];
- const el = document.createElement("div");
-el.className = "cell day";
+  const el = document.createElement("div");
+  el.className = "cell day";
 
-const isToday =
-  dateNum === today.getDate() &&
-  currentMonth === today.getMonth() &&
-  currentYear === today.getFullYear();
+  const isToday =
+    dateNum === today.getDate() &&
+    currentMonth === today.getMonth() &&
+    currentYear === today.getFullYear();
 
-if(isToday){
-  el.classList.add("today-cell");
-}
+  if(isToday) el.classList.add("today-cell");
 
   const num = document.createElement("div");
   num.className = "day-num";
@@ -1500,26 +1700,23 @@ if(isToday){
   const ticks = document.createElement("div");
   ticks.className = "ticks";
 
+  state.tickDefinitions
+    .filter(definition => definitionAppearsOn(definition, dateNum))
+    .forEach(definition => ticks.appendChild(recurringRowElement(definition, dateNum)));
+
   const weekRow = weekRowForDate(dateNum);
   data.hiddenWeekRows ||= {};
-
-const hiddenWeekRowsForDay = data.hiddenWeekRows?.[dateNum] || [];
-
-const weekRows = (data.customWeekRows?.[weekRow] || []).filter(name => {
-  return !hiddenWeekRowsForDay.includes(name);
-});
-
-const dayRows = data.customDayRows?.[dateNum] || [];
+  const hiddenWeekRowsForDay = data.hiddenWeekRows?.[dateNum] || [];
+  const weekRows = (data.customWeekRows?.[weekRow] || []).filter(name => !hiddenWeekRowsForDay.includes(name));
+  const dayRows = data.customDayRows?.[dateNum] || [];
 
   data.hiddenMonthRows ||= { weeks:{}, days:{} };
-
   const hiddenForWeek = data.hiddenMonthRows.weeks?.[weekRow] || [];
   const hiddenForDay = data.hiddenMonthRows.days?.[dateNum] || [];
-
-  const visibleMonthlyRows = monthlyRows.filter(name => {
-    return !hiddenForWeek.includes(name) && !hiddenForDay.includes(name);
+  const recurringNames = new Set(state.tickDefinitions.map(definition => definition.name.toLowerCase()));
+  const visibleMonthlyRows = state.tickDefinitionsVersion === 1 ? [] : monthlyRows.filter(name => {
+    return !recurringNames.has(name.toLowerCase()) && !hiddenForWeek.includes(name) && !hiddenForDay.includes(name);
   });
-
   const allRows = [...visibleMonthlyRows, ...weekRows, ...dayRows];
 
   [...new Set(allRows)].forEach(rowName => {
@@ -1534,7 +1731,19 @@ const dayRows = data.customDayRows?.[dateNum] || [];
     ticks.appendChild(rowElement(rowName, dateNum, rowType));
   });
 
+  const manualEditor = manualTextElement(dateNum);
   el.appendChild(ticks);
+  el.appendChild(manualEditor);
+  el.addEventListener("click", event => {
+    if(event.target !== el && event.target !== num && event.target !== ticks) return;
+    manualEditor.focus();
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(manualEditor);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
   return el;
 }
 
@@ -1546,84 +1755,6 @@ function closeSheet(){
   document.getElementById("sheetBackdrop").classList.remove("show");
 }
 
-function updateScopeButtons(){
-  document.querySelectorAll(".scope-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.scope === activeScope);
-  });
-  document.getElementById("weekField").classList.toggle("hidden", activeScope !== "week");
-  document.getElementById("dayField").classList.toggle("hidden", activeScope !== "day");
-}
-
-function addOrDeleteTick(mode){
-  const name = document.getElementById("tickNameInput").value.trim();
-  if(!name) return;
-
-  const data = monthData();
-  data.monthlyRows ||= ["CEP"];
-  data.customDayRows ||= {};
-  data.customWeekRows ||= {};
-
-  const removeFromArray = (arr, item) => arr.filter(x => x !== item);
-
-  if(activeScope === "month"){
-  if(mode === "add" && !data.monthlyRows.includes(name)){
-    data.monthlyRows.push(name);
-  }
-
-  if(mode === "delete"){
-    data.monthlyRows = removeFromArray(data.monthlyRows, name);
-
-    Object.values(data.days || {}).forEach(dayObj => {
-      delete dayObj[name];
-    });
-  }
-}
-
-  if(activeScope === "week"){
-    const week = document.getElementById("weekSelect").value;
-
-    data.customWeekRows[week] ||= [];
-
-    if(mode === "add" && !data.customWeekRows[week].includes(name)){
-      data.customWeekRows[week].push(name);
-    }
-
-    if(mode === "delete"){
-      data.customWeekRows[week] = removeFromArray(data.customWeekRows[week], name);
-
-      Object.keys(data.days || {}).forEach(dayNum => {
-        if(weekRowForDate(Number(dayNum)) === Number(week)){
-          delete data.days[dayNum][name];
-        }
-      });
-    }
-  }
-
-  if(activeScope === "day"){
-    const day = document.getElementById("dayInput").value;
-    if(!day) return;
-
-    data.customDayRows[day] ||= [];
-
-    if(mode === "add" && !data.customDayRows[day].includes(name)){
-      data.customDayRows[day].push(name);
-    }
-
-    if(mode === "delete"){
-      data.customDayRows[day] = removeFromArray(data.customDayRows[day], name);
-
-      if(data.days[day]){
-        delete data.days[day][name];
-      }
-    }
-  }
-
-    save();
-  render();
-  showDeleteChoices();
-
-  document.getElementById("tickNameInput").value = "";
-}
 
 wholeMonth.onchange = () => {
   monthData().whole = wholeMonth.checked;
@@ -1672,17 +1803,16 @@ document.getElementById("editWeeklyBtn").onclick = () => {
   render();
 };
 
-document.querySelectorAll(".scope-btn").forEach(btn => {
-  btn.onclick = () => {
-    activeScope = btn.dataset.scope;
-    updateScopeButtons();
-  };
+document.querySelectorAll('input[name="tickRepeat"]').forEach(input => {
+  input.addEventListener("change", updateRecurrenceFields);
 });
 
-document.getElementById("cancelSheet").onclick = closeSheet;
-
-document.getElementById("saveTickBtn").onclick = () => {
-  addOrDeleteTick("add");
+document.getElementById("addTickBtn").onclick = () => showTickForm();
+document.getElementById("cancelTickEdit").onclick = hideTickForm;
+document.getElementById("saveTickBtn").onclick = saveTickDefinition;
+document.getElementById("cancelSheet").onclick = () => {
+  hideTickForm();
+  closeSheet();
 };
 
 document.getElementById("sheetBackdrop").onclick = (e) => {
@@ -1690,21 +1820,9 @@ document.getElementById("sheetBackdrop").onclick = (e) => {
 };
 
 document.getElementById("manageTicksBtn").onclick = () => {
-  document.getElementById("tickNameInput").value = "";
-  document.getElementById("dayInput").value = "";
-  document.getElementById("weekSelect").value = "1";
-
-  activeScope = "month";
-  updateScopeButtons();
+  hideTickForm();
+  renderTickDefinitions();
   openSheet();
-  showDeleteChoices();
-};
-
-document.getElementById("editModeBtn").onclick = () => {
-  editMode = !editMode;
-  document.body.classList.toggle("edit-mode", editMode);
-  document.getElementById("editModeBtn").classList.toggle("edit-on", editMode);
-  document.getElementById("editModeBtn").textContent = editMode ? "Done" : "Edit";
 };
 
 function showLogin(message = ""){
@@ -1724,6 +1842,7 @@ async function startRecallTracker(user){
   currentUserEmail = user.email;
   document.getElementById("signInBtn").textContent = "Sign out";
   populateControls();
+  ensureTickDefinitions();
   trackerInitialized = true;
   render();
   loadingView.hidden = true;
@@ -1731,6 +1850,10 @@ async function startRecallTracker(user){
   trackerApp.hidden = false;
   startFirestoreSync();
   await loadFromFirestore(user);
+  if(tickDefinitionsNeedSave){
+    tickDefinitionsNeedSave = false;
+    await save();
+  }
   if(trackerInitialized) render();
 }
 
