@@ -1100,19 +1100,38 @@ select option {
     /* Keep the always-visible checklist visually part of the day card. */
     html.theme-homecal .day-checklist {
       background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
       border: 0 !important;
       box-shadow: none !important;
       padding: 0 !important;
     }
 
-    html.theme-homecal .day-checklist-text,
-    html.theme-homecal .day-checklist-text:focus {
+    html.theme-homecal .day-checklist-items,
+    html.theme-homecal .day-checklist-item,
+    html.theme-homecal .day-checklist-item.done {
       background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+      border: 0 !important;
+      box-shadow: none !important;
+    }
+
+    html.theme-homecal input.day-checklist-text,
+    html.theme-homecal input.day-checklist-text:hover,
+    html.theme-homecal input.day-checklist-text:focus,
+    html.theme-homecal input.day-checklist-text:active {
+      background: transparent !important;
+      background-color: transparent !important;
       background-image: none !important;
       border: 0 !important;
       border-radius: 0 !important;
       box-shadow: none !important;
       outline: 0 !important;
+      color: #000 !important;
+      -webkit-text-fill-color: #000 !important;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     /* Softly raised calendar days; placed after shared theme overrides. */
@@ -1520,7 +1539,7 @@ if (note.trim()) {
         checklist._checklistItems = checklist._checklistItems.filter(item =>
           String(item.text || '').trim()
         );
-        await saveDayChecklist(year, month + 1, i, checklist._checklistItems);
+        void saveDayChecklist(year, month + 1, i, checklist._checklistItems);
       }
 
       checklist.dataset.editing = String(isEditing);
@@ -1650,17 +1669,11 @@ function renderDayChecklistItems(panel, year, month, day) {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = !!item.checked;
-    if (isEditing) {
-      checkbox.addEventListener('change', async () => {
-        item.checked = checkbox.checked;
-        row.classList.toggle('done', item.checked);
-        await saveDayChecklist(year, month, day, items);
-      });
-    } else {
-      checkbox.tabIndex = -1;
-      checkbox.setAttribute('aria-disabled', 'true');
-      checkbox.addEventListener('click', e => e.preventDefault());
-    }
+    checkbox.addEventListener('change', () => {
+      item.checked = checkbox.checked;
+      row.classList.toggle('done', item.checked);
+      void saveDayChecklist(year, month, day, items);
+    });
 
     if (!isEditing) {
       const label = document.createElement('span');
@@ -1680,15 +1693,15 @@ function renderDayChecklistItems(panel, year, month, day) {
       item.text = text.value;
     });
     let deletingRow = false;
-    const deleteEmptyRow = async event => {
+    const deleteEmptyRow = event => {
       if (deletingRow || text.value !== '') return false;
       deletingRow = true;
       event.preventDefault();
 
       const previousIndex = itemIndex - 1;
       items.splice(itemIndex, 1);
-      await saveDayChecklist(year, month, day, items);
       renderDayChecklistItems(panel, year, month, day);
+      void saveDayChecklist(year, month, day, items);
 
       const inputs = panel.querySelectorAll('.day-checklist-text');
       const target = previousIndex >= 0 ? inputs[previousIndex] : inputs[0];
@@ -1699,9 +1712,9 @@ function renderDayChecklistItems(panel, year, month, day) {
       return true;
     };
 
-    text.addEventListener('keydown', async e => {
+    text.addEventListener('keydown', e => {
       if (e.key === 'Backspace' && text.value === '') {
-        await deleteEmptyRow(e);
+        deleteEmptyRow(e);
         return;
       }
 
@@ -1709,19 +1722,19 @@ function renderDayChecklistItems(panel, year, month, day) {
       e.preventDefault();
       item.text = text.value;
       items.splice(itemIndex + 1, 0, createBlankChecklistItem());
-      await saveDayChecklist(year, month, day, items);
       renderDayChecklistItems(panel, year, month, day);
+      void saveDayChecklist(year, month, day, items);
       const nextInput = panel.querySelectorAll('.day-checklist-text')[itemIndex + 1];
       if (nextInput) nextInput.focus();
     });
-    text.addEventListener('beforeinput', async e => {
+    text.addEventListener('beforeinput', e => {
       if (e.inputType === 'deleteContentBackward' && text.value === '') {
-        await deleteEmptyRow(e);
+        deleteEmptyRow(e);
       }
     });
-    text.addEventListener('blur', async () => {
+    text.addEventListener('blur', () => {
       item.text = text.value;
-      await saveDayChecklist(year, month, day, items);
+      void saveDayChecklist(year, month, day, items);
     });
 
     row.append(checkbox, text);
