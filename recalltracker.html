@@ -1080,7 +1080,7 @@ body.edit-mode .tick-row{
 <div id="sheetBackdrop" class="sheet-backdrop">
   <div class="sheet">
     <h2>Manage ticks</h2>
-    <p>Create one reusable tick and choose when it appears.</p>
+    <p id="manageTicksContext">Create one reusable tick and choose when it appears.</p>
 
     <button id="addTickBtn" class="primary">Add Tick</button>
 
@@ -1275,33 +1275,55 @@ function definitionColour(definition){
   return definition.repeat === "weekdays" ? "orange" : "yellow";
 }
 
+function cloneTickDefinitions(definitions){
+  return JSON.parse(JSON.stringify(definitions || []));
+}
+
+function cloneTickDefinitionsForMonth(definitions, monthKey){
+  return cloneTickDefinitions(definitions).flatMap(definition => {
+    if(definition.repeat !== "dates") return [definition];
+    definition.dates = (definition.dates || []).filter(date => date.startsWith(`${monthKey}-`));
+    return definition.dates.length ? [definition] : [];
+  });
+}
+
 function ensureTickDefinitions(){
-  if(state.tickDefinitionsVersion >= 2 && Array.isArray(state.tickDefinitions)){
-    let changed = false;
-    state.tickDefinitions.forEach(definition => {
-      if(tickColours.includes(definition.color)) return;
-      definition.color = definitionColour(definition);
-      changed = true;
+  let changed = false;
+  const existing = Array.isArray(state.tickDefinitions) ? state.tickDefinitions : [];
+
+  if(state.tickDefinitionsVersion < 2){
+    const migratedNames = new Set(state.monthlyRows || ["CEP"]);
+    Object.values(state.months || {}).forEach(month => {
+      (month.monthlyRows || []).forEach(name => migratedNames.add(name === "Me" ? "CEP" : name));
     });
-    return changed;
+    migratedNames.forEach(name => {
+      const cleanName = String(name || "").trim();
+      if(!cleanName || existing.some(item => item.name.toLowerCase() === cleanName.toLowerCase())) return;
+      existing.push({ id:makeTickId(), name:cleanName, repeat:"daily", weekdays:[], dayOfMonth:1, color:"yellow" });
+    });
+    changed = true;
   }
 
-  const existing = Array.isArray(state.tickDefinitions) ? state.tickDefinitions : [];
-  const migratedNames = new Set(state.monthlyRows || ["CEP"]);
-
-  Object.values(state.months || {}).forEach(month => {
-    (month.monthlyRows || []).forEach(name => migratedNames.add(name === "Me" ? "CEP" : name));
-  });
-
-  migratedNames.forEach(name => {
-    const cleanName = String(name || "").trim();
-    if(!cleanName || existing.some(item => item.name.toLowerCase() === cleanName.toLowerCase())) return;
-    existing.push({ id:makeTickId(), name:cleanName, repeat:"daily", weekdays:[], dayOfMonth:1, color:"yellow" });
+  existing.forEach(definition => {
+    if(tickColours.includes(definition.color)) return;
+    definition.color = definitionColour(definition);
+    changed = true;
   });
 
   state.tickDefinitions = existing;
-  state.tickDefinitionsVersion = 2;
-  return true;
+  state.months ||= {};
+  Object.entries(state.months).forEach(([monthKey, month]) => {
+    if(!Array.isArray(month.tickDefinitions)){
+      month.tickDefinitions = cloneTickDefinitionsForMonth(existing, monthKey);
+      changed = true;
+    }
+  });
+
+  if(state.tickDefinitionsVersion !== 3){
+    state.tickDefinitionsVersion = 3;
+    changed = true;
+  }
+  return changed;
 }
 
 function applyTrackerState(nextState){
@@ -1452,7 +1474,8 @@ function monthData(){
     hiddenMonthRows:{ weeks:{}, days:{} },
     hiddenWeekRows:{},
     tickCompletions:{},
-    manualText:{}
+    manualText:{},
+    tickDefinitions:cloneTickDefinitionsForMonth(state.tickDefinitions, key())
   };
 
   state.months[key()].monthlyRows ||= ["CEP"];
@@ -1462,8 +1485,15 @@ function monthData(){
   state.months[key()].hiddenWeekRows ||= {};
   state.months[key()].tickCompletions ||= {};
   state.months[key()].manualText ||= {};
+  if(!Array.isArray(state.months[key()].tickDefinitions)){
+    state.months[key()].tickDefinitions = cloneTickDefinitionsForMonth(state.tickDefinitions, key());
+  }
 
   return state.months[key()];
+}
+
+function currentTickDefinitions(){
+  return monthData().tickDefinitions;
 }
 
 function recurrenceSummary(definition){
@@ -1547,12 +1577,23 @@ function renderSpecificDateList(){
 function addSpecificDate(){
   const input = document.getElementById("specificDateInput");
   if(!input.value) return;
+  if(!input.value.startsWith(`${key()}-`)){
+    alert(`Choose a date in ${monthNames[currentMonth]} ${currentYear}.`);
+    return;
+  }
   if(!selectedSpecificDates.includes(input.value)){
     selectedSpecificDates.push(input.value);
     selectedSpecificDates.sort();
   }
   input.value = "";
   renderSpecificDateList();
+}
+
+function updateManageMonthContext(){
+  document.getElementById("manageTicksContext").textContent = `Ticks for ${monthNames[currentMonth]} ${currentYear}. Changes apply only to this month.`;
+  const dateInput = document.getElementById("specificDateInput");
+  dateInput.min = `${key()}-01`;
+  dateInput.max = `${key()}-${String(new Date(currentYear, currentMonth + 1, 0).getDate()).padStart(2, "0")}`;
 }
 
 function resetTickForm(){
@@ -1563,6 +1604,7 @@ function resetTickForm(){
   document.querySelectorAll(".week-position-choice input").forEach(input => { input.checked = false; });
   selectedSpecificDates = [];
   document.getElementById("specificDateInput").value = "";
+  updateManageMonthContext();
   renderSpecificDateList();
   document.querySelector('input[name="tickColour"][value="yellow"]').checked = true;
   document.getElementById("monthDaySelect").value = "1";
@@ -1602,16 +1644,17 @@ function hideTickForm(){
 
 function renderTickDefinitions(){
   const box = document.getElementById("tickDefinitions");
+  const definitions = currentTickDefinitions();
   box.replaceChildren();
 
-  if(!state.tickDefinitions.length){
+  if(!definitions.length){
     const empty = document.createElement("p");
     empty.textContent = "No recurring ticks yet.";
     box.appendChild(empty);
     return;
   }
 
-  state.tickDefinitions.forEach(definition => {
+  definitions.forEach(definition => {
     const item = document.createElement("div");
     item.className = "tick-definition";
 
@@ -1641,7 +1684,7 @@ function renderTickDefinitions(){
     remove.textContent = "Delete";
     remove.onclick = () => {
       if(!confirm(`Delete recurring tick "${definition.name}"? Completed history will be kept.`)) return;
-      state.tickDefinitions = state.tickDefinitions.filter(item => item.id !== definition.id);
+      monthData().tickDefinitions = currentTickDefinitions().filter(item => item.id !== definition.id);
       hideTickForm();
       renderTickDefinitions();
       render();
@@ -1654,6 +1697,7 @@ function renderTickDefinitions(){
 }
 
 function saveTickDefinition(){
+  const definitions = currentTickDefinitions();
   const name = document.getElementById("tickNameInput").value.trim();
   const repeat = document.querySelector('input[name="tickRepeat"]:checked')?.value || "daily";
   const weekdays = [...document.querySelectorAll(".weekday-choice input:checked")].map(input => Number(input.value));
@@ -1678,7 +1722,7 @@ function saveTickDefinition(){
     return;
   }
 
-  const duplicate = state.tickDefinitions.find(item => item.id !== editingTickId && item.name.toLowerCase() === name.toLowerCase());
+  const duplicate = definitions.find(item => item.id !== editingTickId && item.name.toLowerCase() === name.toLowerCase());
   if(duplicate){
     alert("A tick with that name already exists.");
     return;
@@ -1694,24 +1738,23 @@ function saveTickDefinition(){
     dates:repeat === "dates" ? [...selectedSpecificDates] : [],
     color:tickColours.includes(color) ? color : "yellow"
   };
-  const index = state.tickDefinitions.findIndex(item => item.id === editingTickId);
+  const index = definitions.findIndex(item => item.id === editingTickId);
   if(index >= 0){
-    const previous = state.tickDefinitions[index];
+    const previous = definitions[index];
     if(previous.name !== name){
-      Object.values(state.months || {}).forEach(month => {
-        month.tickCompletions ||= {};
-        Object.entries(month.days || {}).forEach(([day, values]) => {
-          if(!(previous.name in values)) return;
-          month.tickCompletions[day] ||= {};
-          if(!(definition.id in month.tickCompletions[day])){
-            month.tickCompletions[day][definition.id] = !!values[previous.name];
-          }
-        });
+      const month = monthData();
+      month.tickCompletions ||= {};
+      Object.entries(month.days || {}).forEach(([day, values]) => {
+        if(!(previous.name in values)) return;
+        month.tickCompletions[day] ||= {};
+        if(!(definition.id in month.tickCompletions[day])){
+          month.tickCompletions[day][definition.id] = !!values[previous.name];
+        }
       });
     }
-    state.tickDefinitions[index] = definition;
+    definitions[index] = definition;
   }
-  else state.tickDefinitions.push(definition);
+  else definitions.push(definition);
 
   hideTickForm();
   renderTickDefinitions();
@@ -2036,7 +2079,8 @@ function dayCell(dateNum){
   const ticks = document.createElement("div");
   ticks.className = "ticks";
 
-  state.tickDefinitions
+  const definitions = currentTickDefinitions();
+  definitions
     .filter(definition => definitionAppearsOn(definition, dateNum))
     .forEach(definition => ticks.appendChild(recurringRowElement(definition, dateNum)));
 
@@ -2049,7 +2093,7 @@ function dayCell(dateNum){
   data.hiddenMonthRows ||= { weeks:{}, days:{} };
   const hiddenForWeek = data.hiddenMonthRows.weeks?.[weekRow] || [];
   const hiddenForDay = data.hiddenMonthRows.days?.[dateNum] || [];
-  const recurringNames = new Set(state.tickDefinitions.map(definition => definition.name.toLowerCase()));
+  const recurringNames = new Set(definitions.map(definition => definition.name.toLowerCase()));
   const visibleMonthlyRows = state.tickDefinitionsVersion >= 1 ? [] : monthlyRows.filter(name => {
     return !recurringNames.has(name.toLowerCase()) && !hiddenForWeek.includes(name) && !hiddenForDay.includes(name);
   });
