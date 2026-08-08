@@ -548,6 +548,15 @@
         { value: "high", label: "High dose" },
         { value: "range", label: "Show both" }
       ]
+    },
+    {
+      id: "amoxStrepMethod",
+      label: "Strep A child dose method",
+      type: "select",
+      choices: [
+        { value: "mgKg", label: "50 mg/kg once daily (max 1 g)" },
+        { value: "weightBand", label: "Weight band: 750 mg or 1 g" }
+      ]
     }
   ],
   note: ({ selections, formulation, patientType }) => {
@@ -578,10 +587,16 @@
     }
 
    if (selections.dosingType === "strepA") {
+  if (patientType === "adult") {
+    return `
+      <strong>Note:</strong> For the requested adult Strep A first-line pathway, select Penicillin V 500 mg twice daily for 10 days.
+    `;
+  }
+
   return `
     <strong>Note:</strong> Child Strep A dosing.<br><br>
-    Amoxicillin 50 mg/kg once daily for 10 days.<br>
-    Maximum: 1000 mg per dose.<br>
+    Option 1: 50 mg/kg once daily for 10 days (maximum 1000 mg per dose).<br>
+    Option 2: under 30 kg, 750 mg once daily; 30 kg and over, 1000 mg once daily, for 10 days.<br>
     If the child swallows capsules, round to the nearest 250 mg.
     ${tabletNotice}
   `;
@@ -768,13 +783,16 @@
 
     if (type === "strepA") {
   const rawDose = weightKg * 50;
-  const cappedDose = Math.min(rawDose, 1000);
+  const method = selections.amoxStrepMethod || "mgKg";
+  const calculatedDose = method === "weightBand"
+    ? (weightKg < 30 ? 750 : 1000)
+    : Math.min(rawDose, 1000);
   const doseMg = formulation?.type === "tablet"
-    ? Math.min(Math.round(cappedDose / 250) * 250, 1000)
-    : cappedDose;
+    ? Math.min(Math.round(calculatedDose / 250) * 250, 1000)
+    : calculatedDose;
   const warnings = [];
 
-  if (rawDose > 1000) {
+  if (method === "mgKg" && rawDose > 1000) {
     warnings.push("Dose capped at the maximum of 1000 mg per dose.");
   }
 
@@ -788,9 +806,11 @@
     maxDailyMg: doseMg,
     warnings,
     extra: [
-      formulation?.type === "tablet"
-        ? "Calculated at 50 mg/kg and rounded to the nearest 250 mg for capsules."
-        : "Calculated at 50 mg/kg once daily.",
+      method === "weightBand"
+        ? `Weight-band pathway selected (${weightKg < 30 ? "under 30 kg" : "30 kg and over"}).`
+        : formulation?.type === "tablet"
+          ? "Calculated at 50 mg/kg and rounded to the nearest 250 mg for capsules."
+          : "Calculated at 50 mg/kg once daily.",
       `Daily total: ${formatMg(doseMg)}`
     ]
   };
@@ -1059,15 +1079,6 @@
           ]
         },
         {
-          id: "eryStrepFreq",
-          label: "Strep A Frequency",
-          type: "select",
-          choices: [
-            { value: "bid", label: "2 divided doses" },
-            { value: "tid", label: "3 divided doses" }
-          ]
-        },
-        {
           id: "eryImpFreq",
           label: "Impetigo Schedule",
           type: "select",
@@ -1086,9 +1097,9 @@
 
         if (selections.dosingType === "strepA") {
           return `
-            <strong>Note:</strong> Strep A first-line alternative if concern about IgE mediated or anaphylactic beta-lactam allergy.<br><br>
-            Children: 40 mg/kg/day in 2 to 3 divided doses (maximum daily dose 1600 mg) for 10 days.<br>
-            Adults: 800 mg twice daily for 10 days.
+            <strong>Note:</strong> Strep A second-line treatment for penicillin allergy.<br><br>
+            Children: 20 mg/kg per dose twice daily with food for 10 days (maximum 800 mg per dose).<br>
+            Adults: 800 mg twice daily with food for 10 days.
             ${tabletNotice}
           `;
         }
@@ -1116,8 +1127,8 @@
         if (type === "strepA") {
           return {
             mode: "single",
-            frequency: "Twice daily for 10 days",
-            sigFrequency: "twice daily",
+            frequency: "Twice daily with food for 10 days",
+            sigFrequency: "twice daily with food",
             dosesPerDay: 2,
             defaultDurationDays: 10,
             doseMg: 800,
@@ -1158,44 +1169,25 @@
 
         if (type === "strepA") {
           const warnings = [];
-          const ageYears = isFinite(ageMonths) ? ageMonths / 12 : null;
+          const rawDose = weightKg * 20;
+          const perDose = Math.min(rawDose, 800);
 
-          if (ageYears !== null && ageYears >= 18) {
-            const doseMg = 800;
-            return {
-              mode: "single",
-              frequency: "Twice daily for 10 days",
-              sigFrequency: "twice daily",
-              dosesPerDay: 2,
-              defaultDurationDays: 10,
-              doseMg,
-              maxDailyMg: 1600,
-              warnings,
-              extra: [`Daily total: ${formatMg(1600)}`]
-            };
-          }
-
-          const dailyRaw = weightKg * 40;
-          const dailyDose = Math.min(dailyRaw, 1600);
-          const divided = selections.eryStrepFreq === "tid" ? 3 : 2;
-          const perDose = dailyDose / divided;
-
-          if (dailyRaw > 1600) {
-            warnings.push("Total daily dose capped at 1600 mg/day.");
+          if (rawDose > 800) {
+            warnings.push("Dose capped at the maximum of 800 mg per dose.");
           }
 
           return {
             mode: "single",
-            frequency: `${divided} divided doses daily for 10 days`,
-            sigFrequency: divided === 3 ? "three times daily" : "twice daily",
-            dosesPerDay: divided,
+            frequency: "Twice daily with food for 10 days",
+            sigFrequency: "twice daily with food",
+            dosesPerDay: 2,
             defaultDurationDays: 10,
             doseMg: perDose,
-            maxDailyMg: dailyDose,
+            maxDailyMg: perDose * 2,
             warnings,
             extra: [
-              `Total daily dose: ${formatMg(dailyDose)}`,
-              `Divided into ${divided} doses`
+              "Calculated at 20 mg/kg per dose.",
+              `Total daily dose: ${formatMg(perDose * 2)}`
             ]
           };
         }
@@ -1548,6 +1540,15 @@ if (type === "bites") {
       choices: [
         { value: "strepA", label: "Strep A" }
       ]
+    },
+    {
+      id: "strepFreq",
+      label: "Child under 20 kg frequency",
+      type: "select",
+      choices: [
+        { value: "bid", label: "Twice daily" },
+        { value: "tid", label: "Three times daily" }
+      ]
     }
   ],
   note: ({ formulation, patientType }) => {
@@ -1557,9 +1558,16 @@ if (type === "bites") {
         : `<br><br><strong>Child capsule note:</strong> Weight is still used for this pathway.`
       : "";
 
-    return `
-      <strong>Note:</strong> Adult Strep A dosing.<br><br>
-      Phenoxymethylpenicillin (Pen V) 500 mg twice daily for 10 days.
+    return patientType === "adult" ? `
+      <strong>Note:</strong> Adult Strep A first-line dosing.<br><br>
+      Phenoxymethylpenicillin (Pen V) 500 mg twice daily for 10 days.<br><br>
+      Take Pen V roughly 12 hours apart, e.g. morning and evening. If one dose is missed, take it when remembered unless the next dose is almost due. Do not double up. Continue the course until completed.
+      ${tabletNotice}
+    ` : `
+      <strong>Note:</strong> Child Strep A first-line dosing.<br><br>
+      Under 20 kg: Pen V 250 mg twice or three times daily for 10 days.<br>
+      20 kg and over: Pen V 500 mg twice daily for 10 days.<br><br>
+      For twice-daily dosing, take Pen V roughly 12 hours apart, e.g. morning and evening. If one dose is missed, take it when remembered unless the next dose is almost due. Do not double up. Continue the course until completed.
       ${tabletNotice}
     `;
   },
@@ -1573,22 +1581,31 @@ if (type === "bites") {
       doseMg: 500,
       maxDailyMg: 1000,
       warnings: [],
-      extra: ["Adult Strep A Pen V regimen used."]
+      extra: [
+        "Adult Strep A Pen V regimen used.",
+        "Take doses roughly 12 hours apart, e.g. morning and evening.",
+        "If one dose is missed, take it when remembered unless the next dose is almost due. Do not double up. Continue the course until completed."
+      ]
     };
   },
-  calc: ({ weightKg }) => {
+  calc: ({ weightKg, selections }) => {
     const doseMg = weightKg < 20 ? 250 : 500;
+    const dosesPerDay = weightKg < 20 && selections.strepFreq === "tid" ? 3 : 2;
 
     return {
       mode: "single",
-      frequency: "Twice daily for 10 days",
-      sigFrequency: "twice daily",
-      dosesPerDay: 2,
+      frequency: `${dosesPerDay === 3 ? "Three times" : "Twice"} daily for 10 days`,
+      sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
+      dosesPerDay,
       defaultDurationDays: 10,
       doseMg,
-      maxDailyMg: doseMg * 2,
+      maxDailyMg: doseMg * dosesPerDay,
       warnings: [],
-      extra: [`Daily total: ${formatMg(doseMg * 2)}`]
+      extra: [
+        `Daily total: ${formatMg(doseMg * dosesPerDay)}`,
+        dosesPerDay === 2 ? "Take doses roughly 12 hours apart, e.g. morning and evening." : "",
+        "If one dose is missed, take it when remembered unless the next dose is almost due. Do not double up. Continue the course until completed."
+      ].filter(Boolean)
     };
   }
 },
@@ -1774,9 +1791,24 @@ if (type === "bites") {
   return;
 }
 
+        if (
+          medKey === "amoxicillin" &&
+          opt.id === "amoxStrepMethod" &&
+          (selections.dosingType !== "strepA" || patientType === "adult")
+        ) {
+          return;
+        }
+
+        if (
+          medKey === "penicillinV" &&
+          opt.id === "strepFreq" &&
+          patientType === "adult"
+        ) {
+          return;
+        }
+
         if (medKey === "erythromycin") {
           if (opt.id === "doseLevel" && selections.dosingType === "strepA") return;
-          if (opt.id === "eryStrepFreq" && selections.dosingType !== "strepA") return;
           if (opt.id === "eryImpFreq" && selections.dosingType !== "impetigo") return;
         }
 
@@ -1916,6 +1948,19 @@ if (opt.type === "number") {
     const canUseAdultFixedDose =
       patientType === "adult" &&
       typeof med.adultCalc === "function";
+
+    if (
+      patientType === "adult" &&
+      medKey === "amoxicillin" &&
+      selections.dosingType === "strepA"
+    ) {
+      resultBox.innerHTML = `
+        <div class="calcWarnings">
+          <div>Adult Strep A first line: select Penicillin V 500 mg twice daily for 10 days.</div>
+        </div>
+      `;
+      return;
+    }
 
     if (
       (patientType !== "adult" && ageValue && (!isFinite(ageMonths) || ageMonths < 0)) ||
