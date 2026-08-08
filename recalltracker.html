@@ -747,7 +747,7 @@ body.edit-mode .tick-row{
 
 .week-position-selectors{
   display:grid;
-  grid-template-columns:repeat(5, 1fr);
+  grid-template-columns:repeat(auto-fit, minmax(58px, 1fr));
   gap:5px;
 }
 
@@ -1128,6 +1128,8 @@ body.edit-mode .tick-row{
           <label class="week-position-choice"><input type="checkbox" value="2">Second</label>
           <label class="week-position-choice"><input type="checkbox" value="3">Third</label>
           <label class="week-position-choice"><input type="checkbox" value="4">Fourth</label>
+          <label class="week-position-choice" data-calendar-week="5"><input type="checkbox" value="5">Fifth</label>
+          <label class="week-position-choice" data-calendar-week="6"><input type="checkbox" value="6">Sixth</label>
           <label class="week-position-choice"><input type="checkbox" value="last">Last</label>
         </div>
       </div>
@@ -1523,7 +1525,7 @@ function recurrenceSummary(definition){
     return selected.join(", ") || "No weekdays selected";
   }
   if(definition.repeat === "weekOfMonth"){
-    const positionNames = { "1":"First", "2":"Second", "3":"Third", "4":"Fourth", last:"Last" };
+    const positionNames = { "1":"First", "2":"Second", "3":"Third", "4":"Fourth", "5":"Fifth", "6":"Sixth", last:"Last" };
     const positions = (definition.weekPositions || []).map(position => positionNames[position]).filter(Boolean);
     const selectedDays = (definition.weekdays || []).map(index => days[index]).filter(Boolean);
     return `${positions.join(" + ")} · ${selectedDays.join(", ")}`;
@@ -1617,6 +1619,14 @@ function updateManageMonthContext(){
   const dateInput = document.getElementById("specificDateInput");
   dateInput.min = `${key()}-01`;
   dateInput.max = `${key()}-${String(new Date(currentYear, currentMonth + 1, 0).getDate()).padStart(2, "0")}`;
+  const firstOffset = mondayIndex(new Date(currentYear, currentMonth, 1));
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const calendarWeeks = Math.ceil((firstOffset + daysInMonth) / 7);
+  document.querySelectorAll("[data-calendar-week]").forEach(choice => {
+    const unavailable = Number(choice.dataset.calendarWeek) > calendarWeeks;
+    choice.hidden = unavailable;
+    if(unavailable) choice.querySelector("input").checked = false;
+  });
 }
 
 function resetTickForm(){
