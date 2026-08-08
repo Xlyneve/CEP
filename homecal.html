@@ -745,7 +745,10 @@ button:hover,
 }
 
 .day-note-tick.checked {
-  color: #d4ad22;
+  color: #d4ad22 !important;
+  -webkit-text-fill-color: #d4ad22 !important;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
 }
 
 .day.today {
@@ -1620,7 +1623,7 @@ function setCaretOffset(editor, requestedOffset) {
 
 function renderDayNoteText(editor, text, caretOffset = null) {
   const fragment = document.createDocumentFragment();
-  const parts = String(text).split(/([☐☑]|\n)/);
+  const parts = String(text).split(/([☐☑✔]|\n)/);
 
   parts.forEach(part => {
     if (!part) return;
@@ -1630,14 +1633,15 @@ function renderDayNoteText(editor, text, caretOffset = null) {
       return;
     }
 
-    if (part === '☐' || part === '☑') {
+    if (part === '☐' || part === '☑' || part === '✔') {
+      const isChecked = part === '☑' || part === '✔';
       const tick = document.createElement('span');
       tick.className = 'day-note-tick';
-      tick.classList.toggle('checked', part === '☑');
-      tick.textContent = part;
+      tick.classList.toggle('checked', isChecked);
+      tick.textContent = isChecked ? '✔' : '☐';
       tick.setAttribute('contenteditable', 'false');
       tick.setAttribute('role', 'checkbox');
-      tick.setAttribute('aria-checked', String(part === '☑'));
+      tick.setAttribute('aria-checked', String(isChecked));
       fragment.appendChild(tick);
       return;
     }
@@ -1679,7 +1683,7 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
     editor._dirty = true;
     rememberCaret();
 
-    if (event.data && /[☐☑]/.test(event.data)) {
+    if (event.data && /[☐☑✔]/.test(event.data)) {
       const text = getDayNoteText(editor);
       const caret = editor._lastCaretPosition;
       renderDayNoteText(editor, text, caret);
@@ -1698,8 +1702,8 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
     if (!tick || !editor.contains(tick)) return;
 
     event.preventDefault();
-    const checked = tick.textContent === '☑';
-    tick.textContent = checked ? '☐' : '☑';
+    const checked = tick.textContent === '☑' || tick.textContent === '✔';
+    tick.textContent = checked ? '☐' : '✔';
     tick.classList.toggle('checked', !checked);
     tick.setAttribute('aria-checked', String(!checked));
     editor._dirty = true;
@@ -1747,7 +1751,7 @@ async function migrateLegacyChecklist(editor, year, month, day, dayElement) {
 
     positionedItems.forEach(item => {
       const position = Math.max(0, Math.min(note.length, item.position));
-      const line = `${item.checked ? '☑' : '☐'} ${String(item.text).trim()}`;
+      const line = `${item.checked ? '✔' : '☐'} ${String(item.text).trim()}`;
       const leading = position > 0 && note[position - 1] !== '\n' ? '\n' : '';
       const trailing = position < note.length && note[position] !== '\n' ? '\n' : '';
       note = note.slice(0, position) + leading + line + trailing + note.slice(position);
