@@ -579,10 +579,10 @@
 
    if (selections.dosingType === "strepA") {
   return `
-    <strong>Note:</strong> Strep A dosing.<br><br>
-    Oral 50 mg/kg once daily (maximum daily dose 1000 mg).<br><br>
-    Weight under 30 kg: 750 mg once daily for 10 days.<br>
-    Weight 30 kg and over: 1000 mg once daily for 10 days.
+    <strong>Note:</strong> Child Strep A dosing.<br><br>
+    Amoxicillin 50 mg/kg once daily for 10 days.<br>
+    Maximum: 1000 mg per dose.<br>
+    If the child swallows capsules, round to the nearest 250 mg.
     ${tabletNotice}
   `;
 }
@@ -686,7 +686,7 @@
       extra: ["Adult fixed-dose regimen used."]
     };
   },
-  calc: ({ weightKg, selections }) => {
+  calc: ({ weightKg, selections, formulation }) => {
     const type = selections.dosingType || "general";
 
     if (type === "otitisMedia") {
@@ -768,11 +768,14 @@
 
     if (type === "strepA") {
   const rawDose = weightKg * 50;
-  let doseMg = weightKg < 30 ? 750 : 1000;
+  const cappedDose = Math.min(rawDose, 1000);
+  const doseMg = formulation?.type === "tablet"
+    ? Math.min(Math.round(cappedDose / 250) * 250, 1000)
+    : cappedDose;
   const warnings = [];
 
   if (rawDose > 1000) {
-    warnings.push("Calculated dose exceeds maximum daily dose, so dose capped at 1000 mg once daily.");
+    warnings.push("Dose capped at the maximum of 1000 mg per dose.");
   }
 
   return {
@@ -785,7 +788,9 @@
     maxDailyMg: doseMg,
     warnings,
     extra: [
-      "50 mg/kg once daily pathway selected.",
+      formulation?.type === "tablet"
+        ? "Calculated at 50 mg/kg and rounded to the nearest 250 mg for capsules."
+        : "Calculated at 50 mg/kg once daily.",
       `Daily total: ${formatMg(doseMg)}`
     ]
   };
@@ -1543,15 +1548,6 @@ if (type === "bites") {
       choices: [
         { value: "strepA", label: "Strep A" }
       ]
-    },
-    {
-      id: "strepFreq",
-      label: "Frequency",
-      type: "select",
-      choices: [
-        { value: "bid", label: "2 times daily" },
-        { value: "tid", label: "3 times daily" }
-      ]
     }
   ],
   note: ({ formulation, patientType }) => {
@@ -1562,43 +1558,37 @@ if (type === "bites") {
       : "";
 
     return `
-      <strong>Note:</strong> Strep A dosing for 10 days.<br><br>
-      Children under 20 kg: 250 mg 2 or 3 times daily for 10 days.<br>
-      Children and adults over 20 kg: 500 mg 2 or 3 times daily for 10 days.
+      <strong>Note:</strong> Adult Strep A dosing.<br><br>
+      Phenoxymethylpenicillin (Pen V) 500 mg twice daily for 10 days.
       ${tabletNotice}
     `;
   },
-  adultCalc: ({ selections }) => {
-    const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
-    const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
-
+  adultCalc: () => {
     return {
       mode: "single",
-      frequency,
-      sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
-      dosesPerDay,
+      frequency: "Twice daily for 10 days",
+      sigFrequency: "twice daily",
+      dosesPerDay: 2,
       defaultDurationDays: 10,
       doseMg: 500,
-      maxDailyMg: 500 * dosesPerDay,
+      maxDailyMg: 1000,
       warnings: [],
-      extra: ["Adult fixed-dose regimen used."]
+      extra: ["Adult Strep A Pen V regimen used."]
     };
   },
-  calc: ({ weightKg, selections }) => {
+  calc: ({ weightKg }) => {
     const doseMg = weightKg < 20 ? 250 : 500;
-    const dosesPerDay = selections.strepFreq === "tid" ? 3 : 2;
-    const frequency = dosesPerDay === 3 ? "3 times daily for 10 days" : "2 times daily for 10 days";
 
     return {
       mode: "single",
-      frequency,
-      sigFrequency: dosesPerDay === 3 ? "three times daily" : "twice daily",
-      dosesPerDay,
+      frequency: "Twice daily for 10 days",
+      sigFrequency: "twice daily",
+      dosesPerDay: 2,
       defaultDurationDays: 10,
       doseMg,
-      maxDailyMg: doseMg * dosesPerDay,
+      maxDailyMg: doseMg * 2,
       warnings: [],
-      extra: [`Daily total: ${formatMg(doseMg * dosesPerDay)}`]
+      extra: [`Daily total: ${formatMg(doseMg * 2)}`]
     };
   }
 },
@@ -2432,15 +2422,20 @@ window.lastDoseForPlan = {
     return Math.round(value / 75) * 75;
   }
   
-  window.prefillDoseCalculator = function ({ medKey, dosingType } = {}) {
+  window.prefillDoseCalculator = function ({ medKey, dosingType, patientType, strengthId } = {}) {
   const panel = document.getElementById("doseCalculator");
   const medSelect = document.getElementById("medicationSelect");
+  const patientTypeSelect = document.getElementById("patientType");
 
   if (!panel || !medSelect) return;
 
   panel.classList.remove("hidden");
 
   if (!medKey || !MEDS[medKey]) return;
+
+  if (patientTypeSelect && patientType) {
+    patientTypeSelect.value = patientType;
+  }
 
   medSelect.value = medKey;
   renderMedicationOptions();
@@ -2453,6 +2448,13 @@ window.lastDoseForPlan = {
     }
 
     renderMedicationOptions();
+
+    const strengthSelect = document.getElementById("strengthSelect");
+    if (strengthSelect && strengthId) {
+      strengthSelect.value = strengthId;
+    }
+
+    updatePatientFieldHints();
     calculateDose();
   }, 0);
 };
