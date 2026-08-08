@@ -2579,12 +2579,12 @@ select option {
       Fluclox cellulitis
     </button>
 
-    <button type="button" class="quick-dose-btn" data-med="amoxicillin" data-type="strepA">
-      Amoxicillin Strep A
+    <button type="button" class="quick-dose-btn" data-med="amoxicillin" data-type="strepA" data-patient="child" data-strength="liq250">
+      Child Strep A · Amoxicillin
     </button>
 
-    <button type="button" class="quick-dose-btn" data-med="penicillinV" data-type="strepA">
-      Pen V Strep A
+    <button type="button" class="quick-dose-btn" data-med="penicillinV" data-type="strepA" data-patient="adult" data-strength="cap500">
+      Adult Strep A · Pen V
     </button>
   </div>
 
@@ -2827,7 +2827,7 @@ select option {
   </div>
 </div>
 
-  <script src="calculator.js?v=6"></script>
+  <script src="calculator.js?v=7"></script>
 <script type="module">
 import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -3170,13 +3170,15 @@ document.addEventListener("click", (e) => {
 
   const medKey = btn.dataset.med;
   const dosingType = btn.dataset.type;
+  const patientType = btn.dataset.patient;
+  const strengthId = btn.dataset.strength;
 
   if (typeof window.prefillDoseCalculator !== "function") {
     alert("Dose calculator is not ready.");
     return;
   }
 
-  window.prefillDoseCalculator({ medKey, dosingType });
+  window.prefillDoseCalculator({ medKey, dosingType, patientType, strengthId });
 });
 function allTemplates() {
   return [...defaultTemplates, ...userTemplates];
