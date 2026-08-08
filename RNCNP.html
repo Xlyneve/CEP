@@ -105,11 +105,14 @@
 
 
 .topbar.minimized .sticky-template-title {
-  font-size: 0.88rem;
+  font-size: 0.78rem;
+  line-height: 1;
 }
 
 .topbar.minimized .sticky-template-info {
-  max-width: 260px;
+  min-width: 0;
+  max-width: none;
+  flex: 1 1 auto;
 }
 
     .topbar-toggle {
@@ -131,9 +134,12 @@
   font-size: 0.95rem;
 }
 
-      .topbar.minimized {
-  padding: 6px 10px;
-  border-radius: 16px;
+.topbar.minimized {
+  flex-wrap: nowrap;
+  gap: 5px;
+  min-height: 36px;
+  padding: 3px 7px;
+  border-radius: 14px;
 }
 
 .topbar.minimized .brand-dot {
@@ -142,8 +148,30 @@
 }
 
 .topbar.minimized .glass-btn {
-  padding: 7px 9px;
-  font-size: 0.85rem;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  line-height: 1;
+}
+
+.topbar.minimized .top-actions {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 3px;
+}
+
+.topbar.minimized .top-actions > div {
+  flex-wrap: nowrap !important;
+  gap: 3px !important;
+}
+
+.topbar.minimized #authStatus {
+  display: none;
 }
 
 .topbar.minimized .subtitle {
@@ -5398,7 +5426,24 @@ alert('Template archived.');
 function setupDesktopHeaderMinimize() {
   if (!topbar) return;
 
-  const headerBtns = document.querySelectorAll('.header-btn');
+  const headerBtns = topbar.querySelectorAll('.glass-btn');
+  const miniLabels = {
+    fillTemplateBtn: '\u2728',
+    clearBtn: '\u{1F9FC}',
+    generateBtn: '\u{1F4CB}',
+    loginBtn: '\u{1F510}',
+    logoutBtn: '\u{1F6AA}',
+    saveTemplateBtn: '\u{1F4BE}',
+    editTemplateBtn: '\u270F\uFE0F',
+    deleteTemplateBtn: '\u{1F5D1}\uFE0F'
+  };
+
+  headerBtns.forEach(btn => {
+    if (!btn.dataset.full) btn.dataset.full = btn.textContent;
+    if (!btn.dataset.mini && miniLabels[btn.id]) btn.dataset.mini = miniLabels[btn.id];
+    if (btn.dataset.full) btn.title = btn.dataset.full.replace(/^\S+\s*/, '') || btn.dataset.full;
+  });
+
   let isMinimized = false;
 
   function setHeaderMini(mini) {
