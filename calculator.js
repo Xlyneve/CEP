@@ -1683,8 +1683,8 @@ if (type === "bites") {
         </select>
       </label>
 
-      <label>Age (months):
-        <input type="number" id="ageMonths" min="0" step="1" />
+      <label>Age (years):
+        <input type="number" id="ageYears" min="0" step="0.1" />
       </label>
 
       <label>Weight (kg):
@@ -1921,12 +1921,16 @@ if (opt.type === "number") {
   function calculateDose() {
     const medKey = document.getElementById("medicationSelect")?.value;
     const patientType = document.getElementById("patientType")?.value || "child";
-    const ageValue = document.getElementById("ageMonths")?.value?.trim() || "";
+    const ageValue = document.getElementById("ageYears")?.value?.trim() || "";
     const weightValue = document.getElementById("weight")?.value?.trim() || "";
     const durationValue = document.getElementById("durationDays")?.value?.trim() || "";
-    const ageMonths = parseFloat(ageValue);
+    const ageYears = parseFloat(ageValue);
+    const ageMonths = isFinite(ageYears) ? ageYears * 12 : NaN;
     const weightKg = parseFloat(weightValue);
-    const durationDaysInput = parseFloat(durationValue);
+    const parsedDurationDays = parseFloat(durationValue);
+    const durationDaysInput = isFinite(parsedDurationDays) && parsedDurationDays > 0
+      ? parsedDurationDays
+      : NaN;
     const resultBox = document.getElementById("result");
     const noteDiv = document.getElementById("medicationNote");
 
@@ -1963,13 +1967,12 @@ if (opt.type === "number") {
     }
 
     if (
-      (patientType !== "adult" && ageValue && (!isFinite(ageMonths) || ageMonths < 0)) ||
-      (!canUseAdultFixedDose && weightValue && (!isFinite(weightKg) || weightKg <= 0)) ||
-      (!canUseAdultFixedDose && durationValue && (!isFinite(durationDaysInput) || durationDaysInput <= 0))
+      (patientType !== "adult" && ageValue && (!isFinite(ageYears) || ageYears < 0)) ||
+      (!canUseAdultFixedDose && weightValue && (!isFinite(weightKg) || weightKg <= 0))
     ) {
       resultBox.innerHTML = `
         <div class="calcWarnings">
-          <div>⚠ Enter positive numeric values for weight and duration, and a non-negative age.</div>
+          <div>Enter a non-negative age in years and a weight greater than 0 kg.</div>
         </div>
       `;
       return;
@@ -1982,8 +1985,9 @@ if (opt.type === "number") {
       const maxMonths = med.age.maxYears != null ? med.age.maxYears * 12 : Infinity;
 
       if (ageMonths < minMonths || ageMonths > maxMonths) {
+        const minYears = minMonths / 12;
         warnings.push(
-          `Age entered is outside the stated calculator range (${minMonths} months to ${med.age.maxYears} years).`
+          `Age entered is outside the stated calculator range (${stripTrailingZero(minYears)} to ${med.age.maxYears} years).`
         );
       }
     }
@@ -2504,7 +2508,7 @@ window.lastDoseForPlan = {
 
   function updatePatientFieldHints() {
     const patientType = document.getElementById("patientType")?.value || "child";
-    const ageLabel = document.getElementById("ageMonths")?.closest("label");
+    const ageLabel = document.getElementById("ageYears")?.closest("label");
     const weightLabel = document.getElementById("weight")?.closest("label");
     const medKey = document.getElementById("medicationSelect")?.value || "";
     const hasAdultFixedDose =
