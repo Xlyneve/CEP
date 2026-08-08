@@ -1949,8 +1949,11 @@ if (opt.type === "number") {
 
     const canUseAdultFixedDose =
       patientType === "adult" &&
-      isTabletFormulation &&
-      typeof med.adultCalc === "function";
+      typeof med.adultCalc === "function" &&
+      (
+        isTabletFormulation ||
+        (medKey === "penicillinV" && selections.dosingType === "strepA")
+      );
 
     let result = null;
 
@@ -2463,13 +2466,22 @@ window.lastDoseForPlan = {
     const patientType = document.getElementById("patientType")?.value || "child";
     const ageLabel = document.getElementById("ageMonths")?.closest("label");
     const weightLabel = document.getElementById("weight")?.closest("label");
+    const medKey = document.getElementById("medicationSelect")?.value || "";
+    const dosingType = document.getElementById("dosingType")?.value || "";
+    const isAdultStrepPenV =
+      patientType === "adult" &&
+      medKey === "penicillinV" &&
+      dosingType === "strepA";
 
     if (!ageLabel || !weightLabel) return;
 
     if (patientType === "adult") {
-      ageLabel.style.opacity = "0.7";
-      weightLabel.style.opacity = "0.7";
+      ageLabel.style.display = "none";
+      weightLabel.style.display = isAdultStrepPenV ? "none" : "";
+      weightLabel.style.opacity = isAdultStrepPenV ? "1" : "0.7";
     } else {
+      ageLabel.style.display = "";
+      weightLabel.style.display = "";
       ageLabel.style.opacity = "1";
       weightLabel.style.opacity = "1";
     }
