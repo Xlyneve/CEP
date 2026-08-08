@@ -5427,6 +5427,7 @@ function setupDesktopHeaderMinimize() {
   if (!topbar) return;
 
   const headerBtns = topbar.querySelectorAll('.glass-btn');
+  const mainScroller = document.querySelector('.main');
   const miniLabels = {
     fillTemplateBtn: '\u2728',
     clearBtn: '\u{1F9FC}',
@@ -5465,7 +5466,9 @@ function setupDesktopHeaderMinimize() {
       return;
     }
 
-    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    const y = window.innerWidth > 1180 && mainScroller
+      ? mainScroller.scrollTop
+      : (window.scrollY || document.documentElement.scrollTop || 0);
 
     // Use two different points so it does not bounce around one threshold
     if (!isMinimized && y > 120) {
@@ -5478,6 +5481,7 @@ function setupDesktopHeaderMinimize() {
   }
 
   window.addEventListener('scroll', applyHeaderState, { passive: true });
+  mainScroller?.addEventListener('scroll', applyHeaderState, { passive: true });
   window.addEventListener('resize', applyHeaderState);
   applyHeaderState();
 }
