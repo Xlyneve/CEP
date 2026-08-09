@@ -1372,7 +1372,7 @@
       choices: [
   { value: "general", label: "General" },
   { value: "cellulitis", label: "Cellulitis" },
-  { value: "bites", label: "Bites" }
+  { value: "bites", label: "Bite wound" }
 ]
     },
     {
@@ -1396,9 +1396,9 @@
 	  if (selections.dosingType === "bites") {
   return `
     <strong>Note:</strong> Bite wound dosing.<br><br>
-    Adult: 625 mg three times daily for 3 days, with food.<br>
-    Children ≤14 years: 30 mg/kg/dose three times daily for 3 days.<br>
-    Maximum single dose: 625 mg.
+    Adult: 625 mg three times daily for 3 days with food.<br>
+    Child: 30 mg/kg per dose three times daily for 3 days with food.<br>
+    Child maximum single dose: 625 mg.
     ${tabletNotice}
   `;
 }
@@ -1856,6 +1856,14 @@ if (type === "bites") {
           medKey === "cefalexin" &&
           opt.id === "cefalexinImpetigoSchedule" &&
           (selections.dosingType !== "impetigo" || patientType === "adult")
+        ) {
+          return;
+        }
+
+        if (
+          medKey === "amoxClav" &&
+          opt.id === "doseLevel" &&
+          (selections.dosingType === "bites" || selections.dosingType === "cellulitis")
         ) {
           return;
         }
