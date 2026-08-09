@@ -2702,8 +2702,7 @@ window.lastDoseForPlan = {
 
   function formatMg(value) {
     if (!isFinite(value)) return "-";
-    if (Math.abs(value - Math.round(value)) < 0.001) return `${Math.round(value)} mg`;
-    return `${value.toFixed(1)} mg`;
+    return `${Math.round(value)} mg`;
   }
 
   function formatMlQuantity(value, doseStepMl = 0.5) {
