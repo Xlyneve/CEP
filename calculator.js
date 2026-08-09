@@ -2166,6 +2166,8 @@ if (opt.type === "number") {
 
     if (!resultBox || !noteDiv) return;
 
+    updateDurationField(null, medKey);
+
     window.lastDoseForPlan = null;
     noteDiv.innerHTML = medKey ? getMedicationNote(medKey) : "";
 
@@ -2332,7 +2334,11 @@ if (medKey === "customMgKg" && effectiveFormulation?.type !== "liquid") {
   return;
 }
 
-resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, durationDaysInput);
+const hasFixedDuration = isFinite(result.defaultDurationDays) && result.defaultDurationDays > 0;
+updateDurationField(result, medKey);
+const effectiveDurationInput = hasFixedDuration ? NaN : durationDaysInput;
+
+resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, effectiveDurationInput);
 
 window.lastDoseForPlan = {
   medication: MEDS[medKey]?.label || "",
@@ -2346,6 +2352,32 @@ window.lastDoseForPlan = {
   fullText: resultBox.innerText.trim()
 };
 }
+
+  function updateDurationField(result, medKey) {
+    const durationInput = document.getElementById("durationDays");
+    const durationLabel = durationInput?.closest("label");
+    if (!durationInput || !durationLabel) return;
+
+    const fixedDuration = Number(result?.defaultDurationDays);
+    const hasFixedDuration = isFinite(fixedDuration) && fixedDuration > 0;
+    const usesCustomDuration = medKey === "customMgKg";
+
+    if (hasFixedDuration) {
+      durationInput.value = String(fixedDuration);
+      durationInput.disabled = true;
+      durationInput.dataset.autoDuration = "true";
+      durationLabel.style.display = "none";
+      return;
+    }
+
+    if (durationInput.dataset.autoDuration === "true") {
+      durationInput.value = "";
+      delete durationInput.dataset.autoDuration;
+    }
+
+    durationInput.disabled = false;
+    durationLabel.style.display = usesCustomDuration ? "none" : "";
+  }
 
 
   function renderResult(result, formulation, warnings, enteredDurationDays) {
