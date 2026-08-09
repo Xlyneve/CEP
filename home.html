@@ -2475,6 +2475,22 @@ html body > header {
 
     </div>
 
+    <div class="qs-field" style="margin-top:8px;">
+      <label class="qs-label" for="qsMaxDoseMg">
+        Maximum single dose (mg)
+      </label>
+
+      <input
+        id="qsMaxDoseMg"
+        class="qs-input"
+        type="number"
+        inputmode="decimal"
+        min="0"
+        step="any"
+        value="1000"
+      />
+    </div>
+
     <div class="qs-strength-row">
       <div class="qs-field">
         <label class="qs-label" for="qsAvailableMg">
@@ -3387,6 +3403,7 @@ function closeTable() {
 
   const dosePerKgInput = calculator.querySelector('#qsDosePerKg');
   const weightInput = calculator.querySelector('#qsWeight');
+  const maxDoseMgInput = calculator.querySelector('#qsMaxDoseMg');
 
   const availableMgInput =
     calculator.querySelector('#qsAvailableMg');
@@ -3424,6 +3441,7 @@ function closeTable() {
   function calculateSyrupQuantity() {
     const dosePerKg = Number(dosePerKgInput.value);
     const weightKg = Number(weightInput.value);
+    const maxDoseMg = Number(maxDoseMgInput.value);
 
     const availableMg = Number(availableMgInput.value);
     const availableMl = Number(availableMlInput.value);
@@ -3434,6 +3452,7 @@ function closeTable() {
     const values = [
       dosePerKg,
       weightKg,
+      maxDoseMg,
       availableMg,
       availableMl,
       timesDaily,
@@ -3453,7 +3472,9 @@ function closeTable() {
       Required mg per dose:
       guideline mg/kg/dose × patient weight
     */
-    const mgPerDose = dosePerKg * weightKg;
+    const uncappedMgPerDose = dosePerKg * weightKg;
+    const mgPerDose = Math.min(uncappedMgPerDose, maxDoseMg);
+    const doseWasCapped = uncappedMgPerDose > maxDoseMg;
 
     /*
       Convert the required mg into mL using:
@@ -3484,7 +3505,7 @@ function closeTable() {
       `${formatNumber(displayedMlPerDose, 1)} mL per dose`;
 
     subResult.innerHTML =
-      `${formatNumber(mgPerDose)} mg per dose<br>` +
+      `${formatNumber(mgPerDose)} mg per dose${doseWasCapped ? ` (capped from ${formatNumber(uncappedMgPerDose)} mg)` : ''}<br>` +
       `${formatNumber(displayedMlPerDose, 1)} mL × ` +
       `${formatNumber(timesDaily)} daily × ` +
       `${formatNumber(days)} days<br>` +
@@ -3494,6 +3515,7 @@ function closeTable() {
   [
     dosePerKgInput,
     weightInput,
+    maxDoseMgInput,
     availableMgInput,
     availableMlInput,
     frequencyInput,
