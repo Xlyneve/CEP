@@ -304,7 +304,7 @@
     if (selections.dosingType === "cellulitis") {
       return `
         <strong>Note:</strong> Cellulitis dosing.<br><br>
-        Adult: 1 g four times daily for 5 days.<br><br>
+        Adult: 1 g three times daily for 5 days.<br><br>
         <strong>Source:</strong> tewhatakura.nz
         ${capsuleNotice}
       `;
@@ -350,12 +350,12 @@
     if (type === "cellulitis") {
       return {
         mode: "single",
-        frequency: "4 times daily for 5 days",
-        sigFrequency: "four times daily",
-        dosesPerDay: 4,
+        frequency: "Three times daily for 5 days",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
         defaultDurationDays: 5,
         doseMg: 1000,
-        maxDailyMg: 4000,
+        maxDailyMg: 3000,
         warnings: [],
         extra: ["Adult cellulitis regimen used.", "Source: tewhatakura.nz"]
       };
@@ -979,6 +979,7 @@
       type: "select",
       choices: [
         { value: "impetigo", label: "Impetigo" },
+        { value: "cellulitis", label: "Cellulitis" },
         { value: "generalInfection", label: "General Infection" }
       ]
     },
@@ -1025,6 +1026,17 @@
         Palatable suspension, well tolerated, funded.<br><br>
         <strong>Source:</strong> tewhatakura.nz
         ${IMPETIGO_CARE_NOTE}
+        ${tabletNotice}
+      `;
+    }
+
+    if (selections.dosingType === "cellulitis") {
+      return patientType === "adult" ? `
+        <strong>Note:</strong> Adult cellulitis pathway: select flucloxacillin 1 g three times daily for 5 days.
+      ` : `
+        <strong>Note:</strong> Child cellulitis dosing.<br><br>
+        Cefalexin 25 mg/kg per dose three times daily for 5 days.<br>
+        Maximum single dose: 1000 mg (1 g).
         ${tabletNotice}
       `;
     }
@@ -1093,6 +1105,22 @@
           `Daily total: ${formatMg(doseMg * dosesPerDay)}`,
           "Source: tewhatakura.nz"
         ]
+      };
+    }
+
+    if (type === "cellulitis") {
+      const rawDose = weightKg * 25;
+      const doseMg = Math.min(rawDose, 1000);
+      return {
+        mode: "single",
+        frequency: "Three times daily for 5 days",
+        sigFrequency: "three times daily",
+        dosesPerDay: 3,
+        defaultDurationDays: 5,
+        doseMg,
+        maxDailyMg: doseMg * 3,
+        warnings: rawDose > 1000 ? ["Dose capped at max single dose of 1000 mg."] : [],
+        extra: ["Child cellulitis regimen used.", `Daily total: ${formatMg(doseMg * 3)}`]
       };
     }
 
@@ -2019,7 +2047,15 @@ if (type === "bites") {
         if (
           medKey === "cefalexin" &&
           opt.id === "doseLevel" &&
-          selections.dosingType === "impetigo"
+          (selections.dosingType === "impetigo" || selections.dosingType === "cellulitis")
+        ) {
+          return;
+        }
+
+        if (
+          medKey === "flucloxacillin" &&
+          opt.id === "doseLevel" &&
+          selections.dosingType === "cellulitis"
         ) {
           return;
         }
@@ -2190,6 +2226,32 @@ if (opt.type === "number") {
       resultBox.innerHTML = `
         <div class="calcWarnings">
           <div>Adult impetigo pathway: select flucloxacillin 1 g four times daily with food for 5 days.</div>
+        </div>
+      `;
+      return;
+    }
+
+    if (
+      patientType === "adult" &&
+      medKey === "cefalexin" &&
+      selections.dosingType === "cellulitis"
+    ) {
+      resultBox.innerHTML = `
+        <div class="calcWarnings">
+          <div>Adult cellulitis pathway: select flucloxacillin 1 g three times daily for 5 days.</div>
+        </div>
+      `;
+      return;
+    }
+
+    if (
+      patientType === "child" &&
+      medKey === "flucloxacillin" &&
+      selections.dosingType === "cellulitis"
+    ) {
+      resultBox.innerHTML = `
+        <div class="calcWarnings">
+          <div>Child cellulitis pathway: select cefalexin 25 mg/kg per dose three times daily for 5 days (maximum 1 g per dose).</div>
         </div>
       `;
       return;
