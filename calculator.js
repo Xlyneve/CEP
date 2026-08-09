@@ -543,7 +543,7 @@
       type: "select",
       choices: [
         { value: "general", label: "General" },
-        { value: "otitisMedia", label: "Otitis Media" },
+        { value: "otitisMedia", label: "Acute Otitis Media" },
         { value: "acuteSinusitis", label: "Acute Sinusitis" },
         { value: "strepA", label: "Strep A" }
       ]
@@ -556,6 +556,15 @@
         { value: "low", label: "Low dose" },
         { value: "high", label: "High dose" },
         { value: "range", label: "Show both" }
+      ]
+    },
+    {
+      id: "aomChildPathway",
+      label: "Child AOM pathway",
+      type: "select",
+      choices: [
+        { value: "initial", label: "Initial treatment (15 mg/kg/dose)" },
+        { value: "severe", label: "Recent antibiotics / severe / recurrent (30 mg/kg/dose)" }
       ]
     },
     {
@@ -577,9 +586,20 @@
         : "";
 
     if (selections.dosingType === "otitisMedia") {
+      if (patientType === "adult") {
+        return `
+          <strong>Note:</strong> Acute otitis media dosing.<br><br>
+          Adult: 1000 mg three times daily for 5 days.
+          ${tabletNotice}
+        `;
+      }
+
+      const childDose = selections.aomChildPathway === "severe" ? 30 : 15;
       return `
-        <strong>Note:</strong> Otitis media dosing.<br><br>
-        15 mg/kg/dose three times daily for 5 days.<br>
+        <strong>Note:</strong> Acute otitis media dosing.<br><br>
+        1. Initial treatment: 15 mg/kg per dose three times daily for 5 days.<br>
+        2. Recent antibiotic treatment, severe infection, or recurrent infection: 30 mg/kg per dose three times daily for 5 days.<br><br>
+        <strong>Selected pathway:</strong> ${childDose} mg/kg per dose.<br>
         Maximum single dose: 1000 mg.
         ${tabletNotice}
       `;
@@ -629,10 +649,10 @@
         sigFrequency: "three times daily",
         dosesPerDay: 3,
         defaultDurationDays: 5,
-        doseMg: 500,
-        maxDailyMg: 1500,
+        doseMg: 1000,
+        maxDailyMg: 3000,
         warnings: [],
-        extra: ["Adult fixed-dose regimen used."]
+        extra: ["Adult acute otitis media regimen used."]
       };
     }
 
@@ -714,7 +734,8 @@
     const type = selections.dosingType || "general";
 
     if (type === "otitisMedia") {
-      const rawDose = weightKg * 15;
+      const mgPerKg = selections.aomChildPathway === "severe" ? 30 : 15;
+      const rawDose = weightKg * mgPerKg;
       const doseMg = Math.min(rawDose, 1000);
       const warnings = [];
 
@@ -729,7 +750,10 @@
         doseMg,
         maxDailyMg: doseMg * 3,
         warnings,
-        extra: [`Daily total: ${formatMg(doseMg * 3)}`]
+        extra: [
+          `${mgPerKg} mg/kg/dose pathway used.`,
+          `Daily total: ${formatMg(doseMg * 3)}`
+        ]
       };
     }
 
@@ -939,7 +963,8 @@
       return `
         <strong>Note:</strong> Child impetigo dosing.<br><br>
         Extensive disease or topical treatment ineffective: cefalexin 25 mg/kg per dose twice daily for 5 days.<br>
-        Cellulitis surrounding the lesion: cefalexin 25 mg/kg per dose three times daily for 5 days.<br><br>
+        Cellulitis surrounding the lesion: cefalexin 25 mg/kg per dose three times daily for 5 days.<br>
+        Maximum single dose: 1000 mg (1 g).<br><br>
         Palatable suspension, well tolerated, funded.<br><br>
         <strong>Source:</strong> tewhatakura.nz
         ${IMPETIGO_CARE_NOTE}
@@ -1802,6 +1827,14 @@ if (type === "bites") {
 ) {
   return;
 }
+
+        if (
+          medKey === "amoxicillin" &&
+          opt.id === "aomChildPathway" &&
+          (selections.dosingType !== "otitisMedia" || patientType === "adult")
+        ) {
+          return;
+        }
 
         if (
           medKey === "amoxicillin" &&
