@@ -545,7 +545,8 @@
         { value: "general", label: "General" },
         { value: "otitisMedia", label: "Acute Otitis Media" },
         { value: "acuteSinusitis", label: "Acute Sinusitis" },
-        { value: "strepA", label: "Strep A" }
+        { value: "strepA", label: "Strep A" },
+        { value: "arf", label: "Acute rheumatic fever - Strep A eradication" }
       ]
     },
     {
@@ -574,6 +575,15 @@
       choices: [
         { value: "mgKg", label: "50 mg/kg once daily (max 1 g)" },
         { value: "weightBand", label: "Weight band: 750 mg or 1 g" }
+      ]
+    },
+    {
+      id: "arfAmoxSchedule",
+      label: "ARF amoxicillin schedule",
+      type: "select",
+      choices: [
+        { value: "od", label: "Once daily (child 50 mg/kg; adult 1000 mg)" },
+        { value: "bid", label: "Twice daily (child 25 mg/kg; adult 500 mg)" }
       ]
     }
   ],
@@ -630,6 +640,18 @@
     ${tabletNotice}
   `;
 }
+
+    if (selections.dosingType === "arf") {
+      return patientType === "adult" ? `
+        <strong>Note:</strong> Acute rheumatic fever - initial Strep A eradication.<br><br>
+        Amoxicillin 1000 mg once daily for 10 days, or 500 mg twice daily for 10 days.
+        ${tabletNotice}
+      ` : `
+        <strong>Note:</strong> Acute rheumatic fever - initial Strep A eradication.<br><br>
+        Amoxicillin 50 mg/kg once daily for 10 days (maximum 1000 mg/day), or 25 mg/kg twice daily for 10 days (maximum 500 mg per dose).
+        ${tabletNotice}
+      `;
+    }
 
     return `
       <strong>Note:</strong> For ages 1 month to 18 years only.<br><br>
@@ -717,6 +739,21 @@
     extra: ["Adult fixed-dose Strep A regimen used."]
   };
 }
+
+    if (type === "arf") {
+      const twiceDaily = selections.arfAmoxSchedule === "bid";
+      return {
+        mode: "single",
+        frequency: `${twiceDaily ? "Twice" : "Once"} daily for 10 days`,
+        sigFrequency: twiceDaily ? "twice daily" : "once daily",
+        dosesPerDay: twiceDaily ? 2 : 1,
+        defaultDurationDays: 10,
+        doseMg: twiceDaily ? 500 : 1000,
+        maxDailyMg: 1000,
+        warnings: [],
+        extra: ["Adult acute rheumatic fever Strep A eradication regimen used."]
+      };
+    }
 
     return {
       mode: "single",
@@ -848,6 +885,26 @@
     ]
   };
 }
+
+    if (type === "arf") {
+      const twiceDaily = selections.arfAmoxSchedule === "bid";
+      const mgPerKg = twiceDaily ? 25 : 50;
+      const maxDose = twiceDaily ? 500 : 1000;
+      const rawDose = weightKg * mgPerKg;
+      const doseMg = Math.min(rawDose, maxDose);
+      const dosesPerDay = twiceDaily ? 2 : 1;
+      return {
+        mode: "single",
+        frequency: `${twiceDaily ? "Twice" : "Once"} daily for 10 days`,
+        sigFrequency: twiceDaily ? "twice daily" : "once daily",
+        dosesPerDay,
+        defaultDurationDays: 10,
+        doseMg,
+        maxDailyMg: doseMg * dosesPerDay,
+        warnings: rawDose > maxDose ? [`Dose capped at max single dose of ${maxDose} mg.`] : [],
+        extra: [`Calculated at ${mgPerKg} mg/kg per dose.`, `Daily total: ${formatMg(doseMg * dosesPerDay)}`]
+      };
+    }
 
     const doseLevel = selections.doseLevel || "low";
     const lowRaw = weightKg * 15;
@@ -1119,7 +1176,8 @@
           choices: [
             { value: "general", label: "General" },
             { value: "strepA", label: "Strep A" },
-            { value: "impetigo", label: "Impetigo" }
+            { value: "impetigo", label: "Impetigo" },
+            { value: "arf", label: "Acute rheumatic fever - beta-lactam allergy" }
           ]
         },
         {
@@ -1154,6 +1212,16 @@
             <strong>Note:</strong> Penicillin allergy option for impetigo.<br><br>
             10 to 12.5 mg/kg per dose four times daily for 5 days (maximum 400 mg per dose).
             ${IMPETIGO_CARE_NOTE}
+            ${tabletNotice}
+          `;
+        }
+
+        if (selections.dosingType === "arf") {
+          return `
+            <strong>Note:</strong> Acute rheumatic fever - initial Strep A eradication for beta-lactam allergy.<br><br>
+            Child: erythromycin 20 mg/kg per dose twice daily for 10 days.<br>
+            Maximum daily dose: 1000 mg (maximum 500 mg per dose).<br><br>
+            No adolescent/adult erythromycin regimen is specified in the supplied table.
             ${tabletNotice}
           `;
         }
@@ -1197,6 +1265,20 @@
           };
         }
 
+        if (type === "arf") {
+          return {
+            mode: "single",
+            frequency: "",
+            sigFrequency: "",
+            dosesPerDay: null,
+            defaultDurationDays: 10,
+            doseMg: null,
+            maxDailyMg: null,
+            warnings: ["No adolescent/adult erythromycin regimen is specified in the supplied acute rheumatic fever table."],
+            extra: []
+          };
+        }
+
         return {
           mode: "single",
           frequency: "Every 6 hours",
@@ -1234,6 +1316,22 @@
               "Calculated at 20 mg/kg per dose.",
               `Total daily dose: ${formatMg(perDose * 2)}`
             ]
+          };
+        }
+
+        if (type === "arf") {
+          const rawDose = weightKg * 20;
+          const doseMg = Math.min(rawDose, 500);
+          return {
+            mode: "single",
+            frequency: "Twice daily for 10 days",
+            sigFrequency: "twice daily",
+            dosesPerDay: 2,
+            defaultDurationDays: 10,
+            doseMg,
+            maxDailyMg: doseMg * 2,
+            warnings: rawDose > 500 ? ["Dose capped at 500 mg per dose (1000 mg/day)."] : [],
+            extra: ["Calculated at 20 mg/kg per dose.", `Daily total: ${formatMg(doseMg * 2)}`]
           };
         }
 
@@ -1575,7 +1673,8 @@ if (type === "bites") {
       label: "Dosing Type",
       type: "select",
       choices: [
-        { value: "strepA", label: "Strep A" }
+        { value: "strepA", label: "Strep A" },
+        { value: "arf", label: "Acute rheumatic fever - Strep A eradication" }
       ]
     },
     {
@@ -1588,12 +1687,25 @@ if (type === "bites") {
       ]
     }
   ],
-  note: ({ formulation, patientType }) => {
+  note: ({ selections, formulation, patientType }) => {
     const tabletNotice = formulation?.type === "tablet"
       ? patientType === "adult"
         ? `<br><br><strong>Adult capsule note:</strong> Fixed adult dosing can be used without entering weight.`
         : `<br><br><strong>Child capsule note:</strong> Weight is still used for this pathway.`
       : "";
+
+    if (selections.dosingType === "arf") {
+      return patientType === "adult" ? `
+        <strong>Note:</strong> Acute rheumatic fever - initial Strep A eradication.<br><br>
+        Phenoxymethylpenicillin (Penicillin V) 500 mg twice daily for 10 days.
+        ${tabletNotice}
+      ` : `
+        <strong>Note:</strong> Acute rheumatic fever - initial Strep A eradication.<br><br>
+        Weight 20 kg or less: 250 mg twice daily for 10 days.<br>
+        Weight over 20 kg: 500 mg twice daily for 10 days.
+        ${tabletNotice}
+      `;
+    }
 
     return patientType === "adult" ? `
       <strong>Note:</strong> Adult Strep A first-line dosing.<br><br>
@@ -1626,8 +1738,10 @@ if (type === "bites") {
     };
   },
   calc: ({ weightKg, selections }) => {
-    const doseMg = weightKg < 20 ? 250 : 500;
-    const dosesPerDay = weightKg < 20 && selections.strepFreq === "tid" ? 3 : 2;
+    const doseMg = selections.dosingType === "arf"
+      ? (weightKg <= 20 ? 250 : 500)
+      : (weightKg < 20 ? 250 : 500);
+    const dosesPerDay = selections.dosingType !== "arf" && weightKg < 20 && selections.strepFreq === "tid" ? 3 : 2;
 
     return {
       mode: "single",
@@ -1660,16 +1774,42 @@ if (type === "bites") {
           label: "1,200,000 units / 2.3 mL prefilled syringe"
         }
       ],
-      note: `
+      options: [{
+        id: "dosingType",
+        label: "Indication",
+        type: "select",
+        choices: [
+          { value: "strepA", label: "Strep A" },
+          { value: "arf", label: "Acute rheumatic fever - secondary prophylaxis" }
+        ]
+      }],
+      note: ({ selections }) => selections.dosingType === "arf" ? `
+        <strong>Note:</strong> Acute rheumatic fever - secondary antibiotic prophylaxis.<br><br>
+        Weight under 20 kg: 600,000 units (450 mg) IM.<br>
+        Weight 20 kg and over: 1,200,000 units (900 mg) IM.<br>
+        Adolescent/adult: 1,200,000 units (900 mg) IM.
+      ` : `
         <strong>Note:</strong> Strep A intramuscular treatment.<br><br>
         Single dose only.<br>
         Under 30 kg: 450 mg (600,000 U)<br>
         30 kg and over: 900 mg (1,200,000 U)<br><br>
         Consider low-dose lignocaine 2% 0.25 mL mixed with IM benzathine penicillin to reduce pain.
       `,
-      calc: ({ weightKg }) => {
-        const doseMg = weightKg < 30 ? 450 : 900;
-        const units = weightKg < 30 ? "600,000 U" : "1,200,000 U";
+      adultCalc: ({ selections }) => ({
+        mode: "single",
+        frequency: "Single IM dose",
+        sigFrequency: "once",
+        dosesPerDay: 1,
+        defaultDurationDays: 1,
+        doseMg: 900,
+        maxDailyMg: 900,
+        warnings: [],
+        extra: [`Equivalent dose: 1,200,000 U${selections.dosingType === "arf" ? " (ARF secondary prophylaxis)" : ""}`]
+      }),
+      calc: ({ weightKg, selections }) => {
+        const thresholdKg = selections.dosingType === "arf" ? 20 : 30;
+        const doseMg = weightKg < thresholdKg ? 450 : 900;
+        const units = weightKg < thresholdKg ? "600,000 U" : "1,200,000 U";
 
         return {
           mode: "single",
@@ -1823,7 +1963,7 @@ if (type === "bites") {
         if (
   medKey === "amoxicillin" &&
   opt.id === "doseLevel" &&
-  (selections.dosingType === "otitisMedia" || selections.dosingType === "strepA")
+  (selections.dosingType === "otitisMedia" || selections.dosingType === "strepA" || selections.dosingType === "arf")
 ) {
   return;
 }
@@ -1832,6 +1972,14 @@ if (type === "bites") {
           medKey === "amoxicillin" &&
           opt.id === "aomChildPathway" &&
           (selections.dosingType !== "otitisMedia" || patientType === "adult")
+        ) {
+          return;
+        }
+
+        if (
+          medKey === "amoxicillin" &&
+          opt.id === "arfAmoxSchedule" &&
+          selections.dosingType !== "arf"
         ) {
           return;
         }
@@ -1847,7 +1995,7 @@ if (type === "bites") {
         if (
           medKey === "penicillinV" &&
           opt.id === "strepFreq" &&
-          patientType === "adult"
+          (patientType === "adult" || selections.dosingType === "arf")
         ) {
           return;
         }
@@ -1877,7 +2025,7 @@ if (type === "bites") {
         }
 
         if (medKey === "erythromycin") {
-          if (opt.id === "doseLevel" && selections.dosingType === "strepA") return;
+          if (opt.id === "doseLevel" && (selections.dosingType === "strepA" || selections.dosingType === "arf")) return;
         }
 
         
