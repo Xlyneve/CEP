@@ -2197,6 +2197,8 @@ select option {
 .note-editor-fields { min-width:0; }
 .note-link-input { display:none; width:100%; margin-top:6px; padding:7px 9px !important; border:1px solid #cdbfc6 !important; border-radius:8px !important; background:#fff !important; font-size:.86rem; }
 .checklist-row.editing .note-link-input { display:block; }
+.checklist-add-fields { display:grid; gap:6px; min-width:0; }
+.checklist-new-url { width:100%; padding:8px 10px; border:1px solid rgba(20,20,20,.12); border-radius:10px; background:rgba(255,255,255,.68); font-size:.84rem; }
 .reference-drawer-backdrop { position:fixed; inset:0; z-index:1998; background:rgba(20,12,17,.18); opacity:0; pointer-events:none; transition:opacity .2s ease; }
 .reference-drawer-backdrop.open { opacity:1; pointer-events:auto; }
 .reference-drawer { position:fixed; top:0; bottom:0; left:0; z-index:1999; display:flex; flex-direction:column; width:min(520px,88vw); background:#f8f5f6; box-shadow:12px 0 35px rgba(31,18,25,.25); transform:translateX(-105%); transition:transform .24s ease,width .24s ease; }
@@ -3857,24 +3859,42 @@ function initEditableChecklist(id, seedItems = []) {
   container.innerHTML = `
     <div class="checklist-list"></div>
     <div class="checklist-add-row">
-      <input type="text" class="checklist-new-input" placeholder="${escapeHtml(placeholder)}">
+      <div class="checklist-add-fields">
+        <input type="text" class="checklist-new-input" placeholder="${escapeHtml(placeholder)}">
+        <input type="url" class="checklist-new-url" placeholder="Optional webpage URL (HealthPathways, etc.)" aria-label="Optional webpage URL">
+      </div>
       <button type="button" class="glass-btn checklist-add-btn">＋ Add</button>
     </div>
   `;
 
   const addInput = container.querySelector('.checklist-new-input');
+  const addUrlInput = container.querySelector('.checklist-new-url');
   const addBtn = container.querySelector('.checklist-add-btn');
 
   const addFromInput = () => {
     const value = addInput?.value.trim() || '';
     if (!value) return;
-    createChecklistRow(container, value, false);
+    const enteredUrl = addUrlInput?.value.trim() || '';
+    const cleanUrl = normalizeReferenceUrl(enteredUrl);
+    if (enteredUrl && !cleanUrl) {
+      alert('Please enter a valid http:// or https:// URL.');
+      addUrlInput.focus();
+      return;
+    }
+    createChecklistRow(container, value, false, false, cleanUrl);
     addInput.value = '';
+    if (addUrlInput) addUrlInput.value = '';
     addInput.focus();
   };
 
   safeAddListener(addBtn, 'click', addFromInput);
   safeAddListener(addInput, 'keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addFromInput();
+    }
+  });
+  safeAddListener(addUrlInput, 'keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addFromInput();
