@@ -2194,6 +2194,9 @@ select option {
 .note-link-btn { flex:0 0 auto; width:27px; height:27px; padding:0; border:1px solid rgba(255,255,255,.82); border-radius:9px; background:rgba(255,255,255,.72); color:#594650; cursor:pointer; box-shadow:0 2px 7px rgba(60,38,49,.12); }
 .note-link-btn[hidden] { display:none !important; }
 .note-link-btn:hover { background:#fff; transform:translateY(-1px); }
+.note-editor-fields { min-width:0; }
+.note-link-input { display:none; width:100%; margin-top:6px; padding:7px 9px !important; border:1px solid #cdbfc6 !important; border-radius:8px !important; background:#fff !important; font-size:.86rem; }
+.checklist-row.editing .note-link-input { display:block; }
 .reference-drawer-backdrop { position:fixed; inset:0; z-index:1998; background:rgba(20,12,17,.18); opacity:0; pointer-events:none; transition:opacity .2s ease; }
 .reference-drawer-backdrop.open { opacity:1; pointer-events:auto; }
 .reference-drawer { position:fixed; top:0; bottom:0; left:0; z-index:1999; display:flex; flex-direction:column; width:min(520px,88vw); background:#f8f5f6; box-shadow:12px 0 35px rgba(31,18,25,.25); transform:translateX(-105%); transition:transform .24s ease,width .24s ease; }
@@ -3601,7 +3604,18 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   input.rows = 1;
   input.readOnly = true;
 
-  note.appendChild(input);
+  const editorFields = document.createElement('div');
+  editorFields.className = 'note-editor-fields';
+  editorFields.appendChild(input);
+
+  const linkInput = document.createElement('input');
+  linkInput.type = 'url';
+  linkInput.className = 'note-link-input';
+  linkInput.placeholder = 'Optional webpage URL';
+  linkInput.value = url || '';
+  linkInput.setAttribute('aria-label', 'Linked webpage URL');
+  editorFields.appendChild(linkInput);
+  note.appendChild(editorFields);
 
   const linkBtn = document.createElement('button');
   linkBtn.type = 'button';
@@ -3758,18 +3772,34 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
       return;
     }
     row.dataset.url = cleanUrl;
+    linkInput.value = cleanUrl;
     linkBtn.hidden = !cleanUrl;
     linkEditBtn.textContent = cleanUrl ? 'Edit link' : 'Add link';
   });
 
   const finishEditing = () => {
+    const enteredUrl = linkInput.value.trim();
+    const cleanUrl = normalizeReferenceUrl(enteredUrl);
+    if (enteredUrl && !cleanUrl) {
+      alert('Please enter a valid http:// or https:// URL.');
+      linkInput.focus();
+      return;
+    }
+    row.dataset.url = cleanUrl;
+    linkInput.value = cleanUrl;
+    linkBtn.hidden = !cleanUrl;
+    linkEditBtn.textContent = cleanUrl ? 'Edit link' : 'Add link';
     input.readOnly = true;
     row.classList.remove('editing');
 
     autoGrowChecklistTextarea(input);
   };
 
-  input.addEventListener('blur', finishEditing);
+  note.addEventListener('focusout', () => {
+    setTimeout(() => {
+      if (row.classList.contains('editing') && !note.contains(document.activeElement)) finishEditing();
+    }, 0);
+  });
 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -3783,6 +3813,14 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     ) {
       e.preventDefault();
       input.blur();
+    }
+  });
+
+  linkInput.addEventListener('click', e => e.stopPropagation());
+  linkInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === 'Escape') {
+      e.preventDefault();
+      linkInput.blur();
     }
   });
 
@@ -5717,7 +5755,7 @@ if (firebaseReady) {
 
 .card .check-item {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   gap: 8px !important;
 
@@ -5741,7 +5779,7 @@ if (firebaseReady) {
 }
 
 .card .check-item.exam-check-item {
-  grid-template-columns: auto minmax(0, 1fr) !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
   gap: 4px !important;
 }
 
