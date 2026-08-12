@@ -2190,15 +2190,7 @@ select option {
     0 3px 7px rgba(0,0,0,0.14) !important;
 }
 	
-/* Linked reference pages for saved checklist notes */
-.note-link-btn { flex:0 0 auto; width:27px; height:27px; padding:0; border:1px solid rgba(255,255,255,.82); border-radius:9px; background:rgba(255,255,255,.72); color:#594650; cursor:pointer; box-shadow:0 2px 7px rgba(60,38,49,.12); }
-.note-link-btn[hidden] { display:none !important; }
-.note-link-btn:hover { background:#fff; transform:translateY(-1px); }
-.note-editor-fields { min-width:0; }
-.note-link-input { display:none; width:100%; margin-top:6px; padding:7px 9px !important; border:1px solid #cdbfc6 !important; border-radius:8px !important; background:#fff !important; font-size:.86rem; }
-.checklist-row.editing .note-link-input { display:block; }
-.checklist-add-fields { display:grid; gap:6px; min-width:0; }
-.checklist-new-url { width:100%; padding:8px 10px; border:1px solid rgba(20,20,20,.12); border-radius:10px; background:rgba(255,255,255,.68); font-size:.84rem; }
+/* HealthPathways left drawer */
 .reference-drawer-backdrop { position:fixed; inset:0; z-index:1998; background:rgba(20,12,17,.18); opacity:0; pointer-events:none; transition:opacity .2s ease; }
 .reference-drawer-backdrop.open { opacity:1; pointer-events:auto; }
 .reference-drawer { position:fixed; top:0; bottom:0; left:0; z-index:1999; display:flex; flex-direction:column; width:min(520px,88vw); background:#f8f5f6; box-shadow:12px 0 35px rgba(31,18,25,.25); transform:translateX(-105%); transition:transform .24s ease,width .24s ease; }
@@ -2214,14 +2206,14 @@ select option {
 </head>
 <body>
   <div class="reference-drawer-backdrop" id="referenceDrawerBackdrop"></div>
-  <aside class="reference-drawer" id="referenceDrawer" aria-hidden="true" aria-label="Linked reference page">
+  <aside class="reference-drawer" id="referenceDrawer" aria-hidden="true" aria-label="HealthPathways">
     <div class="reference-drawer-header">
-      <div class="reference-drawer-title" id="referenceDrawerTitle">Reference</div>
-      <a class="reference-drawer-action" id="referenceExternalLink" href="#" target="_blank" rel="noopener noreferrer" title="Open in new tab">↗</a>
+      <div class="reference-drawer-title">HealthPathways</div>
+      <a class="reference-drawer-action" id="referenceExternalLink" href="https://aucklandregion.communityhealthpathways.org/17240.htm" target="_blank" rel="noopener noreferrer" title="Open in new tab">↗</a>
       <button class="reference-drawer-action reference-expand-btn" id="referenceExpandBtn" type="button" title="Expand panel">⤢</button>
       <button class="reference-drawer-action" id="referenceCloseBtn" type="button" title="Close panel">✕</button>
     </div>
-    <iframe id="referenceFrame" title="Linked reference page" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <iframe id="referenceFrame" title="HealthPathways page" referrerpolicy="strict-origin-when-cross-origin"></iframe>
   </aside>
   <button class="topbar-toggle" id="topbarToggle" title="Show header">☰</button>
   <div class="page-shell">
@@ -2237,6 +2229,7 @@ select option {
 
     <a class="glass-btn header-btn" href="home.html" data-full="🏠 Home" data-mini="🏠">🏠 Home</a>
     <a class="glass-btn header-btn" href="https://xlyneve.github.io/CEP/chatgptx.html" data-full="💬 Notes" data-mini="💬">💬 Notes</a>
+    <button class="glass-btn header-btn" id="healthPathwaysBtn" type="button" data-full="🩺 HealthPathways" data-mini="🩺" title="Open HealthPathways">🩺 HealthPathways</button>
     <button class="glass-btn header-btn" id="printBtn" data-full="🖨️ Print template" data-mini="🖨️">🖨️ Print</button>
   </div>
 </header>
@@ -3306,16 +3299,14 @@ function splitPromptToItems(value) {
           return {
             text: v.trim(),
             checked: false,
-            lineBreak: false,
-            url: ''
+            lineBreak: false
           };
         }
 
         return {
           text: String(v?.text || '').trim(),
           checked: !!v?.checked,
-          lineBreak: !!v?.lineBreak,
-          url: String(v?.url || '').trim()
+          lineBreak: !!v?.lineBreak
         };
       })
       .filter(item => item.text);
@@ -3326,8 +3317,7 @@ function splitPromptToItems(value) {
     .map(v => ({
       text: v.trim(),
       checked: false,
-      lineBreak: false,
-      url: ''
+      lineBreak: false
     }))
     .filter(item => item.text);
 }
@@ -3336,28 +3326,17 @@ function joinList(items, separator = '\n') {
   return items.filter(Boolean).join(separator);
 }
 
-function normalizeReferenceUrl(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return '';
-  try {
-    const parsed = new URL(raw);
-    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
-  } catch { return ''; }
-}
+const HEALTH_PATHWAYS_URL = 'https://aucklandregion.communityhealthpathways.org/17240.htm';
 
-function openReferenceDrawer(url, title = 'Reference') {
-  const cleanUrl = normalizeReferenceUrl(url);
-  if (!cleanUrl) return;
+function openHealthPathways() {
   const drawer = document.getElementById('referenceDrawer');
-  document.getElementById('referenceDrawerTitle').textContent = title;
-  document.getElementById('referenceExternalLink').href = cleanUrl;
-  document.getElementById('referenceFrame').src = cleanUrl;
+  document.getElementById('referenceFrame').src = HEALTH_PATHWAYS_URL;
   drawer.classList.add('open');
   document.getElementById('referenceDrawerBackdrop').classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
 }
 
-function closeReferenceDrawer() {
+function closeHealthPathways() {
   const drawer = document.getElementById('referenceDrawer');
   drawer.classList.remove('open', 'expanded');
   document.getElementById('referenceDrawerBackdrop').classList.remove('open');
@@ -3365,11 +3344,12 @@ function closeReferenceDrawer() {
   document.getElementById('referenceFrame').src = 'about:blank';
 }
 
-document.getElementById('referenceCloseBtn')?.addEventListener('click', closeReferenceDrawer);
-document.getElementById('referenceDrawerBackdrop')?.addEventListener('click', closeReferenceDrawer);
+document.getElementById('healthPathwaysBtn')?.addEventListener('click', openHealthPathways);
+document.getElementById('referenceCloseBtn')?.addEventListener('click', closeHealthPathways);
+document.getElementById('referenceDrawerBackdrop')?.addEventListener('click', closeHealthPathways);
 document.getElementById('referenceExpandBtn')?.addEventListener('click', () => document.getElementById('referenceDrawer').classList.toggle('expanded'));
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && document.getElementById('referenceDrawer')?.classList.contains('open')) closeReferenceDrawer();
+  if (event.key === 'Escape' && document.getElementById('referenceDrawer')?.classList.contains('open')) closeHealthPathways();
 });
 
 function joinNaturalList(items) {
@@ -3534,7 +3514,7 @@ function setupChecklistRowDrag(row) {
   });
 }
 
-function createChecklistRow(container, text = '', checked = false, lineBreak = false, url = '') {
+function createChecklistRow(container, text = '', checked = false, lineBreak = false) {
   const list = container.querySelector('.checklist-list');
   if (!list) return;
 
@@ -3542,7 +3522,6 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   row.className = 'checklist-row';
   row.dataset.selected = checked ? 'true' : 'false';
   row.dataset.lineBreak = lineBreak ? 'true' : 'false';
-  row.dataset.url = url || '';
 
   if (checked) {
     row.classList.add('selected');
@@ -3606,27 +3585,7 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   input.rows = 1;
   input.readOnly = true;
 
-  const editorFields = document.createElement('div');
-  editorFields.className = 'note-editor-fields';
-  editorFields.appendChild(input);
-
-  const linkInput = document.createElement('input');
-  linkInput.type = 'url';
-  linkInput.className = 'note-link-input';
-  linkInput.placeholder = 'Optional webpage URL';
-  linkInput.value = url || '';
-  linkInput.setAttribute('aria-label', 'Linked webpage URL');
-  editorFields.appendChild(linkInput);
-  note.appendChild(editorFields);
-
-  const linkBtn = document.createElement('button');
-  linkBtn.type = 'button';
-  linkBtn.className = 'note-link-btn';
-  linkBtn.textContent = '↗';
-  linkBtn.title = 'Open linked page';
-  linkBtn.setAttribute('aria-label', 'Open linked page');
-  linkBtn.hidden = !url;
-  note.appendChild(linkBtn);
+  note.appendChild(input);
 
   const optionsWrap = document.createElement('div');
   optionsWrap.className = 'checklist-options-wrap';
@@ -3648,11 +3607,6 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   editBtn.className = 'checklist-menu-action';
   editBtn.textContent = 'Edit';
 
-  const linkEditBtn = document.createElement('button');
-  linkEditBtn.type = 'button';
-  linkEditBtn.className = 'checklist-menu-action';
-  linkEditBtn.textContent = url ? 'Edit link' : 'Add link';
-
   const deleteBtn = document.createElement('button');
   deleteBtn.type = 'button';
   deleteBtn.className =
@@ -3660,7 +3614,6 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   deleteBtn.textContent = 'Delete';
 
   optionsMenu.appendChild(editBtn);
-  optionsMenu.appendChild(linkEditBtn);
   optionsMenu.appendChild(deleteBtn);
 
   optionsWrap.appendChild(optionsBtn);
@@ -3755,53 +3708,14 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     );
   });
 
-  linkBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openReferenceDrawer(row.dataset.url, input.value.trim() || 'Reference');
-  });
-
-  linkEditBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    optionsMenu.hidden = true;
-    optionsBtn.setAttribute('aria-expanded', 'false');
-    const entered = prompt('Paste the webpage URL (leave blank to remove it):', row.dataset.url || '');
-    if (entered === null) return;
-    const cleanUrl = normalizeReferenceUrl(entered);
-    if (entered.trim() && !cleanUrl) {
-      alert('Please enter a valid http:// or https:// URL.');
-      return;
-    }
-    row.dataset.url = cleanUrl;
-    linkInput.value = cleanUrl;
-    linkBtn.hidden = !cleanUrl;
-    linkEditBtn.textContent = cleanUrl ? 'Edit link' : 'Add link';
-  });
-
   const finishEditing = () => {
-    const enteredUrl = linkInput.value.trim();
-    const cleanUrl = normalizeReferenceUrl(enteredUrl);
-    if (enteredUrl && !cleanUrl) {
-      alert('Please enter a valid http:// or https:// URL.');
-      linkInput.focus();
-      return;
-    }
-    row.dataset.url = cleanUrl;
-    linkInput.value = cleanUrl;
-    linkBtn.hidden = !cleanUrl;
-    linkEditBtn.textContent = cleanUrl ? 'Edit link' : 'Add link';
     input.readOnly = true;
     row.classList.remove('editing');
 
     autoGrowChecklistTextarea(input);
   };
 
-  note.addEventListener('focusout', () => {
-    setTimeout(() => {
-      if (row.classList.contains('editing') && !note.contains(document.activeElement)) finishEditing();
-    }, 0);
-  });
+  input.addEventListener('blur', finishEditing);
 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -3815,14 +3729,6 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     ) {
       e.preventDefault();
       input.blur();
-    }
-  });
-
-  linkInput.addEventListener('click', e => e.stopPropagation());
-  linkInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === 'Escape') {
-      e.preventDefault();
-      linkInput.blur();
     }
   });
 
@@ -3859,42 +3765,24 @@ function initEditableChecklist(id, seedItems = []) {
   container.innerHTML = `
     <div class="checklist-list"></div>
     <div class="checklist-add-row">
-      <div class="checklist-add-fields">
-        <input type="text" class="checklist-new-input" placeholder="${escapeHtml(placeholder)}">
-        <input type="url" class="checklist-new-url" placeholder="Optional webpage URL (HealthPathways, etc.)" aria-label="Optional webpage URL">
-      </div>
+      <input type="text" class="checklist-new-input" placeholder="${escapeHtml(placeholder)}">
       <button type="button" class="glass-btn checklist-add-btn">＋ Add</button>
     </div>
   `;
 
   const addInput = container.querySelector('.checklist-new-input');
-  const addUrlInput = container.querySelector('.checklist-new-url');
   const addBtn = container.querySelector('.checklist-add-btn');
 
   const addFromInput = () => {
     const value = addInput?.value.trim() || '';
     if (!value) return;
-    const enteredUrl = addUrlInput?.value.trim() || '';
-    const cleanUrl = normalizeReferenceUrl(enteredUrl);
-    if (enteredUrl && !cleanUrl) {
-      alert('Please enter a valid http:// or https:// URL.');
-      addUrlInput.focus();
-      return;
-    }
-    createChecklistRow(container, value, false, false, cleanUrl);
+    createChecklistRow(container, value, false);
     addInput.value = '';
-    if (addUrlInput) addUrlInput.value = '';
     addInput.focus();
   };
 
   safeAddListener(addBtn, 'click', addFromInput);
   safeAddListener(addInput, 'keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addFromInput();
-    }
-  });
-  safeAddListener(addUrlInput, 'keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addFromInput();
@@ -3906,8 +3794,7 @@ function initEditableChecklist(id, seedItems = []) {
     container,
     item.text || '',
     !!item.checked,
-    !!item.lineBreak,
-    item.url || ''
+    !!item.lineBreak
   );
 });
 }
@@ -3944,8 +3831,7 @@ function getChecklistItems(id) {
       return {
         text: input?.value.trim() || '',
         checked: isSelected,
-        lineBreak: hasLineBreak,
-        url: row.dataset.url || ''
+        lineBreak: hasLineBreak
       };
     })
     .filter(item => item.text);
@@ -4213,9 +4099,9 @@ function collectPromptFields() {
     managementPlanFreeText: getField('managementPlanFreeText')?.value.trim() || '',
     prescribingPrivateNote: getPrivateNoteHtml('prescribingPrivateNote'),
 
-    hpc: getChecklistItems('hpcList'),
-    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList'),
-    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList'),
+    hpc: getChecklistItems('hpcList').map(i => i.text),
+    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
+    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
     examGeneral: getChecklistItems('examGeneralList'),
 	examHeadNeck: getChecklistItems('examHeadNeckList'),
 	examEnt: getChecklistItems('examEntList'),
@@ -4223,17 +4109,17 @@ function collectPromptFields() {
 	examChest: getChecklistItems('examChestList'),
 	examAbdomen: getChecklistItems('examAbdomenList'),
 	examOther: getChecklistItems('examOtherList'),
-    investigationsPrimary: getChecklistItems('investigationsPrimaryList'),
-    investigationsSecondary: getChecklistItems('investigationsSecondaryList'),
-    assessment: getChecklistItems('assessmentList'),
-    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList'),
-    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList'),
-    followUpPrimary: getChecklistItems('followUpPrimaryList'),
-    followUpSecondary: getChecklistItems('followUpSecondaryList'),
-    advicePrimary: getChecklistItems('advicePrimaryList'),
-    adviceSecondary: getChecklistItems('adviceSecondaryList'),
-    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList'),
-safetyNetSecondary: getChecklistItems('safetyNetSecondaryList'),
+    investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
+    investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
+    assessment: getChecklistItems('assessmentList').map(i => i.text),
+    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList').map(i => i.text),
+    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList').map(i => i.text),
+    followUpPrimary: getChecklistItems('followUpPrimaryList').map(i => i.text),
+    followUpSecondary: getChecklistItems('followUpSecondaryList').map(i => i.text),
+    advicePrimary: getChecklistItems('advicePrimaryList').map(i => i.text),
+    adviceSecondary: getChecklistItems('adviceSecondaryList').map(i => i.text),
+    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList').map(i => i.text),
+safetyNetSecondary: getChecklistItems('safetyNetSecondaryList').map(i => i.text),
 patientLinks: getPatientLinks()
   };
 }
@@ -5775,7 +5661,7 @@ if (firebaseReady) {
 
 .card .check-item {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   align-items: center !important;
   gap: 8px !important;
 
@@ -5799,7 +5685,7 @@ if (firebaseReady) {
 }
 
 .card .check-item.exam-check-item {
-  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
   gap: 4px !important;
 }
 
