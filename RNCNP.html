@@ -3446,7 +3446,11 @@ const NOTES_URL = 'https://xlyneve.github.io/CEP/chatgptx.html';
 function openNotesDrawer() {
   closeHealthPathways();
   const drawer = document.getElementById('notesDrawer');
-  document.getElementById('notesFrame').src = NOTES_URL;
+  const frame = document.getElementById('notesFrame');
+  if (frame.dataset.loaded !== 'true') {
+    frame.src = NOTES_URL;
+    frame.dataset.loaded = 'true';
+  }
   drawer.classList.add('open');
   document.getElementById('notesDrawerBackdrop').classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
@@ -3458,7 +3462,6 @@ function closeNotesDrawer() {
   drawer.classList.remove('open', 'expanded');
   document.getElementById('notesDrawerBackdrop')?.classList.remove('open');
   drawer.setAttribute('aria-hidden', 'true');
-  document.getElementById('notesFrame').src = 'about:blank';
 }
 
 document.getElementById('summaryNotesBtn')?.addEventListener('click', openNotesDrawer);
