@@ -2190,10 +2190,34 @@ select option {
     0 3px 7px rgba(0,0,0,0.14) !important;
 }
 	
+/* Linked reference pages for saved checklist notes */
+.note-link-btn { flex:0 0 auto; width:27px; height:27px; padding:0; border:1px solid rgba(255,255,255,.82); border-radius:9px; background:rgba(255,255,255,.72); color:#594650; cursor:pointer; box-shadow:0 2px 7px rgba(60,38,49,.12); }
+.note-link-btn[hidden] { display:none !important; }
+.note-link-btn:hover { background:#fff; transform:translateY(-1px); }
+.reference-drawer-backdrop { position:fixed; inset:0; z-index:1998; background:rgba(20,12,17,.18); opacity:0; pointer-events:none; transition:opacity .2s ease; }
+.reference-drawer-backdrop.open { opacity:1; pointer-events:auto; }
+.reference-drawer { position:fixed; top:0; bottom:0; left:0; z-index:1999; display:flex; flex-direction:column; width:min(520px,88vw); background:#f8f5f6; box-shadow:12px 0 35px rgba(31,18,25,.25); transform:translateX(-105%); transition:transform .24s ease,width .24s ease; }
+.reference-drawer.open { transform:translateX(0); }
+.reference-drawer.expanded { width:min(920px,96vw); }
+.reference-drawer-header { display:flex; align-items:center; gap:8px; min-height:58px; padding:10px 12px 10px 18px; border-bottom:1px solid #d8cdd2; background:rgba(255,255,255,.9); }
+.reference-drawer-title { min-width:0; margin-right:auto; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.reference-drawer-action { min-width:36px; height:36px; padding:0 10px; border:1px solid #d0c2c9; border-radius:10px; background:#fff; color:#33262d; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
+.reference-drawer iframe { flex:1; width:100%; border:0; background:#fff; }
+@media (max-width:600px) { .reference-drawer,.reference-drawer.expanded { width:100vw; } .reference-expand-btn { display:none; } }
 </style>
   <link rel="stylesheet" href="affected-pages-theme.css?v=9">
 </head>
 <body>
+  <div class="reference-drawer-backdrop" id="referenceDrawerBackdrop"></div>
+  <aside class="reference-drawer" id="referenceDrawer" aria-hidden="true" aria-label="Linked reference page">
+    <div class="reference-drawer-header">
+      <div class="reference-drawer-title" id="referenceDrawerTitle">Reference</div>
+      <a class="reference-drawer-action" id="referenceExternalLink" href="#" target="_blank" rel="noopener noreferrer" title="Open in new tab">↗</a>
+      <button class="reference-drawer-action reference-expand-btn" id="referenceExpandBtn" type="button" title="Expand panel">⤢</button>
+      <button class="reference-drawer-action" id="referenceCloseBtn" type="button" title="Close panel">✕</button>
+    </div>
+    <iframe id="referenceFrame" title="Linked reference page" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  </aside>
   <button class="topbar-toggle" id="topbarToggle" title="Show header">☰</button>
   <div class="page-shell">
     <header class="topbar" id="topbar">
@@ -3277,14 +3301,16 @@ function splitPromptToItems(value) {
           return {
             text: v.trim(),
             checked: false,
-            lineBreak: false
+            lineBreak: false,
+            url: ''
           };
         }
 
         return {
           text: String(v?.text || '').trim(),
           checked: !!v?.checked,
-          lineBreak: !!v?.lineBreak
+          lineBreak: !!v?.lineBreak,
+          url: String(v?.url || '').trim()
         };
       })
       .filter(item => item.text);
@@ -3295,7 +3321,8 @@ function splitPromptToItems(value) {
     .map(v => ({
       text: v.trim(),
       checked: false,
-      lineBreak: false
+      lineBreak: false,
+      url: ''
     }))
     .filter(item => item.text);
 }
@@ -3303,6 +3330,42 @@ function splitPromptToItems(value) {
 function joinList(items, separator = '\n') {
   return items.filter(Boolean).join(separator);
 }
+
+function normalizeReferenceUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  try {
+    const parsed = new URL(raw);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
+  } catch { return ''; }
+}
+
+function openReferenceDrawer(url, title = 'Reference') {
+  const cleanUrl = normalizeReferenceUrl(url);
+  if (!cleanUrl) return;
+  const drawer = document.getElementById('referenceDrawer');
+  document.getElementById('referenceDrawerTitle').textContent = title;
+  document.getElementById('referenceExternalLink').href = cleanUrl;
+  document.getElementById('referenceFrame').src = cleanUrl;
+  drawer.classList.add('open');
+  document.getElementById('referenceDrawerBackdrop').classList.add('open');
+  drawer.setAttribute('aria-hidden', 'false');
+}
+
+function closeReferenceDrawer() {
+  const drawer = document.getElementById('referenceDrawer');
+  drawer.classList.remove('open', 'expanded');
+  document.getElementById('referenceDrawerBackdrop').classList.remove('open');
+  drawer.setAttribute('aria-hidden', 'true');
+  document.getElementById('referenceFrame').src = 'about:blank';
+}
+
+document.getElementById('referenceCloseBtn')?.addEventListener('click', closeReferenceDrawer);
+document.getElementById('referenceDrawerBackdrop')?.addEventListener('click', closeReferenceDrawer);
+document.getElementById('referenceExpandBtn')?.addEventListener('click', () => document.getElementById('referenceDrawer').classList.toggle('expanded'));
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && document.getElementById('referenceDrawer')?.classList.contains('open')) closeReferenceDrawer();
+});
 
 function joinNaturalList(items) {
   const clean = items.filter(Boolean);
@@ -3466,7 +3529,7 @@ function setupChecklistRowDrag(row) {
   });
 }
 
-function createChecklistRow(container, text = '', checked = false, lineBreak = false) {
+function createChecklistRow(container, text = '', checked = false, lineBreak = false, url = '') {
   const list = container.querySelector('.checklist-list');
   if (!list) return;
 
@@ -3474,6 +3537,7 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   row.className = 'checklist-row';
   row.dataset.selected = checked ? 'true' : 'false';
   row.dataset.lineBreak = lineBreak ? 'true' : 'false';
+  row.dataset.url = url || '';
 
   if (checked) {
     row.classList.add('selected');
@@ -3539,6 +3603,15 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
 
   note.appendChild(input);
 
+  const linkBtn = document.createElement('button');
+  linkBtn.type = 'button';
+  linkBtn.className = 'note-link-btn';
+  linkBtn.textContent = '↗';
+  linkBtn.title = 'Open linked page';
+  linkBtn.setAttribute('aria-label', 'Open linked page');
+  linkBtn.hidden = !url;
+  note.appendChild(linkBtn);
+
   const optionsWrap = document.createElement('div');
   optionsWrap.className = 'checklist-options-wrap';
 
@@ -3559,6 +3632,11 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   editBtn.className = 'checklist-menu-action';
   editBtn.textContent = 'Edit';
 
+  const linkEditBtn = document.createElement('button');
+  linkEditBtn.type = 'button';
+  linkEditBtn.className = 'checklist-menu-action';
+  linkEditBtn.textContent = url ? 'Edit link' : 'Add link';
+
   const deleteBtn = document.createElement('button');
   deleteBtn.type = 'button';
   deleteBtn.className =
@@ -3566,6 +3644,7 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   deleteBtn.textContent = 'Delete';
 
   optionsMenu.appendChild(editBtn);
+  optionsMenu.appendChild(linkEditBtn);
   optionsMenu.appendChild(deleteBtn);
 
   optionsWrap.appendChild(optionsBtn);
@@ -3660,6 +3739,29 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     );
   });
 
+  linkBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openReferenceDrawer(row.dataset.url, input.value.trim() || 'Reference');
+  });
+
+  linkEditBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    optionsMenu.hidden = true;
+    optionsBtn.setAttribute('aria-expanded', 'false');
+    const entered = prompt('Paste the webpage URL (leave blank to remove it):', row.dataset.url || '');
+    if (entered === null) return;
+    const cleanUrl = normalizeReferenceUrl(entered);
+    if (entered.trim() && !cleanUrl) {
+      alert('Please enter a valid http:// or https:// URL.');
+      return;
+    }
+    row.dataset.url = cleanUrl;
+    linkBtn.hidden = !cleanUrl;
+    linkEditBtn.textContent = cleanUrl ? 'Edit link' : 'Add link';
+  });
+
   const finishEditing = () => {
     input.readOnly = true;
     row.classList.remove('editing');
@@ -3746,7 +3848,8 @@ function initEditableChecklist(id, seedItems = []) {
     container,
     item.text || '',
     !!item.checked,
-    !!item.lineBreak
+    !!item.lineBreak,
+    item.url || ''
   );
 });
 }
@@ -3783,7 +3886,8 @@ function getChecklistItems(id) {
       return {
         text: input?.value.trim() || '',
         checked: isSelected,
-        lineBreak: hasLineBreak
+        lineBreak: hasLineBreak,
+        url: row.dataset.url || ''
       };
     })
     .filter(item => item.text);
@@ -4051,9 +4155,9 @@ function collectPromptFields() {
     managementPlanFreeText: getField('managementPlanFreeText')?.value.trim() || '',
     prescribingPrivateNote: getPrivateNoteHtml('prescribingPrivateNote'),
 
-    hpc: getChecklistItems('hpcList').map(i => i.text),
-    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
-    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
+    hpc: getChecklistItems('hpcList'),
+    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList'),
+    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList'),
     examGeneral: getChecklistItems('examGeneralList'),
 	examHeadNeck: getChecklistItems('examHeadNeckList'),
 	examEnt: getChecklistItems('examEntList'),
@@ -4061,17 +4165,17 @@ function collectPromptFields() {
 	examChest: getChecklistItems('examChestList'),
 	examAbdomen: getChecklistItems('examAbdomenList'),
 	examOther: getChecklistItems('examOtherList'),
-    investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
-    investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
-    assessment: getChecklistItems('assessmentList').map(i => i.text),
-    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList').map(i => i.text),
-    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList').map(i => i.text),
-    followUpPrimary: getChecklistItems('followUpPrimaryList').map(i => i.text),
-    followUpSecondary: getChecklistItems('followUpSecondaryList').map(i => i.text),
-    advicePrimary: getChecklistItems('advicePrimaryList').map(i => i.text),
-    adviceSecondary: getChecklistItems('adviceSecondaryList').map(i => i.text),
-    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList').map(i => i.text),
-safetyNetSecondary: getChecklistItems('safetyNetSecondaryList').map(i => i.text),
+    investigationsPrimary: getChecklistItems('investigationsPrimaryList'),
+    investigationsSecondary: getChecklistItems('investigationsSecondaryList'),
+    assessment: getChecklistItems('assessmentList'),
+    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList'),
+    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList'),
+    followUpPrimary: getChecklistItems('followUpPrimaryList'),
+    followUpSecondary: getChecklistItems('followUpSecondaryList'),
+    advicePrimary: getChecklistItems('advicePrimaryList'),
+    adviceSecondary: getChecklistItems('adviceSecondaryList'),
+    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList'),
+safetyNetSecondary: getChecklistItems('safetyNetSecondaryList'),
 patientLinks: getPatientLinks()
   };
 }
