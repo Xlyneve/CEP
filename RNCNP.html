@@ -2200,7 +2200,14 @@ select option {
 .reference-drawer-title { min-width:0; margin-right:auto; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .reference-drawer-action { min-width:36px; height:36px; padding:0 10px; border:1px solid #d0c2c9; border-radius:10px; background:#fff; color:#33262d; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
 .reference-drawer iframe { flex:1; width:100%; border:0; background:#fff; }
+.notes-drawer-backdrop { position:fixed; inset:0; z-index:2000; background:rgba(20,12,17,.18); opacity:0; pointer-events:none; transition:opacity .2s ease; }
+.notes-drawer-backdrop.open { opacity:1; pointer-events:auto; }
+.notes-drawer { position:fixed; top:0; right:0; bottom:0; z-index:2001; display:flex; flex-direction:column; width:min(520px,88vw); background:#f8f5f6; box-shadow:-12px 0 35px rgba(31,18,25,.25); transform:translateX(105%); transition:transform .24s ease,width .24s ease; }
+.notes-drawer.open { transform:translateX(0); }
+.notes-drawer.expanded { width:min(920px,96vw); }
+.notes-drawer iframe { flex:1; width:100%; border:0; background:#fff; }
 @media (max-width:600px) { .reference-drawer,.reference-drawer.expanded { width:100vw; } .reference-expand-btn { display:none; } }
+@media (max-width:600px) { .notes-drawer,.notes-drawer.expanded { width:100vw; } .notes-expand-btn { display:none; } }
 </style>
   <link rel="stylesheet" href="affected-pages-theme.css?v=9">
 </head>
@@ -2215,6 +2222,16 @@ select option {
     </div>
     <iframe id="referenceFrame" title="HealthPathways page" referrerpolicy="strict-origin-when-cross-origin"></iframe>
   </aside>
+  <div class="notes-drawer-backdrop" id="notesDrawerBackdrop"></div>
+  <aside class="notes-drawer" id="notesDrawer" aria-hidden="true" aria-label="Notes">
+    <div class="reference-drawer-header">
+      <div class="reference-drawer-title">Notes</div>
+      <a class="reference-drawer-action" href="https://xlyneve.github.io/CEP/chatgptx.html" target="_blank" rel="noopener noreferrer" title="Open in new tab">↗</a>
+      <button class="reference-drawer-action notes-expand-btn" id="notesExpandBtn" type="button" title="Expand panel">⤢</button>
+      <button class="reference-drawer-action" id="notesCloseBtn" type="button" title="Close panel">✕</button>
+    </div>
+    <iframe id="notesFrame" title="Notes page" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  </aside>
   <button class="topbar-toggle" id="topbarToggle" title="Show header">☰</button>
   <div class="page-shell">
     <header class="topbar" id="topbar">
@@ -2228,7 +2245,6 @@ select option {
     <button class="glass-btn" id="generateBtn">📋 Generate</button>
 
     <a class="glass-btn header-btn" href="home.html" data-full="🏠 Home" data-mini="🏠">🏠 Home</a>
-    <a class="glass-btn header-btn" href="https://xlyneve.github.io/CEP/chatgptx.html" data-full="💬 Notes" data-mini="💬">💬 Notes</a>
     <button class="glass-btn header-btn" id="healthPathwaysBtn" type="button" data-full="🩺 HealthPathways" data-mini="🩺" title="Open HealthPathways">🩺 HealthPathways</button>
     <button class="glass-btn header-btn" id="printBtn" data-full="🖨️ Print template" data-mini="🖨️">🖨️ Print</button>
   </div>
@@ -2765,6 +2781,7 @@ select option {
                 <div class="hint">Auto-build a clean note from what you entered</div>
               </div>
               <div class="badge-row">
+                <button class="glass-btn" id="summaryNotesBtn" type="button" title="Open Notes">💬 Notes</button>
                 <span class="badge green">Copy-ready</span>
               </div>
             </div>
@@ -3339,6 +3356,7 @@ function openHealthPathways() {
     alert('No HealthPathways link is saved for this template. Use Save or Update and add it under HealthPathways URL.');
     return;
   }
+  closeNotesDrawer();
   const drawer = document.getElementById('referenceDrawer');
   document.getElementById('referenceExternalLink').href = url;
   document.getElementById('referenceFrame').src = url;
@@ -3361,6 +3379,34 @@ document.getElementById('referenceDrawerBackdrop')?.addEventListener('click', cl
 document.getElementById('referenceExpandBtn')?.addEventListener('click', () => document.getElementById('referenceDrawer').classList.toggle('expanded'));
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && document.getElementById('referenceDrawer')?.classList.contains('open')) closeHealthPathways();
+});
+
+const NOTES_URL = 'https://xlyneve.github.io/CEP/chatgptx.html';
+
+function openNotesDrawer() {
+  closeHealthPathways();
+  const drawer = document.getElementById('notesDrawer');
+  document.getElementById('notesFrame').src = NOTES_URL;
+  drawer.classList.add('open');
+  document.getElementById('notesDrawerBackdrop').classList.add('open');
+  drawer.setAttribute('aria-hidden', 'false');
+}
+
+function closeNotesDrawer() {
+  const drawer = document.getElementById('notesDrawer');
+  if (!drawer) return;
+  drawer.classList.remove('open', 'expanded');
+  document.getElementById('notesDrawerBackdrop')?.classList.remove('open');
+  drawer.setAttribute('aria-hidden', 'true');
+  document.getElementById('notesFrame').src = 'about:blank';
+}
+
+document.getElementById('summaryNotesBtn')?.addEventListener('click', openNotesDrawer);
+document.getElementById('notesCloseBtn')?.addEventListener('click', closeNotesDrawer);
+document.getElementById('notesDrawerBackdrop')?.addEventListener('click', closeNotesDrawer);
+document.getElementById('notesExpandBtn')?.addEventListener('click', () => document.getElementById('notesDrawer').classList.toggle('expanded'));
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && document.getElementById('notesDrawer')?.classList.contains('open')) closeNotesDrawer();
 });
 
 function joinNaturalList(items) {
