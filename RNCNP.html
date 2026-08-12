@@ -2852,6 +2852,11 @@ select option {
         Tags
         <input id="templateMetaTags" placeholder="e.g. sore throat, strep, ENT" />
       </label>
+
+      <label>
+        HealthPathways URL
+        <input id="templateMetaHealthPathwaysUrl" type="url" placeholder="https://aucklandregion.communityhealthpathways.org/..." />
+      </label>
     </div>
 
     <div class="template-meta-actions">
@@ -2908,6 +2913,7 @@ const defaultTemplates = [
     category: 'viral',
     desc: 'Flexible all-purpose assessment structure for common acute presentations.',
     tags: ['general', 'assessment', 'documentation'],
+    healthPathwaysUrl: 'https://aucklandregion.communityhealthpathways.org/17240.htm',
     isBuiltIn: true,
     prompts: {
       patientDemo: '',
@@ -3326,11 +3332,16 @@ function joinList(items, separator = '\n') {
   return items.filter(Boolean).join(separator);
 }
 
-const HEALTH_PATHWAYS_URL = 'https://aucklandregion.communityhealthpathways.org/17240.htm';
-
 function openHealthPathways() {
+  const template = getActiveTemplate();
+  const url = String(template?.healthPathwaysUrl || '').trim();
+  if (!url) {
+    alert('No HealthPathways link is saved for this template. Use Save or Update and add it under HealthPathways URL.');
+    return;
+  }
   const drawer = document.getElementById('referenceDrawer');
-  document.getElementById('referenceFrame').src = HEALTH_PATHWAYS_URL;
+  document.getElementById('referenceExternalLink').href = url;
+  document.getElementById('referenceFrame').src = url;
   drawer.classList.add('open');
   document.getElementById('referenceDrawerBackdrop').classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
@@ -4499,6 +4510,15 @@ function syncHero() {
 
   if (activeTemplateTitle) activeTemplateTitle.textContent = template.title;
 
+  const healthPathwaysBtn = document.getElementById('healthPathwaysBtn');
+  if (healthPathwaysBtn) {
+    const hasLink = !!String(template.healthPathwaysUrl || '').trim();
+    healthPathwaysBtn.classList.toggle('has-link', hasLink);
+    healthPathwaysBtn.title = hasLink
+      ? `Open HealthPathways for ${template.title}`
+      : 'No HealthPathways URL saved — use Save or Update to add one';
+  }
+
   if (activeTemplateDesc) {
   activeTemplateDesc.innerHTML = formatTemplateDescHtml(template.desc);
 }
@@ -4571,11 +4591,12 @@ function promptForTemplateMeta(existing = null) {
     const categoryInput = document.getElementById('templateMetaCategory');
     const descInput = document.getElementById('templateMetaDesc');
     const tagsInput = document.getElementById('templateMetaTags');
+    const healthPathwaysInput = document.getElementById('templateMetaHealthPathwaysUrl');
     const saveMetaBtn = document.getElementById('templateMetaSaveBtn');
     const cancelMetaBtn = document.getElementById('templateMetaCancelBtn');
     const closeMetaBtn = document.getElementById('templateMetaCloseBtn');
 
-    if (!modal || !titleInput || !categoryInput || !descInput || !tagsInput || !saveMetaBtn) {
+    if (!modal || !titleInput || !categoryInput || !descInput || !tagsInput || !healthPathwaysInput || !saveMetaBtn) {
       alert('Template editor modal is missing from the page.');
       resolve(null);
       return;
@@ -4587,6 +4608,7 @@ function promptForTemplateMeta(existing = null) {
     categoryInput.value = existing?.category || 'viral';
     descInput.innerHTML = formatTemplateDescHtml(existing?.desc || '');
     tagsInput.value = existing?.tags?.join(', ') || '';
+    healthPathwaysInput.value = existing?.healthPathwaysUrl || '';
     autoResizeInputTextarea(descInput);
 
     modal.classList.remove('hidden');
@@ -4641,12 +4663,24 @@ function onDescKeyDown(e) {
 
     function onSave() {
       const tagsRaw = tagsInput.value || '';
+      const healthPathwaysUrl = healthPathwaysInput.value.trim();
+      if (healthPathwaysUrl) {
+        try {
+          const parsed = new URL(healthPathwaysUrl);
+          if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Invalid protocol');
+        } catch {
+          alert('Please enter a valid HealthPathways URL beginning with http:// or https://.');
+          healthPathwaysInput.focus();
+          return;
+        }
+      }
 
       closeModal({
         title: titleInput.value.trim() || 'Untitled Template',
         category: (categoryInput.value.trim() || 'viral').toLowerCase(),
         desc: formatTemplateDescHtml(descInput.innerHTML.trim()) || 'Custom consultation template.',
-        tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+        tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean),
+        healthPathwaysUrl
       });
     }
 
@@ -5375,6 +5409,7 @@ if (!meta) return;
     category: meta.category,
     desc: meta.desc,
     tags: meta.tags,
+    healthPathwaysUrl: meta.healthPathwaysUrl,
     prompts: collectPromptFields(),
     ownerUid: currentUser.uid,
     ownerEmail: currentUser.email || '',
@@ -5424,6 +5459,7 @@ async function updateCurrentTemplate() {
       category: template.category || '',
       desc: template.desc || '',
       tags: template.tags || [],
+      healthPathwaysUrl: template.healthPathwaysUrl || '',
       prompts: template.prompts || {},
       ownerUid: template.ownerUid || currentUser.uid || '',
       ownerEmail: template.ownerEmail || currentUser.email || ''
@@ -5435,6 +5471,7 @@ async function updateCurrentTemplate() {
     category: meta.category,
     desc: meta.desc,
     tags: meta.tags,
+    healthPathwaysUrl: meta.healthPathwaysUrl,
     prompts: collectPromptFields(),
     updatedAt: serverTimestamp(),
     lastBackedUpAt: serverTimestamp()
