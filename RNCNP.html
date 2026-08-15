@@ -1747,6 +1747,29 @@ select option {
   transition: transform .16s ease, box-shadow .16s ease;
 }
 .floating-tewhatakura:hover { transform: translateY(-2px); box-shadow: 0 13px 26px rgba(0,0,0,.15); }
+.floating-npres {
+  position: fixed;
+  right: 12px;
+  bottom: 340px;
+  z-index: 70;
+  width: 55px;
+  height: 55px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(20,20,20,0.16);
+  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.66));
+  color: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+  font-size: 1.2rem;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.floating-npres:hover { transform: translateY(-2px); box-shadow: 0 13px 26px rgba(0,0,0,.15); }
 
  /* Matching soft glass scrollbar - #f9f7ff */
 ::-webkit-scrollbar {
@@ -1948,6 +1971,12 @@ select option {
        height: 54px;
        right: 14px;
        bottom: 277px;
+      }
+      .floating-npres {
+       width: 54px;
+       height: 54px;
+       right: 14px;
+       bottom: 341px;
       }
       .card,
       .panel {
@@ -2316,7 +2345,7 @@ select option {
   <aside class="notes-drawer" id="notesDrawer" aria-hidden="true" aria-label="Notes">
     <div class="reference-drawer-header">
       <div class="reference-drawer-title">Notes</div>
-      <a class="reference-drawer-action" href="https://xlyneve.github.io/CEP/chatgptx.html" target="_blank" rel="noopener noreferrer" title="Open in new tab">↗</a>
+      <a class="reference-drawer-action" id="notesExternalLink" href="https://xlyneve.github.io/CEP/chatgptx.html" target="_blank" rel="noopener noreferrer" title="Open in new tab">↗</a>
       <button class="reference-drawer-action notes-expand-btn" id="notesExpandBtn" type="button" title="Expand panel">⤢</button>
       <button class="reference-drawer-action" id="notesCloseBtn" type="button" title="Close panel">✕</button>
     </div>
@@ -2893,6 +2922,7 @@ select option {
         </section>
       </main>
     </div>
+    <button class="floating-npres" id="npresBtn" type="button" title="Open prescribing guide" aria-label="Open prescribing guide">💊</button>
     <button class="floating-tewhatakura" id="teWhatuKuraBtn" type="button" title="Open Te Whatu Kura guidelines" aria-label="Open Te Whatu Kura guidelines">📖</button>
     <button class="floating-healthpathways" id="healthPathwaysBtn" type="button" title="Open HealthPathways">🩺</button>
     <button class="floating-notes" id="summaryNotesBtn" type="button" title="Open Notes">💬</button>
@@ -3487,18 +3517,32 @@ document.addEventListener('keydown', event => {
 });
 
 const NOTES_URL = 'https://xlyneve.github.io/CEP/chatgptx.html';
+const NPRES_URL = 'Npres.html';
 
-function openNotesDrawer() {
+function openRightDrawer(title, url) {
   closeHealthPathways();
   const drawer = document.getElementById('notesDrawer');
+  const drawerTitle = drawer.querySelector('.reference-drawer-title');
+  if (drawerTitle) drawerTitle.textContent = title;
+  drawer.setAttribute('aria-label', title);
+  document.getElementById('notesExternalLink').href = url;
   const frame = document.getElementById('notesFrame');
-  if (frame.dataset.loaded !== 'true') {
-    frame.src = NOTES_URL;
-    frame.dataset.loaded = 'true';
+  frame.title = `${title} page`;
+  if (frame.dataset.loadedUrl !== url) {
+    frame.src = url;
+    frame.dataset.loadedUrl = url;
   }
   drawer.classList.add('open');
   document.getElementById('notesDrawerBackdrop').classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
+}
+
+function openNotesDrawer() {
+  openRightDrawer('Notes', NOTES_URL);
+}
+
+function openNpresDrawer() {
+  openRightDrawer('Prescribing guide', NPRES_URL);
 }
 
 function closeNotesDrawer() {
@@ -3510,6 +3554,7 @@ function closeNotesDrawer() {
 }
 
 document.getElementById('summaryNotesBtn')?.addEventListener('click', openNotesDrawer);
+document.getElementById('npresBtn')?.addEventListener('click', openNpresDrawer);
 document.getElementById('notesCloseBtn')?.addEventListener('click', closeNotesDrawer);
 document.getElementById('notesDrawerBackdrop')?.addEventListener('click', closeNotesDrawer);
 document.getElementById('notesExpandBtn')?.addEventListener('click', () => document.getElementById('notesDrawer').classList.toggle('expanded'));
