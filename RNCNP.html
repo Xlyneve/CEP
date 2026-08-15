@@ -1790,12 +1790,31 @@ select option {
     inset 0 -1px 0 rgba(255,255,255,0.18),
     0 8px 20px rgba(42,31,39,0.13);
   font-size: 1.08rem;
+  transition: right .24s ease, transform .16s ease, box-shadow .16s ease;
 }
 
 .floating-notes { bottom: 136px; }
 .floating-healthpathways { bottom: 192px; }
 .floating-tewhatakura { bottom: 248px; }
 .floating-npres { bottom: 304px; }
+
+@media (min-width: 601px) {
+  body.right-drawer-open .floating-generate,
+  body.right-drawer-open .floating-notes,
+  body.right-drawer-open .floating-healthpathways,
+  body.right-drawer-open .floating-tewhatakura,
+  body.right-drawer-open .floating-npres {
+    right: calc(min(520px, 88vw) + 12px);
+  }
+
+  body.right-drawer-expanded .floating-generate,
+  body.right-drawer-expanded .floating-notes,
+  body.right-drawer-expanded .floating-healthpathways,
+  body.right-drawer-expanded .floating-tewhatakura,
+  body.right-drawer-expanded .floating-npres {
+    right: min(calc(min(920px, 96vw) + 12px), calc(100vw - 60px));
+  }
+}
 
  /* Matching soft glass scrollbar - #f9f7ff */
 ::-webkit-scrollbar {
@@ -3559,6 +3578,7 @@ function openRightDrawer(title, url) {
   drawer.classList.add('open');
   document.getElementById('notesDrawerBackdrop').classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('right-drawer-open');
 }
 
 function openNotesDrawer() {
@@ -3575,13 +3595,17 @@ function closeNotesDrawer() {
   drawer.classList.remove('open', 'expanded');
   document.getElementById('notesDrawerBackdrop')?.classList.remove('open');
   drawer.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('right-drawer-open', 'right-drawer-expanded');
 }
 
 document.getElementById('summaryNotesBtn')?.addEventListener('click', openNotesDrawer);
 document.getElementById('npresBtn')?.addEventListener('click', openNpresDrawer);
 document.getElementById('notesCloseBtn')?.addEventListener('click', closeNotesDrawer);
 document.getElementById('notesDrawerBackdrop')?.addEventListener('click', closeNotesDrawer);
-document.getElementById('notesExpandBtn')?.addEventListener('click', () => document.getElementById('notesDrawer').classList.toggle('expanded'));
+document.getElementById('notesExpandBtn')?.addEventListener('click', () => {
+  const expanded = document.getElementById('notesDrawer').classList.toggle('expanded');
+  document.body.classList.toggle('right-drawer-expanded', expanded);
+});
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && document.getElementById('notesDrawer')?.classList.contains('open')) closeNotesDrawer();
 });
