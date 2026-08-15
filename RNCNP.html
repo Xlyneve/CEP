@@ -1738,6 +1738,7 @@ select option {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   text-decoration: none;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -2892,7 +2893,7 @@ select option {
         </section>
       </main>
     </div>
-    <a class="floating-tewhatakura" href="https://tewhatakura.nz/guidelines" target="_blank" rel="noopener noreferrer" title="Open Te Whatu Kura guidelines" aria-label="Open Te Whatu Kura guidelines">📖</a>
+    <button class="floating-tewhatakura" id="teWhatuKuraBtn" type="button" title="Open Te Whatu Kura guidelines" aria-label="Open Te Whatu Kura guidelines">📖</button>
     <button class="floating-healthpathways" id="healthPathwaysBtn" type="button" title="Open HealthPathways">🩺</button>
     <button class="floating-notes" id="summaryNotesBtn" type="button" title="Open Notes">💬</button>
     <button class="floating-generate" id="floatingGenerateBtn" title="Generate summary">📋</button>
@@ -3439,6 +3440,21 @@ function joinList(items, separator = '\n') {
   return items.filter(Boolean).join(separator);
 }
 
+function openReferenceDrawer(title, url) {
+  closeNotesDrawer();
+  const drawer = document.getElementById('referenceDrawer');
+  const drawerTitle = drawer.querySelector('.reference-drawer-title');
+  if (drawerTitle) drawerTitle.textContent = title;
+  drawer.setAttribute('aria-label', title);
+  document.getElementById('referenceExternalLink').href = url;
+  const frame = document.getElementById('referenceFrame');
+  frame.title = `${title} page`;
+  frame.src = url;
+  drawer.classList.add('open');
+  document.getElementById('referenceDrawerBackdrop').classList.add('open');
+  drawer.setAttribute('aria-hidden', 'false');
+}
+
 function openHealthPathways() {
   const template = getActiveTemplate();
   const url = String(template?.healthPathwaysUrl || '').trim();
@@ -3446,13 +3462,11 @@ function openHealthPathways() {
     alert('No HealthPathways link is saved for this template. Use Save or Update and add it under HealthPathways URL.');
     return;
   }
-  closeNotesDrawer();
-  const drawer = document.getElementById('referenceDrawer');
-  document.getElementById('referenceExternalLink').href = url;
-  document.getElementById('referenceFrame').src = url;
-  drawer.classList.add('open');
-  document.getElementById('referenceDrawerBackdrop').classList.add('open');
-  drawer.setAttribute('aria-hidden', 'false');
+  openReferenceDrawer('HealthPathways', url);
+}
+
+function openTeWhatuKura() {
+  openReferenceDrawer('Te Whatu Kura guidelines', 'https://tewhatakura.nz/guidelines');
 }
 
 function closeHealthPathways() {
@@ -3464,6 +3478,7 @@ function closeHealthPathways() {
 }
 
 document.getElementById('healthPathwaysBtn')?.addEventListener('click', openHealthPathways);
+document.getElementById('teWhatuKuraBtn')?.addEventListener('click', openTeWhatuKura);
 document.getElementById('referenceCloseBtn')?.addEventListener('click', closeHealthPathways);
 document.getElementById('referenceDrawerBackdrop')?.addEventListener('click', closeHealthPathways);
 document.getElementById('referenceExpandBtn')?.addEventListener('click', () => document.getElementById('referenceDrawer').classList.toggle('expanded'));
