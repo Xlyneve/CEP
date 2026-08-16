@@ -506,7 +506,7 @@
       choices: [
         { value: "general", label: "General" },
         { value: "otitisMedia", label: "Acute Otitis Media" },
-        { value: "acuteSinusitis", label: "Acute Sinusitis" },
+        { value: "acuteSinusitis", label: "Acute Rhinosinusitis" },
         { value: "strepA", label: "Strep A" },
         { value: "arf", label: "Acute rheumatic fever - Strep A eradication" }
       ]
@@ -578,11 +578,19 @@
     }
 
     if (selections.dosingType === "acuteSinusitis") {
-      return `
-        <strong>Note:</strong> Acute sinusitis dosing.<br><br>
-        Child: 25–30 mg/kg/dose three times daily for 7 days.<br>
-        Adult: 500–1000 mg three times daily for 7 days.<br>
-        Maximum single dose: 1000 mg.
+      return patientType === "adult" ? `
+        <strong>Note:</strong> Acute rhinosinusitis dosing.<br><br>
+        Consider antibiotics for persistent symptoms for more than 3 days with fever, or more than 10 days without fever.<br>
+        Amoxicillin 1000 mg three times daily for 5 days.<br><br>
+        <strong>Penicillin allergy:</strong> Do not use amoxicillin; select the guideline-recommended alternative.
+        ${tabletNotice}
+      ` : `
+        <strong>Note:</strong> Acute rhinosinusitis dosing.<br><br>
+        Consider antibiotics when symptoms are not improving for more than 10 days.<br>
+        Amoxicillin 15 mg/kg per dose three times daily for 5 days.<br>
+        Maximum single dose: 1000 mg (1 g).<br>
+        If the child can swallow capsules, round the calculated dose to the nearest 250 mg.<br><br>
+        <strong>Penicillin allergy:</strong> Do not use amoxicillin; select the guideline-recommended alternative.
         ${tabletNotice}
       `;
     }
@@ -641,49 +649,18 @@
     }
 
     if (type === "acuteSinusitis") {
-      const doseLevel = selections.doseLevel || "low";
-
-      if (doseLevel === "low") {
-        return {
-          mode: "single",
-          frequency: "Three times daily for 7 days",
-          sigFrequency: "three times daily",
-          dosesPerDay: 3,
-          defaultDurationDays: 7,
-          doseMg: 500,
-          maxDailyMg: 1500,
-          warnings: [],
-          extra: ["Adult acute sinusitis regimen used."]
-        };
-      }
-
-      if (doseLevel === "high") {
-        return {
-          mode: "single",
-          frequency: "Three times daily for 7 days",
-          sigFrequency: "three times daily",
-          dosesPerDay: 3,
-          defaultDurationDays: 7,
-          doseMg: 1000,
-          maxDailyMg: 3000,
-          warnings: [],
-          extra: ["Adult acute sinusitis regimen used."]
-        };
-      }
-
       return {
-        mode: "range",
-        frequency: "Three times daily for 7 days",
+        mode: "single",
+        frequency: "Three times daily for 5 days",
         sigFrequency: "three times daily",
         dosesPerDay: 3,
-        defaultDurationDays: 7,
-        lowDoseMg: 500,
-        highDoseMg: 1000,
+        defaultDurationDays: 5,
+        doseMg: 1000,
         maxDailyMg: 3000,
-        warnings: [],
+        warnings: ["Check for penicillin allergy before prescribing amoxicillin."],
         extra: [
-          "Adult acute sinusitis regimen used.",
-          "500 mg TDS to 1000 mg TDS for 7 days."
+          "Adult acute rhinosinusitis regimen used.",
+          "Consider when symptoms persist for more than 3 days with fever or more than 10 days without fever."
         ]
       };
     }
@@ -757,58 +734,30 @@
     }
 
     if (type === "acuteSinusitis") {
-      const doseLevel = selections.doseLevel || "low";
-      const lowRaw = weightKg * 25;
-      const highRaw = weightKg * 30;
-      const lowDose = Math.min(lowRaw, 1000);
-      const highDose = Math.min(highRaw, 1000);
-      const warnings = [];
+      const rawDose = weightKg * 15;
+      const cappedDose = Math.min(rawDose, 1000);
+      const doseMg = formulation?.type === "tablet"
+        ? Math.min(Math.round(cappedDose / 250) * 250, 1000)
+        : cappedDose;
+      const warnings = ["Check for penicillin allergy before prescribing amoxicillin."];
 
-      if (lowRaw > 1000 || highRaw > 1000) {
-        warnings.push("Dose capped at max single dose of 1000 mg.");
-      }
-
-      if (doseLevel === "low") {
-        return {
-          mode: "single",
-          frequency: "Three times daily for 7 days",
-          sigFrequency: "three times daily",
-          dosesPerDay: 3,
-          defaultDurationDays: 7,
-          doseMg: lowDose,
-          maxDailyMg: lowDose * 3,
-          warnings,
-          extra: [`Daily total at this dose: ${formatMg(lowDose * 3)}`]
-        };
-      }
-
-      if (doseLevel === "high") {
-        return {
-          mode: "single",
-          frequency: "Three times daily for 7 days",
-          sigFrequency: "three times daily",
-          dosesPerDay: 3,
-          defaultDurationDays: 7,
-          doseMg: highDose,
-          maxDailyMg: highDose * 3,
-          warnings,
-          extra: [`Daily total at this dose: ${formatMg(highDose * 3)}`]
-        };
-      }
+      if (rawDose > 1000) warnings.push("Dose capped at max single dose of 1000 mg (1 g).");
 
       return {
-        mode: "range",
-        frequency: "Three times daily for 7 days",
+        mode: "single",
+        frequency: "Three times daily for 5 days",
         sigFrequency: "three times daily",
         dosesPerDay: 3,
-        defaultDurationDays: 7,
-        lowDoseMg: lowDose,
-        highDoseMg: highDose,
-        maxDailyMg: highDose * 3,
+        defaultDurationDays: 5,
+        doseMg,
+        maxDailyMg: doseMg * 3,
         warnings,
         extra: [
-          `Daily total (low): ${formatMg(lowDose * 3)}`,
-          `Daily total (high): ${formatMg(highDose * 3)}`
+          formulation?.type === "tablet"
+            ? "Calculated at 15 mg/kg and rounded to the nearest 250 mg for capsules."
+            : "Calculated at 15 mg/kg per dose.",
+          "Consider when symptoms are not improving for more than 10 days.",
+          `Daily total: ${formatMg(doseMg * 3)}`
         ]
       };
     }
@@ -1969,7 +1918,7 @@ if (type === "bites") {
         if (
   medKey === "amoxicillin" &&
   opt.id === "doseLevel" &&
-  (selections.dosingType === "otitisMedia" || selections.dosingType === "strepA" || selections.dosingType === "arf")
+  (selections.dosingType === "otitisMedia" || selections.dosingType === "acuteSinusitis" || selections.dosingType === "strepA" || selections.dosingType === "arf")
 ) {
   return;
 }
