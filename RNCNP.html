@@ -2371,6 +2371,7 @@ select option {
 .reference-drawer-title { min-width:0; margin-right:auto; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .reference-drawer-action { min-width:36px; height:36px; padding:0 10px; border:1px solid #d0c2c9; border-radius:10px; background:#fff; color:#33262d; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
 .reference-drawer iframe { flex:1; width:100%; border:0; background:#fff; }
+.reference-drawer iframe[hidden] { display:none; }
 .notes-drawer-backdrop { position:fixed; inset:0; z-index:1998; background:rgba(20,12,17,.18); opacity:0; pointer-events:none; transition:opacity .2s ease; }
 .notes-drawer-backdrop.open { opacity:1; pointer-events:auto; }
 .notes-drawer { position:fixed; top:0; right:0; bottom:0; z-index:1999; display:flex; flex-direction:column; width:min(520px,88vw); background:#f8f5f6; box-shadow:-12px 0 35px rgba(31,18,25,.25); transform:translateX(105%); transition:transform .24s ease,width .24s ease; }
@@ -2392,6 +2393,7 @@ select option {
       <button class="reference-drawer-action" id="referenceCloseBtn" type="button" title="Close panel">✕</button>
     </div>
     <iframe id="referenceFrame" title="HealthPathways page" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <iframe id="teWhatuKuraFrame" title="Te Whata Kura guidelines page" referrerpolicy="strict-origin-when-cross-origin" hidden></iframe>
   </aside>
   <div class="notes-drawer-backdrop" id="notesDrawerBackdrop"></div>
   <aside class="notes-drawer" id="notesDrawer" aria-hidden="true" aria-label="Notes">
@@ -3522,15 +3524,23 @@ function joinList(items, separator = '\n') {
   return items.filter(Boolean).join(separator);
 }
 
-function openReferenceDrawer(title, url) {
+function openReferenceDrawer(title, url, source) {
   const drawer = document.getElementById('referenceDrawer');
   const drawerTitle = drawer.querySelector('.reference-drawer-title');
   if (drawerTitle) drawerTitle.textContent = title;
   drawer.setAttribute('aria-label', title);
   document.getElementById('referenceExternalLink').href = url;
-  const frame = document.getElementById('referenceFrame');
-  frame.title = `${title} page`;
-  frame.src = url;
+  const frames = {
+    healthPathways: document.getElementById('referenceFrame'),
+    teWhatuKura: document.getElementById('teWhatuKuraFrame')
+  };
+  Object.values(frames).forEach(item => { item.hidden = true; });
+  const frame = frames[source];
+  if (frame.dataset.loadedUrl !== url) {
+    frame.src = url;
+    frame.dataset.loadedUrl = url;
+  }
+  frame.hidden = false;
   drawer.classList.add('open');
   document.getElementById('referenceDrawerBackdrop').classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
@@ -3543,11 +3553,11 @@ function openHealthPathways() {
     alert('No HealthPathways link is saved for this template. Use Save or Update and add it under HealthPathways URL.');
     return;
   }
-  openReferenceDrawer('HealthPathways', url);
+  openReferenceDrawer('HealthPathways', url, 'healthPathways');
 }
 
 function openTeWhatuKura() {
-  openReferenceDrawer('Te Whatu Kura guidelines', 'https://tewhatakura.nz/guidelines');
+  openReferenceDrawer('Te Whatu Kura guidelines', 'https://tewhatakura.nz/guidelines', 'teWhatuKura');
 }
 
 function closeHealthPathways() {
@@ -3555,7 +3565,6 @@ function closeHealthPathways() {
   drawer.classList.remove('open', 'expanded');
   document.getElementById('referenceDrawerBackdrop').classList.remove('open');
   drawer.setAttribute('aria-hidden', 'true');
-  document.getElementById('referenceFrame').src = 'about:blank';
 }
 
 document.getElementById('healthPathwaysBtn')?.addEventListener('click', openHealthPathways);
