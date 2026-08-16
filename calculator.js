@@ -2289,6 +2289,13 @@ const effectiveDurationInput = hasFixedDuration ? NaN : durationDaysInput;
 
 resultBox.innerHTML = renderResult(result, effectiveFormulation, warnings, effectiveDurationInput);
 
+const planText = buildManagementPlanText({
+  medication: MEDS[medKey]?.label || "",
+  result,
+  formulation: effectiveFormulation,
+  enteredDurationDays: effectiveDurationInput
+});
+
 window.lastDoseForPlan = {
   medication: MEDS[medKey]?.label || "",
   indication: selections.dosingType || "",
@@ -2298,6 +2305,9 @@ window.lastDoseForPlan = {
   mode: result.mode,
   frequency: result.sigFrequency || result.frequency || "",
   durationDays: result.defaultDurationDays || null,
+  formulationType: effectiveFormulation?.type || null,
+  formulationLabel: effectiveFormulation?.label || "",
+  planText,
   fullText: resultBox.innerText.trim()
 };
 }
@@ -2537,6 +2547,30 @@ window.lastDoseForPlan = {
 
   function getDirectionDoseText(doseMg, formulation) {
     return getPrimaryDoseText(doseMg, formulation);
+  }
+
+  function buildManagementPlanText({ medication, result, formulation, enteredDurationDays }) {
+    const frequency = result.sigFrequency || result.frequency || "";
+    const durationText = getDurationText(result, enteredDurationDays);
+    const formulationText = formulation?.label ? ` ${formulation.label}` : "";
+    const durationSuffix = durationText ? ` for ${durationText}` : "";
+    const routeVerb = /single im dose/i.test(result.frequency || "") ? "administer" : "take";
+    const routeSuffix = routeVerb === "administer" ? " intramuscularly" : " orally";
+
+    if (result.mode === "single") {
+      const unitDose = getPrimaryDoseText(result.doseMg, formulation);
+      const mgDose = formatMg(result.doseMg);
+      return `${medication}${formulationText}: ${routeVerb} ${unitDose} (${mgDose})${routeSuffix} ${frequency}${durationSuffix}.`;
+    }
+
+    if (result.mode === "range") {
+      const lowUnitDose = getPrimaryDoseText(result.lowDoseMg, formulation);
+      const highUnitDose = getPrimaryDoseText(result.highDoseMg, formulation);
+      const mgRange = `${formatMg(result.lowDoseMg)}–${formatMg(result.highDoseMg)}`;
+      return `${medication}${formulationText}: ${routeVerb} ${lowUnitDose}–${highUnitDose} (${mgRange})${routeSuffix} ${frequency}${durationSuffix}.`;
+    }
+
+    return "";
   }
 
   function getChosenDuration(result, enteredDurationDays) {
