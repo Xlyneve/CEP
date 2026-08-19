@@ -2141,6 +2141,73 @@ header h1 {
   }
 }
 
+/* Keep the dashboard's mobile quick tools aligned and frequent items circular. */
+@media (max-width: 768px) {
+  body.dashboard-hierarchy-active .top-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: calc(100% - 24px);
+    max-width: 520px;
+    gap: 8px;
+    padding: 8px 0 10px;
+    overflow: visible;
+  }
+
+  body.dashboard-hierarchy-active .top-links a {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  body.dashboard-hierarchy-active .qc,
+  body.dashboard-hierarchy-active .qi,
+  body.dashboard-hierarchy-active .qt,
+  body.dashboard-hierarchy-active .qs,
+  body.dashboard-hierarchy-active .qc.collapsed,
+  body.dashboard-hierarchy-active .qi.collapsed,
+  body.dashboard-hierarchy-active .qt.collapsed,
+  body.dashboard-hierarchy-active .qs.collapsed {
+    left: 8px !important;
+    right: auto !important;
+    transform: none !important;
+  }
+
+  body.dashboard-hierarchy-active .qc { top: var(--mobile-quick-tools-top, 190px); }
+  body.dashboard-hierarchy-active .qi { top: calc(var(--mobile-quick-tools-top, 190px) + 58px); }
+  body.dashboard-hierarchy-active .qt { top: calc(var(--mobile-quick-tools-top, 190px) + 116px); }
+  body.dashboard-hierarchy-active .qs { top: calc(var(--mobile-quick-tools-top, 190px) + 174px); }
+
+  body.dashboard-hierarchy-active .top-circles.dashboard-frequent-circles {
+    display: flex;
+    grid-template-columns: none;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+    gap: 12px;
+    padding: 10px 16px 14px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.dashboard-hierarchy-active .top-circles.dashboard-frequent-circles::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.dashboard-hierarchy-active .dashboard-frequent-circles .circle {
+    flex: 0 0 68px;
+    width: 68px;
+    min-width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    scroll-snap-align: start;
+  }
+}
+
 /* Collapsed shortcuts: keep the arrow, remove its surrounding glass panel. */
 .qc.collapsed,
 .qi.collapsed,
@@ -3790,6 +3857,18 @@ function closeTable() {
     frequentCircles.before(frequentHeading);
     frequentCircles.classList.add('dashboard-frequent-circles');
     frequentCircles.replaceChildren();
+
+    const alignMobileQuickTools = () => {
+      if (!window.matchMedia('(max-width: 768px)').matches) {
+        document.documentElement.style.removeProperty('--mobile-quick-tools-top');
+        return;
+      }
+      const headingTop = Math.max(8, Math.round(frequentHeading.getBoundingClientRect().top));
+      document.documentElement.style.setProperty('--mobile-quick-tools-top', `${headingTop}px`);
+    };
+    requestAnimationFrame(alignMobileQuickTools);
+    document.fonts?.ready.then(alignMobileQuickTools);
+    window.addEventListener('resize', alignMobileQuickTools, { passive: true });
 
     const addLinkCard = (sectionName, label, href, newTab = false) => {
       const card = document.createElement('a');
