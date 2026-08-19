@@ -29,6 +29,7 @@ body {
 }
 
 body {
+  --todo-width: 350px;
   margin: 0;
   font-family: Tahoma, sans-serif;
   font-size: 10pt;
@@ -119,9 +120,10 @@ body {
 
 /* Todo (right) — IMPORTANT: do NOT combine this with calendar styles */
 .todo-container {
-  flex: 0 0 350px;
-  max-width: 350px;
-  min-width: 150px;
+  flex: 0 0 var(--todo-width);
+  width: var(--todo-width);
+  max-width: none;
+  min-width: 0;
   padding: 3px;
   border-radius: 0 12px 12px 0;
   white-space: normal;
@@ -129,6 +131,56 @@ body {
 
   display: flex;          /* ADD */
   flex-direction: column; /* ADD */
+}
+
+.todo-resizer {
+  position: relative;
+  z-index: 10;
+  flex: 0 0 10px;
+  width: 10px;
+  margin: 0 -5px;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.todo-resizer::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 4px;
+  width: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.16);
+  transition: width .15s ease, left .15s ease, background .15s ease;
+}
+
+.todo-resizer:hover::after,
+.todo-resizer:focus-visible::after,
+body.todo-resizing .todo-resizer::after {
+  left: 3px;
+  width: 4px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+body.todo-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+body.todo-collapsed .todo-container {
+  flex-basis: 0;
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-width: 0;
+  overflow: hidden;
+}
+
+body.todo-collapsed .todo-container > * {
+  visibility: hidden;
 }
 
 .todo-container::before { background-position: right top; }
@@ -165,66 +217,38 @@ body {
   -webkit-backdrop-filter: none;
 
   /* spacing for items */
-  padding: 6px;
+  padding: 12px 6px 6px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.todo-item.priority {
-  border: 1px solid rgba(210, 225, 255, 0.75);
-
-  background: linear-gradient(
-    135deg,
-    rgba(255, 218, 235, 0.42) 0%,
-    rgba(215, 235, 255, 0.42) 35%,
-    rgba(255, 247, 196, 0.34) 68%,
-    rgba(255, 255, 255, 0.30) 100%
-  );
-
-  box-shadow:
-    inset 0 0 10px rgba(255, 255, 255, 0.32),
-    0 0 10px rgba(215, 235, 255, 0.24),
-    0 0 8px rgba(255, 218, 235, 0.18);
+.delete-tag {
+  all: unset;
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  z-index: 3;
+  display: none;
+  font: 20px/1 "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+  cursor: pointer;
+  opacity: 1;
+  transform: translateY(-50%) scale(1.05);
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.42));
 }
 
-.priority-tag {
-  align-self: flex-start;
-  font-size: 10px;
-  padding: 3px 7px;
-  border-radius: 999px;
-
-  border: 1px solid rgba(210, 225, 255, 0.75);
-
-  background: linear-gradient(
-    135deg,
-    rgba(255, 226, 240, 0.65),
-    rgba(220, 240, 255, 0.65),
-    rgba(255, 249, 210, 0.55),
-    rgba(255, 255, 255, 0.55)
-  );
-
-  color: #5f6f8d;
-  white-space: nowrap;
+.todo-item.delete-confirming .delete-tag {
+  display: block;
 }
 
-.priority-btn-active {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 226, 240, 0.55),
-    rgba(220, 240, 255, 0.55),
-    rgba(255, 249, 210, 0.45),
-    rgba(255, 255, 255, 0.45)
-  ) !important;
-
-  border-color: rgba(210, 225, 255, 0.75) !important;
-  color: #5f6f8d !important;
-  box-shadow: 0 0 8px rgba(215, 235, 255, 0.22);
+.todo-item.delete-confirming textarea {
+  padding-right: 30px;
 }
 
 .todo-item {
+  position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 8px;               /* slightly tighter */
   padding: 6px 8px;       /* less padding = more usable space */
 
@@ -239,6 +263,17 @@ body {
   border-radius: 12px;
 }
 
+.todo-item.priority {
+  border: 3px solid rgba(255, 255, 255, 0.72);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 226, 238, 0.78),
+    rgba(225, 240, 255, 0.76),
+    rgba(255, 249, 205, 0.72)
+  );
+  box-shadow: none;
+}
+
 .todo-item:hover {
   box-shadow:
     inset 0 0 6px rgba(255,255,255,0.2),
@@ -246,63 +281,11 @@ body {
 }
 
 
-/* Action container hidden by default */
-.todo-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 0 0 auto;
-
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-/* Show only when hovering the todo item */
-.todo-item:hover .todo-actions {
-  opacity: 1;
-}
-
-/* Minimal glass buttons */
-.todo-actions button {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
-
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-
-  color: rgba(0,0,0,0.55);
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-
-  transition: background .2s ease, border-color .2s ease, transform .15s ease;
-}
-
-.todo-actions button:hover {
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.35);
-  transform: translateY(-1px);
-}
-
-.todo-actions button:hover{
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.35);
-  transform: translateY(-1px);
-}
-
-.todo-actions button:active{
-  transform: translateY(0);
-}
-
 .todo-item textarea {
   font-family: Tahoma, sans-serif;
   color: #000;
   opacity: 1;
+  min-height: 0;
 }
 
 /* keep readOnly looking normal */
@@ -642,11 +625,18 @@ button:hover,
   margin-top: 5px;
 }
 .todo-item.done {
-  opacity: 0.45;
+  opacity: 1;
 }
 
 .todo-item.done textarea {
+  opacity: 0.45;
   text-decoration: line-through;
+  pointer-events: none;
+  user-select: none;
+}
+
+.todo-item.done input[type="checkbox"] {
+  opacity: 0.55;
 }
 
 .day {
@@ -839,10 +829,10 @@ body {
 }
 
   .todo-container {
-  flex: 0 0 320px;
-  width: 320px;
+  flex: 0 0 var(--todo-width);
+  width: var(--todo-width);
   max-width: none !important;
-  min-width: 320px;
+  min-width: 0;
   border-radius: 0 12px 12px 0 !important;
   height: 100dvh;
   max-height: 100dvh;
@@ -1323,8 +1313,9 @@ select option {
 </div> <!-- End of .calendar-container -->
 
 
+<div class="todo-resizer" id="todoResizer" role="separator" aria-label="Resize or collapse to-do list" aria-orientation="vertical" aria-controls="todoPanel" tabindex="0" title="Drag to resize; click to minimize"></div>
 
- <div class="todo-container">
+ <div class="todo-container" id="todoPanel">
   <div class="todo-title">To-Do List</div>
 
   <div class="todo-list" id="todoList"></div>
@@ -1814,6 +1805,85 @@ function scrollToToday() {
 
 const newTodo = document.getElementById('newTodo');
 
+const todoResizer = document.getElementById('todoResizer');
+const todoPanel = document.getElementById('todoPanel');
+const TODO_MIN_WIDTH = 180;
+const TODO_DEFAULT_WIDTH = 350;
+let todoWidth = Number(localStorage.getItem('homecalTodoWidth')) || TODO_DEFAULT_WIDTH;
+let todoWidthBeforeCollapse = todoWidth;
+let resizeStartX = 0;
+let resizeStartWidth = 0;
+let draggedTodoDivider = false;
+
+function maximumTodoWidth() {
+  if (window.matchMedia('(max-width: 600px)').matches) return 700;
+  return Math.max(TODO_MIN_WIDTH, Math.min(700, window.innerWidth - 260));
+}
+
+function setTodoWidth(width, save = false) {
+  todoWidth = Math.max(TODO_MIN_WIDTH, Math.min(maximumTodoWidth(), width));
+  document.body.style.setProperty('--todo-width', `${todoWidth}px`);
+  todoResizer.setAttribute('aria-valuemin', String(TODO_MIN_WIDTH));
+  todoResizer.setAttribute('aria-valuemax', String(maximumTodoWidth()));
+  todoResizer.setAttribute('aria-valuenow', String(Math.round(todoWidth)));
+  if (save) localStorage.setItem('homecalTodoWidth', String(Math.round(todoWidth)));
+  requestAnimationFrame(() => {
+    todoPanel.querySelectorAll('.todo-item textarea').forEach(autoResizeTextarea);
+  });
+}
+
+function setTodoCollapsed(collapsed) {
+  if (collapsed) todoWidthBeforeCollapse = todoWidth;
+  document.body.classList.toggle('todo-collapsed', collapsed);
+  todoResizer.setAttribute('aria-expanded', String(!collapsed));
+  todoResizer.title = collapsed
+    ? 'Click to restore the to-do list'
+    : 'Drag to resize; click to minimize';
+  localStorage.setItem('homecalTodoCollapsed', String(collapsed));
+  if (!collapsed) setTodoWidth(todoWidthBeforeCollapse || TODO_DEFAULT_WIDTH);
+}
+
+setTodoWidth(todoWidth);
+setTodoCollapsed(localStorage.getItem('homecalTodoCollapsed') === 'true');
+
+todoResizer.addEventListener('pointerdown', event => {
+  resizeStartX = event.clientX;
+  resizeStartWidth = todoWidth;
+  draggedTodoDivider = false;
+  todoResizer.setPointerCapture(event.pointerId);
+  document.body.classList.add('todo-resizing');
+});
+
+todoResizer.addEventListener('pointermove', event => {
+  if (!todoResizer.hasPointerCapture(event.pointerId)) return;
+  const movement = resizeStartX - event.clientX;
+  if (Math.abs(movement) > 3) draggedTodoDivider = true;
+  if (draggedTodoDivider) {
+    if (document.body.classList.contains('todo-collapsed')) setTodoCollapsed(false);
+    setTodoWidth(resizeStartWidth + movement);
+  }
+});
+
+todoResizer.addEventListener('pointerup', event => {
+  if (todoResizer.hasPointerCapture(event.pointerId)) {
+    todoResizer.releasePointerCapture(event.pointerId);
+  }
+  document.body.classList.remove('todo-resizing');
+  if (draggedTodoDivider) setTodoWidth(todoWidth, true);
+  else setTodoCollapsed(!document.body.classList.contains('todo-collapsed'));
+});
+
+todoResizer.addEventListener('keydown', event => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    setTodoCollapsed(!document.body.classList.contains('todo-collapsed'));
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault();
+    setTodoCollapsed(false);
+    setTodoWidth(todoWidth + (event.key === 'ArrowLeft' ? 20 : -20), true);
+  }
+});
+
 newTodo.addEventListener('input', () => autoResizeTextarea(newTodo));
 
 // ensure fresh reset on load
@@ -1836,6 +1906,55 @@ async function addTodo() {
   }
 }
 
+function enableTodoHoldPriority(item, id, priority, done) {
+  let holdTimer = null;
+  let startX = 0;
+  let startY = 0;
+
+  const cancelHold = () => {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  };
+
+  item.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || event.target.closest('button, input[type="checkbox"]')) return;
+    if (done) event.preventDefault();
+    startX = event.clientX;
+    startY = event.clientY;
+    cancelHold();
+    holdTimer = setTimeout(async () => {
+      holdTimer = null;
+      if (done) {
+        item.classList.toggle('delete-confirming');
+        return;
+      }
+
+      const previousPriority = priority;
+      priority = !priority;
+      item.classList.toggle('priority', priority);
+      try {
+        await updateDoc(doc(db, 'todos', id), { priority });
+      } catch (error) {
+        console.error('Unable to update priority:', error);
+        priority = previousPriority;
+        item.classList.toggle('priority', priority);
+      }
+    }, 600);
+  });
+
+  item.addEventListener('pointermove', event => {
+    if (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8) {
+      cancelHold();
+    }
+  });
+
+  item.addEventListener('pointerup', cancelHold);
+  item.addEventListener('pointercancel', cancelHold);
+  item.addEventListener('contextmenu', event => {
+    event.preventDefault();
+  });
+}
+
 function renderTodoItem(id, text, done, priority = false) {
   const item = document.createElement('div');
   item.className = 'todo-item';
@@ -1854,8 +1973,11 @@ function renderTodoItem(id, text, done, priority = false) {
   };
 
   const input = document.createElement('textarea');
+  input.rows = 1;
+  input.dataset.todoId = id;
   input.value = text;
-  input.readOnly = true;
+  input.readOnly = done;
+  if (done) input.tabIndex = -1;
   input.style.flex = '1';
   input.style.border = 'none';
   input.style.background = 'transparent';
@@ -1864,65 +1986,47 @@ function renderTodoItem(id, text, done, priority = false) {
 
   autoResizeTextarea(input);
 
-  input.addEventListener('input', () => autoResizeTextarea(input));
+  let saveTimer = null;
+  let lastSavedText = text;
 
-  const priorityTag = document.createElement('div');
-  priorityTag.className = 'priority-tag';
-  priorityTag.textContent = 'Priority';
-  priorityTag.style.display = priority && !done ? 'block' : 'none';
-
-  const buttonContainer = document.createElement('div');
-  buttonContainer.className = 'todo-actions';
-
-  const priorityBtn = document.createElement('button');
-priorityBtn.type = 'button';
-priorityBtn.title = priority ? 'Remove priority' : 'Mark priority';
-priorityBtn.textContent = priority ? '★' : '☆';
-priorityBtn.classList.toggle('priority-btn-active', priority && !done);
-
-  priorityBtn.onclick = async () => {
-    await updateDoc(doc(db, 'todos', id), {
-      priority: !priority
-    });
+  const saveTodoText = async () => {
+    clearTimeout(saveTimer);
+    const nextText = input.value;
+    if (nextText === lastSavedText) return;
+    lastSavedText = nextText;
+    try {
+      await updateDoc(doc(db, 'todos', id), { text: nextText });
+    } catch (error) {
+      lastSavedText = text;
+      console.error('Unable to autosave to-do:', error);
+    }
   };
 
-  const editBtn = document.createElement('button');
-  editBtn.type = 'button';
-  editBtn.title = 'Edit';
-  editBtn.textContent = '✎';
-
-  editBtn.onclick = async () => {
-    if (input.readOnly) {
-      input.readOnly = false;
-      input.focus();
-
-      setTimeout(() => autoResizeTextarea(input), 20);
-      editBtn.textContent = '💾';
-    } else {
-      await updateDoc(doc(db, 'todos', id), {
-        text: input.value
-      });
-
-      input.readOnly = true;
+  if (!done) {
+    input.addEventListener('input', () => {
       autoResizeTextarea(input);
-      editBtn.textContent = '✎';
-    }
-  };
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveTodoText, 600);
+    });
+    input.addEventListener('blur', saveTodoText);
+  }
 
-  const deleteBtn = document.createElement('button');
-  deleteBtn.type = 'button';
-  deleteBtn.title = 'Delete';
-  deleteBtn.textContent = '×';
-
-  deleteBtn.onclick = async () => {
-    if (confirm("Delete this to-do?")) {
+  const deleteTag = document.createElement('button');
+  deleteTag.type = 'button';
+  deleteTag.className = 'delete-tag';
+  deleteTag.textContent = '🗑️';
+  deleteTag.title = 'Delete completed task';
+  deleteTag.setAttribute('aria-label', 'Delete completed task');
+  deleteTag.onclick = async () => {
+    try {
       await deleteDoc(doc(db, 'todos', id));
+    } catch (error) {
+      console.error('Unable to delete to-do:', error);
     }
   };
 
-  buttonContainer.append(priorityBtn, editBtn, deleteBtn);
-
-  item.append(checkbox, input, priorityTag, buttonContainer);
+  item.append(checkbox, input, deleteTag);
+  enableTodoHoldPriority(item, id, priority, done);
   todoListEl.appendChild(item);
 
   setTimeout(() => autoResizeTextarea(input), 30);
@@ -1933,6 +2037,14 @@ function loadTodos() {
   const ref = collection(db, 'todos');
 
   onSnapshot(ref, snap => {
+    const focusedInput = document.activeElement?.matches?.('.todo-item textarea')
+      ? document.activeElement
+      : null;
+    const focusedTodoId = focusedInput?.dataset.todoId || null;
+    const selectionStart = focusedInput?.selectionStart ?? 0;
+    const selectionEnd = focusedInput?.selectionEnd ?? selectionStart;
+    const previousScrollTop = todoListEl.scrollTop;
+
     todoListEl.innerHTML = '';
 
     const todos = [];
@@ -1970,8 +2082,50 @@ function loadTodos() {
     todos.forEach(todo => {
       renderTodoItem(todo.id, todo.text, todo.done, todo.priority);
     });
+
+    if (focusedTodoId) {
+      const restoredInput = todoListEl.querySelector(
+        `.todo-item textarea[data-todo-id="${CSS.escape(focusedTodoId)}"]`
+      );
+      if (restoredInput) {
+        restoredInput.focus({ preventScroll: true });
+        restoredInput.setSelectionRange(selectionStart, selectionEnd);
+      }
+    }
+    todoListEl.scrollTop = previousScrollTop;
   });
 }
+
+const priorityBorderFrames = [
+  'top',
+  'right',
+  'bottom',
+  'left'
+];
+let priorityBorderFrame = 0;
+
+function advancePriorityBorders() {
+  const activeEdge = priorityBorderFrames[priorityBorderFrame];
+  const restingBorder = 'rgba(255, 255, 255, 0.72)';
+
+  document.querySelectorAll('.todo-item.priority').forEach(item => {
+    item.style.setProperty('border-style', 'solid', 'important');
+    item.style.setProperty('border-width', '3px', 'important');
+    ['top', 'right', 'bottom', 'left'].forEach(edge => {
+      item.style.setProperty(
+        `border-${edge}-color`,
+        edge === activeEdge ? '#ffff00' : restingBorder,
+        'important'
+      );
+    });
+    item.style.setProperty('box-shadow', 'none', 'important');
+  });
+
+  priorityBorderFrame = (priorityBorderFrame + 1) % priorityBorderFrames.length;
+}
+
+advancePriorityBorders();
+setInterval(advancePriorityBorders, 400);
 
 // Escape special regex characters
 function escapeRegex(text) {
