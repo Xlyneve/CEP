@@ -698,6 +698,24 @@ body::after {
   pointer-events: none;
 }
 
+.copy-feedback-border {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.copy-feedback-border rect {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.96);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 10 90;
+  stroke-dashoffset: var(--copy-race-start);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.72));
+  animation: copyBorderRace 560ms cubic-bezier(0.3, 0.65, 0.25, 1) forwards;
+}
+
 .copy-feedback-layer::after {
   content: "";
   position: absolute;
@@ -705,26 +723,6 @@ body::after {
   background: linear-gradient(110deg, transparent 39%, rgba(255, 255, 255, 0.05) 44%, rgba(255, 255, 255, 0.32) 50%, rgba(255, 255, 255, 0.08) 56%, transparent 61%);
   transform: translateX(-65%);
   animation: copyGlassShimmer 330ms ease-out forwards;
-}
-
-.copy-feedback-label {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  z-index: 2;
-  padding: 3px 7px;
-  border-radius: 999px;
-  color: rgba(20, 20, 24, 0.84);
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.84);
-  box-shadow: 0 3px 10px rgba(50, 55, 70, 0.12);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-  animation: copyLabelFade 850ms ease-out forwards;
 }
 
 @keyframes copyGlassSquish {
@@ -741,17 +739,25 @@ body::after {
   to { transform: translateX(65%); opacity: 0; }
 }
 
-@keyframes copyLabelFade {
-  0% { opacity: 0; }
-  12%, 62% { opacity: 1; }
-  100% { opacity: 0; }
+@keyframes copyBorderRace {
+  0% { stroke-dashoffset: var(--copy-race-start); opacity: 0.25; }
+  12% { opacity: 1; }
+  100% { stroke-dashoffset: var(--copy-race-end); opacity: 0; }
+}
+
+@keyframes copyBorderPulse {
+  0%, 100% { opacity: 0; }
+  35% { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .note-card.copy-feedback,
   .pinned-note.copy-feedback { animation: none; }
   .copy-feedback-layer::after { display: none; }
-  .copy-feedback-label { animation: none; opacity: 1; }
+  .copy-feedback-border rect {
+    stroke-dasharray: 100 0;
+    animation: copyBorderPulse 450ms ease-out forwards;
+  }
 }
 
 /* Login panel */
@@ -763,7 +769,7 @@ body::after {
   <link rel="stylesheet" href="site-background.css?v=20260722-4">
   <script src="page-theme.js?v=1"></script>
   <style>
-    .notes-panel .note-card:not(.copy-feedback):not(.copied-feedback) {
+    .notes-panel .note-card:not(.copied-feedback) {
       display: inline-flex;
       flex-direction: column;
       width: 90%;
@@ -772,7 +778,7 @@ body::after {
       border-radius: 24px;
     }
 
-    .notes-panel .note-card:not(.copy-feedback):not(.copied-feedback)::before {
+    .notes-panel .note-card:not(.copied-feedback)::before {
       background:
         radial-gradient(
           circle at 25% 12%,
@@ -788,7 +794,7 @@ body::after {
         );
     }
 
-    .notes-panel .note-card:not(.copy-feedback):not(.copied-feedback)::after {
+    .notes-panel .note-card:not(.copied-feedback)::after {
       left: 12%;
       top: 8px;
       width: 58%;
@@ -801,23 +807,23 @@ body::after {
       filter: blur(8px);
     }
 
-    .notes-panel > .note-card:nth-child(5n + 1):not(.copy-feedback):not(.copied-feedback) {
+    .notes-panel > .note-card:nth-child(5n + 1):not(.copied-feedback) {
       background: linear-gradient(135deg, rgba(158, 137, 147, 0.36), rgba(235, 232, 233, 0.7)) !important;
     }
 
-    .notes-panel > .note-card:nth-child(5n + 2):not(.copy-feedback):not(.copied-feedback) {
+    .notes-panel > .note-card:nth-child(5n + 2):not(.copied-feedback) {
       background: linear-gradient(135deg, rgba(173, 159, 166, 0.4), rgba(235, 232, 233, 0.72)) !important;
     }
 
-    .notes-panel > .note-card:nth-child(5n + 3):not(.copy-feedback):not(.copied-feedback) {
+    .notes-panel > .note-card:nth-child(5n + 3):not(.copied-feedback) {
       background: linear-gradient(135deg, rgba(192, 183, 187, 0.44), rgba(235, 232, 233, 0.74)) !important;
     }
 
-    .notes-panel > .note-card:nth-child(5n + 4):not(.copy-feedback):not(.copied-feedback) {
+    .notes-panel > .note-card:nth-child(5n + 4):not(.copied-feedback) {
       background: linear-gradient(135deg, rgba(213, 208, 211, 0.52), rgba(235, 232, 233, 0.76)) !important;
     }
 
-    .notes-panel > .note-card:nth-child(5n + 5):not(.copy-feedback):not(.copied-feedback) {
+    .notes-panel > .note-card:nth-child(5n + 5):not(.copied-feedback) {
       background: linear-gradient(135deg, rgba(235, 232, 233, 0.84), rgba(213, 208, 211, 0.46)) !important;
     }
 
@@ -1103,19 +1109,51 @@ function renderNotes() {
   });
 }
 
-function showCopyFeedback(card) {
+function showCopyFeedback(card, clientX, clientY) {
   if (card._copyFeedbackTimer) clearTimeout(card._copyFeedbackTimer);
   card.querySelector('.copy-feedback-layer')?.remove();
   card.classList.remove('copy-feedback');
   void card.offsetWidth;
 
+  const bounds = card.getBoundingClientRect();
+  const width = Math.max(bounds.width, 1);
+  const height = Math.max(bounds.height, 1);
+  const x = Number.isFinite(clientX) ? Math.min(Math.max(clientX - bounds.left, 0), width) : width / 2;
+  const y = Number.isFinite(clientY) ? Math.min(Math.max(clientY - bounds.top, 0), height) : 0;
+  const edgeDistances = [y, width - x, height - y, x];
+  const nearestEdge = edgeDistances.indexOf(Math.min(...edgeDistances));
+  const perimeter = 2 * (width + height);
+  let borderDistance;
+
+  if (nearestEdge === 0) borderDistance = x;
+  else if (nearestEdge === 1) borderDistance = width + y;
+  else if (nearestEdge === 2) borderDistance = width + height + (width - x);
+  else borderDistance = (2 * width) + height + (height - y);
+
+  const startOffset = (borderDistance / perimeter) * 100;
+  const radius = Math.min(parseFloat(getComputedStyle(card).borderRadius) || 12, width / 2, height / 2);
+
   const layer = document.createElement('span');
   layer.className = 'copy-feedback-layer';
   layer.setAttribute('aria-hidden', 'true');
-  const label = document.createElement('span');
-  label.className = 'copy-feedback-label';
-  label.textContent = '✓ Copied';
-  layer.appendChild(label);
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('copy-feedback-border');
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+
+  const border = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  border.setAttribute('x', '2');
+  border.setAttribute('y', '2');
+  border.setAttribute('width', String(Math.max(width - 4, 1)));
+  border.setAttribute('height', String(Math.max(height - 4, 1)));
+  border.setAttribute('rx', String(radius));
+  border.setAttribute('pathLength', '100');
+  border.style.setProperty('--copy-race-start', String(-startOffset));
+  border.style.setProperty('--copy-race-end', String(-(startOffset + 100)));
+
+  svg.appendChild(border);
+  layer.appendChild(svg);
   card.appendChild(layer);
   card.classList.add('copy-feedback');
 
@@ -1123,7 +1161,7 @@ function showCopyFeedback(card) {
     layer.remove();
     card.classList.remove('copy-feedback');
     card._copyFeedbackTimer = null;
-  }, 900);
+  }, 650);
 }
 
 function renderPinnedNotes() {
@@ -1168,13 +1206,13 @@ function renderPinnedNotes() {
       });
     });
 
-    item.addEventListener('click', () => {
+    item.addEventListener('click', (event) => {
   if (PINNED_EDIT_MODE) return;
 
   const plainContent = tmp.innerText || '';
 
   navigator.clipboard.writeText(plainContent).then(() => {
-    showCopyFeedback(item);
+    showCopyFeedback(item, event.clientX, event.clientY);
   });
     });
 
@@ -1237,13 +1275,13 @@ function drawNotes(notesArray) {
     });
 
     // --- Copy on click ---
-    div.addEventListener('click', () => {
+    div.addEventListener('click', (event) => {
       if (div.classList.contains('is-editing')) return;
       const htmlContent = contentEl.innerHTML;
       const plainContent = contentEl.innerText;
 
       navigator.clipboard.writeText(plainContent).then(() => {
-        showCopyFeedback(div);
+        showCopyFeedback(div, event.clientX, event.clientY);
       });
     });
 
