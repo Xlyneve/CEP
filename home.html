@@ -2145,7 +2145,51 @@ header h1 {
 }
 
 /* Keep the dashboard's mobile quick tools aligned and frequent items circular. */
+@media (min-width: 769px) and (max-width: 1280px) {
+  body.dashboard-hierarchy-active {
+    --quick-stack-clearance: calc(48px + 1cm);
+  }
+
+  body.dashboard-hierarchy-active .dashboard-frequent-heading,
+  body.dashboard-hierarchy-active .top-circles.dashboard-frequent-circles,
+  body.dashboard-hierarchy-active .layout {
+    width: calc(100% - var(--quick-stack-clearance));
+    max-width: calc(100% - var(--quick-stack-clearance));
+    margin-left: var(--quick-stack-clearance);
+    margin-right: 0;
+  }
+
+  body.dashboard-hierarchy-active .top-links {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: min(980px, calc(100% - 32px));
+    max-width: calc(100% - 32px);
+    gap: 9px;
+    padding: 8px 14px 10px;
+    overflow: visible;
+  }
+
+  body.dashboard-hierarchy-active .top-links a {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 768px) {
+  body.dashboard-hierarchy-active {
+    --quick-stack-clearance: calc(48px + 1cm);
+  }
+
+  body.dashboard-hierarchy-active .dashboard-frequent-heading,
+  body.dashboard-hierarchy-active .top-circles.dashboard-frequent-circles,
+  body.dashboard-hierarchy-active .layout {
+    width: calc(100% - var(--quick-stack-clearance));
+    max-width: calc(100% - var(--quick-stack-clearance));
+    margin-left: var(--quick-stack-clearance);
+    margin-right: 0;
+  }
+
   body.dashboard-hierarchy-active .top-links {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2217,6 +2261,29 @@ header h1 {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   overflow: visible;
+}
+
+/* Render the Quick Calc arrow from its actual panel state. */
+.qc .qc-toggle {
+  position: relative;
+  overflow: hidden;
+  text-indent: -9999px;
+}
+
+.qc .qc-toggle::before {
+  content: "❮";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1;
+  text-indent: 0;
+}
+
+.qc.collapsed .qc-toggle::before {
+  content: "❯";
 }
 
 /* Give each collapsed calculator/shortcut arrow its own palette color. */
@@ -3521,12 +3588,19 @@ function closeTable() {
     }
   });
 
+  const syncQuickCalcToggle = () => {
+    const isCollapsed = qc.classList.contains('collapsed');
+    toggleBtn.textContent = isCollapsed ? '❯' : '❮';
+    toggleBtn.setAttribute('aria-expanded', String(!isCollapsed));
+  };
+
   toggleBtn.addEventListener('click', () => {
     qc.classList.toggle('collapsed');
-    toggleBtn.textContent = qc.classList.contains('collapsed') ? '❯' : '❮';
+    syncQuickCalcToggle();
   });
 
     // init
+  syncQuickCalcToggle();
   resetOutput();
   setMed('para');
 })();
