@@ -1299,24 +1299,13 @@ footer {
 /* Result highlight in the pale-heather theme. */
 .qc-highlight{
   display:inline-block;
-
-  background: linear-gradient(
-    135deg,
-    var(--pale-heather, #d5d0d3),
-    var(--iced-petal, #ad9fa6)
-  );
-
-  padding: 2px 7px;
-  border-radius: 10px;
-
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
   font-weight: 800;
   line-height: 1.2;
-
-  border: 1px solid rgba(255,255,255,0.65);
-
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.35),
-    0 4px 10px rgba(0,0,0,0.08);
+  border: 0;
+  box-shadow: none;
 }
 /* Mobile handling */
 @media (max-width: 520px){
@@ -1863,23 +1852,32 @@ a.qi-name:hover {
 
 .qc-results {
   width: 100%;
-  background: var(--pale-heather, #d5d0d3);
-  border-color: var(--first-light, #ebe8e9);
-  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  padding: 0 !important;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transition: none;
 }
 
 .qc-results.has-value {
-  background: linear-gradient(
-    135deg,
-    var(--first-light, #ebe8e9),
-    var(--pale-heather, #d5d0d3)
-  );
-  box-shadow:
-    0 0 0 2px rgba(235, 232, 233, 0.92),
-    0 0 26px rgba(158, 137, 147, 0.82),
-    0 9px 22px rgba(64, 54, 59, 0.3),
-    inset 0 1px 8px rgba(255, 255, 255, 0.66);
-  transform: translateY(-1px);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  color: #000;
+  text-shadow: none;
+}
+
+.qc-results.has-value .qc-big {
+  color: #000;
+  font-size: 22px;
+  font-weight: 900;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 7px #fff,
+    0 0 14px rgba(255, 255, 255, 1),
+    0 0 24px rgba(175, 180, 188, 0.98),
+    0 0 34px rgba(145, 150, 160, 0.82);
 }
 
 /* Collapsed syrup calculator */
@@ -3420,7 +3418,7 @@ function closeTable() {
     if (activeMed === 'para'){
       // 15 mg/kg; strength is mg/mL (24 = 120/5, 50 = 250/5)
       const ml = (kg * 15) / paraStrength;
-      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      mainEl.textContent = r1(ml);
       subEl.textContent = '';
       resultsEl.classList.add('has-value');
       return;
@@ -3434,7 +3432,7 @@ function closeTable() {
       if (capped) mg = 400;
 
       const ml = mg / ibuStrength;
-      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      mainEl.textContent = r1(ml);
       subEl.textContent = capped ? 'Max 400 mg reached' : '';
       resultsEl.classList.add('has-value');
       return;
@@ -3448,7 +3446,7 @@ function closeTable() {
       const ml = Math.min(rawMl, 0.5);
       const mg = ml; // 1 mg/mL
 
-      mainEl.innerHTML = `${highlight(`${rA(ml)} mL`)} IM`;
+      mainEl.textContent = rA(ml);
       subEl.textContent = capped ? 'Max 0.5 mL reached' : `${rA(mg)} mg`;
       resultsEl.classList.add('has-value');
       return;
@@ -3461,7 +3459,7 @@ function closeTable() {
       const ml = Math.min(rawMl, 5);
       const salineMl = Math.max(0, 4 - ml);
 
-      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      mainEl.textContent = r1(ml);
       subEl.textContent = capped
         ? `Max 5 mL reached • O₂ 6 L/min`
         : `Saline to add: ${r1(salineMl)} mL • O₂ 6 L/min`;
@@ -3474,7 +3472,7 @@ function closeTable() {
       const mg = kg;
       const ml = mg / 5;
 
-      mainEl.innerHTML = `Dose: ${highlight(`${r1(ml)} mL`)}`;
+      mainEl.textContent = r1(ml);
       subEl.textContent = `${r1(mg)} mg`;
       resultsEl.classList.add('has-value');
       return;
@@ -3486,7 +3484,7 @@ function closeTable() {
       const mcg = Math.min(Math.max(rawMcg, 21), 100);
       const ml = mcg / 50;
 
-      mainEl.innerHTML = `Dose 1: ${highlight(`${ml.toFixed(2)} mL`)}`;
+      mainEl.textContent = ml.toFixed(2);
       subEl.textContent = `${Math.round(mcg)} mcg${rawMcg < 21 ? ' • minimum dose' : rawMcg > 100 ? ' • maximum dose' : ''}`;
       resultsEl.classList.add('has-value');
       return;
