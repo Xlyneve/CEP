@@ -274,6 +274,31 @@ body.todo-collapsed .todo-container > * {
   box-shadow: none;
 }
 
+.todo-item.priority::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 3px solid rgba(255, 255, 255, 0.72);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  animation: priorityBorderRun 1.6s steps(1, end) infinite;
+}
+
+@keyframes priorityBorderRun {
+  0%   { border-color: #ffff00 rgba(255,255,255,.72) rgba(255,255,255,.72) rgba(255,255,255,.72); }
+  25%  { border-color: rgba(255,255,255,.72) #ffff00 rgba(255,255,255,.72) rgba(255,255,255,.72); }
+  50%  { border-color: rgba(255,255,255,.72) rgba(255,255,255,.72) #ffff00 rgba(255,255,255,.72); }
+  75%  { border-color: rgba(255,255,255,.72) rgba(255,255,255,.72) rgba(255,255,255,.72) #ffff00; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .todo-item.priority::before {
+    animation: none;
+    border-color: #ffff00;
+  }
+}
+
 .todo-item:hover {
   box-shadow:
     inset 0 0 6px rgba(255,255,255,0.2),
@@ -1331,7 +1356,7 @@ select option {
 <script type="module">
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, onSnapshot, deleteDoc, addDoc
+  getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, onSnapshot, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase config
@@ -1889,24 +1914,83 @@ newTodo.addEventListener('input', () => autoResizeTextarea(newTodo));
 // ensure fresh reset on load
 autoResizeTextarea(newTodo);
 
+const todoRecords = new Map();
+const todoElements = new Map();
+const pendingTextareaResizes = new Set();
+let textareaResizeFrame = 0;
+
+function scheduleTextareaResize(textarea) {
+  if (!textarea?.isConnected) return;
+  pendingTextareaResizes.add(textarea);
+  if (textareaResizeFrame) return;
+  textareaResizeFrame = requestAnimationFrame(() => {
+    textareaResizeFrame = 0;
+    pendingTextareaResizes.forEach(field => {
+      if (field.isConnected) autoResizeTextarea(field);
+    });
+    pendingTextareaResizes.clear();
+  });
+}
+
+function sortTodos(a, b) {
+  if (a.done !== b.done) return a.done ? 1 : -1;
+  if (!a.done && a.priority !== b.priority) return a.priority ? -1 : 1;
+  if (a.createdAt !== b.createdAt) return b.createdAt - a.createdAt;
+  return a.text.localeCompare(b.text);
+}
+
+function refreshTodoOrder() {
+  const orderedElements = [...todoRecords.values()]
+    .sort(sortTodos)
+    .map(todo => todoElements.get(todo.id))
+    .filter(Boolean);
+  orderedElements.forEach((element, index) => {
+    const currentElement = todoListEl.children[index] || null;
+    if (currentElement !== element) {
+      todoListEl.insertBefore(element, currentElement);
+    }
+  });
+}
 
 async function addTodo() {
   const value = todoInput.value.trim();
 
   if (value) {
-    await addDoc(collection(db, 'todos'), {
+    const ref = doc(collection(db, 'todos'));
+    const optimisticTodo = {
+      id: ref.id,
       text: value,
       done: false,
       priority: false,
       createdAt: Date.now()
-    });
+    };
 
     todoInput.value = '';
     autoResizeTextarea(todoInput);
+
+    todoRecords.set(ref.id, optimisticTodo);
+    renderTodoItem(ref.id, value, false, false, optimisticTodo.createdAt);
+    refreshTodoOrder();
+
+    try {
+      await setDoc(ref, {
+        text: optimisticTodo.text,
+        done: false,
+        priority: false,
+        createdAt: optimisticTodo.createdAt
+      });
+    } catch (error) {
+      todoRecords.delete(ref.id);
+      todoElements.get(ref.id)?.remove();
+      todoElements.delete(ref.id);
+      todoInput.value = value;
+      autoResizeTextarea(todoInput);
+      console.error('Unable to add to-do:', error);
+    }
   }
 }
 
-function enableTodoHoldPriority(item, id, priority, done) {
+function enableTodoHoldPriority(item, id) {
   let holdTimer = null;
   let startX = 0;
   let startY = 0;
@@ -1918,6 +2002,8 @@ function enableTodoHoldPriority(item, id, priority, done) {
 
   item.addEventListener('pointerdown', event => {
     if (event.button !== 0 || event.target.closest('button, input[type="checkbox"]')) return;
+    const currentTodo = todoRecords.get(id);
+    const done = !!currentTodo?.done;
     if (done) event.preventDefault();
     startX = event.clientX;
     startY = event.clientY;
@@ -1929,15 +2015,18 @@ function enableTodoHoldPriority(item, id, priority, done) {
         return;
       }
 
-      const previousPriority = priority;
-      priority = !priority;
+      const previousPriority = !!currentTodo?.priority;
+      const priority = !previousPriority;
+      currentTodo.priority = priority;
       item.classList.toggle('priority', priority);
+      refreshTodoOrder();
       try {
         await updateDoc(doc(db, 'todos', id), { priority });
       } catch (error) {
         console.error('Unable to update priority:', error);
-        priority = previousPriority;
-        item.classList.toggle('priority', priority);
+        currentTodo.priority = previousPriority;
+        item.classList.toggle('priority', previousPriority);
+        refreshTodoOrder();
       }
     }, 600);
   });
@@ -1955,61 +2044,98 @@ function enableTodoHoldPriority(item, id, priority, done) {
   });
 }
 
-function renderTodoItem(id, text, done, priority = false) {
+function syncTodoElement(item, todo) {
+  const checkbox = item.querySelector('input[type="checkbox"]');
+  const input = item.querySelector('textarea');
+
+  item.classList.toggle('done', todo.done);
+  item.classList.toggle('priority', todo.priority && !todo.done);
+  item.classList.toggle('delete-confirming', false);
+  checkbox.checked = todo.done;
+  input.readOnly = todo.done;
+  if (todo.done) input.tabIndex = -1;
+  else input.removeAttribute('tabindex');
+
+  if (document.activeElement !== input && input.value !== todo.text) {
+    input.value = todo.text;
+  }
+  if (document.activeElement !== input || input.value === todo.text) {
+    input.dataset.lastSavedText = todo.text;
+  }
+  scheduleTextareaResize(input);
+}
+
+function renderTodoItem(id, text, done, priority = false, createdAt = 0) {
+  const todo = todoRecords.get(id) || { id, text, done, priority, createdAt };
+  todoRecords.set(id, todo);
+
+  const existingItem = todoElements.get(id);
+  if (existingItem) {
+    syncTodoElement(existingItem, todo);
+    return existingItem;
+  }
+
   const item = document.createElement('div');
   item.className = 'todo-item';
-
-  if (done) item.classList.add('done');
-  if (priority && !done) item.classList.add('priority');
+  item.dataset.todoId = id;
 
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
-  checkbox.checked = done;
 
   checkbox.onchange = async () => {
-    await updateDoc(doc(db, 'todos', id), {
-      done: checkbox.checked
-    });
+    const currentTodo = todoRecords.get(id);
+    if (!currentTodo) return;
+    const previousDone = currentTodo.done;
+    currentTodo.done = checkbox.checked;
+    syncTodoElement(item, currentTodo);
+    refreshTodoOrder();
+    try {
+      await updateDoc(doc(db, 'todos', id), { done: currentTodo.done });
+    } catch (error) {
+      currentTodo.done = previousDone;
+      syncTodoElement(item, currentTodo);
+      refreshTodoOrder();
+      console.error('Unable to update to-do:', error);
+    }
   };
 
   const input = document.createElement('textarea');
   input.rows = 1;
   input.dataset.todoId = id;
-  input.value = text;
-  input.readOnly = done;
-  if (done) input.tabIndex = -1;
+  input.value = todo.text;
+  input.dataset.lastSavedText = todo.text;
   input.style.flex = '1';
   input.style.border = 'none';
   input.style.background = 'transparent';
   input.style.resize = 'none';
   input.style.overflow = 'hidden';
 
-  autoResizeTextarea(input);
-
   let saveTimer = null;
-  let lastSavedText = text;
 
   const saveTodoText = async () => {
     clearTimeout(saveTimer);
     const nextText = input.value;
-    if (nextText === lastSavedText) return;
-    lastSavedText = nextText;
+    const currentTodo = todoRecords.get(id);
+    if (!currentTodo || nextText === input.dataset.lastSavedText) return;
+    const previousText = currentTodo.text;
+    currentTodo.text = nextText;
+    input.dataset.lastSavedText = nextText;
     try {
       await updateDoc(doc(db, 'todos', id), { text: nextText });
     } catch (error) {
-      lastSavedText = text;
+      currentTodo.text = previousText;
+      input.dataset.lastSavedText = previousText;
       console.error('Unable to autosave to-do:', error);
     }
   };
 
-  if (!done) {
-    input.addEventListener('input', () => {
-      autoResizeTextarea(input);
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(saveTodoText, 600);
-    });
-    input.addEventListener('blur', saveTodoText);
-  }
+  input.addEventListener('input', () => {
+    if (input.readOnly) return;
+    scheduleTextareaResize(input);
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveTodoText, 600);
+  });
+  input.addEventListener('blur', saveTodoText);
 
   const deleteTag = document.createElement('button');
   deleteTag.type = 'button';
@@ -2018,18 +2144,29 @@ function renderTodoItem(id, text, done, priority = false) {
   deleteTag.title = 'Delete completed task';
   deleteTag.setAttribute('aria-label', 'Delete completed task');
   deleteTag.onclick = async () => {
+    const deletedTodo = todoRecords.get(id);
+    if (!deletedTodo) return;
+    todoRecords.delete(id);
+    todoElements.delete(id);
+    item.remove();
+    refreshTodoOrder();
     try {
       await deleteDoc(doc(db, 'todos', id));
     } catch (error) {
+      todoRecords.set(id, deletedTodo);
+      todoElements.set(id, item);
+      syncTodoElement(item, deletedTodo);
+      refreshTodoOrder();
       console.error('Unable to delete to-do:', error);
     }
   };
 
   item.append(checkbox, input, deleteTag);
-  enableTodoHoldPriority(item, id, priority, done);
-  todoListEl.appendChild(item);
-
-  setTimeout(() => autoResizeTextarea(input), 30);
+  enableTodoHoldPriority(item, id);
+  todoElements.set(id, item);
+  syncTodoElement(item, todo);
+  scheduleTextareaResize(input);
+  return item;
 }
 
 // Load todos
@@ -2037,95 +2174,33 @@ function loadTodos() {
   const ref = collection(db, 'todos');
 
   onSnapshot(ref, snap => {
-    const focusedInput = document.activeElement?.matches?.('.todo-item textarea')
-      ? document.activeElement
-      : null;
-    const focusedTodoId = focusedInput?.dataset.todoId || null;
-    const selectionStart = focusedInput?.selectionStart ?? 0;
-    const selectionEnd = focusedInput?.selectionEnd ?? selectionStart;
     const previousScrollTop = todoListEl.scrollTop;
 
-    todoListEl.innerHTML = '';
+    snap.docChanges().forEach(change => {
+      const id = change.doc.id;
+      if (change.type === 'removed') {
+        todoRecords.delete(id);
+        todoElements.get(id)?.remove();
+        todoElements.delete(id);
+        return;
+      }
 
-    const todos = [];
-
-    snap.forEach(docSnap => {
-      const data = docSnap.data();
-
-      todos.push({
-        id: docSnap.id,
+      const data = change.doc.data();
+      const todo = {
+        id,
         text: data.text || '',
         done: !!data.done,
         priority: !!data.priority,
         createdAt: data.createdAt || 0
-      });
+      };
+      todoRecords.set(id, todo);
+      renderTodoItem(id, todo.text, todo.done, todo.priority, todo.createdAt);
     });
 
-    todos.sort((a, b) => {
-      // completed items always go to the bottom
-      if (a.done !== b.done) return a.done ? 1 : -1;
-
-      // among unticked items, priority goes first
-      if (!a.done && a.priority !== b.priority) {
-        return a.priority ? -1 : 1;
-      }
-
-      // newest added first if createdAt exists
-      if (a.createdAt !== b.createdAt) {
-        return b.createdAt - a.createdAt;
-      }
-
-      // fallback sort
-      return a.text.localeCompare(b.text);
-    });
-
-    todos.forEach(todo => {
-      renderTodoItem(todo.id, todo.text, todo.done, todo.priority);
-    });
-
-    if (focusedTodoId) {
-      const restoredInput = todoListEl.querySelector(
-        `.todo-item textarea[data-todo-id="${CSS.escape(focusedTodoId)}"]`
-      );
-      if (restoredInput) {
-        restoredInput.focus({ preventScroll: true });
-        restoredInput.setSelectionRange(selectionStart, selectionEnd);
-      }
-    }
+    refreshTodoOrder();
     todoListEl.scrollTop = previousScrollTop;
   });
 }
-
-const priorityBorderFrames = [
-  'top',
-  'right',
-  'bottom',
-  'left'
-];
-let priorityBorderFrame = 0;
-
-function advancePriorityBorders() {
-  const activeEdge = priorityBorderFrames[priorityBorderFrame];
-  const restingBorder = 'rgba(255, 255, 255, 0.72)';
-
-  document.querySelectorAll('.todo-item.priority').forEach(item => {
-    item.style.setProperty('border-style', 'solid', 'important');
-    item.style.setProperty('border-width', '3px', 'important');
-    ['top', 'right', 'bottom', 'left'].forEach(edge => {
-      item.style.setProperty(
-        `border-${edge}-color`,
-        edge === activeEdge ? '#ffff00' : restingBorder,
-        'important'
-      );
-    });
-    item.style.setProperty('box-shadow', 'none', 'important');
-  });
-
-  priorityBorderFrame = (priorityBorderFrame + 1) % priorityBorderFrames.length;
-}
-
-advancePriorityBorders();
-setInterval(advancePriorityBorders, 400);
 
 // Escape special regex characters
 function escapeRegex(text) {
