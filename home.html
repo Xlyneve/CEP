@@ -236,6 +236,25 @@ header h1 {
 .universal-search-source-title:hover, .universal-search-source-title:focus-visible { color: #292327; }
 .universal-search-result { min-width: 0; min-height: 72px; overflow: hidden; border-radius: 14px; cursor: pointer; }
 .universal-search-result .global-search-loading { padding: 12px 8px; }
+.universal-search-native-card {
+  display: block;
+  box-sizing: border-box;
+  min-height: 88px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 13px;
+  color: #30292c;
+  background: var(--search-card, rgba(255, 255, 255, 0.62));
+  box-shadow: 0 3px 10px rgba(63, 52, 57, 0.08);
+  text-decoration: none;
+}
+.universal-search-native-title { display: block; margin-bottom: 6px; font: 700 13px/1.25 Arial,sans-serif; }
+.universal-search-native-snippet { display: block; color: #534a4e; font: 11.5px/1.35 Arial,sans-serif; }
+.universal-search-native-snippet mark { padding: 0 1px; border-radius: 3px; background: rgba(255, 237, 125, 0.72); color: inherit; }
+.universal-search-native-card:hover, .universal-search-native-card:focus-visible {
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 5px 13px rgba(63, 52, 57, 0.13);
+}
 .universal-search-card-frame { display: block; visibility: hidden; width: 100%; height: 120px; box-sizing: border-box; overflow: hidden; border: 0; border-radius: 13px; background: transparent; }
 .universal-search-result.is-ready { min-height: 0; }
 .universal-search-result.is-ready .universal-search-card-frame { visibility: visible; }
@@ -3162,7 +3181,7 @@ html body > header {
         if (preview.ready || preview.batch.requestId !== searchRequestId) return;
         preview.ready = true;
         preview.frame.style.height = `${preview.height}px`;
-        preview.result.querySelector('.global-search-loading')?.remove();
+        preview.result.querySelector('.universal-search-native-card')?.remove();
         preview.result.classList.add('is-ready');
         preview.group.classList.add('has-ready-results');
         if (!preview.batch.anyReady) {
@@ -3179,15 +3198,16 @@ html body > header {
           group = document.createElement('section');
           group.className = 'universal-search-result-group';
           const sourceColours = {
-            'pn.html': ['rgba(192, 137, 139, 0.58)', '#755255'],
-            'info.html': ['rgba(126, 161, 158, 0.58)', '#4e706d'],
-            'explain.html': ['rgba(170, 173, 111, 0.58)', '#686b40'],
-            'recalls.html': ['rgba(199, 132, 101, 0.55)', '#82533f']
+            'pn.html': ['rgba(192, 137, 139, 0.58)', '#755255', 'rgba(239, 221, 222, 0.72)'],
+            'info.html': ['rgba(126, 161, 158, 0.58)', '#4e706d', 'rgba(219, 232, 231, 0.76)'],
+            'explain.html': ['rgba(170, 173, 111, 0.58)', '#686b40', 'rgba(235, 235, 211, 0.78)'],
+            'recalls.html': ['rgba(199, 132, 101, 0.55)', '#82533f', 'rgba(240, 220, 211, 0.76)']
           };
-          const [dividerColour, titleColour] = sourceColours[String(page.file).toLowerCase()] ||
-            ['rgba(112, 126, 125, 0.42)', '#655b60'];
+          const [dividerColour, titleColour, cardColour] = sourceColours[String(page.file).toLowerCase()] ||
+            ['rgba(112, 126, 125, 0.42)', '#655b60', 'rgba(255, 255, 255, 0.62)'];
           group.style.setProperty('--search-divider', dividerColour);
           group.style.setProperty('--search-title', titleColour);
+          group.style.setProperty('--search-card', cardColour);
           const groupTitle = document.createElement('a');
           groupTitle.className = 'universal-search-source-title';
           groupTitle.textContent = sourceTitle;
@@ -3199,9 +3219,6 @@ html body > header {
         }
         const result = document.createElement('article');
         result.className = 'universal-search-result';
-        const cardLoading = document.createElement('div');
-        cardLoading.className = 'global-search-loading'; cardLoading.textContent = 'Loading card…';
-        result.appendChild(cardLoading);
         const snippetText = makeSnippet(page, terms);
         const sourcePage = page.sourcePage || page.file;
         const destination = new URL(sourcePage, location.href);
@@ -3212,6 +3229,23 @@ html body > header {
         if (page.focusId) focusParams.set('cepId', page.focusId);
         if (Number.isInteger(page.cardIndex)) focusParams.set('cepCard', String(page.cardIndex));
         destination.hash = focusParams.toString();
+        const nativeCard = document.createElement('a');
+        nativeCard.className = 'universal-search-native-card';
+        nativeCard.href = destination.href;
+        const nativeTitle = document.createElement('span');
+        nativeTitle.className = 'universal-search-native-title';
+        nativeTitle.textContent = page.title;
+        const nativeSnippet = document.createElement('span');
+        nativeSnippet.className = 'universal-search-native-snippet';
+        addHighlightedText(nativeSnippet, snippetText, terms);
+        nativeCard.append(nativeTitle, nativeSnippet);
+        result.appendChild(nativeCard);
+        group.appendChild(result);
+        group.classList.add('has-ready-results');
+        if (!renderBatch.anyReady) {
+          renderBatch.anyReady = true;
+          renderBatch.loading.remove();
+        }
         const cacheKey = `${sourcePage}|${page.focusId || ''}|${Number.isInteger(page.cardIndex) ? page.cardIndex : ''}`;
         const cached = previewCache.get(cacheKey);
         if (cached) {
@@ -3222,7 +3256,7 @@ html body > header {
             height: cached.height, settlePreview
           };
           previewFrames.set(cached.previewKey, preview);
-          result.appendChild(cached.frame); group.appendChild(result);
+          result.appendChild(cached.frame);
           revealPreview(preview);
           return;
         }
@@ -3232,13 +3266,13 @@ html body > header {
         const previewUrl = new URL(sourcePage, location.href); previewUrl.hash = previewParams.toString();
         const frame = document.createElement('iframe');
         frame.className = 'universal-search-card-frame'; frame.title = `${page.title} search result`;
-        frame.src = previewUrl.href; frame.loading = 'eager';
+        frame.src = previewUrl.href; frame.loading = resultIndex < 4 ? 'eager' : 'lazy';
         previewFrames.set(previewKey, {
           frame, previewKey, cacheKey, result, group, destination: destination.href,
           batch: renderBatch, ready: false, failed: false, height: 120,
           revealPreview, settlePreview
         });
-        result.appendChild(frame); group.appendChild(result);
+        result.appendChild(frame);
       };
       const renderNextBatch = () => {
         sentinel.hidden = true;
@@ -3287,8 +3321,8 @@ html body > header {
       }
       if (event.data.type === 'cep-card-preview-error') {
         if (preview.ready) return;
-        preview.failed = true; preview.ready = true; preview.result.remove();
-        if (!preview.group.querySelector('.universal-search-result')) preview.group.remove();
+        preview.failed = true; preview.ready = true;
+        preview.frame.remove();
         preview.settlePreview(preview);
         return;
       }
