@@ -3425,18 +3425,24 @@ html body > header {
         result.className = 'universal-search-result';
         const snippetText = makeSnippet(page, terms);
         const sourcePage = page.sourcePage || page.file;
-        const destination = new URL(sourcePage, location.href);
+        const destination = new URL(page.destinationUrl || sourcePage, location.href);
         const focusParams = new URLSearchParams({
           cepSearch: query,
           cepHint: snippetText
         });
-        if (page.focusId) focusParams.set('cepId', page.focusId);
-        if (Number.isInteger(page.cardIndex)) focusParams.set('cepCard', String(page.cardIndex));
-        destination.hash = focusParams.toString();
+        if (!page.directDestination) {
+          if (page.focusId) focusParams.set('cepId', page.focusId);
+          if (Number.isInteger(page.cardIndex)) focusParams.set('cepCard', String(page.cardIndex));
+          destination.hash = focusParams.toString();
+        }
         result.dataset.destination = destination.href;
         const nativeCard = document.createElement('a');
         nativeCard.className = 'universal-search-native-card';
         nativeCard.href = destination.href;
+        if (page.directDestination) {
+          nativeCard.target = '_blank';
+          nativeCard.rel = 'noopener noreferrer';
+        }
         nativeCard.addEventListener('click', () => recordSearchUse(page));
         const nativeTitle = document.createElement('span');
         nativeTitle.className = 'universal-search-native-title';
@@ -4628,7 +4634,8 @@ const firebaseConfig = {
     { collection: 'upperArmNotes', file: 'Sha.html', title: 'Urgent Care — Shoulder & Elbow', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
     { collection: 'abdominisNotes', file: 'Abdo.html', title: 'Urgent Care — Thorax & Abdomen', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
     { collection: 'spineNotes', file: 'Spine.html', title: 'Urgent Care — Back & Spine', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
-    { collection: 'footlegNotes', file: 'LF.html', title: 'Urgent Care — Lower Limb & Foot', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' }
+    { collection: 'footlegNotes', file: 'LF.html', title: 'Urgent Care — Lower Limb & Foot', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
+    { collection: 'urlForms', file: 'forms.html', title: 'Information Links', fields: ['title', 'note', 'url'], cardClass: 'file-item', renderer: 'forms', directUrlField: 'url' }
   ];
   const htmlToText = html => {
     const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html');
@@ -4714,7 +4721,9 @@ const firebaseConfig = {
           cardType: source.renderer,
           renderer: 'source-page',
           sourceCardClass: source.cardClass,
-          destinationUrl: `${source.file}#cepId=${encodeURIComponent(note.id)}`,
+          destinationUrl: source.directUrlField ? data[source.directUrlField] : `${source.file}#cepId=${encodeURIComponent(note.id)}`,
+          directDestination: Boolean(source.directUrlField && data[source.directUrlField]),
+          nativeOnly: Boolean(source.directUrlField),
           record: { id: note.id, data }
         };
       });
