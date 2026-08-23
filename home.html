@@ -3333,9 +3333,9 @@ html body > header {
       results.appendChild(loading);
       const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
       await (indexPromise ||= buildIndex());
-      await Promise.allSettled(
-        window.cepUniversalLazyLoaders.map(loader => loader(query))
-      );
+      // Start any slower remote indexes without holding back results that are
+      // already available from the primary project.
+      window.cepUniversalLazyLoaders.forEach(loader => void loader(query));
       if (requestId !== searchRequestId || input.value.trim().toLocaleLowerCase() !== query) return;
       const scoredMatches = searchIndex
         .filter(page => activeSource === 'all' || page.sourceTitle === activeSource)
@@ -4700,6 +4700,14 @@ const firebaseConfig = {
   });
   window.cepUniversalLazyLoaders ||= [];
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
+  // Warm the separate Xgpt index as soon as Home is ready. If it is still
+  // loading when Search opens, local results render immediately and the Xgpt
+  // entries are merged automatically when this promise completes.
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => void loadChatgptSearchNotes(), { timeout: 1500 });
+  } else {
+    setTimeout(() => void loadChatgptSearchNotes(), 0);
+  }
 
   searchSources.forEach(async source => {
     try {
