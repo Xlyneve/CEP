@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js"></script>
+  <script src="auth-guard.js?v=20260823-8"></script>
   <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -768,7 +768,7 @@ body::after {
 </style>
 
   <link rel="stylesheet" href="site-background.css?v=20260722-4">
-  <script src="page-theme.js?v=1"></script>
+  <script src="page-theme.js?v=20260823-1"></script>
   <style>
     .notes-panel .note-card:not(.copied-feedback) {
       display: inline-flex;
@@ -900,8 +900,34 @@ body::after {
         0 0 7px rgba(255, 255, 255, 1),
         0 0 15px rgba(255, 255, 255, 0.8);
     }
+
+    /* Keep the left panel visually even from top to bottom. */
+    .input-panel {
+      background: rgba(225, 226, 228, 0.94) !important;
+    }
+
+    /* Clinical Notes left-panel editor: one compact, uninterrupted row. */
+    body.cep-clinical-notes-page .input-panel .cep-pn-editor-toolbar {
+      width: 100%;
+      flex-wrap: nowrap !important;
+      gap: 2px !important;
+      margin: 5px 0 7px !important;
+      overflow: visible;
+    }
+
+    body.cep-clinical-notes-page .input-panel .cep-pn-editor-toolbar button {
+      flex: 0 0 auto;
+      min-width: 21px !important;
+      min-height: 22px !important;
+      padding: 3px 4px !important;
+      font-size: 8.5px !important;
+    }
+
+    body.cep-clinical-notes-page .input-panel .cep-pn-editor-divider {
+      margin: 0 1px !important;
+    }
   </style>
-  <link rel="stylesheet" href="affected-pages-theme.css?v=12">
+  <link rel="stylesheet" href="affected-pages-theme.css?v=20260823-1">
 </head>
 <body>
 
@@ -1067,7 +1093,7 @@ window.formatText = (cmd) => {
 
 // --- Auto-resize contenteditable ---
 const autoGrow = el => {
-  if (el.textContent.trim() === '') el.innerHTML = '';
+  if (el.textContent.trim() === '' && !el.querySelector('table, img')) el.innerHTML = '';
   el.style.height = 'auto';
   el.style.height = Math.max(100, el.scrollHeight) + 'px';
 };
@@ -1165,6 +1191,46 @@ function showCopyFeedback(card, clientX, clientY) {
   }, 900);
 }
 
+async function copyRichNote(htmlContent, plainContent) {
+  const html = String(htmlContent || '');
+  const text = String(plainContent || '');
+  if (navigator.clipboard?.write && window.ClipboardItem) {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([text], { type: 'text/plain' })
+        })
+      ]);
+      return;
+    } catch (error) {
+      console.warn('Rich clipboard copy was unavailable; using plain text.', error);
+    }
+  }
+  await navigator.clipboard.writeText(text);
+}
+
+function richNoteToClinicalText(htmlContent) {
+  const documentCopy = new DOMParser().parseFromString(String(htmlContent || ''), 'text/html');
+  documentCopy.querySelectorAll('table').forEach(table => {
+    const rows = [...table.rows].map(row =>
+      [...row.cells]
+        .map(cell => (cell.innerText || cell.textContent || '').replace(/\s+/g, ' ').trim())
+        .join('  ')
+    );
+    table.replaceWith(documentCopy.createTextNode(`\n${rows.join('\n')}\n`));
+  });
+  documentCopy.querySelectorAll('br').forEach(br => br.replaceWith(documentCopy.createTextNode('\n')));
+  documentCopy.querySelectorAll('p,div,li,h1,h2,h3,h4,h5,h6,blockquote').forEach(block => {
+    block.appendChild(documentCopy.createTextNode('\n'));
+  });
+  return (documentCopy.body.textContent || '')
+    .replace(/\t+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^[\r\n]+|[\r\n]+$/g, '');
+}
+
 function renderPinnedNotes() {
   const pinnedList = document.getElementById('pinnedNotesList');
   if (!pinnedList) return;
@@ -1207,14 +1273,12 @@ function renderPinnedNotes() {
       });
     });
 
-    item.addEventListener('click', (event) => {
+    item.addEventListener('click', async (event) => {
   if (PINNED_EDIT_MODE) return;
 
-  const plainContent = tmp.innerText || '';
-
-  navigator.clipboard.writeText(plainContent).then(() => {
+  const plainContent = richNoteToClinicalText(tmp.innerHTML);
+  await copyRichNote(tmp.innerHTML, plainContent);
     showCopyFeedback(item, event.clientX, event.clientY);
-  });
     });
 
     item.append(title, preview, unpin);
@@ -1276,14 +1340,13 @@ function drawNotes(notesArray) {
     });
 
     // --- Copy on click ---
-    div.addEventListener('click', (event) => {
+    div.addEventListener('click', async (event) => {
       if (div.classList.contains('is-editing')) return;
       const htmlContent = contentEl.innerHTML;
-      const plainContent = contentEl.innerText;
+      const plainContent = richNoteToClinicalText(htmlContent);
 
-      navigator.clipboard.writeText(plainContent).then(() => {
-        showCopyFeedback(div, event.clientX, event.clientY);
-      });
+      await copyRichNote(htmlContent, plainContent);
+      showCopyFeedback(div, event.clientX, event.clientY);
     });
 
 	actions.querySelector('.pin-btn').addEventListener('click', async (e) => {

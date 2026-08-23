@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js"></script>
+  <script src="auth-guard.js?v=20260823-8"></script>
   <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -138,6 +138,12 @@ header h1 {
 
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  cursor: pointer;
+}
+
+.pageTitle:focus-visible {
+  outline: 2px solid #fff200;
+  outline-offset: 6px;
 }
 
 .title {
@@ -190,6 +196,20 @@ header h1 {
   background: rgba(64,54,59,.08); color: #40363b; cursor: pointer; font-size: 22px;
 }
 .universal-search-status { margin: 9px 3px 5px; color: #6c6166; font-size: 11px; }
+.universal-search-filters {
+  display:flex; flex-wrap:nowrap; gap:6px; width:100%; box-sizing:border-box;
+  margin:9px 2px 2px; padding:1px 5px 4px 1px; overflow-x:auto; overflow-y:hidden;
+  scrollbar-width:none; -webkit-overflow-scrolling:touch; touch-action:pan-x;
+  overscroll-behavior-x:contain; cursor:grab;
+}
+.universal-search-filters.is-dragging { cursor:grabbing; user-select:none; }
+.universal-search-filters::-webkit-scrollbar { display: none; }
+.universal-search-filter {
+  flex: 0 0 auto; padding: 5px 9px; border: 1px solid rgba(112, 105, 110, .18);
+  border-radius: 999px; background: rgba(255,255,255,.5); color: #6a6166;
+  font: 600 10px/1 Arial,sans-serif; cursor: pointer;
+}
+.universal-search-filter.is-active { background: rgba(92,82,88,.82); border-color: transparent; color: #fff; }
 .universal-search-results {
   position: relative;
   display: grid;
@@ -251,6 +271,15 @@ header h1 {
 .universal-search-native-title { display: block; margin-bottom: 6px; font: 700 13px/1.25 Arial,sans-serif; }
 .universal-search-native-snippet { display: block; color: #534a4e; font: 11.5px/1.35 Arial,sans-serif; }
 .universal-search-native-snippet mark { padding: 0 1px; border-radius: 3px; background: rgba(255, 237, 125, 0.72); color: inherit; }
+.universal-search-native-table {
+  width:auto; max-width:100%; margin-top:5px; border-collapse:collapse;
+  color:#534a4e; font:10.5px/1.3 Arial,sans-serif;
+}
+.universal-search-native-table td,
+.universal-search-native-table th {
+  padding:3px 6px; border:1px solid rgba(130,130,136,.42); background:rgba(255,255,255,.22);
+  text-align:left; vertical-align:top; white-space:normal; overflow-wrap:anywhere;
+}
 .universal-search-native-card:hover, .universal-search-native-card:focus-visible {
   border-color: rgba(255, 255, 255, 1);
   box-shadow: 0 5px 13px rgba(63, 52, 57, 0.13);
@@ -844,12 +873,14 @@ footer {
 /* === Emoji Picker: sleek slide-out glass === */
 #emojiModal{
   position: fixed;
-  bottom: 70px;
-  right: 20px;
-  width: 300px;
+  top: 50%;
+  left: 50%;
+  bottom: auto;
+  right: auto;
+  width: min(420px, calc(100vw - 40px));
   max-width: calc(100vw - 40px);
-  height: 340px;
-  max-height: calc(100vh - 140px);
+  height: min(480px, calc(100dvh - 80px));
+  max-height: calc(100dvh - 80px);
   padding: 12px;
   border-radius: 18px;
 
@@ -863,14 +894,14 @@ footer {
 
   /* hidden state (slide out) */
   opacity: 0;
-  transform: translateX(18px) translateY(10px);
+  transform: translate(-50%, -48%) scale(0.97);
   pointer-events: none;
   transition: opacity 160ms ease, transform 220ms ease;
 }
 
 #emojiModal.open{
   opacity: 1;
-  transform: translateX(0) translateY(0);
+  transform: translate(-50%, -50%) scale(1);
   pointer-events: auto;
 }
 
@@ -2196,10 +2227,12 @@ header h1 {
   }
 
   #emojiModal {
-    right: 10px;
-    bottom: 66px;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
     width: calc(100vw - 44px);
-    height: 320px;
+    height: min(420px, calc(100dvh - 72px));
   }
 
   .emojiFab {
@@ -2278,16 +2311,57 @@ header h1 {
 
 @media (max-width: 768px) {
   body.dashboard-hierarchy-active {
-    --quick-stack-clearance: calc(48px + 1cm);
+    --quick-stack-clearance: 0px;
+  }
+
+  body.dashboard-hierarchy-active .universal-search {
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100dvh;
+    max-height: none;
+    padding:
+      calc(14px + env(safe-area-inset-top))
+      calc(12px + env(safe-area-inset-right))
+      calc(10px + env(safe-area-inset-bottom))
+      calc(12px + env(safe-area-inset-left));
+    border: 0;
+    border-radius: 0;
+    transform: none !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    overscroll-behavior: contain;
+  }
+
+  body.dashboard-hierarchy-active .universal-search[hidden] {
+    display: none;
+  }
+
+  body.dashboard-hierarchy-active .universal-search-results {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior: contain;
+  }
+
+  body.dashboard-hierarchy-active #universalSearchInput {
+    font-size: 16px;
   }
 
   body.dashboard-hierarchy-active .dashboard-frequent-heading,
   body.dashboard-hierarchy-active .top-circles.dashboard-frequent-circles,
   body.dashboard-hierarchy-active .layout {
-    width: calc(100% - var(--quick-stack-clearance));
-    max-width: calc(100% - var(--quick-stack-clearance));
-    margin-left: var(--quick-stack-clearance);
-    margin-right: 0;
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  body.dashboard-hierarchy-active .dashboard-frequent-section {
+    position: relative;
+    width: 100%;
+    overflow: visible;
   }
 
   body.dashboard-hierarchy-active .top-links {
@@ -2324,17 +2398,23 @@ header h1 {
   body.dashboard-hierarchy-active .qi.collapsed,
   body.dashboard-hierarchy-active .qt.collapsed,
   body.dashboard-hierarchy-active .qs.collapsed {
+    position: absolute !important;
     left: 8px !important;
     right: auto !important;
     transform: none !important;
   }
 
+  body.dashboard-hierarchy-active .qc { top: 58px !important; }
+  body.dashboard-hierarchy-active .qi { top: 116px !important; }
+  body.dashboard-hierarchy-active .qt { top: 174px !important; }
+  body.dashboard-hierarchy-active .qs { top: 232px !important; }
+
   body.dashboard-hierarchy-active .top-circles.dashboard-frequent-circles {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    width: calc(100% - var(--quick-stack-clearance));
-    max-width: calc(100% - var(--quick-stack-clearance));
+    width: 100%;
+    max-width: 100%;
     gap: 12px;
     padding: 10px 16px 14px;
     overflow: visible;
@@ -2545,14 +2625,14 @@ html body > header {
 </style>
 
   <link rel="stylesheet" href="site-background.css">
-  <script src="page-theme.js?v=2"></script>
-  <link rel="stylesheet" href="affected-pages-theme.css?v=4">
+  <script src="page-theme.js?v=20260823-1"></script>
+  <link rel="stylesheet" href="affected-pages-theme.css?v=20260823-1">
 </head>
 
 <body>
 
 <header>
- <h1><span class="pageTitle">XlynEve</span></h1>
+ <h1><span class="pageTitle" role="button" tabindex="0" aria-label="Open mini notepad">XlynEve</span></h1>
   <div class="top-links" role="navigation" aria-label="Clinical reference links">
     <a href="https://www.health.govt.nz/" target="_blank" rel="noopener noreferrer"><img class="site-favicon" src="https://www.google.com/s2/favicons?domain=health.govt.nz&amp;sz=32" alt="">Ministry of Health</a>
     <a href="https://www.health.govt.nz/search?query=cold+chain" target="_blank" rel="noopener noreferrer"><img class="site-favicon" src="https://www.google.com/s2/favicons?domain=health.govt.nz&amp;sz=32" alt="">Cold Chain</a>
@@ -2650,8 +2730,8 @@ html body > header {
       </div>
 
 
-      <!-- Emoji Search Icon -->
-     <button id="emojiSearchIcon" class="emojiFab emojiFabDots" type="button" aria-label="Open emoji picker"></button>
+      <!-- Emoji picker action; moved into Everyday Tools by the dashboard hierarchy. -->
+     <button id="emojiSearchIcon" class="card" type="button" aria-label="Open emoji picker">Emoji</button>
 
       <!-- Emoji Picker (Slide-out) -->
 <div id="emojiModal" aria-hidden="true">
@@ -3077,6 +3157,49 @@ html body > header {
     const status = document.getElementById('universalSearchStatus');
     const results = document.getElementById('universalSearchResults');
     let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer, searchRequestId = 0;
+    window.cepUniversalLazyLoaders ||= [];
+    let activeSource = 'all';
+    const searchUseKey = 'cep-universal-search-use-v1';
+    let searchUse = {};
+    try { searchUse = JSON.parse(localStorage.getItem(searchUseKey) || '{}') || {}; } catch {}
+    const filters = document.createElement('div');
+    filters.className = 'universal-search-filters';
+    filters.setAttribute('aria-label', 'Filter search by section');
+    panel.insertBefore(filters, status);
+    let filterDrag = null;
+    let suppressFilterClickUntil = 0;
+    filters.addEventListener('pointerdown', event => {
+      if (event.pointerType !== 'mouse' || event.button !== 0) return;
+      filterDrag = { pointerId: event.pointerId, startX: event.clientX, startScroll: filters.scrollLeft };
+    });
+    filters.addEventListener('pointermove', event => {
+      if (!filterDrag || event.pointerId !== filterDrag.pointerId) return;
+      const distance = event.clientX - filterDrag.startX;
+      if (Math.abs(distance) > 3) {
+        suppressFilterClickUntil = Date.now() + 180;
+        filters.classList.add('is-dragging');
+      }
+      filters.scrollLeft = filterDrag.startScroll - distance;
+    });
+    const finishFilterDrag = event => {
+      if (!filterDrag || event.pointerId !== filterDrag.pointerId) return;
+      filterDrag = null;
+      filters.classList.remove('is-dragging');
+    };
+    filters.addEventListener('pointerup', finishFilterDrag);
+    filters.addEventListener('pointercancel', finishFilterDrag);
+    filters.addEventListener('pointerleave', event => {
+      if (filterDrag && event.buttons === 0) finishFilterDrag(event);
+    });
+    filters.addEventListener('click', event => {
+      if (Date.now() >= suppressFilterClickUntil) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+    }, true);
+    filters.addEventListener('wheel', event => {
+      if (filters.scrollWidth <= filters.clientWidth || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      event.preventDefault();
+      filters.scrollLeft += event.deltaY;
+    }, { passive: false });
     const previewFrames = new Map();
     const previewCache = new Map();
     const previewCacheHost = document.createElement('div');
@@ -3090,6 +3213,71 @@ html body > header {
       status.textContent = 'Type a word to search.';
       return searchIndex;
     }
+    const pageKey = page => `${page.file}|${page.focusId || page.title}`;
+    function recordSearchUse(page) {
+      const key = pageKey(page);
+      const previous = searchUse[key] || {};
+      searchUse[key] = { count: (previous.count || 0) + 1, last: Date.now() };
+      try { localStorage.setItem(searchUseKey, JSON.stringify(searchUse)); } catch {}
+    }
+    function renderFilters() {
+      const sources = [...new Set(dynamicSearchEntries.map(entry => entry.sourceTitle).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b));
+      if (activeSource !== 'all' && !sources.includes(activeSource)) activeSource = 'all';
+      filters.replaceChildren();
+      ['all', ...sources].forEach(source => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = `universal-search-filter${source === activeSource ? ' is-active' : ''}`;
+        chip.textContent = source === 'all' ? 'All' : source;
+        chip.setAttribute('aria-pressed', String(source === activeSource));
+        chip.addEventListener('click', () => {
+          activeSource = source;
+          renderFilters();
+          if (input.value.trim()) runSearch();
+        });
+        filters.appendChild(chip);
+      });
+    }
+    function editDistance(a, b) {
+      if (a === b) return 0;
+      if (Math.abs(a.length - b.length) > 2) return 3;
+      const row = Array.from({ length: b.length + 1 }, (_, index) => index);
+      for (let i = 1; i <= a.length; i++) {
+        let diagonal = row[0]; row[0] = i;
+        for (let j = 1; j <= b.length; j++) {
+          const above = row[j];
+          row[j] = Math.min(row[j] + 1, row[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1));
+          diagonal = above;
+        }
+      }
+      return row[b.length];
+    }
+    function scorePage(page, query, terms) {
+      const title = String(page.title || '').toLocaleLowerCase();
+      const text = String(page.text || '').toLocaleLowerCase();
+      const words = new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || []);
+      let score = 0; let fuzzy = false;
+      if (title === query) score += 500;
+      else if (title.includes(query)) score += 260;
+      if (text.includes(query)) score += 130;
+      for (const term of terms) {
+        if (title.includes(term)) score += 90;
+        else if (text.includes(term)) score += 28;
+        else {
+          const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
+          const similar = tolerance && [...words].some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+          if (!similar) return null;
+          fuzzy = true; score += 8;
+        }
+      }
+      const usage = searchUse[pageKey(page)];
+      if (usage) {
+        score += Math.min(30, Math.log2((usage.count || 0) + 1) * 8);
+        if (Date.now() - (usage.last || 0) < 30 * 86400000) score += 12;
+      }
+      return { page, score, fuzzy };
+    }
     window.addUniversalSearchPages = entries => {
       const incoming = entries.map(entry => ({
         ...entry,
@@ -3101,6 +3289,7 @@ html body > header {
         .filter(entry => !incomingFiles.has(entry.file))
         .concat(incoming);
       searchIndex = [...dynamicSearchEntries];
+      renderFilters();
       if (input.value.trim()) runSearch();
     };
     function addHighlightedText(parent, text, terms) {
@@ -3145,15 +3334,31 @@ html body > header {
       results.appendChild(loading);
       const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
       await (indexPromise ||= buildIndex());
+      await Promise.allSettled(
+        window.cepUniversalLazyLoaders.map(loader => loader(query))
+      );
       if (requestId !== searchRequestId || input.value.trim().toLocaleLowerCase() !== query) return;
-      const matches = searchIndex
-        .filter(page => terms.every(term => page.searchable.includes(term)))
-        .slice(0, 30);
+      const scoredMatches = searchIndex
+        .filter(page => activeSource === 'all' || page.sourceTitle === activeSource)
+        .map(page => scorePage(page, query, terms))
+        .filter(Boolean)
+        .sort((a, b) => b.score - a.score);
+      const sourceResultCounts = new Map();
+      const matches = [];
+      for (const match of scoredMatches) {
+        const sourceName = match.page.sourceTitle || '';
+        const sourceCount = sourceResultCounts.get(sourceName) || 0;
+        if (sourceName === 'Xgpt Notes' && sourceCount >= 10) continue;
+        matches.push(match.page);
+        sourceResultCounts.set(sourceName, sourceCount + 1);
+        if (matches.length >= 30) break;
+      }
+      const showingSimilar = matches.length > 0 && scoredMatches.every(match => match.fuzzy);
       const loadedSectionCount = new Set(
         dynamicSearchEntries.map(entry => entry.file)
       ).size;
       status.textContent = matches.length
-        ? `${matches.length}${matches.length === 30 ? '+' : ''} result${matches.length === 1 ? '' : 's'} found`
+        ? `${showingSimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 30 ? '+' : ''} ${showingSimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}`
         : `No matching notes found · ${loadedSectionCount} saved-note section${loadedSectionCount === 1 ? '' : 's'} loaded`;
       if (!matches.length) { results.replaceChildren(); return; }
       const stage = document.createElement('div');
@@ -3229,16 +3434,38 @@ html body > header {
         if (page.focusId) focusParams.set('cepId', page.focusId);
         if (Number.isInteger(page.cardIndex)) focusParams.set('cepCard', String(page.cardIndex));
         destination.hash = focusParams.toString();
+        result.dataset.destination = destination.href;
         const nativeCard = document.createElement('a');
         nativeCard.className = 'universal-search-native-card';
         nativeCard.href = destination.href;
+        nativeCard.addEventListener('click', () => recordSearchUse(page));
         const nativeTitle = document.createElement('span');
         nativeTitle.className = 'universal-search-native-title';
         nativeTitle.textContent = page.title;
         const nativeSnippet = document.createElement('span');
         nativeSnippet.className = 'universal-search-native-snippet';
-        addHighlightedText(nativeSnippet, snippetText, terms);
-        nativeCard.append(nativeTitle, nativeSnippet);
+        const matchingTable = page.searchTables?.find(rows =>
+          terms.every(term => rows.flat().join(' ').toLocaleLowerCase().includes(term))
+        );
+        if (matchingTable) {
+          const tablePreview = document.createElement('table');
+          tablePreview.className = 'universal-search-native-table';
+          const tableBody = document.createElement('tbody');
+          matchingTable.forEach(rowValues => {
+            const row = document.createElement('tr');
+            rowValues.forEach(value => {
+              const cell = document.createElement('td');
+              addHighlightedText(cell, value, terms);
+              row.appendChild(cell);
+            });
+            tableBody.appendChild(row);
+          });
+          tablePreview.appendChild(tableBody);
+          nativeCard.append(nativeTitle, tablePreview);
+        } else {
+          addHighlightedText(nativeSnippet, snippetText, terms);
+          nativeCard.append(nativeTitle, nativeSnippet);
+        }
         result.appendChild(nativeCard);
         group.appendChild(result);
         group.classList.add('has-ready-results');
@@ -3246,13 +3473,21 @@ html body > header {
           renderBatch.anyReady = true;
           renderBatch.loading.remove();
         }
+        if (page.nativeOnly) {
+          renderBatch.chunkPending = Math.max(0, renderBatch.chunkPending - 1);
+          if (renderBatch.chunkPending === 0 && nextIndex < matches.length) {
+            renderBatch.sentinel.hidden = false;
+            renderBatch.observer.observe(renderBatch.sentinel);
+          }
+          return;
+        }
         const cacheKey = `${sourcePage}|${page.focusId || ''}|${Number.isInteger(page.cardIndex) ? page.cardIndex : ''}`;
         const cached = previewCache.get(cacheKey);
         if (cached) {
           previewCache.delete(cacheKey);
           const preview = {
             frame: cached.frame, previewKey: cached.previewKey, cacheKey, result, group,
-            destination: destination.href, batch: renderBatch, ready: false, failed: false,
+            destination: destination.href, page, batch: renderBatch, ready: false, failed: false,
             height: cached.height, settlePreview
           };
           previewFrames.set(cached.previewKey, preview);
@@ -3269,6 +3504,7 @@ html body > header {
         frame.src = previewUrl.href; frame.loading = resultIndex < 4 ? 'eager' : 'lazy';
         previewFrames.set(previewKey, {
           frame, previewKey, cacheKey, result, group, destination: destination.href,
+          page,
           batch: renderBatch, ready: false, failed: false, height: 120,
           revealPreview, settlePreview
         });
@@ -3297,6 +3533,7 @@ html body > header {
     function openSearch() {
       panel.hidden = false; button.setAttribute('aria-expanded', 'true'); input.focus();
       indexPromise ||= buildIndex();
+      renderFilters();
     }
     function closeSearch() {
       panel.hidden = true; button.setAttribute('aria-expanded', 'false'); button.focus();
@@ -3306,16 +3543,26 @@ html body > header {
     input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 180); });
     input.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeSearch();
-      if (event.key === 'Enter') results.querySelector('.universal-search-card-frame')?.focus();
+      if (event.key === 'Enter') {
+        const first = results.querySelector('.universal-search-result[data-destination]');
+        if (first?.dataset.destination) location.assign(first.dataset.destination);
+      }
     });
     document.addEventListener('click', event => {
-      if (!panel.hidden && !panel.contains(event.target) && !button.contains(event.target)) closeSearch();
+      const searchTextSelected = document.activeElement === input
+        && Number.isInteger(input.selectionStart)
+        && input.selectionStart !== input.selectionEnd;
+      if (searchTextSelected) return;
+      const clickPath = event.composedPath?.() || [];
+      const clickedInsideSearch = clickPath.includes(panel) || clickPath.includes(button);
+      if (!panel.hidden && !clickedInsideSearch) closeSearch();
     });
     window.addEventListener('message', event => {
       if (event.origin !== location.origin || !String(event.data?.type || '').startsWith('cep-card-preview-')) return;
       const preview = previewFrames.get(event.data.key);
       if (!preview || preview.frame.contentWindow !== event.source || preview.batch.requestId !== searchRequestId) return;
       if (event.data.type === 'cep-card-preview-open') {
+        recordSearchUse(preview.page);
         location.assign(preview.destination);
         return;
       }
@@ -3467,6 +3714,63 @@ function closeTable() {
     { name: 'sick', symbol: '🤧' },
     { name: 'male', symbol: '♂️' },
     { name: 'female', symbol: '♀️' },
+    { name: 'doctor', symbol: '🧑‍⚕️' },
+    { name: 'male doctor', symbol: '👨‍⚕️' },
+    { name: 'medical symbol', symbol: '⚕️' },
+    { name: 'first aid', symbol: '🩹' },
+    { name: 'medical kit', symbol: '🧰' },
+    { name: 'face mask', symbol: '😷' },
+    { name: 'fever', symbol: '🤒' },
+    { name: 'nausea', symbol: '🤢' },
+    { name: 'vomiting', symbol: '🤮' },
+    { name: 'sneeze', symbol: '🤧' },
+    { name: 'injury', symbol: '🤕' },
+    { name: 'rest in bed', symbol: '🛌' },
+    { name: 'brain', symbol: '🧠' },
+    { name: 'heart organ', symbol: '🫀' },
+    { name: 'lungs', symbol: '🫁' },
+    { name: 'bone', symbol: '🦴' },
+    { name: 'tooth', symbol: '🦷' },
+    { name: 'microscope', symbol: '🔬' },
+    { name: 'test tube', symbol: '🧪' },
+    { name: 'petri dish', symbol: '🧫' },
+    { name: 'dna', symbol: '🧬' },
+    { name: 'x ray', symbol: '🩻' },
+    { name: 'clipboard', symbol: '📋' },
+    { name: 'memo', symbol: '📝' },
+    { name: 'notepad', symbol: '🗒️' },
+    { name: 'document', symbol: '📄' },
+    { name: 'folder', symbol: '📁' },
+    { name: 'open folder', symbol: '📂' },
+    { name: 'card index', symbol: '🗂️' },
+    { name: 'paperclip', symbol: '📎' },
+    { name: 'magnifying glass', symbol: '🔎' },
+    { name: 'briefcase', symbol: '💼' },
+    { name: 'people', symbol: '👥' },
+    { name: 'email envelope', symbol: '✉️' },
+    { name: 'checkbox', symbol: '☑️' },
+    { name: 'complete', symbol: '✅' },
+    { name: 'pending', symbol: '⏳' },
+    { name: 'reminder', symbol: '🔔' },
+    { name: 'repeat', symbol: '🔁' },
+    { name: 'calendar date', symbol: '🗓️' },
+    { name: 'suitcase', symbol: '🧳' },
+    { name: 'world map', symbol: '🗺️' },
+    { name: 'departure', symbol: '🛫' },
+    { name: 'arrival', symbol: '🛬' },
+    { name: 'train', symbol: '🚆' },
+    { name: 'bus', symbol: '🚌' },
+    { name: 'ship', symbol: '🚢' },
+    { name: 'hotel', symbol: '🏨' },
+    { name: 'holiday', symbol: '🏝️' },
+    { name: 'celebration', symbol: '🎉' },
+    { name: 'party', symbol: '🥳' },
+    { name: 'christmas', symbol: '🎄' },
+    { name: 'fireworks', symbol: '🎆' },
+    { name: 'new zealand', symbol: '🇳🇿' },
+    { name: 'anzac poppy', symbol: '🌺' },
+    { name: 'easter rabbit', symbol: '🐇' },
+    { name: 'gift', symbol: '🎁' },
 
   ];
 
@@ -4064,12 +4368,28 @@ function closeTable() {
       main.insertBefore(section.group, emojiButton);
     });
 
+    emojiButton.className = 'card';
+    emojiButton.textContent = 'Emoji';
+    emojiButton.setAttribute('aria-label', 'Open emoji picker');
+    sections.get('Home')?.group.appendChild(emojiButton);
+
     const frequentHeading = document.createElement('h2');
     frequentHeading.textContent = 'Frequently Used';
     frequentHeading.className = 'dashboard-frequent-heading';
     frequentCircles.before(frequentHeading);
     frequentCircles.classList.add('dashboard-frequent-circles');
     frequentCircles.replaceChildren();
+
+    const frequentSection = document.createElement('section');
+    frequentSection.className = 'dashboard-frequent-section';
+    frequentSection.setAttribute('aria-labelledby', 'dashboardFrequentHeading');
+    frequentHeading.id = 'dashboardFrequentHeading';
+    frequentHeading.before(frequentSection);
+    frequentSection.append(frequentHeading, frequentCircles);
+    ['quickCalc', 'quickInteleviewer', 'tabletCalculator', 'syrupCalculator'].forEach(id => {
+      const tool = document.getElementById(id);
+      if (tool) frequentSection.appendChild(tool);
+    });
 
     const alignQuickTools = () => {
       const headingTop = Math.max(8, Math.round(frequentHeading.getBoundingClientRect().top));
@@ -4273,6 +4593,10 @@ function closeTable() {
     query,
     orderBy
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  import {
+    getAuth,
+    signInAnonymously
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
   // Avoid an unauthenticated Firestore request and retry on page load.
 await window.CEP_AUTH_READY;
@@ -4314,6 +4638,63 @@ const firebaseConfig = {
       .forEach(element => element.append(' '));
     return (parsed.body.textContent || '').replace(/\s+/g, ' ').trim();
   };
+
+  // ChatGPT Notes live in a separate Firebase project. Load their text-only
+  // index on the first real search, cache it, and never create preview iframes.
+  let chatgptSearchPromise;
+  const loadChatgptSearchNotes = () => chatgptSearchPromise ||= (async () => {
+    const chatConfig = {
+      apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
+      authDomain: 'notes-chat-c5ff3.firebaseapp.com',
+      projectId: 'notes-chat-c5ff3',
+      storageBucket: 'notes-chat-c5ff3.firebasestorage.app',
+      messagingSenderId: '597780727252',
+      appId: '1:597780727252:web:8407eb4096dbe301d74241'
+    };
+    const chatApp = getApps().find(candidate => candidate.name === 'notes-chat') ||
+      initializeApp(chatConfig, 'notes-chat');
+    const chatAuth = getAuth(chatApp);
+    if (typeof chatAuth.authStateReady === 'function') await chatAuth.authStateReady();
+    if (!chatAuth.currentUser) await signInAnonymously(chatAuth);
+    const snapshot = await getDocs(collection(getFirestore(chatApp), 'notes'));
+    const entries = snapshot.docs.map(note => {
+      const data = note.data();
+      const rawHtml = data.content || data.note || data.text || '';
+      const text = htmlToText(rawHtml)
+        .replace(/\[\[([^\]]+)\]\]/g, '$1');
+      const parsedNote = new DOMParser().parseFromString(String(rawHtml), 'text/html');
+      const searchTables = [...parsedNote.querySelectorAll('table')].map(table =>
+        [...table.rows].map(row =>
+          [...row.cells].map(cell =>
+            (cell.textContent || '')
+              .replace(/\[\[([^\]]+)\]\]/g, '$1')
+              .replace(/\s+/g, ' ')
+              .trim()
+          )
+        )
+      ).filter(rows => rows.length);
+      const firstLine = text.split(/[.!?]\s|\n/)[0].trim();
+      return {
+        file: 'chatgptx.html',
+        sourcePage: 'chatgptx.html',
+        title: firstLine ? `Xgpt — ${firstLine.slice(0, 72)}` : 'Xgpt Note',
+        text,
+        focusId: note.id,
+        sourceTitle: 'Xgpt Notes',
+        nativeOnly: true,
+        searchTables
+      };
+    });
+    window.addUniversalSearchPages?.(entries);
+    return entries;
+  })().catch(error => {
+    chatgptSearchPromise = null;
+    console.warn('Lazy ChatGPT Notes search could not load.', error);
+    return [];
+  });
+  window.cepUniversalLazyLoaders ||= [];
+  window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
+
   searchSources.forEach(async source => {
     try {
       const snapshot = await getDocs(collection(db, source.collection));
@@ -4407,5 +4788,6 @@ const firebaseConfig = {
     }
   }
 </script>
+<script src="notepad-launcher.js?v=20260823-28"></script>
 </body>
 </html>

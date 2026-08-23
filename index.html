@@ -150,6 +150,34 @@ button:hover {
   background: rgba(90, 95, 220, 0.8);
 }
 
+.device-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 2px 4px;
+  color: #2f2f55;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.device-choice input {
+  width: 15px;
+  height: 15px;
+  margin: 1px 0 0;
+  accent-color: #7d829f;
+}
+
+.device-help {
+  display: block;
+  color: rgba(47, 47, 85, 0.7);
+  font-size: 10px;
+  line-height: 1.35;
+  text-align: left;
+  margin-left: 25px;
+}
+
 /* Responsive tweaks */
 @media (max-width: 600px) {
   body {
@@ -184,8 +212,8 @@ button:hover {
 
   </style>
   <link rel="stylesheet" href="site-background.css">
-  <script src="page-theme.js?v=1"></script>
-  <link rel="stylesheet" href="affected-pages-theme.css?v=4">
+  <script src="page-theme.js?v=20260823-1"></script>
+  <link rel="stylesheet" href="affected-pages-theme.css?v=20260823-1">
 </head>
 <body>
 
@@ -198,6 +226,11 @@ button:hover {
   <div class="password-container">
     <h2 style="color: black;">Secure sign in</h2>
     <p id="signInStatus" style="font-size: 14px; color: #2f2f6d;">Use the approved Google account to continue.</p>
+    <label class="device-choice">
+      <input id="personalDevice" type="checkbox" checked disabled>
+      <span>Keep me signed in until I use the sign-out light</span>
+    </label>
+    <small class="device-help">On a work or shared computer, use the glowing sign-out light before leaving.</small>
     <button id="googleSignIn" type="button">Sign in with Google</button>
   </div>
 
@@ -237,12 +270,18 @@ updateDateTime();
     const auth = firebase.auth();
     const allowedEmail = "xeve06@gmail.com";
     const params = new URLSearchParams(location.search);
-    const requestedPage = params.get("returnTo") || "home.html";
+    const requestedPage = params.get("returnTo")
+      || localStorage.getItem("cep-auth-return-to")
+      || "home.html";
     const safeReturnTo = /^[A-Za-z0-9 _.-]+\.html$/.test(requestedPage)
       ? requestedPage
       : "home.html";
     const status = document.getElementById("signInStatus");
     const signInButton = document.getElementById("googleSignIn");
+    const personalDevice = document.getElementById("personalDevice");
+    if (params.get("signedOut") === "1") {
+      status.textContent = "Signed out safely. Sign in again when ready.";
+    }
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
       || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const isStandalone = window.navigator.standalone === true
@@ -256,12 +295,28 @@ updateDateTime();
     // its cross-site auth storage is partitioned. Use the popup flow on iOS
     // whether this page is running standalone or in a Safari web clip.
     const useRedirectAuth = isMobile && !isIOS && !isStandalone;
-    // LOCAL persistence is important on iOS: opening Google can temporarily
-    // background/recreate the Home Screen web app, which clears SESSION auth.
-    const persistenceReady = auth.setPersistence(
-      firebase.auth.Auth.Persistence.LOCAL
-    );
+    const savedDeviceMode = localStorage.getItem("cep-auth-device-mode") === "personal"
+      ? "personal"
+      : (sessionStorage.getItem("cep-auth-device-mode") || "shared");
+    personalDevice.checked = true;
+
+    function setDevicePersistence(mode) {
+      localStorage.setItem("cep-auth-device-mode", "personal");
+      sessionStorage.removeItem("cep-auth-device-mode");
+      return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    }
+
+    let persistenceReady = setDevicePersistence(savedDeviceMode);
     let authCompletionStarted = false;
+
+    personalDevice.addEventListener("change", () => {
+      const selectedMode = personalDevice.checked ? "personal" : "shared";
+      persistenceReady = setDevicePersistence(selectedMode);
+      persistenceReady.catch((error) => {
+        console.error("Unable to save device preference.", error);
+        status.textContent = authErrorText("Could not save sign-in preference", error);
+      });
+    });
 
     function authErrorText(prefix, error) {
       const code = error?.code ? ` (${error.code})` : "";
@@ -271,6 +326,7 @@ updateDateTime();
 
     function openSignedInPage() {
       const destination = new URL(safeReturnTo, window.location.href).href;
+      localStorage.removeItem("cep-auth-return-to");
       status.textContent = "Signed in. Opening XlynEve…";
 
       // Normal assignment is more reliable than replacing the current entry
@@ -301,7 +357,7 @@ updateDateTime();
     auth.onAuthStateChanged((user) => {
       // On iPhone Home Screen apps the popup promise can remain pending after
       // Google has authenticated. The auth-state event is the reliable signal.
-      if (user) finishSignIn(user).catch((error) => {
+      if (user) persistenceReady.then(() => finishSignIn(user)).catch((error) => {
         authCompletionStarted = false;
         console.error("Authentication state validation failed.", error);
         status.textContent = authErrorText("Authentication failed", error);
@@ -311,6 +367,8 @@ updateDateTime();
 
     async function processRedirectResult() {
       try {
+        const selectedMode = personalDevice.checked ? "personal" : "shared";
+        persistenceReady = setDevicePersistence(selectedMode);
         await persistenceReady;
         const result = await auth.getRedirectResult();
         if (result?.user) await finishSignIn(result.user);
@@ -328,16 +386,22 @@ updateDateTime();
       status.textContent = "Opening Google sign in…";
 
       try {
-        await persistenceReady;
+        const selectedMode = personalDevice.checked ? "personal" : "shared";
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ login_hint: allowedEmail });
 
         if (useRedirectAuth) {
+          persistenceReady = setDevicePersistence(selectedMode);
+          await persistenceReady;
           status.textContent = "Redirecting to Google sign in…";
           await auth.signInWithRedirect(provider);
           return;
         }
 
+        // Popup sign-in must begin directly inside the tap/click handler.
+        // Awaiting persistence here causes iOS and some mobile browsers to
+        // treat the Google window as an unsolicited (blocked) popup. The
+        // preference is already applied on page load and checkbox change.
         const result = await auth.signInWithPopup(provider);
         await result.user.getIdToken();
         await finishSignIn(result.user);

@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js"></script>
+  <script src="auth-guard.js?v=20260823-8"></script>
   <script src="security.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -2435,6 +2435,8 @@ function deLinkifyConceptAnchors(html) {
 /* =========================
    Notes listener (FIXED: no defs listener here)
 ========================= */
+let externalSearchHandled = false;
+
 function startNotesListener() {
   if (!isUnlocked) return;
   if (unsubscribeNotes) unsubscribeNotes();
@@ -2452,6 +2454,27 @@ function startNotesListener() {
       buildDerivedCachesFromNotes();
 
       if (isEditingNote) return;
+
+      if (!externalSearchHandled) {
+        const externalParams = new URLSearchParams(location.hash.replace(/^#/, ''));
+        const requestedId = externalParams.get('cepId');
+        const requestedQuery = externalParams.get('cepSearch') || '';
+        if (requestedId || requestedQuery) {
+          externalSearchHandled = true;
+          if (requestedQuery) userInput.value = requestedQuery;
+          const requestedNote = requestedId
+            ? notesCache.find(note => note.id === requestedId)
+            : null;
+          if (requestedNote) {
+            renderLiveResults([requestedNote], requestedQuery || 'Selected note');
+            return;
+          }
+          if (requestedQuery) {
+            runLiveSearch(requestedQuery, true);
+            return;
+          }
+        }
+      }
 
       const q = userInput.value.trim();
       if (q) runLiveSearch(q, true);
@@ -4274,9 +4297,15 @@ arrowBtn.addEventListener('mousedown', (e) => {
         div.appendChild(row);
       }
 
+      const removeSharedEditToolbar = () => {
+        const toolbar = editable.nextElementSibling;
+        if (toolbar?.classList.contains('cep-pn-editor-toolbar')) toolbar.remove();
+      };
+
       cancelBtn.onclick = () => {
         isEditingNote = false;
         hideEmojiPanel();
+        removeSharedEditToolbar();
         editable.remove();
         actions.remove();
         bubble.style.display = '';
@@ -4294,6 +4323,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
 
           bubble.innerHTML = '🤖 ' + conceptLinkifyHTML(stripLegacyTableControls(updated));
           hideEmojiPanel();
+          removeSharedEditToolbar();
           editable.remove();
           actions.remove();
           bubble.style.display = '';
