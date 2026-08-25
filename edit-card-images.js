@@ -142,6 +142,10 @@ function openImageZoom(source, alt = 'Note image') {
 document.addEventListener('click', event => {
   const image = event.target.closest?.('.note-card img, .note-tile img');
   if (!image || image.closest('.cep-edit-image-zoom')) return;
+  // Some pages (for example info.html) provide a richer image viewer with
+  // zoom, pan, and highlighting tools. Let their delegated click handler run
+  // instead of replacing it with the shared basic viewer.
+  if (document.getElementById('imgModal')) return;
   event.preventDefault(); event.stopImmediatePropagation();
   openImageZoom(image.currentSrc || image.src, image.alt || 'Note image');
 }, true);
