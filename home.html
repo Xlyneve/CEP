@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js?v=20260823-8"></script>
+  <script src="auth-guard.js?v=20260826-31"></script>
   <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -14,6 +14,35 @@
   <title>Xlyn</title>
 
 <style>
+html:has(body.cep-search-embed),
+body.cep-search-embed {
+  margin: 0 !important;
+  min-height: 100% !important;
+  background: transparent !important;
+  overflow: hidden !important;
+}
+body.cep-search-embed::before,
+body.cep-search-embed::after { display: none !important; }
+body.cep-search-embed #universalSearchPanel {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+  border: 1px solid rgba(255,255,255,.82) !important;
+  border-radius: 18px !important;
+  display: flex;
+  flex-direction: column;
+}
+body.cep-search-embed #universalSearchPanel[hidden] { display: none !important; }
+body.cep-search-embed .universal-search-results {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+}
   /* Custom Fonts */
 @font-face {
   font-family: 'AdeliciaRegular';
@@ -2630,6 +2659,15 @@ html body > header {
 </head>
 
 <body>
+<script>
+  if (new URLSearchParams(location.search).get('cepSearchEmbed') === '1') {
+    document.body.classList.add('cep-search-embed');
+    // The embedded shell contains only the Search UI. Allow it to render while
+    // Firestore-backed loaders continue waiting on CEP_AUTH_READY; otherwise
+    // auth-guard's temporary body visibility rule leaves a blank white frame.
+    document.documentElement.classList.remove('cep-auth-pending');
+  }
+</script>
 
 <header>
  <h1><span class="pageTitle" role="button" tabindex="0" aria-label="Open mini notepad">XlynEve</span></h1>
@@ -3155,6 +3193,12 @@ html body > header {
     const close = document.getElementById('universalSearchClose');
     const status = document.getElementById('universalSearchStatus');
     const results = document.getElementById('universalSearchResults');
+    const embeddedSearch = new URLSearchParams(location.search).get('cepSearchEmbed') === '1';
+    const navigateToSearchResult = url => {
+      if (embeddedSearch && window.parent !== window) {
+        window.parent.postMessage({ type: 'cep-universal-search-navigate', url }, location.origin);
+      } else location.assign(url);
+    };
     let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer, searchRequestId = 0;
     window.cepUniversalLazyLoaders ||= [];
     let activeSource = 'all';
@@ -3443,7 +3487,12 @@ html body > header {
           nativeCard.target = '_blank';
           nativeCard.rel = 'noopener noreferrer';
         }
-        nativeCard.addEventListener('click', () => recordSearchUse(page));
+        nativeCard.addEventListener('click', event => {
+          recordSearchUse(page);
+          if (!embeddedSearch) return;
+          event.preventDefault();
+          navigateToSearchResult(nativeCard.href);
+        });
         const nativeTitle = document.createElement('span');
         nativeTitle.className = 'universal-search-native-title';
         nativeTitle.textContent = page.title;
@@ -3539,9 +3588,16 @@ html body > header {
       panel.hidden = false; button.setAttribute('aria-expanded', 'true'); input.focus();
       indexPromise ||= buildIndex();
       renderFilters();
+      if (embeddedSearch && window.parent !== window) {
+        window.parent.postMessage({ type: 'cep-universal-search-ready' }, location.origin);
+      }
     }
+    window.openCepUniversalSearch = openSearch;
     function closeSearch() {
       panel.hidden = true; button.setAttribute('aria-expanded', 'false'); button.focus();
+      if (embeddedSearch && window.parent !== window) {
+        window.parent.postMessage({ type: 'cep-universal-search-close' }, location.origin);
+      }
     }
     button.addEventListener('click', () => panel.hidden ? openSearch() : closeSearch());
     close.addEventListener('click', closeSearch);
@@ -3550,7 +3606,7 @@ html body > header {
       if (event.key === 'Escape') closeSearch();
       if (event.key === 'Enter') {
         const first = results.querySelector('.universal-search-result[data-destination]');
-        if (first?.dataset.destination) location.assign(first.dataset.destination);
+        if (first?.dataset.destination) navigateToSearchResult(first.dataset.destination);
       }
     });
     document.addEventListener('click', event => {
@@ -3568,7 +3624,7 @@ html body > header {
       if (!preview || preview.frame.contentWindow !== event.source || preview.batch.requestId !== searchRequestId) return;
       if (event.data.type === 'cep-card-preview-open') {
         recordSearchUse(preview.page);
-        location.assign(preview.destination);
+        navigateToSearchResult(preview.destination);
         return;
       }
       if (event.data.type === 'cep-card-preview-error') {
@@ -3590,6 +3646,20 @@ html body > header {
         preview.revealPreview(preview);
       }
     });
+    document.addEventListener('keydown', event => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'k') return;
+      event.preventDefault();
+      openSearch();
+    });
+    const openRequestedSearch = () => {
+      const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+      if (params.get('cepSearch') !== 'open') return;
+      openSearch();
+      params.delete('cepSearch');
+      history.replaceState(null, '', `${location.pathname}${location.search}${params.size ? `#${params}` : ''}`);
+    };
+    openRequestedSearch();
+    window.addEventListener('hashchange', openRequestedSearch);
   })();
 
   // ===== VITALS POPUP =====

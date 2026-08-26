@@ -51,12 +51,23 @@
     window.CEP_FIREBASE_APP = app;
     window.CEP_FIREBASE_AUTH = auth;
 
-    const user = await new Promise(resolve => {
+    let user = await new Promise(resolve => {
       const unsubscribe = authSdk.onAuthStateChanged(auth, currentUser => {
         unsubscribe();
         resolve(currentUser);
       });
     });
+
+    // Same-origin Universal Search opens Home in an iframe. Firebase can emit
+    // a transient null in that new context before its persisted session has
+    // hydrated, even though the authenticated parent is already ready.
+    const embeddedSearch = new URLSearchParams(location.search).get("cepSearchEmbed") === "1" &&
+      window.parent !== window;
+    if (!user && embeddedSearch) {
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      if (typeof auth.authStateReady === "function") await auth.authStateReady();
+      user = auth.currentUser;
+    }
 
     const authorized =
       user &&

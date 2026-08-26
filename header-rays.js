@@ -16,6 +16,49 @@ const menuContainer = centerToggle.querySelector(".rays");
 
 if (!toggleIcon || !menuContainer) return;
 
+  let searchOverlay = null;
+
+  function closeEmbeddedSearch() {
+    if (!searchOverlay) return;
+    const closingOverlay = searchOverlay;
+    searchOverlay = null;
+    closingOverlay.classList.remove("is-open");
+    document.body.classList.remove("cep-search-overlay-open");
+    setTimeout(() => closingOverlay.remove(), 180);
+  }
+
+  async function openEmbeddedSearch() {
+    if (typeof window.openCepUniversalSearch === "function") {
+      window.openCepUniversalSearch();
+      return;
+    }
+    if (searchOverlay) return searchOverlay.querySelector("input")?.focus();
+    const overlay = document.createElement("div");
+    overlay.className = "cep-search-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", "Search all Xlyneve notes and pages");
+    const host = document.createElement("div");
+    host.className = "cep-search-overlay-host";
+    host.textContent = "Opening Search…";
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) closeEmbeddedSearch();
+    });
+    overlay.append(host);
+    document.body.appendChild(overlay);
+    document.body.classList.add("cep-search-overlay-open");
+    searchOverlay = overlay;
+    requestAnimationFrame(() => overlay.classList.add("is-open"));
+    try {
+      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=1");
+      if (searchOverlay !== overlay) return;
+      await mountUniversalSearch(host, closeEmbeddedSearch);
+    } catch (error) {
+      console.error("Universal Search could not open.", error);
+      host.textContent = "Search could not be opened. Please try again.";
+    }
+  }
+
   const menuGroups = [
     {
       name: "Main",
@@ -66,6 +109,19 @@ if (!toggleIcon || !menuContainer) return;
     groupLabel.className = "glass-pill-label";
     groupLabel.textContent = group.name;
     pill.appendChild(groupLabel);
+
+    const searchLink = document.createElement("a");
+    searchLink.className = "glass-pill-link glass-pill-search";
+    searchLink.href = "home.html#cepSearch=open";
+    searchLink.textContent = "🔎 Search";
+    searchLink.setAttribute("aria-label", "Search all Xlyneve notes and pages");
+    searchLink.title = "Search all notes and pages (Ctrl/⌘ K)";
+    searchLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      hideMenu();
+      openEmbeddedSearch();
+    });
+    pill.appendChild(searchLink);
 
     group.links.forEach((item) => {
       const link = document.createElement("a");
@@ -121,5 +177,16 @@ if (!toggleIcon || !menuContainer) return;
     if (!centerToggle.contains(e.target)) {
       hideMenu();
     }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "k") return;
+    event.preventDefault();
+    hideMenu();
+    openEmbeddedSearch();
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && searchOverlay) closeEmbeddedSearch();
   });
 })();
