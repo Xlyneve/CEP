@@ -4,6 +4,7 @@ import { uploadReferenceImage } from "./image-storage.js";
 const attachedEditors = new WeakSet();
 const savedRanges = new WeakMap();
 let columnResize = null;
+let pendingCardReveal = null;
 const clinicalNotesPage = /(?:^|\/)Clinicalnotes\.html$/i.test(location.pathname);
 const textMeasureCanvas = document.createElement('canvas');
 
@@ -114,9 +115,67 @@ function installStyles() {
       .cep-pn-editor-toolbar { gap:4px; }
       .cep-pn-editor-toolbar button { padding:6px 8px; }
     }
+    .cep-saved-card-reveal {
+      position:relative;
+      animation:cepSavedCardReveal 2.4s ease-out both !important;
+    }
+    @keyframes cepSavedCardReveal {
+      0%,18% { box-shadow:0 0 0 4px rgba(255,255,255,.94),0 0 0 9px rgba(219,158,131,.48),0 16px 38px rgba(92,72,82,.24) !important; }
+      100% { box-shadow:inherit; }
+    }
   `;
   document.head.appendChild(style);
 }
+
+function revealSavedCard(card) {
+  if (!card?.isConnected) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+  card.classList.remove('cep-saved-card-reveal');
+  void card.offsetWidth;
+  card.classList.add('cep-saved-card-reveal');
+  setTimeout(() => card.classList.remove('cep-saved-card-reveal'), 2500);
+}
+
+function findPendingCard() {
+  if (!pendingCardReveal || Date.now() > pendingCardReveal.expires) {
+    pendingCardReveal = null;
+    return;
+  }
+  let card = null;
+  if (pendingCardReveal.id) {
+    card = [...document.querySelectorAll('.note-card[data-id], .note-tile[data-id]')]
+      .find(candidate => candidate.dataset.id === pendingCardReveal.id);
+  } else if (pendingCardReveal.adding) {
+    card = [...document.querySelectorAll('.note-card.new-note-highlight, .note-tile.new-note-highlight')]
+      .find(candidate => !pendingCardReveal.existingIds?.has(candidate.dataset.id || ''));
+  }
+  if (!card || card === pendingCardReveal.lastCard) return;
+  pendingCardReveal.lastCard = card;
+  requestAnimationFrame(() => requestAnimationFrame(() => revealSavedCard(card)));
+  if (pendingCardReveal.adding && card.dataset.id) pendingCardReveal.id = card.dataset.id;
+}
+
+document.addEventListener('click', event => {
+  const button = event.target.closest?.('button');
+  if (!button) return;
+  const label = `${button.textContent || ''} ${button.title || ''}`.trim().toLocaleLowerCase();
+  const card = button.closest('.note-card, .note-tile');
+  const isSave = card && (/\bsave\b/.test(label) || button.matches('.btn-save,.btn-save-edit,.save-mini'));
+  if (isSave) {
+    pendingCardReveal = { id: card.dataset.id || '', adding: false, lastCard: null, expires: Date.now() + 12000 };
+    setTimeout(findPendingCard, 80);
+    setTimeout(findPendingCard, 450);
+    setTimeout(findPendingCard, 1200);
+    return;
+  }
+  const isAdd = !card && (/\badd\b/.test(label) || button.matches('.add-btn,#addNoteBtn'));
+  if (isAdd) {
+    const existingIds = new Set([...document.querySelectorAll('.note-card.new-note-highlight, .note-tile.new-note-highlight')]
+      .map(candidate => candidate.dataset.id || ''));
+    pendingCardReveal = { id: '', adding: true, existingIds, lastCard: null, expires: Date.now() + 15000 };
+    setTimeout(findPendingCard, 250);
+  }
+}, true);
 
 function openImageZoom(source, alt = 'Note image') {
   document.querySelector('.cep-edit-image-zoom')?.remove();
@@ -525,6 +584,7 @@ new MutationObserver(records => records.forEach(record => {
     return;
   }
   record.addedNodes.forEach(node => { if (node.nodeType === 1) scan(node); });
+  findPendingCard();
 })).observe(document.documentElement, {
   childList: true,
   subtree: true,
