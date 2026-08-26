@@ -575,7 +575,7 @@ button:hover {
   </div>
 
   <div class="form-group">
-    <button onclick="addURL()">Save URL</button>
+    <button type="button" id="saveUrlBtn">Save URL</button>
     <button onclick="toggleAddForm()">Cancel</button>
   </div>
 </div>
@@ -603,6 +603,7 @@ button:hover {
   const db = firebase.firestore();
 
   async function addURL() {
+    const saveButton = document.getElementById('saveUrlBtn');
     const url = document.getElementById('urlInput').value.trim();
     const title = document.getElementById('urlTitle').value.trim() || 'Untitled';
     const note = document.getElementById('urlNote').value.trim();
@@ -612,19 +613,40 @@ button:hover {
       return;
     }
 
-    await db.collection('urlForms').add({
-      url, title, note,
-      createdAt: new Date()
-    });
+    saveButton.disabled = true;
+    saveButton.textContent = 'Saving…';
+    try {
+      const authorized = await window.CEP_AUTH_READY;
+      if (!authorized) throw new Error('Your signed-in session is not ready.');
+      const formAuth = firebase.auth();
+      if (typeof formAuth.authStateReady === 'function') await formAuth.authStateReady();
+      if (!formAuth.currentUser) {
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => { unsubscribe(); reject(new Error('Sign-in timed out.')); }, 5000);
+          const unsubscribe = formAuth.onAuthStateChanged(user => {
+            if (!user) return;
+            clearTimeout(timer); unsubscribe(); resolve();
+          }, reject);
+        });
+      }
+      await db.collection('urlForms').add({
+        url, title, note,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
-    document.getElementById('urlInput').value = '';
-document.getElementById('urlTitle').value = '';
-document.getElementById('urlNote').value = '';
-
-document.getElementById('addForm').style.display = 'none';
-document.getElementById('addToggleBtn').textContent = '+';
-
-fetchURLs(document.getElementById('searchInput').value);
+      document.getElementById('urlInput').value = '';
+      document.getElementById('urlTitle').value = '';
+      document.getElementById('urlNote').value = '';
+      document.getElementById('addForm').style.display = 'none';
+      document.getElementById('addToggleBtn').textContent = '+';
+      await fetchURLs(document.getElementById('searchInput').value);
+    } catch (error) {
+      console.error('URL could not be saved.', error);
+      alert(`URL could not be saved: ${error.message || 'Please try again.'}`);
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = 'Save URL';
+    }
   }
 
   async function fetchURLs(filter = '') {
@@ -822,7 +844,10 @@ document.addEventListener('click', (e) => {
   }
 });
 
-  fetchURLs(); // Initial load
+  document.getElementById('saveUrlBtn').addEventListener('click', addURL);
+  Promise.resolve(window.CEP_AUTH_READY)
+    .then(authorized => authorized && fetchURLs())
+    .catch(error => console.error('URLs could not be loaded.', error));
 </script>
   <script src="header-rays.js?v=18"></script>
 
