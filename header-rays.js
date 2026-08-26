@@ -79,7 +79,7 @@ toggleIcon.title = 'Menu';
     headerSearchButton = document.createElement('button');
     headerSearchButton.type = 'button';
     headerSearchButton.className = 'header-search-trigger';
-    headerSearchButton.innerHTML = '<span aria-hidden="true">⌕</span>';
+    headerSearchButton.innerHTML = '';
     headerSearchButton.setAttribute('aria-label', 'Search all notes and pages');
     headerSearchButton.title = 'Search all notes and pages (Ctrl/⌘ K)';
     centerToggle.appendChild(headerSearchButton);
