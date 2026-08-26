@@ -149,8 +149,14 @@ function findPendingCard() {
     card = [...document.querySelectorAll('.note-card.new-note-highlight, .note-tile.new-note-highlight')]
       .find(candidate => !pendingCardReveal.existingIds?.has(candidate.dataset.id || ''));
   }
-  if (!card || card === pendingCardReveal.lastCard) return;
+  if (!card) return;
+  const cardTop = card.getBoundingClientRect().top;
+  const samePosition = card === pendingCardReveal.lastCard &&
+    Number.isFinite(pendingCardReveal.lastTop) &&
+    Math.abs(cardTop - pendingCardReveal.lastTop) < 18;
+  if (samePosition) return;
   pendingCardReveal.lastCard = card;
+  pendingCardReveal.lastTop = cardTop;
   requestAnimationFrame(() => requestAnimationFrame(() => revealSavedCard(card)));
   if (pendingCardReveal.adding && card.dataset.id) pendingCardReveal.id = card.dataset.id;
 }
@@ -162,18 +168,23 @@ document.addEventListener('click', event => {
   const card = button.closest('.note-card, .note-tile');
   const isSave = card && (/\bsave\b/.test(label) || button.matches('.btn-save,.btn-save-edit,.save-mini'));
   if (isSave) {
-    pendingCardReveal = { id: card.dataset.id || '', adding: false, lastCard: null, expires: Date.now() + 12000 };
+    pendingCardReveal = { id: card.dataset.id || '', adding: false, lastCard: null, lastTop: NaN, expires: Date.now() + 12000 };
     setTimeout(findPendingCard, 80);
     setTimeout(findPendingCard, 450);
     setTimeout(findPendingCard, 1200);
+    setTimeout(findPendingCard, 2500);
+    setTimeout(findPendingCard, 5000);
     return;
   }
   const isAdd = !card && (/\badd\b/.test(label) || button.matches('.add-btn,#addNoteBtn'));
   if (isAdd) {
     const existingIds = new Set([...document.querySelectorAll('.note-card.new-note-highlight, .note-tile.new-note-highlight')]
       .map(candidate => candidate.dataset.id || ''));
-    pendingCardReveal = { id: '', adding: true, existingIds, lastCard: null, expires: Date.now() + 15000 };
+    pendingCardReveal = { id: '', adding: true, existingIds, lastCard: null, lastTop: NaN, expires: Date.now() + 15000 };
     setTimeout(findPendingCard, 250);
+    setTimeout(findPendingCard, 900);
+    setTimeout(findPendingCard, 2200);
+    setTimeout(findPendingCard, 5000);
   }
 }, true);
 
