@@ -236,21 +236,6 @@ toggleIcon.title = 'Menu';
     event.preventDefault(); toggleIcon.click();
   });
 
-  let swipeStartX = null;
-  menuContainer.addEventListener('touchstart', event => {
-    swipeStartX = event.touches[0]?.clientX ?? null;
-  }, { passive: true });
-  menuContainer.addEventListener('touchend', event => {
-    if (swipeStartX == null) return;
-    const distance = (event.changedTouches[0]?.clientX ?? swipeStartX) - swipeStartX;
-    swipeStartX = null;
-    if (Math.abs(distance) < 42) return;
-    const count = visibleGroups().length;
-    currentGroup = (currentGroup + (distance < 0 ? 1 : -1) + count) % count;
-    try { localStorage.setItem(groupStorageKey, String(currentGroup)); } catch {}
-    buildMenu();
-  }, { passive: true });
-
   document.addEventListener("click", (e) => {
     if (!centerToggle.contains(e.target)) {
       hideMenu();
