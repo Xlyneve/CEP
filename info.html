@@ -1574,6 +1574,29 @@ function initImageZoomModal(){
   let startX = 0, startY = 0;
   let activeHighlight = null;
   let highlightStrokes = [];
+  let currentHighlightSource = "";
+  const highlightStorageKey = "cep-info-image-highlights-v1";
+  let savedImageHighlights = {};
+  try {
+    savedImageHighlights = JSON.parse(localStorage.getItem(highlightStorageKey) || "{}") || {};
+  } catch {}
+
+  function loadSavedHighlights(src){
+    currentHighlightSource = String(src || "");
+    const saved = savedImageHighlights[currentHighlightSource];
+    highlightStrokes = Array.isArray(saved) ? saved.map(stroke => ({ ...stroke })) : [];
+  }
+
+  function saveHighlights(){
+    if (!currentHighlightSource) return;
+    if (highlightStrokes.length) savedImageHighlights[currentHighlightSource] = highlightStrokes;
+    else delete savedImageHighlights[currentHighlightSource];
+    try {
+      localStorage.setItem(highlightStorageKey, JSON.stringify(savedImageHighlights));
+    } catch (error) {
+      console.warn("Image highlights could not be saved.", error);
+    }
+  }
 
   let isPinching = false;
   let pinchStartDist = 0;
@@ -1698,7 +1721,7 @@ function initImageZoomModal(){
     tx = 0; ty = 0;
     applyTransform();
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    highlightStrokes = [];
+    redrawHighlights();
     if (highlightColor) highlightColor.value = "#ffe278";
     if (highlightDirection) highlightDirection.value = "free";
     setRulerMode(false);
@@ -1709,6 +1732,7 @@ function initImageZoomModal(){
   // Expose an opener used by note images
   window.__imgZoom = window.__imgZoom || {};
   window.__imgZoom.open = (src) => {
+    loadSavedHighlights(src);
     modal.style.display = "flex";
     modalImg.src = src;
 	 modal.style.display = "flex";
@@ -1749,6 +1773,7 @@ function initImageZoomModal(){
       e.stopPropagation();
       highlightStrokes = [];
       activeHighlight = null;
+      saveHighlights();
       redrawHighlights();
     });
   }
@@ -1883,7 +1908,10 @@ function initImageZoomModal(){
         activeHighlight.endX - activeHighlight.startX,
         activeHighlight.endY - activeHighlight.startY
       );
-      if (distance > 3) highlightStrokes.push(activeHighlight);
+      if (distance > 3) {
+        highlightStrokes.push(activeHighlight);
+        saveHighlights();
+      }
       activeHighlight = null;
       redrawHighlights();
     }
