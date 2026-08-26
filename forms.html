@@ -601,6 +601,25 @@ button:hover {
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   firebase.auth();
   const db = firebase.firestore();
+  let modularFirestorePromise;
+
+  function getModularFirestore() {
+    if (!modularFirestorePromise) {
+      modularFirestorePromise = Promise.all([
+        import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+        window.CEP_AUTH_READY
+      ]).then(([firestoreSdk, authorized]) => {
+        if (!authorized || !window.CEP_FIREBASE_APP) {
+          throw new Error('Your signed-in session is not ready.');
+        }
+        return {
+          firestoreSdk,
+          firestore: firestoreSdk.getFirestore(window.CEP_FIREBASE_APP)
+        };
+      });
+    }
+    return modularFirestorePromise;
+  }
 
   async function addURL() {
     const saveButton = document.getElementById('saveUrlBtn');
@@ -616,22 +635,10 @@ button:hover {
     saveButton.disabled = true;
     saveButton.textContent = 'Saving…';
     try {
-      const authorized = await window.CEP_AUTH_READY;
-      if (!authorized) throw new Error('Your signed-in session is not ready.');
-      const formAuth = firebase.auth();
-      if (typeof formAuth.authStateReady === 'function') await formAuth.authStateReady();
-      if (!formAuth.currentUser) {
-        await new Promise((resolve, reject) => {
-          const timer = setTimeout(() => { unsubscribe(); reject(new Error('Sign-in timed out.')); }, 5000);
-          const unsubscribe = formAuth.onAuthStateChanged(user => {
-            if (!user) return;
-            clearTimeout(timer); unsubscribe(); resolve();
-          }, reject);
-        });
-      }
-      await db.collection('urlForms').add({
+      const { firestoreSdk, firestore } = await getModularFirestore();
+      await firestoreSdk.addDoc(firestoreSdk.collection(firestore, 'urlForms'), {
         url, title, note,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        createdAt: firestoreSdk.serverTimestamp()
       });
 
       document.getElementById('urlInput').value = '';
@@ -639,7 +646,9 @@ button:hover {
       document.getElementById('urlNote').value = '';
       document.getElementById('addForm').style.display = 'none';
       document.getElementById('addToggleBtn').textContent = '+';
-      await fetchURLs(document.getElementById('searchInput').value);
+      saveButton.textContent = 'Saved';
+      void fetchURLs(document.getElementById('searchInput').value)
+        .catch(error => console.error('Saved URL list could not be refreshed.', error));
     } catch (error) {
       console.error('URL could not be saved.', error);
       alert(`URL could not be saved: ${error.message || 'Please try again.'}`);
@@ -845,6 +854,7 @@ document.addEventListener('click', (e) => {
 });
 
   document.getElementById('saveUrlBtn').addEventListener('click', addURL);
+  void getModularFirestore().catch(error => console.error('Save connection could not be prepared.', error));
   Promise.resolve(window.CEP_AUTH_READY)
     .then(authorized => authorized && fetchURLs())
     .catch(error => console.error('URLs could not be loaded.', error));
