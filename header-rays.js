@@ -16,6 +16,17 @@ const menuContainer = centerToggle.querySelector(".rays");
 
 if (!toggleIcon || !menuContainer) return;
 
+  const warmSearch = () => {
+    Promise.resolve(window.CEP_AUTH_READY).then(authorized => {
+      if (!authorized) return;
+      import("./universal-search-overlay.js?v=3")
+        .then(module => module.preloadUniversalSearch?.())
+        .catch(error => console.warn("Universal Search preload was skipped.", error));
+    });
+  };
+  if ('requestIdleCallback' in window) requestIdleCallback(warmSearch, { timeout: 1400 });
+  else setTimeout(warmSearch, 250);
+
   let searchOverlay = null;
 
   function closeEmbeddedSearch() {
@@ -50,7 +61,7 @@ if (!toggleIcon || !menuContainer) return;
     searchOverlay = overlay;
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     try {
-      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=2");
+      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=3");
       if (searchOverlay !== overlay) return;
       await mountUniversalSearch(host, closeEmbeddedSearch);
     } catch (error) {

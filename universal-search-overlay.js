@@ -27,7 +27,10 @@ const textFromHtml = value => {
 };
 
 let entriesPromise;
+let xgptEntriesPromise;
 async function loadXgptEntries() {
+  if (xgptEntriesPromise) return xgptEntriesPromise;
+  xgptEntriesPromise = (async () => {
   try {
     const config = {
       apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
@@ -50,9 +53,12 @@ async function loadXgptEntries() {
       };
     });
   } catch (error) {
+    xgptEntriesPromise = null;
     console.warn('Search could not load Xgpt Notes.', error);
     return [];
   }
+  })();
+  return xgptEntriesPromise;
 }
 
 async function loadEntries(onProgress) {
@@ -76,10 +82,14 @@ async function loadEntries(onProgress) {
         return [];
       }
     }));
-    onProgress?.('Xgpt Notes');
-    return batches.flat().concat(await loadXgptEntries());
+    return batches.flat();
   })();
   return entriesPromise;
+}
+
+export function preloadUniversalSearch() {
+  void loadEntries();
+  void loadXgptEntries();
 }
 
 function addHighlightedText(parent, text, terms) {
@@ -194,4 +204,9 @@ export async function mountUniversalSearch(host, closeSearch) {
   input.focus();
   entries = await loadEntries(source => { status.textContent = `Loading ${source}…`; });
   renderFilters(); runSearch(); input.focus();
+  void loadXgptEntries().then(xgptEntries => {
+    const existingIds = new Set(entries.filter(entry => entry.file === 'chatgptx.html').map(entry => entry.id));
+    entries = entries.concat(xgptEntries.filter(entry => !existingIds.has(entry.id)));
+    renderFilters(); runSearch();
+  });
 }
