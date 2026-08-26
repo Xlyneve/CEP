@@ -79,7 +79,7 @@ toggleIcon.title = 'Menu';
     headerSearchButton = document.createElement('button');
     headerSearchButton.type = 'button';
     headerSearchButton.className = 'header-search-trigger';
-    headerSearchButton.innerHTML = '';
+    headerSearchButton.innerHTML = '<span aria-hidden="true">⌕</span>';
     headerSearchButton.setAttribute('aria-label', 'Search all notes and pages');
     headerSearchButton.title = 'Search all notes and pages (Ctrl/⌘ K)';
     centerToggle.appendChild(headerSearchButton);
@@ -89,6 +89,38 @@ toggleIcon.title = 'Menu';
     hideMenu();
     openEmbeddedSearch();
   });
+
+  const pageSearchInput = document.querySelector('#searchInput');
+  if (pageSearchInput && !pageSearchInput.closest('.cep-global-search-panel')) {
+    pageSearchInput.classList.add('cep-page-search-input');
+    if (pageSearchInput.parentElement?.childElementCount === 1) {
+      pageSearchInput.parentElement.classList.add('cep-page-search-shell');
+    }
+    const pageSearchToggle = document.createElement('button');
+    pageSearchToggle.type = 'button';
+    pageSearchToggle.className = 'cep-page-search-toggle';
+    pageSearchToggle.innerHTML = '<span aria-hidden="true">⌕</span>';
+    pageSearchToggle.setAttribute('aria-label', 'Search this page');
+    pageSearchToggle.title = 'Search this page';
+    document.body.appendChild(pageSearchToggle);
+    const collapsePageSearch = () => {
+      if (pageSearchInput.value) return;
+      pageSearchInput.classList.remove('is-expanded');
+      pageSearchToggle.classList.remove('is-hidden');
+    };
+    pageSearchToggle.addEventListener('click', () => {
+      pageSearchInput.classList.add('is-expanded');
+      pageSearchToggle.classList.add('is-hidden');
+      pageSearchInput.focus();
+    });
+    pageSearchInput.addEventListener('blur', () => setTimeout(collapsePageSearch, 120));
+    pageSearchInput.addEventListener('keydown', event => {
+      if (event.key !== 'Escape') return;
+      pageSearchInput.value = '';
+      pageSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      pageSearchInput.blur();
+    });
+  }
 
   const menuGroups = [
     {
