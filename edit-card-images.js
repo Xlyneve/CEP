@@ -5,6 +5,7 @@ const attachedEditors = new WeakSet();
 const savedRanges = new WeakMap();
 let columnResize = null;
 let pendingCardReveal = null;
+const cardRevealTimers = new WeakMap();
 const clinicalNotesPage = /(?:^|\/)Clinicalnotes\.html$/i.test(location.pathname);
 const textMeasureCanvas = document.createElement('canvas');
 
@@ -117,11 +118,21 @@ function installStyles() {
     }
     .cep-saved-card-reveal {
       position:relative;
-      animation:cepSavedCardReveal 2.4s ease-out both !important;
+      outline:4px solid transparent;
+      outline-offset:4px;
+      animation:cepSavedCardReveal 3s ease-out both !important;
     }
     @keyframes cepSavedCardReveal {
-      0%,18% { box-shadow:0 0 0 4px rgba(255,255,255,.94),0 0 0 9px rgba(219,158,131,.48),0 16px 38px rgba(92,72,82,.24) !important; }
-      100% { box-shadow:inherit; }
+      0%,30% {
+        outline-color:rgba(255,255,255,.96);
+        box-shadow:0 0 0 9px rgba(219,158,131,.48),0 16px 38px rgba(92,72,82,.24) !important;
+        filter:drop-shadow(0 0 13px rgba(255,245,235,.96)) !important;
+      }
+      100% {
+        outline-color:transparent;
+        box-shadow:inherit;
+        filter:none;
+      }
     }
   `;
   document.head.appendChild(style);
@@ -130,10 +141,16 @@ function installStyles() {
 function revealSavedCard(card) {
   if (!card?.isConnected) return;
   card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+  const previousTimer = cardRevealTimers.get(card);
+  if (previousTimer) clearTimeout(previousTimer);
   card.classList.remove('cep-saved-card-reveal');
   void card.offsetWidth;
   card.classList.add('cep-saved-card-reveal');
-  setTimeout(() => card.classList.remove('cep-saved-card-reveal'), 2500);
+  const timer = setTimeout(() => {
+    card.classList.remove('cep-saved-card-reveal');
+    cardRevealTimers.delete(card);
+  }, 3100);
+  cardRevealTimers.set(card, timer);
 }
 
 function findPendingCard() {
