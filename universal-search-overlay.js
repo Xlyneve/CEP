@@ -1,5 +1,6 @@
-import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const sources = [
   ['nurseNotes','PN.html','PN',['title','note','url']],
@@ -26,6 +27,34 @@ const textFromHtml = value => {
 };
 
 let entriesPromise;
+async function loadXgptEntries() {
+  try {
+    const config = {
+      apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
+      authDomain: 'notes-chat-c5ff3.firebaseapp.com', projectId: 'notes-chat-c5ff3',
+      storageBucket: 'notes-chat-c5ff3.firebasestorage.app', messagingSenderId: '597780727252',
+      appId: '1:597780727252:web:8407eb4096dbe301d74241'
+    };
+    const app = getApps().find(candidate => candidate.name === 'notes-chat') || initializeApp(config, 'notes-chat');
+    const auth = getAuth(app);
+    if (typeof auth.authStateReady === 'function') await auth.authStateReady();
+    if (!auth.currentUser) await signInAnonymously(auth);
+    const snapshot = await getDocs(collection(getFirestore(app), 'notes'));
+    return snapshot.docs.map(note => {
+      const rawHtml = note.data().content || note.data().note || note.data().text || '';
+      const text = textFromHtml(rawHtml).replace(/\[\[([^\]]+)\]\]/g, '$1');
+      const firstLine = text.split(/[.!?]\s|\n/)[0].trim();
+      return {
+        id: note.id, file: 'chatgptx.html', sourceTitle: 'Xgpt Notes',
+        title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text
+      };
+    });
+  } catch (error) {
+    console.warn('Search could not load Xgpt Notes.', error);
+    return [];
+  }
+}
+
 async function loadEntries(onProgress) {
   if (entriesPromise) return entriesPromise;
   entriesPromise = (async () => {
@@ -47,7 +76,8 @@ async function loadEntries(onProgress) {
         return [];
       }
     }));
-    return batches.flat();
+    onProgress?.('Xgpt Notes');
+    return batches.flat().concat(await loadXgptEntries());
   })();
   return entriesPromise;
 }
@@ -61,6 +91,21 @@ function addHighlightedText(parent, text, terms) {
       const mark = document.createElement('mark'); mark.textContent = part; parent.appendChild(mark);
     } else parent.appendChild(document.createTextNode(part));
   });
+}
+
+function editDistance(a, b) {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > 2) return 3;
+  const row = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i++) {
+    let diagonal = row[0]; row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const above = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diagonal = above;
+    }
+  }
+  return row[b.length];
 }
 
 export async function mountUniversalSearch(host, closeSearch) {
@@ -99,12 +144,34 @@ export async function mountUniversalSearch(host, closeSearch) {
     if (!query) { status.textContent = 'Type a word to search.'; return; }
     const matches = entries.map(entry => {
       const title = entry.title.toLocaleLowerCase(), text = entry.text.toLocaleLowerCase();
-      if (!terms.every(term => title.includes(term) || text.includes(term))) return null;
-      return { entry, score: (title.includes(query) ? 250 : 0) + (text.includes(query) ? 100 : 0) + terms.reduce((n,t) => n + (title.includes(t) ? 60 : 10), 0) };
+      const words = new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || []);
+      let score = (title.includes(query) ? 250 : 0) + (text.includes(query) ? 100 : 0);
+      let fuzzy = false;
+      for (const term of terms) {
+        if (title.includes(term)) score += 60;
+        else if (text.includes(term)) score += 10;
+        else {
+          const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
+          const similar = tolerance && [...words].some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+          if (!similar) return null;
+          fuzzy = true; score += 4;
+        }
+      }
+      return { entry, score, fuzzy };
     }).filter(Boolean).filter(match => activeSource === 'All' || match.entry.sourceTitle === activeSource)
       .sort((a,b) => b.score - a.score).slice(0, 40);
-    status.textContent = matches.length ? `${matches.length}${matches.length === 40 ? '+' : ''} result${matches.length === 1 ? '' : 's'}` : 'No matching notes found.';
+    const onlySimilar = matches.length && matches.every(match => match.fuzzy);
+    status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 40 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : 'No matching notes found.';
+    const groups = new Map();
     matches.forEach(({ entry }) => {
+      let group = groups.get(entry.sourceTitle);
+      if (!group) {
+        group = document.createElement('section'); group.className = 'cep-global-search-group';
+        const heading = document.createElement('a'); heading.className = 'cep-global-search-group-title';
+        heading.textContent = entry.sourceTitle; heading.href = entry.file;
+        const cards = document.createElement('div'); cards.className = 'cep-global-search-group-cards';
+        group.append(heading, cards); results.appendChild(group); groups.set(entry.sourceTitle, group);
+      }
       const link = document.createElement('a'); link.className = 'cep-global-search-result';
       if (entry.directUrl) { link.href = entry.directUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; }
       else {
@@ -116,7 +183,7 @@ export async function mountUniversalSearch(host, closeSearch) {
       const snippet = document.createElement('span');
       const lower = entry.text.toLocaleLowerCase(); const first = terms.map(term => lower.indexOf(term)).filter(index => index >= 0).sort((a,b)=>a-b)[0] || 0;
       addHighlightedText(snippet, `${first > 70 ? '…' : ''}${entry.text.slice(Math.max(0,first-70), Math.max(0,first-70)+240)}`, terms);
-      link.append(title, snippet); results.appendChild(link);
+      link.append(title, snippet); group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
   input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 140); });

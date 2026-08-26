@@ -50,7 +50,7 @@ if (!toggleIcon || !menuContainer) return;
     searchOverlay = overlay;
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     try {
-      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=1");
+      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=2");
       if (searchOverlay !== overlay) return;
       await mountUniversalSearch(host, closeEmbeddedSearch);
     } catch (error) {
