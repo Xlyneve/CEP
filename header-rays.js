@@ -15,11 +15,15 @@ const toggleIcon = centerToggle.querySelector(".toggle-icon");
 const menuContainer = centerToggle.querySelector(".rays");
 
 if (!toggleIcon || !menuContainer) return;
+toggleIcon.setAttribute('role', 'button');
+toggleIcon.setAttribute('tabindex', '0');
+toggleIcon.setAttribute('aria-label', 'Open navigation menu');
+toggleIcon.title = 'Menu';
 
   const warmSearch = () => {
     Promise.resolve(window.CEP_AUTH_READY).then(authorized => {
       if (!authorized) return;
-      import("./universal-search-overlay.js?v=3")
+      import("./universal-search-overlay.js?v=4")
         .then(module => module.preloadUniversalSearch?.())
         .catch(error => console.warn("Universal Search preload was skipped.", error));
     });
@@ -61,7 +65,7 @@ if (!toggleIcon || !menuContainer) return;
     searchOverlay = overlay;
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     try {
-      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=3");
+      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=4");
       if (searchOverlay !== overlay) return;
       await mountUniversalSearch(host, closeEmbeddedSearch);
     } catch (error) {
@@ -69,6 +73,22 @@ if (!toggleIcon || !menuContainer) return;
       host.textContent = "Search could not be opened. Please try again.";
     }
   }
+
+  let headerSearchButton = centerToggle.querySelector('.header-search-trigger');
+  if (!headerSearchButton) {
+    headerSearchButton = document.createElement('button');
+    headerSearchButton.type = 'button';
+    headerSearchButton.className = 'header-search-trigger';
+    headerSearchButton.innerHTML = '';
+    headerSearchButton.setAttribute('aria-label', 'Search all notes and pages');
+    headerSearchButton.title = 'Search all notes and pages (Ctrl/⌘ K)';
+    centerToggle.appendChild(headerSearchButton);
+  }
+  headerSearchButton.addEventListener('click', event => {
+    event.stopPropagation();
+    hideMenu();
+    openEmbeddedSearch();
+  });
 
   const menuGroups = [
     {
@@ -106,40 +126,71 @@ if (!toggleIcon || !menuContainer) return;
     }
   ];
 
-  let currentGroup = 0;
+  const groupStorageKey = 'cep-header-last-group-v1';
+  const usageStorageKey = 'cep-header-link-use-v1';
+  let linkUsage = {};
+  try { linkUsage = JSON.parse(localStorage.getItem(usageStorageKey) || '{}') || {}; } catch {}
+  let currentGroup = Math.max(0, Math.min(menuGroups.length, Number(localStorage.getItem(groupStorageKey)) || 0));
+
+  const linkKey = item => item.link.toLocaleLowerCase();
+  const allMenuLinks = () => menuGroups.flatMap(group => group.links);
+  function frequentLinks() {
+    const ranked = allMenuLinks().filter(item => linkUsage[linkKey(item)])
+      .sort((a, b) => (linkUsage[linkKey(b)]?.count || 0) - (linkUsage[linkKey(a)]?.count || 0));
+    return (ranked.length ? ranked : [
+      { text: 'Nurse Notes', link: 'PN.html' }, { text: 'Info', link: 'info.html' },
+      { text: 'Xgpt', link: 'chatgptx.html' }, { text: 'Clinical Notes', link: 'Clinicalnotes.html' }
+    ]).slice(0, 7);
+  }
+  function visibleGroups() {
+    return [{ name: '★ Frequent', links: frequentLinks() }, ...menuGroups];
+  }
+  function recordLinkUse(item) {
+    const key = linkKey(item); const previous = linkUsage[key] || {};
+    linkUsage[key] = { count: (previous.count || 0) + 1, last: Date.now() };
+    try { localStorage.setItem(usageStorageKey, JSON.stringify(linkUsage)); } catch {}
+  }
 
   function buildMenu() {
     menuContainer.innerHTML = "";
 
-    const group = menuGroups[currentGroup];
+    const groups = visibleGroups();
+    const group = groups[currentGroup] || groups[0];
 
     const pill = document.createElement("div");
     pill.className = "glass-pill-menu";
 
-    const groupLabel = document.createElement("div");
-    groupLabel.className = "glass-pill-label";
-    groupLabel.textContent = group.name;
-    pill.appendChild(groupLabel);
-
-    const searchLink = document.createElement("a");
-    searchLink.className = "glass-pill-link glass-pill-search";
-    searchLink.href = "home.html#cepSearch=open";
-    searchLink.textContent = "🔎 Search";
-    searchLink.setAttribute("aria-label", "Search all Xlyneve notes and pages");
-    searchLink.title = "Search all notes and pages (Ctrl/⌘ K)";
-    searchLink.addEventListener("click", (event) => {
-      event.preventDefault();
-      hideMenu();
-      openEmbeddedSearch();
+    const tabs = document.createElement('div');
+    tabs.className = 'glass-pill-tabs';
+    tabs.setAttribute('role', 'tablist');
+    groups.forEach((candidate, index) => {
+      const tab = document.createElement('button');
+      tab.type = 'button'; tab.className = 'glass-pill-tab'; tab.textContent = candidate.name;
+      tab.setAttribute('role', 'tab'); tab.setAttribute('aria-selected', String(index === currentGroup));
+      if (index === currentGroup) tab.classList.add('is-active');
+      tab.addEventListener('click', event => {
+        event.stopPropagation(); currentGroup = index;
+        try { localStorage.setItem(groupStorageKey, String(index)); } catch {}
+        buildMenu();
+      });
+      tabs.appendChild(tab);
     });
-    pill.appendChild(searchLink);
+    const links = document.createElement('div');
+    links.className = 'glass-pill-links';
+    pill.append(tabs, links);
 
     group.links.forEach((item) => {
       const link = document.createElement("a");
       link.className = "glass-pill-link";
       link.href = item.link;
-      link.textContent = item.text;
-      pill.appendChild(link);
+      const external = /^https?:\/\//i.test(item.link) && new URL(item.link, location.href).origin !== location.origin;
+      link.textContent = `${item.text}${external ? ' ↗' : ''}`;
+      const destination = new URL(item.link, location.href);
+      if (destination.pathname.toLocaleLowerCase() === location.pathname.toLocaleLowerCase()) {
+        link.classList.add('active'); link.setAttribute('aria-current', 'page');
+      }
+      link.addEventListener('click', () => recordLinkUse(item));
+      links.appendChild(link);
     });
 
     menuContainer.appendChild(pill);
@@ -148,7 +199,6 @@ if (!toggleIcon || !menuContainer) return;
       pill.classList.add("show");
     });
 
-    currentGroup = (currentGroup + 1) % menuGroups.length;
   }
 
   function showMenu() {
@@ -177,12 +227,29 @@ if (!toggleIcon || !menuContainer) return;
 
     const isOpen = centerToggle.classList.contains("active");
 
-    if (isOpen) {
-      buildMenu();
-    } else {
-      showMenu();
-    }
+    if (isOpen) hideMenu();
+    else showMenu();
   });
+
+  toggleIcon.addEventListener('keydown', event => {
+    if (!['Enter', ' '].includes(event.key)) return;
+    event.preventDefault(); toggleIcon.click();
+  });
+
+  let swipeStartX = null;
+  menuContainer.addEventListener('touchstart', event => {
+    swipeStartX = event.touches[0]?.clientX ?? null;
+  }, { passive: true });
+  menuContainer.addEventListener('touchend', event => {
+    if (swipeStartX == null) return;
+    const distance = (event.changedTouches[0]?.clientX ?? swipeStartX) - swipeStartX;
+    swipeStartX = null;
+    if (Math.abs(distance) < 42) return;
+    const count = visibleGroups().length;
+    currentGroup = (currentGroup + (distance < 0 ? 1 : -1) + count) % count;
+    try { localStorage.setItem(groupStorageKey, String(currentGroup)); } catch {}
+    buildMenu();
+  }, { passive: true });
 
   document.addEventListener("click", (e) => {
     if (!centerToggle.contains(e.target)) {
@@ -199,5 +266,12 @@ if (!toggleIcon || !menuContainer) return;
 
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && searchOverlay) closeEmbeddedSearch();
+    else if (event.key === 'Escape' && centerToggle.classList.contains('active')) hideMenu();
+    if (!centerToggle.classList.contains('active') || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+    const links = [...menuContainer.querySelectorAll('.glass-pill-link')];
+    if (!links.length) return;
+    event.preventDefault();
+    const activeIndex = links.indexOf(document.activeElement);
+    links[(activeIndex + (event.key === 'ArrowRight' ? 1 : -1) + links.length) % links.length].focus();
   });
 })();

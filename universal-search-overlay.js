@@ -22,8 +22,15 @@ const sources = [
 
 const textFromHtml = value => {
   const parsed = new DOMParser().parseFromString(String(value || ''), 'text/html');
-  parsed.body.querySelectorAll('br,p,div,li,tr,h1,h2,h3,h4').forEach(node => node.append(' '));
-  return (parsed.body.textContent || '').replace(/\s+/g, ' ').trim();
+  parsed.body.querySelectorAll('br').forEach(node => node.replaceWith('\n'));
+  parsed.body.querySelectorAll('p,div,li,tr,h1,h2,h3,h4,blockquote,pre').forEach(node => node.append('\n'));
+  return (parsed.body.textContent || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 };
 
 let entriesPromise;
@@ -73,7 +80,7 @@ async function loadEntries(onProgress) {
         return snapshot.docs.map(note => {
           const data = note.data();
           const title = textFromHtml(data.title) || sourceTitle;
-          const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join(' · ');
+          const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
           const directUrl = directField && data[directField];
           return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl };
         });
@@ -177,6 +184,17 @@ export async function mountUniversalSearch(host, closeSearch) {
       let group = groups.get(entry.sourceTitle);
       if (!group) {
         group = document.createElement('section'); group.className = 'cep-global-search-group';
+        const sourceColours = {
+          'pn.html': ['rgba(192,137,139,.58)', '#755255', 'rgba(239,221,222,.72)'],
+          'info.html': ['rgba(126,161,158,.58)', '#4e706d', 'rgba(219,232,231,.76)'],
+          'explain.html': ['rgba(170,173,111,.58)', '#686b40', 'rgba(235,235,211,.78)'],
+          'recalls.html': ['rgba(199,132,101,.55)', '#82533f', 'rgba(240,220,211,.76)']
+        };
+        const [divider, headingColour, cardColour] = sourceColours[entry.file.toLocaleLowerCase()] ||
+          ['rgba(112,126,125,.42)', '#655b60', 'rgba(255,255,255,.62)'];
+        group.style.setProperty('--search-divider', divider);
+        group.style.setProperty('--search-title', headingColour);
+        group.style.setProperty('--search-card', cardColour);
         const heading = document.createElement('a'); heading.className = 'cep-global-search-group-title';
         heading.textContent = entry.sourceTitle; heading.href = entry.file;
         const cards = document.createElement('div'); cards.className = 'cep-global-search-group-cards';
@@ -190,10 +208,9 @@ export async function mountUniversalSearch(host, closeSearch) {
         link.href = destination.href;
       }
       const title = document.createElement('strong'); title.textContent = entry.title;
-      const snippet = document.createElement('span');
-      const lower = entry.text.toLocaleLowerCase(); const first = terms.map(term => lower.indexOf(term)).filter(index => index >= 0).sort((a,b)=>a-b)[0] || 0;
-      addHighlightedText(snippet, `${first > 70 ? '…' : ''}${entry.text.slice(Math.max(0,first-70), Math.max(0,first-70)+240)}`, terms);
-      link.append(title, snippet); group.querySelector('.cep-global-search-group-cards').appendChild(link);
+      const cardBody = document.createElement('span');
+      addHighlightedText(cardBody, entry.text, terms);
+      link.append(title, cardBody); group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
   input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 140); });
