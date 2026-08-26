@@ -1,4 +1,5 @@
 const MAX_SOURCE_BYTES = 15 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = Math.floor(1.9 * 1024 * 1024);
 let storageModulePromise;
 
 function getStorageModule() {
@@ -39,13 +40,32 @@ async function compressImage(file, { maxDimension, quality }) {
   context.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();
 
-  return canvasToBlob(canvas, "image/webp", quality);
+  let outputQuality = quality;
+  let compressed = await canvasToBlob(canvas, "image/webp", outputQuality);
+
+  // Preserve detail first, then reduce quality/size only when needed to stay
+  // below the Storage rule's 2 MB limit.
+  while (compressed.size > MAX_UPLOAD_BYTES && outputQuality > 0.7) {
+    outputQuality = Math.max(0.7, outputQuality - 0.06);
+    compressed = await canvasToBlob(canvas, "image/webp", outputQuality);
+  }
+  while (compressed.size > MAX_UPLOAD_BYTES && Math.max(canvas.width, canvas.height) > 1600) {
+    const resized = document.createElement("canvas");
+    resized.width = Math.max(1, Math.round(canvas.width * 0.86));
+    resized.height = Math.max(1, Math.round(canvas.height * 0.86));
+    resized.getContext("2d", { alpha: false }).drawImage(canvas, 0, 0, resized.width, resized.height);
+    canvas.width = resized.width;
+    canvas.height = resized.height;
+    canvas.getContext("2d", { alpha: false }).drawImage(resized, 0, 0);
+    compressed = await canvasToBlob(canvas, "image/webp", Math.max(0.76, outputQuality));
+  }
+  return compressed;
 }
 
 export async function uploadReferenceImage(app, file, folder, options = {}) {
   const {
-    maxDimension = 1200,
-    quality = 0.75
+    maxDimension = 2400,
+    quality = 0.9
   } = options;
   const { getStorage, ref, uploadBytes, getDownloadURL } = await getStorageModule();
   const compressed = await compressImage(file, { maxDimension, quality });
