@@ -496,16 +496,28 @@ textarea:focus {
   height: 42px;
   padding: 0;
   border-radius: 50%;
-  color: #111;
-  font-size: 21px;
+  color: transparent;
+  font-size: 0;
   cursor: pointer;
-  background: rgba(255,226,120,0.88);
-  border-color: rgba(70,55,0,0.35);
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.62);
+  box-shadow: 0 0 12px rgba(255,255,255,.72), 0 8px 24px rgba(0,0,0,.2);
+}
+
+#highlightMenuBtn::before {
+  content: "";
+  display: block;
+  width: 13px;
+  height: 13px;
+  margin: auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #fff 0 25%, #f2ece8 55%, #dccfd0 100%);
+  box-shadow: 0 0 7px #fff, 0 0 15px rgba(255,245,235,.94), 0 0 25px rgba(229,203,204,.72);
 }
 
 #highlightMenuBtn[aria-expanded="true"] {
-  background: rgba(255,226,120,0.42);
-  box-shadow: 0 0 0 2px rgba(255,226,120,0.52), 0 8px 24px rgba(0,0,0,0.24);
+  background: rgba(255,255,255,0.3);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.38), 0 0 22px rgba(255,245,235,.82), 0 8px 24px rgba(0,0,0,.2);
 }
 
 #highlightControls {
@@ -1580,7 +1592,7 @@ function initImageZoomModal(){
     rulerMode = !!on;
     if (rulerMode) panMode = false;
     canvas.style.pointerEvents = rulerMode ? "auto" : "none";
-    if (rulerToggleBtn) rulerToggleBtn.textContent = `🖍️ Highlight: ${rulerMode ? "ON" : "OFF"}`;
+    if (rulerToggleBtn) rulerToggleBtn.textContent = `Highlight: ${rulerMode ? "ON" : "OFF"}`;
     if (panModeBtn) panModeBtn.textContent = `✋ Pan: ${panMode ? "ON" : "OFF"}`;
     stage.style.cursor = rulerMode ? "crosshair" : (panMode ? "grab" : "default");
   }
@@ -1589,7 +1601,7 @@ function initImageZoomModal(){
     panMode = !!on;
     if (panMode) rulerMode = false;
     canvas.style.pointerEvents = rulerMode ? "auto" : "none";
-    if (rulerToggleBtn) rulerToggleBtn.textContent = `🖍️ Highlight: ${rulerMode ? "ON" : "OFF"}`;
+    if (rulerToggleBtn) rulerToggleBtn.textContent = `Highlight: ${rulerMode ? "ON" : "OFF"}`;
     if (panModeBtn) panModeBtn.textContent = `✋ Pan: ${panMode ? "ON" : "OFF"}`;
     stage.style.cursor = panMode ? "grab" : (rulerMode ? "crosshair" : "default");
   }
@@ -1670,6 +1682,7 @@ function initImageZoomModal(){
     ty = stageY - before.y * scale;
     clampPan();
     applyTransform();
+    if (!rulerMode) setPanMode(scale > 1);
   }
 
   function resizeCanvas(){
@@ -1795,7 +1808,7 @@ function initImageZoomModal(){
   stage.addEventListener("pointerdown", (e) => {
     // If user taps the toggle/close buttons, don't treat it as zoom gesture
     if (e.target.closest("#highlightToolbar") || e.target === closeModalBtn) return;
-    if (rulerMode || panMode) return;
+    if (rulerMode) return;
 
     const now = Date.now();
     const dt = now - lastTap;
@@ -1985,9 +1998,9 @@ if (document.readyState === "loading") {
         aria-label="Open image highlighter tools"
         aria-expanded="false"
         title="Highlighter tools"
-      >🖍️</button>
+      ></button>
       <div id="highlightControls">
-        <button id="rulerToggleBtn" type="button" title="Turn highlighting on or off">🖍️ Highlight: OFF</button>
+        <button id="rulerToggleBtn" type="button" title="Turn highlighting on or off">Highlight: OFF</button>
         <select id="highlightDirection" aria-label="Highlight direction">
           <option value="horizontal">↔ Horizontal</option>
           <option value="vertical">↕ Vertical</option>
