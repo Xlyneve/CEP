@@ -106,6 +106,10 @@ export async function loadXgptConceptMedia(concept) {
   }
 }
 
+export function getCachedXgptConceptMedia(concept) {
+  return xgptConceptMedia[normalizeConcept(concept)] || null;
+}
+
 async function loadEntries(onProgress) {
   if (entriesPromise) return entriesPromise;
   entriesPromise = (async () => {
