@@ -796,11 +796,11 @@ const firebaseConfig = {
   });
 }
 
-
-
+  let unsubscribeNotes = null;
   function renderNotes() {
     const list = document.getElementById('nurseNotesList');
-    onSnapshot(notesCol, snapshot => {
+    if (unsubscribeNotes) unsubscribeNotes();
+    unsubscribeNotes = onSnapshot(notesCol, snapshot => {
       // Clear current notes
       list.innerHTML = '';
       snapshot.forEach(docSnap => {
