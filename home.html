@@ -3447,7 +3447,7 @@ html body > header {
           const concept = String(inner || '').trim();
           const link = document.createElement('a');
           link.href = '#'; link.className = 'xgpt-concept-link'; link.textContent = concept;
-          const media = chatgptConceptMediaCache[normalizeXgptConcept(concept)];
+          const media = window.getCachedXgptConceptMedia?.(concept) || chatgptConceptMediaCache[normalizeXgptConcept(concept)];
           if (media?.imageUrl) {
             link.classList.add('has-image');
             link.dataset.image = media.imageUrl;
@@ -4805,7 +4805,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js';
+  import { getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=5';
   import {
     getFirestore,
     collection,
@@ -4917,13 +4917,10 @@ const firebaseConfig = {
   });
   window.cepUniversalLazyLoaders ||= [];
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
+  window.getCachedXgptConceptMedia = getSharedXgptConceptMedia;
   window.fetchXgptConceptMedia = async concept => {
-    const key = normalizeXgptConcept(concept);
-    if (!key || !chatgptSearchAuth?.currentUser) return null;
-    if (chatgptConceptMediaCache[key]) return chatgptConceptMediaCache[key];
-    const media = await loadSharedXgptConceptMedia(concept);
-    if (media) chatgptConceptMediaCache[key] = media;
-    return media;
+    if (!concept || !chatgptSearchAuth?.currentUser) return null;
+    return loadSharedXgptConceptMedia(concept);
   };
   let previousXgptUserId = null;
   let stopXgptAuthWatch;

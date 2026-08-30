@@ -32,7 +32,7 @@ toggleIcon.title = 'Menu';
     if (homeHasNativeSearch || embeddedHomeSearch || cardPreview) return;
     Promise.resolve(window.CEP_AUTH_READY).then(authorized => {
       if (!authorized) return;
-      import("./universal-search-overlay.js?v=4")
+      import("./universal-search-overlay.js?v=5")
         .then(module => module.preloadUniversalSearch?.())
         .catch(error => console.warn("Universal Search preload was skipped.", error));
     });
@@ -74,7 +74,7 @@ toggleIcon.title = 'Menu';
     searchOverlay = overlay;
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     try {
-      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=4");
+      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=5");
       if (searchOverlay !== overlay) return;
       await mountUniversalSearch(host, closeEmbeddedSearch);
     } catch (error) {
