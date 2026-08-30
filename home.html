@@ -3467,8 +3467,13 @@ html body > header {
       const zoomImage = document.createElement('img'); zoom.append(zoomImage); document.body.append(tip, zoom);
       let hideTimer;
       const hide = () => { hideTimer = setTimeout(() => { tip.style.display = 'none'; tip.replaceChildren(); }, 180); };
-      document.addEventListener('mouseover', event => {
-        const link = event.target.closest?.('.xgpt-concept-link[data-image]'); if (!link) return;
+      document.addEventListener('mouseover', async event => {
+        const link = event.target.closest?.('.xgpt-concept-link'); if (!link) return;
+        if (!link.dataset.image && window.fetchXgptConceptMedia) {
+          const media = await window.fetchXgptConceptMedia(link.textContent);
+          if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption || ''; }
+        }
+        if (!link.dataset.image || !link.isConnected) return;
         clearTimeout(hideTimer); const image = document.createElement('img'); image.src = link.dataset.image; image.alt = link.textContent;
         if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'xgpt-media-tip-caption'; caption.textContent = link.dataset.caption; tip.replaceChildren(image, caption); }
         else tip.replaceChildren(image);
@@ -4802,6 +4807,8 @@ function closeTable() {
   import {
     getFirestore,
     collection,
+    doc,
+    getDoc,
     getDocs,
     onSnapshot,
     query,
@@ -4810,6 +4817,7 @@ function closeTable() {
   import {
     getAuth,
     GoogleAuthProvider,
+    onAuthStateChanged,
     signInWithPopup
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
@@ -4873,6 +4881,7 @@ const firebaseConfig = {
   // index on the first real search, cache it, and never create preview iframes.
   let chatgptSearchPromise;
   let chatgptSearchAuth;
+  let chatgptSearchDb;
   const loadChatgptSearchNotes = () => chatgptSearchPromise ||= (async () => {
     const chatConfig = {
       apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
@@ -4887,12 +4896,14 @@ const firebaseConfig = {
     const chatAuth = getAuth(chatApp);
     chatgptSearchAuth = chatAuth;
     if (typeof chatAuth.authStateReady === 'function') await chatAuth.authStateReady();
+    watchXgptAuth();
     if (!chatAuth.currentUser) {
       document.getElementById('homeXgptAuthPrompt')?.removeAttribute('hidden');
       return [];
     }
     document.getElementById('homeXgptAuthPrompt')?.setAttribute('hidden', '');
     const chatDb = getFirestore(chatApp);
+    chatgptSearchDb = chatDb;
     const snapshot = await getDocs(collection(chatDb, 'notes'));
     const mediaSnapshot = await getDocs(collection(chatDb, 'concept_media')).catch(error => {
       console.warn('Xgpt concept images are unavailable in Home search.', error);
@@ -4940,6 +4951,31 @@ const firebaseConfig = {
   });
   window.cepUniversalLazyLoaders ||= [];
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
+  window.fetchXgptConceptMedia = async concept => {
+    const key = normalizeXgptConcept(concept);
+    if (!key || !chatgptSearchDb || !chatgptSearchAuth?.currentUser) return null;
+    if (chatgptConceptMediaCache[key]) return chatgptConceptMediaCache[key];
+    try {
+      const snapshot = await getDoc(doc(chatgptSearchDb, 'concept_media', key));
+      if (!snapshot.exists()) return null;
+      const data = snapshot.data() || {};
+      return chatgptConceptMediaCache[key] = { imageUrl: data.imageUrl || '', caption: data.caption || '' };
+    } catch (error) { console.warn(`Xgpt concept image could not load for ${concept}.`, error); return null; }
+  };
+  let previousXgptUserId = null;
+  let stopXgptAuthWatch;
+  const watchXgptAuth = () => {
+    if (!chatgptSearchAuth || stopXgptAuthWatch) return;
+    previousXgptUserId = chatgptSearchAuth.currentUser?.uid || null;
+    stopXgptAuthWatch = onAuthStateChanged(chatgptSearchAuth, user => {
+    const nextUserId = user?.uid || null;
+    if (nextUserId && nextUserId !== previousXgptUserId) {
+      chatgptSearchPromise = null;
+      void loadChatgptSearchNotes();
+    }
+    previousXgptUserId = nextUserId;
+    });
+  };
   document.getElementById('homeXgptAuthButton')?.addEventListener('click', async event => {
     const button = event.currentTarget;
     button.disabled = true; button.textContent = 'Signing in…';
