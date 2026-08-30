@@ -3483,7 +3483,12 @@ html body > header {
       document.addEventListener('mouseout', event => { if (event.target.closest?.('.xgpt-concept-link') && !tip.contains(event.relatedTarget)) hide(); });
       tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
       tip.addEventListener('click', event => { const image = event.target.closest('img'); if (!image) return; event.preventDefault(); event.stopPropagation(); zoomImage.src = image.src; zoom.classList.add('is-open'); });
-      zoom.addEventListener('click', () => { zoom.classList.remove('is-open'); zoomImage.src = ''; });
+      zoom.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        zoom.classList.remove('is-open');
+        zoomImage.src = '';
+      });
       document.addEventListener('click', event => { if (event.target.closest?.('.xgpt-concept-link')) { event.preventDefault(); event.stopPropagation(); } }, true);
       document.addEventListener('keydown', event => { if (event.key === 'Escape') zoom.click(); });
     }
@@ -4805,7 +4810,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=5';
+  import { getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=6';
   import {
     getFirestore,
     collection,
