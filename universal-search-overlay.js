@@ -203,7 +203,12 @@ function installXgptMediaUi() {
   document.addEventListener('mouseout', event => { if (event.target.closest?.('.cep-xgpt-concept') && !tip.contains(event.relatedTarget)) hide(); });
   tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
   tip.addEventListener('click', event => { const image = event.target.closest('img'); if (!image) return; event.preventDefault(); event.stopPropagation(); zoomImage.src = image.src; zoom.classList.add('is-open'); });
-  zoom.addEventListener('click', () => { zoom.classList.remove('is-open'); zoomImage.src = ''; });
+  zoom.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    zoom.classList.remove('is-open');
+    zoomImage.src = '';
+  });
   document.addEventListener('click', event => { if (event.target.closest?.('.cep-xgpt-concept')) { event.preventDefault(); event.stopPropagation(); } }, true);
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && zoom.classList.contains('is-open')) zoom.click(); });
 }
