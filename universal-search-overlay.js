@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { collection, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const sources = [
@@ -36,6 +36,7 @@ const textFromHtml = value => {
 let entriesPromise;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
+let xgptDb;
 const normalizeConcept = value => String(value || '').toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
 function getXgptAuth() {
   const config = {
@@ -59,6 +60,7 @@ async function loadXgptEntries() {
       throw error;
     }
     const db = getFirestore(app);
+    xgptDb = db;
     const snapshot = await getDocs(collection(db, 'notes'));
     const mediaSnapshot = await getDocs(collection(db, 'concept_media')).catch(error => {
       console.warn('Xgpt concept images are unavailable in header search.', error);
@@ -166,8 +168,20 @@ function installXgptMediaUi() {
   const zoom = document.createElement('div'); zoom.className = 'cep-xgpt-image-zoom';
   const zoomImage = document.createElement('img'); zoom.append(zoomImage); document.body.append(tip, zoom);
   let hideTimer; const hide = () => { hideTimer = setTimeout(() => { tip.hidden = true; tip.replaceChildren(); }, 180); };
-  document.addEventListener('mouseover', event => {
-    const link = event.target.closest?.('.cep-xgpt-concept[data-image]'); if (!link) return;
+  document.addEventListener('mouseover', async event => {
+    const link = event.target.closest?.('.cep-xgpt-concept'); if (!link) return;
+    if (!link.dataset.image && xgptDb) {
+      const key = normalizeConcept(link.textContent);
+      try {
+        const snapshot = await getDoc(doc(xgptDb, 'concept_media', key));
+        if (snapshot.exists()) {
+          const data = snapshot.data() || {};
+          const media = xgptConceptMedia[key] = { imageUrl: data.imageUrl || '', caption: data.caption || '' };
+          if (media.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption; }
+        }
+      } catch (error) { console.warn(`Xgpt concept image could not load for ${link.textContent}.`, error); }
+    }
+    if (!link.dataset.image || !link.isConnected) return;
     clearTimeout(hideTimer); const image = document.createElement('img'); image.src = link.dataset.image; image.alt = link.textContent;
     if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; tip.replaceChildren(image, caption); } else tip.replaceChildren(image);
     const rect = link.getBoundingClientRect(); tip.style.left = `${Math.max(12, Math.min(innerWidth - 292, rect.left))}px`; tip.style.top = `${Math.max(12, Math.min(innerHeight - 250, rect.bottom + 8))}px`; tip.hidden = false;
