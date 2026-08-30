@@ -3413,6 +3413,31 @@ html body > header {
       });
       parent.append(...richContent.childNodes);
     }
+    function removeBracketedSearchContent(html) {
+      const richContent = document.createElement('div');
+      CEPSecurity.setHTML(richContent, html);
+      const textNodes = [];
+      let combinedText = '';
+      const walker = document.createTreeWalker(richContent, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        textNodes.push({ node, start: combinedText.length, end: combinedText.length + node.nodeValue.length });
+        combinedText += node.nodeValue;
+      }
+      const matches = [...combinedText.matchAll(/\[\[[\s\S]*?\]\]/g)].reverse();
+      matches.forEach(match => {
+        const startOffset = match.index;
+        const endOffset = startOffset + match[0].length;
+        const start = textNodes.find(item => startOffset >= item.start && startOffset < item.end);
+        const end = [...textNodes].reverse().find(item => endOffset > item.start && endOffset <= item.end);
+        if (!start || !end) return;
+        const range = document.createRange();
+        range.setStart(start.node, startOffset - start.start);
+        range.setEnd(end.node, endOffset - end.start);
+        range.deleteContents();
+      });
+      return richContent.innerHTML;
+    }
     function makeSnippet(page, terms) {
       const lower = page.text.toLocaleLowerCase();
       const positions = terms.map(term => lower.indexOf(term)).filter(pos => pos >= 0);
@@ -4821,13 +4846,13 @@ const firebaseConfig = {
       const data = note.data();
       const rawHtml = data.content || data.note || data.text || '';
       const text = htmlToMultilineText(rawHtml)
-        .replace(/\[\[([^\]]+)\]\]/g, '$1');
+        .replace(/\[\[[\s\S]*?\]\]/g, '');
       const parsedNote = new DOMParser().parseFromString(String(rawHtml), 'text/html');
       const searchTables = [...parsedNote.querySelectorAll('table')].map(table =>
         [...table.rows].map(row =>
           [...row.cells].map(cell =>
             (cell.textContent || '')
-              .replace(/\[\[([^\]]+)\]\]/g, '$1')
+              .replace(/\[\[[\s\S]*?\]\]/g, '')
               .replace(/\s+/g, ' ')
               .trim()
           )
@@ -4842,7 +4867,7 @@ const firebaseConfig = {
         focusId: note.id,
         sourceTitle: 'Xgpt Notes',
         nativeOnly: true,
-        richHtml: CEPSecurity.sanitizeHTML(rawHtml),
+        richHtml: removeBracketedSearchContent(rawHtml),
         searchTables
       };
     });
