@@ -53,6 +53,28 @@
     ".todo-item:not(.priority)"
   ].join(",");
 
+  const highlightSelector = [
+    ".gradient-highlight",
+    ".highlight-gradient",
+    ".note-gradient-highlight",
+    "mark.highlight-hue",
+    ".note-text mark",
+    ".edit-note mark"
+  ].join(",");
+
+  function removeEmptyHighlights(scope) {
+    const highlights = [];
+    if (scope.nodeType === 1 && scope.matches(highlightSelector)) highlights.push(scope);
+    scope.querySelectorAll?.(highlightSelector).forEach((highlight) => highlights.push(highlight));
+
+    highlights.forEach((highlight) => {
+      const text = highlight.textContent.replace(/[\s\u200B-\u200D\uFEFF]/g, "");
+      const richContent = highlight.querySelector("img, table, svg, video, audio");
+      if (text || richContent || !highlight.isConnected) return;
+      highlight.replaceWith(...highlight.childNodes);
+    });
+  }
+
   function colorCards(scope) {
     const cards = [];
     if (scope.nodeType === 1 && scope.matches(cardSelector)) cards.push(scope);
@@ -80,10 +102,17 @@
       header.style.setProperty("color", pageColor.ink, "important");
     });
     colorCards(document);
+    removeEmptyHighlights(document);
+    document.addEventListener("input", (event) => {
+      if (event.target?.isContentEditable) removeEmptyHighlights(event.target);
+    });
     const observer = new MutationObserver((records) => {
       records.forEach((record) => {
         record.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) colorCards(node);
+          if (node.nodeType === 1) {
+            colorCards(node);
+            removeEmptyHighlights(node);
+          }
         });
       });
     });

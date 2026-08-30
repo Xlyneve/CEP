@@ -6,11 +6,11 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js"></script>
+  <script src="auth-guard.js?v=20260823-8"></script>
   <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="header-rays.css?v=4">
+  <link rel="stylesheet" href="header-rays.css?v=25">
   <title>Vaccines</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -847,7 +847,7 @@ text-shadow: none;
 
   </style>
   <link rel="stylesheet" href="site-background.css">
-  <script src="page-theme.js?v=1"></script>
+  <script src="page-theme.js?v=20260823-1"></script>
   <style>
     .header {
       position: fixed;
@@ -920,7 +920,7 @@ text-shadow: none;
       background: var(--card-glass, rgba(219, 158, 131, 0.74)) !important;
     }
   </style>
-  <link rel="stylesheet" href="affected-pages-theme.css?v=1">
+  <link rel="stylesheet" href="affected-pages-theme.css?v=20260826-3">
 </head>
 
 <body>
@@ -1010,7 +1010,7 @@ const closeCardZoom = document.getElementById("closeCardZoom");
     const name = document.getElementById("name").value.trim();
     const price = document.getElementById("price").value.trim();
     const url = document.getElementById("url").value.trim();
-    const notes = document.getElementById("notes").innerHTML.trim();
+    const notes = cleanHighlightHtml(document.getElementById("notes").innerHTML).trim();
 
     if (inj && name) {
       await addDoc(vaccineRef, {
@@ -1059,7 +1059,22 @@ function stripHtml(html) {
 
 function applyGradientHighlight() {
   const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+  if (!selection || selection.rangeCount === 0) return;
+
+  const anchorElement = selection.anchorNode?.nodeType === Node.ELEMENT_NODE
+    ? selection.anchorNode
+    : selection.anchorNode?.parentElement;
+  const editor = anchorElement?.closest('[contenteditable="true"]');
+  if (!editor) return;
+
+  const existingHighlight = anchorElement?.closest('.note-gradient-highlight');
+  if (existingHighlight && editor.contains(existingHighlight)) {
+    existingHighlight.replaceWith(...existingHighlight.childNodes);
+    editor.normalize();
+    return;
+  }
+
+  if (selection.isCollapsed) return;
 
   const range = selection.getRangeAt(0);
   const span = document.createElement("span");
@@ -1076,8 +1091,26 @@ function applyGradientHighlight() {
   selection.removeAllRanges();
 }
 
+function cleanEmptyHighlights(root) {
+  root.querySelectorAll('.note-gradient-highlight').forEach(highlight => {
+    const meaningfulText = highlight.textContent.replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+    const meaningfulContent = highlight.querySelector('img, table, svg, video, audio');
+    if (!meaningfulText && !meaningfulContent) {
+      highlight.replaceWith(...highlight.childNodes);
+    }
+  });
+  root.normalize();
+}
+
+function cleanHighlightHtml(html) {
+  const template = document.createElement('template');
+  template.innerHTML = String(html || '');
+  cleanEmptyHighlights(template.content);
+  return template.innerHTML;
+}
+
 function convertOldHighlights(html) {
-  return String(html || "")
+  const converted = String(html || "")
     .replaceAll('background-color: rgb(255, 246, 204);', '')
     .replaceAll('background-color: rgb(255, 246, 204)', '')
     .replaceAll('background-color: #fff6cc;', '')
@@ -1087,7 +1120,12 @@ function convertOldHighlights(html) {
     .replaceAll('background-color: #eaf8ff;', '')
     .replaceAll('background-color: #eaf8ff', '')
     .replaceAll('<span style="">', '<span class="note-gradient-highlight">');
+  return cleanHighlightHtml(converted);
 }
+
+document.getElementById('notes').addEventListener('input', event => {
+  cleanEmptyHighlights(event.currentTarget);
+});
 
 function openCardZoom(v) {
   cardZoomContent.innerHTML = `
@@ -1193,6 +1231,8 @@ document.addEventListener("keydown", (e) => {
         applyGradientHighlight();
       });
 
+      editNotes.addEventListener('input', () => cleanEmptyHighlights(editNotes));
+
     } else {
       card.innerHTML = `
         <div class="vaccine-card-title">💉 ${v.name || 'Untitled vaccine'}</div>
@@ -1264,7 +1304,7 @@ card.addEventListener("click", (e) => {
     const name = document.getElementById("edit-name").value.trim();
     const price = document.getElementById("edit-price").value.trim();
     const url = document.getElementById("edit-url").value.trim();
-    const notes = document.getElementById("edit-notes").innerHTML.trim();
+    const notes = cleanHighlightHtml(document.getElementById("edit-notes").innerHTML).trim();
 
     if (inj && name) {
       const docRef = doc(db, "vaccines", editId);
@@ -1364,7 +1404,7 @@ document.addEventListener("pointerdown", (e) => {
   }
 });
 </script>
-<script src="header-rays.js?v=2"></script>
+  <script src="header-rays.js?v=18"></script>
 <script src="emoji-picker.js?v=1"></script>
 </body>
 </html>

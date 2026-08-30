@@ -6,11 +6,11 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js"></script>
+  <script src="auth-guard.js?v=20260823-8"></script>
   <script src="security.js?v=20260805-4"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="stylesheet" href="header-rays.css?v=4">
+  <link rel="stylesheet" href="header-rays.css?v=25">
   <title>Recalls</title>
   <style>
 @font-face {
@@ -1044,9 +1044,9 @@ button:focus,
 
 </style>
 	<link rel="stylesheet" href="site-background.css?v=20260722-4">
-  <script src="page-theme.js?v=1"></script>
-	<link rel="stylesheet" href="practice-notes-shared.css?v=20260722-6">
-  <link rel="stylesheet" href="affected-pages-theme.css?v=1">
+  <script src="page-theme.js?v=20260823-1"></script>
+  <link rel="stylesheet" href="practice-notes-shared.css?v=20260826-11">
+  <link rel="stylesheet" href="affected-pages-theme.css?v=20260826-3">
 </head>
 <body>
 
@@ -1081,7 +1081,7 @@ button:focus,
 <!-- Hidden glassy form -->
 <div id="nurseFormWrapper" class="form-section">
   <input id="nurseTitle" placeholder="Title">
-  <textarea id="nurseNote" placeholder="Note..."></textarea>
+  <div id="nurseNote" class="edit-note" contenteditable="true" data-placeholder="Note..."></div>
   <input id="nurseURL" placeholder="Optional URL (if any)">
   <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
   <label for="nurseImage" class="custom-file-btn">Choose File</label>
@@ -1126,7 +1126,7 @@ const firebaseConfig = {
 
   async function addNote() {
   const title = nurseTitle.value.trim();
-const note = textToSafeHtml(nurseNote.value.trim());
+const note = sanitizeNoteHtml(nurseNote.innerHTML.trim());
 const url = nurseURL.value.trim();
   const fileInput = document.getElementById('nurseImage');
   const file = fileInput.files[0];
@@ -1163,7 +1163,7 @@ function readFileAsDataURL(file) {
 
 function resetAddForm() {
   nurseTitle.value = '';
-  nurseNote.value = '';
+  nurseNote.innerHTML = '';
   nurseURL.value = '';
 
   const fileInput = document.getElementById('nurseImage');
@@ -1642,7 +1642,7 @@ document.addEventListener('pointerdown', (e) => {
 });
 
 </script>
-	<script src="header-rays.js?v=2"></script>
+  <script src="header-rays.js?v=18"></script>
 <script src="emoji-picker.js?v=1"></script>
 
 </body>

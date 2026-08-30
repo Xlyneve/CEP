@@ -293,15 +293,26 @@
       document.documentElement.classList.remove("cep-card-preview-pending");
       const reportPreview = () => {
         if (!card.isConnected) return;
+        const cardRect = card.getBoundingClientRect();
+        const rootHeight = previewRoot.scrollHeight;
+        const cardHeight = Math.max(cardRect.height, card.scrollHeight);
         window.parent.postMessage({
           type: "cep-card-preview-size",
           key: previewKey,
-          height: Math.ceil(Math.max(previewRoot.scrollHeight, card.getBoundingClientRect().height) + 6)
+          height: Math.ceil(Math.max(rootHeight, cardHeight) + 12)
         }, location.origin);
       };
       requestAnimationFrame(() => requestAnimationFrame(reportPreview));
       [250, 800, 1800].forEach(delay => setTimeout(reportPreview, delay));
-      if (window.ResizeObserver) new ResizeObserver(reportPreview).observe(previewRoot);
+      document.fonts?.ready.then(reportPreview);
+      card.querySelectorAll("img").forEach(image => {
+        if (!image.complete) image.addEventListener("load", reportPreview, { once: true });
+      });
+      if (window.ResizeObserver) {
+        const previewObserver = new ResizeObserver(reportPreview);
+        previewObserver.observe(previewRoot);
+        previewObserver.observe(card);
+      }
       return;
     }
 

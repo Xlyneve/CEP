@@ -49,12 +49,12 @@ html.theme-info .toggle-icon,
 html.theme-explain .toggle-icon,
 html.theme-practice .toggle-icon,
 html.theme-recalls .toggle-icon {
-  background: rgba(219, 158, 131, 0.78) !important;
+  background: var(--refresh-rose) !important;
   border-color: rgba(255, 255, 255, 0.76) !important;
   color: var(--refresh-cocoa) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.72),
-    0 5px 14px rgba(57, 25, 15, 0.1) !important;
+    0 0 12px rgba(229, 203, 204, 0.82) !important;
 }
 
 html.theme-vaccines .toggle-icon::before,
@@ -751,4 +751,57 @@ html.theme-homecal .day:not(.empty):not(.today):not(.match) {
 
 html.theme-homecal .day:not(.empty):not(.today):not(.match):hover {
   background: rgba(226, 229, 229, 0.68) !important;
+}
+
+/* Give editable inline highlights a soft, raised highlighter finish. */
+.gradient-highlight,
+.highlight-gradient,
+.note-gradient-highlight,
+mark.highlight-hue,
+.note-text mark,
+.edit-note mark {
+  border-radius: 7px !important;
+  padding: 0 3px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.68) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Empty rich-text highlight wrappers must not render as coloured slivers. */
+.gradient-highlight:empty,
+.highlight-gradient:empty,
+.note-gradient-highlight:empty,
+mark.highlight-hue:empty,
+.gradient-highlight:has(> br:only-child),
+.highlight-gradient:has(> br:only-child),
+.note-gradient-highlight:has(> br:only-child),
+mark.highlight-hue:has(> br:only-child) {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Raised inline decoration must never create card/editor scrollbars. */
+:where(
+  .note-text,
+  .note-content,
+  .edit-note,
+  .edit-box,
+  .edit-notes-box,
+  .vaccine-notes-input,
+  #noteText,
+  #notes,
+  [contenteditable="true"]
+):has(:is(.gradient-highlight, .highlight-gradient, .note-gradient-highlight, mark.highlight-hue, mark)):not(:has(table)) {
+  overflow-x: hidden !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+:where(.note-card, .vaccine-card):has(
+  :is(.gradient-highlight, .highlight-gradient, .note-gradient-highlight, mark.highlight-hue, mark)
+) {
+  overflow-x: clip !important;
 }
