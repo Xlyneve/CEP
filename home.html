@@ -4759,6 +4759,20 @@ const firebaseConfig = {
       .forEach(element => element.append(' '));
     return (parsed.body.textContent || '').replace(/\s+/g, ' ').trim();
   };
+  const htmlToMultilineText = html => {
+    const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    parsed.body.querySelectorAll('br').forEach(element => element.replaceWith('\n'));
+    parsed.body
+      .querySelectorAll('p,div,li,tr,h1,h2,h3,h4,h5,h6,blockquote,pre')
+      .forEach(element => element.append('\n'));
+    return (parsed.body.textContent || '')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n[ \t]+/g, '\n')
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  };
 
   // ChatGPT Notes live in a separate Firebase project. Load their text-only
   // index on the first real search, cache it, and never create preview iframes.
@@ -4781,7 +4795,7 @@ const firebaseConfig = {
     const entries = snapshot.docs.map(note => {
       const data = note.data();
       const rawHtml = data.content || data.note || data.text || '';
-      const text = htmlToText(rawHtml)
+      const text = htmlToMultilineText(rawHtml)
         .replace(/\[\[([^\]]+)\]\]/g, '$1');
       const parsedNote = new DOMParser().parseFromString(String(rawHtml), 'text/html');
       const searchTables = [...parsedNote.querySelectorAll('table')].map(table =>
