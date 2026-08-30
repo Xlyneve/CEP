@@ -21,6 +21,15 @@ toggleIcon.setAttribute('aria-label', 'Open navigation menu');
 toggleIcon.title = 'Menu';
 
   const warmSearch = () => {
+    const searchParams = new URLSearchParams(location.search);
+    const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
+    const homeHasNativeSearch = /(?:^|\/)home\.html$/i.test(location.pathname);
+    const embeddedHomeSearch = searchParams.get('cepSearchEmbed') === '1';
+    const cardPreview = hashParams.get('cepPreview') === 'card';
+    // Home owns its search index, while embedded/card-preview documents cannot
+    // expose the header search. Avoid downloading every search collection a
+    // second time in those contexts.
+    if (homeHasNativeSearch || embeddedHomeSearch || cardPreview) return;
     Promise.resolve(window.CEP_AUTH_READY).then(authorized => {
       if (!authorized) return;
       import("./universal-search-overlay.js?v=4")
