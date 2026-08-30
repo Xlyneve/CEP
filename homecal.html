@@ -1308,7 +1308,7 @@ select option {
     type="text" 
     id="noteFilterInput" 
     placeholder="search" 
-    oninput="filterNotes()" 
+    oninput="scheduleFilterNotes()"
     class="glass-input"
 />
 
@@ -1419,7 +1419,8 @@ select option {
 <script type="module">
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, onSnapshot, deleteDoc
+  getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, onSnapshot, deleteDoc,
+  query, where, documentId
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase config
@@ -1541,6 +1542,7 @@ async function loadCalendar(scrollToday = true) {
   const firstDay = new Date(year, month, 1).getDay() || 7;
 
   const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
+  const legacyChecklistsPromise = loadLegacyChecklistsForMonth(year, month + 1);
   let notes = {};
   const snap = await getDoc(docRef);
   if (snap.exists()) notes = snap.data();
@@ -1583,7 +1585,9 @@ if (note.trim()) {
       }
     });
 
-    void migrateLegacyChecklist(editor, year, month + 1, i, day);
+    void legacyChecklistsPromise.then(legacyChecklists =>
+      migrateLegacyChecklist(editor, year, month + 1, i, day, legacyChecklists.get(getChecklistDateKey(year, month + 1, i)))
+    );
 
     calendarEl.appendChild(day);
   }
@@ -1609,6 +1613,22 @@ async function saveCalendar(year, month, day, note) {
 
 function getChecklistDateKey(year, month, day) {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+async function loadLegacyChecklistsForMonth(year, month) {
+  const prefix = `${year}-${String(month).padStart(2, '0')}`;
+  try {
+    const checklistQuery = query(
+      collection(db, 'dayChecklists'),
+      where(documentId(), '>=', `${prefix}-01`),
+      where(documentId(), '<=', `${prefix}-31`)
+    );
+    const snapshot = await getDocs(checklistQuery);
+    return new Map(snapshot.docs.map(snapshotDoc => [snapshotDoc.id, snapshotDoc]));
+  } catch (error) {
+    console.error('Unable to load legacy day checklists:', error);
+    return new Map();
+  }
 }
 
 function getDayNoteText(editor) {
@@ -1742,7 +1762,27 @@ function renderDayNoteText(editor, text, caretOffset = null) {
 function updateDayNoteState(editor, year, month, day, dayElement) {
   const note = getDayNoteText(editor);
   dayElement.classList.toggle('has-note', !!note.trim());
-  void saveCalendar(year, month, day, note);
+  scheduleCalendarSave(year, month, day, note);
+}
+
+const pendingCalendarSaves = new Map();
+function calendarSaveKey(year, month, day) {
+  return `${year}-${month}-${day}`;
+}
+function scheduleCalendarSave(year, month, day, note) {
+  const key = calendarSaveKey(year, month, day);
+  const existing = pendingCalendarSaves.get(key);
+  if (existing) window.clearTimeout(existing.timer);
+  const pending = { year, month, day, note, timer: 0 };
+  pending.timer = window.setTimeout(() => void flushCalendarSave(key), 400);
+  pendingCalendarSaves.set(key, pending);
+}
+async function flushCalendarSave(key) {
+  const pending = pendingCalendarSaves.get(key);
+  if (!pending) return;
+  window.clearTimeout(pending.timer);
+  pendingCalendarSaves.delete(key);
+  await saveCalendar(pending.year, pending.month, pending.day, pending.note);
 }
 
 function createDayNoteEditor(note, year, month, day, dayElement) {
@@ -1781,6 +1821,7 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
   editor.addEventListener('blur', () => {
     const text = getDayNoteText(editor);
     renderDayNoteText(editor, text);
+    void flushCalendarSave(calendarSaveKey(year, month, day));
   });
 
   editor.addEventListener('click', event => {
@@ -1815,11 +1856,10 @@ function insertTickAtCaret(editor, year, month, day, dayElement) {
   updateDayNoteState(editor, year, month, day, dayElement);
 }
 
-async function migrateLegacyChecklist(editor, year, month, day, dayElement) {
+async function migrateLegacyChecklist(editor, year, month, day, dayElement, snap) {
   try {
     const ref = doc(db, 'dayChecklists', getChecklistDateKey(year, month, day));
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return;
+    if (!snap?.exists()) return;
 
     const data = snap.data();
     const items = Array.isArray(data.items) ? data.items : [];
@@ -2362,11 +2402,22 @@ async function filterNotes() {
   scrollCalendarToTop();
 }
 
+let filterNotesTimer = 0;
+function scheduleFilterNotes() {
+  window.clearTimeout(filterNotesTimer);
+  if (!document.getElementById('noteFilterInput').value.trim()) {
+    void filterNotes();
+    return;
+  }
+  filterNotesTimer = window.setTimeout(() => void filterNotes(), 400);
+}
+
 // Expose functions
 window.changeMonth = changeMonth;
 window.goToToday = goToToday;
 window.addTodo = addTodo;
 window.filterNotes = filterNotes;
+window.scheduleFilterNotes = scheduleFilterNotes;
 
 // Initial load
 populateSelectors();

@@ -647,7 +647,7 @@ button:hover {
       document.getElementById('addForm').style.display = 'none';
       document.getElementById('addToggleBtn').textContent = '+';
       saveButton.textContent = 'Saved';
-      void fetchURLs(document.getElementById('searchInput').value)
+      void fetchURLs(document.getElementById('searchInput').value, true)
         .catch(error => console.error('Saved URL list could not be refreshed.', error));
     } catch (error) {
       console.error('URL could not be saved.', error);
@@ -658,12 +658,30 @@ button:hover {
     }
   }
 
-  async function fetchURLs(filter = '') {
-  const snapshot = await db.collection('urlForms').orderBy('createdAt', 'desc').get();
+  const URL_CACHE_TTL_MS = 30000;
+  let cachedUrlDocs = null;
+  let urlCacheExpiresAt = 0;
+  let urlLoadPromise = null;
+
+  async function loadUrlDocs(forceRefresh = false) {
+    if (!forceRefresh && cachedUrlDocs && Date.now() < urlCacheExpiresAt) return cachedUrlDocs;
+    if (!forceRefresh && urlLoadPromise) return urlLoadPromise;
+    urlLoadPromise = db.collection('urlForms').orderBy('createdAt', 'desc').get()
+      .then(snapshot => {
+        cachedUrlDocs = snapshot.docs;
+        urlCacheExpiresAt = Date.now() + URL_CACHE_TTL_MS;
+        return cachedUrlDocs;
+      })
+      .finally(() => { urlLoadPromise = null; });
+    return urlLoadPromise;
+  }
+
+  async function fetchURLs(filter = '', forceRefresh = false) {
+  const urlDocs = await loadUrlDocs(forceRefresh);
   const container = document.getElementById('fileList');
   container.innerHTML = '';
 
-  snapshot.forEach(doc => {
+  urlDocs.forEach(doc => {
     const data = doc.data();
 
     const search = filter.toLowerCase().trim();
@@ -808,13 +826,13 @@ async function saveInlineEdit(id) {
     note: newNote
   });
 
-  fetchURLs(document.getElementById('searchInput').value);
+  fetchURLs(document.getElementById('searchInput').value, true);
 }
 
   async function deleteURL(id) {
     if (confirm('Delete this URL entry?')) {
       await db.collection('urlForms').doc(id).delete();
-      fetchURLs(document.getElementById('searchInput').value);
+      fetchURLs(document.getElementById('searchInput').value, true);
     }
   }
 
@@ -859,7 +877,7 @@ document.addEventListener('click', (e) => {
     .then(authorized => authorized && fetchURLs())
     .catch(error => console.error('URLs could not be loaded.', error));
 </script>
-  <script src="header-rays.js?v=18"></script>
+  <script src="header-rays.js?v=19"></script>
 
 </body>
 </html>
