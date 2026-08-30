@@ -52,11 +52,12 @@ async function loadXgptEntries() {
     if (typeof auth.authStateReady === 'function') await auth.authStateReady();
     if (!auth.currentUser) await signInAnonymously(auth);
     const db = getFirestore(app);
-    const [snapshot, mediaSnapshot] = await Promise.all([
-      getDocs(collection(db, 'notes')),
-      getDocs(collection(db, 'concept_media'))
-    ]);
-    xgptConceptMedia = Object.fromEntries(mediaSnapshot.docs.map(item => {
+    const snapshot = await getDocs(collection(db, 'notes'));
+    const mediaSnapshot = await getDocs(collection(db, 'concept_media')).catch(error => {
+      console.warn('Xgpt concept images are unavailable in header search.', error);
+      return null;
+    });
+    xgptConceptMedia = Object.fromEntries((mediaSnapshot?.docs || []).map(item => {
       const media = item.data() || {};
       return [normalizeConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
     }));

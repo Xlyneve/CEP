@@ -4881,11 +4881,12 @@ const firebaseConfig = {
     if (typeof chatAuth.authStateReady === 'function') await chatAuth.authStateReady();
     if (!chatAuth.currentUser) await signInAnonymously(chatAuth);
     const chatDb = getFirestore(chatApp);
-    const [snapshot, mediaSnapshot] = await Promise.all([
-      getDocs(collection(chatDb, 'notes')),
-      getDocs(collection(chatDb, 'concept_media'))
-    ]);
-    chatgptConceptMediaCache = Object.fromEntries(mediaSnapshot.docs.map(item => {
+    const snapshot = await getDocs(collection(chatDb, 'notes'));
+    const mediaSnapshot = await getDocs(collection(chatDb, 'concept_media')).catch(error => {
+      console.warn('Xgpt concept images are unavailable in Home search.', error);
+      return null;
+    });
+    chatgptConceptMediaCache = Object.fromEntries((mediaSnapshot?.docs || []).map(item => {
       const media = item.data() || {};
       return [normalizeXgptConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
     }));
