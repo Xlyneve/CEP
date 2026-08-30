@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithRedirect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const sources = [
   ['nurseNotes','PN.html','PN',['title','note','url']],
@@ -243,9 +243,10 @@ export async function mountUniversalSearch(host, closeSearch) {
     const button = xgptPrompt.querySelector('button'); button.disabled = true; button.textContent = 'Signing in…';
     try {
       const { auth } = getXgptAuth();
-      await signInWithPopup(auth, new GoogleAuthProvider());
-      xgptEntriesPromise = null;
-      await requestXgptEntries();
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
+      sessionStorage.setItem('cep-xgpt-return-search', '1');
+      await signInWithRedirect(auth, provider);
     } catch (error) {
       if (error?.code !== 'auth/popup-closed-by-user') console.warn('Xgpt sign-in failed.', error);
     } finally { button.disabled = false; button.textContent = 'Sign in to Xgpt'; }

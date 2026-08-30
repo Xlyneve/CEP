@@ -4672,10 +4672,11 @@ lockToggle.onclick = () => {
 
 unlockBtn.onclick = async () => {
   const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
 
   try {
-    await auth.signInWithPopup(provider);
-    lockSection.style.display = 'none';
+    lockInfo.textContent = "Redirecting to Google sign in…";
+    await auth.signInWithRedirect(provider);
   } catch (err) {
     console.error(err);
     lockInfo.textContent = "Sign in failed";

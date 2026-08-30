@@ -4818,7 +4818,7 @@ function closeTable() {
     getAuth,
     GoogleAuthProvider,
     onAuthStateChanged,
-    signInWithPopup
+    signInWithRedirect
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
   // Avoid an unauthenticated Firestore request and retry on page load.
@@ -4984,9 +4984,10 @@ const firebaseConfig = {
         chatgptSearchPromise = null;
         await loadChatgptSearchNotes();
       }
-      await signInWithPopup(chatgptSearchAuth, new GoogleAuthProvider());
-      chatgptSearchPromise = null;
-      await loadChatgptSearchNotes();
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
+      sessionStorage.setItem('cep-xgpt-return-search', '1');
+      await signInWithRedirect(chatgptSearchAuth, provider);
     } catch (error) {
       if (error?.code !== 'auth/popup-closed-by-user') console.warn('Xgpt sign-in failed.', error);
     } finally { button.disabled = false; button.textContent = 'Sign in to Xgpt'; }
