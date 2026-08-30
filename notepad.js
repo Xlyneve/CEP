@@ -23,11 +23,12 @@
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length) {
-          return parsed.map((item) => ({
+          const restored = parsed.map((item) => ({
             id: item.id || createId(),
             value: typeof item.value === "string" ? item.value : "",
             createdAt: item.createdAt || new Date().toISOString()
-          }));
+          })).filter((item) => item.value.trim());
+          return restored.length ? restored : [newNote("")];
         }
       } catch {
         // Older versions stored one plain-text note; preserve it as the first pad.
@@ -75,6 +76,14 @@
         note.value = textarea.value;
         window.clearTimeout(saveTimer);
         saveTimer = window.setTimeout(save, 180);
+      });
+      textarea.addEventListener("blur", () => {
+        window.setTimeout(() => {
+          if (note.value.trim() || notes.length === 1) return;
+          notes = notes.filter((item) => item.id !== note.id);
+          card.remove();
+          save();
+        }, 80);
       });
 
       const stamp = document.createElement("time");
