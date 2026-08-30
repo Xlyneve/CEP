@@ -351,7 +351,8 @@ header h1 {
 .xgpt-rich-snippet img { max-width: 100%; height: auto; }
 .xgpt-rich-snippet table { max-width: 100%; border-collapse: collapse; }
 .xgpt-rich-snippet td, .xgpt-rich-snippet th { padding: 3px 6px; border: 1px solid rgba(130,130,136,.42); }
-.xgpt-concept-link { display:inline; color:inherit; font-weight:600; text-decoration:none; border-bottom:1px dotted rgba(90,72,82,.5); cursor:help; }
+.xgpt-concept-link { display:inline; color:inherit; font-weight:600; text-decoration:none; border-bottom:1px dotted rgba(90,72,82,.5); cursor:pointer; }
+.xgpt-concept-link.has-image { cursor:zoom-in; }
 .xgpt-concept-link.has-image::after { content:""; display:inline-block; width:5px; height:5px; margin-left:3px; border-radius:50%; background:#aa96d2; vertical-align:middle; }
 .xgpt-media-tip { position:fixed; z-index:10020; display:none; width:min(280px,calc(100vw - 24px)); padding:9px; border:1px solid rgba(255,255,255,.8); border-radius:12px; background:rgba(255,255,255,.96); box-shadow:0 12px 32px rgba(30,25,28,.24); }
 .xgpt-media-tip img { display:block; width:100%; max-height:220px; object-fit:contain; border-radius:8px; cursor:zoom-in; }
@@ -4804,11 +4805,10 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js';
   import {
     getFirestore,
     collection,
-    doc,
-    getDoc,
     getDocs,
     onSnapshot,
     query,
@@ -4881,7 +4881,6 @@ const firebaseConfig = {
   // index on the first real search, cache it, and never create preview iframes.
   let chatgptSearchPromise;
   let chatgptSearchAuth;
-  let chatgptSearchDb;
   const loadChatgptSearchNotes = () => chatgptSearchPromise ||= (async () => {
     const chatConfig = {
       apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
@@ -4902,46 +4901,13 @@ const firebaseConfig = {
       return [];
     }
     document.getElementById('homeXgptAuthPrompt')?.setAttribute('hidden', '');
-    const chatDb = getFirestore(chatApp);
-    chatgptSearchDb = chatDb;
-    const snapshot = await getDocs(collection(chatDb, 'notes'));
-    const mediaSnapshot = await getDocs(collection(chatDb, 'concept_media')).catch(error => {
-      console.warn('Xgpt concept images are unavailable in Home search.', error);
-      return null;
-    });
-    chatgptConceptMediaCache = Object.fromEntries((mediaSnapshot?.docs || []).map(item => {
-      const media = item.data() || {};
-      return [normalizeXgptConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
+    const entries = (await loadSharedXgptEntries()).map(entry => ({
+      ...entry,
+      sourcePage: 'chatgptx.html',
+      focusId: entry.id,
+      nativeOnly: true,
+      richHtml: CEPSecurity.sanitizeHTML(entry.richHtml || '')
     }));
-    const entries = snapshot.docs.map(note => {
-      const data = note.data();
-      const rawHtml = data.content || data.note || data.text || '';
-      const text = htmlToMultilineText(rawHtml)
-        .replace(/\[\[([^\]]+)\]\]/g, '$1');
-      const parsedNote = new DOMParser().parseFromString(String(rawHtml), 'text/html');
-      const searchTables = [...parsedNote.querySelectorAll('table')].map(table =>
-        [...table.rows].map(row =>
-          [...row.cells].map(cell =>
-            (cell.textContent || '')
-              .replace(/\[\[([^\]]+)\]\]/g, '$1')
-              .replace(/\s+/g, ' ')
-              .trim()
-          )
-        )
-      ).filter(rows => rows.length);
-      const firstLine = text.split(/[.!?]\s|\n/)[0].trim();
-      return {
-        file: 'chatgptx.html',
-        sourcePage: 'chatgptx.html',
-        title: firstLine ? `Xgpt — ${firstLine.slice(0, 72)}` : 'Xgpt Note',
-        text,
-        focusId: note.id,
-        sourceTitle: 'Xgpt Notes',
-        nativeOnly: true,
-        richHtml: CEPSecurity.sanitizeHTML(rawHtml),
-        searchTables
-      };
-    });
     window.addUniversalSearchPages?.(entries);
     return entries;
   })().catch(error => {
@@ -4953,14 +4919,11 @@ const firebaseConfig = {
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
   window.fetchXgptConceptMedia = async concept => {
     const key = normalizeXgptConcept(concept);
-    if (!key || !chatgptSearchDb || !chatgptSearchAuth?.currentUser) return null;
+    if (!key || !chatgptSearchAuth?.currentUser) return null;
     if (chatgptConceptMediaCache[key]) return chatgptConceptMediaCache[key];
-    try {
-      const snapshot = await getDoc(doc(chatgptSearchDb, 'concept_media', key));
-      if (!snapshot.exists()) return null;
-      const data = snapshot.data() || {};
-      return chatgptConceptMediaCache[key] = { imageUrl: data.imageUrl || '', caption: data.caption || '' };
-    } catch (error) { console.warn(`Xgpt concept image could not load for ${concept}.`, error); return null; }
+    const media = await loadSharedXgptConceptMedia(concept);
+    if (media) chatgptConceptMediaCache[key] = media;
+    return media;
   };
   let previousXgptUserId = null;
   let stopXgptAuthWatch;
