@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const sources = [
   ['nurseNotes','PN.html','PN',['title','note','url']],
@@ -37,20 +37,27 @@ let entriesPromise;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
 const normalizeConcept = value => String(value || '').toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
+function getXgptAuth() {
+  const config = {
+    apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
+    authDomain: 'notes-chat-c5ff3.firebaseapp.com', projectId: 'notes-chat-c5ff3',
+    storageBucket: 'notes-chat-c5ff3.firebasestorage.app', messagingSenderId: '597780727252',
+    appId: '1:597780727252:web:8407eb4096dbe301d74241'
+  };
+  const app = getApps().find(candidate => candidate.name === 'notes-chat') || initializeApp(config, 'notes-chat');
+  return { app, auth: getAuth(app) };
+}
 async function loadXgptEntries() {
   if (xgptEntriesPromise) return xgptEntriesPromise;
   xgptEntriesPromise = (async () => {
   try {
-    const config = {
-      apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
-      authDomain: 'notes-chat-c5ff3.firebaseapp.com', projectId: 'notes-chat-c5ff3',
-      storageBucket: 'notes-chat-c5ff3.firebasestorage.app', messagingSenderId: '597780727252',
-      appId: '1:597780727252:web:8407eb4096dbe301d74241'
-    };
-    const app = getApps().find(candidate => candidate.name === 'notes-chat') || initializeApp(config, 'notes-chat');
-    const auth = getAuth(app);
+    const { app, auth } = getXgptAuth();
     if (typeof auth.authStateReady === 'function') await auth.authStateReady();
-    if (!auth.currentUser) await signInAnonymously(auth);
+    if (!auth.currentUser) {
+      const error = new Error('Sign in to include Xgpt Notes.');
+      error.code = 'xgpt/auth-required';
+      throw error;
+    }
     const db = getFirestore(app);
     const snapshot = await getDocs(collection(db, 'notes'));
     const mediaSnapshot = await getDocs(collection(db, 'concept_media')).catch(error => {
@@ -72,6 +79,7 @@ async function loadXgptEntries() {
     });
   } catch (error) {
     xgptEntriesPromise = null;
+    if (error?.code === 'xgpt/auth-required') throw error;
     console.warn('Search could not load Xgpt Notes.', error);
     return [];
   }
@@ -107,7 +115,7 @@ async function loadEntries(onProgress) {
 
 export function preloadUniversalSearch() {
   void loadEntries();
-  void loadXgptEntries();
+  void loadXgptEntries().catch(() => {});
 }
 
 function addHighlightedText(parent, text, terms) {
@@ -198,14 +206,36 @@ export async function mountUniversalSearch(host, closeSearch) {
     </div>
     <div class="cep-global-search-filters" aria-label="Filter search by section"></div>
     <div class="cep-global-search-status" aria-live="polite">Preparing saved-note sections…</div>
+    <div class="cep-xgpt-auth-prompt" hidden><span>Sign in to include Xgpt Notes and concept images.</span><button type="button">Sign in to Xgpt</button></div>
     <div class="cep-global-search-results"></div>`;
   host.replaceChildren(panel);
   const input = panel.querySelector('input');
   const filters = panel.querySelector('.cep-global-search-filters');
   const status = panel.querySelector('.cep-global-search-status');
+  const xgptPrompt = panel.querySelector('.cep-xgpt-auth-prompt');
   const results = panel.querySelector('.cep-global-search-results');
   panel.querySelector('button').addEventListener('click', closeSearch);
   let entries = [], activeSource = 'All', timer;
+  const mergeXgptEntries = xgptEntries => {
+    const existingIds = new Set(entries.filter(entry => entry.file === 'chatgptx.html').map(entry => entry.id));
+    entries = entries.concat(xgptEntries.filter(entry => !existingIds.has(entry.id)));
+    xgptPrompt.hidden = true; renderFilters(); runSearch();
+  };
+  const requestXgptEntries = () => loadXgptEntries().then(mergeXgptEntries).catch(error => {
+    if (error?.code === 'xgpt/auth-required') xgptPrompt.hidden = false;
+    else console.warn('Search could not load Xgpt Notes.', error);
+  });
+  xgptPrompt.querySelector('button').addEventListener('click', async () => {
+    const button = xgptPrompt.querySelector('button'); button.disabled = true; button.textContent = 'Signing in…';
+    try {
+      const { auth } = getXgptAuth();
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      xgptEntriesPromise = null;
+      await requestXgptEntries();
+    } catch (error) {
+      if (error?.code !== 'auth/popup-closed-by-user') console.warn('Xgpt sign-in failed.', error);
+    } finally { button.disabled = false; button.textContent = 'Sign in to Xgpt'; }
+  });
 
   const renderFilters = () => {
     const names = ['All', ...new Set(entries.map(entry => entry.sourceTitle))];
@@ -287,9 +317,5 @@ export async function mountUniversalSearch(host, closeSearch) {
   input.focus();
   entries = await loadEntries(source => { status.textContent = `Loading ${source}…`; });
   renderFilters(); runSearch(); input.focus();
-  void loadXgptEntries().then(xgptEntries => {
-    const existingIds = new Set(entries.filter(entry => entry.file === 'chatgptx.html').map(entry => entry.id));
-    entries = entries.concat(xgptEntries.filter(entry => !existingIds.has(entry.id)));
-    renderFilters(); runSearch();
-  });
+  void requestXgptEntries();
 }
