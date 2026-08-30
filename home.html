@@ -225,6 +225,10 @@ header h1 {
   background: rgba(64,54,59,.08); color: #40363b; cursor: pointer; font-size: 22px;
 }
 .universal-search-status { margin: 9px 3px 5px; color: #6c6166; font-size: 11px; }
+.home-xgpt-auth-prompt { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:3px 3px 8px; padding:9px 11px; border:1px solid rgba(255,255,255,.8); border-radius:11px; background:rgba(255,255,255,.55); color:#5e5358; font:11px/1.3 Arial,sans-serif; }
+.home-xgpt-auth-prompt[hidden] { display:none; }
+.home-xgpt-auth-prompt button { flex:0 0 auto; padding:7px 10px; border:1px solid rgba(94,83,88,.2); border-radius:9px; background:rgba(94,83,88,.84); color:#fff; font:600 10.5px Arial,sans-serif; cursor:pointer; }
+.home-xgpt-auth-prompt button:disabled { opacity:.6; cursor:wait; }
 .universal-search-filters {
   display:flex; flex-wrap:nowrap; gap:6px; width:100%; box-sizing:border-box;
   margin:9px 2px 2px; padding:1px 5px 4px 1px; overflow-x:auto; overflow-y:hidden;
@@ -2767,6 +2771,7 @@ html body > header {
     <button class="universal-search-close" id="universalSearchClose" type="button" aria-label="Close search">×</button>
   </div>
   <div class="universal-search-status" id="universalSearchStatus" aria-live="polite">Type a word to search.</div>
+  <div class="home-xgpt-auth-prompt" id="homeXgptAuthPrompt" hidden><span>Sign in to include Xgpt Notes and concept images.</span><button id="homeXgptAuthButton" type="button">Sign in to Xgpt</button></div>
   <div class="universal-search-results" id="universalSearchResults"></div>
 </section>
 
@@ -4804,7 +4809,8 @@ function closeTable() {
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
   import {
     getAuth,
-    signInAnonymously
+    GoogleAuthProvider,
+    signInWithPopup
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
   // Avoid an unauthenticated Firestore request and retry on page load.
@@ -4866,6 +4872,7 @@ const firebaseConfig = {
   // ChatGPT Notes live in a separate Firebase project. Load their text-only
   // index on the first real search, cache it, and never create preview iframes.
   let chatgptSearchPromise;
+  let chatgptSearchAuth;
   const loadChatgptSearchNotes = () => chatgptSearchPromise ||= (async () => {
     const chatConfig = {
       apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
@@ -4878,8 +4885,13 @@ const firebaseConfig = {
     const chatApp = getApps().find(candidate => candidate.name === 'notes-chat') ||
       initializeApp(chatConfig, 'notes-chat');
     const chatAuth = getAuth(chatApp);
+    chatgptSearchAuth = chatAuth;
     if (typeof chatAuth.authStateReady === 'function') await chatAuth.authStateReady();
-    if (!chatAuth.currentUser) await signInAnonymously(chatAuth);
+    if (!chatAuth.currentUser) {
+      document.getElementById('homeXgptAuthPrompt')?.removeAttribute('hidden');
+      return [];
+    }
+    document.getElementById('homeXgptAuthPrompt')?.setAttribute('hidden', '');
     const chatDb = getFirestore(chatApp);
     const snapshot = await getDocs(collection(chatDb, 'notes'));
     const mediaSnapshot = await getDocs(collection(chatDb, 'concept_media')).catch(error => {
@@ -4928,6 +4940,21 @@ const firebaseConfig = {
   });
   window.cepUniversalLazyLoaders ||= [];
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
+  document.getElementById('homeXgptAuthButton')?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    button.disabled = true; button.textContent = 'Signing in…';
+    try {
+      if (!chatgptSearchAuth) {
+        chatgptSearchPromise = null;
+        await loadChatgptSearchNotes();
+      }
+      await signInWithPopup(chatgptSearchAuth, new GoogleAuthProvider());
+      chatgptSearchPromise = null;
+      await loadChatgptSearchNotes();
+    } catch (error) {
+      if (error?.code !== 'auth/popup-closed-by-user') console.warn('Xgpt sign-in failed.', error);
+    } finally { button.disabled = false; button.textContent = 'Sign in to Xgpt'; }
+  });
   // Warm the separate Xgpt index as soon as Home is ready. If it is still
   // loading when Search opens, local results render immediately and the Xgpt
   // entries are merged automatically when this promise completes.
