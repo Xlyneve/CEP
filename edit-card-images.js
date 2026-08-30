@@ -40,6 +40,15 @@ function installStyles() {
       overflow:visible !important;
     }
     .cep-pn-editor-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:3px; margin:5px 0 7px; }
+    #noteInputContainer .cep-pn-editor-shell {
+      flex-direction:column !important; align-items:center !important;
+    }
+    #noteInputContainer .cep-pn-editor-shell > .cep-pn-editor,
+    #noteInputContainer .cep-pn-editor-shell > .cep-pn-editor-toolbar {
+      width:90% !important; max-width:700px !important; box-sizing:border-box !important;
+    }
+    #noteInputContainer input[type="file"][hidden],
+    .cep-pn-image-input[hidden] { display:none !important; }
     .cep-pn-editor-toolbar[hidden],
     .editor-buttons[hidden], .main-editor-buttons[hidden], .edit-table-tools[hidden],
     .formatting-buttons[hidden], .format-buttons[hidden],
@@ -490,6 +499,7 @@ function hideLegacyFormatting(editor) {
 function attachEditor(editor) {
   if (attachedEditors.has(editor) || !isNoteEditor(editor)) return;
   attachedEditors.add(editor); editor.classList.add('cep-pn-editor');
+  if (editor.closest('#noteInputContainer')) editor.parentElement?.classList.add('cep-pn-editor-shell');
   const toolbar = document.createElement('div');
   toolbar.className = 'cep-pn-editor-toolbar';
   const input = document.createElement('input');
