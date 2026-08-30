@@ -347,6 +347,14 @@ header h1 {
 .xgpt-rich-snippet img { max-width: 100%; height: auto; }
 .xgpt-rich-snippet table { max-width: 100%; border-collapse: collapse; }
 .xgpt-rich-snippet td, .xgpt-rich-snippet th { padding: 3px 6px; border: 1px solid rgba(130,130,136,.42); }
+.xgpt-concept-link { display:inline; color:inherit; font-weight:600; text-decoration:none; border-bottom:1px dotted rgba(90,72,82,.5); cursor:help; }
+.xgpt-concept-link.has-image::after { content:""; display:inline-block; width:5px; height:5px; margin-left:3px; border-radius:50%; background:#aa96d2; vertical-align:middle; }
+.xgpt-media-tip { position:fixed; z-index:10020; display:none; width:min(280px,calc(100vw - 24px)); padding:9px; border:1px solid rgba(255,255,255,.8); border-radius:12px; background:rgba(255,255,255,.96); box-shadow:0 12px 32px rgba(30,25,28,.24); }
+.xgpt-media-tip img { display:block; width:100%; max-height:220px; object-fit:contain; border-radius:8px; cursor:zoom-in; }
+.xgpt-media-tip-caption { padding-top:6px; color:#534a4e; font:11px/1.35 Arial,sans-serif; }
+.xgpt-image-zoom { position:fixed; inset:0; z-index:10030; display:none; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,.72); }
+.xgpt-image-zoom.is-open { display:flex; }
+.xgpt-image-zoom img { max-width:94vw; max-height:92vh; object-fit:contain; border-radius:10px; cursor:zoom-out; }
 .universal-search-card-frame { display: block; visibility: hidden; width: 100%; height: 120px; box-sizing: border-box; overflow: hidden; border: 0; border-radius: 13px; background: transparent; }
 .universal-search-result.is-ready { min-height: 0; }
 .universal-search-result.is-ready .universal-search-card-frame { visibility: visible; }
@@ -3402,6 +3410,7 @@ html body > header {
     function addHighlightedRichHtml(parent, html, terms) {
       const richContent = document.createElement('div');
       CEPSecurity.setHTML(richContent, html);
+      linkifyXgptConcepts(richContent);
       const textNodes = [];
       const walker = document.createTreeWalker(richContent, NodeFilter.SHOW_TEXT);
       while (walker.nextNode()) textNodes.push(walker.currentNode);
@@ -3413,31 +3422,61 @@ html body > header {
       });
       parent.append(...richContent.childNodes);
     }
-    function removeBracketedSearchContent(html) {
-      const richContent = document.createElement('div');
-      CEPSecurity.setHTML(richContent, html);
-      const textNodes = [];
-      let combinedText = '';
-      const walker = document.createTreeWalker(richContent, NodeFilter.SHOW_TEXT);
-      while (walker.nextNode()) {
-        const node = walker.currentNode;
-        textNodes.push({ node, start: combinedText.length, end: combinedText.length + node.nodeValue.length });
-        combinedText += node.nodeValue;
-      }
-      const matches = [...combinedText.matchAll(/\[\[[\s\S]*?\]\]/g)].reverse();
-      matches.forEach(match => {
-        const startOffset = match.index;
-        const endOffset = startOffset + match[0].length;
-        const start = textNodes.find(item => startOffset >= item.start && startOffset < item.end);
-        const end = [...textNodes].reverse().find(item => endOffset > item.start && endOffset <= item.end);
-        if (!start || !end) return;
-        const range = document.createRange();
-        range.setStart(start.node, startOffset - start.start);
-        range.setEnd(end.node, endOffset - end.start);
-        range.deleteContents();
+    const normalizeXgptConcept = value => String(value || '').toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
+    let chatgptConceptMediaCache = {};
+    function linkifyXgptConcepts(root) {
+      const nodes = [];
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(node => {
+        if (node.parentElement?.closest('a,button')) return;
+        const text = node.nodeValue || '';
+        const pattern = /\[\[([^\]\[]+?)\]\]/g;
+        if (!pattern.test(text)) return;
+        pattern.lastIndex = 0;
+        const fragment = document.createDocumentFragment();
+        let last = 0;
+        text.replace(pattern, (match, inner, offset) => {
+          fragment.append(document.createTextNode(text.slice(last, offset)));
+          const concept = String(inner || '').trim();
+          const link = document.createElement('a');
+          link.href = '#'; link.className = 'xgpt-concept-link'; link.textContent = concept;
+          const media = chatgptConceptMediaCache[normalizeXgptConcept(concept)];
+          if (media?.imageUrl) {
+            link.classList.add('has-image');
+            link.dataset.image = media.imageUrl;
+            link.dataset.caption = media.caption || '';
+          }
+          fragment.append(link);
+          last = offset + match.length;
+          return match;
+        });
+        fragment.append(document.createTextNode(text.slice(last)));
+        node.replaceWith(fragment);
       });
-      return richContent.innerHTML;
     }
+    function installXgptMediaInteractions() {
+      if (document.querySelector('.xgpt-media-tip')) return;
+      const tip = document.createElement('div'); tip.className = 'xgpt-media-tip';
+      const zoom = document.createElement('div'); zoom.className = 'xgpt-image-zoom';
+      const zoomImage = document.createElement('img'); zoom.append(zoomImage); document.body.append(tip, zoom);
+      let hideTimer;
+      const hide = () => { hideTimer = setTimeout(() => { tip.style.display = 'none'; tip.replaceChildren(); }, 180); };
+      document.addEventListener('mouseover', event => {
+        const link = event.target.closest?.('.xgpt-concept-link[data-image]'); if (!link) return;
+        clearTimeout(hideTimer); const image = document.createElement('img'); image.src = link.dataset.image; image.alt = link.textContent;
+        if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'xgpt-media-tip-caption'; caption.textContent = link.dataset.caption; tip.replaceChildren(image, caption); }
+        else tip.replaceChildren(image);
+        const rect = link.getBoundingClientRect(); tip.style.left = `${Math.max(12, Math.min(innerWidth - 292, rect.left))}px`; tip.style.top = `${Math.max(12, Math.min(innerHeight - 250, rect.bottom + 8))}px`; tip.style.display = 'block';
+      });
+      document.addEventListener('mouseout', event => { if (event.target.closest?.('.xgpt-concept-link') && !tip.contains(event.relatedTarget)) hide(); });
+      tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
+      tip.addEventListener('click', event => { const image = event.target.closest('img'); if (!image) return; event.preventDefault(); event.stopPropagation(); zoomImage.src = image.src; zoom.classList.add('is-open'); });
+      zoom.addEventListener('click', () => { zoom.classList.remove('is-open'); zoomImage.src = ''; });
+      document.addEventListener('click', event => { if (event.target.closest?.('.xgpt-concept-link')) { event.preventDefault(); event.stopPropagation(); } }, true);
+      document.addEventListener('keydown', event => { if (event.key === 'Escape') zoom.click(); });
+    }
+    installXgptMediaInteractions();
     function makeSnippet(page, terms) {
       const lower = page.text.toLocaleLowerCase();
       const positions = terms.map(term => lower.indexOf(term)).filter(pos => pos >= 0);
@@ -4841,18 +4880,26 @@ const firebaseConfig = {
     const chatAuth = getAuth(chatApp);
     if (typeof chatAuth.authStateReady === 'function') await chatAuth.authStateReady();
     if (!chatAuth.currentUser) await signInAnonymously(chatAuth);
-    const snapshot = await getDocs(collection(getFirestore(chatApp), 'notes'));
+    const chatDb = getFirestore(chatApp);
+    const [snapshot, mediaSnapshot] = await Promise.all([
+      getDocs(collection(chatDb, 'notes')),
+      getDocs(collection(chatDb, 'concept_media'))
+    ]);
+    chatgptConceptMediaCache = Object.fromEntries(mediaSnapshot.docs.map(item => {
+      const media = item.data() || {};
+      return [normalizeXgptConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
+    }));
     const entries = snapshot.docs.map(note => {
       const data = note.data();
       const rawHtml = data.content || data.note || data.text || '';
       const text = htmlToMultilineText(rawHtml)
-        .replace(/\[\[[\s\S]*?\]\]/g, '');
+        .replace(/\[\[([^\]]+)\]\]/g, '$1');
       const parsedNote = new DOMParser().parseFromString(String(rawHtml), 'text/html');
       const searchTables = [...parsedNote.querySelectorAll('table')].map(table =>
         [...table.rows].map(row =>
           [...row.cells].map(cell =>
             (cell.textContent || '')
-              .replace(/\[\[[\s\S]*?\]\]/g, '')
+              .replace(/\[\[([^\]]+)\]\]/g, '$1')
               .replace(/\s+/g, ' ')
               .trim()
           )
@@ -4867,7 +4914,7 @@ const firebaseConfig = {
         focusId: note.id,
         sourceTitle: 'Xgpt Notes',
         nativeOnly: true,
-        richHtml: removeBracketedSearchContent(rawHtml),
+        richHtml: CEPSecurity.sanitizeHTML(rawHtml),
         searchTables
       };
     });

@@ -35,6 +35,8 @@ const textFromHtml = value => {
 
 let entriesPromise;
 let xgptEntriesPromise;
+let xgptConceptMedia = {};
+const normalizeConcept = value => String(value || '').toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
 async function loadXgptEntries() {
   if (xgptEntriesPromise) return xgptEntriesPromise;
   xgptEntriesPromise = (async () => {
@@ -49,14 +51,22 @@ async function loadXgptEntries() {
     const auth = getAuth(app);
     if (typeof auth.authStateReady === 'function') await auth.authStateReady();
     if (!auth.currentUser) await signInAnonymously(auth);
-    const snapshot = await getDocs(collection(getFirestore(app), 'notes'));
+    const db = getFirestore(app);
+    const [snapshot, mediaSnapshot] = await Promise.all([
+      getDocs(collection(db, 'notes')),
+      getDocs(collection(db, 'concept_media'))
+    ]);
+    xgptConceptMedia = Object.fromEntries(mediaSnapshot.docs.map(item => {
+      const media = item.data() || {};
+      return [normalizeConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
+    }));
     return snapshot.docs.map(note => {
       const rawHtml = note.data().content || note.data().note || note.data().text || '';
       const text = textFromHtml(rawHtml).replace(/\[\[([^\]]+)\]\]/g, '$1');
       const firstLine = text.split(/[.!?]\s|\n/)[0].trim();
       return {
         id: note.id, file: 'chatgptx.html', sourceTitle: 'Xgpt Notes',
-        title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text
+        title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text, richHtml: rawHtml
       };
     });
   } catch (error) {
@@ -110,6 +120,57 @@ function addHighlightedText(parent, text, terms) {
   });
 }
 
+function addXgptRichContent(parent, html, terms) {
+  const content = document.createElement('div');
+  if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(content, html);
+  else content.textContent = textFromHtml(html);
+  const nodes = [];
+  const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node => {
+    if (node.parentElement?.closest('a,button')) return;
+    const text = node.nodeValue || '', pattern = /\[\[([^\]\[]+?)\]\]/g;
+    if (!pattern.test(text)) return;
+    pattern.lastIndex = 0; const fragment = document.createDocumentFragment(); let last = 0;
+    text.replace(pattern, (match, inner, offset) => {
+      fragment.append(document.createTextNode(text.slice(last, offset)));
+      const concept = String(inner || '').trim(); const link = document.createElement('a');
+      link.href = '#'; link.className = 'cep-xgpt-concept'; link.textContent = concept;
+      const media = xgptConceptMedia[normalizeConcept(concept)];
+      if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption || ''; }
+      fragment.append(link); last = offset + match.length; return match;
+    });
+    fragment.append(document.createTextNode(text.slice(last))); node.replaceWith(fragment);
+  });
+  const richTextNodes = []; const highlightWalker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+  while (highlightWalker.nextNode()) richTextNodes.push(highlightWalker.currentNode);
+  richTextNodes.forEach(node => {
+    if (!node.nodeValue || !terms.some(term => node.nodeValue.toLocaleLowerCase().includes(term))) return;
+    const fragment = document.createDocumentFragment(); addHighlightedText(fragment, node.nodeValue, terms); node.replaceWith(fragment);
+  });
+  parent.append(...content.childNodes);
+}
+
+function installXgptMediaUi() {
+  if (document.querySelector('.cep-xgpt-media-tip')) return;
+  const tip = document.createElement('div'); tip.className = 'cep-xgpt-media-tip'; tip.hidden = true;
+  const zoom = document.createElement('div'); zoom.className = 'cep-xgpt-image-zoom';
+  const zoomImage = document.createElement('img'); zoom.append(zoomImage); document.body.append(tip, zoom);
+  let hideTimer; const hide = () => { hideTimer = setTimeout(() => { tip.hidden = true; tip.replaceChildren(); }, 180); };
+  document.addEventListener('mouseover', event => {
+    const link = event.target.closest?.('.cep-xgpt-concept[data-image]'); if (!link) return;
+    clearTimeout(hideTimer); const image = document.createElement('img'); image.src = link.dataset.image; image.alt = link.textContent;
+    if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; tip.replaceChildren(image, caption); } else tip.replaceChildren(image);
+    const rect = link.getBoundingClientRect(); tip.style.left = `${Math.max(12, Math.min(innerWidth - 292, rect.left))}px`; tip.style.top = `${Math.max(12, Math.min(innerHeight - 250, rect.bottom + 8))}px`; tip.hidden = false;
+  });
+  document.addEventListener('mouseout', event => { if (event.target.closest?.('.cep-xgpt-concept') && !tip.contains(event.relatedTarget)) hide(); });
+  tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
+  tip.addEventListener('click', event => { const image = event.target.closest('img'); if (!image) return; event.preventDefault(); event.stopPropagation(); zoomImage.src = image.src; zoom.classList.add('is-open'); });
+  zoom.addEventListener('click', () => { zoom.classList.remove('is-open'); zoomImage.src = ''; });
+  document.addEventListener('click', event => { if (event.target.closest?.('.cep-xgpt-concept')) { event.preventDefault(); event.stopPropagation(); } }, true);
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && zoom.classList.contains('is-open')) zoom.click(); });
+}
+
 function editDistance(a, b) {
   if (a === b) return 0;
   if (Math.abs(a.length - b.length) > 2) return 3;
@@ -126,6 +187,7 @@ function editDistance(a, b) {
 }
 
 export async function mountUniversalSearch(host, closeSearch) {
+  installXgptMediaUi();
   const panel = document.createElement('section');
   panel.className = 'cep-global-search-panel';
   panel.innerHTML = `
@@ -208,8 +270,11 @@ export async function mountUniversalSearch(host, closeSearch) {
         link.href = destination.href;
       }
       const title = document.createElement('strong'); title.textContent = entry.title;
-      const cardBody = document.createElement('span');
-      addHighlightedText(cardBody, entry.text, terms);
+      const cardBody = document.createElement(entry.file === 'chatgptx.html' ? 'div' : 'span');
+      if (entry.file === 'chatgptx.html' && entry.richHtml) {
+        cardBody.className = 'cep-xgpt-rich-content';
+        addXgptRichContent(cardBody, entry.richHtml, terms);
+      } else addHighlightedText(cardBody, entry.text, terms);
       link.append(title, cardBody); group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
