@@ -48,7 +48,7 @@ function getXgptAuth() {
   const app = getApps().find(candidate => candidate.name === 'notes-chat') || initializeApp(config, 'notes-chat');
   return { app, auth: getAuth(app) };
 }
-async function loadXgptEntries() {
+export async function loadXgptEntries() {
   if (xgptEntriesPromise) return xgptEntriesPromise;
   xgptEntriesPromise = (async () => {
   try {
@@ -87,6 +87,23 @@ async function loadXgptEntries() {
   }
   })();
   return xgptEntriesPromise;
+}
+
+export async function loadXgptConceptMedia(concept) {
+  const key = normalizeConcept(concept);
+  if (!key) return null;
+  if (xgptConceptMedia[key]?.imageUrl) return xgptConceptMedia[key];
+  if (!xgptDb) await loadXgptEntries();
+  if (!xgptDb) return null;
+  try {
+    const snapshot = await getDoc(doc(xgptDb, 'concept_media', key));
+    if (!snapshot.exists()) return null;
+    const data = snapshot.data() || {};
+    return xgptConceptMedia[key] = { imageUrl: data.imageUrl || '', caption: data.caption || '' };
+  } catch (error) {
+    console.warn(`Xgpt concept image could not load for ${concept}.`, error);
+    return null;
+  }
 }
 
 async function loadEntries(onProgress) {
@@ -170,16 +187,9 @@ function installXgptMediaUi() {
   let hideTimer; const hide = () => { hideTimer = setTimeout(() => { tip.hidden = true; tip.replaceChildren(); }, 180); };
   document.addEventListener('mouseover', async event => {
     const link = event.target.closest?.('.cep-xgpt-concept'); if (!link) return;
-    if (!link.dataset.image && xgptDb) {
-      const key = normalizeConcept(link.textContent);
-      try {
-        const snapshot = await getDoc(doc(xgptDb, 'concept_media', key));
-        if (snapshot.exists()) {
-          const data = snapshot.data() || {};
-          const media = xgptConceptMedia[key] = { imageUrl: data.imageUrl || '', caption: data.caption || '' };
-          if (media.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption; }
-        }
-      } catch (error) { console.warn(`Xgpt concept image could not load for ${link.textContent}.`, error); }
+    if (!link.dataset.image) {
+      const media = await loadXgptConceptMedia(link.textContent);
+      if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption; }
     }
     if (!link.dataset.image || !link.isConnected) return;
     clearTimeout(hideTimer); const image = document.createElement('img'); image.src = link.dataset.image; image.alt = link.textContent;
