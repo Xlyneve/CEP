@@ -75,17 +75,19 @@
     });
   }
 
-  function colorCards(scope) {
+  function colorCards(scope, getPageOrder) {
     const cards = [];
     if (scope.nodeType === 1 && scope.matches(cardSelector)) cards.push(scope);
     scope.querySelectorAll(cardSelector).forEach((card) => cards.push(card));
 
+    const pendingCards = cards.filter(card => card.dataset.sharedPaletteColor !== "true");
+    if (!pendingCards.length) return;
+    // Build the page order once, rather than rescanning the page for every card.
+    const pageOrder = getPageOrder ? getPageOrder() : new Map(
+      Array.from(document.querySelectorAll(cardSelector), (card, index) => [card, index]));
     cards.forEach((card, index) => {
       if (card.dataset.sharedPaletteColor === "true") return;
-      const pageIndex = Array.prototype.indexOf.call(
-        document.querySelectorAll(cardSelector),
-        card
-      );
+      const pageIndex = pageOrder.get(card) ?? -1;
       const seed = `${pageName}:${pageIndex >= 0 ? pageIndex : index}:${card.id}:${card.className}`;
       const color = palette[hash(seed) % palette.length];
       card.style.setProperty("--card-glass", `rgba(${color.rgb}, 0.74)`);
@@ -107,10 +109,16 @@
       if (event.target?.isContentEditable) removeEmptyHighlights(event.target);
     });
     const observer = new MutationObserver((records) => {
+      // All cards inserted in this delivery share the same page-order lookup.
+      let pageOrder;
+      const getPageOrder = () => pageOrder ||= new Map(
+        Array.from(document.querySelectorAll(cardSelector), (card, index) => [card, index]));
+      const visited = new Set();
       records.forEach((record) => {
         record.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) {
-            colorCards(node);
+          if (node.nodeType === 1 && node.isConnected && !visited.has(node)) {
+            visited.add(node);
+            colorCards(node, getPageOrder);
             removeEmptyHighlights(node);
           }
         });

@@ -851,6 +851,7 @@ mark,
 
 
 <script type="module">
+import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc
@@ -1537,10 +1538,10 @@ window.formatText = function(id, command){
 };
 
 // Search
-document.getElementById('searchInput').addEventListener('input', e=>{
+document.getElementById('searchInput').addEventListener('input', debounceSearch(e=>{
   currentFilter = e.target.value.toLowerCase();
   renderNotes(getFilteredNotes());
-});
+}));
 
 // Firestore live sync
 onSnapshot(collection(db, 'explainNotes'), snapshot => {

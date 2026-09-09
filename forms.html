@@ -554,7 +554,7 @@ button:hover {
 
 <!-- Top Buttons -->
 <div class="search-add-row">
-  <input type="text" id="searchInput" placeholder="Search" oninput="filterFiles()">
+  <input type="text" id="searchInput" placeholder="Search">
   <button id="addToggleBtn" class="add-plus-btn" onclick="toggleAddForm()">+</button>
 </div>
 
@@ -677,7 +677,16 @@ button:hover {
   }
 
   async function fetchURLs(filter = '', forceRefresh = false) {
+  if (!forceRefresh && cachedUrlDocs) {
+    renderURLDocs(cachedUrlDocs, filter);
+    if (Date.now() < urlCacheExpiresAt) return;
+  }
   const urlDocs = await loadUrlDocs(forceRefresh);
+  // Network responses always use the current query, never a stale keystroke.
+  renderURLDocs(urlDocs, document.getElementById('searchInput').value);
+}
+
+function renderURLDocs(urlDocs, filter) {
   const container = document.getElementById('fileList');
   container.innerHTML = '';
 
@@ -837,9 +846,13 @@ async function saveInlineEdit(id) {
   }
 
   // Filter files based on search input
+  let urlSearchTimer;
   function filterFiles() {
-    const term = document.getElementById('searchInput').value;
-    fetchURLs(term);
+    clearTimeout(urlSearchTimer);
+    urlSearchTimer = setTimeout(() => {
+      const term = document.getElementById('searchInput').value;
+      void fetchURLs(term).catch(error => console.error('URL search could not refresh.', error));
+    }, 120);
   }
 
   // Always show search input

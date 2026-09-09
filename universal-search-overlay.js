@@ -33,6 +33,18 @@ const textFromHtml = value => {
     .trim();
 };
 
+const searchTextCache = new WeakMap();
+function getSearchText(entry) {
+  let indexed = searchTextCache.get(entry);
+  if (!indexed || indexed.rawTitle !== entry.title || indexed.rawText !== entry.text) {
+    indexed = { rawTitle: entry.title, rawText: entry.text,
+      title: String(entry.title || '').toLocaleLowerCase(),
+      text: String(entry.text || '').toLocaleLowerCase(), words: null };
+    searchTextCache.set(entry, indexed);
+  }
+  return indexed;
+}
+
 let entriesPromise;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
@@ -287,8 +299,8 @@ export async function mountUniversalSearch(host, closeSearch) {
     results.replaceChildren();
     if (!query) { status.textContent = 'Type a word to search.'; return; }
     const matches = entries.map(entry => {
-      const title = entry.title.toLocaleLowerCase(), text = entry.text.toLocaleLowerCase();
-      const words = new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || []);
+      const indexed = getSearchText(entry);
+      const { title, text } = indexed;
       let score = (title.includes(query) ? 250 : 0) + (text.includes(query) ? 100 : 0);
       let fuzzy = false;
       for (const term of terms) {
@@ -296,7 +308,8 @@ export async function mountUniversalSearch(host, closeSearch) {
         else if (text.includes(term)) score += 10;
         else {
           const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
-          const similar = tolerance && [...words].some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+          const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
+          const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
           if (!similar) return null;
           fuzzy = true; score += 4;
         }

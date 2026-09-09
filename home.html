@@ -2794,10 +2794,13 @@ html body > header {
 <h2>Admin</h2>
 
 <div class="card-group section-card-group section-admin">
-  <a class="card" href="https://ohcoldchain.web.app/" target="_blank" rel="noopener noreferrer">OH Cold Chain</a>
+  <a class="card" href="homecal.html" target="_blank" rel="noopener noreferrer">Calendar and To-Do</a>
   <a class="card" href="https://ohexpiry.firebaseapp.com/" target="_blank" rel="noopener noreferrer">Expiry Check</a>
-  <a class="card" href="recalltracker.html" target="_blank" rel="noopener noreferrer">Recall Tracker</a>
+  <a class="card" href="https://onehealthgpuc.github.io/cases-site/" target="_blank" rel="noopener noreferrer">OH CME</a>
+  <a class="card" href="https://ohcoldchain.web.app/" target="_blank" rel="noopener noreferrer">OH Cold Chain</a>
   <a class="card" href="https://pdrp-99403.web.app/" target="_blank" rel="noopener noreferrer">PDRP</a>
+  <a class="card" href="recalltracker.html" target="_blank" rel="noopener noreferrer">Recall Tracker</a>
+  <a class="card" href="https://xlyneve.github.io/OHNRoster/" target="_blank" rel="noopener noreferrer">Roster</a>
 </div>
 
     <h2>Home</h2>
@@ -3374,10 +3377,21 @@ html body > header {
       }
       return row[b.length];
     }
+    const searchTextCache = new WeakMap();
+    function getSearchText(entry) {
+      let indexed = searchTextCache.get(entry);
+      if (!indexed || indexed.rawTitle !== entry.title || indexed.rawText !== entry.text) {
+        indexed = { rawTitle: entry.title, rawText: entry.text,
+          title: String(entry.title || '').toLocaleLowerCase(),
+          text: String(entry.text || '').toLocaleLowerCase(), words: null };
+        searchTextCache.set(entry, indexed);
+      }
+      return indexed;
+    }
+
     function scorePage(page, query, terms) {
-      const title = String(page.title || '').toLocaleLowerCase();
-      const text = String(page.text || '').toLocaleLowerCase();
-      const words = new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || []);
+      const indexed = getSearchText(page);
+      const { title, text } = indexed;
       let score = 0; let fuzzy = false;
       if (title === query) score += 500;
       else if (title.includes(query)) score += 260;
@@ -3387,7 +3401,8 @@ html body > header {
         else if (text.includes(term)) score += 28;
         else {
           const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
-          const similar = tolerance && [...words].some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+          const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
+          const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
           if (!similar) return null;
           fuzzy = true; score += 8;
         }
@@ -3660,7 +3675,7 @@ html body > header {
         const matchingTable = page.searchTables?.find(rows =>
           terms.every(term => rows.flat().join(' ').toLocaleLowerCase().includes(term))
         );
-        if (sourceTitle === 'Xgpt Notes' && page.richHtml) {
+        if (page.richHtml) {
           nativeSnippet.classList.add('xgpt-rich-snippet');
           addHighlightedRichHtml(nativeSnippet, page.richHtml, terms);
           nativeCard.append(nativeTitle, nativeSnippet);
@@ -3750,6 +3765,7 @@ html body > header {
     function openSearch() {
       panel.hidden = false; button.setAttribute('aria-expanded', 'true'); input.focus();
       indexPromise ||= buildIndex();
+      window.cepUniversalLazyLoaders.forEach(loader => void loader());
       renderFilters();
       if (embeddedSearch && window.parent !== window) {
         window.parent.postMessage({ type: 'cep-universal-search-ready' }, location.origin);
@@ -4968,16 +4984,9 @@ const firebaseConfig = {
       if (error?.code !== 'auth/popup-closed-by-user') console.warn('Xgpt sign-in failed.', error);
     } finally { button.disabled = false; button.textContent = 'Sign in to Xgpt'; }
   });
-  // Warm the separate Xgpt index as soon as Home is ready. If it is still
-  // loading when Search opens, local results render immediately and the Xgpt
-  // entries are merged automatically when this promise completes.
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(() => void loadChatgptSearchNotes(), { timeout: 1500 });
-  } else {
-    setTimeout(() => void loadChatgptSearchNotes(), 0);
-  }
-
-  searchSources.forEach(async source => {
+  // Read saved notes only when search is used, once per Home document.
+  let savedSearchPromise;
+  const loadSavedSearchNotes = () => savedSearchPromise ||= Promise.all(searchSources.map(async source => {
     try {
       const snapshot = await getDocs(collection(db, source.collection));
       const entries = snapshot.docs.map(note => {
@@ -4999,7 +5008,9 @@ const firebaseConfig = {
           sourceCardClass: source.cardClass,
           destinationUrl: source.directUrlField ? data[source.directUrlField] : `${source.file}#cepId=${encodeURIComponent(note.id)}`,
           directDestination: Boolean(source.directUrlField && data[source.directUrlField]),
-          nativeOnly: Boolean(source.directUrlField),
+          // Render the already-loaded record; no extra Firebase-backed iframe per hit.
+          nativeOnly: true,
+          richHtml: data.note || data.text || '',
           record: { id: note.id, data }
         };
       });
@@ -5009,7 +5020,9 @@ const firebaseConfig = {
     } catch (error) {
       console.warn(`Universal search could not load ${source.collection}.`, error);
     }
-  });
+  }));
+  window.cepUniversalLazyLoaders.push(loadSavedSearchNotes);
+
 
   const qiList = document.getElementById('qiList');
   const q = query(collection(db, 'inteleviewerData'), orderBy('radiology'));

@@ -515,6 +515,15 @@ function attachEditor(editor) {
   const divider = document.createElement('span'); divider.className = 'cep-pn-editor-divider';
   toolbar.append(bold, highlight, imageButton, divider, table, addRow, delRow, addCol, delCol, input);
   ['keyup', 'mouseup', 'focus'].forEach(type => editor.addEventListener(type, () => rememberRange(editor)));
+  let tableStyleTimer;
+  const flushTableStyles = () => {
+    clearTimeout(tableStyleTimer);
+    tableStyleTimer = null;
+    if (editor.isConnected) styleTables(editor);
+  };
+  editor.addEventListener('blur', () => {
+    if (tableStyleTimer != null) flushTableStyles();
+  });
   editor.addEventListener('input', () => {
     rememberRange(editor);
     const activeCell = currentCell(editor);
@@ -522,7 +531,10 @@ function attachEditor(editor) {
       delete activeCell.dataset.cepColumnResized;
       activeCell.closest('table')?.removeAttribute('data-cep-table-resized');
     }
-    styleTables(editor);
+    // Let typed characters paint before measuring and resizing table cells.
+    // Coalesce native input and synthetic editor-change notifications.
+    clearTimeout(tableStyleTimer);
+    tableStyleTimer = setTimeout(flushTableStyles, 180);
   });
   toolbar.addEventListener('mousedown', () => rememberRange(editor), true);
   input.addEventListener('change', async () => {
