@@ -1,3 +1,4 @@
+import { sharedSearchRecords, searchCacheVersion, getSharedSearchQuery, setSharedSearchQuery, clearSharedSearchCache } from "./shared-search-cache.js";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithRedirect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -45,6 +46,22 @@ function getSearchText(entry) {
   return indexed;
 }
 
+// Return a snapshot-shaped view of shared plain records, after checking auth.
+export async function loadSearchCollection(db, name) {
+  if (!await window.CEP_AUTH_READY) throw new Error('Sign in to search.');
+  const auth = getAuth(db.app);
+  if (auth.authStateReady) await auth.authStateReady();
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('Sign in to search.');
+  const records = await sharedSearchRecords(db.app.options.projectId, uid, name, async () => {
+    const snapshot = await getDocs(collection(db, name));
+    return snapshot.docs.map(item => ({ id: item.id, data: item.data() }));
+  });
+  if (auth.currentUser?.uid !== uid) throw new Error('Search account changed.');
+  return { docs: records.map(item => ({ id: item.id, data: () => item.data })) };
+}
+let entriesVersion;
+let xgptVersion;
 let entriesPromise;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
@@ -61,6 +78,8 @@ function getXgptAuth() {
   return { app, auth: getAuth(app) };
 }
 export async function loadXgptEntries() {
+  const version = searchCacheVersion();
+  if (xgptVersion !== version) { xgptEntriesPromise = null; xgptConceptMedia = {}; xgptVersion = version; }
   if (xgptEntriesPromise) return xgptEntriesPromise;
   xgptEntriesPromise = (async () => {
   try {
@@ -73,8 +92,8 @@ export async function loadXgptEntries() {
     }
     const db = getFirestore(app);
     xgptDb = db;
-    const snapshot = await getDocs(collection(db, 'notes'));
-    const mediaSnapshot = await getDocs(collection(db, 'concept_media')).catch(error => {
+    const snapshot = await loadSearchCollection(db, 'notes');
+    const mediaSnapshot = await loadSearchCollection(db, 'concept_media').catch(error => {
       console.warn('Xgpt concept images are unavailable in header search.', error);
       return null;
     });
@@ -123,13 +142,15 @@ export function getCachedXgptConceptMedia(concept) {
 }
 
 async function loadEntries(onProgress) {
+  const version = searchCacheVersion();
+  if (entriesVersion !== version) { entriesPromise = null; entriesVersion = version; }
   if (entriesPromise) return entriesPromise;
   entriesPromise = (async () => {
     await window.CEP_AUTH_READY;
     const db = getFirestore(getApp());
     const batches = await Promise.all(sources.map(async ([collectionName,file,sourceTitle,fields,directField]) => {
       try {
-        const snapshot = await getDocs(collection(db, collectionName));
+        const snapshot = await loadSearchCollection(db, collectionName);
         onProgress?.(sourceTitle);
         return snapshot.docs.map(note => {
           const data = note.data();
@@ -241,12 +262,14 @@ function editDistance(a, b) {
 }
 
 export async function mountUniversalSearch(host, closeSearch) {
+  if (!await window.CEP_AUTH_READY) return;
   installXgptMediaUi();
   const panel = document.createElement('section');
   panel.className = 'cep-global-search-panel';
   panel.innerHTML = `
     <div class="cep-global-search-row">
       <input type="search" autocomplete="off" spellcheck="false" placeholder="Search all notes and pages…" aria-label="Words to search for">
+      <button type="button" aria-label="Refresh search" title="Load the latest saved notes" data-search-refresh>↻</button>
       <button type="button" aria-label="Close search">×</button>
     </div>
     <div class="cep-global-search-filters" aria-label="Filter search by section"></div>
@@ -255,11 +278,12 @@ export async function mountUniversalSearch(host, closeSearch) {
     <div class="cep-global-search-results"></div>`;
   host.replaceChildren(panel);
   const input = panel.querySelector('input');
+  input.value = getSharedSearchQuery();
   const filters = panel.querySelector('.cep-global-search-filters');
   const status = panel.querySelector('.cep-global-search-status');
   const xgptPrompt = panel.querySelector('.cep-xgpt-auth-prompt');
   const results = panel.querySelector('.cep-global-search-results');
-  panel.querySelector('button').addEventListener('click', closeSearch);
+  panel.querySelector('[aria-label="Close search"]').addEventListener('click', closeSearch);
   let entries = [], activeSource = 'All', timer;
   const mergeXgptEntries = xgptEntries => {
     const existingIds = new Set(entries.filter(entry => entry.file === 'chatgptx.html').map(entry => entry.id));
@@ -356,10 +380,20 @@ export async function mountUniversalSearch(host, closeSearch) {
       link.append(title, cardBody); group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
-  input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 140); });
+  input.addEventListener('input', () => { setSharedSearchQuery(input.value); clearTimeout(timer); timer = setTimeout(runSearch, 140); });
   input.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeSearch();
     if (event.key === 'Enter') results.querySelector('a')?.click();
+  });
+  panel.querySelector('[data-search-refresh]').addEventListener('click', async event => {
+    const button = event.currentTarget;
+    button.disabled = true; status.textContent = 'Refreshing saved notes…';
+    try {
+      await clearSharedSearchCache();
+      entries = await loadEntries();
+      renderFilters(); runSearch();
+      await requestXgptEntries();
+    } finally { button.disabled = false; }
   });
   input.focus();
   entries = await loadEntries(source => { status.textContent = `Loading ${source}…`; });

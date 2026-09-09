@@ -3265,7 +3265,8 @@ html body > header {
   </div>
 
       <footer>© 2025 Xlyn Notes Board</footer>
- <script>
+ <script type="module">
+  import { getSharedSearchQuery, setSharedSearchQuery, clearSharedSearchCache } from "./shared-search-cache.js";
   // ===== UNIVERSAL SITE SEARCH =====
   (() => {
     const button = document.getElementById('universalSearchButton');
@@ -3762,11 +3763,14 @@ html body > header {
       }, { root: results, rootMargin: '120px 0px' });
       renderNextBatch();
     }
-    function openSearch() {
+    async function openSearch() {
+      if (!await window.CEP_AUTH_READY) return;
+      input.value = getSharedSearchQuery();
       panel.hidden = false; button.setAttribute('aria-expanded', 'true'); input.focus();
       indexPromise ||= buildIndex();
       window.cepUniversalLazyLoaders.forEach(loader => void loader());
       renderFilters();
+      void runSearch();
       if (embeddedSearch && window.parent !== window) {
         window.parent.postMessage({ type: 'cep-universal-search-ready' }, location.origin);
       }
@@ -3780,7 +3784,20 @@ html body > header {
     }
     button.addEventListener('click', () => panel.hidden ? openSearch() : closeSearch());
     close.addEventListener('click', closeSearch);
-    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 180); });
+    const refresh = document.createElement('button');
+    refresh.type = 'button'; refresh.className = close.className;
+    refresh.textContent = '↻'; refresh.title = 'Load the latest saved notes';
+    refresh.setAttribute('aria-label', 'Refresh search');
+    close.before(refresh);
+    refresh.addEventListener('click', async () => {
+      refresh.disabled = true;
+      try {
+        await clearSharedSearchCache();
+        await Promise.all(window.cepUniversalLazyLoaders.map(loader => loader()));
+        await runSearch();
+      } finally { refresh.disabled = false; }
+    });
+    input.addEventListener('input', () => { setSharedSearchQuery(input.value); clearTimeout(timer); timer = setTimeout(runSearch, 180); });
     input.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeSearch();
       if (event.key === 'Enter') {
@@ -3841,6 +3858,8 @@ html body > header {
     window.addEventListener('hashchange', openRequestedSearch);
   })();
 
+</script>
+<script>
   // ===== VITALS POPUP =====
  function showTable() {
   const el = document.getElementById('vital-signs-table');
@@ -4837,7 +4856,8 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=6';
+  import { searchCacheVersion } from "./shared-search-cache.js";
+  import { loadSearchCollection, getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=8';
   import {
     getFirestore,
     collection,
@@ -4913,7 +4933,11 @@ const firebaseConfig = {
   // index on the first real search, cache it, and never create preview iframes.
   let chatgptSearchPromise;
   let chatgptSearchAuth;
-  const loadChatgptSearchNotes = () => chatgptSearchPromise ||= (async () => {
+  let chatgptSearchVersion;
+  const loadChatgptSearchNotes = () => {
+    const version = searchCacheVersion();
+    if (chatgptSearchVersion !== version) { chatgptSearchPromise = null; chatgptSearchVersion = version; }
+    return chatgptSearchPromise ||= (async () => {
     const chatConfig = {
       apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
       authDomain: 'notes-chat-c5ff3.firebaseapp.com',
@@ -4947,6 +4971,7 @@ const firebaseConfig = {
     console.warn('Lazy ChatGPT Notes search could not load.', error);
     return [];
   });
+  };
   window.cepUniversalLazyLoaders ||= [];
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
   window.getCachedXgptConceptMedia = getSharedXgptConceptMedia;
@@ -4986,9 +5011,13 @@ const firebaseConfig = {
   });
   // Read saved notes only when search is used, once per Home document.
   let savedSearchPromise;
-  const loadSavedSearchNotes = () => savedSearchPromise ||= Promise.all(searchSources.map(async source => {
+  let savedSearchVersion;
+  const loadSavedSearchNotes = () => {
+    const version = searchCacheVersion();
+    if (savedSearchVersion !== version) { savedSearchPromise = null; savedSearchVersion = version; }
+    return savedSearchPromise ||= Promise.all(searchSources.map(async source => {
     try {
-      const snapshot = await getDocs(collection(db, source.collection));
+      const snapshot = await loadSearchCollection(db, source.collection);
       const entries = snapshot.docs.map(note => {
         const data = note.data();
         const savedTitle = htmlToText(data.title).trim();
@@ -5021,6 +5050,7 @@ const firebaseConfig = {
       console.warn(`Universal search could not load ${source.collection}.`, error);
     }
   }));
+  };
   window.cepUniversalLazyLoaders.push(loadSavedSearchNotes);
 
 

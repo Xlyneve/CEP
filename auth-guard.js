@@ -104,6 +104,10 @@
       localStorage.removeItem("cep-auth-device-mode");
       localStorage.removeItem("cep-auth-return-to");
       localStorage.setItem("cep-explicit-sign-out", String(Date.now()));
+      try {
+        const { clearSharedSearchCache } = await import('./shared-search-cache.js');
+        await clearSharedSearchCache({ queries: true });
+      } catch (error) { console.warn('Search cache cleanup could not finish.', error); }
       await authSdk.signOut(auth);
       location.replace(`${LOGIN_PAGE}?signedOut=1`);
     }
