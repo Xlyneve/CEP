@@ -75,7 +75,7 @@ function installStyles() {
       width:100% !important; margin:8px 0 !important; border-collapse:collapse !important; border-spacing:0 !important;
       max-width:100% !important; min-width:0 !important;
       overflow:hidden; border:1px solid #e5dfcc !important; border-radius:8px;
-      background:#BFC6C6 !important; color:#2f2b2d !important;
+      background:#CCD1D1 !important; color:#2f2b2d !important;
       box-shadow:0 3px 10px rgba(75,65,70,.07);
     }
     .cep-pn-editor th, .cep-pn-editor td,
@@ -83,7 +83,7 @@ function installStyles() {
       min-width:48px !important; padding:6px 7px !important;
       box-sizing:border-box !important;
       border:1px solid #e5dfcc !important;
-      background:#BFC6C6 !important;
+      background:#CCD1D1 !important;
       position:relative; vertical-align:top; touch-action:pan-y;
     }
     .cep-pn-editor td:not(:last-child)::after,
@@ -97,19 +97,19 @@ function installStyles() {
     }
     body.cep-clinical-notes-page .cep-pn-editor table,
     body.cep-clinical-notes-page .note-card table {
-      background:#BFC6C6 !important; box-shadow:none !important;
+      background:#CCD1D1 !important; box-shadow:none !important;
     }
     body.cep-clinical-notes-page .cep-pn-editor td,
     body.cep-clinical-notes-page .cep-pn-editor th,
     body.cep-clinical-notes-page .note-card td,
     body.cep-clinical-notes-page .note-card th {
-      background:#BFC6C6 !important;
+      background:#CCD1D1 !important;
     }
     body.cep-resizing-table-column, body.cep-resizing-table-column * {
       cursor:col-resize !important; user-select:none !important;
     }
     .cep-pn-editor tr:nth-child(even) td, .note-card tr:nth-child(even) td, .note-tile tr:nth-child(even) td {
-      background:#DBCAD0 !important;
+      background:#E2D5D9 !important;
     }
     .note-card:has(.cep-pn-editor) input[type="text"], .note-tile:has(.cep-pn-editor) input[type="text"] {
       width:100% !important; box-sizing:border-box !important; margin:4px 0 6px !important;
@@ -419,7 +419,7 @@ function currentCell(editor) {
 
 function insertTable(editor) {
   restoreEditorRange(editor);
-  document.execCommand('insertHTML', false, '<table class="cep-note-table" style="width:auto;max-width:100%;border-collapse:collapse;border:1px solid #e5dfcc;background:#BFC6C6"><tbody><tr><td style="width:1cm;padding:6px;border:1px solid #e5dfcc;background:#BFC6C6"><br></td><td style="width:1cm;padding:6px;border:1px solid #e5dfcc;background:#BFC6C6"><br></td></tr><tr><td style="width:1cm;padding:6px;border:1px solid #e5dfcc;background:#DBCAD0"><br></td><td style="width:1cm;padding:6px;border:1px solid #e5dfcc;background:#DBCAD0"><br></td></tr></tbody></table><br>');
+  document.execCommand('insertHTML', false, '<table class="cep-note-table" style="width:auto;max-width:100%;border-collapse:collapse;border:1px solid #e5dfcc;background:#CCD1D1"><tbody><tr><td style="width:1cm;padding:6px;border:1px solid #e5dfcc;background:#CCD1D1"><br></td><td style="width:1cm;padding:6px;border:1px solid #e5dfcc;background:#CCD1D1"><br></td></tr><tr><td style="width:1cm;padding:6px;border:1px solid #e5dfcc;background:#E2D5D9"><br></td><td style="width:1cm;padding:6px;border:1px solid #e5dfcc;background:#E2D5D9"><br></td></tr></tbody></table><br>');
   styleTables(editor);
   notifyEditorChanged(editor, 'insertFromPaste');
 }
@@ -565,7 +565,7 @@ function styleTables(root = document) {
     table.style.setProperty('border-collapse', 'collapse', 'important');
     table.style.setProperty('table-layout', 'auto', 'important');
     table.style.setProperty('border', `1px solid ${gridColor}`, 'important');
-    table.style.setProperty('background', '#BFC6C6', 'important');
+    table.style.setProperty('background', '#CCD1D1', 'important');
     table.querySelectorAll('th,td').forEach(cell => {
       const isEmpty = !cell.textContent.trim() && !cell.querySelector('img,table');
       cell.style.setProperty('border', `1px solid ${gridColor}`, 'important');
@@ -576,7 +576,7 @@ function styleTables(root = document) {
       }
       cell.style.setProperty(
         'background',
-        cell.parentElement.rowIndex % 2 ? '#DBCAD0' : '#BFC6C6',
+        cell.parentElement.rowIndex % 2 ? '#E2D5D9' : '#CCD1D1',
         'important'
       );
     });
