@@ -62,6 +62,13 @@
     });
   }
 
+  function resizeNote(textarea) {
+    const scrollTop = notesElement.scrollTop;
+    textarea.style.height = "0px";
+    textarea.style.height = Math.max(90, textarea.scrollHeight) + "px";
+    notesElement.scrollTop = scrollTop;
+  }
+
   function render(focusLast) {
     notesElement.replaceChildren();
 
@@ -76,6 +83,7 @@
       textarea.setAttribute("aria-label", `Note ${index + 1}`);
       textarea.addEventListener("input", () => {
         note.value = textarea.value;
+        resizeNote(textarea);
         window.clearTimeout(saveTimer);
         saveTimer = window.setTimeout(save, 180);
       });
@@ -95,6 +103,7 @@
 
       card.append(textarea, stamp);
       notesElement.append(card);
+      resizeNote(textarea);
     });
 
     const target = focusLast
@@ -120,7 +129,7 @@
       return;
     }
     const destination = new URL(location.href);
-    destination.searchParams.set("v", "20260911-1");
+    destination.searchParams.set("v", "20260911-2");
     const opened = newWindow
       ? window.open(destination.href, "_blank", "popup=yes,width=900,height=760,resizable=yes,scrollbars=yes")
       : window.open(destination.href, "_blank");
@@ -135,6 +144,20 @@
   }
   document.getElementById("openNewTab").addEventListener("click", () => moveNotepad(false));
   document.getElementById("openNewWindow").addEventListener("click", () => moveNotepad(true));
+
+  let previousWidth = 0;
+  let resizeFrame = 0;
+  const resizeNotes = () => {
+    const width = notesElement.clientWidth;
+    if (width === previousWidth) return;
+    previousWidth = width;
+    cancelAnimationFrame(resizeFrame);
+    resizeFrame = requestAnimationFrame(() => {
+      notesElement.querySelectorAll(".notepad").forEach(resizeNote);
+    });
+  };
+  if (window.ResizeObserver) new ResizeObserver(resizeNotes).observe(notesElement);
+  else window.addEventListener("resize", resizeNotes);
 
   window.addEventListener("pagehide", save);
   render(false);

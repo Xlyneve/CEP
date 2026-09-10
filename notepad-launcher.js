@@ -14,7 +14,7 @@
     }
 
     notepadWindow = window.open(
-      "notepad.html?v=20260911-1",
+      "notepad.html?v=20260911-2",
       windowName,
       "popup=yes,width=300,height=633,resizable=yes,scrollbars=no,location=no,toolbar=no,menubar=no,status=no"
     );
