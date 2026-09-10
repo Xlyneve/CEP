@@ -19,6 +19,28 @@ export function renderSearchCard(card, entry, terms, renderRich) {
     });
   }
   card.append(title, body);
+  const safeUrl = (value, image = false) => {
+    try {
+      const url = new URL(value, location.href);
+      if (['https:', 'http:'].includes(url.protocol) || (image && /^data:image\/(png|jpe?g|gif|webp);base64,/i.test(value))) return url.href;
+    } catch {}
+    return null;
+  };
+  const imageUrl = entry.imageUrl && safeUrl(entry.imageUrl, true);
+  if (imageUrl) {
+    const image = document.createElement('img');
+    image.className = 'cep-search-attachment';
+    image.src = imageUrl; image.alt = 'Note image'; image.loading = 'lazy'; image.decoding = 'async';
+    card.append(image);
+  }
+  const noteUrl = entry.noteUrl && safeUrl(entry.noteUrl);
+  if (noteUrl) {
+    const link = document.createElement('a');
+    link.className = 'cep-search-note-link'; link.href = noteUrl;
+    link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = '🔗 Open URL';
+    link.addEventListener('click', event => event.stopPropagation());
+    card.append(link);
+  }
 }
 function installCardStyles() {
   if (document.getElementById('cep-shared-search-card-styles')) return;
@@ -50,6 +72,8 @@ function installCardStyles() {
   .cep-search-rich > :first-child {margin-top:0;}
   .cep-search-rich > :last-child {margin-bottom:0;}
   .cep-search-rich p,.cep-search-rich div {margin:0 0 7px;}
+  .cep-search-attachment {display:block;max-width:100%;height:auto;margin-top:10px;border-radius:6px;}
+  .cep-search-note-link {display:block;margin-top:8px;font:12px/1.35 Arial,sans-serif;}
   .cep-search-rich img {max-width:100%;height:auto;}
   .cep-search-rich table {max-width:100%;border-collapse:collapse;}
   .cep-search-rich td,.cep-search-rich th {padding:3px 6px;border:1px solid rgba(130,130,136,.42);}

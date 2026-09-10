@@ -1,4 +1,4 @@
-import { renderSearchCard } from "./shared-search-card.js";
+import { renderSearchCard } from "./shared-search-card.js?v=2";
 import { sharedSearchRecords, searchCacheVersion, getSharedSearchQuery, setSharedSearchQuery, clearSharedSearchCache } from "./shared-search-cache.js";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -158,7 +158,7 @@ async function loadEntries(onProgress) {
           const title = textFromHtml(data.title) || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
           const directUrl = directField && data[directField];
-          return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl, richHtml: data.note || data.text || '' };
+          return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl, richHtml: data.note || data.text || '', imageUrl: data.image || '', noteUrl: directField ? '' : (data.url || '') };
         });
       } catch (error) {
         console.warn(`Search could not load ${collectionName}.`, error);
