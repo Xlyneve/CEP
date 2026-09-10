@@ -44,8 +44,10 @@
     window.clearTimeout(saveTimer);
     try {
       localStorage.setItem(storageKey, JSON.stringify(notes));
+      return true;
     } catch {
       // Keep every pad usable when storage is unavailable.
+      return false;
     }
   }
 
@@ -107,6 +109,32 @@
     save();
     render(true);
   });
+
+  function moveNotepad(newWindow) {
+    const status = document.getElementById("openStatus");
+    status.hidden = true;
+    // Flush the typing debounce before the destination reads the saved notes.
+    if (!save()) {
+      status.textContent = "Your browser could not save these notes. Please copy them before opening another view.";
+      status.hidden = false;
+      return;
+    }
+    const destination = new URL(location.href);
+    destination.searchParams.set("v", "20260911-1");
+    const opened = newWindow
+      ? window.open(destination.href, "_blank", "popup=yes,width=900,height=760,resizable=yes,scrollbars=yes")
+      : window.open(destination.href, "_blank");
+    if (!opened) {
+      status.textContent = "The browser blocked the new view. Allow popups for this site and try again.";
+      status.hidden = false;
+      return;
+    }
+    opened.focus();
+    // Script-opened notepads can close themselves; a directly visited page stays open.
+    if (window.opener) window.close();
+  }
+  document.getElementById("openNewTab").addEventListener("click", () => moveNotepad(false));
+  document.getElementById("openNewWindow").addEventListener("click", () => moveNotepad(true));
 
   window.addEventListener("pagehide", save);
   render(false);
