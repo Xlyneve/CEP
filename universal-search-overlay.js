@@ -1,4 +1,4 @@
-import { renderSearchCard } from "./shared-search-card.js?v=2";
+import { renderSearchCard } from "./shared-search-card.js?v=3";
 import { sharedSearchRecords, searchCacheVersion, getSharedSearchQuery, setSharedSearchQuery, clearSharedSearchCache } from "./shared-search-cache.js";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -102,13 +102,13 @@ export async function loadXgptEntries() {
       const media = item.data() || {};
       return [normalizeConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
     }));
-    return snapshot.docs.map(note => {
+    return snapshot.docs.map((note, sourceIndex) => {
       const rawHtml = note.data().content || note.data().note || note.data().text || '';
       const text = textFromHtml(rawHtml).replace(/\[\[([^\]]+)\]\]/g, '$1');
       const firstLine = text.split(/[.!?]\s|\n/)[0].trim();
       return {
         id: note.id, file: 'chatgptx.html', sourceTitle: 'Xgpt Notes',
-        title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text, richHtml: rawHtml
+        title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text, richHtml: rawHtml, sourceIndex, record: { id: note.id, data: note.data() }
       };
     });
   } catch (error) {
@@ -153,12 +153,12 @@ async function loadEntries(onProgress) {
       try {
         const snapshot = await loadSearchCollection(db, collectionName);
         onProgress?.(sourceTitle);
-        return snapshot.docs.map(note => {
+        return snapshot.docs.map((note, sourceIndex) => {
           const data = note.data();
           const title = textFromHtml(data.title) || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
           const directUrl = directField && data[directField];
-          return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl, richHtml: data.note || data.text || '', imageUrl: data.image || '', noteUrl: directField ? '' : (data.url || '') };
+          return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl, richHtml: data.note || data.text || '', imageUrl: data.image || '', noteUrl: directField ? '' : (data.url || ''), sourceIndex, record: { id: note.id, data } };
         });
       } catch (error) {
         console.warn(`Search could not load ${collectionName}.`, error);
@@ -224,7 +224,7 @@ function installXgptMediaUi() {
   const zoomImage = document.createElement('img'); zoom.append(zoomImage); document.body.append(tip, zoom);
   let hideTimer; const hide = () => { hideTimer = setTimeout(() => { tip.hidden = true; tip.replaceChildren(); }, 180); };
   document.addEventListener('mouseover', async event => {
-    const link = event.target.closest?.('.cep-xgpt-concept'); if (!link) return;
+    const link = event.composedPath().find(node => node.matches?.('.cep-xgpt-concept')); if (!link) return;
     if (!link.dataset.image) {
       const media = await loadXgptConceptMedia(link.textContent);
       if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption; }
@@ -234,7 +234,7 @@ function installXgptMediaUi() {
     if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; tip.replaceChildren(image, caption); } else tip.replaceChildren(image);
     const rect = link.getBoundingClientRect(); tip.style.left = `${Math.max(12, Math.min(innerWidth - 292, rect.left))}px`; tip.style.top = `${Math.max(12, Math.min(innerHeight - 250, rect.bottom + 8))}px`; tip.hidden = false;
   });
-  document.addEventListener('mouseout', event => { if (event.target.closest?.('.cep-xgpt-concept') && !tip.contains(event.relatedTarget)) hide(); });
+  document.addEventListener('mouseout', event => { if (event.composedPath().find(node => node.matches?.('.cep-xgpt-concept')) && !tip.contains(event.relatedTarget)) hide(); });
   tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
   tip.addEventListener('click', event => { const image = event.target.closest('img'); if (!image) return; event.preventDefault(); event.stopPropagation(); zoomImage.src = image.src; zoom.classList.add('is-open'); });
   zoom.addEventListener('click', event => {
@@ -243,7 +243,7 @@ function installXgptMediaUi() {
     zoom.classList.remove('is-open');
     zoomImage.src = '';
   });
-  document.addEventListener('click', event => { if (event.target.closest?.('.cep-xgpt-concept')) { event.preventDefault(); event.stopPropagation(); } }, true);
+  document.addEventListener('click', event => { if (event.composedPath().find(node => node.matches?.('.cep-xgpt-concept'))) { event.preventDefault(); event.stopPropagation(); } }, true);
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && zoom.classList.contains('is-open')) zoom.click(); });
 }
 

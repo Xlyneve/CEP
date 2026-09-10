@@ -3267,7 +3267,7 @@ html body > header {
       <footer>© 2025 Xlyn Notes Board</footer>
  <script type="module">
   import { getSharedSearchQuery, setSharedSearchQuery, clearSharedSearchCache } from "./shared-search-cache.js";
-  import { renderSearchCard } from "./shared-search-card.js?v=2";
+  import { renderSearchCard } from "./shared-search-card.js?v=3";
   // ===== UNIVERSAL SITE SEARCH =====
   (() => {
     const button = document.getElementById('universalSearchButton') || document.querySelector('[data-frequent-action="search"]');
@@ -3497,7 +3497,7 @@ html body > header {
       let hideTimer;
       const hide = () => { hideTimer = setTimeout(() => { tip.style.display = 'none'; tip.replaceChildren(); }, 180); };
       document.addEventListener('mouseover', async event => {
-        const link = event.target.closest?.('.xgpt-concept-link'); if (!link) return;
+        const link = event.composedPath().find(node => node.matches?.('.xgpt-concept-link')); if (!link) return;
         if (!link.dataset.image && window.fetchXgptConceptMedia) {
           const media = await window.fetchXgptConceptMedia(link.textContent);
           if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption || ''; }
@@ -3508,7 +3508,7 @@ html body > header {
         else tip.replaceChildren(image);
         const rect = link.getBoundingClientRect(); tip.style.left = `${Math.max(12, Math.min(innerWidth - 292, rect.left))}px`; tip.style.top = `${Math.max(12, Math.min(innerHeight - 250, rect.bottom + 8))}px`; tip.style.display = 'block';
       });
-      document.addEventListener('mouseout', event => { if (event.target.closest?.('.xgpt-concept-link') && !tip.contains(event.relatedTarget)) hide(); });
+      document.addEventListener('mouseout', event => { if (event.composedPath().find(node => node.matches?.('.xgpt-concept-link')) && !tip.contains(event.relatedTarget)) hide(); });
       tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
       tip.addEventListener('click', event => { const image = event.target.closest('img'); if (!image) return; event.preventDefault(); event.stopPropagation(); zoomImage.src = image.src; zoom.classList.add('is-open'); });
       zoom.addEventListener('click', event => {
@@ -3517,7 +3517,7 @@ html body > header {
         zoom.classList.remove('is-open');
         zoomImage.src = '';
       });
-      document.addEventListener('click', event => { if (event.target.closest?.('.xgpt-concept-link')) { event.preventDefault(); event.stopPropagation(); } }, true);
+      document.addEventListener('click', event => { if (event.composedPath().find(node => node.matches?.('.xgpt-concept-link'))) { event.preventDefault(); event.stopPropagation(); } }, true);
       document.addEventListener('keydown', event => { if (event.key === 'Escape') zoom.click(); });
     }
     installXgptMediaInteractions();
@@ -4829,7 +4829,7 @@ function closeTable() {
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { searchCacheVersion } from "./shared-search-cache.js";
-  import { loadSearchCollection, getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=10';
+  import { loadSearchCollection, getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=11';
   import {
     getFirestore,
     collection,
@@ -4990,7 +4990,7 @@ const firebaseConfig = {
     return savedSearchPromise ||= Promise.all(searchSources.map(async source => {
     try {
       const snapshot = await loadSearchCollection(db, source.collection);
-      const entries = snapshot.docs.map(note => {
+      const entries = snapshot.docs.map((note, sourceIndex) => {
         const data = note.data();
         const savedTitle = htmlToText(data.title).trim();
         const text = source.fields
@@ -5014,6 +5014,7 @@ const firebaseConfig = {
           richHtml: data.note || data.text || '',
           imageUrl: data.image || '',
           noteUrl: source.directUrlField ? '' : (data.url || ''),
+          sourceIndex,
           record: { id: note.id, data }
         };
       });

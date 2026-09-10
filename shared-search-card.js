@@ -1,4 +1,6 @@
+import { renderSourceCard } from './source-search-card.js';
 export function renderSearchCard(card, entry, terms, renderRich) {
+  if (renderSourceCard(card, entry, terms, renderRich)) return;
   installCardStyles();
   card.classList.add('cep-search-card');
   card.classList.toggle('cep-search-xgpt', entry.sourceTitle === 'Xgpt Notes');
