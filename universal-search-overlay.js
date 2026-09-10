@@ -1,3 +1,4 @@
+import { renderSearchCard } from "./shared-search-card.js";
 import { sharedSearchRecords, searchCacheVersion, getSharedSearchQuery, setSharedSearchQuery, clearSharedSearchCache } from "./shared-search-cache.js";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -157,7 +158,7 @@ async function loadEntries(onProgress) {
           const title = textFromHtml(data.title) || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
           const directUrl = directField && data[directField];
-          return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl };
+          return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl, richHtml: data.note || data.text || '' };
         });
       } catch (error) {
         console.warn(`Search could not load ${collectionName}.`, error);
@@ -371,13 +372,8 @@ export async function mountUniversalSearch(host, closeSearch) {
         destination.hash = new URLSearchParams({ cepId: entry.id, cepSearch: query, cepHint: entry.text.slice(0,230) }).toString();
         link.href = destination.href;
       }
-      const title = document.createElement('strong'); title.textContent = entry.title;
-      const cardBody = document.createElement(entry.file === 'chatgptx.html' ? 'div' : 'span');
-      if (entry.file === 'chatgptx.html' && entry.richHtml) {
-        cardBody.className = 'cep-xgpt-rich-content';
-        addXgptRichContent(cardBody, entry.richHtml, terms);
-      } else addHighlightedText(cardBody, entry.text, terms);
-      link.append(title, cardBody); group.querySelector('.cep-global-search-group-cards').appendChild(link);
+      renderSearchCard(link, entry, terms, addXgptRichContent);
+      group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
   input.addEventListener('input', () => { setSharedSearchQuery(input.value); clearTimeout(timer); timer = setTimeout(runSearch, 140); });

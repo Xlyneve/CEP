@@ -3267,9 +3267,10 @@ html body > header {
       <footer>© 2025 Xlyn Notes Board</footer>
  <script type="module">
   import { getSharedSearchQuery, setSharedSearchQuery, clearSharedSearchCache } from "./shared-search-cache.js";
+  import { renderSearchCard } from "./shared-search-card.js";
   // ===== UNIVERSAL SITE SEARCH =====
   (() => {
-    const button = document.getElementById('universalSearchButton');
+    const button = document.getElementById('universalSearchButton') || document.querySelector('[data-frequent-action="search"]');
     const panel = document.getElementById('universalSearchPanel');
     const input = document.getElementById('universalSearchInput');
     const close = document.getElementById('universalSearchClose');
@@ -3668,37 +3669,7 @@ html body > header {
           event.preventDefault();
           navigateToSearchResult(nativeCard.href);
         });
-        const nativeTitle = document.createElement('span');
-        nativeTitle.className = 'universal-search-native-title';
-        nativeTitle.textContent = page.title;
-        const nativeSnippet = document.createElement('div');
-        nativeSnippet.className = 'universal-search-native-snippet';
-        const matchingTable = page.searchTables?.find(rows =>
-          terms.every(term => rows.flat().join(' ').toLocaleLowerCase().includes(term))
-        );
-        if (page.richHtml) {
-          nativeSnippet.classList.add('xgpt-rich-snippet');
-          addHighlightedRichHtml(nativeSnippet, page.richHtml, terms);
-          nativeCard.append(nativeTitle, nativeSnippet);
-        } else if (matchingTable) {
-          const tablePreview = document.createElement('table');
-          tablePreview.className = 'universal-search-native-table';
-          const tableBody = document.createElement('tbody');
-          matchingTable.forEach(rowValues => {
-            const row = document.createElement('tr');
-            rowValues.forEach(value => {
-              const cell = document.createElement('td');
-              addHighlightedText(cell, value, terms);
-              row.appendChild(cell);
-            });
-            tableBody.appendChild(row);
-          });
-          tablePreview.appendChild(tableBody);
-          nativeCard.append(nativeTitle, tablePreview);
-        } else {
-          addHighlightedText(nativeSnippet, snippetText, terms);
-          nativeCard.append(nativeTitle, nativeSnippet);
-        }
+        renderSearchCard(nativeCard, { ...page, text: snippetText }, terms, addHighlightedRichHtml);
         result.appendChild(nativeCard);
         group.appendChild(result);
         group.classList.add('has-ready-results');
@@ -3766,7 +3737,7 @@ html body > header {
     async function openSearch() {
       if (!await window.CEP_AUTH_READY) return;
       input.value = getSharedSearchQuery();
-      panel.hidden = false; button.setAttribute('aria-expanded', 'true'); input.focus();
+      panel.hidden = false; button?.setAttribute('aria-expanded', 'true'); input.focus();
       indexPromise ||= buildIndex();
       window.cepUniversalLazyLoaders.forEach(loader => void loader());
       renderFilters();
@@ -3777,12 +3748,12 @@ html body > header {
     }
     window.openCepUniversalSearch = openSearch;
     function closeSearch() {
-      panel.hidden = true; button.setAttribute('aria-expanded', 'false'); button.focus();
+      panel.hidden = true; button?.setAttribute('aria-expanded', 'false'); button?.focus();
       if (embeddedSearch && window.parent !== window) {
         window.parent.postMessage({ type: 'cep-universal-search-close' }, location.origin);
       }
     }
-    button.addEventListener('click', () => panel.hidden ? openSearch() : closeSearch());
+    if (button?.id === 'universalSearchButton') button.addEventListener('click', () => panel.hidden ? openSearch() : closeSearch());
     close.addEventListener('click', closeSearch);
     const refresh = document.createElement('button');
     refresh.type = 'button'; refresh.className = close.className;
@@ -4747,6 +4718,7 @@ function closeTable() {
 
     const runAction = action => {
       if (action === 'search') {
+        if (window.openCepUniversalSearch) { void window.openCepUniversalSearch(); return; }
         const panel = document.getElementById('universalSearchPanel');
         const input = document.getElementById('universalSearchInput');
         if (panel) panel.hidden = false;
@@ -4857,7 +4829,7 @@ function closeTable() {
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { searchCacheVersion } from "./shared-search-cache.js";
-  import { loadSearchCollection, getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=8';
+  import { loadSearchCollection, getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=9';
   import {
     getFirestore,
     collection,
