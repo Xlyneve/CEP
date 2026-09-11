@@ -372,6 +372,10 @@ export async function mountUniversalSearch(host, closeSearch) {
         destination.hash = new URLSearchParams({ cepId: entry.id, cepSearch: query, cepHint: entry.text.slice(0,230) }).toString();
         link.href = destination.href;
       }
+      link.addEventListener('click', event => {
+        if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        closeSearch();
+      });
       renderSearchCard(link, entry, terms, addXgptRichContent);
       group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
