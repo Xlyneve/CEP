@@ -190,9 +190,10 @@
     .dose-history, .date-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .dose-pill, .date-pill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 14px; background: rgba(244,247,255,0.95); border: 1px solid rgba(70,95,170,0.10); font-size: 0.84rem; }
     .dose-pill.done { background: rgba(237,250,244,0.98); border-color: rgba(36,107,79,0.20); }
-    .date-pill { flex-direction: column; align-items: flex-start; }
-    .date-pill label { font-size: 0.76rem; color: var(--muted); }
-    .date-pill input { padding: 7px 8px; border-radius: 10px; }
+    .date-pill { flex-direction: column; align-items: flex-start; background: #fff; color: #000; }
+    .date-pill label { font-size: 0.76rem; color: #000; }
+    .date-pill input { padding: 7px 8px; border-radius: 10px; background: #fff; color: #000; -webkit-text-fill-color: #000; border: 1px solid #999; }
+    .date-pill input::placeholder { color: #555; -webkit-text-fill-color: #555; }
     .timeline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .week-box { border-radius: 16px; background: rgba(255,255,255,0.86); border: 1px solid rgba(55,74,124,0.10); padding: 10px; min-height: 145px; display: grid; gap: 10px; align-content: start; break-inside: avoid; }
     .week-title { font-size: 0.9rem; font-weight: 700; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
@@ -304,7 +305,6 @@
   <span class="notfunded">● Recommended / not funded</span>
 </div>
       <div class="hero-actions">
-        <button class="btn-primary" id="generateBtn">Generate Plan</button>
         <button class="btn-soft" id="resetDefaultsBtn">Reset Defaults</button>
       </div>
     </section>
@@ -390,6 +390,10 @@
         </div>
       </div>
       <div class="library-grid" id="libraryGrid"></div>
+      <div class="hero-actions" style="margin-top:16px">
+        <button class="btn-primary" id="generateBtn" type="button">▶ Generate Plan</button>
+      </div>
+      <div id="planFeedback" class="notes-box" role="status" aria-live="polite" style="margin-top:12px"></div>
     </section>
 
     <section class="grid-2">
@@ -562,7 +566,7 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
               <input
   type="text"
   inputmode="numeric"
-  placeholder="DD-MM-YYYY"
+  placeholder="DD-MM-YYYY or DD/MM/YYYY"
   value="${
     vax.doseDates[doseIndex]
       ? (() => {
@@ -597,18 +601,20 @@ function updateDoseDate(index, doseIndex, value) {
 
   if (!cleaned) {
     vaccines[index].doseDates[doseIndex] = '';
-    generatePlan();
+    generatePlan(false);
     return;
   }
 
-  const match = cleaned.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  const match = cleaned.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
 
   if (!match) {
-    alert('Please enter the date as DD-MM-YYYY');
+    alert('Please enter the date as DD-MM-YYYY or DD/MM/YYYY');
     return;
   }
 
-  const [, day, month, year] = match;
+  const day = match[1].padStart(2, '0');
+  const month = match[2].padStart(2, '0');
+  const year = match[3];
 
   const testDate = new Date(`${year}-${month}-${day}T00:00:00`);
   if (
@@ -617,12 +623,12 @@ function updateDoseDate(index, doseIndex, value) {
     testDate.getMonth() + 1 !== Number(month) ||
     testDate.getDate() !== Number(day)
   ) {
-    alert('Please enter a valid date as DD-MM-YYYY');
+    alert('Please enter a valid date as DD-MM-YYYY or DD/MM/YYYY');
     return;
   }
 
   vaccines[index].doseDates[doseIndex] = `${year}-${month}-${day}`;
-  generatePlan();
+  generatePlan(false);
 }
    function clinicalContext() {
     const value = id => document.getElementById(id).value;
@@ -793,16 +799,30 @@ if (carryOver.length) {
   }
 }
 
-  function generatePlan() {
+  function generatePlan(refreshHistory = true) {
     BioSchedule.configure(vaccines, clinicalContext());
     normalizeVaccines();
-    renderLibrary();
+    if (refreshHistory !== false) renderLibrary();
     const plan = createPlan();
     renderTimelineTo(timeline, plan.visits);
     renderSummary(plan.visits, plan.carryOver);
+    const count = plan.visits.reduce((sum, visit) => sum + visit.items.length, 0);
+    const feedback = document.getElementById('planFeedback');
+    feedback.replaceChildren();
+    const message = document.createElement('strong');
+    message.textContent = count ? `Plan generated: ${count} doses scheduled. See the visit plan below.` : 'No doses scheduled. Review the requirements below.';
+    feedback.appendChild(message);
+    if (plan.carryOver.length) {
+      const list = document.createElement('ul');
+      plan.carryOver.forEach(note => { const item = document.createElement('li'); item.textContent = note; list.appendChild(item); });
+      feedback.appendChild(list);
+    }
   }
 
-  document.getElementById('generateBtn').addEventListener('click', generatePlan);
+  document.getElementById('generateBtn').addEventListener('click', () => {
+    generatePlan(false);
+    document.getElementById('planFeedback').scrollIntoView({behavior:'smooth', block:'start'});
+  });
   document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
     resetData();
     generatePlan();
