@@ -27,6 +27,25 @@ function applyStyles(shadow,file) {
   if (!sheet) { const css=cssFor(file); try { sheet=new CSSStyleSheet();sheet.replaceSync(css); } catch { sheet=css; } sheets.set(file,sheet); }
   if(typeof sheet==='string'){const style=document.createElement('style');style.textContent=sheet;shadow.append(style);}else shadow.adoptedStyleSheets=[sheet];
 }
+function applyTableTheme(table,file) {
+  if (!['note-card','note-tile'].includes(sourceCardDefinitions[file].card)) return;
+  const styles=sourceCardProfiles[file].styles;
+  const property=(selector,name)=>{
+    const rule=sourceCardRules[styles[selector]] || '';
+    return rule.split(';').find(value=>value.startsWith(name+':'))?.slice(name.length+1);
+  };
+  const base=property('.source-body table','background-color');
+  const alternate=property('.source-body tr:nth-child(even) td','background-color');
+  const border=property('.source-body table','border');
+  // Match the source page's display-time theme, including legacy inline !important colours.
+  if(base)table.style.setProperty('background',base,'important');
+  if(border)table.style.setProperty('border',border,'important');
+  table.querySelectorAll('td,th').forEach(cell=>{
+    const colour=cell.parentElement.rowIndex % 2 ? alternate : base;
+    if(colour)cell.style.setProperty('background',colour,'important');
+    if(border)cell.style.setProperty('border',border,'important');
+  });
+}
 function safeAsset(value,image=false) {
   if(!value)return '';
   try {const url=new URL(value,location.href);return ['http:','https:'].includes(url.protocol)||(image&&/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(value))?url.href:'';}catch{return '';}
@@ -71,7 +90,7 @@ export function renderSourceCard(card,entry,terms,renderRich) {
     source.style.backgroundColor=`rgba(${palette[hash(seed)%palette.length]}, 0.74)`;
     source.style.color='#39190f';
   }
-  source.querySelectorAll('table').forEach(table=>{table.tabIndex=0;table.setAttribute('aria-label','Enlarge table');table.setAttribute('aria-haspopup','dialog');table.style.cursor='zoom-in';});
+  source.querySelectorAll('table').forEach(table=>{applyTableTheme(table,file);table.tabIndex=0;table.setAttribute('aria-label','Enlarge table');table.setAttribute('aria-haspopup','dialog');table.style.cursor='zoom-in';});
   shadow.addEventListener('keydown',event=>{if(event.target.matches?.('table')&&['Enter',' '].includes(event.key)){event.preventDefault();event.stopPropagation();zoomTable(event.target,file);}});
   shadow.append(source);card.append(host);
   card.classList.add('cep-search-card','cep-source-preview');
