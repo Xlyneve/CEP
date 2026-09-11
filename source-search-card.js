@@ -31,15 +31,27 @@ function safeAsset(value,image=false) {
   if(!value)return '';
   try {const url=new URL(value,location.href);return ['http:','https:'].includes(url.protocol)||(image&&/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(value))?url.href:'';}catch{return '';}
 }
-function zoomImage(image) {
+function openZoom(full, label) {
   const dialog=document.createElement('dialog');
-  dialog.setAttribute('aria-label','Note image');
+  dialog.setAttribute('aria-label',label);
   dialog.style.cssText='padding:12px;border:0;border-radius:12px;max-width:94vw;max-height:94vh;background:#fff';
-  const full=document.createElement('img');full.src=image.currentSrc||image.src;full.alt=image.alt||'Note image';full.style.cssText='display:block;max-width:90vw;max-height:82vh;object-fit:contain';
-  const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label','Close image');close.title='Close image';close.className='cep-image-close';
+  const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label','Close '+label.toLowerCase());close.title='Close '+label.toLowerCase();close.className='cep-image-close';
   const closeStyle=document.createElement('style');closeStyle.textContent='.cep-image-close{display:block;width:36px;height:36px;margin:10px auto 0;padding:0;border:1px solid rgba(255,255,255,.88);border-radius:12px;background:rgba(229,203,204,.55);color:#40363b;font:400 24px/1 Arial,sans-serif;box-shadow:0 3px 10px rgba(63,52,57,.08);backdrop-filter:blur(12px);cursor:pointer}.cep-image-close:hover{background:rgba(229,203,204,.8)}.cep-image-close:focus-visible{outline:2px solid #6a6166;outline-offset:3px}';dialog.append(closeStyle);
   close.addEventListener('click',()=>dialog.close());dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener('close',()=>dialog.remove());
   dialog.append(full,close);document.body.append(dialog);dialog.showModal();
+}
+function zoomImage(image) {
+  const full=document.createElement('img');full.src=image.currentSrc||image.src;full.alt=image.alt||'Note image';full.style.cssText='display:block;max-width:90vw;max-height:82vh;object-fit:contain';
+  openZoom(full,'Image');
+}
+function zoomTable(table,file) {
+  const full=document.createElement('div');full.style.cssText='width:88vw;max-height:76vh;overflow:auto;text-align:left';
+  const shadow=full.attachShadow({mode:'open'});applyStyles(shadow,file);
+  const body=document.createElement('div');body.className='source-body';
+  const copy=table.cloneNode(true);copy.removeAttribute('tabindex');copy.removeAttribute('aria-label');copy.removeAttribute('aria-haspopup');
+  body.append(copy);shadow.append(body);
+  const style=document.createElement('style');style.textContent='.source-body table{width:max-content !important;min-width:100% !important;max-width:none !important;cursor:default}.source-body td,.source-body th{max-width:60vw;overflow-wrap:anywhere}';shadow.append(style);
+  openZoom(full,'Table');
 }
 export function renderSourceCard(card,entry,terms,renderRich) {
   const file=entry.sourcePage||entry.file;
@@ -59,6 +71,8 @@ export function renderSourceCard(card,entry,terms,renderRich) {
     source.style.backgroundColor=`rgba(${palette[hash(seed)%palette.length]}, 0.74)`;
     source.style.color='#39190f';
   }
+  source.querySelectorAll('table').forEach(table=>{table.tabIndex=0;table.setAttribute('aria-label','Enlarge table');table.setAttribute('aria-haspopup','dialog');table.style.cursor='zoom-in';});
+  shadow.addEventListener('keydown',event=>{if(event.target.matches?.('table')&&['Enter',' '].includes(event.key)){event.preventDefault();event.stopPropagation();zoomTable(event.target,file);}});
   shadow.append(source);card.append(host);
   card.classList.add('cep-search-card','cep-source-preview');
   card.style.cssText+=';display:block;padding:0;border:0;background:transparent;box-shadow:none;min-height:0;color:inherit;text-decoration:none';
@@ -67,7 +81,8 @@ export function renderSourceCard(card,entry,terms,renderRich) {
     const target=event.target;
     if(target.closest?.('.xgpt-concept-link,.cep-xgpt-concept'))return;
     if(target.closest?.('a')){event.stopPropagation();return;}
-    const image=target.closest?.('img');if(image){event.preventDefault();event.stopPropagation();zoomImage(image);}
+    const image=target.closest?.('img');if(image){event.preventDefault();event.stopPropagation();zoomImage(image);return;}
+    const table=target.closest?.('table');if(table){event.preventDefault();event.stopPropagation();zoomTable(table,file);}
   });
   return true;
 }
