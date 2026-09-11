@@ -1,4 +1,4 @@
-import { renderSourceCard } from './source-search-card.js';
+import { renderSourceCard } from './source-search-card.js?v=2';
 export function renderSearchCard(card, entry, terms, renderRich) {
   if (renderSourceCard(card, entry, terms, renderRich)) return;
   installCardStyles();

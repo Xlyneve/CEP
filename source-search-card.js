@@ -36,7 +36,8 @@ function zoomImage(image) {
   dialog.setAttribute('aria-label','Note image');
   dialog.style.cssText='padding:12px;border:0;border-radius:12px;max-width:94vw;max-height:94vh;background:#fff';
   const full=document.createElement('img');full.src=image.currentSrc||image.src;full.alt=image.alt||'Note image';full.style.cssText='display:block;max-width:90vw;max-height:82vh;object-fit:contain';
-  const close=document.createElement('button');close.type='button';close.textContent='Close image';close.style.cssText='display:block;margin:8px auto 0;padding:6px 12px;cursor:pointer';
+  const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label','Close image');close.title='Close image';close.className='cep-image-close';
+  const closeStyle=document.createElement('style');closeStyle.textContent='.cep-image-close{display:block;width:36px;height:36px;margin:10px auto 0;padding:0;border:1px solid rgba(255,255,255,.88);border-radius:12px;background:rgba(229,203,204,.55);color:#40363b;font:400 24px/1 Arial,sans-serif;box-shadow:0 3px 10px rgba(63,52,57,.08);backdrop-filter:blur(12px);cursor:pointer}.cep-image-close:hover{background:rgba(229,203,204,.8)}.cep-image-close:focus-visible{outline:2px solid #6a6166;outline-offset:3px}';dialog.append(closeStyle);
   close.addEventListener('click',()=>dialog.close());dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});dialog.addEventListener('close',()=>dialog.remove());
   dialog.append(full,close);document.body.append(dialog);dialog.showModal();
 }
