@@ -45,12 +45,12 @@ function zoomImage(image) {
   openZoom(full,'Image');
 }
 function zoomTable(table,file) {
-  const full=document.createElement('div');full.style.cssText='width:88vw;max-height:76vh;overflow:auto;text-align:left';
+  const full=document.createElement('div');full.style.cssText='width:max-content;max-width:calc(94vw - 24px);max-height:76vh;overflow:auto;margin:0 auto;text-align:left';
   const shadow=full.attachShadow({mode:'open'});applyStyles(shadow,file);
   const body=document.createElement('div');body.className='source-body';
   const copy=table.cloneNode(true);copy.removeAttribute('tabindex');copy.removeAttribute('aria-label');copy.removeAttribute('aria-haspopup');
   body.append(copy);shadow.append(body);
-  const style=document.createElement('style');style.textContent='.source-body table{width:max-content !important;min-width:100% !important;max-width:none !important;cursor:default}.source-body td,.source-body th{max-width:60vw;overflow-wrap:anywhere}';shadow.append(style);
+  const style=document.createElement('style');style.textContent=':host .source-body{width:max-content;max-width:none;margin:0}:host .source-body table{width:max-content !important;min-width:0 !important;max-width:none !important;margin:0 !important;cursor:default !important}:host .source-body td,:host .source-body th{max-width:60vw;overflow-wrap:anywhere}';shadow.append(style);
   openZoom(full,'Table');
 }
 export function renderSourceCard(card,entry,terms,renderRich) {
