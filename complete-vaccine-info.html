@@ -890,8 +890,22 @@ text-shadow: none;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 46px;
+      width: 52px;
       height: 26px;
+    }
+
+    /* Keep the menu light and search light separate inside the header control. */
+    .header .center-toggle > .toggle-icon {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      margin: 0;
+    }
+
+    .header .center-toggle > .header-search-trigger {
+      top: 2px;
+      left: 2px;
+      right: auto;
     }
 
     .vaccine-card {
@@ -968,6 +982,7 @@ text-shadow: none;
   </div>
 
   <script type="module">
+import { debounceSearch } from "./search-scheduler.js";
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
     getFirestore, collection, addDoc, onSnapshot,
@@ -1326,11 +1341,11 @@ card.addEventListener("click", (e) => {
   await deleteDoc(doc(db, "vaccines", id));
 };
 
-  searchBox.addEventListener("input", () => {
+  searchBox.addEventListener("input", debounceSearch(() => {
     currentSearch = searchBox.value; // store current filter
     applyFilter();
     renderCards();
-  });
+  }));
 
   // Text formatting function
   window.formatText = function (command, value = null) {

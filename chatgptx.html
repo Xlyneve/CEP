@@ -4594,9 +4594,8 @@ function runLiveSearch(q, immediate = false) {
     }
   };
 
-  if (immediate) return doIt();
-
   clearTimeout(liveTimer);
+  if (immediate) return doIt();
   liveTimer = setTimeout(doIt, 220);
 }
 
@@ -4604,6 +4603,7 @@ userInput.addEventListener('input', () => {
   const q = userInput.value.trim();
 
   if (!q) {
+    clearTimeout(liveTimer);
     lastLiveQuery = '';
     if (isUnlocked) renderWelcome();
     else clearLiveResults();

@@ -1204,6 +1204,7 @@ button:focus,
  
 
 <script type="module">
+import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { renderInBatches } from "./progressive-render.js";
 import { uploadReferenceImage, deleteReferenceImage } from "./image-storage.js?v=20260826-2";
@@ -1679,17 +1680,27 @@ function enableEditing(card, id, title, note, url = "") {
   });
 }
 /* ---------------- Rendering ---------------- */
+const noteSearchText = new WeakMap();
 function buildNoteCards(snapshot) {
   const list = document.getElementById('nurseNotesList');
   list.innerHTML = '';
+  // Firestore can return new document wrappers on each access to snapshot.docs.
+  // Keep the text index by snapshot and document ID instead of wrapper identity.
+  let searchIndex = noteSearchText.get(snapshot);
+  if (!searchIndex) noteSearchText.set(snapshot, searchIndex = new Map());
 
   const searchTerms = currentSearchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
   const matchingDocs = snapshot.docs.filter(docSnap => {
-    const data = docSnap.data();
-    const noteText = new DOMParser()
-      .parseFromString(String(data.note || ''), 'text/html')
-      .body.textContent || '';
-    const searchable = `${data.title || ''} ${noteText} ${data.url || ''}`.toLowerCase();
+    if (!searchTerms.length) return true;
+    let searchable = searchIndex.get(docSnap.id);
+    if (searchable === undefined) {
+      const data = docSnap.data();
+      const noteText = new DOMParser()
+        .parseFromString(String(data.note || ''), 'text/html')
+        .body.textContent || '';
+      searchable = `${data.title || ''} ${noteText} ${data.url || ''}`.toLowerCase();
+      searchIndex.set(docSnap.id, searchable);
+    }
     return searchTerms.every(term => searchable.includes(term));
   });
 
@@ -1794,10 +1805,7 @@ div.addEventListener('click', (event) => {
 return div;
   }, {
     initialBatchSize: 12,
-    batchSize: 8,
-    onBatch: () => {
-      if (currentSearchQuery.trim() !== "") applySearchFilter(currentSearchQuery);
-    }
+    batchSize: 8
   });
 }
 
@@ -1933,7 +1941,7 @@ function searchNotes(event) {
 
 /* ---------------- Setup ---------------- */
 const searchInput = document.getElementById('searchInput');
-searchInput?.addEventListener('input', searchNotes);
+searchInput?.addEventListener('input', debounceSearch(searchNotes));
 document.getElementById('mainBoldBtn').addEventListener('mousedown', (e) => {
   e.preventDefault();
 

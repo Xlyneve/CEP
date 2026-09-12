@@ -393,6 +393,7 @@ h1 {
 
 <div class="note-grid" id="noteGrid"></div>
 <script type="module">
+import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, query, orderBy,
@@ -742,27 +743,24 @@ tile.appendChild(menuToggle);
 
 grid.appendChild(tile);
 
-    // Resize after appending
-    requestAnimationFrame(() => {
-      autoResize(textarea);
-      resizeTiles();
-    });
+    // Batch initial measurements once after every tile has been appended.
 
     // Auto-resize while typing
     textarea.addEventListener("input", () => {
       autoResize(textarea);
-      resizeTiles();
+      resizeTiles(tile);
     });
   });
 
+  requestAnimationFrame(() => resizeTiles());
   enableTileClickZoom();
 }
 
 // Search listener
-document.getElementById("searchInput")?.addEventListener("input", e => {
+document.getElementById("searchInput")?.addEventListener("input", debounceSearch(e => {
   const filter = e.target.value;
   displayNotes(allNotes, filter);
-});
+}));
 
 // Zoom on click
 function enableTileClickZoom() {
@@ -807,12 +805,14 @@ document.getElementById("addNoteBtn").addEventListener("click", async () => {
 });
 
 // Masonry grid recalculation
-function resizeTiles() {
+function resizeTiles(onlyTile = null) {
   const grid = document.getElementById("noteGrid");
   const rowHeight = parseInt(window.getComputedStyle(grid).getPropertyValue('grid-auto-rows'));
   const rowGap = parseInt(window.getComputedStyle(grid).getPropertyValue('gap'));
 
-  grid.querySelectorAll('.note-tile').forEach(tile => {
+  // Read all tile dimensions before writing any grid spans.
+  const tiles = onlyTile ? [onlyTile] : [...grid.querySelectorAll('.note-tile')];
+  const spans = tiles.map(tile => {
     const display = tile.querySelector('.note-display');
 const textarea = tile.querySelector('textarea');
 
@@ -830,7 +830,11 @@ const contentHeight =
   extraSpace;
 
     const rowSpan = Math.ceil((contentHeight + rowGap) / (rowHeight + rowGap));
-    tile.style.gridRowEnd = `span ${rowSpan}`;
+    return rowSpan;
+  });
+  tiles.forEach((tile, index) => {
+    const value = `span ${spans[index]}`;
+    if (tile.style.gridRowEnd !== value) tile.style.gridRowEnd = value;
   });
 }
 

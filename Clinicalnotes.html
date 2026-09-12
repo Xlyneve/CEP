@@ -981,6 +981,7 @@ body::after {
   <div class="notes-panel" id="notesList"></div>
 </div>
 <script type="module">
+import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc
@@ -1415,7 +1416,7 @@ function drawNotes(notesArray) {
 
 
 // --- Search ---
-document.getElementById('searchInput').addEventListener('input', e => {
+document.getElementById('searchInput').addEventListener('input', debounceSearch(e => {
   const term = e.target.value.toLowerCase();
 
   const filtered = ALL_NOTES.filter(n =>
@@ -1424,7 +1425,7 @@ document.getElementById('searchInput').addEventListener('input', e => {
   );
 
   drawNotes(filtered);
-});
+}));
 
 const notesDiv = document.getElementById('notesDiv');
 const panelToggle = document.getElementById('panelToggle');

@@ -30,12 +30,9 @@ toggleIcon.title = 'Menu';
     // expose the header search. Avoid downloading every search collection a
     // second time in those contexts.
     if (homeHasNativeSearch || embeddedHomeSearch || cardPreview) return;
-    Promise.resolve(window.CEP_AUTH_READY).then(authorized => {
-      if (!authorized) return;
-      import("./universal-search-overlay.js?v=6")
-        .then(module => module.preloadUniversalSearch?.())
-        .catch(error => console.warn("Universal Search preload was skipped.", error));
-    });
+    // Warm only the UI module. Collection reads start when search opens.
+    import("./universal-search-overlay.js?v=7")
+      .catch(error => console.warn("Search UI preload was skipped.", error));
   };
   if ('requestIdleCallback' in window) requestIdleCallback(warmSearch, { timeout: 1400 });
   else setTimeout(warmSearch, 250);
@@ -74,7 +71,7 @@ toggleIcon.title = 'Menu';
     searchOverlay = overlay;
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     try {
-      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=6");
+      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=7");
       if (searchOverlay !== overlay) return;
       await mountUniversalSearch(host, closeEmbeddedSearch);
     } catch (error) {
@@ -160,8 +157,9 @@ toggleIcon.title = 'Menu';
       name: "Admin",
       links: [
         { text: "Inteleviewer", link: "inteleviewer.html" },
-        { text: "Roster", link: "https://xlyneve.github.io/OHNRoster/" },
         { text: "Notes", link: "Notes.html" },
+        { text: "OH CME", link: "https://onehealthgpuc.github.io/cases-site/" },
+        { text: "Roster", link: "https://xlyneve.github.io/OHNRoster/" },
         { text: "Timesheet", link: "timesheet.html" }
       ]
     }

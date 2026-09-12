@@ -967,6 +967,7 @@ textarea:focus {
 <button id="toggleInputBtn">+</button>
 
 <script type="module">
+import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { renderInBatches } from "./progressive-render.js";
 import { uploadReferenceImage, deleteReferenceImage } from "./image-storage.js?v=20260826-2";
@@ -1498,11 +1499,11 @@ async function deleteNote(id){
 }
 
 /* ---------------- Search ---------------- */
-document.getElementById('searchInput').addEventListener('input',(e)=>{
+document.getElementById('searchInput').addEventListener('input',debounceSearch((e)=>{
   const val=e.target.value.toLowerCase();
   const filtered=notes.filter(n=>(n.title||'').toLowerCase().includes(val)||(String(n.text||'')).toLowerCase().includes(val));
   renderNotes(filtered);
-});
+}));
 
 /* ---------------- Toggle Input Group ---------------- */
 /* ---------------- Toggle Input Group ---------------- */

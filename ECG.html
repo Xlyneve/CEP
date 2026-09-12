@@ -101,7 +101,8 @@ const firebaseConfig = {
 }
 
   // ------------------ Load Notes ------------------
-  let isLoadingNotes = false;
+  let noteLoadPromise = null;
+  let noteLoadRequest = 0;
   let cachedNoteDocs = null;
   const createCachedNote = (id, data) => ({ id, data: () => data });
   const updateCachedNote = (id, updates) => {
@@ -112,16 +113,18 @@ const firebaseConfig = {
     );
   };
   async function loadNotes(filter = "", forceRefresh = false) {
-    if (isLoadingNotes) return;
-    isLoadingNotes = true;
-
+    const request = ++noteLoadRequest;
+    if (forceRefresh || !cachedNoteDocs) {
+      noteLoadPromise ||= getDocs(ecgNotesCollection)
+        .then(snapshot => { cachedNoteDocs = snapshot.docs; })
+        .finally(() => { noteLoadPromise = null; });
+      await noteLoadPromise;
+    }
+    // A query typed during the initial download must supersede the older one.
+    if (request !== noteLoadRequest) return;
     const notesContainer = document.getElementById("notes");
     notesContainer.innerHTML = "";
     const searchWords = filter.toLowerCase().trim().split(/\s+/).filter(Boolean);
-
-    if (forceRefresh || !cachedNoteDocs) {
-      cachedNoteDocs = (await getDocs(ecgNotesCollection)).docs;
-    }
     const matchingDocs = cachedNoteDocs.filter((docSnap) => {
       const noteText = docSnap.data().note?.toLowerCase() || "";
       return !searchWords.length || searchWords.every(w => noteText.includes(w));
@@ -262,7 +265,7 @@ card.appendChild(p);
       return card;
     }, { initialBatchSize: 8, batchSize: 6 });
 
-    isLoadingNotes = false;
+
   }
 
   // ------------------ Search Debounce ------------------
@@ -277,7 +280,7 @@ card.appendChild(p);
   window.searchNotes = debounce(() => {
     const searchVal = document.getElementById("search").value;
     loadNotes(searchVal);
-  }, 300);
+  }, 150);
 
   // ------------------ Expose globals ------------------
   window.insertEcgTemplate = () => {
@@ -657,6 +660,65 @@ button:hover {
   background-color: rgba(255, 255, 255, 0.3);
 }
 
+@media (max-width: 768px) {
+  .ecg-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 16px 12px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .ecg-header .page-title {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    position: static;
+    margin: 0;
+    font-family: 'hellohon', sans-serif;
+    font-size: clamp(2rem, 9vw, 3rem);
+    font-weight: normal;
+    line-height: 1.3;
+    letter-spacing: -0.06em;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .ecg-header .home-btn {
+    position: static;
+    margin: 0;
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .ecg-header .top-actions {
+    position: static;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .ecg-header #search {
+    flex: 1;
+    width: 0;
+    min-width: 0;
+    height: 40px;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
+
+  .ecg-header .add-note-btn {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .container {
+    top: 0;
+  }
+}
 
 
   </style>
@@ -664,6 +726,7 @@ button:hover {
   <script src="page-theme.js?v=1"></script>
 </head>
 <body>
+  <header class="ecg-header">
    <a href="home.html"><button class="home-btn">Home</button></a>
     <h1 class="page-title">Electrocardiogram</h1>
   
@@ -675,6 +738,7 @@ button:hover {
   </button>
 </div>
 
+  </header>
 <div class="container">
 
   <!-- Note input container (hidden by default) -->

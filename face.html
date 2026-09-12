@@ -84,7 +84,8 @@ const faceNotesCollection = collection(db, "faceNotes");
   }
 
   // ------------------ Load Notes ------------------
-  let isLoadingNotes = false;
+  let noteLoadPromise = null;
+  let noteLoadRequest = 0;
   let cachedNoteDocs = null;
   const createCachedNote = (id, data) => ({ id, data: () => data });
   const updateCachedNote = (id, updates) => {
@@ -95,16 +96,18 @@ const faceNotesCollection = collection(db, "faceNotes");
     );
   };
   async function loadNotes(filter = "", forceRefresh = false) {
-    if (isLoadingNotes) return;
-    isLoadingNotes = true;
-
+    const request = ++noteLoadRequest;
+    if (forceRefresh || !cachedNoteDocs) {
+      noteLoadPromise ||= getDocs(faceNotesCollection)
+        .then(snapshot => { cachedNoteDocs = snapshot.docs; })
+        .finally(() => { noteLoadPromise = null; });
+      await noteLoadPromise;
+    }
+    // A query typed during the initial download must supersede the older one.
+    if (request !== noteLoadRequest) return;
     const notesContainer = document.getElementById("notes");
     notesContainer.innerHTML = "";
     const searchWords = filter.toLowerCase().trim().split(/\s+/).filter(Boolean);
-
-    if (forceRefresh || !cachedNoteDocs) {
-      cachedNoteDocs = (await getDocs(faceNotesCollection )).docs;
-    }
     const matchingDocs = cachedNoteDocs.filter((docSnap) => {
       const noteText = docSnap.data().note?.toLowerCase() || "";
       return !searchWords.length || searchWords.every(w => noteText.includes(w));
@@ -232,7 +235,7 @@ const faceNotesCollection = collection(db, "faceNotes");
       return card;
     }, { initialBatchSize: 8, batchSize: 6 });
 
-    isLoadingNotes = false;
+
   }
 
   // ------------------ Search Debounce ------------------
@@ -247,7 +250,7 @@ const faceNotesCollection = collection(db, "faceNotes");
   window.searchNotes = debounce(() => {
     const searchVal = document.getElementById("search").value;
     loadNotes(searchVal);
-  }, 300);
+  }, 150);
 
   // ------------------ Expose globals ------------------
   window.saveNote = saveNote;

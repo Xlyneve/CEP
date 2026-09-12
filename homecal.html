@@ -747,6 +747,15 @@ button:hover,
   line-height: normal;
 }
 
+.day-note-editor b,
+.day-note-editor strong {
+  font-weight: 700;
+}
+
+.day-note-editor u {
+  text-decoration: underline;
+}
+
 .day-note-tick {
   display: inline;
   margin: 0;
@@ -1529,8 +1538,12 @@ function getDayName(year, month, day) {
   return new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'short' });
 }
 
+let calendarViewRequest = 0;
+let calendarSearchNotes = null;
+let calendarSearchPromise = null;
 // Load calendar for a month
 async function loadCalendar(scrollToday = true) {
+  const request = ++calendarViewRequest;
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
   calendarEl.innerHTML = '';
@@ -1545,6 +1558,7 @@ async function loadCalendar(scrollToday = true) {
   const legacyChecklistsPromise = loadLegacyChecklistsForMonth(year, month + 1);
   let notes = {};
   const snap = await getDoc(docRef);
+  if (request !== calendarViewRequest) return;
   if (snap.exists()) notes = snap.data();
 
   // Blank days before first day
@@ -1557,10 +1571,11 @@ async function loadCalendar(scrollToday = true) {
   // Days with notes
   for (let i = 1; i <= daysInMonth; i++) {
     const note = notes[i] || "";
+	const noteText = getStoredDayNoteText(note);
 	const day = document.createElement('div');
 	day.className = 'day';
 
-if (note.trim()) {
+if (noteText.trim()) {
   day.classList.add('has-note');
 }
 
@@ -1604,10 +1619,11 @@ if (scrollToday) {
 // Save note
 async function saveCalendar(year, month, day, note) {
   const ref = doc(db, 'calendar', `${year}-${month}`);
-  try {
-    await updateDoc(ref, { [day]: note });
-  } catch {
-    await setDoc(ref, { [day]: note }, { merge: true });
+  // Merge creates missing months and updates existing days in one operation.
+  await setDoc(ref, { [day]: note }, { merge: true });
+  if (calendarSearchNotes) {
+    const key = `${year}-${month}`;
+    calendarSearchNotes.set(key, { ...calendarSearchNotes.get(key), [day]: note });
   }
 }
 
@@ -1633,6 +1649,48 @@ async function loadLegacyChecklistsForMonth(year, month) {
 
 function getDayNoteText(editor) {
   return editor.innerText.replace(/\r/g, '');
+}
+
+const RICH_DAY_NOTE_PREFIX = '__HOME_CAL_RICH_V1__';
+
+function sanitiseDayNoteHtml(html) {
+  const template = document.createElement('template');
+  template.innerHTML = String(html);
+  const allowedTags = new Set(['B', 'STRONG', 'U', 'BR', 'DIV', 'P']);
+
+  const cleanNode = node => {
+    if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.nodeValue);
+    if (node.nodeType !== Node.ELEMENT_NODE) return document.createDocumentFragment();
+
+    const fragment = document.createDocumentFragment();
+    const destination = allowedTags.has(node.tagName)
+      ? document.createElement(node.tagName.toLowerCase())
+      : fragment;
+    [...node.childNodes].forEach(child => destination.appendChild(cleanNode(child)));
+    return destination;
+  };
+
+  const cleaned = document.createElement('div');
+  [...template.content.childNodes].forEach(node => cleaned.appendChild(cleanNode(node)));
+  return cleaned.innerHTML;
+}
+
+function getStoredDayNoteText(note) {
+  const value = String(note ?? '');
+  if (!value.startsWith(RICH_DAY_NOTE_PREFIX)) return value;
+  const holder = document.createElement('div');
+  holder.innerHTML = sanitiseDayNoteHtml(value.slice(RICH_DAY_NOTE_PREFIX.length));
+  holder.querySelectorAll('br').forEach(node => node.replaceWith('\n'));
+  holder.querySelectorAll('div,p').forEach(node => node.append('\n'));
+  return (holder.textContent || '').replace(/\r/g, '');
+}
+
+function getDayNoteStorageValue(editor) {
+  const clone = editor.cloneNode(true);
+  clone.querySelectorAll('.day-note-tick').forEach(tick => {
+    tick.replaceWith(document.createTextNode(tick.classList.contains('checked') ? '✔' : '☐'));
+  });
+  return RICH_DAY_NOTE_PREFIX + sanitiseDayNoteHtml(clone.innerHTML);
 }
 
 function getNodeTextLength(node) {
@@ -1759,10 +1817,47 @@ function renderDayNoteText(editor, text, caretOffset = null) {
   if (caretOffset !== null) setCaretOffset(editor, caretOffset);
 }
 
+function renderStoredDayNote(editor, note) {
+  const value = String(note ?? '');
+  if (!value.startsWith(RICH_DAY_NOTE_PREFIX)) {
+    renderDayNoteText(editor, value);
+    return;
+  }
+
+  editor.innerHTML = sanitiseDayNoteHtml(value.slice(RICH_DAY_NOTE_PREFIX.length));
+  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+  textNodes.forEach(textNode => {
+    if (!/[☐☑✔]/.test(textNode.nodeValue)) return;
+    const fragment = document.createDocumentFragment();
+    textNode.nodeValue.split(/([☐☑✔])/).forEach(part => {
+      if (!part) return;
+      if (!/[☐☑✔]/.test(part)) {
+        fragment.appendChild(document.createTextNode(part));
+        return;
+      }
+      const checked = part !== '☐';
+      const tick = document.createElement('span');
+      tick.className = 'day-note-tick';
+      tick.classList.toggle('checked', checked);
+      tick.textContent = checked ? '✔' : '☐';
+      tick.contentEditable = 'false';
+      tick.setAttribute('role', 'checkbox');
+      tick.setAttribute('aria-checked', String(checked));
+      fragment.appendChild(tick);
+    });
+    textNode.replaceWith(fragment);
+  });
+}
+
 function updateDayNoteState(editor, year, month, day, dayElement) {
   const note = getDayNoteText(editor);
   dayElement.classList.toggle('has-note', !!note.trim());
-  scheduleCalendarSave(year, month, day, note);
+  const storedNote = getDayNoteStorageValue(editor);
+  if (storedNote === editor._lastScheduledValue) return;
+  editor._lastScheduledValue = storedNote;
+  scheduleCalendarSave(year, month, day, storedNote);
 }
 
 const pendingCalendarSaves = new Map();
@@ -1782,7 +1877,14 @@ async function flushCalendarSave(key) {
   if (!pending) return;
   window.clearTimeout(pending.timer);
   pendingCalendarSaves.delete(key);
-  await saveCalendar(pending.year, pending.month, pending.day, pending.note);
+  try {
+    await saveCalendar(pending.year, pending.month, pending.day, pending.note);
+  } catch (error) {
+    // Keep the newest unsaved edit available for a later blur/retry.
+    if (!pendingCalendarSaves.has(key)) pendingCalendarSaves.set(key, pending);
+    console.error('Unable to save calendar note:', error);
+    alert('Your calendar note could not save. Keep this page open and click out of the note to retry.');
+  }
 }
 
 function createDayNoteEditor(note, year, month, day, dayElement) {
@@ -1793,16 +1895,27 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
   editor.setAttribute('role', 'textbox');
   editor.setAttribute('aria-multiline', 'true');
   editor.setAttribute('aria-label', 'Day note');
-  editor._lastCaretPosition = String(note).length;
+  editor._lastCaretPosition = getStoredDayNoteText(note).length;
   editor._dirty = false;
 
-  renderDayNoteText(editor, note);
+  renderStoredDayNote(editor, note);
+  editor._lastScheduledValue = getDayNoteStorageValue(editor);
 
   const rememberCaret = () => {
     editor._lastCaretPosition = getCaretOffset(editor);
   };
 
   editor.addEventListener('focus', rememberCaret);
+  editor.addEventListener('keydown', event => {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+    const key = event.key.toLowerCase();
+    const command = key === 'b' ? 'bold' : key === 'u' ? 'underline' : null;
+    if (!command) return;
+
+    event.preventDefault();
+    document.execCommand(command, false, null);
+    rememberCaret();
+  });
   editor.addEventListener('keyup', rememberCaret);
   editor.addEventListener('pointerup', rememberCaret);
   editor.addEventListener('input', event => {
@@ -1810,17 +1923,16 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
     rememberCaret();
 
     if (event.data && /[☐☑✔]/.test(event.data)) {
-      const text = getDayNoteText(editor);
       const caret = editor._lastCaretPosition;
-      renderDayNoteText(editor, text, caret);
+      renderStoredDayNote(editor, getDayNoteStorageValue(editor));
+      setCaretOffset(editor, caret);
     }
 
     updateDayNoteState(editor, year, month, day, dayElement);
   });
 
   editor.addEventListener('blur', () => {
-    const text = getDayNoteText(editor);
-    renderDayNoteText(editor, text);
+    updateDayNoteState(editor, year, month, day, dayElement);
     void flushCalendarSave(calendarSaveKey(year, month, day));
   });
 
@@ -1846,12 +1958,16 @@ function insertTickAtCaret(editor, year, month, day, dayElement) {
   const needsLeadingNewline = position > 0 && note[position - 1] !== '\n';
   const needsTrailingNewline = position < note.length && note[position] !== '\n';
   const insertion = `${needsLeadingNewline ? '\n' : ''}☐ ${needsTrailingNewline ? '\n' : ''}`;
-  const updatedNote = note.slice(0, position) + insertion + note.slice(position);
   const newCaretPosition = position + insertion.length;
-
   editor._dirty = true;
-  renderDayNoteText(editor, updatedNote, newCaretPosition);
   editor.focus();
+  setCaretOffset(editor, position);
+  const range = window.getSelection().getRangeAt(0);
+  const holder = document.createElement('div');
+  renderDayNoteText(holder, insertion);
+  const fragment = document.createDocumentFragment();
+  fragment.append(...holder.childNodes);
+  range.insertNode(fragment);
   setCaretOffset(editor, newCaretPosition);
   updateDayNoteState(editor, year, month, day, dayElement);
 }
@@ -2324,6 +2440,7 @@ function highlightSearchTerm(text, term) {
 
 // Search notes across all months
 async function filterNotes() {
+  const request = ++calendarViewRequest;
   const term = document.getElementById("noteFilterInput").value.trim();
 
   if (!term) {
@@ -2335,25 +2452,40 @@ async function filterNotes() {
   const regExp = new RegExp(safeTerm, 'i');
 
   const calendarRef = collection(db, 'calendar');
-  const allDocs = await getDocs(calendarRef);
+  // Share one read across keystrokes; edits update this in-memory index.
+  calendarSearchPromise ||= new Promise((resolve, reject) => {
+    let ready = false;
+    const unsubscribe = onSnapshot(calendarRef, snapshot => {
+      calendarSearchNotes = new Map(snapshot.docs.map(item => [item.id, item.data()]));
+      if (!ready) { ready = true; resolve(calendarSearchNotes); }
+      else if (document.getElementById('noteFilterInput').value.trim()) void filterNotes();
+    }, error => {
+      calendarSearchPromise = null;
+      reject(error);
+      console.error('Calendar search could not sync:', error);
+    });
+  });
+  await calendarSearchPromise;
+  const allNotes = calendarSearchNotes;
+  if (request !== calendarViewRequest || document.getElementById('noteFilterInput').value.trim() !== term) return;
 
   calendarEl.innerHTML = '';
 
   const results = [];
 
-  allDocs.forEach(docSnap => {
-    const [year, month] = docSnap.id.split('-').map(Number);
-    const notes = docSnap.data();
+  allNotes.forEach((notes, id) => {
+    const [year, month] = id.split('-').map(Number);
 
     Object.keys(notes).forEach(dayNum => {
       const note = notes[dayNum] || '';
+      const noteText = getStoredDayNoteText(note);
 
-      if (regExp.test(note)) {
+      if (regExp.test(noteText)) {
         results.push({
           year,
           month,
           day: Number(dayNum),
-          note
+          note: noteText
         });
       }
     });
@@ -2366,11 +2498,10 @@ async function filterNotes() {
   });
 
   if (results.length === 0) {
-    calendarEl.innerHTML = `
-      <div class="no-search-results">
-        No notes found for "${term}"
-      </div>
-    `;
+    const empty = document.createElement('div');
+    empty.className = 'no-search-results';
+    empty.textContent = `No notes found for "${term}"`;
+    calendarEl.replaceChildren(empty);
     return;
   }
 
@@ -2404,12 +2535,13 @@ async function filterNotes() {
 
 let filterNotesTimer = 0;
 function scheduleFilterNotes() {
+  ++calendarViewRequest;
   window.clearTimeout(filterNotesTimer);
   if (!document.getElementById('noteFilterInput').value.trim()) {
     void filterNotes();
     return;
   }
-  filterNotesTimer = window.setTimeout(() => void filterNotes(), 400);
+  filterNotesTimer = window.setTimeout(() => void filterNotes(), 120);
 }
 
 // Expose functions

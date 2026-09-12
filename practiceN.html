@@ -1270,6 +1270,7 @@ mark.highlight-hue {
 <button id="toggleInputBtn">+</button>
 
 <script type="module">
+import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { renderInBatches } from "./progressive-render.js";
 import { uploadReferenceImage, deleteReferenceImagesFromHTML } from "./image-storage.js?v=20260826-2";
@@ -2132,10 +2133,10 @@ async function deleteNote(id) {
 }
 
 /* ---------------- Search ---------------- */
-document.getElementById('searchInput').addEventListener('input', (e) => {
+document.getElementById('searchInput').addEventListener('input', debounceSearch((e) => {
   currentSearch = e.target.value.toLowerCase();
   renderFilteredNotes();
-});
+}));
 
 const toggleBtn = document.getElementById('toggleInputBtn');
 const inputGroup = document.getElementById('inputGroup');

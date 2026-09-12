@@ -84,7 +84,8 @@ const firebaseConfig = {
   }
 
   // ------------------ Load Notes ------------------
-  let isLoadingNotes = false;
+  let noteLoadPromise = null;
+  let noteLoadRequest = 0;
   let cachedNoteDocs = null;
   const createCachedNote = (id, data) => ({ id, data: () => data });
   const updateCachedNote = (id, updates) => {
@@ -95,25 +96,27 @@ const firebaseConfig = {
     );
   };
   async function loadNotes(filter = "", forceRefresh = false) {
-    if (isLoadingNotes) return;
-    isLoadingNotes = true;
-
+    const request = ++noteLoadRequest;
+    if (forceRefresh || !cachedNoteDocs) {
+      if (!cachedNoteDocs) document.getElementById("notes").innerHTML = "<p>Loading notes…</p>";
+      noteLoadPromise ||= getDocs(urgentCareCollection)
+        .then(snapshot => { cachedNoteDocs = snapshot.docs; })
+        .finally(() => { noteLoadPromise = null; });
+      try {
+        await noteLoadPromise;
+      } catch (error) {
+        console.error("Urgent Care notes failed to load.", error);
+        if (request === noteLoadRequest) {
+          document.getElementById("notes").innerHTML = "<p>Notes could not load. Please refresh and try again.</p>";
+        }
+        return;
+      }
+    }
+    // A query typed during the initial download must supersede the older one.
+    if (request !== noteLoadRequest) return;
     const notesContainer = document.getElementById("notes");
     notesContainer.innerHTML = "";
     const searchWords = filter.toLowerCase().trim().split(/\s+/).filter(Boolean);
-
-    if (forceRefresh || !cachedNoteDocs) {
-      notesContainer.innerHTML = "<p>Loading notes…</p>";
-      try {
-        cachedNoteDocs = (await getDocs(urgentCareCollection)).docs;
-      } catch (error) {
-        console.error("Urgent Care notes failed to load.", error);
-        notesContainer.innerHTML = "<p>Notes could not load. Please refresh and try again.</p>";
-        isLoadingNotes = false;
-        return;
-      }
-      notesContainer.innerHTML = "";
-    }
     const matchingDocs = cachedNoteDocs.filter((docSnap) => {
       const noteText = docSnap.data().note?.toLowerCase() || "";
       return !searchWords.length || searchWords.every(w => noteText.includes(w));
@@ -243,7 +246,7 @@ const firebaseConfig = {
       return card;
     }, { initialBatchSize: 8, batchSize: 6 });
 
-    isLoadingNotes = false;
+
   }
 
   // ------------------ Search Debounce ------------------
@@ -258,7 +261,7 @@ const firebaseConfig = {
   window.searchNotes = debounce(() => {
     const searchVal = document.getElementById("search").value;
     loadNotes(searchVal);
-  }, 300);
+  }, 150);
 
   // ------------------ Expose globals ------------------
   window.saveNote = saveNote;
