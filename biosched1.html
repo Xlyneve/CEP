@@ -263,6 +263,10 @@
     .vaccine-card { border-radius: 18px; border: 1px solid rgba(55,74,124,0.10); background: rgba(248,250,255,0.9); padding: 12px; display: grid; gap: 10px; }
     .vaccine-card.live-card { border-color: rgba(194,24,91,0.38); }
     .vaccine-card.nonlive-card { border-color: rgba(55,74,124,0.10); }
+    .vaccine-card.inactive-card { background: #eee; border-color: #bbb; }
+    .inactive-card .vaccine-name { color: #666; }
+    .inactive-card input:disabled { cursor: not-allowed; opacity: 0.55; }
+    .inactive-reason { margin-top: 8px; font-weight: bold; color: #593b3b; }
     .vaccine-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
     .vaccine-name { font-weight: 700; }
     .vaccine-meta { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -631,7 +635,23 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
     { key: 'notfunded', title: 'Recommended — not funded / eligibility-dependent' }
   ];
 
+  function applyInactiveRules(context) {
+    const dobYear = context.dob ? new Date(context.dob + 'T00:00:00').getFullYear() : null;
+    const duringTreatment = context.phase === 'first' || context.phase === 'later';
+    vaccines.forEach(v => {
+      let reason = '';
+      if (v.key === 'mmr' && dobYear && dobYear < 1969) {
+        reason = 'Not required — presumed immune (born before 1969)';
+      } else if (v.key === 'varicella' && duringTreatment) {
+        reason = 'Contraindicated — live vaccine during active immunosuppression';
+      }
+      v.inactiveReason = reason;
+      if (reason) v.selected = false;
+    });
+  }
+
   function renderLibrary() {
+    applyInactiveRules(clinicalContext());
     normalizeVaccines();
     vaccines.sort((a, b) => seriesWeight(b) - seriesWeight(a));
 
@@ -639,7 +659,8 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
 
     vaccines.forEach((vax, index) => {
       const card = document.createElement('div');
-      card.className = `vaccine-card ${vax.type === 'live' ? 'live-card' : 'nonlive-card'}`;
+      const inactive = Boolean(vax.inactiveReason);
+      card.className = `vaccine-card ${vax.type === 'live' ? 'live-card' : 'nonlive-card'}${inactive ? ' inactive-card' : ''}`;
       card.innerHTML = `
         <div class="vaccine-top">
           <div>
@@ -650,13 +671,14 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
   <span class="mini-chip">${vax.doses ? `${vax.doses} dose${vax.doses === 1 ? '' : 's'}` : 'Clinical assessment'}</span>
 </div>
             ${vax.ruleText ? `<div class="muted" style="font-size:0.82rem; margin-top:6px;">${vax.ruleText}</div>` : ''}
+            ${inactive ? `<div class="inactive-reason">${vax.inactiveReason}</div>` : ''}
           </div>
-          <label class="pill"><input type="checkbox" ${vax.selected ? 'checked' : ''} onchange="toggleSelected(${index}, this.checked)">Use</label>
+          <label class="pill"><input type="checkbox" ${vax.selected && !inactive ? 'checked' : ''} ${inactive ? 'disabled' : ''} onchange="toggleSelected(${index}, this.checked)">Use</label>
         </div>
         <div class="dose-history">
           ${vax.doseHistory.slice(0, vax.doses).map((done, doseIndex) => `
             <label class="dose-pill ${done ? 'done' : ''}">
-              <input type="checkbox" ${done ? 'checked' : ''} onchange="toggleDose(${index}, ${doseIndex}, this.checked)">
+              <input type="checkbox" ${done ? 'checked' : ''} ${inactive ? 'disabled' : ''} onchange="toggleDose(${index}, ${doseIndex}, this.checked)">
               Dose ${doseIndex + 1} given
             </label>
           `).join('')}
@@ -667,6 +689,7 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
               <label>Dose ${doseIndex + 1} date given</label>
               <input
   type="text"
+  ${inactive ? 'disabled' : ''}
   inputmode="numeric"
   placeholder="DD-MM-YYYY or DD/MM/YYYY"
   value="${
@@ -829,7 +852,7 @@ function updateDoseDate(index, doseIndex, value) {
     const patientName = document.getElementById('patientName').value.trim();
     const biologicName = document.getElementById('biologicName').value.trim();
     const treatmentDate = document.getElementById('treatmentDate').value;
-    const selected = vaccines.filter(v => v.selected && v.doses > 0);
+    const selected = vaccines.filter(v => v.selected && !v.inactiveReason && v.doses > 0);
     const dueText = selected.filter(v => countRemaining(v) > 0).map(v => `${v.name} (${countRemaining(v)} remaining)`);
     const doneText = selected.filter(v => countCompleted(v) >= v.doses).map(v => v.name);
     const used = visits.filter(v => v.items.length > 0).length;
