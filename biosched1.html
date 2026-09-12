@@ -76,6 +76,85 @@
   outline: none;
 }
     .full { grid-column: 1 / -1; }
+    .form-subhead {
+      grid-column: 1 / -1;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      padding-top: 14px;
+      margin-top: 4px;
+      border-top: 1px dashed rgba(80,98,145,0.24);
+    }
+    .form-subhead:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+    .field-error {
+      font-size: 0.8rem;
+      color: #b3261e;
+      margin-top: 2px;
+    }
+    .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      flex: none;
+    }
+    .card-head h2 { display: flex; align-items: center; gap: 10px; }
+    .library-groups { display: grid; gap: 20px; }
+    .library-group-title {
+      font-size: 0.86rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .library-group-title .count { font-weight: 400; text-transform: none; letter-spacing: 0; }
+    .library-card { overflow: visible; }
+    .generate-bar {
+      position: sticky;
+      bottom: 12px;
+      z-index: 5;
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .generate-bar-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      padding: 8px 10px 8px 18px;
+    }
+    .generate-bar-inner span { font-size: 0.86rem; color: var(--muted); }
+    .stat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+    .stat-chip {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 8px 12px;
+      border-radius: 14px;
+      background: rgba(240,244,255,0.95);
+      border: 1px solid rgba(60,80,120,0.10);
+      min-width: 100px;
+    }
+    .stat-chip .num { font-size: 1.15rem; font-weight: 700; }
+    .stat-chip .lbl { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
     .pill, .legend span, .helper-chip, .mini-chip {
   display: inline-flex;
   align-items: center;
@@ -313,11 +392,12 @@
       <div class="card">
         <div class="card-head">
           <div>
-            <h2>Patient + planning setup</h2>
+            <h2><span class="section-kicker">1</span> Patient + planning setup</h2>
            <p>Visits are shown from the first visit date, then in 4-week blocks after that.</p>
           </div>
         </div>
         <div class="form-grid">
+          <div class="form-subhead">Patient &amp; therapy</div>
           <div class="field">
             <label for="patientName">Patient name</label>
             <input id="patientName" placeholder="Optional" />
@@ -326,6 +406,8 @@
             <label for="biologicName">Biologic / immunosuppressive therapy</label>
             <input id="biologicName" placeholder="e.g. adalimumab" />
           </div>
+
+          <div class="form-subhead">Timeline</div>
           <div class="field">
             <label for="planStartDate">First visit date</label>
             <input id="planStartDate" type="date" />
@@ -335,6 +417,8 @@
             <input id="treatmentDate" type="date" />
           </div>
           <div class="field"><label for="dob">Date of birth</label><input id="dob" type="date"></div>
+
+          <div class="form-subhead">Clinical assessment</div>
           <div class="field"><label for="scope">Adult disease-modifying therapy pathway applies</label><select id="scope"><option value="review">Confirm eligibility</option><option value="yes">Yes — not a stem-cell transplant or excluded cancer pathway</option></select></div>
           <div class="field"><label for="phase">Immunosuppression stage</label><select id="phase"><option value="before">Before treatment</option><option value="first">During treatment — first year</option><option value="later">During treatment — subsequent year</option></select></div>
           <div class="field"><label for="dmard">DMARDs for RA, SLE or polymyalgia rheumatica</label><select id="dmard"><option value="no">No / not confirmed</option><option value="yes">Yes — Shingrix funding criterion met</option></select></div>
@@ -342,6 +426,8 @@
           <div class="field"><label for="varicellaStatus">Varicella history</label><select id="varicellaStatus"><option value="review">Unknown / review</option><option value="susceptible">No clinical infection or vaccination history</option><option value="immune">Previous infection / vaccination — review documented doses</option></select></div>
           <div class="field"><label for="tdapMode">Tdap assessment</label><select id="tdapMode"><option value="review">Review history</option><option value="primary">Unknown / incomplete primary course</option><option value="booster">Completed primary course — age-based booster</option></select></div>
           <div class="field"><label for="tdapUnderFour">Fewer than four documented tetanus doses</label><select id="tdapUnderFour"><option value="no">No / unknown</option><option value="yes">Yes</option></select></div>
+
+          <div class="form-subhead">Planning preferences</div>
           <div class="field full">
             <label>Live vaccine rule</label>
             <div class="switch-row">
@@ -382,16 +468,19 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card library-card">
       <div class="card-head">
         <div>
-          <h2>Vaccine library + history</h2>
+          <h2><span class="section-kicker">2</span> Vaccine library + history</h2>
           <p>Use the built-in schedules, then record which doses have already been given.</p>
         </div>
       </div>
-      <div class="library-grid" id="libraryGrid"></div>
-      <div class="hero-actions" style="margin-top:16px">
-        <button class="btn-primary" id="generateBtn" type="button">▶ Generate Plan</button>
+      <div class="library-groups" id="libraryGrid"></div>
+      <div class="generate-bar">
+        <div class="generate-bar-inner">
+          <button class="btn-primary" id="generateBtn" type="button">▶ Generate Plan</button>
+          <span id="selectedCountLabel"></span>
+        </div>
       </div>
       <div id="planFeedback" class="notes-box" role="status" aria-live="polite" style="margin-top:12px"></div>
     </section>
@@ -400,7 +489,7 @@
       <div class="card">
         <div class="card-head">
   <div>
-    <h2>Auto-generated visit plan</h2>
+    <h2><span class="section-kicker">3</span> Auto-generated visit plan</h2>
     <p>Small side-by-side visit cards. Visit 1 = first visit date, visit 2 = 4 weeks later, visit 3 = 8 weeks later, and so on.</p>
   </div>
 
@@ -530,10 +619,23 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
   function countRemaining(vax) { return vax.doseHistory.slice(0,vax.doses).filter(x => !x).length; }
   function countCompleted(vax) { return vax.doseHistory.slice(0,vax.doses).filter(Boolean).length; }
 
+  function vaxBucket(vax) {
+    if (vax.type === 'live') return 'live';
+    if (/not funded|depends on eligibility/i.test(vax.funded)) return 'notfunded';
+    return 'funded';
+  }
+
+  const LIBRARY_GROUPS = [
+    { key: 'live', title: 'Live vaccines' },
+    { key: 'funded', title: 'Non-live — funded' },
+    { key: 'notfunded', title: 'Recommended — not funded / eligibility-dependent' }
+  ];
+
   function renderLibrary() {
     normalizeVaccines();
-    libraryGrid.innerHTML = '';
     vaccines.sort((a, b) => seriesWeight(b) - seriesWeight(a));
+
+    const groupHtml = { live: [], funded: [], notfunded: [] };
 
     vaccines.forEach((vax, index) => {
       const card = document.createElement('div');
@@ -577,12 +679,35 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
   }"
   onchange="updateDoseDate(${index}, ${doseIndex}, this.value)"
 >
+              <div class="field-error" id="err-${index}-${doseIndex}"></div>
             </div>
           ` : '').join('')}
         </div>
       `;
-      libraryGrid.appendChild(card);
+      groupHtml[vaxBucket(vax)].push(card);
     });
+
+    libraryGrid.innerHTML = '';
+    LIBRARY_GROUPS.forEach(group => {
+      const cards = groupHtml[group.key];
+      if (!cards.length) return;
+      const selectedCount = cards.filter(c => c.querySelector('.pill input').checked).length;
+      const section = document.createElement('div');
+      section.className = 'library-group';
+      const title = document.createElement('div');
+      title.className = 'library-group-title';
+      title.innerHTML = `${group.title} <span class="count">(${selectedCount} of ${cards.length} selected)</span>`;
+      const grid = document.createElement('div');
+      grid.className = 'library-grid';
+      cards.forEach(card => grid.appendChild(card));
+      section.appendChild(title);
+      section.appendChild(grid);
+      libraryGrid.appendChild(section);
+    });
+
+    const totalSelected = vaccines.filter(v => v.selected).length;
+    const countLabel = document.getElementById('selectedCountLabel');
+    if (countLabel) countLabel.textContent = `${totalSelected} of ${vaccines.length} vaccines selected`;
   }
 
   function toggleSelected(index, checked) {
@@ -596,8 +721,14 @@ function toggleDose(index, doseIndex, checked) {
   generatePlan();
 }
 
+function doseDateError(index, doseIndex, message) {
+  const el = document.getElementById(`err-${index}-${doseIndex}`);
+  if (el) el.textContent = message || '';
+}
+
 function updateDoseDate(index, doseIndex, value) {
   const cleaned = value.trim();
+  doseDateError(index, doseIndex, '');
 
   if (!cleaned) {
     vaccines[index].doseDates[doseIndex] = '';
@@ -608,7 +739,7 @@ function updateDoseDate(index, doseIndex, value) {
   const match = cleaned.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
 
   if (!match) {
-    alert('Please enter the date as DD-MM-YYYY or DD/MM/YYYY');
+    doseDateError(index, doseIndex, 'Enter the date as DD-MM-YYYY or DD/MM/YYYY');
     return;
   }
 
@@ -623,7 +754,7 @@ function updateDoseDate(index, doseIndex, value) {
     testDate.getMonth() + 1 !== Number(month) ||
     testDate.getDate() !== Number(day)
   ) {
-    alert('Please enter a valid date as DD-MM-YYYY or DD/MM/YYYY');
+    doseDateError(index, doseIndex, 'That date doesn\'t exist — check the day/month/year');
     return;
   }
 
@@ -702,6 +833,8 @@ function updateDoseDate(index, doseIndex, value) {
     const dueText = selected.filter(v => countRemaining(v) > 0).map(v => `${v.name} (${countRemaining(v)} remaining)`);
     const doneText = selected.filter(v => countCompleted(v) >= v.doses).map(v => v.name);
     const used = visits.filter(v => v.items.length > 0).length;
+    const dosesRemainingTotal = selected.reduce((sum, v) => sum + countRemaining(v), 0);
+    const dosesDoneTotal = selected.reduce((sum, v) => sum + countCompleted(v), 0);
 
     const noteLines = [];
     if (patientName) noteLines.push(`Patient: ${patientName}`);
@@ -741,6 +874,11 @@ if (carryOver.length) {
       .replace(/>/g,'&gt;');
 
     summaryBox.innerHTML = `
+  <div class="stat-row">
+    <div class="stat-chip"><span class="num">${used}</span><span class="lbl">Visits used</span></div>
+    <div class="stat-chip"><span class="num">${dosesRemainingTotal}</span><span class="lbl">Doses due</span></div>
+    <div class="stat-chip"><span class="num">${dosesDoneTotal}</span><span class="lbl">Doses recorded</span></div>
+  </div>
   <div><strong>Patient:</strong> ${patientName || 'Not entered'}</div>
   <div><strong>Planned therapy:</strong> ${biologicName || 'Not entered'}</div>
   <div><strong>First visit:</strong> ${formatDate(buildVisitDates()[0])}</div>
