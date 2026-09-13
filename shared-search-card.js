@@ -1,4 +1,11 @@
-import { renderSourceCard } from './source-search-card.js?v=8';
+import { renderSourceCard } from './source-search-card.js?v=9';
+export function showSearchConceptPreview(event, selector) {
+  const link = event.composedPath().find(node => node.matches?.(selector));
+  if (!link) return false;
+  event.preventDefault(); event.stopPropagation();
+  link.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, composed: true }));
+  return true;
+}
 export function renderSearchCard(card, entry, terms, renderRich) {
   // Search terms affect matching and ranking, not the note's saved formatting.
   terms = [];

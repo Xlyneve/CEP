@@ -1,4 +1,4 @@
-import { renderSearchCard } from "./shared-search-card.js?v=10";
+import { renderSearchCard, showSearchConceptPreview } from "./shared-search-card.js?v=11";
 import { sharedSearchRecords, searchCacheVersion, getSharedSearchQuery, setSharedSearchQuery, clearSharedSearchCache } from "./shared-search-cache.js";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -243,7 +243,7 @@ function installXgptMediaUi() {
     zoom.classList.remove('is-open');
     zoomImage.src = '';
   });
-  document.addEventListener('click', event => { if (event.composedPath().find(node => node.matches?.('.cep-xgpt-concept'))) { event.preventDefault(); event.stopPropagation(); } }, true);
+  document.addEventListener('click', event => showSearchConceptPreview(event, '.cep-xgpt-concept'), true);
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && zoom.classList.contains('is-open')) zoom.click(); });
 }
 
