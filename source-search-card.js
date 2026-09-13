@@ -16,7 +16,9 @@ function cssFor(file) {
       return `${selector}{${css}}`;
     }).join('\n') +
     '.source-card{width:100%;min-width:0;max-width:100%;height:auto;margin:0;position:relative;overflow-wrap:anywhere}' +
-    '.source-body{min-width:0}.source-body img,.source-image{height:auto;max-width:100%;cursor:zoom-in}' +
+    '.source-body{min-width:0;max-width:100%;overflow-x:auto}.source-body img,.source-image{height:auto !important;max-width:100% !important;cursor:zoom-in}' +
+    '.source-table-scroll{display:block;width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}' +
+    '.source-table-hint{display:block;font:12px/1.4 Arial,sans-serif;color:#655b60;margin:6px 0 3px}' +
     '.source-body table{max-width:100%}.source-body [contenteditable]{cursor:inherit}' +
     '.source-url a{cursor:pointer}.source-body mark.cep-search-match{background:rgba(255,237,125,.72);color:inherit;padding:0 1px;border-radius:3px}' +
     '.xgpt-concept-link,.cep-xgpt-concept{display:inline;color:inherit;font-weight:600;text-decoration:none;border-bottom:1px dotted rgba(90,72,82,.5);cursor:pointer}' +
@@ -90,7 +92,13 @@ export function renderSourceCard(card,entry,terms,renderRich) {
     source.style.backgroundColor=`rgba(${palette[hash(seed)%palette.length]}, 0.74)`;
     source.style.color='#39190f';
   }
-  source.querySelectorAll('table').forEach(table=>{applyTableTheme(table,file);table.tabIndex=0;table.setAttribute('aria-label','Enlarge table');table.setAttribute('aria-haspopup','dialog');table.style.cursor='zoom-in';});
+  source.querySelectorAll('table').forEach(table=>{
+    applyTableTheme(table,file);table.tabIndex=0;table.setAttribute('aria-label','Enlarge table');table.setAttribute('aria-haspopup','dialog');table.style.cursor='zoom-in';
+    if(table.parentElement.closest('table'))return;
+    const hint=document.createElement('span');hint.className='source-table-hint';hint.textContent='Swipe sideways for more columns · Tap table to enlarge';
+    const scroll=document.createElement('div');scroll.className='source-table-scroll';scroll.tabIndex=0;scroll.setAttribute('role','region');scroll.setAttribute('aria-label','Scrollable table');
+    table.before(hint,scroll);scroll.append(table);
+  });
   shadow.addEventListener('keydown',event=>{if(event.target.matches?.('table')&&['Enter',' '].includes(event.key)){event.preventDefault();event.stopPropagation();zoomTable(event.target,file);}});
   shadow.append(source);card.append(host);
   card.classList.add('cep-search-card','cep-source-preview');
