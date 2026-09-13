@@ -12,8 +12,9 @@ const root=path.resolve(__dirname,'..');
       const result=await page.evaluate(async()=>{
         const {renderSearchCard}=await import('/shared-search-card.js');
         const card=document.createElement('a');card.href='#note';document.querySelector('main').append(card);
-        renderSearchCard(card,{file:'chatgptx.html',title:'28 day',record:{data:{content:'<table style="width:1400px;min-width:1400px"><tr><td>Fertile phase</td><td>Day 12</td><td>Rightmost column</td></tr></table>'}}},[],(el,html)=>el.innerHTML=html);
+        renderSearchCard(card,{file:'chatgptx.html',title:'28 day',record:{data:{content:'<table style="width:1400px;min-width:1400px"><tr><td><mark class="saved-highlight">Fertile</mark> phase</td><td>Day 12</td><td>Rightmost column</td></tr></table>'}}},["phase"],(el,html,terms)=>{if(terms.length)throw Error("Automatic highlighting still enabled");el.innerHTML=html;});
         const shadow=card.firstElementChild.shadowRoot,scroll=shadow.querySelector('.source-table-scroll');
+        if(!shadow.querySelector("mark.saved-highlight"))throw Error("Saved highlight lost");
         scroll.scrollLeft=scroll.scrollWidth;
         return {pageWidth:document.documentElement.scrollWidth,viewport:innerWidth,scrollLeft:scroll.scrollLeft,scrollWidth:scroll.scrollWidth,clientWidth:scroll.clientWidth};
       });

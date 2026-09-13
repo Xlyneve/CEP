@@ -1,5 +1,7 @@
-import { renderSourceCard } from './source-search-card.js?v=6';
+import { renderSourceCard } from './source-search-card.js?v=7';
 export function renderSearchCard(card, entry, terms, renderRich) {
+  // Search terms affect matching and ranking, not the note's saved formatting.
+  terms = [];
   if (renderSourceCard(card, entry, terms, renderRich)) return;
   installCardStyles();
   card.classList.add('cep-search-card');

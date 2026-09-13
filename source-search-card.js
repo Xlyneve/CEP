@@ -84,8 +84,6 @@ export function renderSourceCard(card,entry,terms,renderRich) {
   const source=createSourceCard(document,file,data,(body,html)=>{
     renderRich(body,html,terms);
     body.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
-    // Saved highlights retain their source style; only new matches get search yellow.
-    body.querySelectorAll('mark:not([class]):not([style])').forEach(mark=>mark.classList.add('cep-search-match'));
   });
   if(profile.themed&&profile.offset>=0&&!sourceCardDefinitions[file].savedColor){
     const seed=`${file.toLowerCase()}:${profile.offset+(entry.sourceIndex||0)}::${sourceCardDefinitions[file].card}`;
