@@ -19,12 +19,13 @@ const root=path.resolve(__dirname,'..');
           let previewEvents=0;const onHover=event=>{if(event.composedPath().some(node=>node.matches?.(selector)))previewEvents++;};
           const onClick=event=>showSearchConceptPreview(event,selector);document.addEventListener('mouseover',onHover);document.addEventListener('click',onClick,true);
           const link=card.querySelector('.cep-source-card-host').shadowRoot.querySelector(selector);link.click();
-          output[name]={previewEvents,hash:location.hash,indicator:getComputedStyle(link,'::after').content,caption:link.dataset.caption};
+          const linkStyle=getComputedStyle(link),dotStyle=getComputedStyle(link,'::after');
+          output[name]={previewEvents,hash:location.hash,indicator:dotStyle.content,dotColour:dotStyle.backgroundColor,dotWidth:dotStyle.width,colour:linkStyle.color,decoration:linkStyle.textDecorationLine,caption:link.dataset.caption};
           document.removeEventListener('mouseover',onHover);document.removeEventListener('click',onClick,true);card.remove();history.replaceState(null,'',location.pathname);
         }
         return output;
       });
-      for(const entry of Object.values(result)){assert.equal(entry.previewEvents,1);assert.equal(entry.hash,'');assert.equal(entry.indicator,'""');assert.equal(entry.caption,'Saved definition');}
+      for(const entry of Object.values(result)){assert.equal(entry.previewEvents,1);assert.equal(entry.hash,'');assert.equal(entry.indicator,'""');assert.equal(entry.dotColour,'rgb(255, 176, 0)');assert.equal(entry.dotWidth,'8px');assert.equal(entry.colour,'rgb(154, 63, 0)');assert.equal(entry.decoration,'none');assert.equal(entry.caption,'Saved definition');}
       await context.close();console.log('PASS '+mode.name+' Home and lightbulb concept click reopens cached image/caption preview');
     }
   } finally {await browser.close();server.close();}
