@@ -1362,7 +1362,8 @@ const notesChatApp = firebase.apps.find(app => app.name === "notes-chat") ||
 const db = firebase.firestore(notesChatApp);
 const storage = firebase.storage(notesChatApp);
 const auth = firebase.auth(notesChatApp);
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+// Firebase restores the saved session and defaults to local persistence.
+// Do not rewrite persistence while mobile auth is restoring its state.
 
 /* =========================
    DOM refs
@@ -4695,16 +4696,45 @@ lockToggle.onclick = () => {
   lockSection.style.display = (lockSection.style.display === 'flex') ? 'none' : 'flex';
 };
 
+let notesSignInTimer = 0;
+let notesSignInAttempt = 0;
+
+function resetNotesSignIn() {
+  clearTimeout(notesSignInTimer);
+  unlockBtn.disabled = false;
+}
+
 unlockBtn.onclick = async () => {
+  if (unlockBtn.disabled) return;
+  const attempt = ++notesSignInAttempt;
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
 
   try {
-    lockInfo.textContent = "Redirecting to Google sign in…";
-    await auth.signInWithRedirect(provider);
+    unlockBtn.disabled = true;
+    lockInfo.textContent = "Opening Google sign in…";
+    notesSignInTimer = window.setTimeout(() => {
+      resetNotesSignIn();
+      if (!auth.currentUser) {
+        lockInfo.textContent = "Sign-in has not completed. Finish in the Google window, or tap Sign in to try again.";
+      }
+    }, 60000);
+    // Start directly in the tap handler: awaiting storage first can block the
+    // popup on iOS. Redirect auth loses its result with cross-site storage.
+    await auth.signInWithPopup(provider);
   } catch (err) {
+    if (attempt !== notesSignInAttempt || auth.currentUser) return;
     console.error(err);
-    lockInfo.textContent = "Sign in failed";
+    const messages = {
+      'auth/popup-blocked': 'Google sign-in was blocked. Allow pop-ups for this site, then tap Sign in again.',
+      'auth/popup-closed-by-user': 'Sign-in was closed before completing. Tap Sign in to try again.',
+      'auth/cancelled-popup-request': 'Sign-in was interrupted. Tap Sign in to try again.',
+      'auth/network-request-failed': 'Could not connect to Google. Check your connection and try again.',
+      'auth/web-storage-unsupported': 'Sign-in needs browser storage. Open this page in Safari or Chrome with site storage enabled.'
+    };
+    lockInfo.textContent = messages[err.code] || `Sign in failed (${err.code || 'unknown error'}). Please try again.`;
+  } finally {
+    if (attempt === notesSignInAttempt) resetNotesSignIn();
   }
 };
 
@@ -4722,6 +4752,8 @@ auth.onAuthStateChanged((user) => {
   currentUser = user || null;
 
   if (user) {
+    // Mobile browsers can deliver auth state before the popup promise settles.
+    resetNotesSignIn();
     setUnlocked(true);
     lockInfo.textContent = `Signed in as ${user.email}`;
     unlockBtn.style.display = 'none';
