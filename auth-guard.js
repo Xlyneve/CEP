@@ -171,7 +171,10 @@
     signOutButton.className = "cep-sign-out-light";
     signOutButton.setAttribute("aria-label", "Sign out of XlynEve");
     signOutButton.title = "Sign out";
-    signOutButton.addEventListener("click", performSignOut);
+    signOutButton.addEventListener("click", () => {
+      if (typeof window.CEP_HOME_OPTIONS === 'function') window.CEP_HOME_OPTIONS(signOutButton);
+      else performSignOut();
+    });
     document.body.appendChild(signOutButton);
     window.CEP_SIGN_OUT = performSignOut;
 
