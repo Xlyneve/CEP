@@ -1,5 +1,5 @@
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { mountHomeLinks } from './home-links-ui.js?v=2';
+import { mountHomeLinks } from './home-links-ui.js?v=3';
 
 if (await window.CEP_AUTH_READY) {
   const ref = doc(getFirestore(window.CEP_FIREBASE_APP), 'homePreferences', window.CEP_CURRENT_USER.uid);

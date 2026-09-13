@@ -4,6 +4,16 @@ export function mountHomeLinks({ load, save, signOut }) {
   if (!nav || !light) return;
   const defaults = [...nav.querySelectorAll('a')].map(a => ({ title: a.textContent.trim(), url: a.href }));
   let links = defaults, ready = false, loadError = false, busy = false;
+  const usageKey = 'cep-home-link-usage-v1';
+  let usage = {};
+  try {
+    const stored = JSON.parse(localStorage.getItem(usageKey) || '{}');
+    if (stored && typeof stored === 'object' && !Array.isArray(stored)) usage = stored;
+  } catch {}
+  const linkKey = link => new URL(link.url).href;
+  const saveUsage = () => {
+    try { localStorage.setItem(usageKey, JSON.stringify(usage)); } catch {}
+  };
   const normalize = value => {
     const title = String(value.title || '').trim();
     let url = String(value.url || '').trim();
@@ -13,13 +23,24 @@ export function mountHomeLinks({ load, save, signOut }) {
     return { title, url: parsed.href };
   };
   function render() {
-    nav.replaceChildren(...links.map(link => {
+    const ordered = links.map((link, index) => ({ link, index, uses: Number(usage[linkKey(link)]) || 0 }))
+      .sort((a, b) => b.uses - a.uses || a.index - b.index)
+      .map(item => item.link);
+    nav.replaceChildren(...ordered.map(link => {
       const a = document.createElement('a'); a.href = link.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.dataset.homeLinkKey = linkKey(link);
       const icon = document.createElement('img'); icon.className = 'site-favicon'; icon.alt = '';
       icon.src = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(new URL(link.url).hostname) + '&sz=32';
       a.append(icon, document.createTextNode(link.title)); return a;
     }));
   }
+  nav.addEventListener('click', event => {
+    const anchor = event.target.closest('a[data-home-link-key]');
+    if (!anchor) return;
+    const key = anchor.dataset.homeLinkKey;
+    usage[key] = Math.min(Number.MAX_SAFE_INTEGER, (Number(usage[key]) || 0) + 1);
+    saveUsage();
+  });
   const style = document.createElement('style');
   style.textContent = `
     .home-options {position:fixed;inset:auto auto max(50px,calc(env(safe-area-inset-bottom) + 44px)) max(10px,env(safe-area-inset-left));margin:0;padding:7px;min-width:150px;border:1px solid #ffffffd9;border-radius:14px;background:inherit;box-shadow:0 8px 30px #493c3426;color:#40363b}
@@ -88,9 +109,15 @@ export function mountHomeLinks({ load, save, signOut }) {
     try { updated = [...rows.children].map(row => normalize({ title: row.querySelector('[name=title]').value, url: row.querySelector('[name=url]').value })); }
     catch (error) { status.textContent = error.message; return; }
     busy = true; form.querySelectorAll('button,input').forEach(el => el.disabled = true); status.textContent = 'Saving…';
-    try { await save(updated); links = updated; render(); dialog.close(); }
+    try {
+      await save(updated);
+      const active = new Set(updated.map(linkKey));
+      for (const key of Object.keys(usage)) if (!active.has(key)) delete usage[key];
+      saveUsage(); links = updated; render(); dialog.close();
+    }
     catch { status.textContent = 'Could not save links. Your changes are still here—please try again.'; }
     finally { busy = false; form.querySelectorAll('button,input').forEach(el => el.disabled = false); }
   });
+  render();
   void fetchLinks();
 }
