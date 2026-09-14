@@ -21,6 +21,29 @@ const root=path.resolve(__dirname,'..');
         document.querySelector('main').append(card);
       };
     });
+    await page.evaluate(()=>window.addCard('animation','PN.html','Fast feedback'));
+    const feedback=await page.evaluate(()=>{
+      const card=document.querySelector('#animation'),source=card.querySelector('.cep-source-card-host').shadowRoot.querySelector('.source-card');
+      card.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1,button:0,clientX:20,clientY:20}));
+      const firstLayer=source.querySelector('.copy-feedback-layer');
+      const timing={
+        active:source.classList.contains('copy-feedback'),
+        layers:source.querySelectorAll('.copy-feedback-layer').length,
+        card:getComputedStyle(source).animationDuration,
+        streak:getComputedStyle(firstLayer,'::after').animationDuration,
+        border:getComputedStyle(firstLayer.querySelector('rect')).animationDuration
+      };
+      card.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1,button:0,clientX:24,clientY:20}));
+      timing.restarted=firstLayer!==source.querySelector('.copy-feedback-layer');
+      timing.layersAfterRestart=source.querySelectorAll('.copy-feedback-layer').length;
+      return timing;
+    });
+    assert.deepEqual(feedback,{active:true,layers:1,card:'0.25s',streak:'0.25s',border:'0.25s',restarted:true,layersAfterRestart:1});
+    await page.waitForTimeout(280);
+    assert.equal(await page.evaluate(()=>window.copies.length),1,'rapid clicks restart one animation and queue one copy');
+    const documentText=fs.readFileSync(path.join(root,'PN.html'),'utf8');
+    assert.match(documentText,/animation: copyGlassSquish 400ms/,'normal page card animation remains unchanged');
+    await page.evaluate(()=>{document.querySelector('main').replaceChildren();window.copies.length=0;window.navigations=0;});
     for(const file of ['PN.html','info.html','explain.html','recalls.html','practiceN.html']){
       await page.evaluate(file=>{window.copies.length=0;window.navigations=0;window.addCard('single',file);},file);
       await page.locator('#single .source-body').click();await page.waitForTimeout(280);

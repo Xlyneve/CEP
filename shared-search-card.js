@@ -1,4 +1,4 @@
-import { renderSourceCard } from './source-search-card.js?v=11';
+import { renderSourceCard } from './source-search-card.js?v=12';
 export function showSearchConceptPreview(event, selector) {
   const link = event.composedPath().find(node => node.matches?.(selector));
   if (!link) return false;
