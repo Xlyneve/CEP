@@ -321,9 +321,8 @@ export async function mountUniversalSearch(host, closeSearch) {
   const runSearch = () => {
     const query = input.value.trim().toLocaleLowerCase();
     const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
-    results.replaceChildren();
-    if (!query) { status.textContent = 'Type a word to search.'; return; }
-    const matches = entries.map(entry => {
+    if (!query) { results.replaceChildren(); status.textContent = 'Type a word to search.'; return; }
+    const matches = entries.filter(entry => activeSource === 'All' || entry.sourceTitle === activeSource).map(entry => {
       const indexed = getSearchText(entry);
       const { title, text } = indexed;
       let score = (title.includes(query) ? 250 : 0) + (text.includes(query) ? 100 : 0);
@@ -340,15 +339,15 @@ export async function mountUniversalSearch(host, closeSearch) {
         }
       }
       return { entry, score, fuzzy };
-    }).filter(Boolean).filter(match => activeSource === 'All' || match.entry.sourceTitle === activeSource)
-      .sort((a,b) => b.score - a.score).slice(0, 40);
+    }).filter(Boolean).sort((a,b) => b.score - a.score).slice(0, 40);
     const onlySimilar = matches.length && matches.every(match => match.fuzzy);
     status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 40 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : 'No matching notes found.';
     const groups = new Map();
+    const fragment = document.createDocumentFragment();
     matches.forEach(({ entry }) => {
-      let group = groups.get(entry.sourceTitle);
-      if (!group) {
-        group = document.createElement('section'); group.className = 'cep-global-search-group';
+      let cards = groups.get(entry.sourceTitle);
+      if (!cards) {
+        const group = document.createElement('section'); group.className = 'cep-global-search-group';
         const sourceColours = {
           'pn.html': ['rgba(192,137,139,.58)', '#755255', 'rgba(239,221,222,.72)'],
           'info.html': ['rgba(126,161,158,.58)', '#4e706d', 'rgba(219,232,231,.76)'],
@@ -362,8 +361,9 @@ export async function mountUniversalSearch(host, closeSearch) {
         group.style.setProperty('--search-card', cardColour);
         const heading = document.createElement('a'); heading.className = 'cep-global-search-group-title';
         heading.textContent = entry.sourceTitle; heading.href = entry.file;
-        const cards = document.createElement('div'); cards.className = 'cep-global-search-group-cards';
-        group.append(heading, cards); results.appendChild(group); groups.set(entry.sourceTitle, group);
+        cards = document.createElement('div'); cards.className = 'cep-global-search-group-cards';
+        group.append(heading, cards); fragment.appendChild(group);
+        groups.set(entry.sourceTitle, cards);
       }
       const link = document.createElement('a'); link.className = 'cep-global-search-result';
       if (entry.directUrl) { link.href = entry.directUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; }
@@ -377,10 +377,15 @@ export async function mountUniversalSearch(host, closeSearch) {
         closeSearch();
       });
       renderSearchCard(link, entry, terms, addXgptRichContent);
-      group.querySelector('.cep-global-search-group-cards').appendChild(link);
+      cards.appendChild(link);
     });
+    results.replaceChildren(fragment);
   };
-  input.addEventListener('input', () => { setSharedSearchQuery(input.value); clearTimeout(timer); timer = setTimeout(runSearch, 140); });
+  input.addEventListener('input', () => {
+    setSharedSearchQuery(input.value);
+    clearTimeout(timer);
+    timer = setTimeout(runSearch, 80);
+  });
   input.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeSearch();
     if (event.key === 'Enter') results.querySelector('a')?.click();

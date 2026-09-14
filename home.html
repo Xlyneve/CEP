@@ -3283,7 +3283,7 @@ html body > header {
         window.parent.postMessage({ type: 'cep-universal-search-navigate', url }, location.origin);
       } else location.assign(url);
     };
-    let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer, searchRequestId = 0;
+    let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer, dynamicRenderFrame = 0, searchRequestId = 0;
     window.cepUniversalLazyLoaders ||= [];
     let activeSource = 'all';
     const searchUseKey = 'cep-universal-search-use-v1';
@@ -3428,8 +3428,12 @@ html body > header {
         .filter(entry => !incomingFiles.has(entry.file))
         .concat(incoming);
       searchIndex = [...dynamicSearchEntries];
-      renderFilters();
-      if (input.value.trim()) runSearch();
+      cancelAnimationFrame(dynamicRenderFrame);
+      dynamicRenderFrame = requestAnimationFrame(() => {
+        dynamicRenderFrame = 0;
+        renderFilters();
+        if (input.value.trim()) runSearch();
+      });
     };
     function addHighlightedText(parent, text, terms) {
       const escaped = terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -3769,7 +3773,11 @@ html body > header {
         await runSearch();
       } finally { refresh.disabled = false; }
     });
-    input.addEventListener('input', () => { setSharedSearchQuery(input.value); clearTimeout(timer); timer = setTimeout(runSearch, 180); });
+    input.addEventListener('input', () => {
+      setSharedSearchQuery(input.value);
+      clearTimeout(timer);
+      timer = setTimeout(runSearch, 80);
+    });
     input.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeSearch();
       if (event.key === 'Enter') {
@@ -4830,7 +4838,7 @@ function closeTable() {
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { searchCacheVersion } from "./shared-search-cache.js";
-  import { loadSearchCollection, getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=23';
+  import { loadSearchCollection, getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=24';
   import {
     getFirestore,
     collection,
