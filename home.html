@@ -1474,6 +1474,12 @@ footer {
   gap: 8px;
 }
 
+/* Cardiac arrest only: medication dose, then volume/concentration and interval. */
+.qc-row.qc-actions .qc-results.qc-arrest-result{
+  flex-direction: column;
+  align-items: stretch;
+}
+
 /* result typography */
 .qc-big{
   font-size: 16px;
@@ -2873,7 +2879,7 @@ html body > header {
       <button class="qc-tab active" type="button" data-med="para" role="tab" aria-selected="true">Paracetamol</button>
       <button class="qc-tab" type="button" data-med="ibu" role="tab" aria-selected="false">Ibuprofen</button>
       <button class="qc-tab" type="button" data-med="adren" role="tab" aria-selected="false">Adrenaline IM</button>
-      <button class="qc-tab" type="button" data-med="adren-arrest" role="tab" aria-selected="false">Adrenaline IV</button>
+      <button class="qc-tab" type="button" data-med="adren-arrest" role="tab" aria-selected="false">Cardiac Arrest</button>
       <button class="qc-tab" type="button" data-med="adren-neb" role="tab" aria-selected="false">Adrenaline Neb</button>
       <button class="qc-tab" type="button" data-med="redipred" role="tab" aria-selected="false">Redipred</button>
       <button class="qc-tab" type="button" data-med="fentanyl" role="tab" aria-selected="false">Fentanyl</button>
@@ -2942,7 +2948,6 @@ html body > header {
           <div class="qc-pill">Maximum: <b>1 mg / 10 mL</b> (single dose)</div>
         </div>
       </div>
-      <div class="qc-note" id="qcArrestFrequency">Every second CPR loop (~4 min)</div>
       <div class="qc-note"><b>Do not confuse with Adrenaline 1:1,000 (1 mg/mL) used IM for anaphylaxis.</b></div>
     </div>
 
@@ -2984,6 +2989,7 @@ html body > header {
       <div class="qc-results" aria-live="polite">
         <div class="qc-big" id="qcMain">—</div>
         <div class="qc-sub" id="qcSub"></div>
+        <div class="qc-sub" id="qcArrestFrequency" style="display:none;">Every second CPR loop (~4 min)</div>
       </div>
     </div>
 
@@ -4158,6 +4164,9 @@ function closeTable() {
   const weightLabel = qc.querySelector('label[for="qcWeight"]');
 
   function syncArrestMode(){
+    const isArrest = activeMed === 'adren-arrest';
+    resultsEl.classList.toggle('qc-arrest-result', isArrest);
+    qc.querySelector('#qcArrestFrequency').style.display = isArrest ? '' : 'none';
     const fixedAdult = activeMed === 'adren-arrest' && arrestMode === 'adult';
     weightEl.style.display = fixedAdult ? 'none' : '';
     weightLabel.style.display = fixedAdult ? 'none' : '';
@@ -4227,8 +4236,8 @@ function closeTable() {
     // Adult is fixed-dose and deliberately bypasses the shared weight guard.
     if (activeMed === 'adren-arrest'){
       if (arrestMode === 'adult'){
-        mainEl.textContent = '10 mL IV/IO';
-        subEl.textContent = 'Dose: 1 mg';
+        mainEl.textContent = '1 mg IV/IO';
+        subEl.textContent = '= 10 mL of Adrenaline 1:10,000 (0.1 mg/mL)';
       } else {
         const kg = Number(weightEl.value);
         if (!Number.isFinite(kg) || kg <= 0){
@@ -4237,8 +4246,8 @@ function closeTable() {
         }
         const cappedKg = Math.min(kg, 100);
         const fmt = (value) => String(Number(value.toFixed(4)));
-        mainEl.textContent = `${fmt(cappedKg * 0.1)} mL IV/IO`;
-        subEl.textContent = `Calculated dose: ${fmt(cappedKg * 10)} micrograms (${fmt(cappedKg * 0.01)} mg)${kg >= 100 ? ' • Maximum reached' : ''}`;
+        mainEl.textContent = `${fmt(cappedKg * 10)} micrograms (${fmt(cappedKg * 0.01)} mg) IV/IO`;
+        subEl.textContent = `= ${fmt(cappedKg * 0.1)} mL of Adrenaline 1:10,000 (0.1 mg/mL)${kg >= 100 ? ' • Maximum reached' : ''}`;
       }
       resultsEl.classList.add('has-value');
       return;
