@@ -136,6 +136,40 @@
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && !openMenu.hidden) { hideOpenMenu(); openOptions.focus(); }
   });
+  async function moveToHomepage() {
+    hideOpenMenu();
+    const status = document.getElementById("openStatus");
+    status.hidden = true;
+    if (!save()) {
+      status.textContent = "Your browser could not save these notes. Please copy them before returning to the homepage.";
+      status.hidden = false;
+      return;
+    }
+    const requestKey = "xlyneve-notepad-open-home-request";
+    const acknowledgementKey = "xlyneve-notepad-open-home-ack";
+    const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const acknowledged = new Promise(resolve => {
+      const onStorage = event => {
+        if (event.key !== acknowledgementKey || event.newValue !== requestId) return;
+        window.removeEventListener("storage", onStorage);
+        resolve(true);
+      };
+      window.addEventListener("storage", onStorage);
+      window.setTimeout(() => {
+        window.removeEventListener("storage", onStorage);
+        resolve(false);
+      }, 450);
+    });
+    try { localStorage.setItem(requestKey, requestId); } catch {}
+    if (await acknowledged) {
+      window.opener?.focus();
+      window.close();
+      status.textContent = "Opened on the homepage. You can close this tab.";
+      status.hidden = false;
+      return;
+    }
+    location.href = `home.html?openNotepad=1`;
+  }
   function moveNotepad(newWindow) {
     hideOpenMenu();
     const status = document.getElementById("openStatus");
@@ -147,7 +181,7 @@
       return;
     }
     const destination = new URL(location.href);
-    destination.searchParams.set("v", "20260916-7");
+    destination.searchParams.set("v", "20260916-8");
     const opened = newWindow
       ? window.open(destination.href, "_blank", "popup=yes,width=900,height=760,resizable=yes,scrollbars=yes")
       : window.open(destination.href, "_blank");
@@ -160,6 +194,7 @@
     // Script-opened notepads can close themselves; a directly visited page stays open.
     if (window.opener) window.close();
   }
+  document.getElementById("openOnHomepage").addEventListener("click", moveToHomepage);
   document.getElementById("openNewTab").addEventListener("click", () => moveNotepad(false));
   document.getElementById("openNewWindow").addEventListener("click", () => moveNotepad(true));
 

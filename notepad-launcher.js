@@ -2,7 +2,7 @@
   "use strict";
   const launcher = document.querySelector(".pageTitle");
   if (!launcher) return;
-  const url = "notepad.html?v=20260916-7";
+  const url = "notepad.html?v=20260916-8";
   let notepadWindow = null;
   let panel = null;
   const layoutKey = "xlyneve-notepad-home-layout";
@@ -148,6 +148,21 @@
     panel.append(frame, resize);
     document.body.append(panel);
     restoreLayout();
+  }
+  const homeRequestKey = "xlyneve-notepad-open-home-request";
+  const homeAcknowledgementKey = "xlyneve-notepad-open-home-ack";
+  window.addEventListener("storage", event => {
+    if (event.key !== homeRequestKey || !event.newValue) return;
+    openOnHome();
+    try { localStorage.setItem(homeAcknowledgementKey, event.newValue); } catch {}
+    window.focus();
+  });
+  const launchParams = new URLSearchParams(location.search);
+  if (launchParams.get("openNotepad") === "1") {
+    openOnHome();
+    launchParams.delete("openNotepad");
+    const cleanUrl = `${location.pathname}${launchParams.size ? `?${launchParams}` : ""}${location.hash}`;
+    history.replaceState(null, "", cleanUrl);
   }
   const modes = [
     ["home", "Open on homepage", openOnHome],
