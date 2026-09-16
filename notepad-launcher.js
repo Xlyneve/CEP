@@ -121,20 +121,26 @@
     document.body.append(panel);
     movePanel(innerWidth - 344, 100);
   }
-  for (const [text, action] of [
-    ["Open on homepage", openOnHome],
-    ["Open in new tab", () => window.open(url, "_blank", "noopener")],
-    ["Open in new window", () => {
+  const modes = [
+    ["home", "Open on homepage", openOnHome],
+    ["tab", "Open in new tab", () => window.open(url, "_blank", "noopener")],
+    ["window", "Open in new window", () => {
       if (!notepadWindow || notepadWindow.closed) {
         notepadWindow = window.open(url, "xlyneveMiniNotepad", "popup=yes,width=300,height=633,resizable=yes,scrollbars=no,location=no,toolbar=no,menubar=no,status=no");
       }
       notepadWindow?.focus();
     }]
-  ]) {
+  ];
+  for (const [mode, text, action] of modes) {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = text;
-    button.onclick = () => { closeChoices(); action(); };
+    button.onclick = () => {
+      preferredMode = mode;
+      try { localStorage.setItem(preferenceKey, mode); } catch {}
+      closeChoices();
+      action();
+    };
     choices.append(button);
   }
   function toggleChoices() {
@@ -146,11 +152,25 @@
     choices.style.top = `${Math.max(8, Math.min(rect.bottom + 8, innerHeight - choices.offsetHeight - 8))}px`;
     choices.querySelector("button").focus();
   }
-  launcher.addEventListener("click", toggleChoices);
+  const preferenceKey = "xlyneve-notepad-open-mode";
+  let preferredMode = null;
+  try { preferredMode = localStorage.getItem(preferenceKey); } catch {}
+  launcher.title = "Open notepad · Shift-click or right-click to change how it opens";
+  function launch(event) {
+    const selected = modes.find(([mode]) => mode === preferredMode);
+    if (event.shiftKey || !selected) { toggleChoices(); return; }
+    closeChoices();
+    selected[2]();
+  }
+  launcher.addEventListener("click", launch);
+  launcher.addEventListener("contextmenu", event => {
+    event.preventDefault();
+    toggleChoices();
+  });
   launcher.addEventListener("keydown", event => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
-    toggleChoices();
+    launch(event);
   });
   document.addEventListener("pointerdown", event => {
     if (!choices.contains(event.target) && !launcher.contains(event.target)) closeChoices();
