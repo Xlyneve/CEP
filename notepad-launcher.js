@@ -5,6 +5,24 @@
   const url = "notepad.html?v=20260916-7";
   let notepadWindow = null;
   let panel = null;
+  const layoutKey = "xlyneve-notepad-home-layout";
+  let savedLayout = null;
+  try {
+    const value = JSON.parse(localStorage.getItem(layoutKey));
+    if (value && [value.x, value.y, value.width, value.height].every(Number.isFinite) && value.width > 0 && value.height > 0) savedLayout = value;
+  } catch {}
+  function saveLayout() {
+    if (!panel || panel.hidden) return;
+    savedLayout = { x:panel.offsetLeft, y:panel.offsetTop, width:panel.offsetWidth, height:panel.offsetHeight };
+    try { localStorage.setItem(layoutKey, JSON.stringify(savedLayout)); } catch {}
+  }
+  function restoreLayout() {
+    if (!panel || panel.hidden) return;
+    const layout = savedLayout || { x:innerWidth - 344, y:100, width:320, height:340 };
+    panel.style.width = Math.min(Math.max(180, layout.width), Math.max(1, innerWidth - 16)) + "px";
+    panel.style.height = Math.min(Math.max(160, layout.height), Math.max(1, innerHeight - 42)) + "px";
+    movePanel(layout.x, layout.y);
+  }
   const style = document.createElement("style");
   style.textContent = `
     .notepad-choices { display:grid; grid-template-columns:1fr 1fr; gap:4px; position:fixed; z-index:10001; padding:8px; border:1px solid #cabec8; border-radius:14px; background:#fff9fc; box-shadow:0 8px 30px #39263730; }
@@ -45,7 +63,7 @@
   function openOnHome() {
     if (panel) {
       panel.hidden = false;
-      movePanel(parseFloat(panel.style.left), parseFloat(panel.style.top));
+      restoreLayout();
       panel.querySelector("iframe").contentDocument?.querySelector(".dot-yellow")?.focus();
       return;
     }
@@ -87,7 +105,7 @@
         else movePanel(gesture.left + dx, gesture.top + dy);
       });
       for (const name of ["pointerup", "pointercancel", "lostpointercapture"]) {
-        handle.addEventListener(name, () => { gesture = null; });
+        handle.addEventListener(name, () => { if (gesture) saveLayout(); gesture = null; });
       }
       handle.addEventListener("keydown", event => {
         const delta = { ArrowLeft:[-16,0], ArrowRight:[16,0], ArrowUp:[0,-16], ArrowDown:[0,16] }[event.key];
@@ -95,6 +113,7 @@
         event.preventDefault();
         if (resizing) sizePanel(panel.offsetWidth + delta[0], panel.offsetHeight + delta[1]);
         else movePanel(panel.offsetLeft + delta[0], panel.offsetTop + delta[1]);
+        saveLayout();
       });
     }
     frame.addEventListener("load", () => {
@@ -124,7 +143,7 @@
     bindHandle(resize, true);
     panel.append(frame, close, resize);
     document.body.append(panel);
-    movePanel(innerWidth - 344, 100);
+    restoreLayout();
   }
   const modes = [
     ["home", "Open on homepage", openOnHome],
@@ -196,10 +215,6 @@
   });
   window.addEventListener("resize", () => {
     closeChoices();
-    if (panel && !panel.hidden) {
-      panel.style.width = Math.min(panel.offsetWidth, innerWidth - 16) + "px";
-      panel.style.height = Math.min(panel.offsetHeight, innerHeight - 42) + "px";
-      movePanel(panel.offsetLeft, panel.offsetTop);
-    }
+    restoreLayout();
   });
 })();
