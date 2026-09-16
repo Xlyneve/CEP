@@ -34,12 +34,9 @@
     .notepad-choices button:hover, .notepad-choices button:focus-visible { background:#eee5ef; }
     .homepage-notepad { position:fixed; z-index:10000; width:min(320px, calc(100vw - 16px)); height:min(340px, calc(100dvh - 42px)); overflow:visible; border-radius:14px; background:var(--light-dove-grey, #e8e8e8); box-shadow:0 12px 36px #39263730; }
     .homepage-notepad iframe { display:block; width:100%; height:100%; border:0; border-radius:14px; background:transparent; }
-    .homepage-notepad-close, .homepage-notepad-resize { position:absolute; z-index:2; border:0; background:transparent; color:#777; cursor:pointer; }
-    .homepage-notepad-close { top:-26px; right:0; width:26px; height:26px; font:20px system-ui; opacity:0; transition:opacity .15s; }
-    .homepage-notepad:hover .homepage-notepad-close, .homepage-notepad-close:focus-visible { opacity:1; }
+    .homepage-notepad-resize { position:absolute; z-index:2; border:0; background:transparent; color:#777; cursor:pointer; }
     .homepage-notepad-resize { right:0; bottom:0; width:24px; height:24px; cursor:nwse-resize; touch-action:none; }
     .homepage-notepad-resize::after { content:""; position:absolute; right:6px; bottom:6px; width:8px; height:8px; border-right:2px solid #bbb; border-bottom:2px solid #bbb; }
-    @media (hover:none) { .homepage-notepad-close { opacity:1; } }
   `;
   document.head.append(style);
   const choices = document.createElement("div");
@@ -70,12 +67,6 @@
     panel = document.createElement("section");
     panel.className = "homepage-notepad";
     panel.setAttribute("aria-label", "Homepage notepad");
-    const close = document.createElement("button");
-    close.className = "homepage-notepad-close";
-    close.type = "button";
-    close.textContent = "×";
-    close.setAttribute("aria-label", "Close homepage notepad");
-    close.onclick = () => { panel.hidden = true; launcher.focus(); };
     const frame = document.createElement("iframe");
     frame.title = "Mini notepad";
     frame.src = url;
@@ -127,6 +118,8 @@
         .note-card { margin:0 0 9px; border:0; border-radius:10px; box-shadow:none; }
         .note-card, .notepad { background:white; }
         .timestamp { right:28px; }
+        .dot-purple { cursor:pointer; }
+        .dot-purple:focus-visible { outline:2px solid #8c7bb5; outline-offset:4px; }
         .dot-yellow { cursor:grab; touch-action:none; }
         .dot-yellow:active { cursor:grabbing; }
         .dot-yellow:focus-visible { outline:2px solid #ad8e20; outline-offset:4px; }
@@ -139,9 +132,20 @@
       handle.title = "Drag to move, or use arrow keys";
       doc.querySelector(".dot-yellow").replaceWith(handle);
       bindHandle(handle, false);
+      const close = doc.createElement("button");
+      close.type = "button";
+      close.className = "dot dot-purple";
+      close.setAttribute("aria-label", "Close homepage notepad");
+      close.title = "Close notepad";
+      close.addEventListener("click", () => {
+        saveLayout();
+        panel.hidden = true;
+        launcher.focus();
+      });
+      doc.querySelector(".dot-purple").replaceWith(close);
     });
     bindHandle(resize, true);
-    panel.append(frame, close, resize);
+    panel.append(frame, resize);
     document.body.append(panel);
     restoreLayout();
   }
