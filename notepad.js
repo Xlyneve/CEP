@@ -114,9 +114,9 @@
   }
 
   addButton.addEventListener("click", () => {
-    notes.push(newNote(""));
+    notes.unshift(newNote(""));
     save();
-    render(true);
+    render(false);
   });
 
   const openOptions = document.getElementById("openOptions");
