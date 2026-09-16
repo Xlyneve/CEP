@@ -14,8 +14,8 @@
     .notepad-choices button.notepad-choice-icon { display:flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; padding:10px; }
     .notepad-choice-icon svg { width:20px; height:20px; pointer-events:none; }
     .notepad-choices button:hover, .notepad-choices button:focus-visible { background:#eee5ef; }
-    .homepage-notepad { position:fixed; z-index:10000; width:min(320px, calc(100vw - 16px)); height:min(340px, calc(100dvh - 16px)); overflow:hidden; border-radius:14px; background:white; box-shadow:0 12px 36px #39263730; }
-    .homepage-notepad iframe { display:block; width:100%; height:100%; border:0; background:white; }
+    .homepage-notepad { position:fixed; z-index:10000; width:min(320px, calc(100vw - 16px)); height:min(340px, calc(100dvh - 16px)); overflow:hidden; border-radius:14px; background:var(--light-dove-grey, #e8e8e8); box-shadow:0 12px 36px #39263730; }
+    .homepage-notepad iframe { display:block; width:100%; height:100%; border:0; background:transparent; }
     .homepage-notepad-close, .homepage-notepad-resize { position:absolute; z-index:2; border:0; background:transparent; color:#777; cursor:pointer; }
     .homepage-notepad-close { top:6px; right:8px; width:26px; height:26px; font:20px system-ui; opacity:0; transition:opacity .15s; }
     .homepage-notepad:hover .homepage-notepad-close, .homepage-notepad-close:focus-visible { opacity:1; }
@@ -101,10 +101,12 @@
       const doc = frame.contentDocument;
       const embeddedStyle = doc.createElement("style");
       embeddedStyle.textContent = `
-        body { padding:0; background:white; }
-        main { border:0; border-radius:0; background:white; box-shadow:none; }
+        html, body { background:transparent; }
+        body { padding:0; }
+        main { border:0; border-radius:0; background:transparent; box-shadow:none; }
         .notes { padding:36px 0 0; }
         .note-card { min-height:100%; margin:0; border:0; border-radius:0; box-shadow:none; }
+        .note-card, .notepad { background:transparent; }
         .timestamp { right:28px; }
         .dot-yellow { cursor:grab; touch-action:none; }
         .dot-yellow:active { cursor:grabbing; }
