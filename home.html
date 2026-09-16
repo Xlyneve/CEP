@@ -4766,9 +4766,12 @@ function closeTable() {
 
     addActionCard('Urgent Care', 'Vitals', 'vitals');
 
+    const sectionStateKey = matchMedia('(max-width: 760px)').matches
+      ? 'homeDashboardSections.mobile'
+      : 'homeDashboardSections.desktop';
     const savedState = (() => {
       try {
-        return JSON.parse(localStorage.getItem('homeDashboardSections') || '{}');
+        return JSON.parse(localStorage.getItem(sectionStateKey) || '{}');
       } catch {
         return {};
       }
@@ -4781,15 +4784,14 @@ function closeTable() {
       section.toggle.setAttribute('aria-expanded', String(expanded));
       if (save) {
         savedState[name] = expanded;
-        localStorage.setItem('homeDashboardSections', JSON.stringify(savedState));
+        try { localStorage.setItem(sectionStateKey, JSON.stringify(savedState)); } catch {}
       }
     };
 
     order.forEach(name => {
       const section = sections.get(name);
       if (!section) return;
-      const defaultExpanded = name === 'Notes' || name === 'Admin';
-      const expanded = typeof savedState[name] === 'boolean' ? savedState[name] : defaultExpanded;
+      const expanded = typeof savedState[name] === 'boolean' ? savedState[name] : false;
       const toggle = document.createElement('button');
       toggle.type = 'button';
       toggle.className = 'dashboard-section-toggle';
