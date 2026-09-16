@@ -675,6 +675,10 @@ a.conceptLink:focus-visible {
   transform: translateY(-0.5px); /* sits nicer with text */
 }
 
+.conceptCount::before {
+  content: attr(data-count);
+}
+
 /* Hashtag suggest dropdown */
 #tagSuggest {
   position: fixed;
@@ -4101,7 +4105,9 @@ function conceptLinkifyHTML(html) {
         badge.className = 'conceptCount';
         badge.setAttribute('data-presentation-only', 'true');
         badge.setAttribute('aria-hidden', 'true');
-        badge.textContent = String(count);
+        // Keep the count visual-only so search/title extraction does not
+        // concatenate it with the linked concept (for example, "Fever1").
+        badge.dataset.count = String(count);
         a.appendChild(badge);
       }
 
