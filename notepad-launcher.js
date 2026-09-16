@@ -2,7 +2,7 @@
   "use strict";
   const launcher = document.querySelector(".pageTitle");
   if (!launcher) return;
-  const url = "notepad.html?v=20260830-8";
+  const url = "notepad.html?v=20260916-7";
   let notepadWindow = null;
   let panel = null;
   const style = document.createElement("style");
@@ -104,9 +104,9 @@
         html, body { background:transparent; }
         body { padding:0; }
         main { border:0; border-radius:0; background:transparent; box-shadow:none; }
-        .notes { padding:36px 0 0; }
-        .note-card { min-height:100%; margin:0; border:0; border-radius:0; box-shadow:none; }
-        .note-card, .notepad { background:transparent; }
+        .notes { inset:36px 0 0; padding:0 8px 8px; }
+        .note-card { margin:0 0 9px; border:0; border-radius:10px; box-shadow:none; }
+        .note-card, .notepad { background:white; }
         .timestamp { right:28px; }
         .dot-yellow { cursor:grab; touch-action:none; }
         .dot-yellow:active { cursor:grabbing; }

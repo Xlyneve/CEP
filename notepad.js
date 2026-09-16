@@ -119,7 +119,25 @@
     render(true);
   });
 
+  const openOptions = document.getElementById("openOptions");
+  const openMenu = document.getElementById("openOptionsMenu");
+  function hideOpenMenu() {
+    openMenu.hidden = true;
+    openOptions.setAttribute("aria-expanded", "false");
+  }
+  openOptions.addEventListener("click", () => {
+    openMenu.hidden = !openMenu.hidden;
+    openOptions.setAttribute("aria-expanded", String(!openMenu.hidden));
+    if (!openMenu.hidden) openMenu.querySelector("button").focus();
+  });
+  document.addEventListener("pointerdown", event => {
+    if (!event.target.closest(".pad-open-options")) hideOpenMenu();
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !openMenu.hidden) { hideOpenMenu(); openOptions.focus(); }
+  });
   function moveNotepad(newWindow) {
+    hideOpenMenu();
     const status = document.getElementById("openStatus");
     status.hidden = true;
     // Flush the typing debounce before the destination reads the saved notes.
@@ -129,7 +147,7 @@
       return;
     }
     const destination = new URL(location.href);
-    destination.searchParams.set("v", "20260911-2");
+    destination.searchParams.set("v", "20260916-7");
     const opened = newWindow
       ? window.open(destination.href, "_blank", "popup=yes,width=900,height=760,resizable=yes,scrollbars=yes")
       : window.open(destination.href, "_blank");
