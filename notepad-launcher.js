@@ -7,9 +7,12 @@
   let panel = null;
   const style = document.createElement("style");
   style.textContent = `
-    .notepad-choices { position:fixed; z-index:10001; padding:8px; border:1px solid #cabec8; border-radius:14px; background:#fff9fc; box-shadow:0 8px 30px #39263730; }
+    .notepad-choices { display:grid; grid-template-columns:1fr 1fr; gap:4px; position:fixed; z-index:10001; padding:8px; border:1px solid #cabec8; border-radius:14px; background:#fff9fc; box-shadow:0 8px 30px #39263730; }
     .notepad-choices[hidden], .homepage-notepad[hidden] { display:none; }
     .notepad-choices button { display:block; width:100%; padding:10px 14px; border:0; border-radius:8px; background:transparent; color:#493d49; font:14px system-ui; text-align:left; cursor:pointer; }
+    .notepad-choices button[data-mode="home"] { grid-column:1 / -1; }
+    .notepad-choices button.notepad-choice-icon { display:flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; padding:10px; }
+    .notepad-choice-icon svg { width:20px; height:20px; pointer-events:none; }
     .notepad-choices button:hover, .notepad-choices button:focus-visible { background:#eee5ef; }
     .homepage-notepad { position:fixed; z-index:10000; width:min(320px, calc(100vw - 16px)); height:min(340px, calc(100dvh - 16px)); overflow:hidden; border-radius:14px; background:white; box-shadow:0 12px 36px #39263730; }
     .homepage-notepad iframe { display:block; width:100%; height:100%; border:0; background:white; }
@@ -134,7 +137,18 @@
   for (const [mode, text, action] of modes) {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = text;
+    button.dataset.mode = mode;
+    button.setAttribute("aria-label", text);
+    button.title = text;
+    if (mode === "home") {
+      button.textContent = text;
+    } else {
+      button.className = "notepad-choice-icon";
+      const paths = mode === "tab"
+        ? '<path d="M14 3h7v7M21 3l-9 9M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/>'
+        : '<rect x="8" y="3" width="13" height="13" rx="2"/><path d="M8 8h13M5 8H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-1"/>';
+      button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
+    }
     button.onclick = () => {
       preferredMode = mode;
       try { localStorage.setItem(preferenceKey, mode); } catch {}
