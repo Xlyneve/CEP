@@ -3405,6 +3405,24 @@ function refreshConceptDefBadges(root = document) {
   const links = root.querySelectorAll('a.conceptLink');
   links.forEach(a => {
     const concept = getConceptFromLink(a);
+    const count = conceptCountMap.get(normalizeText(concept)) || 0;
+    let countBadge = a.querySelector('.conceptCount');
+
+    // The HTML sanitizer intentionally removes data-* attributes. Restore the
+    // visual-only count after insertion without adding it to link.textContent.
+    if (count > 0) {
+      if (!countBadge) {
+        countBadge = document.createElement('span');
+        countBadge.className = 'conceptCount';
+        a.appendChild(countBadge);
+      }
+      countBadge.textContent = '';
+      countBadge.dataset.count = String(count);
+      countBadge.setAttribute('data-presentation-only', 'true');
+      countBadge.setAttribute('aria-hidden', 'true');
+    } else {
+      countBadge?.remove();
+    }
     const def = (getDefinition(concept) || '').trim();
     const why = (getWhy(concept) || '').trim();
 
