@@ -14,10 +14,10 @@
     .notepad-choices button.notepad-choice-icon { display:flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; padding:10px; }
     .notepad-choice-icon svg { width:20px; height:20px; pointer-events:none; }
     .notepad-choices button:hover, .notepad-choices button:focus-visible { background:#eee5ef; }
-    .homepage-notepad { position:fixed; z-index:10000; width:min(320px, calc(100vw - 16px)); height:min(340px, calc(100dvh - 16px)); overflow:hidden; border-radius:14px; background:var(--light-dove-grey, #e8e8e8); box-shadow:0 12px 36px #39263730; }
-    .homepage-notepad iframe { display:block; width:100%; height:100%; border:0; background:transparent; }
+    .homepage-notepad { position:fixed; z-index:10000; width:min(320px, calc(100vw - 16px)); height:min(340px, calc(100dvh - 42px)); overflow:visible; border-radius:14px; background:var(--light-dove-grey, #e8e8e8); box-shadow:0 12px 36px #39263730; }
+    .homepage-notepad iframe { display:block; width:100%; height:100%; border:0; border-radius:14px; background:transparent; }
     .homepage-notepad-close, .homepage-notepad-resize { position:absolute; z-index:2; border:0; background:transparent; color:#777; cursor:pointer; }
-    .homepage-notepad-close { top:6px; right:8px; width:26px; height:26px; font:20px system-ui; opacity:0; transition:opacity .15s; }
+    .homepage-notepad-close { top:-26px; right:0; width:26px; height:26px; font:20px system-ui; opacity:0; transition:opacity .15s; }
     .homepage-notepad:hover .homepage-notepad-close, .homepage-notepad-close:focus-visible { opacity:1; }
     .homepage-notepad-resize { right:0; bottom:0; width:24px; height:24px; cursor:nwse-resize; touch-action:none; }
     .homepage-notepad-resize::after { content:""; position:absolute; right:6px; bottom:6px; width:8px; height:8px; border-right:2px solid #bbb; border-bottom:2px solid #bbb; }
@@ -40,7 +40,7 @@
   }
   function movePanel(x, y) {
     panel.style.left = `${Math.max(8, Math.min(x, innerWidth - panel.offsetWidth - 8))}px`;
-    panel.style.top = `${Math.max(8, Math.min(y, innerHeight - panel.offsetHeight - 8))}px`;
+    panel.style.top = `${Math.max(34, Math.min(y, innerHeight - panel.offsetHeight - 8))}px`;
   }
   function openOnHome() {
     if (panel) {
@@ -198,7 +198,7 @@
     closeChoices();
     if (panel && !panel.hidden) {
       panel.style.width = Math.min(panel.offsetWidth, innerWidth - 16) + "px";
-      panel.style.height = Math.min(panel.offsetHeight, innerHeight - 16) + "px";
+      panel.style.height = Math.min(panel.offsetHeight, innerHeight - 42) + "px";
       movePanel(panel.offsetLeft, panel.offsetTop);
     }
   });
