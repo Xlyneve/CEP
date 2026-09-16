@@ -5,7 +5,10 @@
   const url = "notepad.html?v=20260916-8";
   let notepadWindow = null;
   let panel = null;
-  const layoutKey = "xlyneve-notepad-home-layout";
+  const compactLayout = matchMedia("(max-width: 600px)").matches;
+  const layoutKey = compactLayout
+    ? "xlyneve-notepad-home-layout-mobile"
+    : "xlyneve-notepad-home-layout";
   let savedLayout = null;
   try {
     const value = JSON.parse(localStorage.getItem(layoutKey));
@@ -18,7 +21,11 @@
   }
   function restoreLayout() {
     if (!panel || panel.hidden) return;
-    const layout = savedLayout || { x:innerWidth - 344, y:100, width:320, height:340 };
+    const mobileWidth = Math.min(320, innerWidth - 24);
+    const mobileHeight = Math.min(380, innerHeight - 180);
+    const layout = savedLayout || (compactLayout
+      ? { x:(innerWidth - mobileWidth) / 2, y:180, width:mobileWidth, height:mobileHeight }
+      : { x:innerWidth - 344, y:100, width:320, height:340 });
     panel.style.width = Math.min(Math.max(180, layout.width), Math.max(1, innerWidth - 16)) + "px";
     panel.style.height = Math.min(Math.max(160, layout.height), Math.max(1, innerHeight - 42)) + "px";
     movePanel(layout.x, layout.y);
@@ -37,6 +44,10 @@
     .homepage-notepad-resize { position:absolute; z-index:2; border:0; background:transparent; color:#777; cursor:pointer; }
     .homepage-notepad-resize { right:0; bottom:0; width:24px; height:24px; cursor:nwse-resize; touch-action:none; }
     .homepage-notepad-resize::after { content:""; position:absolute; right:6px; bottom:6px; width:8px; height:8px; border-right:2px solid #bbb; border-bottom:2px solid #bbb; }
+    @media (max-width:600px) {
+      .homepage-notepad-resize { width:34px; height:34px; }
+      .homepage-notepad-resize::after { right:8px; bottom:8px; width:10px; height:10px; }
+    }
   `;
   document.head.append(style);
   const choices = document.createElement("div");
@@ -107,8 +118,16 @@
         saveLayout();
       });
     }
-    frame.addEventListener("load", () => {
+    function prepareEmbeddedNotepad() {
       const doc = frame.contentDocument;
+      if (!doc || doc.documentElement.dataset.homeNotepadReady === "1") return;
+      const yellowDot = doc.querySelector(".dot-yellow");
+      const purpleDot = doc.querySelector(".dot-purple");
+      if (!yellowDot || !purpleDot) {
+        window.setTimeout(prepareEmbeddedNotepad, 80);
+        return;
+      }
+      doc.documentElement.dataset.homeNotepadReady = "1";
       const embeddedStyle = doc.createElement("style");
       embeddedStyle.textContent = `
         html, body { background:transparent; }
@@ -130,7 +149,7 @@
       handle.className = "dot dot-yellow";
       handle.setAttribute("aria-label", "Move notepad: drag or use arrow keys");
       handle.title = "Drag to move, or use arrow keys";
-      doc.querySelector(".dot-yellow").replaceWith(handle);
+      yellowDot.replaceWith(handle);
       bindHandle(handle, false);
       const close = doc.createElement("button");
       close.type = "button";
@@ -142,12 +161,14 @@
         panel.hidden = true;
         launcher.focus();
       });
-      doc.querySelector(".dot-purple").replaceWith(close);
-    });
+      purpleDot.replaceWith(close);
+    }
+    frame.addEventListener("load", prepareEmbeddedNotepad);
     bindHandle(resize, true);
     panel.append(frame, resize);
     document.body.append(panel);
     restoreLayout();
+    if (frame.contentDocument?.readyState === "complete") prepareEmbeddedNotepad();
   }
   const homeRequestKey = "xlyneve-notepad-open-home-request";
   const homeAcknowledgementKey = "xlyneve-notepad-open-home-ack";
