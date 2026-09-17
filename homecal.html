@@ -2010,8 +2010,13 @@ async function migrateLegacyChecklist(editor, year, month, day, dayElement, snap
 }
 // Auto resize textareas
 function autoResizeTextarea(textarea) {
+  if (!textarea.isConnected || textarea.getClientRects().length === 0) return;
   textarea.style.height = 'auto';
-  textarea.style.height = textarea.scrollHeight + 'px';
+  const style = getComputedStyle(textarea);
+  const borderHeight = style.boxSizing === 'border-box'
+    ? parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth)
+    : -parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+  textarea.style.height = `${textarea.scrollHeight + borderHeight}px`;
 }
 
 function autoResizeAllDayTextareas() {
@@ -2072,7 +2077,7 @@ function setTodoWidth(width, save = false) {
   todoResizer.setAttribute('aria-valuenow', String(Math.round(todoWidth)));
   if (save) localStorage.setItem('homecalTodoWidth', String(Math.round(todoWidth)));
   requestAnimationFrame(() => {
-    todoPanel.querySelectorAll('.todo-item textarea').forEach(autoResizeTextarea);
+    todoPanel.querySelectorAll('textarea').forEach(autoResizeTextarea);
   });
 }
 
@@ -2139,7 +2144,7 @@ const pendingTextareaResizes = new Set();
 let textareaResizeFrame = 0;
 
 function scheduleTextareaResize(textarea) {
-  if (!textarea?.isConnected) return;
+  if (!textarea) return;
   pendingTextareaResizes.add(textarea);
   if (textareaResizeFrame) return;
   textareaResizeFrame = requestAnimationFrame(() => {
@@ -2168,6 +2173,7 @@ function refreshTodoOrder() {
     if (currentElement !== element) {
       todoListEl.insertBefore(element, currentElement);
     }
+    scheduleTextareaResize(element.querySelector('textarea'));
   });
 }
 
@@ -2556,7 +2562,7 @@ populateSelectors();
 loadCalendar();
 loadTodos();
 window.addEventListener('resize', () => {
-  document.querySelectorAll('.todo-item textarea, .day textarea').forEach(autoResizeTextarea);
+  document.querySelectorAll('.todo-item textarea, #newTodo, .day textarea').forEach(autoResizeTextarea);
   autoResizeAllDayTextareas();
 });
 
