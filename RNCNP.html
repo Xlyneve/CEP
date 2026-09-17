@@ -3789,6 +3789,46 @@ function setupChecklistRowDrag(row) {
   });
 }
 
+function openRationaleEditor(noteText, value, onSave, returnFocus) {
+  const dialog = document.createElement('dialog');
+  dialog.className = 'rationale-dialog dose-modal-card';
+  dialog.setAttribute('aria-labelledby', 'rationaleEditorTitle');
+  dialog.innerHTML = `
+    <form method="dialog">
+      <h2 id="rationaleEditorTitle">💡 Note rationale</h2>
+      <p class="rationale-note-preview"></p>
+      <label for="rationaleEditorText">Why did you add this note?</label>
+      <textarea id="rationaleEditorText" placeholder="Write your reasoning here…" autofocus></textarea>
+      <p class="rationale-editor-hint">Clear the text and save to remove the rationale.</p>
+      <div class="dose-modal-actions">
+        <button type="button" class="rationale-cancel">Cancel</button>
+        <button type="submit">Save rationale</button>
+      </div>
+    </form>`;
+  dialog.querySelector('.rationale-note-preview').textContent = noteText;
+  const textarea = dialog.querySelector('textarea');
+  textarea.value = value;
+  dialog.querySelector('form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    onSave(textarea.value);
+    dialog.close();
+  });
+  dialog.querySelector('.rationale-cancel').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', (event) => {
+    const bounds = dialog.getBoundingClientRect();
+    if (event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom)) dialog.close();
+  });
+  dialog.addEventListener('close', () => {
+    dialog.remove();
+    if (returnFocus?.isConnected) returnFocus.focus();
+  }, { once: true });
+  document.body.appendChild(dialog);
+  dialog.showModal();
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+
 function createChecklistRow(container, text = '', checked = false, lineBreak = false, rationale = '') {
   const list = container.querySelector('.checklist-list');
   if (!list) return;
@@ -3915,8 +3955,7 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     event.stopPropagation();
     optionsMenu.hidden = true;
     optionsBtn.setAttribute('aria-expanded', 'false');
-    const value = window.prompt('Why did you add this note? (Clear the text to remove the rationale.)', row.dataset.rationale);
-    if (value !== null) updateRationale(value);
+    openRationaleEditor(input.value, row.dataset.rationale, updateRationale, optionsBtn);
   };
   rationaleBtn.addEventListener('click', editRationale);
   rationaleIndicator.addEventListener('click', editRationale);
@@ -6102,6 +6141,29 @@ if (firebaseReady) {
 }
 
 /* Light options button */
+.rationale-dialog {
+  margin: auto; max-width: 480px; max-height: calc(100dvh - 32px);
+  padding: 24px; color: var(--text); overflow-y: auto;
+}
+.rationale-dialog::backdrop {
+  background: rgba(74,58,68,.24); backdrop-filter: blur(12px) saturate(120%);
+}
+.rationale-dialog h2 { margin: 0 0 12px; font-size: 20px; }
+.rationale-note-preview {
+  margin: 0 0 18px; padding: 10px 12px; border-radius: 12px;
+  background: rgba(255,255,255,.45); font-size: 13px;
+  max-height: 100px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.rationale-dialog label { display: block; font-size: 14px; font-weight: 600; }
+.rationale-dialog textarea {
+  width: 100%; min-height: 140px; max-height: 40dvh; margin-top: 8px;
+  padding: 12px; border: 1px solid var(--stroke); border-radius: 12px;
+  background: rgba(255,255,255,.65); color: var(--text); font: inherit;
+  line-height: 1.5; resize: vertical;
+}
+.rationale-dialog textarea:focus { outline: 2px solid #b18aa4; outline-offset: 2px; }
+.rationale-editor-hint { margin: 8px 0 18px; color: var(--soft); font-size: 12px; }
+.rationale-dialog .dose-modal-actions { flex-wrap: wrap; }
 .card .checklist-row.has-rationale .check-item { padding-right: 30px !important; }
 .checklist-rationale-indicator {
   position: absolute; top: 0; right: 19px; z-index: 3;
