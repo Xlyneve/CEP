@@ -3506,7 +3506,8 @@ function splitPromptToItems(value) {
         return {
           text: String(v?.text || '').trim(),
           checked: !!v?.checked,
-          lineBreak: !!v?.lineBreak
+          lineBreak: !!v?.lineBreak,
+          rationale: String(v?.rationale || '')
         };
       })
       .filter(item => item.text);
@@ -3788,7 +3789,7 @@ function setupChecklistRowDrag(row) {
   });
 }
 
-function createChecklistRow(container, text = '', checked = false, lineBreak = false) {
+function createChecklistRow(container, text = '', checked = false, lineBreak = false, rationale = '') {
   const list = container.querySelector('.checklist-list');
   if (!list) return;
 
@@ -3888,7 +3889,58 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   deleteBtn.textContent = 'Delete';
 
   optionsMenu.appendChild(editBtn);
+  const rationaleBtn = document.createElement('button');
+  rationaleBtn.type = 'button';
+  rationaleBtn.className = 'checklist-menu-action';
+  optionsMenu.appendChild(rationaleBtn);
   optionsMenu.appendChild(deleteBtn);
+
+  const rationaleIndicator = document.createElement('button');
+  rationaleIndicator.type = 'button';
+  rationaleIndicator.className = 'checklist-rationale-indicator';
+  rationaleIndicator.textContent = '💡';
+  const rationaleTooltip = document.createElement('span');
+  rationaleTooltip.className = 'checklist-rationale-tooltip';
+  rationaleIndicator.appendChild(rationaleTooltip);
+  const updateRationale = (value) => {
+    row.dataset.rationale = String(value || '').trim();
+    rationaleIndicator.hidden = !row.dataset.rationale;
+    rationaleTooltip.textContent = row.dataset.rationale;
+    rationaleIndicator.setAttribute('aria-label', `Rationale: ${row.dataset.rationale}. Click to edit.`);
+    rationaleBtn.textContent = row.dataset.rationale ? 'Edit rationale' : 'Add rationale';
+    row.classList.toggle('has-rationale', !!row.dataset.rationale);
+  };
+  const editRationale = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    optionsMenu.hidden = true;
+    optionsBtn.setAttribute('aria-expanded', 'false');
+    const value = window.prompt('Why did you add this note? (Clear the text to remove the rationale.)', row.dataset.rationale);
+    if (value !== null) updateRationale(value);
+  };
+  rationaleBtn.addEventListener('click', editRationale);
+  rationaleIndicator.addEventListener('click', editRationale);
+  updateRationale(rationale);
+  row.appendChild(rationaleIndicator);
+  row.addEventListener('contextmenu', (event) => {
+    if (row.classList.contains('editing')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (optionsMenu.hidden) optionsBtn.click();
+    rationaleBtn.focus();
+  });
+  row.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      optionsMenu.hidden = true;
+      optionsBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+  row.addEventListener('focusout', (event) => {
+    if (!row.contains(event.relatedTarget)) {
+      optionsMenu.hidden = true;
+      optionsBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
 
   optionsWrap.appendChild(optionsBtn);
   optionsWrap.appendChild(optionsMenu);
@@ -4068,7 +4120,8 @@ function initEditableChecklist(id, seedItems = []) {
     container,
     item.text || '',
     !!item.checked,
-    !!item.lineBreak
+    !!item.lineBreak,
+    item.rationale || ''
   );
 });
 }
@@ -4105,7 +4158,8 @@ function getChecklistItems(id) {
       return {
         text: input?.value.trim() || '',
         checked: isSelected,
-        lineBreak: hasLineBreak
+        lineBreak: hasLineBreak,
+        rationale: row.dataset.rationale || ''
       };
     })
     .filter(item => item.text);
@@ -6048,6 +6102,24 @@ if (firebaseReady) {
 }
 
 /* Light options button */
+.card .checklist-row.has-rationale .check-item { padding-right: 30px !important; }
+.checklist-rationale-indicator {
+  position: absolute; top: 0; right: 19px; z-index: 3;
+  border: 0; background: transparent; padding: 2px; font-size: 13px;
+  cursor: pointer; line-height: 1;
+}
+.checklist-rationale-indicator[hidden] { display: none; }
+.checklist-rationale-tooltip {
+  display: none; position: absolute; right: 0; bottom: calc(100% + 6px);
+  width: max-content; max-width: min(260px, 65vw); padding: 10px 12px;
+  border: 1px solid #e6d6ac; border-radius: 10px; background: #fff9e8;
+  color: #493d27; box-shadow: 0 4px 16px #0002;
+  font: 13px/1.5 system-ui, sans-serif; text-align: left;
+  white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none;
+}
+.checklist-rationale-indicator:hover .checklist-rationale-tooltip,
+.checklist-rationale-indicator:focus-visible .checklist-rationale-tooltip { display: block; }
+@media print { .checklist-rationale-indicator { display: none !important; } }
 .card .checklist-options-wrap {
   position: relative;
   display: flex;
