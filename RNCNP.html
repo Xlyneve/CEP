@@ -3959,7 +3959,11 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     event.preventDefault();
     event.stopPropagation();
     optionsMenu.hidden = true;
-    openRationaleEditor(input.value, row.dataset.rationale, updateRationale, note);
+    openRationaleEditor(input.value, row.dataset.rationale, (value) => {
+      const previousRationale = row.dataset.rationale;
+      updateRationale(value);
+      if (row.dataset.rationale !== previousRationale) markTemplateDirty();
+    }, note);
   };
   rationaleBtn.addEventListener('click', editRationale);
   rationaleIndicator.addEventListener('click', editRationale);
@@ -4464,9 +4468,9 @@ function collectPromptFields() {
     managementPlanFreeText: getField('managementPlanFreeText')?.value.trim() || '',
     prescribingPrivateNote: getPrivateNoteHtml('prescribingPrivateNote'),
 
-    hpc: getChecklistItems('hpcList').map(i => i.text),
-    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
-    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
+    hpc: getChecklistItems('hpcList'),
+    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList'),
+    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList'),
     examGeneral: getChecklistItems('examGeneralList'),
 	examHeadNeck: getChecklistItems('examHeadNeckList'),
 	examEnt: getChecklistItems('examEntList'),
@@ -4474,17 +4478,17 @@ function collectPromptFields() {
 	examChest: getChecklistItems('examChestList'),
 	examAbdomen: getChecklistItems('examAbdomenList'),
 	examOther: getChecklistItems('examOtherList'),
-    investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
-    investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
-    assessment: getChecklistItems('assessmentList').map(i => i.text),
-    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList').map(i => i.text),
-    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList').map(i => i.text),
-    followUpPrimary: getChecklistItems('followUpPrimaryList').map(i => i.text),
-    followUpSecondary: getChecklistItems('followUpSecondaryList').map(i => i.text),
-    advicePrimary: getChecklistItems('advicePrimaryList').map(i => i.text),
-    adviceSecondary: getChecklistItems('adviceSecondaryList').map(i => i.text),
-    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList').map(i => i.text),
-safetyNetSecondary: getChecklistItems('safetyNetSecondaryList').map(i => i.text),
+    investigationsPrimary: getChecklistItems('investigationsPrimaryList'),
+    investigationsSecondary: getChecklistItems('investigationsSecondaryList'),
+    assessment: getChecklistItems('assessmentList'),
+    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList'),
+    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList'),
+    followUpPrimary: getChecklistItems('followUpPrimaryList'),
+    followUpSecondary: getChecklistItems('followUpSecondaryList'),
+    advicePrimary: getChecklistItems('advicePrimaryList'),
+    adviceSecondary: getChecklistItems('adviceSecondaryList'),
+    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList'),
+safetyNetSecondary: getChecklistItems('safetyNetSecondaryList'),
 patientLinks: getPatientLinks()
   };
 }
