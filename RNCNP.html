@@ -3643,10 +3643,24 @@ function sentence(text) {
   return /[.!?]$/.test(clean) ? clean : `${clean}.`;
 }
 
+const pendingChecklistResizes = new Set();
+let checklistResizeFrame = null;
+
 function autoGrowChecklistTextarea(el) {
   if (!el) return;
-  el.style.height = 'auto';
-  el.style.height = `${el.scrollHeight}px`;
+  pendingChecklistResizes.add(el);
+  if (checklistResizeFrame !== null) return;
+
+  checklistResizeFrame = requestAnimationFrame(() => {
+    checklistResizeFrame = null;
+    const fields = [...pendingChecklistResizes].filter(field => field.isConnected);
+    pendingChecklistResizes.clear();
+
+    // Batch writes and measurements so typing never measures layout in its input handler.
+    fields.forEach(field => { field.style.height = 'auto'; });
+    const heights = fields.map(field => field.scrollHeight);
+    fields.forEach((field, index) => { field.style.height = `${heights[index]}px`; });
+  });
 }
 
 function autoGrowTextarea(el) {
