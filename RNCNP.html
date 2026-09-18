@@ -3919,14 +3919,6 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   const optionsWrap = document.createElement('div');
   optionsWrap.className = 'checklist-options-wrap';
 
-  const optionsBtn = document.createElement('button');
-  optionsBtn.type = 'button';
-  optionsBtn.className = 'checklist-options-btn';
-  optionsBtn.textContent = '';
-  optionsBtn.title = 'Note options';
-  optionsBtn.setAttribute('aria-label', 'Note options');
-  optionsBtn.setAttribute('aria-expanded', 'false');
-
   const optionsMenu = document.createElement('div');
   optionsMenu.className = 'checklist-options-menu';
   optionsMenu.hidden = true;
@@ -3967,34 +3959,30 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     event.preventDefault();
     event.stopPropagation();
     optionsMenu.hidden = true;
-    optionsBtn.setAttribute('aria-expanded', 'false');
-    openRationaleEditor(input.value, row.dataset.rationale, updateRationale, optionsBtn);
+    openRationaleEditor(input.value, row.dataset.rationale, updateRationale, note);
   };
   rationaleBtn.addEventListener('click', editRationale);
   rationaleIndicator.addEventListener('click', editRationale);
   updateRationale(rationale);
-  row.appendChild(rationaleIndicator);
+  optionsWrap.appendChild(rationaleIndicator);
   row.addEventListener('contextmenu', (event) => {
     if (row.classList.contains('editing')) return;
     event.preventDefault();
     event.stopPropagation();
-    if (optionsMenu.hidden) optionsBtn.click();
+    openOptionsMenu();
     rationaleBtn.focus();
   });
   row.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       optionsMenu.hidden = true;
-      optionsBtn.setAttribute('aria-expanded', 'false');
     }
   });
   row.addEventListener('focusout', (event) => {
     if (!row.contains(event.relatedTarget)) {
       optionsMenu.hidden = true;
-      optionsBtn.setAttribute('aria-expanded', 'false');
     }
   });
 
-  optionsWrap.appendChild(optionsBtn);
   optionsWrap.appendChild(optionsMenu);
 
   const setSelected = (selected) => {
@@ -4047,10 +4035,7 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     e.stopPropagation();
   });
 
-  optionsBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  function openOptionsMenu() {
     document
       .querySelectorAll('.checklist-options-menu')
       .forEach(menu => {
@@ -4059,14 +4044,15 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
         }
       });
 
-    const willOpen = optionsMenu.hidden;
+    optionsMenu.hidden = false;
+  }
 
-    optionsMenu.hidden = !willOpen;
-
-    optionsBtn.setAttribute(
-      'aria-expanded',
-      willOpen ? 'true' : 'false'
-    );
+  row.addEventListener('keydown', (event) => {
+    if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+      event.preventDefault();
+      openOptionsMenu();
+      rationaleBtn.focus();
+    }
   });
 
   editBtn.addEventListener('click', (e) => {
@@ -4074,7 +4060,6 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     e.stopPropagation();
 
     optionsMenu.hidden = true;
-    optionsBtn.setAttribute('aria-expanded', 'false');
 
     row.classList.add('editing');
     input.readOnly = false;
@@ -6177,9 +6162,8 @@ if (firebaseReady) {
 .rationale-dialog textarea:focus { outline: 2px solid #b18aa4; outline-offset: 2px; }
 .rationale-editor-hint { margin: 8px 0 18px; color: var(--soft); font-size: 12px; }
 .rationale-dialog .dose-modal-actions { flex-wrap: wrap; }
-.card .checklist-row.has-rationale .check-item { padding-right: 30px !important; }
 .checklist-rationale-indicator {
-  position: absolute; top: 2px; right: 19px; z-index: 3;
+  position: relative; z-index: 3;
   width: 14px; height: 14px; min-width: 14px; min-height: 14px;
   border: 1px solid #d6bb70; border-radius: 50%; padding: 0;
   background: radial-gradient(circle at 35% 30%, #fffef4, #f3da8c);
