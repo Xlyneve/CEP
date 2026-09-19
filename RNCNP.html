@@ -3867,7 +3867,6 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   abnormalMarker.title = 'Abnormal finding';
   abnormalMarker.setAttribute('role', 'img');
   abnormalMarker.setAttribute('aria-label', 'Abnormal finding');
-  note.appendChild(abnormalMarker);
   note.tabIndex = 0;
   note.setAttribute('role', 'button');
   note.setAttribute(
@@ -3922,7 +3921,11 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   input.rows = 1;
   input.readOnly = true;
 
-  note.appendChild(input);
+  const textWrap = document.createElement('div');
+  textWrap.className = 'checklist-note-text-wrap';
+  textWrap.appendChild(input);
+  textWrap.appendChild(abnormalMarker);
+  note.appendChild(textWrap);
 
   const optionsWrap = document.createElement('div');
   optionsWrap.className = 'checklist-options-wrap';
@@ -6110,9 +6113,10 @@ if (firebaseReady) {
 }
 
 .card .check-item { position: relative; }
-.card .checklist-row.is-abnormal .check-item { padding-left: 22px !important; }
+.checklist-note-text-wrap { position: relative; min-width: 0; }
+.checklist-note-text-wrap > textarea { display: block; }
 .card .check-item .checklist-abnormal-marker {
-  position: absolute; left: 3px; top: -3px; z-index: 2;
+  position: absolute; left: 1px; top: -7px; z-index: 2;
   color: #ff0000 !important;
   -webkit-text-fill-color: #ff0000 !important;
   font-size: 11px; line-height: 1;
