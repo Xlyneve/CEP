@@ -326,6 +326,24 @@ header h1 {
   padding:3px 6px; border:1px solid rgba(130,130,136,.42); background:rgba(255,255,255,.22);
   text-align:left; vertical-align:top; white-space:normal; overflow-wrap:anywhere;
 }
+.structured-rich-snippet {
+  display:block; min-width:0; max-width:100%; overflow-x:auto; white-space:normal;
+  overflow-wrap:anywhere; -webkit-overflow-scrolling:touch;
+}
+.structured-rich-snippet > :first-child { margin-top:0; }
+.structured-rich-snippet > :last-child { margin-bottom:0; }
+.structured-rich-snippet p,.structured-rich-snippet div { margin:0 0 7px; }
+.structured-rich-snippet ul,.structured-rich-snippet ol { margin:6px 0; padding-left:22px; }
+.structured-rich-snippet img { box-sizing:border-box; max-width:100% !important; height:auto !important; }
+.structured-rich-snippet table {
+  width:max-content; min-width:100%; max-width:none; margin:8px 0; border-collapse:collapse;
+  table-layout:auto; font:10px/1.25 Tahoma,sans-serif;
+}
+.structured-rich-snippet th,.structured-rich-snippet td {
+  min-width:24px; padding:4px 6px; border:1px solid rgba(0,0,0,.25);
+  background:rgba(255,255,255,.18); text-align:left; vertical-align:top; white-space:normal; overflow-wrap:anywhere;
+}
+.structured-rich-snippet th { background:rgba(255,255,255,.35); font-weight:700; }
 .universal-search-native-card:hover, .universal-search-native-card:focus-visible {
   border-color: rgba(255, 255, 255, 1);
   box-shadow: 0 5px 13px rgba(63, 52, 57, 0.13);
@@ -364,9 +382,28 @@ header h1 {
 .xgpt-rich-snippet img { max-width: 100%; height: auto; }
 .xgpt-rich-snippet table { max-width: 100%; border-collapse: collapse; }
 .xgpt-rich-snippet td, .xgpt-rich-snippet th { padding: 3px 6px; border: 1px solid rgba(130,130,136,.42); }
-.xgpt-concept-link { display:inline; color:inherit; font-weight:600; text-decoration:none; border-bottom:1px dotted rgba(90,72,82,.5); cursor:pointer; }
-.xgpt-concept-link.has-image { cursor:zoom-in; }
-.xgpt-concept-link.has-image::after { content:""; display:inline-block; width:5px; height:5px; margin-left:3px; border-radius:50%; background:#aa96d2; vertical-align:middle; }
+.xgpt-rich-snippet .cep-xgpt-concept {
+  --xgpt-search-accent:var(--page-header-glass,rgba(219,158,131,.82));
+  position:relative; display:inline-flex; align-items:baseline; gap:4px; vertical-align:baseline;
+  padding:0 6px; border:1px solid rgba(208,160,163,.22); border-radius:10px;
+  background:rgba(208,160,163,.15); color:#2a2a2a;
+  line-height:1.25; text-decoration:none; transform:translateY(.35px); cursor:pointer;
+}
+.xgpt-rich-snippet .cep-xgpt-concept:hover,.xgpt-rich-snippet .cep-xgpt-concept:focus-visible {
+  background:rgba(208,160,163,.20); border-color:rgba(208,160,163,.40); outline:2px solid rgba(208,160,163,.35); outline-offset:2px;
+}
+.xgpt-rich-snippet .cep-xgpt-concept-label { display:inline; color:inherit; font:inherit; white-space:normal; }
+.xgpt-rich-snippet .cep-xgpt-concept-count {
+  display:inline-block; margin-left:2px; padding:0 5px; border:1px solid var(--xgpt-search-accent);
+  border-radius:999px; background:rgba(219,158,131,.18); color:#444; font:700 9px/1.2 Arial,sans-serif;
+  transform:translateY(-.5px);
+}
+.xgpt-rich-snippet .cep-xgpt-concept-count::before { content:attr(data-count); }
+.xgpt-rich-snippet .cep-xgpt-concept.has-image { cursor:zoom-in; }
+.xgpt-rich-snippet .cep-xgpt-concept.has-image::after {
+  content:""; display:inline-block; width:6px; height:6px; margin-left:5px; border-radius:999px;
+  background:var(--xgpt-search-accent); box-shadow:0 0 0 2px rgba(255,255,255,.7); vertical-align:middle;
+}
 .xgpt-media-tip { position:fixed; z-index:2147483646; display:none; width:min(280px,calc(100vw - 24px)); padding:9px; border:1px solid rgba(255,255,255,.8); border-radius:12px; background:rgba(255,255,255,.96); box-shadow:0 12px 32px rgba(30,25,28,.24); }
 .xgpt-media-tip img { display:block; width:100%; max-height:220px; object-fit:contain; border-radius:8px; cursor:zoom-in; }
 .xgpt-media-tip-caption { padding-top:6px; color:#534a4e; font:11px/1.35 Arial,sans-serif; }
@@ -3500,6 +3537,10 @@ html body > header {
       });
     }
     function addHighlightedRichHtml(parent, html, terms) {
+      if (window.renderXgptSearchRichContent) {
+        window.renderXgptSearchRichContent(parent, html, terms);
+        return;
+      }
       const richContent = document.createElement('div');
       CEPSecurity.setHTML(richContent, html);
       linkifyXgptConcepts(richContent);
@@ -3507,6 +3548,7 @@ html body > header {
       const walker = document.createTreeWalker(richContent, NodeFilter.SHOW_TEXT);
       while (walker.nextNode()) textNodes.push(walker.currentNode);
       textNodes.forEach(textNode => {
+        if (textNode.parentElement?.closest('a,button')) return;
         if (!textNode.nodeValue || !terms.some(term => textNode.nodeValue.toLocaleLowerCase().includes(term))) return;
         const fragment = document.createDocumentFragment();
         addHighlightedText(fragment, textNode.nodeValue, terms);
@@ -3804,7 +3846,12 @@ html body > header {
         nativeTitle.textContent = page.title;
         const nativeSnippet = document.createElement('div');
         nativeSnippet.className = 'universal-search-native-snippet';
-        const resultImages = createSearchResultImages(page.imageUrls || [page.imageUrl], page.file);
+        const structuredRichContent = sourceTitle !== 'Xgpt Notes' &&
+          Boolean(page.richHtml) && Boolean(window.hasStructuredSearchContent?.(page.richHtml));
+        const separateImageUrls = structuredRichContent
+          ? (page.imageUrls || [page.imageUrl]).filter(imageUrl => imageUrl && !String(page.richHtml).includes(imageUrl))
+          : (page.imageUrls || [page.imageUrl]);
+        const resultImages = createSearchResultImages(separateImageUrls, page.file);
         const matchingTable = page.searchTables?.find(rows => {
           const tableText = rows.flat().join(' ').toLocaleLowerCase();
           return commaGroups
@@ -3814,6 +3861,10 @@ html body > header {
         if (page.richHtml && sourceTitle === 'Xgpt Notes') {
           nativeSnippet.classList.add('xgpt-rich-snippet');
           addHighlightedRichHtml(nativeSnippet, page.richHtml, renderTerms);
+          appendSearchResultContent(nativeCard, nativeTitle, nativeSnippet, resultImages, page.file);
+        } else if (structuredRichContent) {
+          nativeSnippet.classList.add('structured-rich-snippet');
+          window.renderStructuredSearchContent(nativeSnippet, page.richHtml, renderTerms);
           appendSearchResultContent(nativeCard, nativeTitle, nativeSnippet, resultImages, page.file);
         } else if (matchingTable) {
           const tablePreview = document.createElement('table');
@@ -5021,7 +5072,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getCachedXgptConceptMedia as getSharedXgptConceptMedia, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia } from './universal-search-overlay.js?v=10';
+  import { getCachedXgptConceptMedia as getSharedXgptConceptMedia, hasStructuredSearchContent as hasSharedStructuredSearchContent, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=12';
   import {
     getFirestore,
     collection,
@@ -5131,6 +5182,9 @@ const firebaseConfig = {
   window.cepUniversalLazyLoaders ||= [];
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
   window.getCachedXgptConceptMedia = getSharedXgptConceptMedia;
+  window.renderXgptSearchRichContent = renderSharedXgptSearchRichContent;
+  window.hasStructuredSearchContent = hasSharedStructuredSearchContent;
+  window.renderStructuredSearchContent = renderSharedStructuredSearchContent;
   window.fetchXgptConceptMedia = async concept => {
     if (!concept || !chatgptSearchAuth?.currentUser) return null;
     return loadSharedXgptConceptMedia(concept);

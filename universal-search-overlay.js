@@ -36,6 +36,12 @@ const imageUrlsFromHtml = value => {
   const parsed = new DOMParser().parseFromString(String(value || ''), 'text/html');
   return [...parsed.body.querySelectorAll('img[src]')].map(image => image.getAttribute('src')).filter(Boolean);
 };
+const structuredContentSelector = 'table,thead,tbody,tfoot,tr,th,td,ul,ol,li,h1,h2,h3,h4,h5,h6,blockquote,pre,figure,figcaption';
+export function hasStructuredSearchContent(html) {
+  if (!html) return false;
+  const parsed = new DOMParser().parseFromString(String(html), 'text/html');
+  return Boolean(parsed.body.querySelector(structuredContentSelector));
+}
 
 const normalizeSearchValue = value => String(value || '').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
 const searchTextCache = new WeakMap();
@@ -53,6 +59,7 @@ function getSearchText(entry) {
 let entriesPromise;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
+let xgptConceptCounts = new Map();
 let xgptDb;
 const normalizeConcept = value => String(value || '').toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
 function getXgptAuth() {
@@ -87,7 +94,7 @@ export async function loadXgptEntries() {
       const media = item.data() || {};
       return [normalizeConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
     }));
-    return snapshot.docs.map(note => {
+    const entries = snapshot.docs.map(note => {
       const rawHtml = note.data().content || note.data().note || note.data().text || '';
       const text = textFromHtml(rawHtml).replace(/\[\[([^\]]+)\]\]/g, '$1');
       const firstLine = text.split(/[.!?]\s|\n/)[0].trim();
@@ -96,6 +103,13 @@ export async function loadXgptEntries() {
         title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text, richHtml: rawHtml
       };
     });
+    xgptConceptCounts = new Map();
+    entries.forEach(entry => {
+      const concepts = new Set([...String(entry.richHtml || '').matchAll(/\[\[([^\]\[]+?)\]\]/g)]
+        .map(match => normalizeConcept(match[1])).filter(Boolean));
+      concepts.forEach(concept => xgptConceptCounts.set(concept, (xgptConceptCounts.get(concept) || 0) + 1));
+    });
+    return entries;
   } catch (error) {
     xgptEntriesPromise = null;
     if (error?.code === 'xgpt/auth-required') throw error;
@@ -141,6 +155,7 @@ async function loadEntries(onProgress) {
           const title = textFromHtml(data.title).replace(/\s+/g, ' ').trim() || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
           const displayText = textFromHtml(data.note || data.text || data.content || '') || text;
+          const richHtml = data.note || data.text || data.content || '';
           const imageUrls = [...new Set([
             data.image || '',
             ...fields.flatMap(field => imageUrlsFromHtml(data[field]))
@@ -149,7 +164,7 @@ async function loadEntries(onProgress) {
           return {
             id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`,
             text, displayText, directUrl, cardColour: file === 'Notes.html' ? (data.color || '#C0B7BB') : '',
-            imageUrl: data.image || '', imageUrls
+            imageUrl: data.image || '', imageUrls, richHtml
           };
         });
       } catch (error) {
@@ -230,7 +245,7 @@ function appendSearchResultContent(card, title, body, images, file) {
   if (images.length && !imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
 }
 
-function addXgptRichContent(parent, html, terms) {
+export function renderXgptSearchRichContent(parent, html, terms = []) {
   const content = document.createElement('div');
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(content, html);
   else content.textContent = textFromHtml(html);
@@ -245,9 +260,16 @@ function addXgptRichContent(parent, html, terms) {
     text.replace(pattern, (match, inner, offset) => {
       fragment.append(document.createTextNode(text.slice(last, offset)));
       const concept = String(inner || '').trim(); const link = document.createElement('a');
-      link.href = '#'; link.className = 'cep-xgpt-concept'; link.textContent = concept;
+      link.href = '#'; link.className = 'cep-xgpt-concept xgpt-concept-link';
+      const label = document.createElement('span'); label.className = 'cep-xgpt-concept-label'; label.textContent = concept;
+      link.appendChild(label);
       const media = xgptConceptMedia[normalizeConcept(concept)];
       if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption || ''; }
+      const count = xgptConceptCounts.get(normalizeConcept(concept)) || 1;
+      if (count) {
+        const badge = document.createElement('span'); badge.className = 'cep-xgpt-concept-count';
+        badge.dataset.count = String(count); badge.setAttribute('aria-hidden', 'true'); link.appendChild(badge);
+      }
       fragment.append(link); last = offset + match.length; return match;
     });
     fragment.append(document.createTextNode(text.slice(last))); node.replaceWith(fragment);
@@ -255,8 +277,26 @@ function addXgptRichContent(parent, html, terms) {
   const richTextNodes = []; const highlightWalker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
   while (highlightWalker.nextNode()) richTextNodes.push(highlightWalker.currentNode);
   richTextNodes.forEach(node => {
+    if (node.parentElement?.closest('.cep-xgpt-concept')) return;
     if (!node.nodeValue || !terms.some(term => node.nodeValue.toLocaleLowerCase().includes(term))) return;
     const fragment = document.createDocumentFragment(); addHighlightedText(fragment, node.nodeValue, terms); node.replaceWith(fragment);
+  });
+  parent.append(...content.childNodes);
+}
+
+export function renderStructuredSearchContent(parent, html, terms = []) {
+  const content = document.createElement('div');
+  if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(content, html);
+  else content.textContent = textFromHtml(html);
+  const nodes = [];
+  const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node => {
+    if (node.parentElement?.closest('a,button')) return;
+    if (!node.nodeValue || !terms.some(term => node.nodeValue.toLocaleLowerCase().includes(term))) return;
+    const fragment = document.createDocumentFragment();
+    addHighlightedText(fragment, node.nodeValue, terms);
+    node.replaceWith(fragment);
   });
   parent.append(...content.childNodes);
 }
@@ -479,12 +519,19 @@ export async function mountUniversalSearch(host, closeSearch) {
         destination.hash = new URLSearchParams({ cepId: entry.id, cepSearch: query, cepHint: navigationHint }).toString();
         link.href = destination.href;
       }
+      const structuredRichContent = entry.file !== 'chatgptx.html' && hasStructuredSearchContent(entry.richHtml);
       const title = document.createElement('strong'); title.textContent = entry.title;
-      const cardBody = document.createElement(entry.file === 'chatgptx.html' ? 'div' : 'span');
-      const resultImages = createSearchResultImages(entry.imageUrls || [entry.imageUrl], entry.file);
+      const cardBody = document.createElement(entry.file === 'chatgptx.html' || structuredRichContent ? 'div' : 'span');
+      const separateImageUrls = structuredRichContent
+        ? (entry.imageUrls || [entry.imageUrl]).filter(imageUrl => imageUrl && !String(entry.richHtml || '').includes(imageUrl))
+        : (entry.imageUrls || [entry.imageUrl]);
+      const resultImages = createSearchResultImages(separateImageUrls, entry.file);
       if (entry.file === 'chatgptx.html' && entry.richHtml) {
         cardBody.className = 'cep-xgpt-rich-content';
-        addXgptRichContent(cardBody, entry.richHtml, renderTerms);
+        renderXgptSearchRichContent(cardBody, entry.richHtml, renderTerms);
+      } else if (structuredRichContent) {
+        cardBody.className = 'cep-structured-rich-content';
+        renderStructuredSearchContent(cardBody, entry.richHtml, renderTerms);
       } else addHighlightedText(cardBody, snippetText, renderTerms);
       appendSearchResultContent(link, title, cardBody, resultImages, entry.file);
       group.querySelector('.cep-global-search-group-cards').appendChild(link);
