@@ -337,13 +337,46 @@ header h1 {
 .structured-rich-snippet img { box-sizing:border-box; max-width:100% !important; height:auto !important; }
 .structured-rich-snippet table {
   width:max-content; min-width:100%; max-width:none; margin:8px 0; border-collapse:collapse;
-  table-layout:auto; font:10px/1.25 Tahoma,sans-serif;
+  table-layout:auto; border-radius:8px; font:10px/1.25 Tahoma,sans-serif; cursor:zoom-in;
 }
 .structured-rich-snippet th,.structured-rich-snippet td {
   min-width:24px; padding:4px 6px; border:1px solid rgba(0,0,0,.25);
   background:rgba(255,255,255,.18); text-align:left; vertical-align:top; white-space:normal; overflow-wrap:anywhere;
 }
 .structured-rich-snippet th { background:rgba(255,255,255,.35); font-weight:700; }
+.universal-search-native-card.is-copied { box-shadow:0 0 0 2px rgba(219,158,131,.48),0 5px 13px rgba(63,52,57,.13); }
+.cep-search-table-zoom[hidden] { display:none !important; }
+.cep-search-table-zoom {
+  position:fixed; inset:0; z-index:2147483647; display:flex; align-items:center; justify-content:center;
+  padding:clamp(10px,3vw,28px); box-sizing:border-box; background:rgba(25,22,24,.72);
+}
+.cep-search-table-zoom-panel {
+  display:flex; flex-direction:column; width:min(1100px,96vw); height:min(820px,92dvh); min-width:0;
+  padding:10px; box-sizing:border-box; border:1px solid rgba(255,255,255,.82); border-radius:16px;
+  background:rgba(248,246,245,.97); box-shadow:0 18px 52px rgba(0,0,0,.34);
+}
+.cep-search-table-zoom-controls { display:flex; flex:0 0 auto; justify-content:flex-end; gap:7px; padding:0 0 9px; }
+.cep-search-table-zoom-controls button {
+  min-width:34px; height:32px; padding:0 10px; border:1px solid rgba(120,99,108,.24); border-radius:9px;
+  background:rgba(255,255,255,.88); color:#40363b; font:700 12px/1 Arial,sans-serif; cursor:pointer;
+}
+.cep-search-table-zoom-controls button:hover,.cep-search-table-zoom-controls button:focus-visible { background:var(--page-header-glass,rgba(219,158,131,.82)); outline:none; }
+.cep-search-table-zoom-controls .cep-search-table-zoom-close { margin-left:auto; font-size:21px; }
+.cep-search-table-zoom-viewport {
+  flex:1 1 auto; min-width:0; min-height:0; overflow:auto; padding:10px; box-sizing:border-box;
+  border-radius:11px; background:rgba(255,255,255,.72); overscroll-behavior:contain; touch-action:pan-x pan-y;
+}
+.cep-search-table-zoom-stage { position:relative; min-width:100%; min-height:100%; }
+.cep-search-table-zoom-content {
+  position:absolute; top:0; left:0; width:max-content; min-width:0; max-width:none; margin:0;
+  border-collapse:collapse; table-layout:auto; border-radius:8px; transform-origin:top left;
+  color:#40363b; font:14px/1.35 Tahoma,sans-serif;
+}
+.cep-search-table-zoom-content th,.cep-search-table-zoom-content td {
+  min-width:52px; padding:7px 9px; border:1px solid rgba(0,0,0,.25); background:rgba(255,255,255,.18);
+  text-align:left; vertical-align:top; white-space:normal; overflow-wrap:anywhere;
+}
+.cep-search-table-zoom-content th { background:rgba(255,255,255,.42); font-weight:700; }
 .universal-search-native-card:hover, .universal-search-native-card:focus-visible {
   border-color: rgba(255, 255, 255, 1);
   box-shadow: 0 5px 13px rgba(63, 52, 57, 0.13);
@@ -3835,11 +3868,10 @@ html body > header {
           nativeCard.target = '_blank';
           nativeCard.rel = 'noopener noreferrer';
         }
-        nativeCard.addEventListener('click', event => {
-          recordSearchUse(page);
-          if (!embeddedSearch) return;
-          event.preventDefault();
-          navigateToSearchResult(nativeCard.href);
+        window.installSearchCardInteractions?.(nativeCard, {
+          copyText: page.displayText || page.text || page.title,
+          onNavigate: () => recordSearchUse(page),
+          navigate: () => navigateToSearchResult(nativeCard.href)
         });
         const nativeTitle = document.createElement('span');
         nativeTitle.className = 'universal-search-native-title';
@@ -5072,7 +5104,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getCachedXgptConceptMedia as getSharedXgptConceptMedia, hasStructuredSearchContent as hasSharedStructuredSearchContent, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=12';
+  import { getCachedXgptConceptMedia as getSharedXgptConceptMedia, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=13';
   import {
     getFirestore,
     collection,
@@ -5185,6 +5217,7 @@ const firebaseConfig = {
   window.renderXgptSearchRichContent = renderSharedXgptSearchRichContent;
   window.hasStructuredSearchContent = hasSharedStructuredSearchContent;
   window.renderStructuredSearchContent = renderSharedStructuredSearchContent;
+  window.installSearchCardInteractions = installSharedSearchCardInteractions;
   window.fetchXgptConceptMedia = async concept => {
     if (!concept || !chatgptSearchAuth?.currentUser) return null;
     return loadSharedXgptConceptMedia(concept);

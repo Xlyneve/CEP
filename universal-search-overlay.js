@@ -281,7 +281,9 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
     if (!node.nodeValue || !terms.some(term => node.nodeValue.toLocaleLowerCase().includes(term))) return;
     const fragment = document.createDocumentFragment(); addHighlightedText(fragment, node.nodeValue, terms); node.replaceWith(fragment);
   });
+  const tables = [...content.querySelectorAll('table')];
   parent.append(...content.childNodes);
+  tables.forEach(enableSearchTableZoom);
 }
 
 export function renderStructuredSearchContent(parent, html, terms = []) {
@@ -298,7 +300,94 @@ export function renderStructuredSearchContent(parent, html, terms = []) {
     addHighlightedText(fragment, node.nodeValue, terms);
     node.replaceWith(fragment);
   });
+  const tables = [...content.querySelectorAll('table')];
   parent.append(...content.childNodes);
+  tables.forEach(enableSearchTableZoom);
+}
+
+let tableZoomUi;
+function getSearchTableZoomUi() {
+  if (tableZoomUi?.root?.isConnected) return tableZoomUi;
+  const root = document.createElement('div'); root.className = 'cep-search-table-zoom'; root.hidden = true;
+  root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Expanded table');
+  const panel = document.createElement('div'); panel.className = 'cep-search-table-zoom-panel';
+  const controls = document.createElement('div'); controls.className = 'cep-search-table-zoom-controls';
+  const minus = document.createElement('button'); minus.type = 'button'; minus.textContent = '−'; minus.title = 'Zoom out'; minus.setAttribute('aria-label', 'Zoom out');
+  const reset = document.createElement('button'); reset.type = 'button'; reset.textContent = '100%'; reset.title = 'Reset zoom';
+  const plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '+'; plus.title = 'Zoom in'; plus.setAttribute('aria-label', 'Zoom in');
+  const close = document.createElement('button'); close.type = 'button'; close.className = 'cep-search-table-zoom-close'; close.textContent = '×'; close.title = 'Close'; close.setAttribute('aria-label', 'Close expanded table');
+  controls.append(minus, reset, plus, close);
+  const viewport = document.createElement('div'); viewport.className = 'cep-search-table-zoom-viewport';
+  const stage = document.createElement('div'); stage.className = 'cep-search-table-zoom-stage'; viewport.appendChild(stage);
+  panel.append(controls, viewport); root.appendChild(panel); document.body.appendChild(root);
+  let scale = 1; let table; let previousBodyOverflow = '';
+  const sizeStage = () => {
+    if (!table) return;
+    const width = table.scrollWidth || table.getBoundingClientRect().width;
+    const height = table.scrollHeight || table.getBoundingClientRect().height;
+    stage.style.width = `${Math.ceil(width * scale)}px`; stage.style.height = `${Math.ceil(height * scale)}px`;
+    table.style.transform = `scale(${scale})`; reset.textContent = `${Math.round(scale * 100)}%`;
+  };
+  const setScale = nextScale => {
+    const oldScale = scale; const centerX = viewport.scrollLeft + viewport.clientWidth / 2; const centerY = viewport.scrollTop + viewport.clientHeight / 2;
+    scale = Math.min(3, Math.max(.5, nextScale)); sizeStage();
+    viewport.scrollLeft = centerX * (scale / oldScale) - viewport.clientWidth / 2;
+    viewport.scrollTop = centerY * (scale / oldScale) - viewport.clientHeight / 2;
+  };
+  const closeZoom = () => {
+    if (root.hidden) return;
+    root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow;
+  };
+  const open = sourceTable => {
+    table = sourceTable.cloneNode(true); table.querySelectorAll('[id]').forEach(element => element.removeAttribute('id')); table.removeAttribute('id');
+    table.classList.add('cep-search-table-zoom-content'); stage.replaceChildren(table); scale = 1;
+    previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; root.hidden = false;
+    requestAnimationFrame(() => { sizeStage(); viewport.scrollTo({ left: 0, top: 0 }); close.focus(); });
+  };
+  minus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale - .25); });
+  plus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale + .25); });
+  reset.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(1); });
+  close.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); closeZoom(); });
+  panel.addEventListener('click', event => event.stopPropagation());
+  root.addEventListener('click', event => { if (event.target === root) closeZoom(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !root.hidden) closeZoom(); });
+  tableZoomUi = { root, open, close: closeZoom };
+  return tableZoomUi;
+}
+
+export function enableSearchTableZoom(table) {
+  if (!table || table.dataset.cepSearchTableZoom === 'true') return;
+  table.dataset.cepSearchTableZoom = 'true'; table.tabIndex = 0;
+  table.setAttribute('aria-label', 'Open enlarged table');
+  const open = event => { event.preventDefault(); event.stopPropagation(); getSearchTableZoomUi().open(table); };
+  table.addEventListener('click', open);
+  table.addEventListener('dblclick', event => { event.preventDefault(); event.stopPropagation(); });
+  table.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') open(event); });
+}
+
+const interactiveSearchChildSelector = 'table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)';
+export function installSearchCardInteractions(card, { copyText, navigate, onNavigate } = {}) {
+  let clickTimer;
+  const isInteractiveChild = target => target instanceof Element && Boolean(target.closest(interactiveSearchChildSelector));
+  card.addEventListener('click', event => {
+    if (isInteractiveChild(event.target)) {
+      const nestedLink = event.target.closest?.('a:not(.cep-global-search-result):not(.universal-search-native-card):not(.cep-xgpt-concept):not(.xgpt-concept-link)');
+      if (!nestedLink) { event.preventDefault(); event.stopPropagation(); }
+      return;
+    }
+    event.preventDefault();
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(async () => {
+      try {
+        await navigator.clipboard.writeText(String(copyText || '').trim());
+        card.classList.add('is-copied'); setTimeout(() => card.classList.remove('is-copied'), 550);
+      } catch (error) { console.warn('Search result could not be copied.', error); }
+    }, 260);
+  });
+  card.addEventListener('dblclick', event => {
+    if (isInteractiveChild(event.target)) { event.preventDefault(); event.stopPropagation(); return; }
+    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer); onNavigate?.(); navigate?.();
+  });
 }
 
 function installXgptMediaUi() {
@@ -534,13 +623,23 @@ export async function mountUniversalSearch(host, closeSearch) {
         renderStructuredSearchContent(cardBody, entry.richHtml, renderTerms);
       } else addHighlightedText(cardBody, snippetText, renderTerms);
       appendSearchResultContent(link, title, cardBody, resultImages, entry.file);
+      installSearchCardInteractions(link, {
+        copyText: entry.displayText || entry.text || entry.title,
+        navigate: () => {
+          if (entry.directUrl) window.open(link.href, '_blank', 'noopener');
+          else location.assign(link.href);
+        }
+      });
       group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
   input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 140); });
   input.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeSearch();
-    if (event.key === 'Enter') results.querySelector('a')?.click();
+    if (event.key === 'Enter') {
+      const firstResult = results.querySelector('.cep-global-search-result');
+      if (firstResult?.href) location.assign(firstResult.href);
+    }
   });
   input.focus();
   entries = await loadEntries(source => { status.textContent = `Loading ${source}…`; });
