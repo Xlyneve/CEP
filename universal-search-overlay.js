@@ -36,7 +36,7 @@ const imageUrlsFromHtml = value => {
   const parsed = new DOMParser().parseFromString(String(value || ''), 'text/html');
   return [...parsed.body.querySelectorAll('img[src]')].map(image => image.getAttribute('src')).filter(Boolean);
 };
-const structuredContentSelector = 'table,thead,tbody,tfoot,tr,th,td,ul,ol,li,h1,h2,h3,h4,h5,h6,blockquote,pre,figure,figcaption';
+const structuredContentSelector = 'table,thead,tbody,tfoot,tr,th,td,ul,ol,li,h1,h2,h3,h4,h5,h6,blockquote,pre,figure,figcaption,p,br,strong,b,em,i,u,mark,s,small,sub,sup,img,span[style],div[style]';
 export function hasStructuredSearchContent(html) {
   if (!html) return false;
   const parsed = new DOMParser().parseFromString(String(html), 'text/html');
@@ -235,6 +235,7 @@ function createSearchResultImages(imageUrls, file) {
     image.className = 'cep-search-attachment';
     if (String(file).toLowerCase() === 'pn.html') image.classList.add('is-pn-image');
     image.src = safeUrl; image.alt = 'Note image'; image.loading = 'lazy'; image.decoding = 'async';
+    enableSearchImageZoom(image);
     return [image];
   });
 }
@@ -281,9 +282,10 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
     if (!node.nodeValue || !terms.some(term => node.nodeValue.toLocaleLowerCase().includes(term))) return;
     const fragment = document.createDocumentFragment(); addHighlightedText(fragment, node.nodeValue, terms); node.replaceWith(fragment);
   });
-  const tables = [...content.querySelectorAll('table')];
+  const tables = [...content.querySelectorAll('table')]; const images = [...content.querySelectorAll('img')];
   parent.append(...content.childNodes);
   tables.forEach(enableSearchTableZoom);
+  images.forEach(enableSearchImageZoom);
 }
 
 export function renderStructuredSearchContent(parent, html, terms = []) {
@@ -300,9 +302,80 @@ export function renderStructuredSearchContent(parent, html, terms = []) {
     addHighlightedText(fragment, node.nodeValue, terms);
     node.replaceWith(fragment);
   });
-  const tables = [...content.querySelectorAll('table')];
+  const tables = [...content.querySelectorAll('table')]; const images = [...content.querySelectorAll('img')];
   parent.append(...content.childNodes);
   tables.forEach(enableSearchTableZoom);
+  images.forEach(enableSearchImageZoom);
+}
+
+let imageZoomUi;
+function getSearchImageZoomUi() {
+  if (imageZoomUi?.root?.isConnected) return imageZoomUi;
+  const root = document.createElement('div'); root.className = 'cep-search-image-viewer'; root.hidden = true;
+  root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Expanded image');
+  const panel = document.createElement('div'); panel.className = 'cep-search-image-viewer-panel';
+  const controls = document.createElement('div'); controls.className = 'cep-search-image-viewer-controls';
+  const minus = document.createElement('button'); minus.type = 'button'; minus.textContent = '−'; minus.title = 'Zoom out'; minus.setAttribute('aria-label', 'Zoom out');
+  const reset = document.createElement('button'); reset.type = 'button'; reset.textContent = '100%'; reset.title = 'Reset zoom';
+  const plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '+'; plus.title = 'Zoom in'; plus.setAttribute('aria-label', 'Zoom in');
+  const close = document.createElement('button'); close.type = 'button'; close.className = 'cep-search-image-viewer-close'; close.textContent = '×'; close.title = 'Close'; close.setAttribute('aria-label', 'Close expanded image');
+  controls.append(minus, reset, plus, close);
+  const viewport = document.createElement('div'); viewport.className = 'cep-search-image-viewer-viewport';
+  const stage = document.createElement('div'); stage.className = 'cep-search-image-viewer-stage'; viewport.appendChild(stage);
+  panel.append(controls, viewport); root.appendChild(panel); document.body.appendChild(root);
+  let scale = 1; let image; let baseWidth = 0; let baseHeight = 0; let previousBodyOverflow = '';
+  const sizeStage = () => {
+    if (!image || !baseWidth || !baseHeight) return;
+    const scaledWidth = Math.ceil(baseWidth * scale); const scaledHeight = Math.ceil(baseHeight * scale);
+    const stageWidth = Math.max(scaledWidth, viewport.clientWidth); const stageHeight = Math.max(scaledHeight, viewport.clientHeight);
+    stage.style.width = `${stageWidth}px`; stage.style.height = `${stageHeight}px`;
+    image.style.left = `${Math.max(0, Math.floor((stageWidth - scaledWidth) / 2))}px`;
+    image.style.top = `${Math.max(0, Math.floor((stageHeight - scaledHeight) / 2))}px`;
+    image.style.transform = `scale(${scale})`; reset.textContent = `${Math.round(scale * 100)}%`;
+  };
+  const setScale = nextScale => {
+    const oldScale = scale; const centerX = viewport.scrollLeft + viewport.clientWidth / 2; const centerY = viewport.scrollTop + viewport.clientHeight / 2;
+    scale = Math.min(4, Math.max(.5, nextScale)); sizeStage();
+    viewport.scrollLeft = centerX * (scale / oldScale) - viewport.clientWidth / 2;
+    viewport.scrollTop = centerY * (scale / oldScale) - viewport.clientHeight / 2;
+  };
+  const closeViewer = () => {
+    if (root.hidden) return;
+    root.hidden = true; stage.replaceChildren(); image = null; baseWidth = 0; baseHeight = 0;
+    document.body.style.overflow = previousBodyOverflow;
+  };
+  const open = sourceImage => {
+    image = sourceImage.cloneNode(true); image.removeAttribute('id'); image.className = 'cep-search-image-viewer-image';
+    image.removeAttribute('loading'); stage.replaceChildren(image); scale = 1;
+    previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; root.hidden = false;
+    const prepare = () => requestAnimationFrame(() => {
+      const sourceRect = sourceImage.getBoundingClientRect(); const naturalWidth = image.naturalWidth || sourceRect.width || 1;
+      const naturalHeight = image.naturalHeight || sourceRect.height || 1;
+      const fit = Math.min(1, Math.max(.01, (viewport.clientWidth - 12) / naturalWidth), Math.max(.01, (viewport.clientHeight - 12) / naturalHeight));
+      baseWidth = Math.max(1, Math.round(naturalWidth * fit)); baseHeight = Math.max(1, Math.round(naturalHeight * fit));
+      image.style.width = `${baseWidth}px`; image.style.height = `${baseHeight}px`; sizeStage();
+      viewport.scrollTo({ left: 0, top: 0 }); close.focus();
+    });
+    if (image.complete) prepare(); else image.addEventListener('load', prepare, { once: true });
+  };
+  minus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale - .25); });
+  plus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale + .25); });
+  reset.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(1); });
+  close.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); closeViewer(); });
+  root.addEventListener('click', event => { if (!event.target.closest('.cep-search-image-viewer-image,.cep-search-image-viewer-controls')) closeViewer(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !root.hidden) closeViewer(); });
+  imageZoomUi = { root, open, close: closeViewer };
+  return imageZoomUi;
+}
+
+export function enableSearchImageZoom(image) {
+  if (!image || image.dataset.cepSearchImageZoom === 'true') return;
+  image.dataset.cepSearchImageZoom = 'true'; image.tabIndex = 0; image.setAttribute('role', 'button');
+  image.setAttribute('aria-label', image.alt ? `Open enlarged image: ${image.alt}` : 'Open enlarged image');
+  const open = event => { event.preventDefault(); event.stopPropagation(); getSearchImageZoomUi().open(image); };
+  image.addEventListener('click', open);
+  image.addEventListener('dblclick', event => { event.preventDefault(); event.stopPropagation(); });
+  image.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') open(event); });
 }
 
 let tableZoomUi;
@@ -407,7 +480,8 @@ export function installSearchCardInteractions(card, { copyText, navigate, onNavi
     clickTimer = setTimeout(async () => {
       try {
         await navigator.clipboard.writeText(String(copyText || '').trim());
-        card.classList.add('is-copied'); setTimeout(() => card.classList.remove('is-copied'), 550);
+        card.classList.remove('is-copied'); void card.offsetWidth; card.classList.add('is-copied');
+        setTimeout(() => card.classList.remove('is-copied'), 720);
       } catch (error) { console.warn('Search result could not be copied.', error); }
     }, 260);
   });
