@@ -7,7 +7,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
   <script src="auth-guard.js?v=20260823-8"></script>
-  <script src="security.js?v=20260911-nav1"></script>
+  <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Biologics Vaccine Planner</title>
@@ -515,7 +515,7 @@
       </div>
     </section>
   </div>
-<script src="biosched-rules.js?v=20260912-1"></script>
+<script src="biosched-rules.js?v=20260912-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
  <script>
   const vaccineDefaults = [
@@ -635,23 +635,7 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
     { key: 'notfunded', title: 'Recommended — not funded / eligibility-dependent' }
   ];
 
-  function applyInactiveRules(context) {
-    const dobYear = context.dob ? new Date(context.dob + 'T00:00:00').getFullYear() : null;
-    const duringTreatment = context.phase === 'first' || context.phase === 'later';
-    vaccines.forEach(v => {
-      let reason = '';
-      if (v.key === 'mmr' && dobYear && dobYear < 1969) {
-        reason = 'Not required — presumed immune (born before 1969)';
-      } else if (v.key === 'varicella' && duringTreatment) {
-        reason = 'Contraindicated — live vaccine during active immunosuppression';
-      }
-      v.inactiveReason = reason;
-      if (reason) v.selected = false;
-    });
-  }
-
   function renderLibrary() {
-    applyInactiveRules(clinicalContext());
     normalizeVaccines();
     vaccines.sort((a, b) => seriesWeight(b) - seriesWeight(a));
 
@@ -728,7 +712,7 @@ function firstAvailableVisitIndex(eligibleDate, visitDates, visits, limit) {
       libraryGrid.appendChild(section);
     });
 
-    const totalSelected = vaccines.filter(v => v.selected).length;
+    const totalSelected = vaccines.filter(v => v.selected && !v.inactiveReason).length;
     const countLabel = document.getElementById('selectedCountLabel');
     if (countLabel) countLabel.textContent = `${totalSelected} of ${vaccines.length} vaccines selected`;
   }

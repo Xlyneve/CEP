@@ -103,7 +103,6 @@
 (() => {
   "use strict";
 
-  function focusSearchResult() {
   const params = new URLSearchParams(location.hash.slice(1));
   const query = params.get("cepSearch");
   if (!query) return;
@@ -360,7 +359,4 @@
   } else {
     startSearchFocus();
   }
-  }
-  window.addEventListener("hashchange", focusSearchResult);
-  focusSearchResult();
 })();

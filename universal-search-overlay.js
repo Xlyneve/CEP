@@ -1,5 +1,3 @@
-import { renderSearchCard, showSearchConceptPreview } from "./shared-search-card.js?v=14";
-import { sharedSearchRecords, searchCacheVersion, getSharedSearchQuery, setSharedSearchQuery, clearSharedSearchCache } from "./shared-search-cache.js";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithRedirect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -47,22 +45,6 @@ function getSearchText(entry) {
   return indexed;
 }
 
-// Return a snapshot-shaped view of shared plain records, after checking auth.
-export async function loadSearchCollection(db, name) {
-  if (!await window.CEP_AUTH_READY) throw new Error('Sign in to search.');
-  const auth = getAuth(db.app);
-  if (auth.authStateReady) await auth.authStateReady();
-  const uid = auth.currentUser?.uid;
-  if (!uid) throw new Error('Sign in to search.');
-  const records = await sharedSearchRecords(db.app.options.projectId, uid, name, async () => {
-    const snapshot = await getDocs(collection(db, name));
-    return snapshot.docs.map(item => ({ id: item.id, data: item.data() }));
-  });
-  if (auth.currentUser?.uid !== uid) throw new Error('Search account changed.');
-  return { docs: records.map(item => ({ id: item.id, data: () => item.data })) };
-}
-let entriesVersion;
-let xgptVersion;
 let entriesPromise;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
@@ -79,8 +61,6 @@ function getXgptAuth() {
   return { app, auth: getAuth(app) };
 }
 export async function loadXgptEntries() {
-  const version = searchCacheVersion();
-  if (xgptVersion !== version) { xgptEntriesPromise = null; xgptConceptMedia = {}; xgptVersion = version; }
   if (xgptEntriesPromise) return xgptEntriesPromise;
   xgptEntriesPromise = (async () => {
   try {
@@ -93,8 +73,8 @@ export async function loadXgptEntries() {
     }
     const db = getFirestore(app);
     xgptDb = db;
-    const snapshot = await loadSearchCollection(db, 'notes');
-    const mediaSnapshot = await loadSearchCollection(db, 'concept_media').catch(error => {
+    const snapshot = await getDocs(collection(db, 'notes'));
+    const mediaSnapshot = await getDocs(collection(db, 'concept_media')).catch(error => {
       console.warn('Xgpt concept images are unavailable in header search.', error);
       return null;
     });
@@ -102,13 +82,13 @@ export async function loadXgptEntries() {
       const media = item.data() || {};
       return [normalizeConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
     }));
-    return snapshot.docs.map((note, sourceIndex) => {
+    return snapshot.docs.map(note => {
       const rawHtml = note.data().content || note.data().note || note.data().text || '';
       const text = textFromHtml(rawHtml).replace(/\[\[([^\]]+)\]\]/g, '$1');
       const firstLine = text.split(/[.!?]\s|\n/)[0].trim();
       return {
         id: note.id, file: 'chatgptx.html', sourceTitle: 'Xgpt Notes',
-        title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text, richHtml: rawHtml, sourceIndex, record: { id: note.id, data: note.data() }
+        title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text, richHtml: rawHtml
       };
     });
   } catch (error) {
@@ -143,22 +123,20 @@ export function getCachedXgptConceptMedia(concept) {
 }
 
 async function loadEntries(onProgress) {
-  const version = searchCacheVersion();
-  if (entriesVersion !== version) { entriesPromise = null; entriesVersion = version; }
   if (entriesPromise) return entriesPromise;
   entriesPromise = (async () => {
     await window.CEP_AUTH_READY;
     const db = getFirestore(getApp());
     const batches = await Promise.all(sources.map(async ([collectionName,file,sourceTitle,fields,directField]) => {
       try {
-        const snapshot = await loadSearchCollection(db, collectionName);
+        const snapshot = await getDocs(collection(db, collectionName));
         onProgress?.(sourceTitle);
-        return snapshot.docs.map((note, sourceIndex) => {
+        return snapshot.docs.map(note => {
           const data = note.data();
           const title = textFromHtml(data.title) || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
           const directUrl = directField && data[directField];
-          return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl, richHtml: data.note || data.text || '', imageUrl: data.image || '', noteUrl: directField ? '' : (data.url || ''), sourceIndex, record: { id: note.id, data } };
+          return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl };
         });
       } catch (error) {
         console.warn(`Search could not load ${collectionName}.`, error);
@@ -224,7 +202,7 @@ function installXgptMediaUi() {
   const zoomImage = document.createElement('img'); zoom.append(zoomImage); document.body.append(tip, zoom);
   let hideTimer; const hide = () => { hideTimer = setTimeout(() => { tip.hidden = true; tip.replaceChildren(); }, 180); };
   document.addEventListener('mouseover', async event => {
-    const link = event.composedPath().find(node => node.matches?.('.cep-xgpt-concept')); if (!link) return;
+    const link = event.target.closest?.('.cep-xgpt-concept'); if (!link) return;
     if (!link.dataset.image) {
       const media = await loadXgptConceptMedia(link.textContent);
       if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption; }
@@ -234,7 +212,7 @@ function installXgptMediaUi() {
     if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; tip.replaceChildren(image, caption); } else tip.replaceChildren(image);
     const rect = link.getBoundingClientRect(); tip.style.left = `${Math.max(12, Math.min(innerWidth - 292, rect.left))}px`; tip.style.top = `${Math.max(12, Math.min(innerHeight - 250, rect.bottom + 8))}px`; tip.hidden = false;
   });
-  document.addEventListener('mouseout', event => { if (event.composedPath().find(node => node.matches?.('.cep-xgpt-concept')) && !tip.contains(event.relatedTarget)) hide(); });
+  document.addEventListener('mouseout', event => { if (event.target.closest?.('.cep-xgpt-concept') && !tip.contains(event.relatedTarget)) hide(); });
   tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
   tip.addEventListener('click', event => { const image = event.target.closest('img'); if (!image) return; event.preventDefault(); event.stopPropagation(); zoomImage.src = image.src; zoom.classList.add('is-open'); });
   zoom.addEventListener('click', event => {
@@ -243,7 +221,7 @@ function installXgptMediaUi() {
     zoom.classList.remove('is-open');
     zoomImage.src = '';
   });
-  document.addEventListener('click', event => showSearchConceptPreview(event, '.cep-xgpt-concept'), true);
+  document.addEventListener('click', event => { if (event.target.closest?.('.cep-xgpt-concept')) { event.preventDefault(); event.stopPropagation(); } }, true);
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && zoom.classList.contains('is-open')) zoom.click(); });
 }
 
@@ -263,14 +241,12 @@ function editDistance(a, b) {
 }
 
 export async function mountUniversalSearch(host, closeSearch) {
-  if (!await window.CEP_AUTH_READY) return;
   installXgptMediaUi();
   const panel = document.createElement('section');
   panel.className = 'cep-global-search-panel';
   panel.innerHTML = `
     <div class="cep-global-search-row">
       <input type="search" autocomplete="off" spellcheck="false" placeholder="Search all notes and pages…" aria-label="Words to search for">
-      <button type="button" aria-label="Refresh search" title="Load the latest saved notes" data-search-refresh>↻</button>
       <button type="button" aria-label="Close search">×</button>
     </div>
     <div class="cep-global-search-filters" aria-label="Filter search by section"></div>
@@ -279,12 +255,11 @@ export async function mountUniversalSearch(host, closeSearch) {
     <div class="cep-global-search-results"></div>`;
   host.replaceChildren(panel);
   const input = panel.querySelector('input');
-  input.value = getSharedSearchQuery();
   const filters = panel.querySelector('.cep-global-search-filters');
   const status = panel.querySelector('.cep-global-search-status');
   const xgptPrompt = panel.querySelector('.cep-xgpt-auth-prompt');
   const results = panel.querySelector('.cep-global-search-results');
-  panel.querySelector('[aria-label="Close search"]').addEventListener('click', closeSearch);
+  panel.querySelector('button').addEventListener('click', closeSearch);
   let entries = [], activeSource = 'All', timer;
   const mergeXgptEntries = xgptEntries => {
     const existingIds = new Set(entries.filter(entry => entry.file === 'chatgptx.html').map(entry => entry.id));
@@ -321,10 +296,44 @@ export async function mountUniversalSearch(host, closeSearch) {
   const runSearch = () => {
     const query = input.value.trim().toLocaleLowerCase();
     const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
-    if (!query) { results.replaceChildren(); status.textContent = 'Type a word to search.'; return; }
-    const matches = entries.filter(entry => activeSource === 'All' || entry.sourceTitle === activeSource).map(entry => {
+    const commaGroups = query.includes(',')
+      ? [...new Set(query.split(',').map(group => group.trim()).filter(Boolean))]
+          .map(group => ({ query: group, terms: [...new Set(group.split(/\s+/).filter(Boolean))] }))
+      : null;
+    const renderTerms = commaGroups
+      ? [...new Set(commaGroups.flatMap(group => group.terms))]
+      : terms;
+    results.replaceChildren();
+    if (!query) { status.textContent = 'Type a word to search.'; return; }
+    const matches = entries.map(entry => {
       const indexed = getSearchText(entry);
       const { title, text } = indexed;
+      if (commaGroups) {
+        const matchedGroups = [];
+        for (const group of commaGroups) {
+          let groupScore = (title.includes(group.query) ? 250 : 0) + (text.includes(group.query) ? 100 : 0);
+          let fuzzy = false; let matched = true;
+          for (const term of group.terms) {
+            if (title.includes(term)) groupScore += 60;
+            else if (text.includes(term)) groupScore += 10;
+            else {
+              const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
+              const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
+              const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+              if (!similar) { matched = false; break; }
+              fuzzy = true; groupScore += 4;
+            }
+          }
+          if (matched) matchedGroups.push({ score: groupScore, fuzzy });
+        }
+        if (!matchedGroups.length) return null;
+        return {
+          entry,
+          score: matchedGroups.reduce((total, group) => total + group.score, 0),
+          matchedGroupCount: matchedGroups.length,
+          fuzzy: matchedGroups.every(group => group.fuzzy)
+        };
+      }
       let score = (title.includes(query) ? 250 : 0) + (text.includes(query) ? 100 : 0);
       let fuzzy = false;
       for (const term of terms) {
@@ -339,15 +348,17 @@ export async function mountUniversalSearch(host, closeSearch) {
         }
       }
       return { entry, score, fuzzy };
-    }).filter(Boolean).sort((a,b) => b.score - a.score).slice(0, 40);
+    }).filter(Boolean).filter(match => activeSource === 'All' || match.entry.sourceTitle === activeSource)
+      .sort((a,b) => commaGroups
+        ? b.matchedGroupCount - a.matchedGroupCount || b.score - a.score
+        : b.score - a.score).slice(0, 40);
     const onlySimilar = matches.length && matches.every(match => match.fuzzy);
     status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 40 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : 'No matching notes found.';
     const groups = new Map();
-    const fragment = document.createDocumentFragment();
     matches.forEach(({ entry }) => {
-      let cards = groups.get(entry.sourceTitle);
-      if (!cards) {
-        const group = document.createElement('section'); group.className = 'cep-global-search-group';
+      let group = groups.get(entry.sourceTitle);
+      if (!group) {
+        group = document.createElement('section'); group.className = 'cep-global-search-group';
         const sourceColours = {
           'pn.html': ['rgba(192,137,139,.58)', '#755255', 'rgba(239,221,222,.72)'],
           'info.html': ['rgba(126,161,158,.58)', '#4e706d', 'rgba(219,232,231,.76)'],
@@ -361,9 +372,8 @@ export async function mountUniversalSearch(host, closeSearch) {
         group.style.setProperty('--search-card', cardColour);
         const heading = document.createElement('a'); heading.className = 'cep-global-search-group-title';
         heading.textContent = entry.sourceTitle; heading.href = entry.file;
-        cards = document.createElement('div'); cards.className = 'cep-global-search-group-cards';
-        group.append(heading, cards); fragment.appendChild(group);
-        groups.set(entry.sourceTitle, cards);
+        const cards = document.createElement('div'); cards.className = 'cep-global-search-group-cards';
+        group.append(heading, cards); results.appendChild(group); groups.set(entry.sourceTitle, group);
       }
       const link = document.createElement('a'); link.className = 'cep-global-search-result';
       if (entry.directUrl) { link.href = entry.directUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; }
@@ -372,33 +382,19 @@ export async function mountUniversalSearch(host, closeSearch) {
         destination.hash = new URLSearchParams({ cepId: entry.id, cepSearch: query, cepHint: entry.text.slice(0,230) }).toString();
         link.href = destination.href;
       }
-      link.addEventListener('click', event => {
-        if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-        closeSearch();
-      });
-      renderSearchCard(link, entry, terms, addXgptRichContent);
-      cards.appendChild(link);
+      const title = document.createElement('strong'); title.textContent = entry.title;
+      const cardBody = document.createElement(entry.file === 'chatgptx.html' ? 'div' : 'span');
+      if (entry.file === 'chatgptx.html' && entry.richHtml) {
+        cardBody.className = 'cep-xgpt-rich-content';
+        addXgptRichContent(cardBody, entry.richHtml, renderTerms);
+      } else addHighlightedText(cardBody, entry.text, renderTerms);
+      link.append(title, cardBody); group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
-    results.replaceChildren(fragment);
   };
-  input.addEventListener('input', () => {
-    setSharedSearchQuery(input.value);
-    clearTimeout(timer);
-    timer = setTimeout(runSearch, 80);
-  });
+  input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 140); });
   input.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeSearch();
     if (event.key === 'Enter') results.querySelector('a')?.click();
-  });
-  panel.querySelector('[data-search-refresh]').addEventListener('click', async event => {
-    const button = event.currentTarget;
-    button.disabled = true; status.textContent = 'Refreshing saved notes…';
-    try {
-      await clearSharedSearchCache();
-      entries = await loadEntries();
-      renderFilters(); runSearch();
-      await requestXgptEntries();
-    } finally { button.disabled = false; }
   });
   input.focus();
   entries = await loadEntries(source => { status.textContent = `Loading ${source}…`; });

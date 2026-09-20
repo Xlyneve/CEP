@@ -90,7 +90,7 @@
     if (!/(?:^|\/)(?:homecal|RNCNP)\.html$/i.test(location.pathname)) {
       const editImageTools = document.createElement("script");
       editImageTools.type = "module";
-      editImageTools.src = "edit-card-images.js?v=20260909-quota1";
+      editImageTools.src = "edit-card-images.js?v=20260909-3";
       document.head.appendChild(editImageTools);
     }
 
@@ -104,10 +104,6 @@
       localStorage.removeItem("cep-auth-device-mode");
       localStorage.removeItem("cep-auth-return-to");
       localStorage.setItem("cep-explicit-sign-out", String(Date.now()));
-      try {
-        const { clearSharedSearchCache } = await import('./shared-search-cache.js');
-        await clearSharedSearchCache({ queries: true });
-      } catch (error) { console.warn('Search cache cleanup could not finish.', error); }
       await authSdk.signOut(auth);
       location.replace(`${LOGIN_PAGE}?signedOut=1`);
     }
@@ -171,10 +167,7 @@
     signOutButton.className = "cep-sign-out-light";
     signOutButton.setAttribute("aria-label", "Sign out of XlynEve");
     signOutButton.title = "Sign out";
-    signOutButton.addEventListener("click", () => {
-      if (typeof window.CEP_HOME_OPTIONS === 'function') window.CEP_HOME_OPTIONS(signOutButton);
-      else performSignOut();
-    });
+    signOutButton.addEventListener("click", performSignOut);
     document.body.appendChild(signOutButton);
     window.CEP_SIGN_OUT = performSignOut;
 

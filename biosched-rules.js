@@ -17,6 +17,13 @@
   function configure(vaccines, c) {
     const years = c.dob ? age(date(c.dob), date(c.start)) : null;
     vaccines.forEach(v => {
+      v.inactiveReason = '';
+      if (v.key === 'mmr' && c.dob && date(c.dob).getFullYear() < 1969) {
+        v.inactiveReason = 'Not required: born before 1969, under this factsheet.';
+      }
+      if (v.type === 'live' && c.phase !== 'before') {
+        v.inactiveReason = 'Inactive: live vaccine contraindicated during immunosuppression.';
+      }
       if (v.key === 'hepB' || v.key === 'hpv') {
         v.intervals = [{value:v.key === 'hepB' ? 1 : 2,unit:'months'},{value:6,unit:'months'}];
         v.spacingMode = 'fromDose1';
@@ -55,7 +62,7 @@
     const start = date(c.start), dob = date(c.dob), treatment = date(c.treatment);
     const visits = Array.from({length:10}, (_,i) => ({visit:i+1,date:add(start,i*4),items:[]}));
     const notes = [], liveDates = [], actual = new Map();
-    const selected = vaccines.filter(v => v.selected);
+    const selected = vaccines.filter(v => v.selected && !v.inactiveReason);
     if (!start || Number.isNaN(+start) || !dob || Number.isNaN(+dob) || age(dob,start) < 18 || dob > start || c.scope !== 'yes') return {visits,carryOver:['Enter a valid first visit date, adult date of birth and confirm this factsheet applies. Children, stem-cell transplant recipients, and excluded cancer groups need their specific guidance.']};
     if (c.phase === 'before' && treatment && treatment <= start) return {visits,carryOver:['Treatment starts on or before the first visit: select the appropriate during-treatment stage.']};
     const warn = s => { if (!notes.includes(s)) notes.push(s); };
