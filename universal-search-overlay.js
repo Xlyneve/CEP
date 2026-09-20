@@ -164,7 +164,7 @@ async function loadEntries(onProgress) {
           return {
             id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`,
             text, displayText, directUrl, cardColour: file === 'Notes.html' ? (data.color || '#C0B7BB') : '',
-            imageUrl: data.image || '', imageUrls, richHtml
+            imageUrl: data.image || '', imageUrls, richHtml, record: { id: note.id, data }
           };
         });
       } catch (error) {
@@ -306,6 +306,105 @@ export function renderStructuredSearchContent(parent, html, terms = []) {
   parent.append(...content.childNodes);
   tables.forEach(enableSearchTableZoom);
   images.forEach(enableSearchImageZoom);
+}
+
+const sourceCardTypes = {
+  'pn.html':'pn', 'notes.html':'notes', 'ecg.html':'ecg', 'urgent_care.html':'urgent',
+  'face.html':'urgent', 'hand.html':'urgent', 'sha.html':'urgent', 'abdo.html':'urgent',
+  'spine.html':'urgent', 'lf.html':'urgent', 'practicen.html':'practice', 'info.html':'info',
+  'explain.html':'explain', 'recalls.html':'pn', 'forms.html':'forms'
+};
+const sourceDateValue = value => value?.toDate ? value.toDate() : value ? new Date(value) : null;
+const sourceLegacyHtml = value => {
+  const raw = String(value || '');
+  if (raw.includes('<')) return raw;
+  const escaped = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  return escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/==(.+?)==/g, '<mark class="gradient-highlight">$1</mark>').replace(/\n/g, '<br>');
+};
+const appendSourceRichContent = (parent, html, terms, className) => {
+  const body = document.createElement('div'); body.className = className;
+  renderStructuredSearchContent(body, html, terms); parent.appendChild(body); return body;
+};
+const appendSourceImage = (parent, url, className = 'cep-source-card-image') => {
+  let safeUrl;
+  try {
+    const candidate = new URL(String(url || ''), location.href);
+    if (['https:', 'http:'].includes(candidate.protocol)) safeUrl = candidate.href;
+    else if (/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(String(url || ''))) safeUrl = String(url);
+  } catch {}
+  if (!safeUrl) return null;
+  const image = document.createElement('img'); image.className = className; image.src = safeUrl;
+  image.alt = 'Note image'; image.loading = 'lazy'; image.decoding = 'async'; enableSearchImageZoom(image);
+  parent.appendChild(image); return image;
+};
+const appendSourceLink = (parent, url, label) => {
+  if (!url) return;
+  let safeUrl;
+  try { const candidate = new URL(String(url), location.href); if (['https:', 'http:', 'mailto:', 'tel:'].includes(candidate.protocol)) safeUrl = candidate.href; } catch {}
+  if (!safeUrl) return;
+  const wrap = document.createElement('div'); wrap.className = 'cep-source-card-url';
+  const link = document.createElement('a'); link.href = safeUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = label;
+  wrap.appendChild(link); parent.appendChild(wrap);
+};
+
+export function renderSourceSearchCard(parent, entry, terms = []) {
+  const data = entry?.record?.data;
+  const type = sourceCardTypes[String(entry?.file || '').toLocaleLowerCase()];
+  if (!data || !type) return false;
+  parent.classList.add('cep-source-card', `cep-source-card--${type}`);
+  parent.dataset.sourceCardType = type;
+  if (entry.cardColour) parent.style.background = entry.cardColour;
+
+  if (type === 'forms') {
+    const view = document.createElement('div'); view.className = 'cep-source-card-view';
+    const title = document.createElement('strong'); title.textContent = data.title || 'Untitled'; view.appendChild(title);
+    if (data.note) { const note = document.createElement('em'); renderStructuredSearchContent(note, data.note, terms); view.appendChild(note); }
+    parent.appendChild(view); return true;
+  }
+  if (type === 'notes') {
+    const display = document.createElement('div'); display.className = 'cep-source-note-display';
+    addHighlightedText(display, String(data.text || ''), terms); parent.appendChild(display);
+    const date = sourceDateValue(data.date);
+    if (date && !Number.isNaN(date.valueOf())) {
+      const dateLine = document.createElement('div'); dateLine.className = 'cep-source-card-date';
+      dateLine.textContent = date.toLocaleString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+      parent.appendChild(dateLine);
+    }
+    return true;
+  }
+  if (type === 'ecg' || type === 'urgent') {
+    if (type === 'ecg') {
+      const date = sourceDateValue(data.createdAt);
+      if (date && !Number.isNaN(date.valueOf())) {
+        const dateLine = document.createElement('div'); dateLine.className = 'cep-source-card-date';
+        dateLine.textContent = date.toLocaleDateString('en-NZ', { day:'2-digit', month:'short', year:'numeric' }); parent.appendChild(dateLine);
+      }
+    }
+    appendSourceImage(parent, data.image);
+    appendSourceRichContent(parent, data.note || '', terms, 'cep-source-note-text');
+    return true;
+  }
+  if (type === 'pn') {
+    const title = document.createElement('div'); title.className = 'cep-source-note-title'; title.textContent = data.title || ''; parent.appendChild(title);
+    appendSourceRichContent(parent, data.note || '', terms, 'cep-source-note-content');
+    appendSourceImage(parent, data.image, 'cep-source-card-image cep-source-card-image--pn');
+    const date = sourceDateValue(data.time);
+    if (date && !Number.isNaN(date.valueOf())) { const line = document.createElement('div'); line.className = 'cep-source-card-date'; line.textContent = date.toLocaleString(); parent.appendChild(line); }
+    appendSourceLink(parent, data.url, '🔗 Open URL'); return true;
+  }
+  if (type === 'practice' || type === 'info' || type === 'explain') {
+    if (type === 'info') appendSourceImage(parent, data.image);
+    const title = document.createElement('div'); title.className = 'cep-source-note-title'; title.textContent = data.title || ''; parent.appendChild(title);
+    if (type !== 'explain') appendSourceLink(parent, data.url, type === 'practice' ? '🔗 Open' : 'URL Link');
+    appendSourceRichContent(parent, sourceLegacyHtml(data.text || ''), terms, 'cep-source-note-text');
+    if (type === 'practice') appendSourceImage(parent, data.image);
+    const date = sourceDateValue(data.timestamp);
+    if (date && !Number.isNaN(date.valueOf())) { const line = document.createElement('div'); line.className = 'cep-source-card-date'; line.textContent = `${type === 'explain' ? 'Saved on ' : 'Added: '}${date.toLocaleString()}`; parent.appendChild(line); }
+    return true;
+  }
+  return false;
 }
 
 let imageZoomUi;
@@ -712,18 +811,21 @@ export async function mountUniversalSearch(host, closeSearch) {
       const structuredRichContent = entry.file !== 'chatgptx.html' && hasStructuredSearchContent(entry.richHtml);
       const title = document.createElement('strong'); title.textContent = entry.title;
       const cardBody = document.createElement(entry.file === 'chatgptx.html' || structuredRichContent ? 'div' : 'span');
+      const sourceCardRendered = entry.file !== 'chatgptx.html' && renderSourceSearchCard(link, entry, renderTerms);
       const separateImageUrls = structuredRichContent
         ? (entry.imageUrls || [entry.imageUrl]).filter(imageUrl => imageUrl && !String(entry.richHtml || '').includes(imageUrl))
         : (entry.imageUrls || [entry.imageUrl]);
-      const resultImages = createSearchResultImages(separateImageUrls, entry.file);
+      const resultImages = sourceCardRendered ? [] : createSearchResultImages(separateImageUrls, entry.file);
       if (entry.file === 'chatgptx.html' && entry.richHtml) {
         cardBody.className = 'cep-xgpt-rich-content';
         renderXgptSearchRichContent(cardBody, entry.richHtml, renderTerms);
+      } else if (sourceCardRendered) {
+        // The shared source-card renderer already appended the original presentation.
       } else if (structuredRichContent) {
         cardBody.className = 'cep-structured-rich-content';
         renderStructuredSearchContent(cardBody, entry.richHtml, renderTerms);
       } else addHighlightedText(cardBody, snippetText, renderTerms);
-      appendSearchResultContent(link, title, cardBody, resultImages, entry.file);
+      if (!sourceCardRendered) appendSearchResultContent(link, title, cardBody, resultImages, entry.file);
       installSearchCardInteractions(link, {
         copyText: entry.displayText || entry.text || entry.title,
         navigate: () => {
