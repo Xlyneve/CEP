@@ -320,15 +320,17 @@ function getSearchTableZoomUi() {
   const viewport = document.createElement('div'); viewport.className = 'cep-search-table-zoom-viewport';
   const stage = document.createElement('div'); stage.className = 'cep-search-table-zoom-stage'; viewport.appendChild(stage);
   panel.append(controls, viewport); root.appendChild(panel); document.body.appendChild(root);
-  let scale = 1; let table; let previousBodyOverflow = '';
+  let scale = 1; let table; let baseTableWidth = 0; let baseTableHeight = 0; let previousBodyOverflow = '';
   const sizeStage = () => {
     if (!table) return;
-    const width = table.scrollWidth || table.getBoundingClientRect().width;
-    const height = table.scrollHeight || table.getBoundingClientRect().height;
+    const width = baseTableWidth || table.scrollWidth || table.getBoundingClientRect().width;
+    const height = baseTableHeight || table.scrollHeight || table.getBoundingClientRect().height;
     const scaledWidth = Math.ceil(width * scale); const scaledHeight = Math.ceil(height * scale);
     const stageWidth = Math.max(scaledWidth, viewport.clientWidth - 20);
-    stage.style.width = `${stageWidth}px`; stage.style.height = `${Math.max(scaledHeight, viewport.clientHeight - 20)}px`;
+    const stageHeight = Math.max(scaledHeight, viewport.clientHeight - 20);
+    stage.style.width = `${stageWidth}px`; stage.style.height = `${stageHeight}px`;
     table.style.left = `${Math.max(0, Math.floor((stageWidth - scaledWidth) / 2))}px`;
+    table.style.top = `${Math.max(0, Math.floor((stageHeight - scaledHeight) / 2))}px`;
     table.style.transform = `scale(${scale})`; reset.textContent = `${Math.round(scale * 100)}%`;
   };
   const setScale = nextScale => {
@@ -342,10 +344,32 @@ function getSearchTableZoomUi() {
     root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow;
   };
   const open = sourceTable => {
+    const sourceRect = sourceTable.getBoundingClientRect(); const sourceStyle = getComputedStyle(sourceTable);
     table = sourceTable.cloneNode(true); table.querySelectorAll('[id]').forEach(element => element.removeAttribute('id')); table.removeAttribute('id');
+    table.style.setProperty('width', `${sourceRect.width}px`, 'important');
+    table.style.setProperty('min-width', `${sourceRect.width}px`, 'important');
+    table.style.setProperty('max-width', `${sourceRect.width}px`, 'important');
+    table.style.setProperty('font-family', sourceStyle.fontFamily, 'important');
+    table.style.setProperty('font-size', sourceStyle.fontSize, 'important');
+    table.style.setProperty('line-height', sourceStyle.lineHeight, 'important');
+    const sourceCells = [...sourceTable.querySelectorAll('th,td')]; const clonedCells = [...table.querySelectorAll('th,td')];
+    clonedCells.forEach((cell, index) => {
+      const sourceCell = sourceCells[index]; if (!sourceCell) return;
+      const cellRect = sourceCell.getBoundingClientRect(); const cellStyle = getComputedStyle(sourceCell);
+      cell.style.setProperty('width', `${cellRect.width}px`, 'important');
+      cell.style.setProperty('min-width', `${cellRect.width}px`, 'important');
+      cell.style.setProperty('max-width', `${cellRect.width}px`, 'important');
+      cell.style.setProperty('white-space', cellStyle.whiteSpace, 'important');
+      cell.style.setProperty('padding', cellStyle.padding, 'important');
+      cell.style.setProperty('text-align', cellStyle.textAlign, 'important');
+      cell.style.setProperty('vertical-align', cellStyle.verticalAlign, 'important');
+    });
     table.classList.add('cep-search-table-zoom-content'); stage.replaceChildren(table); scale = 1;
     previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; root.hidden = false;
-    requestAnimationFrame(() => { sizeStage(); viewport.scrollTo({ left: 0, top: 0 }); close.focus(); });
+    requestAnimationFrame(() => {
+      baseTableWidth = sourceRect.width; baseTableHeight = table.scrollHeight || sourceRect.height;
+      sizeStage(); viewport.scrollTo({ left: 0, top: 0 }); close.focus();
+    });
   };
   minus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale - .25); });
   plus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale + .25); });
