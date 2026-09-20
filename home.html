@@ -302,7 +302,7 @@ header h1 {
   text-decoration: none;
 }
 .universal-search-native-title { display: block; margin-bottom: 6px; font: 700 13px/1.25 Arial,sans-serif; }
-.universal-search-native-snippet { display: block; color: #534a4e; font: 11.5px/1.35 Arial,sans-serif; }
+.universal-search-native-snippet { display: block; color: #534a4e; font: 11.5px/1.35 Arial,sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; }
 .universal-search-native-snippet mark { padding: 0 1px; border-radius: 3px; background: rgba(255, 237, 125, 0.72); color: inherit; }
 .universal-search-native-snippet mark.gradient-highlight,
 .universal-search-native-snippet span[style*="background-color"] {
@@ -355,7 +355,7 @@ header h1 {
 }
 .xgpt-header-style .universal-search-native-title { margin: 0; }
 .xgpt-header-style .universal-search-native-snippet { line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
-.xgpt-rich-snippet { white-space: normal !important; }
+.xgpt-rich-snippet { white-space: pre-wrap !important; }
 .xgpt-rich-snippet > :first-child { margin-top: 0; }
 .xgpt-rich-snippet > :last-child { margin-bottom: 0; }
 .xgpt-rich-snippet p, .xgpt-rich-snippet div { margin: 0 0 7px; }
@@ -3400,13 +3400,14 @@ html body > header {
       }
       return row[b.length];
     }
+    const normalizeSearchValue = value => String(value || '').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
     const searchTextCache = new WeakMap();
     function getSearchText(entry) {
       let indexed = searchTextCache.get(entry);
       if (!indexed || indexed.rawTitle !== entry.title || indexed.rawText !== entry.text) {
         indexed = { rawTitle: entry.title, rawText: entry.text,
-          title: String(entry.title || '').toLocaleLowerCase(),
-          text: String(entry.text || '').toLocaleLowerCase(), words: null };
+          title: normalizeSearchValue(entry.title),
+          text: normalizeSearchValue(entry.text), words: null };
         searchTextCache.set(entry, indexed);
       }
       return indexed;
@@ -3585,7 +3586,7 @@ html body > header {
     }
     async function runSearch() {
       const requestId = ++searchRequestId;
-      const query = input.value.trim().toLocaleLowerCase();
+      const query = normalizeSearchValue(input.value);
       previewFrames.forEach(preview => {
         if (!preview.ready || preview.failed) return;
         previewCache.get(preview.cacheKey)?.frame.remove();
@@ -3617,7 +3618,7 @@ html body > header {
       // Start any slower remote indexes without holding back results that are
       // already available from the primary project.
       window.cepUniversalLazyLoaders.forEach(loader => void loader(query));
-      if (requestId !== searchRequestId || input.value.trim().toLocaleLowerCase() !== query) return;
+      if (requestId !== searchRequestId || normalizeSearchValue(input.value) !== query) return;
       const scoredMatches = searchIndex
         .filter(page => activeSource === 'all' || page.sourceTitle === activeSource)
         .map(page => commaGroups ? scoreCommaPage(page, commaGroups) : scorePage(page, query, terms))
@@ -3744,7 +3745,7 @@ html body > header {
             ? commaGroups.some(group => group.terms.every(term => tableText.includes(term)))
             : terms.every(term => tableText.includes(term));
         });
-        if (page.richHtml) {
+        if (page.richHtml && sourceTitle === 'Xgpt Notes') {
           nativeSnippet.classList.add('xgpt-rich-snippet');
           addHighlightedRichHtml(nativeSnippet, page.richHtml, renderTerms);
           nativeCard.append(nativeTitle, nativeSnippet);
@@ -5004,13 +5005,6 @@ const firebaseConfig = {
     { collection: 'footlegNotes', file: 'LF.html', title: 'Urgent Care — Lower Limb & Foot', fields: ['note'], cardClass: 'note-card', renderer: 'urgent-care' },
     { collection: 'urlForms', file: 'forms.html', title: 'Information Links', fields: ['title', 'note', 'url'], cardClass: 'file-item', renderer: 'forms', directUrlField: 'url' }
   ];
-  const htmlToText = html => {
-    const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html');
-    parsed.body
-      .querySelectorAll('br,p,div,li,tr,h1,h2,h3,h4,h5,h6')
-      .forEach(element => element.append(' '));
-    return (parsed.body.textContent || '').replace(/\s+/g, ' ').trim();
-  };
   const htmlToMultilineText = html => {
     const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html');
     parsed.body.querySelectorAll('br').forEach(element => element.replaceWith('\n'));
@@ -5108,11 +5102,11 @@ const firebaseConfig = {
       const snapshot = await getDocs(collection(db, source.collection));
       const entries = snapshot.docs.map(note => {
         const data = note.data();
-        const savedTitle = htmlToText(data.title).trim();
+        const savedTitle = htmlToMultilineText(data.title).replace(/\s+/g, ' ').trim();
         const text = source.fields
-          .map(field => htmlToText(data[field]))
+          .map(field => htmlToMultilineText(data[field]))
           .filter(Boolean)
-          .join(' · ');
+          .join('\n');
         return {
           file: source.file,
           sourcePage: source.file,
