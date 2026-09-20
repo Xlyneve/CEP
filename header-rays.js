@@ -31,7 +31,7 @@ toggleIcon.title = 'Menu';
     // second time in those contexts.
     if (homeHasNativeSearch || embeddedHomeSearch || cardPreview) return;
     // Warm only the UI module. Collection reads start when search opens.
-    import("./universal-search-overlay.js?v=7")
+    import("./universal-search-overlay.js?v=8")
       .catch(error => console.warn("Search UI preload was skipped.", error));
   };
   if ('requestIdleCallback' in window) requestIdleCallback(warmSearch, { timeout: 1400 });
@@ -71,7 +71,7 @@ toggleIcon.title = 'Menu';
     searchOverlay = overlay;
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     try {
-      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=7");
+      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=8");
       if (searchOverlay !== overlay) return;
       await mountUniversalSearch(host, closeEmbeddedSearch);
     } catch (error) {
