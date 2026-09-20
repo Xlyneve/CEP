@@ -296,11 +296,44 @@ export async function mountUniversalSearch(host, closeSearch) {
   const runSearch = () => {
     const query = input.value.trim().toLocaleLowerCase();
     const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
+    const commaGroups = query.includes(',')
+      ? [...new Set(query.split(',').map(group => group.trim()).filter(Boolean))]
+          .map(group => ({ query: group, terms: [...new Set(group.split(/\s+/).filter(Boolean))] }))
+      : null;
+    const renderTerms = commaGroups
+      ? [...new Set(commaGroups.flatMap(group => group.terms))]
+      : terms;
     results.replaceChildren();
     if (!query) { status.textContent = 'Type a word to search.'; return; }
     const matches = entries.map(entry => {
       const indexed = getSearchText(entry);
       const { title, text } = indexed;
+      if (commaGroups) {
+        const matchedGroups = [];
+        for (const group of commaGroups) {
+          let groupScore = (title.includes(group.query) ? 250 : 0) + (text.includes(group.query) ? 100 : 0);
+          let fuzzy = false; let matched = true;
+          for (const term of group.terms) {
+            if (title.includes(term)) groupScore += 60;
+            else if (text.includes(term)) groupScore += 10;
+            else {
+              const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
+              const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
+              const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+              if (!similar) { matched = false; break; }
+              fuzzy = true; groupScore += 4;
+            }
+          }
+          if (matched) matchedGroups.push({ score: groupScore, fuzzy });
+        }
+        if (!matchedGroups.length) return null;
+        return {
+          entry,
+          score: matchedGroups.reduce((total, group) => total + group.score, 0),
+          matchedGroupCount: matchedGroups.length,
+          fuzzy: matchedGroups.every(group => group.fuzzy)
+        };
+      }
       let score = (title.includes(query) ? 250 : 0) + (text.includes(query) ? 100 : 0);
       let fuzzy = false;
       for (const term of terms) {
@@ -316,7 +349,9 @@ export async function mountUniversalSearch(host, closeSearch) {
       }
       return { entry, score, fuzzy };
     }).filter(Boolean).filter(match => activeSource === 'All' || match.entry.sourceTitle === activeSource)
-      .sort((a,b) => b.score - a.score).slice(0, 40);
+      .sort((a,b) => commaGroups
+        ? b.matchedGroupCount - a.matchedGroupCount || b.score - a.score
+        : b.score - a.score).slice(0, 40);
     const onlySimilar = matches.length && matches.every(match => match.fuzzy);
     status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 40 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : 'No matching notes found.';
     const groups = new Map();
@@ -351,8 +386,8 @@ export async function mountUniversalSearch(host, closeSearch) {
       const cardBody = document.createElement(entry.file === 'chatgptx.html' ? 'div' : 'span');
       if (entry.file === 'chatgptx.html' && entry.richHtml) {
         cardBody.className = 'cep-xgpt-rich-content';
-        addXgptRichContent(cardBody, entry.richHtml, terms);
-      } else addHighlightedText(cardBody, entry.text, terms);
+        addXgptRichContent(cardBody, entry.richHtml, renderTerms);
+      } else addHighlightedText(cardBody, entry.text, renderTerms);
       link.append(title, cardBody); group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };

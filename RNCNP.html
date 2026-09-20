@@ -2639,38 +2639,38 @@ select option {
   </div>
 
  <div class="section-fields">
-  <label>
-    General findings
+  <label class="exam-finding-group">
+    <span class="exam-finding-label">General findings</span>
     <div class="editable-checklist" id="examGeneralList" data-placeholder="Add general finding..."></div>
   </label>
 
-  <label>
-    HEAD & NECK
+  <label class="exam-finding-group">
+    <span class="exam-finding-label">HEAD &amp; NECK</span>
     <div class="editable-checklist" id="examHeadNeckList" data-placeholder="Add head & neck finding..."></div>
   </label>
 
-    <label>
-      ENT
+    <label class="exam-finding-group">
+      <span class="exam-finding-label">ENT</span>
       <div class="editable-checklist" id="examEntList" data-placeholder="Add ENT finding..."></div>
     </label>
 
-    <label>
-      Oropharynx
+    <label class="exam-finding-group">
+      <span class="exam-finding-label">Oropharynx</span>
       <div class="editable-checklist" id="examOropharynxList" data-placeholder="Add oropharynx finding..."></div>
     </label>
 
-    <label>
-  CHEST
+    <label class="exam-finding-group">
+  <span class="exam-finding-label">CHEST</span>
   <div class="editable-checklist" id="examChestList" data-placeholder="Add chest finding..."></div>
 </label>
 
-<label>
-  Abdomen
+<label class="exam-finding-group">
+  <span class="exam-finding-label">Abdomen</span>
   <div class="editable-checklist" id="examAbdomenList" data-placeholder="Add abdomen finding..."></div>
 </label>
 
-<label>
-  Other findings
+<label class="exam-finding-group">
+  <span class="exam-finding-label">Other findings</span>
   <div class="editable-checklist" id="examOtherList" data-placeholder="Add other finding..."></div>
 </label>
 
@@ -3506,7 +3506,9 @@ function splitPromptToItems(value) {
         return {
           text: String(v?.text || '').trim(),
           checked: !!v?.checked,
-          lineBreak: !!v?.lineBreak
+          lineBreak: !!v?.lineBreak,
+          rationale: String(v?.rationale || ''),
+          abnormal: !!v?.abnormal
         };
       })
       .filter(item => item.text);
@@ -3642,10 +3644,24 @@ function sentence(text) {
   return /[.!?]$/.test(clean) ? clean : `${clean}.`;
 }
 
+const pendingChecklistResizes = new Set();
+let checklistResizeFrame = null;
+
 function autoGrowChecklistTextarea(el) {
   if (!el) return;
-  el.style.height = 'auto';
-  el.style.height = `${el.scrollHeight}px`;
+  pendingChecklistResizes.add(el);
+  if (checklistResizeFrame !== null) return;
+
+  checklistResizeFrame = requestAnimationFrame(() => {
+    checklistResizeFrame = null;
+    const fields = [...pendingChecklistResizes].filter(field => field.isConnected);
+    pendingChecklistResizes.clear();
+
+    // Batch writes and measurements so typing never measures layout in its input handler.
+    fields.forEach(field => { field.style.height = 'auto'; });
+    const heights = fields.map(field => field.scrollHeight);
+    fields.forEach((field, index) => { field.style.height = `${heights[index]}px`; });
+  });
 }
 
 function autoGrowTextarea(el) {
@@ -3788,7 +3804,47 @@ function setupChecklistRowDrag(row) {
   });
 }
 
-function createChecklistRow(container, text = '', checked = false, lineBreak = false) {
+function openRationaleEditor(noteText, value, onSave, returnFocus) {
+  const dialog = document.createElement('dialog');
+  dialog.className = 'rationale-dialog dose-modal-card';
+  dialog.setAttribute('aria-labelledby', 'rationaleEditorTitle');
+  dialog.innerHTML = `
+    <form method="dialog">
+      <h2 id="rationaleEditorTitle">💡 Note rationale</h2>
+      <p class="rationale-note-preview"></p>
+      <label for="rationaleEditorText">Why did you add this note?</label>
+      <textarea id="rationaleEditorText" placeholder="Write your reasoning here…" autofocus></textarea>
+      <p class="rationale-editor-hint">Clear the text and save to remove the rationale.</p>
+      <div class="dose-modal-actions">
+        <button type="button" class="rationale-cancel">Cancel</button>
+        <button type="submit">Save rationale</button>
+      </div>
+    </form>`;
+  dialog.querySelector('.rationale-note-preview').textContent = noteText;
+  const textarea = dialog.querySelector('textarea');
+  textarea.value = value;
+  dialog.querySelector('form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    onSave(textarea.value);
+    dialog.close();
+  });
+  dialog.querySelector('.rationale-cancel').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', (event) => {
+    const bounds = dialog.getBoundingClientRect();
+    if (event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom)) dialog.close();
+  });
+  dialog.addEventListener('close', () => {
+    dialog.remove();
+    if (returnFocus?.isConnected) returnFocus.focus();
+  }, { once: true });
+  document.body.appendChild(dialog);
+  dialog.showModal();
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+
+function createChecklistRow(container, text = '', checked = false, lineBreak = false, rationale = '', abnormal = false) {
   const list = container.querySelector('.checklist-list');
   if (!list) return;
 
@@ -3805,6 +3861,12 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
 
   const note = document.createElement('div');
   note.className = 'check-item';
+  const abnormalMarker = document.createElement('span');
+  abnormalMarker.className = 'checklist-abnormal-marker';
+  abnormalMarker.textContent = '▲';
+  abnormalMarker.title = 'Abnormal finding';
+  abnormalMarker.setAttribute('role', 'img');
+  abnormalMarker.setAttribute('aria-label', 'Abnormal finding');
   note.tabIndex = 0;
   note.setAttribute('role', 'button');
   note.setAttribute(
@@ -3859,18 +3921,14 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   input.rows = 1;
   input.readOnly = true;
 
-  note.appendChild(input);
+  const textWrap = document.createElement('div');
+  textWrap.className = 'checklist-note-text-wrap';
+  textWrap.appendChild(input);
+  textWrap.appendChild(abnormalMarker);
+  note.appendChild(textWrap);
 
   const optionsWrap = document.createElement('div');
   optionsWrap.className = 'checklist-options-wrap';
-
-  const optionsBtn = document.createElement('button');
-  optionsBtn.type = 'button';
-  optionsBtn.className = 'checklist-options-btn';
-  optionsBtn.textContent = '';
-  optionsBtn.title = 'Note options';
-  optionsBtn.setAttribute('aria-label', 'Note options');
-  optionsBtn.setAttribute('aria-expanded', 'false');
 
   const optionsMenu = document.createElement('div');
   optionsMenu.className = 'checklist-options-menu';
@@ -3888,9 +3946,78 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
   deleteBtn.textContent = 'Delete';
 
   optionsMenu.appendChild(editBtn);
+  const rationaleBtn = document.createElement('button');
+  rationaleBtn.type = 'button';
+  rationaleBtn.className = 'checklist-menu-action';
+  optionsMenu.appendChild(rationaleBtn);
+  const abnormalBtn = document.createElement('button');
+  abnormalBtn.type = 'button';
+  abnormalBtn.className = 'checklist-menu-action';
+  const updateAbnormal = (value) => {
+    row.dataset.abnormal = value ? 'true' : 'false';
+    row.classList.toggle('is-abnormal', value);
+    abnormalMarker.hidden = !value;
+    abnormalBtn.textContent = value ? 'Remove abnormal marker' : 'Mark as abnormal';
+  };
+  updateAbnormal(abnormal);
+  abnormalBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    updateAbnormal(row.dataset.abnormal !== 'true');
+    markTemplateDirty();
+    optionsMenu.hidden = true;
+    autoGrowChecklistTextarea(input);
+    note.focus();
+  });
+  optionsMenu.appendChild(abnormalBtn);
   optionsMenu.appendChild(deleteBtn);
 
-  optionsWrap.appendChild(optionsBtn);
+  const rationaleIndicator = document.createElement('button');
+  rationaleIndicator.type = 'button';
+  rationaleIndicator.className = 'checklist-rationale-indicator';
+  const rationaleTooltip = document.createElement('span');
+  rationaleTooltip.className = 'checklist-rationale-tooltip';
+  rationaleIndicator.appendChild(rationaleTooltip);
+  const updateRationale = (value) => {
+    row.dataset.rationale = String(value || '').trim();
+    rationaleIndicator.hidden = !row.dataset.rationale;
+    rationaleTooltip.textContent = row.dataset.rationale;
+    rationaleIndicator.setAttribute('aria-label', `Rationale: ${row.dataset.rationale}. Click to edit.`);
+    rationaleBtn.textContent = row.dataset.rationale ? 'Edit rationale' : 'Add rationale';
+    row.classList.toggle('has-rationale', !!row.dataset.rationale);
+  };
+  const editRationale = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    optionsMenu.hidden = true;
+    openRationaleEditor(input.value, row.dataset.rationale, (value) => {
+      const previousRationale = row.dataset.rationale;
+      updateRationale(value);
+      if (row.dataset.rationale !== previousRationale) markTemplateDirty();
+    }, note);
+  };
+  rationaleBtn.addEventListener('click', editRationale);
+  rationaleIndicator.addEventListener('click', editRationale);
+  updateRationale(rationale);
+  optionsWrap.appendChild(rationaleIndicator);
+  row.addEventListener('contextmenu', (event) => {
+    if (row.classList.contains('editing')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openOptionsMenu();
+    rationaleBtn.focus();
+  });
+  row.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      optionsMenu.hidden = true;
+    }
+  });
+  row.addEventListener('focusout', (event) => {
+    if (!row.contains(event.relatedTarget)) {
+      optionsMenu.hidden = true;
+    }
+  });
+
   optionsWrap.appendChild(optionsMenu);
 
   const setSelected = (selected) => {
@@ -3943,10 +4070,7 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     e.stopPropagation();
   });
 
-  optionsBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  function openOptionsMenu() {
     document
       .querySelectorAll('.checklist-options-menu')
       .forEach(menu => {
@@ -3955,14 +4079,15 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
         }
       });
 
-    const willOpen = optionsMenu.hidden;
+    optionsMenu.hidden = false;
+  }
 
-    optionsMenu.hidden = !willOpen;
-
-    optionsBtn.setAttribute(
-      'aria-expanded',
-      willOpen ? 'true' : 'false'
-    );
+  row.addEventListener('keydown', (event) => {
+    if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+      event.preventDefault();
+      openOptionsMenu();
+      rationaleBtn.focus();
+    }
   });
 
   editBtn.addEventListener('click', (e) => {
@@ -3970,7 +4095,6 @@ function createChecklistRow(container, text = '', checked = false, lineBreak = f
     e.stopPropagation();
 
     optionsMenu.hidden = true;
-    optionsBtn.setAttribute('aria-expanded', 'false');
 
     row.classList.add('editing');
     input.readOnly = false;
@@ -4068,7 +4192,9 @@ function initEditableChecklist(id, seedItems = []) {
     container,
     item.text || '',
     !!item.checked,
-    !!item.lineBreak
+    !!item.lineBreak,
+    item.rationale || '',
+    !!item.abnormal
   );
 });
 }
@@ -4096,7 +4222,7 @@ function getChecklistItems(id) {
       const hasLineBreak =
         row.dataset.lineBreak === 'true' ||
         lineBreakButton?.dataset.lineBreak === 'true' ||
-        lineBreakButton?.classList.contains('active');
+        lineBreakButton?.classList.contains('active') || false;
 
       const isSelected =
         row.dataset.selected === 'true' ||
@@ -4105,7 +4231,9 @@ function getChecklistItems(id) {
       return {
         text: input?.value.trim() || '',
         checked: isSelected,
-        lineBreak: hasLineBreak
+        lineBreak: hasLineBreak,
+        rationale: row.dataset.rationale || '',
+        abnormal: row.dataset.abnormal === 'true'
       };
     })
     .filter(item => item.text);
@@ -4373,9 +4501,9 @@ function collectPromptFields() {
     managementPlanFreeText: getField('managementPlanFreeText')?.value.trim() || '',
     prescribingPrivateNote: getPrivateNoteHtml('prescribingPrivateNote'),
 
-    hpc: getChecklistItems('hpcList').map(i => i.text),
-    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList').map(i => i.text),
-    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList').map(i => i.text),
+    hpc: getChecklistItems('hpcList'),
+    redFlagsPrimary: getChecklistItems('redFlagsPrimaryList'),
+    redFlagsSecondary: getChecklistItems('redFlagsSecondaryList'),
     examGeneral: getChecklistItems('examGeneralList'),
 	examHeadNeck: getChecklistItems('examHeadNeckList'),
 	examEnt: getChecklistItems('examEntList'),
@@ -4383,17 +4511,17 @@ function collectPromptFields() {
 	examChest: getChecklistItems('examChestList'),
 	examAbdomen: getChecklistItems('examAbdomenList'),
 	examOther: getChecklistItems('examOtherList'),
-    investigationsPrimary: getChecklistItems('investigationsPrimaryList').map(i => i.text),
-    investigationsSecondary: getChecklistItems('investigationsSecondaryList').map(i => i.text),
-    assessment: getChecklistItems('assessmentList').map(i => i.text),
-    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList').map(i => i.text),
-    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList').map(i => i.text),
-    followUpPrimary: getChecklistItems('followUpPrimaryList').map(i => i.text),
-    followUpSecondary: getChecklistItems('followUpSecondaryList').map(i => i.text),
-    advicePrimary: getChecklistItems('advicePrimaryList').map(i => i.text),
-    adviceSecondary: getChecklistItems('adviceSecondaryList').map(i => i.text),
-    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList').map(i => i.text),
-safetyNetSecondary: getChecklistItems('safetyNetSecondaryList').map(i => i.text),
+    investigationsPrimary: getChecklistItems('investigationsPrimaryList'),
+    investigationsSecondary: getChecklistItems('investigationsSecondaryList'),
+    assessment: getChecklistItems('assessmentList'),
+    managementPlanPrimary: getChecklistItems('managementPlanPrimaryList'),
+    managementPlanSecondary: getChecklistItems('managementPlanSecondaryList'),
+    followUpPrimary: getChecklistItems('followUpPrimaryList'),
+    followUpSecondary: getChecklistItems('followUpSecondaryList'),
+    advicePrimary: getChecklistItems('advicePrimaryList'),
+    adviceSecondary: getChecklistItems('adviceSecondaryList'),
+    safetyNetPrimary: getChecklistItems('safetyNetPrimaryList'),
+safetyNetSecondary: getChecklistItems('safetyNetSecondaryList'),
 patientLinks: getPatientLinks()
   };
 }
@@ -5984,13 +6112,31 @@ if (firebaseReady) {
     transform 0.16s ease;
 }
 
+.card .check-item { position: relative; }
+.exam-finding-label {
+  display: inline-block;
+  font-weight: 700;
+}
+.checklist-note-text-wrap { position: relative; min-width: 0; }
+.checklist-note-text-wrap > textarea { display: block; }
+.card .check-item .checklist-abnormal-marker {
+  position: absolute; left: 1px; top: -7px; z-index: 2;
+  color: #ff0000 !important;
+  -webkit-text-fill-color: #ff0000 !important;
+  font-size: 14px; line-height: 1;
+}
+.checklist-abnormal-marker[hidden] { display: none; }
+@media print { .checklist-abnormal-marker { display: none !important; } }
+
 .card .check-item.exam-check-item {
   grid-template-columns: auto minmax(0, 1fr) !important;
   gap: 4px !important;
 }
 
 .card .checklist-row:hover .checklist-note-text {
-  background: #C0B7BB !important;
+  background: rgba(168, 125, 145, .1) !important;
+  border-color: rgba(145, 103, 123, .18) !important;
+  box-shadow: 0 2px 8px rgba(94, 62, 77, .07) !important;
 }
 
 
@@ -6002,11 +6148,15 @@ if (firebaseReady) {
 }
 
 .card .checklist-row.selected .checklist-note-text {
-  background: #7d616c !important;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-  border-radius: 7px !important;
+  background: rgba(168, 125, 145, .18) !important;
+  color: #3f3038 !important;
+  -webkit-text-fill-color: #3f3038 !important;
+  border: 1px solid rgba(145, 103, 123, .3) !important;
+  border-radius: 9px !important;
   padding: 4px 7px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .58),
+    0 3px 10px rgba(94, 62, 77, .1) !important;
 }
 
 /* Remove old checkbox */
@@ -6048,6 +6198,53 @@ if (firebaseReady) {
 }
 
 /* Light options button */
+.rationale-dialog {
+  margin: auto; max-width: 480px; max-height: calc(100dvh - 32px);
+  padding: 24px; color: var(--text); overflow-y: auto;
+}
+.rationale-dialog::backdrop {
+  background: rgba(74,58,68,.24); backdrop-filter: blur(12px) saturate(120%);
+}
+.rationale-dialog h2 { margin: 0 0 12px; font-size: 20px; }
+.rationale-note-preview {
+  margin: 0 0 18px; padding: 10px 12px; border-radius: 12px;
+  background: rgba(255,255,255,.45); font-size: 13px;
+  max-height: 100px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.rationale-dialog label { display: block; font-size: 14px; font-weight: 600; }
+.rationale-dialog textarea {
+  width: 100%; min-height: 140px; max-height: 40dvh; margin-top: 8px;
+  padding: 12px; border: 1px solid var(--stroke); border-radius: 12px;
+  background: rgba(255,255,255,.65); color: var(--text); font: inherit;
+  line-height: 1.5; resize: vertical;
+}
+.rationale-dialog textarea:focus { outline: 2px solid #b18aa4; outline-offset: 2px; }
+.rationale-editor-hint { margin: 8px 0 18px; color: var(--soft); font-size: 12px; }
+.rationale-dialog .dose-modal-actions { flex-wrap: wrap; }
+.checklist-rationale-indicator {
+  position: relative; z-index: 3;
+  width: 14px; height: 14px; min-width: 14px; min-height: 14px;
+  border: 0; border-radius: 50%; padding: 0;
+  background: #ffff00;
+  box-shadow:
+    0 0 7px 3px rgba(255, 255, 0, .55),
+    0 0 15px 6px rgba(255, 255, 0, .25);
+  cursor: pointer; line-height: 1;
+}
+.checklist-rationale-indicator:focus-visible { outline: 2px solid #9b7940; outline-offset: 2px; }
+.checklist-rationale-indicator[hidden] { display: none; }
+.checklist-rationale-tooltip {
+  display: none; position: absolute; right: 0; bottom: calc(100% + 6px);
+  width: max-content; max-width: min(260px, 65vw); padding: 10px 12px;
+  border: 1px solid #e6d6ac; border-radius: 10px; background: #fff9e8;
+  color: #493d27; box-shadow: 0 4px 16px #0002;
+  font: 13px/1.5 system-ui, sans-serif; text-align: left;
+  white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none;
+}
+.checklist-row.has-rationale:hover { z-index: 4; }
+.checklist-row.has-rationale:hover .checklist-rationale-tooltip,
+.checklist-rationale-indicator:focus-visible .checklist-rationale-tooltip { display: block; }
+@media print { .checklist-rationale-indicator { display: none !important; } }
 .card .checklist-options-wrap {
   position: relative;
   display: flex;

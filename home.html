@@ -205,7 +205,7 @@ header h1 {
 .search-circle svg { width: 24px; height: 24px; pointer-events: none; }
 .universal-search {
   position: fixed; top: 130px; right: 136px;
-  width: min(430px, calc(100vw - 230px)); z-index: 5100; padding: 14px;
+  width: min(430px, calc(100vw - 230px)); z-index: 12000; padding: 14px;
   border: 1px solid rgba(255,255,255,.72); border-radius: 20px;
   background: #ebebeb; backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -2872,6 +2872,7 @@ html body > header {
       <button class="qc-tab active" type="button" data-med="para" role="tab" aria-selected="true">Paracetamol</button>
       <button class="qc-tab" type="button" data-med="ibu" role="tab" aria-selected="false">Ibuprofen</button>
       <button class="qc-tab" type="button" data-med="adren" role="tab" aria-selected="false">Adrenaline IM</button>
+      <button class="qc-tab" type="button" data-med="adren-arrest" role="tab" aria-selected="false">Adrenaline IV</button>
       <button class="qc-tab" type="button" data-med="adren-neb" role="tab" aria-selected="false">Adrenaline Neb</button>
       <button class="qc-tab" type="button" data-med="redipred" role="tab" aria-selected="false">Redipred</button>
       <button class="qc-tab" type="button" data-med="fentanyl" role="tab" aria-selected="false">Fentanyl</button>
@@ -2920,6 +2921,28 @@ html body > header {
       <div class="qc-note">
         Autoinjector dosing is device-based. Confirm local anaphylaxis guideline.
       </div>
+    </div>
+
+    <!-- Adrenaline IV/IO: cardiac arrest only (separate from IM anaphylaxis). -->
+    <div class="qc-section" data-section="adren-arrest" style="display:none;">
+      <div class="qc-strength" id="qcArrestMode" role="group" aria-label="Cardiac arrest patient">
+        <button class="qc-strength-btn active" type="button" data-mode="adult" aria-pressed="true">Adult</button>
+        <button class="qc-strength-btn" type="button" data-mode="paediatric" aria-pressed="false">Paediatric</button>
+      </div>
+      <div class="qc-note"><b>Adrenaline 1:10,000 — Cardiac Arrest</b><br>Cardiac arrest use — IV/IO.</div>
+      <div class="qc-row">
+        <div class="qc-pill">IV/IO: <b>1:10,000 (0.1 mg/mL)</b></div>
+      </div>
+      <div class="qc-note">Adrenaline 1:10,000 = 0.1 mg/mL = 100 micrograms/mL</div>
+      <div id="qcArrestPaediatric" style="display:none;">
+        <div class="qc-row">
+          <div class="qc-pill">Dose: <b>10 micrograms/kg</b> (0.01 mg/kg)</div>
+          <div class="qc-pill">Volume: <b>0.1 mL/kg</b></div>
+          <div class="qc-pill">Maximum: <b>1 mg / 10 mL</b> (single dose)</div>
+        </div>
+      </div>
+      <div class="qc-note" id="qcArrestFrequency">Every second CPR loop (~4 min)</div>
+      <div class="qc-note"><b>Do not confuse with Adrenaline 1:1,000 (1 mg/mL) used IM for anaphylaxis.</b></div>
     </div>
 
     <!-- Nebulised Adrenaline (Severe Croup) -->
@@ -3414,6 +3437,40 @@ html body > header {
       }
       return { page, score, fuzzy };
     }
+    function scoreCommaPage(page, groups) {
+      const indexed = getSearchText(page);
+      const { title, text } = indexed;
+      const matchedGroups = [];
+      for (const group of groups) {
+        let groupScore = 0; let fuzzy = false; let matched = true;
+        if (title === group.query) groupScore += 500;
+        else if (title.includes(group.query)) groupScore += 260;
+        if (text.includes(group.query)) groupScore += 130;
+        for (const term of group.terms) {
+          if (title.includes(term)) groupScore += 90;
+          else if (text.includes(term)) groupScore += 28;
+          else {
+            const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
+            const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
+            const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+            if (!similar) { matched = false; break; }
+            fuzzy = true; groupScore += 8;
+          }
+        }
+        if (matched) matchedGroups.push({ score: groupScore, fuzzy });
+      }
+      if (!matchedGroups.length) return null;
+      let score = matchedGroups.reduce((total, group) => total + group.score, 0);
+      const usage = searchUse[pageKey(page)];
+      if (usage) {
+        score += Math.min(30, Math.log2((usage.count || 0) + 1) * 8);
+        if (Date.now() - (usage.last || 0) < 30 * 86400000) score += 12;
+      }
+      return {
+        page, score, matchedGroupCount: matchedGroups.length,
+        fuzzy: matchedGroups.every(group => group.fuzzy)
+      };
+    }
     window.addUniversalSearchPages = entries => {
       const incoming = entries.map(entry => ({
         ...entry,
@@ -3549,6 +3606,13 @@ html body > header {
       loading.className = 'global-search-loading'; loading.textContent = 'Loading results…';
       results.appendChild(loading);
       const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
+      const commaGroups = query.includes(',')
+        ? [...new Set(query.split(',').map(group => group.trim()).filter(Boolean))]
+            .map(group => ({ query: group, terms: [...new Set(group.split(/\s+/).filter(Boolean))] }))
+        : null;
+      const renderTerms = commaGroups
+        ? [...new Set(commaGroups.flatMap(group => group.terms))]
+        : terms;
       await (indexPromise ||= buildIndex());
       // Start any slower remote indexes without holding back results that are
       // already available from the primary project.
@@ -3556,9 +3620,11 @@ html body > header {
       if (requestId !== searchRequestId || input.value.trim().toLocaleLowerCase() !== query) return;
       const scoredMatches = searchIndex
         .filter(page => activeSource === 'all' || page.sourceTitle === activeSource)
-        .map(page => scorePage(page, query, terms))
+        .map(page => commaGroups ? scoreCommaPage(page, commaGroups) : scorePage(page, query, terms))
         .filter(Boolean)
-        .sort((a, b) => b.score - a.score);
+        .sort((a, b) => commaGroups
+          ? b.matchedGroupCount - a.matchedGroupCount || b.score - a.score
+          : b.score - a.score);
       const sourceResultCounts = new Map();
       const matches = [];
       for (const match of scoredMatches) {
@@ -3641,7 +3707,7 @@ html body > header {
         }
         const result = document.createElement('article');
         result.className = 'universal-search-result';
-        const snippetText = sourceTitle === 'Xgpt Notes' ? page.text : makeSnippet(page, terms);
+        const snippetText = sourceTitle === 'Xgpt Notes' ? page.text : makeSnippet(page, renderTerms);
         const sourcePage = page.sourcePage || page.file;
         const destination = new URL(page.destinationUrl || sourcePage, location.href);
         const focusParams = new URLSearchParams({
@@ -3672,12 +3738,15 @@ html body > header {
         nativeTitle.textContent = page.title;
         const nativeSnippet = document.createElement('div');
         nativeSnippet.className = 'universal-search-native-snippet';
-        const matchingTable = page.searchTables?.find(rows =>
-          terms.every(term => rows.flat().join(' ').toLocaleLowerCase().includes(term))
-        );
+        const matchingTable = page.searchTables?.find(rows => {
+          const tableText = rows.flat().join(' ').toLocaleLowerCase();
+          return commaGroups
+            ? commaGroups.some(group => group.terms.every(term => tableText.includes(term)))
+            : terms.every(term => tableText.includes(term));
+        });
         if (page.richHtml) {
           nativeSnippet.classList.add('xgpt-rich-snippet');
-          addHighlightedRichHtml(nativeSnippet, page.richHtml, terms);
+          addHighlightedRichHtml(nativeSnippet, page.richHtml, renderTerms);
           nativeCard.append(nativeTitle, nativeSnippet);
         } else if (matchingTable) {
           const tablePreview = document.createElement('table');
@@ -3687,7 +3756,7 @@ html body > header {
             const row = document.createElement('tr');
             rowValues.forEach(value => {
               const cell = document.createElement('td');
-              addHighlightedText(cell, value, terms);
+              addHighlightedText(cell, value, renderTerms);
               row.appendChild(cell);
             });
             tableBody.appendChild(row);
@@ -3695,7 +3764,7 @@ html body > header {
           tablePreview.appendChild(tableBody);
           nativeCard.append(nativeTitle, tablePreview);
         } else {
-          addHighlightedText(nativeSnippet, snippetText, terms);
+          addHighlightedText(nativeSnippet, snippetText, renderTerms);
           nativeCard.append(nativeTitle, nativeSnippet);
         }
         result.appendChild(nativeCard);
@@ -4107,6 +4176,7 @@ function closeTable() {
     para: qc.querySelector('[data-section="para"]'),
     ibu: qc.querySelector('[data-section="ibu"]'),
     adren: qc.querySelector('[data-section="adren"]'),
+    'adren-arrest': qc.querySelector('[data-section="adren-arrest"]'),
     'adren-neb': qc.querySelector('[data-section="adren-neb"]'),
     redipred: qc.querySelector('[data-section="redipred"]'),
     fentanyl: qc.querySelector('[data-section="fentanyl"]'),
@@ -4130,6 +4200,32 @@ function closeTable() {
 
   // ---- state ----
   let activeMed = 'para';
+  let arrestMode = 'adult';
+  const arrestModeWrap = qc.querySelector('#qcArrestMode');
+  const weightLabel = qc.querySelector('label[for="qcWeight"]');
+
+  function syncArrestMode(){
+    const fixedAdult = activeMed === 'adren-arrest' && arrestMode === 'adult';
+    weightEl.style.display = fixedAdult ? 'none' : '';
+    weightLabel.style.display = fixedAdult ? 'none' : '';
+    qc.querySelector('#qcArrestPaediatric').style.display = arrestMode === 'paediatric' ? '' : 'none';
+    qc.querySelector('#qcArrestFrequency').textContent = arrestMode === 'adult'
+      ? 'Every second CPR loop (~4 min)'
+      : 'Repeat every 3–5 minutes / every second PALS loop (~4 min)';
+  }
+
+  arrestModeWrap.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      arrestMode = btn.dataset.mode;
+      arrestModeWrap.querySelectorAll('button').forEach(b => {
+        const on = b === btn;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      syncArrestMode();
+      calc();
+    });
+  });
 
   // read defaults from the UI (active button), fall back safely
   const getActiveStrength = (wrap, fallback) => {
@@ -4161,6 +4257,7 @@ function closeTable() {
     });
 
     // keep weight, just refresh output
+    syncArrestMode();
     calc();
   }
 
@@ -4173,6 +4270,27 @@ function closeTable() {
   }
 
   function calc(){
+    // ANZCOR 11.5 and 12.2: cardiac arrest IV/IO, 0.1 mg/mL only.
+    // Adult is fixed-dose and deliberately bypasses the shared weight guard.
+    if (activeMed === 'adren-arrest'){
+      if (arrestMode === 'adult'){
+        mainEl.textContent = '10 mL IV/IO';
+        subEl.textContent = 'Dose: 1 mg';
+      } else {
+        const kg = Number(weightEl.value);
+        if (!Number.isFinite(kg) || kg <= 0){
+          resetOutput();
+          return;
+        }
+        const cappedKg = Math.min(kg, 100);
+        const fmt = (value) => String(Number(value.toFixed(4)));
+        mainEl.textContent = `${fmt(cappedKg * 0.1)} mL IV/IO`;
+        subEl.textContent = `Calculated dose: ${fmt(cappedKg * 10)} micrograms (${fmt(cappedKg * 0.01)} mg)${kg >= 100 ? ' • Maximum reached' : ''}`;
+      }
+      resultsEl.classList.add('has-value');
+      return;
+    }
+
     const kg = Number(weightEl.value);
 
     if (!kg || kg <= 0){
@@ -4683,9 +4801,12 @@ function closeTable() {
 
     addActionCard('Urgent Care', 'Vitals', 'vitals');
 
+    const sectionStateKey = matchMedia('(max-width: 760px)').matches
+      ? 'homeDashboardSections.mobile'
+      : 'homeDashboardSections.desktop';
     const savedState = (() => {
       try {
-        return JSON.parse(localStorage.getItem('homeDashboardSections') || '{}');
+        return JSON.parse(localStorage.getItem(sectionStateKey) || '{}');
       } catch {
         return {};
       }
@@ -4698,15 +4819,14 @@ function closeTable() {
       section.toggle.setAttribute('aria-expanded', String(expanded));
       if (save) {
         savedState[name] = expanded;
-        localStorage.setItem('homeDashboardSections', JSON.stringify(savedState));
+        try { localStorage.setItem(sectionStateKey, JSON.stringify(savedState)); } catch {}
       }
     };
 
     order.forEach(name => {
       const section = sections.get(name);
       if (!section) return;
-      const defaultExpanded = name === 'Notes' || name === 'Admin';
-      const expanded = typeof savedState[name] === 'boolean' ? savedState[name] : defaultExpanded;
+      const expanded = typeof savedState[name] === 'boolean' ? savedState[name] : false;
       const toggle = document.createElement('button');
       toggle.type = 'button';
       toggle.className = 'dashboard-section-toggle';
@@ -5082,6 +5202,6 @@ const firebaseConfig = {
     }
   }
 </script>
-<script src="notepad-launcher.js?v=20260830-8"></script>
+<script src="notepad-launcher.js?v=20260916-11"></script>
 </body>
 </html>

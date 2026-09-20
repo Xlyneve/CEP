@@ -675,6 +675,10 @@ a.conceptLink:focus-visible {
   transform: translateY(-0.5px); /* sits nicer with text */
 }
 
+.conceptCount::before {
+  content: attr(data-count);
+}
+
 /* Hashtag suggest dropdown */
 #tagSuggest {
   position: fixed;
@@ -2767,25 +2771,34 @@ function linkify(html) {
   div.innerHTML = html;
 
   const walker = document.createTreeWalker(div, NodeFilter.SHOW_TEXT, null);
-  const urlRegex = /\bhttps?:\/\/[^\s<]+/gi;
+  const urlRegex = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
 
   const textNodes = [];
   while (walker.nextNode()) textNodes.push(walker.currentNode);
 
   textNodes.forEach(node => {
+    if (node.parentElement?.closest('a, button, script, style, code, pre')) return;
     const text = node.nodeValue;
+    urlRegex.lastIndex = 0;
     if (!urlRegex.test(text)) return;
+    urlRegex.lastIndex = 0;
 
     const frag = document.createDocumentFragment();
     let lastIndex = 0;
     text.replace(urlRegex, (match, offset) => {
+      let url = match.replace(/[.,!?;:]+$/, '');
+      // Keep balanced parentheses in URLs, but exclude sentence punctuation.
+      while (url.endsWith(')') && (url.match(/\)/g) || []).length > (url.match(/\(/g) || []).length) {
+        url = url.slice(0, -1).replace(/[.,!?;:]+$/, '');
+      }
       frag.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
       const a = document.createElement('a');
-      a.href = match;
+      a.href = /^www\./i.test(url) ? `https://${url}` : url;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
-      a.textContent = match;
+      a.textContent = url;
       frag.appendChild(a);
+      frag.appendChild(document.createTextNode(match.slice(url.length)));
       lastIndex = offset + match.length;
       return match;
     });
@@ -3391,6 +3404,24 @@ function refreshConceptDefBadges(root = document) {
   const links = root.querySelectorAll('a.conceptLink');
   links.forEach(a => {
     const concept = getConceptFromLink(a);
+    const count = conceptCountMap.get(normalizeText(concept)) || 0;
+    let countBadge = a.querySelector('.conceptCount');
+
+    // The HTML sanitizer intentionally removes data-* attributes. Restore the
+    // visual-only count after insertion without adding it to link.textContent.
+    if (count > 0) {
+      if (!countBadge) {
+        countBadge = document.createElement('span');
+        countBadge.className = 'conceptCount';
+        a.appendChild(countBadge);
+      }
+      countBadge.textContent = '';
+      countBadge.dataset.count = String(count);
+      countBadge.setAttribute('data-presentation-only', 'true');
+      countBadge.setAttribute('aria-hidden', 'true');
+    } else {
+      countBadge?.remove();
+    }
     const def = (getDefinition(concept) || '').trim();
     const why = (getWhy(concept) || '').trim();
 
@@ -4091,7 +4122,9 @@ function conceptLinkifyHTML(html) {
         badge.className = 'conceptCount';
         badge.setAttribute('data-presentation-only', 'true');
         badge.setAttribute('aria-hidden', 'true');
-        badge.textContent = String(count);
+        // Keep the count visual-only so search/title extraction does not
+        // concatenate it with the linked concept (for example, "Fever1").
+        badge.dataset.count = String(count);
         a.appendChild(badge);
       }
 
@@ -4129,7 +4162,7 @@ function displayNotesInto(targetEl, notes) {
 
     const bubble = document.createElement('div');
     bubble.className = 'chatBubble';
-    CEPSecurity.setHTML(bubble, '🤖 ' + conceptLinkifyHTML(stripLegacyTableControls(note.content || '')));
+    CEPSecurity.setHTML(bubble, '🤖 ' + conceptLinkifyHTML(linkify(stripLegacyTableControls(note.content || ''))));
     setTableCellsEditable(bubble, false);
     div.appendChild(bubble);
 
@@ -4329,7 +4362,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
       };
 
       saveBtn.onclick = async () => {
-        const updated = deLinkifyConceptAnchors(editable.innerHTML.trim());
+        const updated = linkify(deLinkifyConceptAnchors(editable.innerHTML.trim()));
         if (!updated) return alert('Cannot save empty note');
 
         try {
