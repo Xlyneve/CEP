@@ -288,6 +288,7 @@ header h1 {
 }
 .universal-search-source-title:hover, .universal-search-source-title:focus-visible { color: #292327; }
 .universal-search-result { min-width: 0; min-height: 72px; overflow: hidden; border-radius: 14px; cursor: pointer; }
+.universal-search-result.has-native-card { overflow: visible; }
 .universal-search-result .global-search-loading { padding: 12px 8px; }
 .universal-search-native-card {
   display: block;
@@ -3901,17 +3902,25 @@ html body > header {
         result.dataset.destination = destination.href;
         const nativeCard = document.createElement('a');
         nativeCard.className = 'universal-search-native-card';
+        result.classList.add('has-native-card');
         if (page.cardColour) nativeCard.style.background = page.cardColour;
         nativeCard.href = destination.href;
         if (page.directDestination) {
           nativeCard.target = '_blank';
           nativeCard.rel = 'noopener noreferrer';
         }
-        window.installSearchCardInteractions?.(nativeCard, {
+        const interactionOptions = {
           copyText: page.displayText || page.text || page.title,
           onNavigate: () => recordSearchUse(page),
           navigate: () => navigateToSearchResult(nativeCard.href)
-        });
+        };
+        if (window.installSearchCardInteractions) {
+          window.installSearchCardInteractions(nativeCard, interactionOptions);
+        } else {
+          window.addEventListener('cep-search-helpers-ready', () => {
+            window.installSearchCardInteractions?.(nativeCard, interactionOptions);
+          }, { once: true });
+        }
         const nativeTitle = document.createElement('span');
         nativeTitle.className = 'universal-search-native-title';
         nativeTitle.textContent = page.title;
@@ -5260,6 +5269,7 @@ const firebaseConfig = {
   window.installSearchCardInteractions = installSharedSearchCardInteractions;
   window.enableSearchImageZoom = enableSharedSearchImageZoom;
   window.enableSearchTableZoom = enableSharedSearchTableZoom;
+  window.dispatchEvent(new Event('cep-search-helpers-ready'));
   window.fetchXgptConceptMedia = async concept => {
     if (!concept || !chatgptSearchAuth?.currentUser) return null;
     return loadSharedXgptConceptMedia(concept);
