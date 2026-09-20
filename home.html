@@ -3578,11 +3578,23 @@ html body > header {
     }
     installXgptMediaInteractions();
     function makeSnippet(page, terms) {
-      const lower = page.text.toLocaleLowerCase();
+      const displayText = String(page.displayText || page.text || page.title || '').trim();
+      if (!displayText) return '';
+      const lower = displayText.toLocaleLowerCase();
       const positions = terms.map(term => lower.indexOf(term)).filter(pos => pos >= 0);
-      const start = Math.max(0, Math.min(...positions) - 70);
-      const end = Math.min(page.text.length, start + 230);
-      return `${start ? '…' : ''}${page.text.slice(start, end)}${end < page.text.length ? '…' : ''}`;
+      if (!positions.length) {
+        const words = [...lower.matchAll(/[\p{L}\p{N}]+/gu)];
+        for (const term of terms) {
+          const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
+          const similar = tolerance && words.find(match =>
+            Math.abs(match[0].length - term.length) <= tolerance && editDistance(term, match[0]) <= tolerance
+          );
+          if (similar) positions.push(similar.index);
+        }
+      }
+      const start = positions.length ? Math.max(0, Math.min(...positions) - 70) : 0;
+      const end = Math.min(displayText.length, start + 230);
+      return `${start ? '…' : ''}${displayText.slice(start, end)}${end < displayText.length ? '…' : ''}`;
     }
     async function runSearch() {
       const requestId = ++searchRequestId;
@@ -3692,8 +3704,27 @@ html body > header {
             'explain.html': ['rgba(170, 173, 111, 0.58)', '#686b40', 'rgba(235, 235, 211, 0.78)'],
             'recalls.html': ['rgba(199, 132, 101, 0.55)', '#82533f', 'rgba(240, 220, 211, 0.76)']
           };
-          const [dividerColour, titleColour, cardColour] = sourceColours[String(page.file).toLowerCase()] ||
-            ['rgba(112, 126, 125, 0.42)', '#655b60', 'rgba(255, 255, 255, 0.62)'];
+          const sourceCardColours = {
+            'pn.html': 'rgba(229, 203, 204, 0.3)',
+            'info.html': 'rgba(229, 203, 204, 0.3)',
+            'explain.html': 'rgba(229, 203, 204, 0.3)',
+            'recalls.html': 'rgba(229, 203, 204, 0.3)',
+            'practicen.html': 'rgba(229, 203, 204, 0.22)',
+            'notes.html': 'rgb(192, 183, 187)',
+            'ecg.html': 'rgba(239, 237, 232, 0.74)',
+            'urgent_care.html': 'rgba(239, 237, 232, 0.74)',
+            'face.html': 'rgba(239, 237, 232, 0.74)',
+            'hand.html': 'rgba(239, 237, 232, 0.74)',
+            'sha.html': 'rgba(239, 237, 232, 0.74)',
+            'abdo.html': 'rgba(239, 237, 232, 0.74)',
+            'spine.html': 'rgba(239, 237, 232, 0.74)',
+            'lf.html': 'rgba(239, 237, 232, 0.74)',
+            'forms.html': 'rgb(213, 208, 211)'
+          };
+          const fileKey = String(page.file).toLowerCase();
+          const [dividerColour, titleColour] = sourceColours[fileKey] ||
+            ['rgba(112, 126, 125, 0.42)', '#655b60'];
+          const cardColour = sourceCardColours[fileKey] || 'rgba(255, 255, 255, 0.62)';
           group.style.setProperty('--search-divider', dividerColour);
           group.style.setProperty('--search-title', titleColour);
           group.style.setProperty('--search-card', cardColour);
@@ -3723,6 +3754,7 @@ html body > header {
         result.dataset.destination = destination.href;
         const nativeCard = document.createElement('a');
         nativeCard.className = 'universal-search-native-card';
+        if (page.cardColour) nativeCard.style.background = page.cardColour;
         nativeCard.href = destination.href;
         if (page.directDestination) {
           nativeCard.target = '_blank';
@@ -5107,11 +5139,14 @@ const firebaseConfig = {
           .map(field => htmlToMultilineText(data[field]))
           .filter(Boolean)
           .join('\n');
+        const displayText = htmlToMultilineText(data.note || data.text || data.content || '') || text;
         return {
           file: source.file,
           sourcePage: source.file,
           title: savedTitle ? `${source.title} — ${savedTitle}` : source.title,
           text,
+          displayText,
+          cardColour: source.file === 'Notes.html' ? (data.color || '#C0B7BB') : '',
           focusId: note.id,
           sourceTitle: source.title,
           cardType: source.renderer,
