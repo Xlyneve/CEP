@@ -136,8 +136,12 @@ async function loadEntries(onProgress) {
           const data = note.data();
           const title = textFromHtml(data.title).replace(/\s+/g, ' ').trim() || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
+          const displayText = textFromHtml(data.note || data.text || data.content || '') || text;
           const directUrl = directField && data[directField];
-          return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl };
+          return {
+            id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`,
+            text, displayText, directUrl, cardColour: file === 'Notes.html' ? (data.color || '#C0B7BB') : ''
+          };
         });
       } catch (error) {
         console.warn(`Search could not load ${collectionName}.`, error);
@@ -166,11 +170,23 @@ function addHighlightedText(parent, text, terms) {
 }
 
 function makeSnippet(entry, terms) {
-  const lower = entry.text.toLocaleLowerCase();
+  const displayText = String(entry.displayText || entry.text || entry.title || '').trim();
+  if (!displayText) return '';
+  const lower = displayText.toLocaleLowerCase();
   const positions = terms.map(term => lower.indexOf(term)).filter(position => position >= 0);
-  const start = Math.max(0, Math.min(...positions) - 70);
-  const end = Math.min(entry.text.length, start + 230);
-  return `${start ? '…' : ''}${entry.text.slice(start, end)}${end < entry.text.length ? '…' : ''}`;
+  if (!positions.length) {
+    const words = [...lower.matchAll(/[\p{L}\p{N}]+/gu)];
+    for (const term of terms) {
+      const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
+      const similar = tolerance && words.find(match =>
+        Math.abs(match[0].length - term.length) <= tolerance && editDistance(term, match[0]) <= tolerance
+      );
+      if (similar) positions.push(similar.index);
+    }
+  }
+  const start = positions.length ? Math.max(0, Math.min(...positions) - 70) : 0;
+  const end = Math.min(displayText.length, start + 230);
+  return `${start ? '…' : ''}${displayText.slice(start, end)}${end < displayText.length ? '…' : ''}`;
 }
 
 function addXgptRichContent(parent, html, terms) {
@@ -391,8 +407,20 @@ export async function mountUniversalSearch(host, closeSearch) {
           'explain.html': ['rgba(170,173,111,.58)', '#686b40', 'rgba(235,235,211,.78)'],
           'recalls.html': ['rgba(199,132,101,.55)', '#82533f', 'rgba(240,220,211,.76)']
         };
-        const [divider, headingColour, cardColour] = sourceColours[entry.file.toLocaleLowerCase()] ||
-          ['rgba(112,126,125,.42)', '#655b60', 'rgba(255,255,255,.62)'];
+        const sourceCardColours = {
+          'pn.html':'rgba(229,203,204,.3)', 'info.html':'rgba(229,203,204,.3)',
+          'explain.html':'rgba(229,203,204,.3)', 'recalls.html':'rgba(229,203,204,.3)',
+          'practicen.html':'rgba(229,203,204,.22)', 'notes.html':'rgb(192,183,187)',
+          'ecg.html':'rgba(239,237,232,.74)', 'urgent_care.html':'rgba(239,237,232,.74)',
+          'face.html':'rgba(239,237,232,.74)', 'hand.html':'rgba(239,237,232,.74)',
+          'sha.html':'rgba(239,237,232,.74)', 'abdo.html':'rgba(239,237,232,.74)',
+          'spine.html':'rgba(239,237,232,.74)', 'lf.html':'rgba(239,237,232,.74)',
+          'forms.html':'rgb(213,208,211)'
+        };
+        const fileKey = entry.file.toLocaleLowerCase();
+        const [divider, headingColour] = sourceColours[fileKey] ||
+          ['rgba(112,126,125,.42)', '#655b60'];
+        const cardColour = sourceCardColours[fileKey] || 'rgba(255,255,255,.62)';
         group.style.setProperty('--search-divider', divider);
         group.style.setProperty('--search-title', headingColour);
         group.style.setProperty('--search-card', cardColour);
@@ -402,6 +430,7 @@ export async function mountUniversalSearch(host, closeSearch) {
         group.append(heading, cards); results.appendChild(group); groups.set(entry.sourceTitle, group);
       }
       const link = document.createElement('a'); link.className = 'cep-global-search-result';
+      if (entry.cardColour) link.style.background = entry.cardColour;
       if (entry.directUrl) { link.href = entry.directUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; }
       else {
         const destination = new URL(entry.file, location.href);
