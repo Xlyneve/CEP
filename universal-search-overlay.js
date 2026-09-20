@@ -328,6 +328,7 @@ const appendSourceRichContent = (parent, html, terms, className) => {
   renderStructuredSearchContent(body, html, terms); parent.appendChild(body); return body;
 };
 const appendSourceImage = (parent, url, className = 'cep-source-card-image') => {
+  if (!String(url || '').trim()) return null;
   let safeUrl;
   try {
     const candidate = new URL(String(url || ''), location.href);
@@ -337,6 +338,7 @@ const appendSourceImage = (parent, url, className = 'cep-source-card-image') => 
   if (!safeUrl) return null;
   const image = document.createElement('img'); image.className = className; image.src = safeUrl;
   image.alt = 'Note image'; image.loading = 'lazy'; image.decoding = 'async'; enableSearchImageZoom(image);
+  image.addEventListener('error', () => image.remove(), { once: true });
   parent.appendChild(image); return image;
 };
 const appendSourceLink = (parent, url, label) => {
