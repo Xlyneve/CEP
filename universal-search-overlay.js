@@ -23,7 +23,7 @@ const sources = [
 const textFromHtml = value => {
   const parsed = new DOMParser().parseFromString(String(value || ''), 'text/html');
   parsed.body.querySelectorAll('br').forEach(node => node.replaceWith('\n'));
-  parsed.body.querySelectorAll('p,div,li,tr,h1,h2,h3,h4,blockquote,pre').forEach(node => node.append('\n'));
+  parsed.body.querySelectorAll('p,div,li,tr,h1,h2,h3,h4,h5,h6,blockquote,pre').forEach(node => node.append('\n'));
   return (parsed.body.textContent || '')
     .replace(/\u00a0/g, ' ')
     .replace(/[ \t]+\n/g, '\n')
@@ -33,13 +33,14 @@ const textFromHtml = value => {
     .trim();
 };
 
+const normalizeSearchValue = value => String(value || '').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
 const searchTextCache = new WeakMap();
 function getSearchText(entry) {
   let indexed = searchTextCache.get(entry);
   if (!indexed || indexed.rawTitle !== entry.title || indexed.rawText !== entry.text) {
     indexed = { rawTitle: entry.title, rawText: entry.text,
-      title: String(entry.title || '').toLocaleLowerCase(),
-      text: String(entry.text || '').toLocaleLowerCase(), words: null };
+      title: normalizeSearchValue(entry.title),
+      text: normalizeSearchValue(entry.text), words: null };
     searchTextCache.set(entry, indexed);
   }
   return indexed;
@@ -133,7 +134,7 @@ async function loadEntries(onProgress) {
         onProgress?.(sourceTitle);
         return snapshot.docs.map(note => {
           const data = note.data();
-          const title = textFromHtml(data.title) || sourceTitle;
+          const title = textFromHtml(data.title).replace(/\s+/g, ' ').trim() || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
           const directUrl = directField && data[directField];
           return { id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`, text, directUrl };
@@ -162,6 +163,14 @@ function addHighlightedText(parent, text, terms) {
       const mark = document.createElement('mark'); mark.textContent = part; parent.appendChild(mark);
     } else parent.appendChild(document.createTextNode(part));
   });
+}
+
+function makeSnippet(entry, terms) {
+  const lower = entry.text.toLocaleLowerCase();
+  const positions = terms.map(term => lower.indexOf(term)).filter(position => position >= 0);
+  const start = Math.max(0, Math.min(...positions) - 70);
+  const end = Math.min(entry.text.length, start + 230);
+  return `${start ? '…' : ''}${entry.text.slice(start, end)}${end < entry.text.length ? '…' : ''}`;
 }
 
 function addXgptRichContent(parent, html, terms) {
@@ -294,7 +303,7 @@ export async function mountUniversalSearch(host, closeSearch) {
   };
 
   const runSearch = () => {
-    const query = input.value.trim().toLocaleLowerCase();
+    const query = normalizeSearchValue(input.value);
     const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
     const commaGroups = query.includes(',')
       ? [...new Set(query.split(',').map(group => group.trim()).filter(Boolean))]
@@ -305,23 +314,26 @@ export async function mountUniversalSearch(host, closeSearch) {
       : terms;
     results.replaceChildren();
     if (!query) { status.textContent = 'Type a word to search.'; return; }
-    const matches = entries.map(entry => {
+    const scoredMatches = entries.map(entry => {
       const indexed = getSearchText(entry);
       const { title, text } = indexed;
       if (commaGroups) {
         const matchedGroups = [];
         for (const group of commaGroups) {
-          let groupScore = (title.includes(group.query) ? 250 : 0) + (text.includes(group.query) ? 100 : 0);
+          let groupScore = 0;
+          if (title === group.query) groupScore += 500;
+          else if (title.includes(group.query)) groupScore += 260;
+          if (text.includes(group.query)) groupScore += 130;
           let fuzzy = false; let matched = true;
           for (const term of group.terms) {
-            if (title.includes(term)) groupScore += 60;
-            else if (text.includes(term)) groupScore += 10;
+            if (title.includes(term)) groupScore += 90;
+            else if (text.includes(term)) groupScore += 28;
             else {
               const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
               const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
               const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
               if (!similar) { matched = false; break; }
-              fuzzy = true; groupScore += 4;
+              fuzzy = true; groupScore += 8;
             }
           }
           if (matched) matchedGroups.push({ score: groupScore, fuzzy });
@@ -334,28 +346,42 @@ export async function mountUniversalSearch(host, closeSearch) {
           fuzzy: matchedGroups.every(group => group.fuzzy)
         };
       }
-      let score = (title.includes(query) ? 250 : 0) + (text.includes(query) ? 100 : 0);
+      let score = 0;
+      if (title === query) score += 500;
+      else if (title.includes(query)) score += 260;
+      if (text.includes(query)) score += 130;
       let fuzzy = false;
       for (const term of terms) {
-        if (title.includes(term)) score += 60;
-        else if (text.includes(term)) score += 10;
+        if (title.includes(term)) score += 90;
+        else if (text.includes(term)) score += 28;
         else {
           const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
           const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
           const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
           if (!similar) return null;
-          fuzzy = true; score += 4;
+          fuzzy = true; score += 8;
         }
       }
       return { entry, score, fuzzy };
     }).filter(Boolean).filter(match => activeSource === 'All' || match.entry.sourceTitle === activeSource)
       .sort((a,b) => commaGroups
         ? b.matchedGroupCount - a.matchedGroupCount || b.score - a.score
-        : b.score - a.score).slice(0, 40);
+        : b.score - a.score);
+    const sourceResultCounts = new Map();
+    const matches = [];
+    for (const match of scoredMatches) {
+      const sourceName = match.entry.sourceTitle || '';
+      const sourceCount = sourceResultCounts.get(sourceName) || 0;
+      if (sourceName === 'Xgpt Notes' && sourceCount >= 10) continue;
+      matches.push(match);
+      sourceResultCounts.set(sourceName, sourceCount + 1);
+      if (matches.length >= 30) break;
+    }
     const onlySimilar = matches.length && matches.every(match => match.fuzzy);
-    status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 40 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : 'No matching notes found.';
+    status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 30 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : 'No matching notes found.';
     const groups = new Map();
     matches.forEach(({ entry }) => {
+      const snippetText = entry.file === 'chatgptx.html' ? entry.text : makeSnippet(entry, renderTerms);
       let group = groups.get(entry.sourceTitle);
       if (!group) {
         group = document.createElement('section'); group.className = 'cep-global-search-group';
@@ -379,7 +405,7 @@ export async function mountUniversalSearch(host, closeSearch) {
       if (entry.directUrl) { link.href = entry.directUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; }
       else {
         const destination = new URL(entry.file, location.href);
-        destination.hash = new URLSearchParams({ cepId: entry.id, cepSearch: query, cepHint: entry.text.slice(0,230) }).toString();
+        destination.hash = new URLSearchParams({ cepId: entry.id, cepSearch: query, cepHint: snippetText }).toString();
         link.href = destination.href;
       }
       const title = document.createElement('strong'); title.textContent = entry.title;
@@ -387,7 +413,7 @@ export async function mountUniversalSearch(host, closeSearch) {
       if (entry.file === 'chatgptx.html' && entry.richHtml) {
         cardBody.className = 'cep-xgpt-rich-content';
         addXgptRichContent(cardBody, entry.richHtml, renderTerms);
-      } else addHighlightedText(cardBody, entry.text, renderTerms);
+      } else addHighlightedText(cardBody, snippetText, renderTerms);
       link.append(title, cardBody); group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
