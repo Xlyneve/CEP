@@ -325,7 +325,10 @@ function getSearchTableZoomUi() {
     if (!table) return;
     const width = table.scrollWidth || table.getBoundingClientRect().width;
     const height = table.scrollHeight || table.getBoundingClientRect().height;
-    stage.style.width = `${Math.ceil(width * scale)}px`; stage.style.height = `${Math.ceil(height * scale)}px`;
+    const scaledWidth = Math.ceil(width * scale); const scaledHeight = Math.ceil(height * scale);
+    const stageWidth = Math.max(scaledWidth, viewport.clientWidth - 20);
+    stage.style.width = `${stageWidth}px`; stage.style.height = `${Math.max(scaledHeight, viewport.clientHeight - 20)}px`;
+    table.style.left = `${Math.max(0, Math.floor((stageWidth - scaledWidth) / 2))}px`;
     table.style.transform = `scale(${scale})`; reset.textContent = `${Math.round(scale * 100)}%`;
   };
   const setScale = nextScale => {
