@@ -32,6 +32,10 @@ const textFromHtml = value => {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 };
+const imageUrlsFromHtml = value => {
+  const parsed = new DOMParser().parseFromString(String(value || ''), 'text/html');
+  return [...parsed.body.querySelectorAll('img[src]')].map(image => image.getAttribute('src')).filter(Boolean);
+};
 
 const normalizeSearchValue = value => String(value || '').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
 const searchTextCache = new WeakMap();
@@ -137,10 +141,15 @@ async function loadEntries(onProgress) {
           const title = textFromHtml(data.title).replace(/\s+/g, ' ').trim() || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
           const displayText = textFromHtml(data.note || data.text || data.content || '') || text;
+          const imageUrls = [...new Set([
+            data.image || '',
+            ...fields.flatMap(field => imageUrlsFromHtml(data[field]))
+          ].filter(Boolean))];
           const directUrl = directField && data[directField];
           return {
             id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`,
-            text, displayText, directUrl, cardColour: file === 'Notes.html' ? (data.color || '#C0B7BB') : ''
+            text, displayText, directUrl, cardColour: file === 'Notes.html' ? (data.color || '#C0B7BB') : '',
+            imageUrl: data.image || '', imageUrls
           };
         });
       } catch (error) {
@@ -171,6 +180,11 @@ function addHighlightedText(parent, text, terms) {
 
 function makeSnippet(entry, terms) {
   const displayText = String(entry.displayText || entry.text || entry.title || '').trim();
+  return displayText;
+}
+
+function makeNavigationHint(entry, terms) {
+  const displayText = makeSnippet(entry, terms);
   if (!displayText) return '';
   const lower = displayText.toLocaleLowerCase();
   const positions = terms.map(term => lower.indexOf(term)).filter(position => position >= 0);
@@ -187,6 +201,33 @@ function makeSnippet(entry, terms) {
   const start = positions.length ? Math.max(0, Math.min(...positions) - 70) : 0;
   const end = Math.min(displayText.length, start + 230);
   return `${start ? '…' : ''}${displayText.slice(start, end)}${end < displayText.length ? '…' : ''}`;
+}
+
+const imageFirstSources = new Set([
+  'info.html', 'practicen.html', 'ecg.html', 'urgent_care.html',
+  'face.html', 'hand.html', 'sha.html', 'abdo.html', 'spine.html', 'lf.html'
+]);
+function createSearchResultImages(imageUrls, file) {
+  return [...new Set((imageUrls || []).filter(Boolean))].flatMap(imageUrl => {
+    let safeUrl;
+    try {
+      const candidate = new URL(String(imageUrl), location.href);
+      if (['https:', 'http:'].includes(candidate.protocol)) safeUrl = candidate.href;
+      else if (/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(String(imageUrl))) safeUrl = String(imageUrl);
+    } catch {}
+    if (!safeUrl) return [];
+    const image = document.createElement('img');
+    image.className = 'cep-search-attachment';
+    if (String(file).toLowerCase() === 'pn.html') image.classList.add('is-pn-image');
+    image.src = safeUrl; image.alt = 'Note image'; image.loading = 'lazy'; image.decoding = 'async';
+    return [image];
+  });
+}
+function appendSearchResultContent(card, title, body, images, file) {
+  card.append(title);
+  if (images.length && imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
+  card.append(body);
+  if (images.length && !imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
 }
 
 function addXgptRichContent(parent, html, terms) {
@@ -398,6 +439,7 @@ export async function mountUniversalSearch(host, closeSearch) {
     const groups = new Map();
     matches.forEach(({ entry }) => {
       const snippetText = entry.file === 'chatgptx.html' ? entry.text : makeSnippet(entry, renderTerms);
+      const navigationHint = entry.file === 'chatgptx.html' ? entry.text : makeNavigationHint(entry, renderTerms);
       let group = groups.get(entry.sourceTitle);
       if (!group) {
         group = document.createElement('section'); group.className = 'cep-global-search-group';
@@ -434,16 +476,18 @@ export async function mountUniversalSearch(host, closeSearch) {
       if (entry.directUrl) { link.href = entry.directUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; }
       else {
         const destination = new URL(entry.file, location.href);
-        destination.hash = new URLSearchParams({ cepId: entry.id, cepSearch: query, cepHint: snippetText }).toString();
+        destination.hash = new URLSearchParams({ cepId: entry.id, cepSearch: query, cepHint: navigationHint }).toString();
         link.href = destination.href;
       }
       const title = document.createElement('strong'); title.textContent = entry.title;
       const cardBody = document.createElement(entry.file === 'chatgptx.html' ? 'div' : 'span');
+      const resultImages = createSearchResultImages(entry.imageUrls || [entry.imageUrl], entry.file);
       if (entry.file === 'chatgptx.html' && entry.richHtml) {
         cardBody.className = 'cep-xgpt-rich-content';
         addXgptRichContent(cardBody, entry.richHtml, renderTerms);
       } else addHighlightedText(cardBody, snippetText, renderTerms);
-      link.append(title, cardBody); group.querySelector('.cep-global-search-group-cards').appendChild(link);
+      appendSearchResultContent(link, title, cardBody, resultImages, entry.file);
+      group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
   input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 140); });
