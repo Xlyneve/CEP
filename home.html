@@ -540,9 +540,12 @@ header h1 {
   content:""; display:inline-block; width:6px; height:6px; margin-left:5px; border-radius:999px;
   background:rgba(238,198,55,.96); box-shadow:0 0 0 2px rgba(255,255,255,.72),0 0 9px rgba(238,198,55,.82); vertical-align:middle;
 }
-.xgpt-media-tip { position:fixed; z-index:2147483646; display:none; width:min(280px,calc(100vw - 24px)); padding:9px; border:1px solid rgba(255,255,255,.8); border-radius:12px; background:rgba(255,255,255,.96); box-shadow:0 12px 32px rgba(30,25,28,.24); }
+.xgpt-media-tip { position:fixed; z-index:2147483646; display:none; width:min(280px,calc(100vw - 24px)); max-height:min(520px,calc(100vh - 24px)); overflow:auto; padding:9px; border:1px solid rgba(255,255,255,.8); border-radius:12px; background:rgba(255,255,255,.96); box-shadow:0 12px 32px rgba(30,25,28,.24); }
 .xgpt-media-tip img { display:block; width:100%; max-height:220px; object-fit:contain; border-radius:8px; cursor:zoom-in; }
 .xgpt-media-tip-caption { padding-top:6px; color:#534a4e; font:11px/1.35 Arial,sans-serif; }
+.xgpt-media-tip .cep-xgpt-media-section { padding-top:8px; color:#534a4e; }
+.xgpt-media-tip .cep-xgpt-media-label { margin-bottom:2px; color:#796b72; font:700 9px/1.25 Arial,sans-serif; letter-spacing:.04em; }
+.xgpt-media-tip .cep-xgpt-media-text { font:11px/1.4 Arial,sans-serif; white-space:pre-wrap; overflow-wrap:anywhere; }
 .xgpt-image-zoom { position:fixed; inset:0; z-index:2147483647; display:none; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,.72); }
 .xgpt-image-zoom.is-open { display:flex; }
 .xgpt-image-zoom img { max-width:94vw; max-height:92vh; object-fit:contain; border-radius:10px; cursor:zoom-out; }
@@ -3717,6 +3720,9 @@ html body > header {
             link.dataset.image = media.imageUrl;
             link.dataset.caption = media.caption || '';
           }
+          const details = window.getCachedXgptConceptDefinition?.(concept);
+          if (details?.definition) link.dataset.definition = details.definition;
+          if (details?.why) link.dataset.why = details.why;
           fragment.append(link);
           last = offset + match.length;
           return match;
@@ -3738,11 +3744,23 @@ html body > header {
           const media = await window.fetchXgptConceptMedia(link.textContent);
           if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption || ''; }
         }
-        if (!link.dataset.image || !link.isConnected) return;
-        clearTimeout(hideTimer); const image = document.createElement('img'); image.src = link.dataset.image; image.alt = link.textContent;
-        if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'xgpt-media-tip-caption'; caption.textContent = link.dataset.caption; tip.replaceChildren(image, caption); }
-        else tip.replaceChildren(image);
-        const rect = link.getBoundingClientRect(); tip.style.left = `${Math.max(12, Math.min(innerWidth - 292, rect.left))}px`; tip.style.top = `${Math.max(12, Math.min(innerHeight - 250, rect.bottom + 8))}px`; tip.style.display = 'block';
+        const definition = link.dataset.definition || '', why = link.dataset.why || '';
+        if ((!link.dataset.image && !definition && !why) || !link.isConnected) return;
+        clearTimeout(hideTimer); const parts = [];
+        if (link.dataset.image) { const image = document.createElement('img'); image.src = link.dataset.image; image.alt = link.textContent; parts.push(image); }
+        if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'xgpt-media-tip-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
+        const appendSection = (labelText, bodyText) => {
+          if (!bodyText) return;
+          const section = document.createElement('div'); section.className = 'cep-xgpt-media-section';
+          const label = document.createElement('div'); label.className = 'cep-xgpt-media-label'; label.textContent = labelText;
+          const body = document.createElement('div'); body.className = 'cep-xgpt-media-text'; body.textContent = bodyText;
+          section.append(label, body); parts.push(section);
+        };
+        appendSection('DEFINITION', definition); appendSection('WHY IT MATTERS', why);
+        tip.replaceChildren(...parts); tip.style.display = 'block';
+        const rect = link.getBoundingClientRect(), tipRect = tip.getBoundingClientRect();
+        tip.style.left = `${Math.max(12, Math.min(innerWidth - tipRect.width - 12, rect.left))}px`;
+        tip.style.top = `${Math.max(12, Math.min(innerHeight - tipRect.height - 12, rect.bottom + 8))}px`;
       });
       document.addEventListener('mouseout', event => { if (event.target.closest?.('.xgpt-concept-link') && !tip.contains(event.relatedTarget)) hide(); });
       tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
@@ -5221,7 +5239,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=20';
+  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=21';
   import {
     getFirestore,
     collection,
@@ -5331,6 +5349,7 @@ const firebaseConfig = {
   window.cepUniversalLazyLoaders ||= [];
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
   window.getCachedXgptConceptMedia = getSharedXgptConceptMedia;
+  window.getCachedXgptConceptDefinition = getSharedXgptConceptDefinition;
   window.renderXgptSearchRichContent = renderSharedXgptSearchRichContent;
   window.hasStructuredSearchContent = hasSharedStructuredSearchContent;
   window.renderStructuredSearchContent = renderSharedStructuredSearchContent;

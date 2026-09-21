@@ -59,6 +59,7 @@ function getSearchText(entry) {
 let entriesPromise;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
+let xgptConceptDefinitions = {};
 let xgptConceptCounts = new Map();
 let xgptDb;
 const normalizeConcept = value => String(value || '').toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
@@ -85,14 +86,27 @@ export async function loadXgptEntries() {
     }
     const db = getFirestore(app);
     xgptDb = db;
-    const snapshot = await getDocs(collection(db, 'notes'));
-    const mediaSnapshot = await getDocs(collection(db, 'concept_media')).catch(error => {
-      console.warn('Xgpt concept images are unavailable in header search.', error);
-      return null;
-    });
+    const [snapshot, mediaSnapshot, definitionsSnapshot] = await Promise.all([
+      getDocs(collection(db, 'notes')),
+      getDocs(collection(db, 'concept_media')).catch(error => {
+        console.warn('Xgpt concept images are unavailable in header search.', error);
+        return null;
+      }),
+      getDocs(collection(db, 'concept_defs')).catch(error => {
+        console.warn('Xgpt concept definitions are unavailable in search.', error);
+        return null;
+      })
+    ]);
     xgptConceptMedia = Object.fromEntries((mediaSnapshot?.docs || []).map(item => {
       const media = item.data() || {};
       return [normalizeConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
+    }));
+    xgptConceptDefinitions = Object.fromEntries((definitionsSnapshot?.docs || []).map(item => {
+      const definition = item.data() || {};
+      return [normalizeConcept(definition.concept || item.id), {
+        definition: typeof definition === 'string' ? definition : definition.value || '',
+        why: typeof definition === 'string' ? '' : definition.why || ''
+      }];
     }));
     const entries = snapshot.docs.map(note => {
       const rawHtml = note.data().content || note.data().note || note.data().text || '';
@@ -139,6 +153,10 @@ export async function loadXgptConceptMedia(concept) {
 
 export function getCachedXgptConceptMedia(concept) {
   return xgptConceptMedia[normalizeConcept(concept)] || null;
+}
+
+export function getCachedXgptConceptDefinition(concept) {
+  return xgptConceptDefinitions[normalizeConcept(concept)] || null;
 }
 
 async function loadEntries(onProgress) {
@@ -266,6 +284,9 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
       link.appendChild(label);
       const media = xgptConceptMedia[normalizeConcept(concept)];
       if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption || ''; }
+      const details = xgptConceptDefinitions[normalizeConcept(concept)];
+      if (details?.definition) link.dataset.definition = details.definition;
+      if (details?.why) link.dataset.why = details.why;
       const count = xgptConceptCounts.get(normalizeConcept(concept)) || 1;
       if (count) {
         const badge = document.createElement('span'); badge.className = 'cep-xgpt-concept-count';
@@ -634,10 +655,23 @@ function installXgptMediaUi() {
       const media = await loadXgptConceptMedia(link.textContent);
       if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption; }
     }
-    if (!link.dataset.image || !link.isConnected) return;
-    clearTimeout(hideTimer); const image = document.createElement('img'); image.src = link.dataset.image; image.alt = link.textContent;
-    if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; tip.replaceChildren(image, caption); } else tip.replaceChildren(image);
-    const rect = link.getBoundingClientRect(); tip.style.left = `${Math.max(12, Math.min(innerWidth - 292, rect.left))}px`; tip.style.top = `${Math.max(12, Math.min(innerHeight - 250, rect.bottom + 8))}px`; tip.hidden = false;
+    const definition = link.dataset.definition || '', why = link.dataset.why || '';
+    if ((!link.dataset.image && !definition && !why) || !link.isConnected) return;
+    clearTimeout(hideTimer); const parts = [];
+    if (link.dataset.image) { const image = document.createElement('img'); image.src = link.dataset.image; image.alt = link.textContent; parts.push(image); }
+    if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
+    const appendSection = (labelText, bodyText) => {
+      if (!bodyText) return;
+      const section = document.createElement('div'); section.className = 'cep-xgpt-media-section';
+      const label = document.createElement('div'); label.className = 'cep-xgpt-media-label'; label.textContent = labelText;
+      const body = document.createElement('div'); body.className = 'cep-xgpt-media-text'; body.textContent = bodyText;
+      section.append(label, body); parts.push(section);
+    };
+    appendSection('DEFINITION', definition); appendSection('WHY IT MATTERS', why);
+    tip.replaceChildren(...parts); tip.hidden = false;
+    const rect = link.getBoundingClientRect(), tipRect = tip.getBoundingClientRect();
+    tip.style.left = `${Math.max(12, Math.min(innerWidth - tipRect.width - 12, rect.left))}px`;
+    tip.style.top = `${Math.max(12, Math.min(innerHeight - tipRect.height - 12, rect.bottom + 8))}px`;
   });
   document.addEventListener('mouseout', event => { if (event.target.closest?.('.cep-xgpt-concept') && !tip.contains(event.relatedTarget)) hide(); });
   tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
