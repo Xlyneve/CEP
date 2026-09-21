@@ -56,6 +56,12 @@ const invalidatedDatasetFromEvent = event => {
     ? key.slice(persistentSearchDatasetInvalidationPrefix.length)
     : '';
 };
+const persistentDatasetForKey = key => {
+  const parts = String(key || '').split(':');
+  if (parts[0] === 'xgpt') return `xgpt:${parts[3] || ''}`;
+  if (parts[0] === 'main') return `main:${parts[2] || ''}`;
+  return '';
+};
 let persistentSearchDbPromise;
 const cacheSafeValue = value => {
   if (value == null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
@@ -94,7 +100,9 @@ export async function readPersistentSearchCache(key) {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => resolve(null);
     });
-    const dataset = record?.dataset || '';
+    // Derive from the key so records written before the Xgpt dataset-label fix
+    // are invalidated correctly without requiring users to clear site data.
+    const dataset = persistentDatasetForKey(key) || record?.dataset || '';
     const invalidatedAt = Math.max(
       Number(localStorage.getItem(persistentSearchInvalidationKey) || 0),
       Number(dataset ? localStorage.getItem(`${persistentSearchDatasetInvalidationPrefix}${dataset}`) || 0 : 0)
@@ -108,8 +116,7 @@ export async function writePersistentSearchCache(key, value) {
     const db = await openPersistentSearchCache();
     if (!db) return;
     await new Promise(resolve => {
-      const parts = key.split(':');
-      const dataset = parts[0] === 'xgpt' ? `xgpt:${parts[2] || ''}` : `main:${parts[2] || ''}`;
+      const dataset = persistentDatasetForKey(key);
       const request = db.transaction(persistentSearchCacheStore, 'readwrite').objectStore(persistentSearchCacheStore)
         .put({ key, dataset, savedAt: Date.now(), value: cacheSafeValue(value) });
       request.onsuccess = request.onerror = () => resolve();
@@ -190,7 +197,8 @@ export async function loadXgptEntries() {
     const db = getFirestore(app);
     const cacheScope = `xgpt:${auth.currentUser.uid}:v1`;
     const [entries, media, definitions] = await Promise.all([
-      loadPersistentSearchValue(`${cacheScope}:notes`, async () => {
+      // v2 forces one clean reload after correcting the historic Xgpt dataset label.
+      loadPersistentSearchValue(`${cacheScope}:notes:v2`, async () => {
         const snapshot = await getDocs(collection(db, 'notes'));
         return snapshot.docs.map(note => {
           const rawHtml = note.data().content || note.data().note || note.data().text || '';
