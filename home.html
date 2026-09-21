@@ -3820,7 +3820,7 @@ html body > header {
       });
     }
     function appendSearchResultContent(card, title, body, images, file) {
-      card.append(title);
+      if (title) card.append(title);
       if (images.length && imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
       card.append(body);
       if (images.length && !imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
@@ -3959,7 +3959,7 @@ html body > header {
           group.style.setProperty('--search-card', cardColour);
           const groupTitle = document.createElement('a');
           groupTitle.className = 'universal-search-source-title';
-          groupTitle.textContent = sourceTitle;
+          groupTitle.textContent = sourceTitle === 'Xgpt Notes' ? 'Xgpt' : sourceTitle;
           groupTitle.href = new URL(page.sourcePage || page.file, location.href).href;
           groupTitle.target = '_blank'; groupTitle.rel = 'noopener';
           group.appendChild(groupTitle);
@@ -4025,7 +4025,7 @@ html body > header {
         if (page.richHtml && sourceTitle === 'Xgpt Notes') {
           nativeSnippet.classList.add('xgpt-rich-snippet');
           addHighlightedRichHtml(nativeSnippet, page.richHtml, renderTerms);
-          appendSearchResultContent(nativeCard, nativeTitle, nativeSnippet, resultImages, page.file);
+          appendSearchResultContent(nativeCard, null, nativeSnippet, resultImages, page.file);
         } else if (sourceCardRendered) {
           // The shared source-card renderer already appended the original presentation.
         } else if (structuredRichContent) {
@@ -5239,7 +5239,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=22';
+  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=23';
   import {
     getFirestore,
     collection,

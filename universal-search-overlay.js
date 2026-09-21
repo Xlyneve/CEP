@@ -354,7 +354,7 @@ function createSearchResultImages(imageUrls, file) {
   });
 }
 function appendSearchResultContent(card, title, body, images, file) {
-  card.append(title);
+  if (title) card.append(title);
   if (images.length && imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
   card.append(body);
   if (images.length && !imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
@@ -958,7 +958,7 @@ export async function mountUniversalSearch(host, closeSearch) {
         group.style.setProperty('--search-title', headingColour);
         group.style.setProperty('--search-card', cardColour);
         const heading = document.createElement('a'); heading.className = 'cep-global-search-group-title';
-        heading.textContent = entry.sourceTitle; heading.href = entry.file;
+        heading.textContent = entry.sourceTitle === 'Xgpt Notes' ? 'Xgpt' : entry.sourceTitle; heading.href = entry.file;
         const cards = document.createElement('div'); cards.className = 'cep-global-search-group-cards';
         group.append(heading, cards); results.appendChild(group); groups.set(entry.sourceTitle, group);
       }
@@ -987,7 +987,7 @@ export async function mountUniversalSearch(host, closeSearch) {
         cardBody.className = 'cep-structured-rich-content';
         renderStructuredSearchContent(cardBody, entry.richHtml, renderTerms);
       } else addHighlightedText(cardBody, snippetText, renderTerms);
-      if (!sourceCardRendered) appendSearchResultContent(link, title, cardBody, resultImages, entry.file);
+      if (!sourceCardRendered) appendSearchResultContent(link, entry.file === 'chatgptx.html' ? null : title, cardBody, resultImages, entry.file);
       installSearchCardInteractions(link, {
         copyText: entry.displayText || entry.text || entry.title,
         copyHtml: getSearchCopyHtml(entry),
