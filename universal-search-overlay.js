@@ -347,7 +347,8 @@ const appendSourceLink = (parent, url, label) => {
   try { const candidate = new URL(String(url), location.href); if (['https:', 'http:', 'mailto:', 'tel:'].includes(candidate.protocol)) safeUrl = candidate.href; } catch {}
   if (!safeUrl) return;
   const wrap = document.createElement('div'); wrap.className = 'cep-source-card-url';
-  const link = document.createElement('a'); link.href = safeUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = label;
+  const link = document.createElement('a'); link.href = safeUrl; link.target = '_blank'; link.rel = 'noopener noreferrer';
+  link.textContent = '🔗'; link.setAttribute('aria-label', label || 'Open link'); link.title = label || 'Open link';
   wrap.appendChild(link); parent.appendChild(wrap);
 };
 
