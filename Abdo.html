@@ -77,6 +77,7 @@ const firebaseConfig = {
       : "";
     const noteData = { note: noteText, image: imageUrl };
     const newDoc = await addDoc(notesCollection, noteData);
+    window.invalidateCepSearchCache?.('main:abdominisNotes');
     cachedNoteDocs?.push(createCachedNote(newDoc.id, noteData));
     hideNoteInput();
     loadNotes();
@@ -164,6 +165,7 @@ const firebaseConfig = {
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
         await deleteDoc(doc(notesCollection, docSnap.id));
+        window.invalidateCepSearchCache?.('main:abdominisNotes');
         cachedNoteDocs = cachedNoteDocs?.filter(noteDoc => noteDoc.id !== docSnap.id);
         loadNotes(filter);
         deleteReferenceImage(app, data.image).catch(error => {
@@ -207,6 +209,7 @@ const firebaseConfig = {
         saveBtn.onclick = async () => {
           const newNote = editDiv.innerHTML;
           await updateDoc(doc(notesCollection, docSnap.id), { note: newNote });
+          window.invalidateCepSearchCache?.('main:abdominisNotes');
           updateCachedNote(docSnap.id, { note: newNote });
           loadNotes(filter);
         };

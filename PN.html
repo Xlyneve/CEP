@@ -1257,6 +1257,7 @@ async function addNote() {
     image: imageUrl,
     time: createdAt
   });
+  window.invalidateCepSearchCache?.('main:nurseNotes');
 
   newestNoteId = newDoc.id;
   resetAddForm();
@@ -1278,6 +1279,7 @@ function resetAddForm() {
 async function deleteNote(id, imageUrl = "") {
   if (confirm("Delete this note?")) {
     await deleteDoc(doc(db, "nurseNotes", id));
+    window.invalidateCepSearchCache?.('main:nurseNotes');
     try {
       await deleteReferenceImage(app, imageUrl);
     } catch (error) {
@@ -1292,6 +1294,7 @@ async function saveEdit(id, updatedTitle, updatedNote, updatedUrl) {
     note: updatedNote,
     url: updatedUrl || ""
   });
+  window.invalidateCepSearchCache?.('main:nurseNotes');
 }
 
 /* ---------------- Utilities ---------------- */
@@ -2018,7 +2021,7 @@ toggleBtn.addEventListener('click', () => {
 
 
 </script>
-    <script src="header-rays.js?v=35"></script>
+    <script src="header-rays.js?v=36"></script>
 	<script src="emoji-picker.js?v=1"></script>
 </body>
 </html>

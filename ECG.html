@@ -83,6 +83,7 @@ const firebaseConfig = {
       updatedAt: new Date().toISOString()
     };
     const newDoc = await addDoc(ecgNotesCollection, noteData);
+    window.invalidateCepSearchCache?.('main:ecgNotes');
     cachedNoteDocs?.push(createCachedNote(newDoc.id, noteData));
     hideNoteInput();
     loadNotes();
@@ -195,6 +196,7 @@ card.appendChild(p);
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
         await deleteDoc(doc(ecgNotesCollection, docSnap.id));
+        window.invalidateCepSearchCache?.('main:ecgNotes');
         cachedNoteDocs = cachedNoteDocs?.filter(noteDoc => noteDoc.id !== docSnap.id);
         loadNotes(filter);
         deleteReferenceImage(app, data.image).catch(error => {
@@ -238,6 +240,7 @@ card.appendChild(p);
         saveBtn.onclick = async () => {
           const newNote = editDiv.innerHTML;
           await updateDoc(doc(ecgNotesCollection, docSnap.id), { note: newNote });
+          window.invalidateCepSearchCache?.('main:ecgNotes');
           updateCachedNote(docSnap.id, { note: newNote, updatedAt: new Date().toISOString() });
           loadNotes(filter);
         };

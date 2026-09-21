@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { collection, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithRedirect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const sources = [
@@ -44,6 +44,90 @@ export function hasStructuredSearchContent(html) {
 }
 
 const normalizeSearchValue = value => String(value || '').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+const persistentSearchCacheName = 'cep-search-cache-v1';
+const persistentSearchCacheStore = 'datasets';
+const persistentSearchCacheTtl = 24 * 60 * 60 * 1000;
+const persistentSearchInvalidationKey = 'cep-search-cache-invalidated-at';
+const persistentSearchDatasetInvalidationPrefix = 'cep-search-cache-invalidated:';
+let persistentSearchDbPromise;
+const cacheSafeValue = value => {
+  if (value == null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
+  if (value instanceof Date) return { __cepSearchDate: value.getTime() };
+  if (typeof value?.toMillis === 'function') return { __cepSearchDate: value.toMillis() };
+  if (Array.isArray(value)) return value.map(cacheSafeValue);
+  if (typeof value === 'object') return Object.fromEntries(Object.entries(value)
+    .filter(([, item]) => typeof item !== 'function' && item !== undefined)
+    .map(([key, item]) => [key, cacheSafeValue(item)]));
+  return String(value);
+};
+const reviveCachedValue = value => {
+  if (!value || typeof value !== 'object') return value;
+  if (!Array.isArray(value) && Number.isFinite(value.__cepSearchDate)) return new Date(value.__cepSearchDate);
+  if (Array.isArray(value)) return value.map(reviveCachedValue);
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, reviveCachedValue(item)]));
+};
+const openPersistentSearchCache = () => {
+  if (!('indexedDB' in window)) return Promise.resolve(null);
+  if (persistentSearchDbPromise) return persistentSearchDbPromise;
+  persistentSearchDbPromise = new Promise(resolve => {
+    const request = indexedDB.open(persistentSearchCacheName, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(persistentSearchCacheStore, { keyPath: 'key' });
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+    request.onblocked = () => resolve(null);
+  });
+  return persistentSearchDbPromise;
+};
+export async function readPersistentSearchCache(key) {
+  try {
+    const db = await openPersistentSearchCache();
+    if (!db) return undefined;
+    const record = await new Promise(resolve => {
+      const request = db.transaction(persistentSearchCacheStore, 'readonly').objectStore(persistentSearchCacheStore).get(key);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => resolve(null);
+    });
+    const dataset = record?.dataset || '';
+    const invalidatedAt = Math.max(
+      Number(localStorage.getItem(persistentSearchInvalidationKey) || 0),
+      Number(dataset ? localStorage.getItem(`${persistentSearchDatasetInvalidationPrefix}${dataset}`) || 0 : 0)
+    );
+    if (!record || record.savedAt < invalidatedAt || Date.now() - record.savedAt >= persistentSearchCacheTtl) return undefined;
+    return reviveCachedValue(record.value);
+  } catch { return undefined; }
+}
+export async function writePersistentSearchCache(key, value) {
+  try {
+    const db = await openPersistentSearchCache();
+    if (!db) return;
+    await new Promise(resolve => {
+      const parts = key.split(':');
+      const dataset = parts[0] === 'xgpt' ? `xgpt:${parts[2] || ''}` : `main:${parts[2] || ''}`;
+      const request = db.transaction(persistentSearchCacheStore, 'readwrite').objectStore(persistentSearchCacheStore)
+        .put({ key, dataset, savedAt: Date.now(), value: cacheSafeValue(value) });
+      request.onsuccess = request.onerror = () => resolve();
+    });
+  } catch {}
+}
+export function invalidatePersistentSearchCache(dataset = '') {
+  try {
+    const key = dataset ? `${persistentSearchDatasetInvalidationPrefix}${dataset}` : persistentSearchInvalidationKey;
+    localStorage.setItem(key, String(Date.now()));
+  } catch {}
+}
+const loadPersistentSearchValue = async (key, loader) => {
+  const cached = await readPersistentSearchCache(key);
+  if (cached !== undefined) return cached;
+  const value = await loader();
+  await writePersistentSearchCache(key, value);
+  return value;
+};
+export function loadPersistentSearchDocuments(db, collectionName, scope) {
+  return loadPersistentSearchValue(`${scope}:${collectionName}:documents:v1`, async () => {
+    const snapshot = await getDocs(collection(db, collectionName));
+    return snapshot.docs.map(item => ({ id: item.id, data: item.data() }));
+  });
+}
 const searchTextCache = new WeakMap();
 function getSearchText(entry) {
   let indexed = searchTextCache.get(entry);
@@ -59,9 +143,21 @@ function getSearchText(entry) {
 let entriesPromise;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
+let xgptConceptMediaLoaded = false;
 let xgptConceptDefinitions = {};
 let xgptConceptCounts = new Map();
-let xgptDb;
+const clearInMemorySearchCache = () => {
+  entriesPromise = null;
+  xgptEntriesPromise = null;
+  xgptConceptMedia = {};
+  xgptConceptMediaLoaded = false;
+  xgptConceptDefinitions = {};
+  xgptConceptCounts = new Map();
+};
+window.addEventListener('cep-search-cache-invalidated', clearInMemorySearchCache);
+window.addEventListener('storage', event => {
+  if (event.key === persistentSearchInvalidationKey || event.key?.startsWith(persistentSearchDatasetInvalidationPrefix)) clearInMemorySearchCache();
+});
 const normalizeConcept = value => String(value || '').toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
 function getXgptAuth() {
   const config = {
@@ -85,38 +181,46 @@ export async function loadXgptEntries() {
       throw error;
     }
     const db = getFirestore(app);
-    xgptDb = db;
-    const [snapshot, mediaSnapshot, definitionsSnapshot] = await Promise.all([
-      getDocs(collection(db, 'notes')),
-      getDocs(collection(db, 'concept_media')).catch(error => {
-        console.warn('Xgpt concept images are unavailable in header search.', error);
-        return null;
+    const cacheScope = `xgpt:${auth.currentUser.uid}:v1`;
+    const [entries, media, definitions] = await Promise.all([
+      loadPersistentSearchValue(`${cacheScope}:notes`, async () => {
+        const snapshot = await getDocs(collection(db, 'notes'));
+        return snapshot.docs.map(note => {
+          const rawHtml = note.data().content || note.data().note || note.data().text || '';
+          const text = textFromHtml(rawHtml).replace(/\[\[([^\]]+)\]\]/g, '$1');
+          const firstLine = text.split(/[.!?]\s|\n/)[0].trim();
+          return {
+            id: note.id, file: 'chatgptx.html', sourceTitle: 'Xgpt Notes',
+            title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text, richHtml: rawHtml
+          };
+        });
       }),
-      getDocs(collection(db, 'concept_defs')).catch(error => {
+      loadPersistentSearchValue(`${cacheScope}:media`, async () => {
+        const mediaSnapshot = await getDocs(collection(db, 'concept_media'));
+        return Object.fromEntries(mediaSnapshot.docs.map(item => {
+          const media = item.data() || {};
+          return [normalizeConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
+        }));
+      }).catch(error => {
+        console.warn('Xgpt concept images are unavailable in header search.', error);
+        return {};
+      }),
+      loadPersistentSearchValue(`${cacheScope}:definitions`, async () => {
+        const definitionsSnapshot = await getDocs(collection(db, 'concept_defs'));
+        return Object.fromEntries(definitionsSnapshot.docs.map(item => {
+          const definition = item.data() || {};
+          return [normalizeConcept(definition.concept || item.id), {
+            definition: definition.value || '', why: definition.why || ''
+          }];
+        }));
+      }).catch(error => {
         console.warn('Xgpt concept definitions are unavailable in search.', error);
-        return null;
+        return {};
       })
     ]);
-    xgptConceptMedia = Object.fromEntries((mediaSnapshot?.docs || []).map(item => {
-      const media = item.data() || {};
-      return [normalizeConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
-    }));
-    xgptConceptDefinitions = Object.fromEntries((definitionsSnapshot?.docs || []).map(item => {
-      const definition = item.data() || {};
-      return [normalizeConcept(definition.concept || item.id), {
-        definition: typeof definition === 'string' ? definition : definition.value || '',
-        why: typeof definition === 'string' ? '' : definition.why || ''
-      }];
-    }));
-    const entries = snapshot.docs.map(note => {
-      const rawHtml = note.data().content || note.data().note || note.data().text || '';
-      const text = textFromHtml(rawHtml).replace(/\[\[([^\]]+)\]\]/g, '$1');
-      const firstLine = text.split(/[.!?]\s|\n/)[0].trim();
-      return {
-        id: note.id, file: 'chatgptx.html', sourceTitle: 'Xgpt Notes',
-        title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text, richHtml: rawHtml
-      };
-    });
+    xgptConceptMedia = media;
+    xgptConceptMediaLoaded = true;
+    xgptConceptDefinitions = definitions;
     xgptConceptCounts = new Map();
     entries.forEach(entry => {
       const concepts = new Set([...String(entry.richHtml || '').matchAll(/\[\[([^\]\[]+?)\]\]/g)]
@@ -138,17 +242,8 @@ export async function loadXgptConceptMedia(concept) {
   const key = normalizeConcept(concept);
   if (!key) return null;
   if (xgptConceptMedia[key]?.imageUrl) return xgptConceptMedia[key];
-  if (!xgptDb) await loadXgptEntries();
-  if (!xgptDb) return null;
-  try {
-    const snapshot = await getDoc(doc(xgptDb, 'concept_media', key));
-    if (!snapshot.exists()) return null;
-    const data = snapshot.data() || {};
-    return xgptConceptMedia[key] = { imageUrl: data.imageUrl || '', caption: data.caption || '' };
-  } catch (error) {
-    console.warn(`Xgpt concept image could not load for ${concept}.`, error);
-    return null;
-  }
+  if (!xgptConceptMediaLoaded) await loadXgptEntries();
+  return xgptConceptMedia[key]?.imageUrl ? xgptConceptMedia[key] : null;
 }
 
 export function getCachedXgptConceptMedia(concept) {
@@ -164,12 +259,13 @@ async function loadEntries(onProgress) {
   entriesPromise = (async () => {
     await window.CEP_AUTH_READY;
     const db = getFirestore(getApp());
+    const userId = getAuth(getApp()).currentUser?.uid || 'signed-in';
     const batches = await Promise.all(sources.map(async ([collectionName,file,sourceTitle,fields,directField]) => {
       try {
-        const snapshot = await getDocs(collection(db, collectionName));
+        const documents = await loadPersistentSearchDocuments(db, collectionName, `main:${userId}`);
         onProgress?.(sourceTitle);
-        return snapshot.docs.map(note => {
-          const data = note.data();
+        return documents.map(note => {
+          const data = note.data;
           const title = textFromHtml(data.title).replace(/\s+/g, ' ').trim() || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
           const displayText = textFromHtml(data.note || data.text || data.content || '') || text;

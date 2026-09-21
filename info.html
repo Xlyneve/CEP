@@ -1233,6 +1233,7 @@ pendingNewNoteTimestamp = createdAt;
     image: imageUrl,
     timestamp: createdAt
   });
+  window.invalidateCepSearchCache?.('main:informationNotes');
 
   newestNoteId = newDoc.id;
   resetAddForm();
@@ -1472,6 +1473,7 @@ async function saveEdit(card){
     text: newText,
     url: newUrl
   });
+  window.invalidateCepSearchCache?.('main:informationNotes');
 
   toggleEdit(card, false);
 
@@ -1491,6 +1493,7 @@ async function deleteNote(id){
   if(!confirm("Are you sure you want to delete this note?")) return;
   const existing = notes.find(note => note.id === id);
   await deleteDoc(doc(db,"informationNotes",id));
+  window.invalidateCepSearchCache?.('main:informationNotes');
   try {
     await deleteReferenceImage(app, existing?.image);
   } catch (error) {
@@ -2060,7 +2063,7 @@ if (document.readyState === "loading") {
     ">Highlight: drag over text • Pan: zoom, then drag • Pinch / scroll to zoom</div>
   </div>
 </div>
-    <script src="header-rays.js?v=35"></script>
+    <script src="header-rays.js?v=36"></script>
 	<script src="emoji-picker.js?v=1"></script>
 </body>
 </html>

@@ -210,3 +210,10 @@
     return false;
   });
 })();
+window.invalidateCepSearchCache = (dataset = '') => {
+  try {
+    const key = dataset ? `cep-search-cache-invalidated:${dataset}` : 'cep-search-cache-invalidated-at';
+    localStorage.setItem(key, String(Date.now()));
+  } catch {}
+  window.dispatchEvent(new CustomEvent('cep-search-cache-invalidated', { detail: { dataset } }));
+};

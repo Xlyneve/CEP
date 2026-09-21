@@ -78,6 +78,7 @@ const handNotesCollection = collection(db, "handNotes");
       : "";
     const noteData = { note: noteText, image: imageUrl };
     const newDoc = await addDoc(handNotesCollection , noteData);
+    window.invalidateCepSearchCache?.('main:handNotes');
     cachedNoteDocs?.push(createCachedNote(newDoc.id, noteData));
     hideNoteInput();
     loadNotes();
@@ -165,6 +166,7 @@ const handNotesCollection = collection(db, "handNotes");
       delBtn.textContent = "Delete";
       delBtn.onclick = async () => {
         await deleteDoc(doc(handNotesCollection , docSnap.id));
+        window.invalidateCepSearchCache?.('main:handNotes');
         cachedNoteDocs = cachedNoteDocs?.filter(noteDoc => noteDoc.id !== docSnap.id);
         loadNotes(filter);
         deleteReferenceImage(app, data.image).catch(error => {
@@ -208,6 +210,7 @@ const handNotesCollection = collection(db, "handNotes");
         saveBtn.onclick = async () => {
           const newNote = editDiv.innerHTML;
           await updateDoc(doc(handNotesCollection , docSnap.id), { note: newNote });
+          window.invalidateCepSearchCache?.('main:handNotes');
           updateCachedNote(docSnap.id, { note: newNote });
           loadNotes(filter);
         };

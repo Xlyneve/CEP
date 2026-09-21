@@ -2830,6 +2830,7 @@ addNoteBtn.onclick = async () => {
       content: noteContent,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    window.invalidateCepSearchCache?.('xgpt:notes');
 
     noteInput.innerHTML = '';
     imageUpload.value = '';
@@ -3320,6 +3321,7 @@ async function uploadConceptMedia(concept, fileOrBlob, caption = '') {
     storagePath,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
+  window.invalidateCepSearchCache?.('xgpt:media');
 
   console.log('firestore media doc saved');
 
@@ -3344,6 +3346,7 @@ async function removeConceptMedia(concept) {
   }
 
   await db.collection('concept_media').doc(key).delete();
+  window.invalidateCepSearchCache?.('xgpt:media');
 }
 
 // legacy-safe getters: handle both {value,why} objects and old string cache entries
@@ -3374,6 +3377,7 @@ async function setDefinition(concept, value, why) {
     why: (why || '').trim(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
+  window.invalidateCepSearchCache?.('xgpt:definitions');
 }
 
 async function deleteDefinition(concept) {
@@ -3382,6 +3386,7 @@ async function deleteDefinition(concept) {
 
   await ensureSignedIn();
   await db.collection('concept_defs').doc(k).delete();
+  window.invalidateCepSearchCache?.('xgpt:definitions');
 }
 
 function getConceptFromLink(link) {
@@ -3790,6 +3795,7 @@ defSaveBtn?.addEventListener('click', async (e) => {
           caption: (kbCaptionInput?.value || '').trim(),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
+        window.invalidateCepSearchCache?.('xgpt:media');
 
         console.log('caption updated');
       }
@@ -3959,6 +3965,7 @@ async function mergeConceptEverywhere(oldConcept, newConcept) {
       batch.update(db.collection('notes').doc(doc.id), { content: doc.content });
     });
     await batch.commit();
+    window.invalidateCepSearchCache?.('xgpt:notes');
     changed += chunk.length;
   }
 
@@ -3982,17 +3989,20 @@ async function mergeConceptEverywhere(oldConcept, newConcept) {
       why: newWhy || oldWhy,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
+    window.invalidateCepSearchCache?.('xgpt:definitions');
   } else {
     // still make sure the pretty concept name is stored
     await db.collection('concept_defs').doc(newKey).set({
       concept: newTrim,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
+    window.invalidateCepSearchCache?.('xgpt:definitions');
   }
 
   // Delete the old doc if it’s a different key
   if (oldKey !== newKey) {
     try { await db.collection('concept_defs').doc(oldKey).delete(); } catch {}
+    window.invalidateCepSearchCache?.('xgpt:definitions');
   }
 
   return { changed };
@@ -4368,6 +4378,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
         try {
           await ensureSignedIn();
           await db.collection('notes').doc(note.id).update({ content: updated });
+          window.invalidateCepSearchCache?.('xgpt:notes');
           note.content = updated;
 
           bubble.innerHTML = '🤖 ' + conceptLinkifyHTML(stripLegacyTableControls(updated));
@@ -4391,6 +4402,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
       try {
         await ensureSignedIn();
         await db.collection('notes').doc(note.id).delete();
+        window.invalidateCepSearchCache?.('xgpt:notes');
         div.remove();
 
         const q = userInput.value.trim();

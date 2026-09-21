@@ -901,6 +901,7 @@ document.querySelector('.add-btn').addEventListener('click', async (e) => {
     text,
     timestamp: createdAt
   });
+  window.invalidateCepSearchCache?.('main:explainNotes');
 
   newestNoteId = newDoc.id;
   resetAddForm();
@@ -1157,6 +1158,7 @@ window.saveEdit = async (id) => {
     text: newText,
     timestamp: new Date().toISOString()
   });
+  window.invalidateCepSearchCache?.('main:explainNotes');
 };
 
 // Cancel edits
@@ -1178,6 +1180,7 @@ window.cancelEdit = (id) => {
 window.deleteNote = async (id) => {
   if (confirm("Delete this note?")) {
     await deleteDoc(doc(db, 'explainNotes', id));
+    window.invalidateCepSearchCache?.('main:explainNotes');
   }
 };
 
@@ -1641,7 +1644,7 @@ document.addEventListener('input', (e) => {
 });
 
 </script>
-    <script src="header-rays.js?v=35"></script>
+    <script src="header-rays.js?v=36"></script>
 	<script src="emoji-picker.js?v=1"></script>
 </body>
 </html>
