@@ -49,6 +49,13 @@ const persistentSearchCacheStore = 'datasets';
 const persistentSearchCacheTtl = 24 * 60 * 60 * 1000;
 const persistentSearchInvalidationKey = 'cep-search-cache-invalidated-at';
 const persistentSearchDatasetInvalidationPrefix = 'cep-search-cache-invalidated:';
+const invalidatedDatasetFromEvent = event => {
+  if (event?.type === 'cep-search-cache-invalidated') return String(event.detail?.dataset || '');
+  const key = String(event?.key || '');
+  return key.startsWith(persistentSearchDatasetInvalidationPrefix)
+    ? key.slice(persistentSearchDatasetInvalidationPrefix.length)
+    : '';
+};
 let persistentSearchDbPromise;
 const cacheSafeValue = value => {
   if (value == null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
@@ -999,6 +1006,49 @@ export async function mountUniversalSearch(host, closeSearch) {
       group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
+  let mountedRefreshPromise = Promise.resolve();
+  const refreshMountedEntries = async dataset => {
+    if (!host.isConnected) return;
+    try {
+      if (!dataset || dataset.startsWith('main:')) {
+        const xgptEntries = entries.filter(entry => entry.file === 'chatgptx.html');
+        const mainEntries = await loadEntries(source => { status.textContent = `Refreshing ${source}…`; });
+        if (!host.isConnected) return;
+        entries = mainEntries.concat(xgptEntries);
+      }
+      if (!dataset || dataset.startsWith('xgpt:')) {
+        const mainEntries = entries.filter(entry => entry.file !== 'chatgptx.html');
+        const freshXgptEntries = await loadXgptEntries();
+        if (!host.isConnected) return;
+        entries = mainEntries.concat(freshXgptEntries);
+        xgptPrompt.hidden = true;
+      }
+      renderFilters();
+      runSearch();
+    } catch (error) {
+      if (error?.code === 'xgpt/auth-required') xgptPrompt.hidden = false;
+      else console.warn('Search could not refresh its updated notes.', error);
+    }
+  };
+  const queueMountedRefresh = event => {
+    const dataset = invalidatedDatasetFromEvent(event);
+    mountedRefreshPromise = mountedRefreshPromise.then(() => refreshMountedEntries(dataset));
+  };
+  const onSearchCacheInvalidated = event => { queueMountedRefresh(event); };
+  const onSearchStorageInvalidated = event => {
+    if (event.key === persistentSearchInvalidationKey || event.key?.startsWith(persistentSearchDatasetInvalidationPrefix)) {
+      queueMountedRefresh(event);
+    }
+  };
+  window.addEventListener('cep-search-cache-invalidated', onSearchCacheInvalidated);
+  window.addEventListener('storage', onSearchStorageInvalidated);
+  const mountedSearchObserver = new MutationObserver(() => {
+    if (host.isConnected) return;
+    window.removeEventListener('cep-search-cache-invalidated', onSearchCacheInvalidated);
+    window.removeEventListener('storage', onSearchStorageInvalidated);
+    mountedSearchObserver.disconnect();
+  });
+  mountedSearchObserver.observe(document.body, { childList: true, subtree: true });
   input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 140); });
   input.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeSearch();

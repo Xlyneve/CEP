@@ -5239,7 +5239,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=23';
+  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=24';
   import {
     getFirestore,
     collection,
@@ -5394,10 +5394,26 @@ const firebaseConfig = {
   });
   // Read saved notes only when search is used, once per Home document.
   let savedSearchPromise;
-  window.addEventListener('cep-search-cache-invalidated', () => {
-    savedSearchPromise = null;
-    chatgptSearchPromise = null;
-  });
+  const refreshInvalidatedHomeSearch = event => {
+    const invalidationPrefix = 'cep-search-cache-invalidated:';
+    const storageKey = String(event?.key || '');
+    if (event?.type === 'storage' &&
+        storageKey !== 'cep-search-cache-invalidated-at' &&
+        !storageKey.startsWith(invalidationPrefix)) return;
+    const dataset = event?.type === 'storage'
+      ? (storageKey.startsWith(invalidationPrefix) ? storageKey.slice(invalidationPrefix.length) : '')
+      : String(event?.detail?.dataset || '');
+    if (!dataset || dataset.startsWith('main:')) {
+      savedSearchPromise = null;
+      void loadSavedSearchNotes();
+    }
+    if (!dataset || dataset.startsWith('xgpt:')) {
+      chatgptSearchPromise = null;
+      void loadChatgptSearchNotes();
+    }
+  };
+  window.addEventListener('cep-search-cache-invalidated', refreshInvalidatedHomeSearch);
+  window.addEventListener('storage', refreshInvalidatedHomeSearch);
   const loadSavedSearchNotes = () => savedSearchPromise ||= Promise.all(searchSources.map(async source => {
     try {
       const userId = getAuth(app).currentUser?.uid || 'signed-in';
