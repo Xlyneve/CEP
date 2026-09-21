@@ -409,6 +409,16 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
   return false;
 }
 
+export function getSearchCopyHtml(entry) {
+  const data = entry?.record?.data;
+  const type = sourceCardTypes[String(entry?.file || '').toLocaleLowerCase()];
+  if (data && type === 'notes') return String(data.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+  if (data && type === 'forms') return String(data.note || '');
+  if (data && (type === 'pn' || type === 'ecg' || type === 'urgent')) return String(data.note || '');
+  if (data && (type === 'practice' || type === 'info' || type === 'explain')) return sourceLegacyHtml(data.text || '');
+  return String(entry?.richHtml || '');
+}
+
 let imageZoomUi;
 function getSearchImageZoomUi() {
   if (imageZoomUi?.root?.isConnected) return imageZoomUi;
@@ -567,7 +577,26 @@ export function enableSearchTableZoom(table) {
 }
 
 const interactiveSearchChildSelector = 'table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)';
-export function installSearchCardInteractions(card, { copyText, navigate, onNavigate } = {}) {
+async function writeSearchClipboard(copyText, copyHtml) {
+  const plainText = String(copyText || '').trim();
+  const safeHtml = copyHtml && window.CEPSecurity?.sanitizeHTML
+    ? window.CEPSecurity.sanitizeHTML(String(copyHtml))
+    : '';
+  if (safeHtml && navigator.clipboard?.write && typeof ClipboardItem === 'function') {
+    const item = new ClipboardItem({
+      'text/plain': new Blob([plainText], { type:'text/plain' }),
+      'text/html': new Blob([safeHtml], { type:'text/html' })
+    });
+    try {
+      await navigator.clipboard.write([item]);
+      return;
+    } catch (error) {
+      if (!navigator.clipboard?.writeText) throw error;
+    }
+  }
+  await navigator.clipboard.writeText(plainText);
+}
+export function installSearchCardInteractions(card, { copyText, copyHtml, navigate, onNavigate } = {}) {
   let clickTimer;
   const isInteractiveChild = target => target instanceof Element && Boolean(target.closest(interactiveSearchChildSelector));
   card.addEventListener('click', event => {
@@ -580,7 +609,7 @@ export function installSearchCardInteractions(card, { copyText, navigate, onNavi
     clearTimeout(clickTimer);
     clickTimer = setTimeout(async () => {
       try {
-        await navigator.clipboard.writeText(String(copyText || '').trim());
+        await writeSearchClipboard(copyText, copyHtml);
         card.classList.remove('is-copied'); void card.offsetWidth; card.classList.add('is-copied');
         setTimeout(() => card.classList.remove('is-copied'), 720);
       } catch (error) { console.warn('Search result could not be copied.', error); }
@@ -830,6 +859,7 @@ export async function mountUniversalSearch(host, closeSearch) {
       if (!sourceCardRendered) appendSearchResultContent(link, title, cardBody, resultImages, entry.file);
       installSearchCardInteractions(link, {
         copyText: entry.displayText || entry.text || entry.title,
+        copyHtml: getSearchCopyHtml(entry),
         navigate: () => {
           if (entry.directUrl) window.open(link.href, '_blank', 'noopener');
           else location.assign(link.href);
