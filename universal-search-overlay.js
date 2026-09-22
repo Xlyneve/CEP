@@ -423,7 +423,7 @@ function addHighlightedText(parent, text, terms) {
   const pattern = new RegExp(`(${escaped.join('|')})`, 'gi');
   text.split(pattern).forEach(part => {
     if (terms.includes(part.toLocaleLowerCase())) {
-      const mark = document.createElement('mark'); mark.textContent = part; parent.appendChild(mark);
+      const mark = document.createElement('mark'); mark.className = 'cep-search-match'; mark.textContent = part; parent.appendChild(mark);
     } else parent.appendChild(document.createTextNode(part));
   });
 }
