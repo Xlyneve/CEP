@@ -5,22 +5,20 @@
 
   const fullUrl = "homecal.html";
   const embeddedUrl = "homecal.html?homeEmbed=today&v=4";
-  const preferenceKey = "xlyneve-calendar-open-mode";
   const layoutKey = "xlyneve-calendar-home-layout";
   let calendarWindow = null;
   let panel = null;
   let choices = null;
   let activeLauncher = launchers[0];
   let collapsedWidth = 380;
+  let hoverTimer = null;
+  let closeTimer = null;
 
   const style = document.createElement("style");
   style.textContent = `
-    .calendar-launch-choices { display:grid; grid-template-columns:1fr 1fr; gap:4px; position:fixed; z-index:10021; padding:8px; border:1px solid #cabec8; border-radius:14px; background:#fff9fc; box-shadow:0 8px 30px #39263730; }
+    .calendar-launch-choices { display:grid; grid-template-columns:1fr; gap:4px; position:fixed; z-index:10021; padding:8px; border:1px solid #cabec8; border-radius:14px; background:#fff9fc; box-shadow:0 8px 30px #39263730; }
     .calendar-launch-choices[hidden] { display:none; }
     .calendar-launch-choices button { display:block; width:100%; padding:10px 14px; border:0; border-radius:8px; background:transparent; color:#493d49; font:14px system-ui; text-align:left; cursor:pointer; }
-    .calendar-launch-choices button[data-mode="home"] { grid-column:1 / -1; }
-    .calendar-launch-choices button.calendar-choice-icon { display:flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; padding:10px; }
-    .calendar-choice-icon svg { width:20px; height:20px; pointer-events:none; }
     .calendar-launch-choices button:hover,.calendar-launch-choices button:focus-visible { background:#eee5ef; }
     .homepage-calendar { position:fixed; z-index:10020; display:flex; flex-direction:column; width:min(380px,calc(100vw - 16px)); height:min(460px,calc(100dvh - 42px)); overflow:hidden; border:1px solid rgba(255,255,255,.72); border-radius:16px; background:#e8e8e8; box-shadow:0 12px 36px #39263730; }
     .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; cursor:grab; touch-action:none; user-select:none; }
@@ -156,7 +154,6 @@
   const closeChoices = () => { choices.hidden = true; activeLauncher?.setAttribute("aria-expanded", "false"); };
   const modes = [
     ["home", "Open on homepage", openOnHome],
-    ["tab", "Open in new tab", () => window.open(fullUrl, "_blank", "noopener")],
     ["window", "Open in new window", () => {
       if (!calendarWindow || calendarWindow.closed) calendarWindow = window.open(fullUrl, "xlyneveCalendar", "popup=yes,width=1050,height=760,resizable=yes,scrollbars=yes,location=no,toolbar=no,menubar=no,status=no");
       calendarWindow?.focus();
@@ -165,41 +162,67 @@
   modes.forEach(([mode, text, action]) => {
     const choice = document.createElement("button"); choice.type = "button"; choice.dataset.mode = mode;
     choice.setAttribute("aria-label", text); choice.title = text;
-    if (mode === "home") choice.textContent = text;
-    else {
-      choice.className = "calendar-choice-icon";
-      const paths = mode === "tab"
-        ? '<path d="M14 3h7v7M21 3l-9 9M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/>'
-        : '<rect x="8" y="3" width="13" height="13" rx="2"/><path d="M8 8h13M5 8H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-1"/>';
-      choice.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
-    }
+    choice.textContent = text;
     choice.addEventListener("click", () => {
-      try { localStorage.setItem(preferenceKey, mode); } catch {}
       closeChoices(); action();
     });
     choices.appendChild(choice);
   });
-  function toggleChoices(launcher) {
+  function showChoices(launcher) {
     activeLauncher = launcher;
-    if (!choices.hidden) { closeChoices(); return; }
+    clearTimeout(closeTimer);
+    if (!choices.hidden) return;
     choices.hidden = false; launcher.setAttribute("aria-expanded", "true");
     const rect = launcher.getBoundingClientRect();
     choices.style.left = `${Math.max(8, Math.min(rect.left, innerWidth - choices.offsetWidth - 8))}px`;
     choices.style.top = `${Math.max(8, Math.min(rect.bottom + 8, innerHeight - choices.offsetHeight - 8))}px`;
     choices.querySelector("button")?.focus();
   }
-  launchers.forEach(launcher => {
+  function toggleChoices(launcher) {
+    if (!choices.hidden) { closeChoices(); return; }
+    showChoices(launcher);
+  }
+  function scheduleCloseChoices() {
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(closeChoices, 250);
+  }
+  const prepareLauncher = launcher => {
     launcher.setAttribute("aria-haspopup", "true"); launcher.setAttribute("aria-expanded", "false");
-    launcher.title = "Choose how to open calendar and to-do";
-    launcher.addEventListener("click", event => {
-      event.preventDefault(); activeLauncher = launcher;
-      toggleChoices(launcher);
-    }, { capture:true });
-    launcher.addEventListener("contextmenu", event => { event.preventDefault(); toggleChoices(launcher); });
+    launcher.title = "Open calendar in a new tab · Hover 3 seconds for more options";
+  };
+  launchers.forEach(prepareLauncher);
+  const launcherFromEvent = event => event.target.closest?.(".home-calendar-launcher");
+  document.addEventListener("click", event => {
+    const launcher = launcherFromEvent(event);
+    if (!launcher) return;
+    event.preventDefault(); activeLauncher = launcher;
+    clearTimeout(hoverTimer); closeChoices(); window.open(fullUrl, "_blank", "noopener");
+  }, { capture:true });
+  document.addEventListener("mouseover", event => {
+    const launcher = launcherFromEvent(event);
+    if (!launcher || launcher.contains(event.relatedTarget)) return;
+    prepareLauncher(launcher);
+    clearTimeout(hoverTimer); clearTimeout(closeTimer);
+    hoverTimer = setTimeout(() => {
+      if (launcher.isConnected && launcher.matches(":hover")) showChoices(launcher);
+    }, 3000);
   });
+  document.addEventListener("mouseout", event => {
+    const launcher = launcherFromEvent(event);
+    if (!launcher || launcher.contains(event.relatedTarget)) return;
+    clearTimeout(hoverTimer);
+    if (!choices.hidden) scheduleCloseChoices();
+  });
+  document.addEventListener("contextmenu", event => {
+    const launcher = launcherFromEvent(event);
+    if (!launcher) return;
+    event.preventDefault(); prepareLauncher(launcher); toggleChoices(launcher);
+  });
+  choices.addEventListener("mouseenter", () => clearTimeout(closeTimer));
+  choices.addEventListener("mouseleave", scheduleCloseChoices);
   document.addEventListener("pointerdown", event => {
-    if (!choices.contains(event.target) && !launchers.some(launcher => launcher.contains(event.target))) closeChoices();
+    if (!choices.contains(event.target) && !launcherFromEvent(event)) closeChoices();
   });
   document.addEventListener("keydown", event => { if (event.key === "Escape" && !choices.hidden) closeChoices(); });
-  window.addEventListener("resize", () => { closeChoices(); if (panel) movePanel(panel.offsetLeft, panel.offsetTop); });
+  window.addEventListener("resize", () => { clearTimeout(hoverTimer); closeChoices(); if (panel) movePanel(panel.offsetLeft, panel.offsetTop); });
 })();
