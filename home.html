@@ -224,6 +224,14 @@ header h1 {
   flex: 0 0 40px; border: 0; border-radius: 12px;
   background: rgba(64,54,59,.08); color: #40363b; cursor: pointer; font-size: 22px;
 }
+.universal-search-modes {
+  display:flex; gap:6px; margin:9px 2px 0;
+}
+.universal-search-mode {
+  padding:6px 11px; border:1px solid rgba(112,105,110,.18); border-radius:999px;
+  background:rgba(255,255,255,.5); color:#6a6166; font:600 10px/1 Arial,sans-serif; cursor:pointer;
+}
+.universal-search-mode.is-active { background:rgba(92,82,88,.82); border-color:transparent; color:#fff; }
 .universal-search-status { margin: 9px 3px 5px; color: #6c6166; font-size: 11px; }
 .home-xgpt-auth-prompt { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:3px 3px 8px; padding:9px 11px; border:1px solid rgba(255,255,255,.8); border-radius:11px; background:rgba(255,255,255,.55); color:#5e5358; font:11px/1.3 Arial,sans-serif; }
 .home-xgpt-auth-prompt[hidden] { display:none; }
@@ -272,6 +280,25 @@ header h1 {
   background: transparent;
 }
 .global-search-loading { padding: 18px 8px; color: #655b60; text-align: center; font: 600 12px/1.4 Arial,sans-serif; }
+.cep-concept-search-result {
+  display:grid; gap:9px; min-width:0; padding:13px 14px; border:1px solid rgba(255,255,255,.78);
+  border-radius:14px; background:rgba(255,255,255,.62); color:#40363b; box-shadow:0 4px 14px rgba(75,65,70,.08);
+  font:11.5px/1.45 Arial,sans-serif;
+}
+.cep-concept-search-heading { display:flex; align-items:center; gap:7px; }
+.cep-concept-search-pill {
+  display:inline-block; padding:4px 9px; border:1px solid rgba(145,125,165,.24); border-radius:999px;
+  background:rgba(236,229,242,.84); color:#4f4653; font-weight:700;
+}
+.cep-concept-search-count {
+  display:inline-flex; align-items:center; justify-content:center; min-width:19px; height:19px; padding:0 5px;
+  box-sizing:border-box; border-radius:999px; background:rgba(92,82,88,.82); color:#fff; font:700 9px/1 Arial,sans-serif;
+}
+.cep-concept-search-section { display:grid; gap:2px; min-width:0; }
+.cep-concept-search-section > strong { color:#655b60; font-size:10px; text-transform:uppercase; letter-spacing:.04em; }
+.cep-concept-search-section > div { white-space:pre-wrap; overflow-wrap:anywhere; }
+.cep-concept-search-image { display:block; max-width:100%; max-height:240px; height:auto; border-radius:9px; cursor:zoom-in; }
+.cep-concept-search-result mark { padding:0 1px; border-radius:3px; background:rgba(255,237,125,.72); color:inherit; }
 .universal-search-render-stage { display: grid; gap: 12px; min-width: 0; }
 .universal-search-result-group { display: none; gap: 6px; min-width: 0; }
 .universal-search-result-group.has-ready-results { display: grid; }
@@ -2960,6 +2987,10 @@ html body > header {
     <input id="universalSearchInput" type="search" autocomplete="off" spellcheck="false" placeholder="Search all notes and pages…" aria-label="Words to search for">
     <button class="universal-search-close" id="universalSearchClose" type="button" aria-label="Close search">×</button>
   </div>
+  <div class="universal-search-modes" id="universalSearchModes" aria-label="Search mode">
+    <button class="universal-search-mode is-active" type="button" data-search-mode="default" aria-pressed="true">Default</button>
+    <button class="universal-search-mode" type="button" data-search-mode="concepts" aria-pressed="false">Concepts</button>
+  </div>
   <div class="universal-search-status" id="universalSearchStatus" aria-live="polite">Type a word to search.</div>
   <div class="home-xgpt-auth-prompt" id="homeXgptAuthPrompt" hidden><span>Sign in to include Xgpt Notes and concept images.</span><button id="homeXgptAuthButton" type="button">Sign in to Xgpt</button></div>
   <div class="universal-search-results" id="universalSearchResults"></div>
@@ -3473,6 +3504,7 @@ html body > header {
     const panel = document.getElementById('universalSearchPanel');
     const input = document.getElementById('universalSearchInput');
     const close = document.getElementById('universalSearchClose');
+    const modes = document.getElementById('universalSearchModes');
     const status = document.getElementById('universalSearchStatus');
     const results = document.getElementById('universalSearchResults');
     const embeddedSearch = new URLSearchParams(location.search).get('cepSearchEmbed') === '1';
@@ -3481,7 +3513,7 @@ html body > header {
         window.parent.postMessage({ type: 'cep-universal-search-navigate', url }, location.origin);
       } else location.assign(url);
     };
-    let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer, searchRequestId = 0;
+    let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer, searchRequestId = 0, searchMode = 'default';
     window.cepUniversalLazyLoaders ||= [];
     let activeSource = 'all';
     const searchUseKey = 'cep-universal-search-use-v1';
@@ -3843,7 +3875,38 @@ html body > header {
       }
       results.replaceChildren();
       previewFrames.clear();
-      if (!query) { status.textContent = 'Type a word to search.'; return; }
+      if (!query) {
+        status.textContent = searchMode === 'concepts' ? 'Type a word to search referenced concepts.' : 'Type a word to search.';
+        return;
+      }
+      if (searchMode === 'concepts') {
+        const loading = document.createElement('div');
+        loading.className = 'global-search-loading'; loading.textContent = 'Searching referenced concepts…';
+        results.appendChild(loading);
+        try {
+          const conceptSearch = window.searchReferencedXgptConcepts;
+          const conceptRenderer = window.renderReferencedXgptConceptResults;
+          if (!conceptSearch || !conceptRenderer) throw new Error('Concept search helpers are not ready.');
+          const { results: conceptResults, terms } = await conceptSearch(query);
+          if (requestId !== searchRequestId || searchMode !== 'concepts' || normalizeSearchValue(input.value) !== query) return;
+          document.getElementById('homeXgptAuthPrompt')?.setAttribute('hidden', '');
+          status.textContent = conceptResults.length
+            ? `${conceptResults.length}${conceptResults.length === 30 ? '+' : ''} referenced concept${conceptResults.length === 1 ? '' : 's'}`
+            : 'No matching referenced concepts found.';
+          conceptRenderer(results, conceptResults, terms);
+        } catch (error) {
+          if (requestId !== searchRequestId) return;
+          if (error?.code === 'xgpt/auth-required') {
+            document.getElementById('homeXgptAuthPrompt')?.removeAttribute('hidden');
+            status.textContent = 'Sign in to search referenced concepts.';
+          } else {
+            results.replaceChildren();
+            status.textContent = 'Concept search could not be loaded.';
+            console.warn('Referenced concept search could not load.', error);
+          }
+        }
+        return;
+      }
       const loading = document.createElement('div');
       loading.className = 'global-search-loading'; loading.textContent = 'Loading results…';
       results.appendChild(loading);
@@ -4116,6 +4179,20 @@ html body > header {
       }, { root: results, rootMargin: '120px 0px' });
       renderNextBatch();
     }
+    modes.querySelectorAll('[data-search-mode]').forEach(modeButton => {
+      modeButton.addEventListener('click', () => {
+        searchMode = modeButton.dataset.searchMode;
+        modes.querySelectorAll('[data-search-mode]').forEach(button => {
+          const active = button === modeButton;
+          button.classList.toggle('is-active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+        filters.hidden = searchMode === 'concepts';
+        input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : 'Search all notes and pages…';
+        void runSearch();
+        input.focus();
+      });
+    });
     function openSearch() {
       panel.hidden = false; button.setAttribute('aria-expanded', 'true'); input.focus();
       indexPromise ||= buildIndex();
@@ -5239,7 +5316,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent } from './universal-search-overlay.js?v=25';
+  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=26';
   import {
     getFirestore,
     collection,
@@ -5349,6 +5426,8 @@ const firebaseConfig = {
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
   window.getCachedXgptConceptMedia = getSharedXgptConceptMedia;
   window.getCachedXgptConceptDefinition = getSharedXgptConceptDefinition;
+  window.searchReferencedXgptConcepts = searchSharedReferencedXgptConcepts;
+  window.renderReferencedXgptConceptResults = renderSharedReferencedXgptConceptResults;
   window.renderXgptSearchRichContent = renderSharedXgptSearchRichContent;
   window.hasStructuredSearchContent = hasSharedStructuredSearchContent;
   window.renderStructuredSearchContent = renderSharedStructuredSearchContent;

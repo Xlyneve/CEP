@@ -160,6 +160,7 @@ let xgptConceptMedia = {};
 let xgptConceptMediaLoaded = false;
 let xgptConceptDefinitions = {};
 let xgptConceptCounts = new Map();
+let xgptConceptLabels = new Map();
 const clearInMemorySearchCache = () => {
   entriesPromise = null;
   xgptEntriesPromise = null;
@@ -167,6 +168,7 @@ const clearInMemorySearchCache = () => {
   xgptConceptMediaLoaded = false;
   xgptConceptDefinitions = {};
   xgptConceptCounts = new Map();
+  xgptConceptLabels = new Map();
 };
 window.addEventListener('cep-search-cache-invalidated', clearInMemorySearchCache);
 window.addEventListener('storage', event => {
@@ -237,9 +239,15 @@ export async function loadXgptEntries() {
     xgptConceptMediaLoaded = true;
     xgptConceptDefinitions = definitions;
     xgptConceptCounts = new Map();
+    xgptConceptLabels = new Map();
     entries.forEach(entry => {
       const concepts = new Set([...String(entry.richHtml || '').matchAll(/\[\[([^\]\[]+?)\]\]/g)]
-        .map(match => normalizeConcept(match[1])).filter(Boolean));
+        .map(match => {
+          const label = textFromHtml(match[1]);
+          const key = normalizeConcept(label);
+          if (key && !xgptConceptLabels.has(key)) xgptConceptLabels.set(key, label);
+          return key;
+        }).filter(Boolean));
       concepts.forEach(concept => xgptConceptCounts.set(concept, (xgptConceptCounts.get(concept) || 0) + 1));
     });
     return entries;
@@ -267,6 +275,104 @@ export function getCachedXgptConceptMedia(concept) {
 
 export function getCachedXgptConceptDefinition(concept) {
   return xgptConceptDefinitions[normalizeConcept(concept)] || null;
+}
+
+const conceptSearchTokens = value => normalizeSearchValue(value).match(/[\p{L}\p{N}]+/gu) || [];
+const containsConceptPhrase = (text, phrase) => Boolean(phrase) && ` ${text} `.includes(` ${phrase} `);
+const scoreReferencedConceptGroup = (concept, group) => {
+  let score = 0;
+  if (concept.labelTokenText === group.query) score += 500;
+  else if (containsConceptPhrase(concept.labelTokenText, group.query)) score += 260;
+  if (containsConceptPhrase(concept.searchTokenText, group.query)) score += 130;
+  for (const term of group.terms) {
+    if (concept.labelWords.includes(term)) score += 90;
+    else if (concept.words.includes(term)) score += 28;
+    else {
+      const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
+      const similar = tolerance && concept.words.some(word =>
+        Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance
+      );
+      if (!similar) return null;
+      score += 8;
+    }
+  }
+  return score;
+};
+
+export async function searchReferencedXgptConcepts(rawQuery) {
+  await loadXgptEntries();
+  const query = normalizeSearchValue(rawQuery);
+  const commaGroups = query.includes(',')
+    ? [...new Set(query.split(',').map(group => group.trim()).filter(Boolean))]
+        .map(group => {
+          const terms = [...new Set(conceptSearchTokens(group))];
+          return { query: terms.join(' '), terms };
+        }).filter(group => group.terms.length)
+    : null;
+  const terms = commaGroups
+    ? [...new Set(commaGroups.flatMap(group => group.terms))]
+    : [...new Set(conceptSearchTokens(query))];
+  if (!query || !terms.length) return { results: [], terms };
+  const concepts = [...xgptConceptCounts.entries()].map(([key, count]) => {
+    const label = xgptConceptLabels.get(key) || key;
+    const details = xgptConceptDefinitions[key] || {};
+    const media = xgptConceptMedia[key] || {};
+    const searchText = normalizeSearchValue([
+      label, details.definition, details.why, media.caption
+    ].filter(Boolean).join(' '));
+    const labelTokens = conceptSearchTokens(label);
+    const searchTokens = conceptSearchTokens(searchText);
+    const labelWords = [...new Set(labelTokens)];
+    const words = [...new Set(searchTokens)];
+    return {
+      key, label, count, definition: details.definition || '', why: details.why || '',
+      imageUrl: media.imageUrl || '', caption: media.caption || '', searchText,
+      labelWords, words, labelTokenText: labelTokens.join(' '), searchTokenText: searchTokens.join(' ')
+    };
+  });
+  const results = concepts.map(concept => {
+    if (commaGroups) {
+      const matchedScores = commaGroups.map(group => scoreReferencedConceptGroup(concept, group)).filter(score => score !== null);
+      if (!matchedScores.length) return null;
+      return { concept, matchedGroupCount: matchedScores.length, score: matchedScores.reduce((sum, score) => sum + score, 0) };
+    }
+    const score = scoreReferencedConceptGroup(concept, { query: terms.join(' '), terms });
+    return score === null ? null : { concept, matchedGroupCount: 1, score };
+  }).filter(Boolean).sort((a, b) =>
+    b.matchedGroupCount - a.matchedGroupCount || b.score - a.score || b.concept.count - a.concept.count ||
+    a.concept.label.localeCompare(b.concept.label)
+  ).slice(0, 30).map(match => match.concept);
+  return { results, terms };
+}
+
+export function renderReferencedXgptConceptResults(container, concepts, terms = []) {
+  const cards = concepts.map(concept => {
+    const card = document.createElement('article');
+    card.className = 'cep-concept-search-result';
+    const heading = document.createElement('div'); heading.className = 'cep-concept-search-heading';
+    const pill = document.createElement('span'); pill.className = 'cep-concept-search-pill';
+    addHighlightedText(pill, concept.label, terms);
+    const count = document.createElement('span'); count.className = 'cep-concept-search-count';
+    count.textContent = String(concept.count); count.title = `${concept.count} Xgpt note${concept.count === 1 ? '' : 's'}`;
+    heading.append(pill, count); card.appendChild(heading);
+    const appendSection = (labelText, value) => {
+      if (!value) return;
+      const section = document.createElement('section'); section.className = 'cep-concept-search-section';
+      const label = document.createElement('strong'); label.textContent = labelText;
+      const body = document.createElement('div'); addHighlightedText(body, value, terms);
+      section.append(label, body); card.appendChild(section);
+    };
+    appendSection('Definition', concept.definition);
+    appendSection('Why it matters', concept.why);
+    if (concept.imageUrl) {
+      const image = document.createElement('img'); image.className = 'cep-concept-search-image';
+      image.src = concept.imageUrl; image.alt = concept.caption || concept.label; image.loading = 'lazy'; image.decoding = 'async';
+      enableSearchImageZoom(image); card.appendChild(image);
+    }
+    appendSection('Image note', concept.caption);
+    return card;
+  });
+  container.replaceChildren(...cards);
 }
 
 async function loadEntries(onProgress) {
@@ -821,18 +927,23 @@ export async function mountUniversalSearch(host, closeSearch) {
       <input type="search" autocomplete="off" spellcheck="false" placeholder="Search all notes and pages…" aria-label="Words to search for">
       <button type="button" aria-label="Close search">×</button>
     </div>
+    <div class="cep-global-search-modes" aria-label="Search mode">
+      <button type="button" class="is-active" data-search-mode="default" aria-pressed="true">Default</button>
+      <button type="button" data-search-mode="concepts" aria-pressed="false">Concepts</button>
+    </div>
     <div class="cep-global-search-filters" aria-label="Filter search by section"></div>
     <div class="cep-global-search-status" aria-live="polite">Preparing saved-note sections…</div>
     <div class="cep-xgpt-auth-prompt" hidden><span>Sign in to include Xgpt Notes and concept images.</span><button type="button">Sign in to Xgpt</button></div>
     <div class="cep-global-search-results"></div>`;
   host.replaceChildren(panel);
   const input = panel.querySelector('input');
+  const modes = panel.querySelector('.cep-global-search-modes');
   const filters = panel.querySelector('.cep-global-search-filters');
   const status = panel.querySelector('.cep-global-search-status');
   const xgptPrompt = panel.querySelector('.cep-xgpt-auth-prompt');
   const results = panel.querySelector('.cep-global-search-results');
   panel.querySelector('button').addEventListener('click', closeSearch);
-  let entries = [], activeSource = 'All', timer;
+  let entries = [], activeSource = 'All', searchMode = 'default', timer, conceptRequestId = 0;
   const mergeXgptEntries = xgptEntries => {
     const existingIds = new Set(entries.filter(entry => entry.file === 'chatgptx.html').map(entry => entry.id));
     entries = entries.concat(xgptEntries.filter(entry => !existingIds.has(entry.id)));
@@ -865,7 +976,35 @@ export async function mountUniversalSearch(host, closeSearch) {
     }));
   };
 
+  async function runConceptSearch() {
+    const requestId = ++conceptRequestId;
+    const query = normalizeSearchValue(input.value);
+    results.replaceChildren();
+    if (!query) { status.textContent = 'Type a word to search referenced concepts.'; return; }
+    status.textContent = 'Searching referenced concepts…';
+    try {
+      const { results: conceptResults, terms } = await searchReferencedXgptConcepts(query);
+      if (requestId !== conceptRequestId || searchMode !== 'concepts' || normalizeSearchValue(input.value) !== query) return;
+      xgptPrompt.hidden = true;
+      status.textContent = conceptResults.length
+        ? `${conceptResults.length}${conceptResults.length === 30 ? '+' : ''} referenced concept${conceptResults.length === 1 ? '' : 's'}`
+        : 'No matching referenced concepts found.';
+      renderReferencedXgptConceptResults(results, conceptResults, terms);
+    } catch (error) {
+      if (requestId !== conceptRequestId) return;
+      if (error?.code === 'xgpt/auth-required') {
+        xgptPrompt.hidden = false;
+        status.textContent = 'Sign in to search referenced concepts.';
+      } else {
+        status.textContent = 'Concept search could not be loaded.';
+        console.warn('Referenced concept search could not load.', error);
+      }
+    }
+  }
+
   const runSearch = () => {
+    if (searchMode === 'concepts') { void runConceptSearch(); return; }
+    conceptRequestId++;
     const query = normalizeSearchValue(input.value);
     const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
     const commaGroups = query.includes(',')
@@ -1014,6 +1153,20 @@ export async function mountUniversalSearch(host, closeSearch) {
       group.querySelector('.cep-global-search-group-cards').appendChild(link);
     });
   };
+  modes.querySelectorAll('[data-search-mode]').forEach(modeButton => {
+    modeButton.addEventListener('click', () => {
+      searchMode = modeButton.dataset.searchMode;
+      modes.querySelectorAll('[data-search-mode]').forEach(button => {
+        const active = button === modeButton;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+      filters.hidden = searchMode === 'concepts';
+      input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : 'Search all notes and pages…';
+      runSearch();
+      input.focus();
+    });
+  });
   let mountedRefreshPromise = Promise.resolve();
   const refreshMountedEntries = async dataset => {
     if (!host.isConnected) return;
