@@ -6,11 +6,16 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js?v=20260823-8"></script>
+  <script src="auth-guard.js?v=20260922-1"></script>
   <script src="security.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Calendar and To-Do Page</title>
+  <script>
+    if (new URLSearchParams(location.search).get('homeEmbed') === 'today' && window.parent !== window) {
+      document.documentElement.classList.add('homecal-embed-today');
+    }
+  </script>
   
 <style>
 
@@ -1305,6 +1310,46 @@ select option {
       }
     }
   </style>
+  <style>
+    html.homecal-embed-today,html.homecal-embed-today body { background:transparent !important; overflow:hidden; }
+    html.homecal-embed-today body { width:100%; min-width:0; padding:0; }
+    html.homecal-embed-today .calendar-container {
+      flex:1 1 auto; width:auto; min-width:0; height:auto; min-height:0; max-height:none !important; margin:0; padding:8px;
+      overflow:hidden; box-sizing:border-box; border:0; border-radius:0; background:transparent; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none;
+    }
+    html.homecal-embed-today .calendar-header,
+    html.homecal-embed-today .note-filter-bar,
+    html.homecal-embed-today .day-headers { display:none !important; }
+    html.homecal-embed-today .calendar-scroll-glass {
+      flex:1 1 auto; min-height:0; padding:0; overflow-x:hidden; overflow-y:auto; background:transparent;
+      scrollbar-width:thin; scrollbar-color:transparent transparent;
+    }
+    html.homecal-embed-today .calendar-scroll-glass::-webkit-scrollbar,
+    html.homecal-embed-today .todo-list::-webkit-scrollbar { width:5px; height:5px; }
+    html.homecal-embed-today .calendar-scroll-glass:hover,
+    html.homecal-embed-today .todo-list:hover { scrollbar-color:rgba(105,96,101,.22) transparent; }
+    html.homecal-embed-today .calendar-scroll-glass:hover::-webkit-scrollbar-thumb,
+    html.homecal-embed-today .todo-list:hover::-webkit-scrollbar-thumb { background:rgba(105,96,101,.22); border:0; }
+    html.homecal-embed-today .calendar { display:block; width:100%; min-width:0 !important; min-height:0; padding:0; }
+    html.homecal-embed-today .day:not(.today) { display:none !important; }
+    html.homecal-embed-today .day.today {
+      display:flex; min-width:0; min-height:calc(100dvh - 18px); margin:0; box-sizing:border-box; border-radius:13px !important;
+    }
+    html.homecal-embed-today .day-note-editor,
+    html.homecal-embed-today .day-note-editor div,
+    html.homecal-embed-today .day-note-editor p {
+      min-width:0; max-width:100%; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;
+    }
+    html.homecal-embed-today .todo-resizer { display:none !important; }
+    html.homecal-embed-today .todo-container { display:none !important; }
+    html.homecal-embed-today body.embed-todo-open .todo-container {
+      display:flex !important; flex:0 0 min(330px,46vw) !important; width:min(330px,46vw) !important;
+      min-width:220px; max-width:46vw; height:100dvh; border-radius:0; border-width:0 0 0 1px;
+    }
+    .embedded-todo-toggle { display:none; }
+    html.homecal-embed-today .embedded-todo-toggle { display:none !important; }
+    html.homecal-embed-today .cep-sign-out-light { display:none !important; }
+  </style>
 </head>
 
 <body>
@@ -1409,6 +1454,7 @@ select option {
 </div>
 </div> <!-- End of .calendar-container -->
 
+<button class="embedded-todo-toggle" id="embeddedTodoToggle" type="button" aria-label="Show to-do list" aria-expanded="false">&gt;&gt;</button>
 
 <div class="todo-resizer" id="todoResizer" role="separator" aria-label="Resize or collapse to-do list" aria-orientation="vertical" aria-controls="todoPanel" tabindex="0" title="Drag to resize; click to minimize"></div>
 
@@ -1455,6 +1501,7 @@ const monthSelect = document.getElementById('monthSelect');
 const yearSelect = document.getElementById('yearSelect');
 const todoInput = document.getElementById('newTodo');
 const todoListEl = document.getElementById('todoList');
+const homeEmbedToday = document.documentElement.classList.contains('homecal-embed-today');
 
 window.lastFocusedTextField = null;
 
@@ -1553,23 +1600,28 @@ async function loadCalendar(scrollToday = true) {
 
   const daysInMonth = getDaysInMonth(month, year);
   const firstDay = new Date(year, month, 1).getDay() || 7;
+  const today = new Date();
 
   const docRef = doc(db, 'calendar', `${year}-${month + 1}`);
-  const legacyChecklistsPromise = loadLegacyChecklistsForMonth(year, month + 1);
+  const legacyChecklistsPromise = homeEmbedToday
+    ? loadLegacyChecklistForDay(year, month + 1, today.getDate())
+    : loadLegacyChecklistsForMonth(year, month + 1);
   let notes = {};
   const snap = await getDoc(docRef);
   if (request !== calendarViewRequest) return;
   if (snap.exists()) notes = snap.data();
 
   // Blank days before first day
-  for (let i = 1; i < firstDay; i++) {
+  for (let i = 1; !homeEmbedToday && i < firstDay; i++) {
     const empty = document.createElement('div');
     empty.className = 'day empty';
     calendarEl.appendChild(empty);
   }
 
   // Days with notes
-  for (let i = 1; i <= daysInMonth; i++) {
+  const firstRenderedDay = homeEmbedToday ? today.getDate() : 1;
+  const lastRenderedDay = homeEmbedToday ? today.getDate() : daysInMonth;
+  for (let i = firstRenderedDay; i <= lastRenderedDay; i++) {
     const note = notes[i] || "";
 	const noteText = getStoredDayNoteText(note);
 	const day = document.createElement('div');
@@ -1579,7 +1631,6 @@ if (noteText.trim()) {
   day.classList.add('has-note');
 }
 
-    const today = new Date();
     if (i === today.getDate() &&
         month === today.getMonth() &&
         year === today.getFullYear()) {
@@ -1643,6 +1694,17 @@ async function loadLegacyChecklistsForMonth(year, month) {
     return new Map(snapshot.docs.map(snapshotDoc => [snapshotDoc.id, snapshotDoc]));
   } catch (error) {
     console.error('Unable to load legacy day checklists:', error);
+    return new Map();
+  }
+}
+
+async function loadLegacyChecklistForDay(year, month, day) {
+  const key = getChecklistDateKey(year, month, day);
+  try {
+    const snapshot = await getDoc(doc(db, 'dayChecklists', key));
+    return snapshot.exists() ? new Map([[key, snapshot]]) : new Map();
+  } catch (error) {
+    console.error('Unable to load legacy day checklist:', error);
     return new Map();
   }
 }
@@ -2395,10 +2457,12 @@ function renderTodoItem(id, text, done, priority = false, createdAt = 0) {
 }
 
 // Load todos
+let stopTodos = null;
 function loadTodos() {
+  if (stopTodos) return;
   const ref = collection(db, 'todos');
 
-  onSnapshot(ref, snap => {
+  stopTodos = onSnapshot(ref, snap => {
     const previousScrollTop = todoListEl.scrollTop;
 
     snap.docChanges().forEach(change => {
@@ -2560,7 +2624,25 @@ window.scheduleFilterNotes = scheduleFilterNotes;
 // Initial load
 populateSelectors();
 loadCalendar();
-loadTodos();
+if (!homeEmbedToday) loadTodos();
+const embeddedTodoToggle = document.getElementById('embeddedTodoToggle');
+if (homeEmbedToday && embeddedTodoToggle) {
+  const setEmbeddedTodoOpen = open => {
+    document.body.classList.toggle('embed-todo-open', open);
+    embeddedTodoToggle.textContent = open ? '<<' : '>>';
+    embeddedTodoToggle.setAttribute('aria-expanded', String(open));
+    embeddedTodoToggle.setAttribute('aria-label', open ? 'Hide to-do list' : 'Show to-do list');
+    if (open) loadTodos();
+    window.parent.postMessage({ type:'homecal-embedded-todo', open }, location.origin);
+  };
+  embeddedTodoToggle.addEventListener('click', () => {
+    setEmbeddedTodoOpen(!document.body.classList.contains('embed-todo-open'));
+  });
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin || event.source !== window.parent || event.data?.type !== 'homecal-set-todo') return;
+    setEmbeddedTodoOpen(Boolean(event.data.open));
+  });
+}
 window.addEventListener('resize', () => {
   document.querySelectorAll('.todo-item textarea, #newTodo, .day textarea').forEach(autoResizeTextarea);
   autoResizeAllDayTextareas();
