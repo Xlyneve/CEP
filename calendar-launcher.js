@@ -188,7 +188,7 @@
   }
   const prepareLauncher = launcher => {
     launcher.setAttribute("aria-haspopup", "true"); launcher.setAttribute("aria-expanded", "false");
-    launcher.title = "Open calendar in a new tab · Hover 3 seconds for more options";
+    launcher.title = "Open calendar in a new tab · Hover briefly for more options";
   };
   launchers.forEach(prepareLauncher);
   const launcherFromEvent = event => event.target.closest?.(".home-calendar-launcher");
@@ -205,7 +205,7 @@
     clearTimeout(hoverTimer); clearTimeout(closeTimer);
     hoverTimer = setTimeout(() => {
       if (launcher.isConnected && launcher.matches(":hover")) showChoices(launcher);
-    }, 3000);
+    }, 1250);
   });
   document.addEventListener("mouseout", event => {
     const launcher = launcherFromEvent(event);
