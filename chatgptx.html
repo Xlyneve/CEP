@@ -1396,7 +1396,7 @@ let notesCache = [];
 let unsubscribeNotes = null;
 
 let unsubscribeDefs = null;         // defs listener
-let defsCache = {}; // { normalizedKey: { value: "", why: "", concept: "" } }  (legacy-safe)
+let defsCache = {}; // { normalizedKey: { value: "", why: "", valueHtml: "", whyHtml: "", concept: "" } }  (legacy-safe)
 
 let unsubscribeConceptMedia = null;
 let conceptMediaCache = {};
@@ -2534,9 +2534,11 @@ function startDefsListener() {
           // legacy-safe: if earlier docs stored just "value" string in your old cache shape
           const value = typeof d.value === 'string' ? d.value : '';
           const why   = typeof d.why === 'string' ? d.why : '';
+          const valueHtml = typeof d.valueHtml === 'string' ? d.valueHtml : '';
+          const whyHtml = typeof d.whyHtml === 'string' ? d.whyHtml : '';
           const concept = typeof d.concept === 'string' ? d.concept : '';
 
-          next[doc.id] = { value, why, concept };
+          next[doc.id] = { value, why, valueHtml, whyHtml, concept };
         });
 
         defsCache = next;
@@ -3365,16 +3367,39 @@ function getWhy(concept) {
   return (v?.why) || '';
 }
 
-async function setDefinition(concept, value, why) {
+function getDefinitionHtml(concept) {
+  const k = defKeyForConcept(concept);
+  const v = defsCache[k];
+  if (!v || typeof v === 'string') return '';
+  return (v?.valueHtml) || '';
+}
+
+function getWhyHtml(concept) {
+  const k = defKeyForConcept(concept);
+  const v = defsCache[k];
+  if (!v || typeof v === 'string') return '';
+  return (v?.whyHtml) || '';
+}
+
+async function setDefinition(concept, value, why, valueHtml = '', whyHtml = '') {
   const k = defKeyForConcept(concept);
   if (!k) return;
 
   await ensureSignedIn();
 
+  const safeValueHtml = window.CEPSecurity?.sanitizeHTML
+    ? window.CEPSecurity.sanitizeHTML(valueHtml)
+    : '';
+  const safeWhyHtml = window.CEPSecurity?.sanitizeHTML
+    ? window.CEPSecurity.sanitizeHTML(whyHtml)
+    : '';
+
   await db.collection('concept_defs').doc(k).set({
     concept: (concept || '').trim(),
     value: (value || '').trim(),
     why: (why || '').trim(),
+    valueHtml: safeValueHtml.trim(),
+    whyHtml: safeWhyHtml.trim(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
   window.invalidateCepSearchCache?.('xgpt:definitions');
@@ -3506,6 +3531,15 @@ function enableSoftLineBreaks(el){
 enableSoftLineBreaks(defBox);
 enableSoftLineBreaks(whyBox);
 
+[defBox, whyBox].filter(Boolean).forEach(editor => {
+  ['input', 'keyup', 'mouseup', 'touchend', 'focus'].forEach(eventName => {
+    editor.addEventListener(eventName, () => {
+      activeEditable = editor;
+      saveCaret();
+    }, true);
+  });
+});
+
 let currentDefConcept = '';
 let pendingKbImageBlob = null;
 let pendingKbImagePreviewUrl = '';
@@ -3523,10 +3557,12 @@ let tipOpen = false;
 let defTipPinned = false;
 let defTipHideTimer = null;
 
-function showDefTip(defText, whyText, imageUrl, caption, x, y) {
+function showDefTip(defText, whyText, imageUrl, caption, x, y, defHtml = '', whyHtml = '') {
   if (!defText && !whyText && !imageUrl) return;
 
-  defTip.innerHTML = renderTip(defText, whyText, imageUrl, caption);
+  const tipHtml = renderTip(defText, whyText, imageUrl, caption, defHtml, whyHtml);
+  if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(defTip, tipHtml);
+  else defTip.textContent = [defText, whyText].filter(Boolean).join('\n\n');
   defTip.style.display = 'block';
   tipOpen = true;
 
@@ -3577,9 +3613,17 @@ function linkifyText(s) {
   );
 }
 
-function renderTip(defText, whyText, imageUrl = '', caption = '') {
-  const defSafe = linkifyText(defText);
-  const whySafe = linkifyText(whyText);
+function renderDefinitionContent(html, fallbackText) {
+  const richHtml = String(html || '').trim();
+  if (richHtml && window.CEPSecurity?.sanitizeHTML) {
+    return window.CEPSecurity.sanitizeHTML(richHtml);
+  }
+  return linkifyText(fallbackText);
+}
+
+function renderTip(defText, whyText, imageUrl = '', caption = '', defHtml = '', whyHtml = '') {
+  const defSafe = renderDefinitionContent(defHtml, defText);
+  const whySafe = renderDefinitionContent(whyHtml, whyText);
   const capSafe = linkifyText(caption);
 
   return `
@@ -3627,13 +3671,16 @@ document.addEventListener('mouseover', (e) => {
 
   cancelHideDefTip();
 
+  const concept = getConceptFromLink(a);
   const def = (a.getAttribute('data-def') || '').trim();
   const why = (a.getAttribute('data-why') || '').trim();
+  const defHtml = getDefinitionHtml(concept);
+  const whyHtml = getWhyHtml(concept);
   const imageUrl = (a.getAttribute('data-kb-image') || '').trim();
   const caption = (a.getAttribute('data-kb-caption') || '').trim();
 
   if (!def && !why && !imageUrl) return;
-  showDefTip(def, why, imageUrl, caption, e.clientX, e.clientY);
+  showDefTip(def, why, imageUrl, caption, e.clientX, e.clientY, defHtml, whyHtml);
 }, true);
 
 // Use capture so tables/cells don’t swallow hover
@@ -3689,14 +3736,20 @@ defBox?.addEventListener('paste', () => setTimeout(() => autoGrowBox(defBox), 0)
 whyBox?.addEventListener('input', () => autoGrowBox(whyBox));
 whyBox?.addEventListener('paste', () => setTimeout(() => autoGrowBox(whyBox), 0));
 
+function setDefinitionEditorContent(editor, html, fallbackText) {
+  if (!editor) return;
+  if (html && window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(editor, html);
+  else editor.textContent = fallbackText || '';
+}
+
 function openDefPanel(concept, clientX, clientY) {
   currentDefConcept = (concept || '').trim();
   if (!currentDefConcept) return;
 
   if (defTitle) defTitle.textContent = currentDefConcept;
 
-  if (defBox) defBox.textContent = getDefinition(currentDefConcept);
-  if (whyBox) whyBox.textContent = getWhy(currentDefConcept);
+  setDefinitionEditorContent(defBox, getDefinitionHtml(currentDefConcept), getDefinition(currentDefConcept));
+  setDefinitionEditorContent(whyBox, getWhyHtml(currentDefConcept), getWhy(currentDefConcept));
   clearPendingKbImage();
 
   const existingMedia = getConceptMedia(currentDefConcept);
@@ -3768,8 +3821,10 @@ defSaveBtn?.addEventListener('click', async (e) => {
 
     await setDefinition(
       currentDefConcept,
-      defBox?.textContent || '',
-      whyBox?.textContent || ''
+      defBox?.innerText || defBox?.textContent || '',
+      whyBox?.innerText || whyBox?.textContent || '',
+      defBox?.innerHTML || '',
+      whyBox?.innerHTML || ''
     );
     console.log('definition saved');
 
@@ -3976,9 +4031,13 @@ async function mergeConceptEverywhere(oldConcept, newConcept) {
 
   const oldVal = (oldDef?.value || '').trim();
   const oldWhy = (oldDef?.why || '').trim();
+  const oldValHtml = (oldDef?.valueHtml || '').trim();
+  const oldWhyHtml = (oldDef?.whyHtml || '').trim();
 
   const newVal = (newDef?.value || '').trim();
   const newWhy = (newDef?.why || '').trim();
+  const newValHtml = (newDef?.valueHtml || '').trim();
+  const newWhyHtml = (newDef?.whyHtml || '').trim();
 
   // If the target has no definition/why, carry over from old.
   // If it already has content, keep it (don’t overwrite).
@@ -3987,6 +4046,8 @@ async function mergeConceptEverywhere(oldConcept, newConcept) {
       concept: newTrim,
       value: newVal || oldVal,
       why: newWhy || oldWhy,
+      valueHtml: newValHtml || oldValHtml,
+      whyHtml: newWhyHtml || oldWhyHtml,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     window.invalidateCepSearchCache?.('xgpt:definitions');
