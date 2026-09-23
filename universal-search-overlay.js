@@ -1136,6 +1136,7 @@ export async function mountUniversalSearch(host, closeSearch) {
       }
       const link = document.createElement('a'); link.className = 'cep-global-search-result';
       if (entry.cardColour) link.style.background = entry.cardColour;
+      if (entry.file === 'chatgptx.html') link.style.background = 'linear-gradient(145deg, #dfd9e3 0%, #cbc2d1 48%, #b8adc0 100%)';
       if (entry.directUrl) { link.href = entry.directUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; }
       else {
         const destination = new URL(entry.file, location.href);
