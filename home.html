@@ -5195,15 +5195,26 @@ function closeTable() {
         return {};
       }
     })();
+    const sectionAutoCollapseMs = 10000;
+    const sectionCollapseTimers = new Map();
 
     const setExpanded = (name, expanded, save = true) => {
       const section = sections.get(name);
       if (!section) return;
+      clearTimeout(sectionCollapseTimers.get(name));
+      sectionCollapseTimers.delete(name);
       section.group.hidden = !expanded;
       section.toggle.setAttribute('aria-expanded', String(expanded));
       if (save) {
         savedState[name] = expanded;
         try { localStorage.setItem(sectionStateKey, JSON.stringify(savedState)); } catch {}
+      }
+      if (expanded) {
+        const timer = setTimeout(() => {
+          sectionCollapseTimers.delete(name);
+          setExpanded(name, false);
+        }, sectionAutoCollapseMs);
+        sectionCollapseTimers.set(name, timer);
       }
     };
 
