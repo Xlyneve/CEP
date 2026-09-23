@@ -739,9 +739,9 @@ mark.underlineMatch{
 }
 
 /* Saved note highlights — match the shared raised gradient style. */
-#noteInput span[style*="background-color"],
-.editableNote span[style*="background-color"],
-.chatBubble span[style*="background-color"],
+#noteInput span[style*="background-color"]:not([style*="transparent"]):not([style*="rgba(0, 0, 0, 0)"]):not([style*="rgba(0,0,0,0)"]),
+.editableNote span[style*="background-color"]:not([style*="transparent"]):not([style*="rgba(0, 0, 0, 0)"]):not([style*="rgba(0,0,0,0)"]),
+.chatBubble span[style*="background-color"]:not([style*="transparent"]):not([style*="rgba(0, 0, 0, 0)"]):not([style*="rgba(0,0,0,0)"]),
 #noteInput mark.gradient-highlight,
 .editableNote mark.gradient-highlight,
 .chatBubble mark.gradient-highlight {
@@ -1495,6 +1495,62 @@ imageUpload.addEventListener('change', function () {
     saveCaret();
   }, true);
 });
+
+function cleanPastedBackgroundFormatting(html) {
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  let changed = false;
+
+  container.querySelectorAll('*').forEach(element => {
+    if (element.tagName === 'MARK') {
+      element.replaceWith(...element.childNodes);
+      changed = true;
+      return;
+    }
+
+    ['background', 'background-color', 'background-image'].forEach(property => {
+      if (element.style.getPropertyValue(property)) {
+        element.style.removeProperty(property);
+        changed = true;
+      }
+    });
+    if (element.hasAttribute('bgcolor')) {
+      element.removeAttribute('bgcolor');
+      changed = true;
+    }
+    if (element.classList.contains('gradient-highlight')) {
+      element.classList.remove('gradient-highlight');
+      changed = true;
+    }
+    if (!element.getAttribute('style')?.trim()) element.removeAttribute('style');
+    if (!element.getAttribute('class')?.trim()) element.removeAttribute('class');
+  });
+
+  if (!changed) return null;
+  return window.CEPSecurity?.sanitizeHTML
+    ? window.CEPSecurity.sanitizeHTML(container.innerHTML)
+    : '';
+}
+
+document.addEventListener('paste', event => {
+  const editor = event.target.closest?.('#noteInput, .editableNote, #defBox, #whyBox');
+  if (!editor?.isContentEditable) return;
+
+  const pastedHtml = event.clipboardData?.getData('text/html') || '';
+  if (!pastedHtml) return;
+  const cleanedHtml = cleanPastedBackgroundFormatting(pastedHtml);
+  if (cleanedHtml === null) return;
+
+  event.preventDefault();
+  activeEditable = editor;
+  editor.focus({ preventScroll: true });
+  document.execCommand(
+    cleanedHtml ? 'insertHTML' : 'insertText',
+    false,
+    cleanedHtml || event.clipboardData?.getData('text/plain') || ''
+  );
+  saveCaret();
+}, true);
 
 // When opening toolbar, keep caret (toggle click can steal focus/selection)
 const formatToggle = document.getElementById('formatToggle');
