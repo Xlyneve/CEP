@@ -481,6 +481,22 @@ function appendSearchResultContent(card, title, body, images, file) {
   if (images.length && !imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
 }
 
+function prepareScrollableSearchTable(table) {
+  if (!table || table.parentElement?.classList.contains('cep-search-table-scroll')) return;
+  table.style.setProperty('width', 'max-content', 'important');
+  table.style.setProperty('min-width', '100%', 'important');
+  table.style.setProperty('max-width', 'none', 'important');
+  table.style.setProperty('table-layout', 'auto', 'important');
+  table.querySelectorAll('th,td').forEach(cell => {
+    cell.style.setProperty('white-space', 'nowrap', 'important');
+    cell.style.setProperty('overflow-wrap', 'normal', 'important');
+    cell.style.setProperty('word-break', 'normal', 'important');
+  });
+  const scroll = document.createElement('div');
+  scroll.className = 'cep-search-table-scroll';
+  table.before(scroll); scroll.appendChild(table);
+}
+
 export function renderXgptSearchRichContent(parent, html, terms = []) {
   const content = document.createElement('div');
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(content, html);
@@ -521,6 +537,7 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
     const fragment = document.createDocumentFragment(); addHighlightedText(fragment, node.nodeValue, terms); node.replaceWith(fragment);
   });
   const tables = [...content.querySelectorAll('table')]; const images = [...content.querySelectorAll('img')];
+  tables.forEach(prepareScrollableSearchTable);
   parent.append(...content.childNodes);
   tables.forEach(enableSearchTableZoom);
   images.forEach(enableSearchImageZoom);
@@ -541,6 +558,7 @@ export function renderStructuredSearchContent(parent, html, terms = []) {
     node.replaceWith(fragment);
   });
   const tables = [...content.querySelectorAll('table')]; const images = [...content.querySelectorAll('img')];
+  tables.forEach(prepareScrollableSearchTable);
   parent.append(...content.childNodes);
   tables.forEach(enableSearchTableZoom);
   images.forEach(enableSearchImageZoom);

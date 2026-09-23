@@ -437,6 +437,18 @@ header h1 {
 }
 .structured-rich-snippet th { background:var(--refresh-rose,#e5cbcc); font-weight:700; }
 .structured-rich-snippet tbody tr:nth-child(even) td { background:rgba(229,203,204,.34); }
+/* Wide search-result tables keep their natural width inside a dedicated scroller. */
+.cep-search-table-scroll {
+  display:block; width:100%; max-width:100%; overflow-x:auto; overflow-y:hidden;
+  overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
+}
+.cep-search-table-scroll > table {
+  width:max-content !important; min-width:100% !important; max-width:none !important; table-layout:auto !important;
+}
+.cep-search-table-scroll > table th,.cep-search-table-scroll > table td {
+  white-space:nowrap !important;
+  overflow-wrap:normal !important; word-break:normal !important;
+}
 .universal-search-native-card.is-copied { animation:cepSearchCopyGlow 720ms ease-out both; }
 @keyframes cepSearchCopyGlow {
   0% { box-shadow:0 0 0 0 rgba(255,255,255,0),0 5px 13px rgba(63,52,57,.13); }
@@ -4102,6 +4114,8 @@ html body > header {
           window.renderStructuredSearchContent(nativeSnippet, page.richHtml, renderTerms);
           appendSearchResultContent(nativeCard, nativeTitle, nativeSnippet, resultImages, page.file);
         } else if (matchingTable) {
+          const tableScroll = document.createElement('div');
+          tableScroll.className = 'cep-search-table-scroll';
           const tablePreview = document.createElement('table');
           tablePreview.className = 'universal-search-native-table';
           const tableBody = document.createElement('tbody');
@@ -4115,8 +4129,9 @@ html body > header {
             tableBody.appendChild(row);
           });
           tablePreview.appendChild(tableBody);
+          tableScroll.appendChild(tablePreview);
           window.enableSearchTableZoom?.(tablePreview);
-          appendSearchResultContent(nativeCard, nativeTitle, tablePreview, resultImages, page.file);
+          appendSearchResultContent(nativeCard, nativeTitle, tableScroll, resultImages, page.file);
         } else {
           addHighlightedText(nativeSnippet, snippetText, renderTerms);
           appendSearchResultContent(nativeCard, nativeTitle, nativeSnippet, resultImages, page.file);
@@ -5328,7 +5343,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=27';
+  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=28';
   import {
     getFirestore,
     collection,
