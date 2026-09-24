@@ -481,8 +481,35 @@ function appendSearchResultContent(card, title, body, images, file) {
   if (images.length && !imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
 }
 
+const legacySearchTableColours = new Set([
+  '#ccd1d1', '#e2d5d9', 'rgb(204,209,209)', 'rgb(226,213,217)'
+]);
+const compactCssColour = value => String(value || '').toLocaleLowerCase().replace(/\s+/g, '');
+const replaceLegacySearchTableColour = (element, nextColour) => {
+  const background = element.style.getPropertyValue('background');
+  const backgroundColour = element.style.getPropertyValue('background-color');
+  if (![background, backgroundColour].some(value => legacySearchTableColours.has(compactCssColour(value)))) return;
+  const priority = element.style.getPropertyPriority('background')
+    || element.style.getPropertyPriority('background-color') || 'important';
+  element.style.removeProperty('background-color');
+  element.style.setProperty('background', nextColour, priority);
+};
+function replaceLegacySearchTableTheme(table) {
+  replaceLegacySearchTableColour(table, '#ede8e6');
+  table.querySelectorAll('th,td').forEach(cell => {
+    const row = cell.closest('tr');
+    const section = row?.parentElement;
+    const rows = section ? [...section.children].filter(child => child.tagName === 'TR') : [];
+    const rowIndex = Math.max(0, rows.indexOf(row));
+    const isHeader = cell.tagName === 'TH' || section?.tagName === 'THEAD';
+    const nextColour = isHeader ? '#d5d0d3' : rowIndex % 2 ? '#d4c9c7' : '#ede8e6';
+    replaceLegacySearchTableColour(cell, nextColour);
+  });
+}
+
 function prepareScrollableSearchTable(table) {
   if (!table || table.parentElement?.classList.contains('cep-search-table-scroll')) return;
+  replaceLegacySearchTableTheme(table);
   table.style.setProperty('width', 'max-content', 'important');
   table.style.setProperty('min-width', '100%', 'important');
   table.style.setProperty('max-width', 'none', 'important');
