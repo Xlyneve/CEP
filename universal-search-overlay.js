@@ -495,14 +495,14 @@ const replaceLegacySearchTableColour = (element, nextColour) => {
   element.style.setProperty('background', nextColour, priority);
 };
 function replaceLegacySearchTableTheme(table) {
-  replaceLegacySearchTableColour(table, '#ede8e6');
+  replaceLegacySearchTableColour(table, '#ecebeb');
   table.querySelectorAll('th,td').forEach(cell => {
     const row = cell.closest('tr');
     const section = row?.parentElement;
     const rows = section ? [...section.children].filter(child => child.tagName === 'TR') : [];
     const rowIndex = Math.max(0, rows.indexOf(row));
     const isHeader = cell.tagName === 'TH' || section?.tagName === 'THEAD';
-    const nextColour = isHeader ? '#d5d0d3' : rowIndex % 2 ? '#f2edf4' : '#ede8e6';
+    const nextColour = isHeader ? '#d5d0d3' : rowIndex % 2 ? '#f2edf4' : '#ecebeb';
     replaceLegacySearchTableColour(cell, nextColour);
   });
 }
