@@ -502,7 +502,7 @@ function replaceLegacySearchTableTheme(table) {
     const rows = section ? [...section.children].filter(child => child.tagName === 'TR') : [];
     const rowIndex = Math.max(0, rows.indexOf(row));
     const isHeader = cell.tagName === 'TH' || section?.tagName === 'THEAD';
-    const nextColour = isHeader ? '#d5d0d3' : rowIndex % 2 ? '#d4c9c7' : '#ede8e6';
+    const nextColour = isHeader ? '#d5d0d3' : rowIndex % 2 ? '#f2edf4' : '#ede8e6';
     replaceLegacySearchTableColour(cell, nextColour);
   });
 }
