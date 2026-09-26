@@ -188,83 +188,41 @@ body {
 }
 
 .file-grid {
-  column-count: 6;
-  column-gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 22px 16px;
+  justify-items: center;
+  align-items: start;
   margin-top: 24px;
-}
-
-@media (max-width: 1200px) {
-  .file-grid {
-    column-count: 5;
-  }
-}
-
-@media (max-width: 950px) {
-  .file-grid {
-    column-count: 4;
-  }
-}
-
-@media (max-width: 700px) {
-  .file-grid {
-    column-count: 3;
-  }
 }
 
 @media (max-width: 500px) {
   .file-grid {
-    column-count: 2;
-  }
-}
-
-@media (max-width: 1200px) {
-  .file-grid {
-    column-count: 4;
-  }
-}
-
-@media (max-width: 900px) {
-  .file-grid {
-    column-count: 3;
-  }
-}
-
-@media (max-width: 650px) {
-  .file-grid {
-    column-count: 2;
-  }
-}
-
-@media (max-width: 430px) {
-  .file-grid {
-    column-count: 1;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 18px 10px;
   }
 }
 
 .file-item {
   position: relative;
 
-  display: inline-block;
-  vertical-align: top;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  width: 100%;
-
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-
-  margin-bottom: 12px;
-
-  padding: 13px 16px 24px;
-  border-radius: 18px;
+  width: 108px;
+  height: 108px;
+  padding: 17px 13px 25px;
+  border-radius: 50%;
 
   cursor: pointer;
 
-  background: #D5D0D3;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: #f8f8f8;
+  border: 1px solid rgba(255, 255, 255, 0.92);
 
   box-shadow:
-    0 7px 18px rgba(92, 77, 85, 0.10),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    0 10px 20px rgba(73, 62, 67, 0.18),
+    inset 0 1px 1px rgba(255, 255, 255, 0.72);
 
   color: #222;
   overflow: hidden;
@@ -276,13 +234,46 @@ body {
 }
 
 .file-item:hover {
-  background: #C0B7BB;
-
   transform: translateY(-3px) scale(1.015);
 
   box-shadow:
-    0 12px 26px rgba(92, 77, 85, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    0 14px 28px rgba(73, 62, 67, 0.24),
+    inset 0 1px 1px rgba(255, 255, 255, 0.82);
+}
+
+.file-item:nth-child(5n + 1) { background: #3b180f; }
+.file-item:nth-child(5n + 2) { background: #ead0d2; }
+.file-item:nth-child(5n + 3) { background: #d8e5e3; }
+.file-item:nth-child(5n + 4) { background: #e8e8c8; }
+.file-item:nth-child(5n + 5) { background: #f8f8f8; }
+
+.file-item:nth-child(5n + 1) strong {
+  color: #fff;
+}
+
+.file-item.is-editing {
+  grid-column: span 2;
+  width: min(320px, calc(100vw - 32px));
+  height: auto;
+  min-height: 230px;
+  padding: 18px;
+  border-radius: 22px;
+  background: #ecebeb;
+  cursor: default;
+}
+
+@media (max-width: 500px) {
+  .file-item {
+    width: 94px;
+    height: 94px;
+    padding: 15px 11px 23px;
+  }
+
+  .file-item.is-editing {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: auto;
+  }
 }
 
 .file-item:hover strong {
@@ -327,6 +318,15 @@ input[type="date"] {
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.file-item .view-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+  text-align: center;
 }
 
 .edit-mode input,
@@ -380,15 +380,22 @@ input[type="date"]:focus {
 }
  
 .file-item strong {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 
-  font-size: 13px;
-  line-height: 1.15;
+  font-size: 12px;
+  line-height: 1.18;
   font-weight: 700;
 
   color: #282328;
 
   overflow-wrap: anywhere;
+  overflow: hidden;
+}
+
+.file-item .view-mode em {
+  display: none;
 }
 
 .file-item em {
@@ -809,6 +816,8 @@ function escapeHtmlText(str) {
   function startInlineEdit(id) {
   const view = document.getElementById(`view-${id}`);
   const edit = document.getElementById(`edit-${id}`);
+  const card = view?.closest('.file-item');
+  if (card) card.classList.add('is-editing');
   if (view) view.style.display = 'none';
   if (edit) edit.style.display = 'block';
 }
@@ -816,7 +825,9 @@ function escapeHtmlText(str) {
 function cancelInlineEdit(id) {
   const view = document.getElementById(`view-${id}`);
   const edit = document.getElementById(`edit-${id}`);
-  if (view) view.style.display = 'block';
+  const card = edit?.closest('.file-item');
+  if (card) card.classList.remove('is-editing');
+  if (view) view.style.display = 'flex';
   if (edit) edit.style.display = 'none';
 }
 
