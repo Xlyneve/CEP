@@ -102,6 +102,29 @@
       handle.addEventListener(name, () => { if (gesture) saveLayout(); gesture = null; })
     );
   }
+  function setPanelTodoOpen(open) {
+    if (!panel) return;
+    const isOpen = panel.classList.contains("todo-open");
+    if (open !== isOpen) {
+      const rightEdge = panel.offsetLeft + panel.offsetWidth;
+      if (open) {
+        collapsedWidth = panel.offsetWidth;
+        panel.classList.add("todo-open");
+        const expandedWidth = Math.min(Math.max(collapsedWidth + 330, 620), innerWidth - 16);
+        panel.style.width = `${expandedWidth}px`;
+        movePanel(rightEdge - expandedWidth, panel.offsetTop);
+      } else {
+        panel.classList.remove("todo-open");
+        const restoredWidth = Math.min(collapsedWidth, innerWidth - 16);
+        panel.style.width = `${restoredWidth}px`;
+        movePanel(rightEdge - restoredWidth, panel.offsetTop);
+      }
+    }
+    const todoButton = panel.querySelector(".homepage-calendar-todo");
+    todoButton.textContent = open ? "<<" : ">>";
+    todoButton.setAttribute("aria-expanded", String(open));
+    todoButton.setAttribute("aria-label", open ? "Hide to-do list" : "Show to-do list");
+  }
   function openOnHome() {
     if (panel) { panel.querySelector("iframe")?.focus(); return; }
     sessionStorage.setItem(openStateKey, "true");
@@ -115,9 +138,10 @@
     todo.textContent = ">>"; todo.setAttribute("aria-label", "Show to-do list"); todo.setAttribute("aria-expanded", "false");
     todo.addEventListener("pointerdown", event => event.stopPropagation());
     todo.addEventListener("click", () => {
-      panel?.querySelector("iframe")?.contentWindow?.postMessage({
-        type: "homecal-set-todo", open: !panel.classList.contains("todo-open")
-      }, location.origin);
+      const open = !panel.classList.contains("todo-open");
+      sessionStorage.setItem(todoOpenStateKey, String(open));
+      setPanelTodoOpen(open);
+      panel?.querySelector("iframe")?.contentWindow?.postMessage({ type: "homecal-set-todo", open }, location.origin);
     });
     const close = document.createElement("button"); close.type = "button"; close.className = "homepage-calendar-close";
     close.addEventListener("pointerdown", event => event.stopPropagation());
@@ -125,37 +149,22 @@
     actions.append(todo, close); bar.append(label, actions);
     const frame = document.createElement("iframe"); frame.title = "Today calendar and to-do"; frame.src = embeddedUrl;
     frame.addEventListener("load", () => {
-      if (sessionStorage.getItem(todoOpenStateKey) !== "true") return;
-      frame.contentWindow?.postMessage({ type: "homecal-set-todo", open: true }, location.origin);
+      const open = sessionStorage.getItem(todoOpenStateKey) === "true";
+      frame.contentWindow?.postMessage({ type: "homecal-set-todo", open }, location.origin);
     });
     const resize = document.createElement("button"); resize.type = "button"; resize.className = "homepage-calendar-resize";
     resize.setAttribute("aria-label", "Resize homepage calendar");
     panel.append(bar, frame, resize); document.body.appendChild(panel);
-    restoreLayout(); bindPointerHandle(bar, false); bindPointerHandle(resize, true);
+    restoreLayout();
+    setPanelTodoOpen(sessionStorage.getItem(todoOpenStateKey) === "true");
+    bindPointerHandle(bar, false); bindPointerHandle(resize, true);
   }
   window.addEventListener("message", event => {
     if (!panel || event.origin !== location.origin || event.source !== panel.querySelector("iframe")?.contentWindow) return;
     if (event.data?.type !== "homecal-embedded-todo") return;
     const open = Boolean(event.data.open);
     sessionStorage.setItem(todoOpenStateKey, String(open));
-    if (open === panel.classList.contains("todo-open")) return;
-    const rightEdge = panel.offsetLeft + panel.offsetWidth;
-    if (open) {
-      collapsedWidth = panel.offsetWidth;
-      panel.classList.add("todo-open");
-      const expandedWidth = Math.min(Math.max(collapsedWidth + 330, 620), innerWidth - 16);
-      panel.style.width = `${expandedWidth}px`;
-      movePanel(rightEdge - expandedWidth, panel.offsetTop);
-    } else {
-      panel.classList.remove("todo-open");
-      const restoredWidth = Math.min(collapsedWidth, innerWidth - 16);
-      panel.style.width = `${restoredWidth}px`;
-      movePanel(rightEdge - restoredWidth, panel.offsetTop);
-    }
-    const todoButton = panel.querySelector(".homepage-calendar-todo");
-    todoButton.textContent = open ? "<<" : ">>";
-    todoButton.setAttribute("aria-expanded", String(open));
-    todoButton.setAttribute("aria-label", open ? "Hide to-do list" : "Show to-do list");
+    setPanelTodoOpen(open);
   });
 
   choices = document.createElement("div"); choices.className = "calendar-launch-choices"; choices.hidden = true;
