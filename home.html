@@ -363,8 +363,10 @@ header h1 {
 }
 .cep-source-card--notes { padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,.3); box-shadow:0 2px 8px rgba(0,0,0,.1); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
 .cep-source-card--forms {
-  padding:13px 16px 24px; border-radius:18px; border:1px solid rgba(255,255,255,.55);
-  box-shadow:0 7px 18px rgba(92,77,85,.10),inset 0 1px 0 rgba(255,255,255,.55); color:#222; font-family:Tahoma,Geneva,Verdana,sans-serif;
+  display:flex; align-items:center; justify-content:center; min-height:72px; box-sizing:border-box;
+  padding:13px 16px 22px; border-radius:999px; border:1px solid rgba(255,255,255,.88);
+  background:#ecebeb; box-shadow:0 7px 16px rgba(73,62,67,.13),inset 0 1px 1px rgba(255,255,255,.78);
+  color:#222; font-family:Tahoma,Geneva,Verdana,sans-serif;
 }
 .cep-source-card-view strong { display:block; color:#282328; font-size:13px; line-height:1.15; font-weight:700; overflow-wrap:anywhere; }
 .cep-source-card-view em { display:block; margin-top:4px; color:rgba(40,35,40,.68); font-size:10px; line-height:1.3; font-style:normal; overflow-wrap:anywhere; }
@@ -4100,7 +4102,9 @@ html body > header {
           copyText: page.displayText || page.text || page.title,
           copyHtml: window.getSearchCopyHtml?.(page) || page.richHtml || '',
           onNavigate: () => recordSearchUse(page),
-          navigate: () => navigateToSearchResult(nativeCard.href)
+          navigate: () => String(page.file).toLowerCase() === 'forms.html'
+            ? window.open(nativeCard.href, '_blank', 'noopener,noreferrer')
+            : navigateToSearchResult(nativeCard.href)
         };
         if (window.installSearchCardInteractions) {
           window.installSearchCardInteractions(nativeCard, interactionOptions);
