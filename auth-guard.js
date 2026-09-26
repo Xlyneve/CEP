@@ -12,6 +12,11 @@
     appId: "1:840696526325:web:b9bcb4669fbfad066a1cbc"
   };
 
+  const tableTheme = document.createElement("link");
+  tableTheme.rel = "stylesheet";
+  tableTheme.href = "table-theme.css?v=1";
+  document.head.appendChild(tableTheme);
+
   // Keep protected content hidden while showing a lightweight loading state.
   const loadingStyle = document.createElement("style");
   loadingStyle.textContent = `
