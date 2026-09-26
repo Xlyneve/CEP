@@ -17,6 +17,11 @@
   tableTheme.href = "table-theme.css?v=2";
   document.head.appendChild(tableTheme);
 
+  const scrollbarTheme = document.createElement("link");
+  scrollbarTheme.rel = "stylesheet";
+  scrollbarTheme.href = "scrollbar-theme.css?v=1";
+  document.head.appendChild(scrollbarTheme);
+
   // Keep protected content hidden while showing a lightweight loading state.
   const loadingStyle = document.createElement("style");
   loadingStyle.textContent = `
