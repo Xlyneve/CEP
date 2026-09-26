@@ -4521,6 +4521,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
           note.content = updated;
 
           bubble.innerHTML = '🤖 ' + conceptLinkifyHTML(stripLegacyTableControls(updated));
+          setTableCellsEditable(bubble, false);
           hideEmojiPanel();
           removeSharedEditToolbar();
           editable.remove();
@@ -4748,6 +4749,16 @@ document.addEventListener('click', (e) => {
 
 function setTableCellsEditable(root, editable) {
   if (!root) return;
+  root.querySelectorAll('table').forEach(table => {
+    table.style.setProperty('background', '#ecebeb', 'important');
+    table.querySelectorAll('th,td').forEach(cell => {
+      const isHeader = cell.tagName === 'TH' || Boolean(cell.closest('thead'));
+      const rowIndex = cell.closest('tr')?.rowIndex || 0;
+      const background = isHeader ? '#d5d0d3' : rowIndex % 2 ? '#f2edf4' : '#ecebeb';
+      cell.style.setProperty('background', background, 'important');
+      if (isHeader) cell.style.setProperty('color', '#40363b', 'important');
+    });
+  });
   root.querySelectorAll('.cellBox').forEach(cell => {
     cell.contentEditable = editable ? 'true' : 'false';
     if (!editable) {
