@@ -295,6 +295,26 @@ body {
   text-align: center;
 }
 
+.form-preview.is-external-fallback {
+  cursor: pointer;
+}
+
+.form-preview.is-external-fallback .preview-empty {
+  padding: 28px 48px;
+  color: #5f4540;
+  font-weight: 700;
+}
+
+.form-preview.is-external-fallback:hover .preview-empty,
+.form-preview.is-external-fallback:focus-visible .preview-empty {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.form-preview.is-external-fallback:focus-visible {
+  outline: 2px solid rgba(118, 85, 77, 0.55);
+  outline-offset: 3px;
+}
+
 .preview-toolbar {
   display: none;
   align-items: center;
@@ -1001,14 +1021,6 @@ function showFormPreview(url, title, selectedCard) {
     hostname === host || hostname.endsWith(`.${host}`)
   ));
 
-  if (opensExternally) {
-    const externalWindow = window.open(parsedUrl.href, '_blank', 'noopener,noreferrer');
-    if (!externalWindow) {
-      alert('Please allow pop-ups to open this website in a new tab.');
-    }
-    return;
-  }
-
   document.querySelectorAll('.file-item.is-selected').forEach(card => {
     card.classList.remove('is-selected');
   });
@@ -1019,11 +1031,29 @@ function showFormPreview(url, title, selectedCard) {
   const previewTitle = document.getElementById('previewTitle');
   const previewOpenLink = document.getElementById('previewOpenLink');
   const previewFrame = document.getElementById('previewFrame');
+  const formPreview = document.querySelector('.form-preview');
 
-  previewEmpty.style.display = 'none';
   previewToolbar.style.display = 'flex';
   previewTitle.textContent = title;
   previewOpenLink.href = parsedUrl.href;
+
+  if (opensExternally) {
+    previewEmpty.style.display = 'grid';
+    previewEmpty.textContent = 'This website prevents an embedded preview. Click here to open it in a new tab.';
+    previewFrame.style.display = 'none';
+    previewFrame.removeAttribute('src');
+    formPreview.classList.add('is-external-fallback');
+    formPreview.dataset.externalUrl = parsedUrl.href;
+    formPreview.tabIndex = 0;
+    formPreview.setAttribute('aria-label', `${title}. Preview unavailable; open in a new tab.`);
+    return;
+  }
+
+  previewEmpty.style.display = 'none';
+  formPreview.classList.remove('is-external-fallback');
+  delete formPreview.dataset.externalUrl;
+  formPreview.removeAttribute('tabindex');
+  formPreview.setAttribute('aria-label', 'Form preview');
   previewFrame.style.display = 'block';
   previewFrame.src = parsedUrl.href;
 }
@@ -1210,6 +1240,29 @@ document.addEventListener('click', (e) => {
     });
   }
 });
+
+  const formPreviewPanel = document.querySelector('.form-preview');
+
+  function openPreviewFallback() {
+    const externalUrl = formPreviewPanel.dataset.externalUrl;
+    if (!externalUrl) return;
+
+    const externalWindow = window.open(externalUrl, '_blank', 'noopener,noreferrer');
+    if (!externalWindow) {
+      alert('Please allow pop-ups to open this website in a new tab.');
+    }
+  }
+
+  formPreviewPanel.addEventListener('click', event => {
+    if (!formPreviewPanel.dataset.externalUrl || event.target.closest('a')) return;
+    openPreviewFallback();
+  });
+
+  formPreviewPanel.addEventListener('keydown', event => {
+    if (!formPreviewPanel.dataset.externalUrl || !['Enter', ' '].includes(event.key)) return;
+    event.preventDefault();
+    openPreviewFallback();
+  });
 
   document.getElementById('saveUrlBtn').addEventListener('click', addURL);
   void getModularFirestore().catch(error => console.error('Save connection could not be prepared.', error));
