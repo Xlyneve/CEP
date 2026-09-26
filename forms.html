@@ -208,8 +208,8 @@ body {
 
 .forms-workspace {
   display: grid;
-  grid-template-columns: minmax(190px, 240px) minmax(0, 1fr);
-  gap: 22px;
+  grid-template-columns: var(--forms-sidebar-width, 240px) 12px minmax(300px, 1fr);
+  gap: 10px;
   flex: 1 1 auto;
   min-height: 0;
   margin-top: 24px;
@@ -221,6 +221,52 @@ body {
   gap: 12px;
   min-width: 0;
   min-height: 0;
+}
+
+.forms-resizer {
+  position: relative;
+  min-height: 0;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.forms-resizer::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 64px;
+  border-radius: 999px;
+  background: rgba(118, 85, 77, 0.28);
+  box-shadow: 0 0 9px rgba(255, 255, 255, 0.9);
+  transform: translate(-50%, -50%);
+  transition: background-color 0.2s ease, height 0.2s ease;
+}
+
+.forms-resizer:hover::before,
+.forms-resizer:focus-visible::before,
+.forms-resizer.is-dragging::before {
+  height: 92px;
+  background: rgba(118, 85, 77, 0.62);
+}
+
+.forms-resizer:focus-visible {
+  outline: 2px solid rgba(118, 85, 77, 0.45);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+@media (min-width: 761px) {
+  .forms-sidebar.is-wide .file-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+  }
+
+  .forms-sidebar.is-wide .file-item.is-editing {
+    grid-column: 1 / -1;
+  }
 }
 
 .form-preview {
@@ -290,6 +336,7 @@ body {
   justify-content: center;
 
   width: 100%;
+  box-sizing: border-box;
   min-height: 72px;
   padding: 13px 16px 22px;
   border-radius: 999px;
@@ -352,6 +399,10 @@ body {
     display: grid;
     height: auto;
     min-height: 0;
+  }
+
+  .forms-resizer {
+    display: none;
   }
 
   .file-grid {
@@ -690,6 +741,18 @@ button:hover {
     <input type="text" id="searchInput" placeholder="Search saved forms" aria-label="Search saved forms">
     <div class="file-grid" id="fileList"></div>
   </aside>
+
+  <div
+    class="forms-resizer"
+    id="formsResizer"
+    role="separator"
+    tabindex="0"
+    aria-label="Resize saved forms and preview panels"
+    aria-orientation="vertical"
+    aria-valuemin="190"
+    aria-valuenow="240"
+    title="Drag to resize panels">
+  </div>
 
   <section class="form-preview" aria-label="Form preview">
     <div class="preview-empty" id="previewEmpty">Select a form on the left to preview it here.</div>
@@ -1037,6 +1100,89 @@ async function saveInlineEdit(id) {
   const searchInput = document.getElementById('searchInput');
   searchInput.style.display = 'block';
   searchInput.addEventListener('input', filterFiles);
+
+  const formsWorkspace = document.querySelector('.forms-workspace');
+  const formsSidebar = document.querySelector('.forms-sidebar');
+  const formsResizer = document.getElementById('formsResizer');
+  const desktopFormsLayout = window.matchMedia('(min-width: 761px)');
+  const minimumSidebarWidth = 190;
+  const minimumPreviewWidth = 300;
+
+  function getMaximumSidebarWidth() {
+    return Math.max(
+      minimumSidebarWidth,
+      formsWorkspace.clientWidth - minimumPreviewWidth - 32
+    );
+  }
+
+  function setSidebarWidth(width, save = false) {
+    if (!desktopFormsLayout.matches) return;
+
+    const nextWidth = Math.round(Math.min(
+      Math.max(width, minimumSidebarWidth),
+      getMaximumSidebarWidth()
+    ));
+
+    formsWorkspace.style.setProperty('--forms-sidebar-width', `${nextWidth}px`);
+    formsSidebar.classList.toggle('is-wide', nextWidth >= 400);
+    formsResizer.setAttribute('aria-valuenow', String(nextWidth));
+    formsResizer.setAttribute('aria-valuemax', String(Math.round(getMaximumSidebarWidth())));
+
+    if (save) localStorage.setItem('formsSidebarWidth', String(nextWidth));
+  }
+
+  const savedSidebarWidth = Number(localStorage.getItem('formsSidebarWidth'));
+  setSidebarWidth(Number.isFinite(savedSidebarWidth) && savedSidebarWidth > 0
+    ? savedSidebarWidth
+    : 240);
+
+  formsResizer.addEventListener('pointerdown', event => {
+    if (!desktopFormsLayout.matches) return;
+
+    event.preventDefault();
+    formsResizer.setPointerCapture(event.pointerId);
+    formsResizer.classList.add('is-dragging');
+
+    const startX = event.clientX;
+    const startWidth = formsSidebar.getBoundingClientRect().width;
+
+    const handlePointerMove = moveEvent => {
+      setSidebarWidth(startWidth + moveEvent.clientX - startX);
+    };
+
+    const finishResize = () => {
+      formsResizer.classList.remove('is-dragging');
+      formsResizer.removeEventListener('pointermove', handlePointerMove);
+      formsResizer.removeEventListener('pointerup', finishResize);
+      formsResizer.removeEventListener('pointercancel', finishResize);
+      localStorage.setItem('formsSidebarWidth', String(Math.round(
+        formsSidebar.getBoundingClientRect().width
+      )));
+    };
+
+    formsResizer.addEventListener('pointermove', handlePointerMove);
+    formsResizer.addEventListener('pointerup', finishResize);
+    formsResizer.addEventListener('pointercancel', finishResize);
+  });
+
+  formsResizer.addEventListener('keydown', event => {
+    if (!desktopFormsLayout.matches || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+    const currentWidth = formsSidebar.getBoundingClientRect().width;
+    if (event.key === 'Home') setSidebarWidth(minimumSidebarWidth, true);
+    if (event.key === 'End') setSidebarWidth(getMaximumSidebarWidth(), true);
+    if (event.key === 'ArrowLeft') setSidebarWidth(currentWidth - 24, true);
+    if (event.key === 'ArrowRight') setSidebarWidth(currentWidth + 24, true);
+  });
+
+  window.addEventListener('resize', () => {
+    if (desktopFormsLayout.matches) {
+      setSidebarWidth(formsSidebar.getBoundingClientRect().width);
+    }
+  });
 
 function toggleAddForm() {
   const form = document.getElementById('addForm');
