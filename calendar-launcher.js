@@ -13,6 +13,7 @@
   let choices = null;
   let activeLauncher = launchers[0];
   let collapsedWidth = 380;
+  let expandedPanelWidth = 0;
   let hoverTimer = null;
   let closeTimer = null;
 
@@ -45,11 +46,13 @@
   function saveLayout() {
     if (!panel) return;
     const todoOpen = panel.classList.contains("todo-open");
+    if (todoOpen) expandedPanelWidth = panel.offsetWidth;
     const width = todoOpen ? collapsedWidth : panel.offsetWidth;
     const x = todoOpen ? panel.offsetLeft + panel.offsetWidth - width : panel.offsetLeft;
     try {
       localStorage.setItem(layoutKey, JSON.stringify({
-        x, y: panel.offsetTop, width, height: panel.offsetHeight
+        x, y: panel.offsetTop, width, height: panel.offsetHeight,
+        expandedWidth: expandedPanelWidth
       }));
     } catch {}
   }
@@ -67,6 +70,9 @@
       width: fallbackWidth, height: fallbackHeight
     };
     collapsedWidth = Math.min(Math.max(300, layout.width), innerWidth - 16);
+    expandedPanelWidth = Number.isFinite(layout.expandedWidth)
+      ? Math.min(Math.max(collapsedWidth, layout.expandedWidth), innerWidth - 16)
+      : 0;
     panel.style.width = `${collapsedWidth}px`;
     panel.style.height = `${Math.min(Math.max(260, layout.height), innerHeight - 42)}px`;
     movePanel(layout.x, layout.y);
@@ -95,7 +101,8 @@
       if (resize) {
         panel.style.width = `${Math.min(Math.max(300, gesture.width + dx), innerWidth - panel.offsetLeft - 8)}px`;
         panel.style.height = `${Math.min(Math.max(260, gesture.height + dy), innerHeight - panel.offsetTop - 8)}px`;
-        if (!panel.classList.contains("todo-open")) collapsedWidth = panel.offsetWidth;
+        if (panel.classList.contains("todo-open")) expandedPanelWidth = panel.offsetWidth;
+        else collapsedWidth = panel.offsetWidth;
       } else movePanel(gesture.left + dx, gesture.top + dy);
     });
     ["pointerup", "pointercancel", "lostpointercapture"].forEach(name =>
@@ -110,9 +117,10 @@
       if (open) {
         collapsedWidth = panel.offsetWidth;
         panel.classList.add("todo-open");
-        const expandedWidth = Math.min(Math.max(collapsedWidth + 330, 620), innerWidth - 16);
-        panel.style.width = `${expandedWidth}px`;
-        movePanel(rightEdge - expandedWidth, panel.offsetTop);
+        const nextExpandedWidth = expandedPanelWidth || Math.max(collapsedWidth + 330, 620);
+        expandedPanelWidth = Math.min(Math.max(collapsedWidth, nextExpandedWidth), innerWidth - 16);
+        panel.style.width = `${expandedPanelWidth}px`;
+        movePanel(rightEdge - expandedPanelWidth, panel.offsetTop);
       } else {
         panel.classList.remove("todo-open");
         const restoredWidth = Math.min(collapsedWidth, innerWidth - 16);
