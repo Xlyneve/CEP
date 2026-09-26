@@ -7,6 +7,7 @@
   const embeddedUrl = "homecal.html?homeEmbed=today&v=6";
   const layoutKey = "xlyneve-calendar-home-layout";
   const openStateKey = "xlyneve-calendar-home-open";
+  const todoOpenStateKey = "xlyneve-calendar-home-todo-open";
   let calendarWindow = null;
   let panel = null;
   let choices = null;
@@ -123,6 +124,10 @@
     close.textContent = "×"; close.setAttribute("aria-label", "Close homepage calendar"); close.addEventListener("click", closePanel);
     actions.append(todo, close); bar.append(label, actions);
     const frame = document.createElement("iframe"); frame.title = "Today calendar and to-do"; frame.src = embeddedUrl;
+    frame.addEventListener("load", () => {
+      if (sessionStorage.getItem(todoOpenStateKey) !== "true") return;
+      frame.contentWindow?.postMessage({ type: "homecal-set-todo", open: true }, location.origin);
+    });
     const resize = document.createElement("button"); resize.type = "button"; resize.className = "homepage-calendar-resize";
     resize.setAttribute("aria-label", "Resize homepage calendar");
     panel.append(bar, frame, resize); document.body.appendChild(panel);
@@ -132,6 +137,7 @@
     if (!panel || event.origin !== location.origin || event.source !== panel.querySelector("iframe")?.contentWindow) return;
     if (event.data?.type !== "homecal-embedded-todo") return;
     const open = Boolean(event.data.open);
+    sessionStorage.setItem(todoOpenStateKey, String(open));
     if (open === panel.classList.contains("todo-open")) return;
     const rightEdge = panel.offsetLeft + panel.offsetWidth;
     if (open) {
