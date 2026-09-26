@@ -849,6 +849,7 @@ button:hover {
       const { firestoreSdk, firestore } = await getModularFirestore();
       await firestoreSdk.addDoc(firestoreSdk.collection(firestore, 'urlForms'), {
         url, title, note,
+        openCount: 0,
         createdAt: firestoreSdk.serverTimestamp()
       });
       window.invalidateCepSearchCache?.('main:urlForms');
@@ -902,7 +903,18 @@ function renderURLDocs(urlDocs, filter) {
   const container = document.getElementById('fileList');
   container.innerHTML = '';
 
-  urlDocs.forEach(doc => {
+  const rankedDocs = [...urlDocs].sort((leftDoc, rightDoc) => {
+    const left = leftDoc.data();
+    const right = rightDoc.data();
+    const countDifference = (Number(right.openCount) || 0) - (Number(left.openCount) || 0);
+    if (countDifference) return countDifference;
+
+    const leftOpened = left.lastOpenedAt?.toMillis?.() || 0;
+    const rightOpened = right.lastOpenedAt?.toMillis?.() || 0;
+    return rightOpened - leftOpened;
+  });
+
+  rankedDocs.forEach(doc => {
     const data = doc.data();
 
     const search = filter.toLowerCase().trim();
@@ -994,12 +1006,25 @@ div.addEventListener('click', (e) => {
   }
 
   if (safeUrl) {
+    void recordFormOpen(doc.id);
     showFormPreview(safeUrl, data.title || 'Untitled', div);
   }
 });
 container.appendChild(div);
     }
   });
+}
+
+async function recordFormOpen(id) {
+  try {
+    await db.collection('urlForms').doc(id).update({
+      openCount: firebase.firestore.FieldValue.increment(1),
+      lastOpenedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    urlCacheExpiresAt = 0;
+  } catch (error) {
+    console.error('Form open count could not be updated.', error);
+  }
 }
 
 function showFormPreview(url, title, selectedCard) {
