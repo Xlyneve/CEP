@@ -235,11 +235,11 @@ input[type="file"]::file-selector-button:hover {
 
 .resizableEmoji {
   display: inline-block;
-  font-size: 1.5em;   /* Bigger than text */
+  font-size: 1em;
   font-weight: normal;
-  line-height: 1;
-  vertical-align: middle;
-  transform: translateY(0.8px);
+  line-height: inherit;
+  vertical-align: baseline;
+  transform: none;
 }
 
 /* Normal-size inline symbols (arrows, ≤, ≥, etc.) */
@@ -250,6 +250,7 @@ input[type="file"]::file-selector-button:hover {
   line-height: 1.1;
   vertical-align: baseline;
   transform: none;
+  color: #000;
 }
 
 /* Tag chips under notes */
@@ -966,6 +967,13 @@ a.conceptLink.hasDef::before{
   gap:10px;
   justify-content:flex-end;
   margin-top:10px;
+  position:sticky;
+  bottom:0;
+  z-index:2;
+  padding:8px 0 2px;
+  background:rgba(255,255,255,0.78);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
 }
 
 #defPanel .miniBtn{
@@ -4374,7 +4382,7 @@ arrowBtn.textContent = '↳';
 Object.assign(arrowBtn.style, {
   background: 'none',
   border: 'none',
-  color: '#666',
+  color: '#000',
   fontSize: '16px',
   cursor: 'pointer',
   marginRight: '12px'
@@ -4417,7 +4425,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
   activeEditable = editable;
   editable.focus({ preventScroll: true });
   restoreCaret();
-  insertEmojiAtCaret(picked);           // ✅ big emoji style
+  insertEmojiAtCaret(picked);
 });
       });
 
@@ -4936,7 +4944,7 @@ function wrapSelectionWithBrackets(mode = 'wrap') {
   refreshConceptDefBadges(document.getElementById('chat'));
 }
 
-// Ctrl+L = wrap, Shift+L = unwrap
+// Ctrl/Cmd+L = wrap, Ctrl/Cmd+Shift+L = unwrap.
 document.addEventListener('keydown', (e) => {
   const t = e.target;
   if (t === userInput) return;
@@ -4944,15 +4952,15 @@ document.addEventListener('keydown', (e) => {
   const key = (e.key || '').toLowerCase();
   if (key !== 'l') return;
 
-  if (e.ctrlKey || e.metaKey) {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
     e.preventDefault();
-    wrapSelectionWithBrackets('wrap');
+    wrapSelectionWithBrackets('unwrap');
     return;
   }
 
-  if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
     e.preventDefault();
-    wrapSelectionWithBrackets('unwrap');
+    wrapSelectionWithBrackets('wrap');
     return;
   }
 }, true);
