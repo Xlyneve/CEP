@@ -97,7 +97,7 @@
     if (!/(?:^|\/)(?:homecal|RNCNP)\.html$/i.test(location.pathname)) {
       const editImageTools = document.createElement("script");
       editImageTools.type = "module";
-      editImageTools.src = "edit-card-images.js?v=20260909-3";
+      editImageTools.src = "edit-card-images.js?v=20260926-4";
       document.head.appendChild(editImageTools);
     }
 
