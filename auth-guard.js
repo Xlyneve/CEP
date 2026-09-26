@@ -14,7 +14,7 @@
 
   const tableTheme = document.createElement("link");
   tableTheme.rel = "stylesheet";
-  tableTheme.href = "table-theme.css?v=1";
+  tableTheme.href = "table-theme.css?v=2";
   document.head.appendChild(tableTheme);
 
   // Keep protected content hidden while showing a lightweight loading state.
