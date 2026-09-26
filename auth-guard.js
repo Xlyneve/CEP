@@ -19,7 +19,7 @@
 
   const scrollbarTheme = document.createElement("link");
   scrollbarTheme.rel = "stylesheet";
-  scrollbarTheme.href = "scrollbar-theme.css?v=1";
+  scrollbarTheme.href = "scrollbar-theme.css?v=2";
   document.head.appendChild(scrollbarTheme);
 
   // Keep protected content hidden while showing a lightweight loading state.
