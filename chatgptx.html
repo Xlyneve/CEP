@@ -250,7 +250,9 @@ input[type="file"]::file-selector-button:hover {
   line-height: 1.1;
   vertical-align: baseline;
   transform: none;
-  color: #000;
+  color: #000 !important;
+  -webkit-text-fill-color: #000;
+  font-family: "Segoe UI Symbol", Arial, sans-serif;
 }
 
 /* Tag chips under notes */
@@ -809,6 +811,12 @@ mark.underlineMatch{
 #floatingEmojiPanel .pick:hover {
   opacity: 1;
   transform: scale(1.12);
+}
+
+#floatingEmojiPanel.symbolPicker .pick {
+  color: #000 !important;
+  -webkit-text-fill-color: #000;
+  font-family: "Segoe UI Symbol", Arial, sans-serif;
 }
 
 /* =========================
@@ -2716,16 +2724,19 @@ const floatingEmojiPanel = document.getElementById('floatingEmojiPanel');
 const EMOJIS = ['°','🔴','🟠','🟡','🟢','🔵','🟣','⚫️','⚪️','✅','❌','⭐','🔥','🦠','◼️','❤️','🧠','🌡️','📝','📌','📍','💊','⚠️','🚨','⏳','💥','💪🏻','🌐','🔍'];
 
 // New: arrows / math symbols (inserted at normal text size)
-const ARROWS = ['±','⤷','⤶','⤹','⤵','↳','⤴︎','≥','≤','➜','⬇︎','⬅','⬆'];
+const ARROWS = ['±','⤷','⤶','⤹','⤵','↳','⤴','≥','≤','➜','⬇','⬅','⬆']
+  .map(symbol => symbol + '\uFE0E');
 
 function hideEmojiPanel() {
   floatingEmojiPanel.style.display = 'none';
   floatingEmojiPanel.setAttribute('aria-hidden', 'true');
+  floatingEmojiPanel.classList.remove('symbolPicker');
   floatingEmojiPanel.innerHTML = '';
 }
 
 function showPickerNearButton(btnEl, items, onPick) {
   floatingEmojiPanel.innerHTML = '';
+  floatingEmojiPanel.classList.toggle('symbolPicker', items === ARROWS);
 
   items.forEach(sym => {
     const b = document.createElement('button');
@@ -4383,6 +4394,8 @@ Object.assign(arrowBtn.style, {
   background: 'none',
   border: 'none',
   color: '#000',
+  WebkitTextFillColor: '#000',
+  fontFamily: '"Segoe UI Symbol", Arial, sans-serif',
   fontSize: '16px',
   cursor: 'pointer',
   marginRight: '12px'
@@ -4920,6 +4933,18 @@ function wrapSelectionWithBrackets(mode = 'wrap') {
   const range = sel.getRangeAt(0);
   if (!editor.contains(range.commonAncestorContainer)) return;
 
+  if (mode === 'unwrap' &&
+      range.startContainer === range.endContainer &&
+      range.startContainer.nodeType === Node.TEXT_NODE) {
+    const text = range.startContainer.nodeValue || '';
+    const open = text.lastIndexOf('[[', range.startOffset);
+    const close = text.indexOf(']]', range.endOffset);
+    if (open !== -1 && close !== -1 && open <= range.startOffset && close + 2 >= range.endOffset) {
+      range.setStart(range.startContainer, open);
+      range.setEnd(range.endContainer, close + 2);
+    }
+  }
+
   const selectedText = sel.toString();
   if (!selectedText || !selectedText.trim()) return;
 
@@ -4950,10 +4975,11 @@ document.addEventListener('keydown', (e) => {
   if (t === userInput) return;
 
   const key = (e.key || '').toLowerCase();
-  if (key !== 'l') return;
+  if (key !== 'l' && e.code !== 'KeyL') return;
 
   if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
     e.preventDefault();
+    e.stopImmediatePropagation();
     wrapSelectionWithBrackets('unwrap');
     return;
   }
