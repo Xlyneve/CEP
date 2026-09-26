@@ -719,6 +719,7 @@ button:hover {
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   firebase.auth();
   const db = firebase.firestore();
+  const externalOnlyHosts = ['akohiringa.co.nz'];
   let modularFirestorePromise;
 
   function getModularFirestore() {
@@ -920,6 +921,19 @@ function showFormPreview(url, title, selectedCard) {
 
   if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
     alert('This form does not have a valid preview URL.');
+    return;
+  }
+
+  const hostname = parsedUrl.hostname.toLowerCase();
+  const opensExternally = externalOnlyHosts.some(host => (
+    hostname === host || hostname.endsWith(`.${host}`)
+  ));
+
+  if (opensExternally) {
+    const externalWindow = window.open(parsedUrl.href, '_blank', 'noopener,noreferrer');
+    if (!externalWindow) {
+      alert('Please allow pop-ups to open this website in a new tab.');
+    }
     return;
   }
 
