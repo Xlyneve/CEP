@@ -28,7 +28,7 @@
     .homepage-calendar-bar:active { cursor:grabbing; }
     .homepage-calendar-actions { display:flex; align-items:center; gap:4px; }
     .homepage-calendar-day-nav,.homepage-calendar-todo,.homepage-calendar-close { width:25px; height:25px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.58); color:#655b60; cursor:pointer; line-height:1; }
-    .homepage-calendar-day-nav { font:700 15px/1 Arial,sans-serif; }
+    .homepage-calendar-day-nav { color:#fff; font:700 15px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 1px 3px rgba(55,43,50,.38); }
     .homepage-calendar-todo { font:700 10px/1 Arial,sans-serif; }
     .homepage-calendar-close { font-size:17px; }
     .homepage-calendar iframe { display:block; flex:1 1 auto; width:100%; min-height:0; border:0; background:transparent; }
@@ -150,8 +150,8 @@
       button.addEventListener("click", () => frame.contentWindow?.postMessage({ type:"homecal-shift-day", offset }, location.origin));
       return button;
     };
-    const previousDay = makeDayButton("←", -1, "Previous day");
-    const nextDay = makeDayButton("→", 1, "Next day");
+    const previousDay = makeDayButton("❮", -1, "Previous day");
+    const nextDay = makeDayButton("❯", 1, "Next day");
     const todo = document.createElement("button"); todo.type = "button"; todo.className = "homepage-calendar-todo";
     todo.textContent = ">>"; todo.setAttribute("aria-label", "Show to-do list"); todo.setAttribute("aria-expanded", "false");
     todo.addEventListener("pointerdown", event => event.stopPropagation());
