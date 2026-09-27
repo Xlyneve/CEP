@@ -27,9 +27,8 @@
     .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; cursor:grab; touch-action:none; user-select:none; }
     .homepage-calendar-bar:active { cursor:grabbing; }
     .homepage-calendar-actions { display:flex; align-items:center; gap:4px; }
-    .homepage-calendar-notes,.homepage-calendar-todo,.homepage-calendar-close { width:25px; height:25px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.58); color:#655b60; cursor:pointer; line-height:1; }
-    .homepage-calendar-notes { display:grid; place-items:center; }
-    .homepage-calendar-notes svg { width:13px; height:13px; pointer-events:none; }
+    .homepage-calendar-day-nav,.homepage-calendar-todo,.homepage-calendar-close { width:25px; height:25px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.58); color:#655b60; cursor:pointer; line-height:1; }
+    .homepage-calendar-day-nav { font:700 15px/1 Arial,sans-serif; }
     .homepage-calendar-todo { font:700 10px/1 Arial,sans-serif; }
     .homepage-calendar-close { font-size:17px; }
     .homepage-calendar iframe { display:block; flex:1 1 auto; width:100%; min-height:0; border:0; background:transparent; }
@@ -144,18 +143,15 @@
     const bar = document.createElement("div"); bar.className = "homepage-calendar-bar";
     const label = document.createElement("span"); label.textContent = "Today";
     const actions = document.createElement("div"); actions.className = "homepage-calendar-actions";
-    const notes = document.createElement("button"); notes.type = "button"; notes.className = "homepage-calendar-notes";
-    notes.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M7 14h4M7 17h7"/></svg>';
-    notes.setAttribute("aria-label", "Show other day notes"); notes.setAttribute("aria-pressed", "false"); notes.title = "Show other day notes";
-    notes.addEventListener("pointerdown", event => event.stopPropagation());
-    notes.addEventListener("click", () => {
-      const open = !panel.classList.contains("other-notes-open");
-      panel.classList.toggle("other-notes-open", open);
-      notes.setAttribute("aria-pressed", String(open));
-      notes.setAttribute("aria-label", open ? "Show today only" : "Show other day notes");
-      notes.title = open ? "Show today only" : "Show other day notes";
-      frame.contentWindow?.postMessage({ type:"homecal-set-other-notes", open }, location.origin);
-    });
+    const makeDayButton = (text, offset, labelText) => {
+      const button = document.createElement("button"); button.type = "button"; button.className = "homepage-calendar-day-nav";
+      button.textContent = text; button.setAttribute("aria-label", labelText); button.title = labelText;
+      button.addEventListener("pointerdown", event => event.stopPropagation());
+      button.addEventListener("click", () => frame.contentWindow?.postMessage({ type:"homecal-shift-day", offset }, location.origin));
+      return button;
+    };
+    const previousDay = makeDayButton("←", -1, "Previous day");
+    const nextDay = makeDayButton("→", 1, "Next day");
     const todo = document.createElement("button"); todo.type = "button"; todo.className = "homepage-calendar-todo";
     todo.textContent = ">>"; todo.setAttribute("aria-label", "Show to-do list"); todo.setAttribute("aria-expanded", "false");
     todo.addEventListener("pointerdown", event => event.stopPropagation());
@@ -168,7 +164,7 @@
     const close = document.createElement("button"); close.type = "button"; close.className = "homepage-calendar-close";
     close.addEventListener("pointerdown", event => event.stopPropagation());
     close.textContent = "×"; close.setAttribute("aria-label", "Close homepage calendar"); close.addEventListener("click", closePanel);
-    actions.append(notes, todo, close); bar.append(label, actions);
+    actions.append(previousDay, nextDay, todo, close); bar.append(label, actions);
     const restoreTodoOpen = localStorage.getItem(todoOpenStateKey) === "true";
     const frame = document.createElement("iframe"); frame.title = "Today calendar and to-do";
     frame.src = `${embeddedUrl}&todoOpen=${restoreTodoOpen ? "1" : "0"}`;
@@ -185,13 +181,8 @@
   }
   window.addEventListener("message", event => {
     if (!panel || event.origin !== location.origin || event.source !== panel.querySelector("iframe")?.contentWindow) return;
-    if (event.data?.type === "homecal-embedded-other-notes") {
-      const open = Boolean(event.data.open);
-      panel.classList.toggle("other-notes-open", open);
-      const notesButton = panel.querySelector(".homepage-calendar-notes");
-      notesButton.setAttribute("aria-pressed", String(open));
-      notesButton.setAttribute("aria-label", open ? "Show today only" : "Show other day notes");
-      notesButton.title = open ? "Show today only" : "Show other day notes";
+    if (event.data?.type === "homecal-embedded-day") {
+      panel.querySelector(".homepage-calendar-bar > span").textContent = String(event.data.label || "Today");
       return;
     }
     if (event.data?.type !== "homecal-embedded-todo") return;
