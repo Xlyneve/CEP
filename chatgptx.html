@@ -835,6 +835,66 @@ mark.underlineMatch{
   font-family: "Segoe UI Symbol", Arial, sans-serif;
 }
 
+/* YouTube links open in a lightweight in-page player. */
+#youtubePlayerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(28, 24, 27, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#youtubePlayerOverlay.is-open { display: flex; }
+
+.youtube-player-dialog {
+  width: min(900px, 94vw);
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.55);
+  border-radius: 16px;
+  background: rgba(250, 244, 245, .92);
+  box-shadow: 0 18px 60px rgba(0,0,0,.35), 0 0 22px rgba(208,160,163,.3);
+}
+
+.youtube-player-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 11px;
+  background: #000;
+}
+
+.youtube-player-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.youtube-player-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 9px;
+  font: 12px Tahoma, sans-serif;
+}
+
+.youtube-player-actions a { color: #604853; }
+
+#youtubePlayerClose {
+  border: 0;
+  background: none;
+  color: #604853;
+  font-size: 18px;
+  cursor: pointer;
+}
+
 /* =========================
    Concept Definition Panel
 ========================= */
@@ -1336,6 +1396,15 @@ a.conceptLink.hasDef::before{
 <div id="tagSuggest" aria-hidden="true"></div>
 <div id="floatingEmojiBtn" title="Insert emoji">📌</div>
 <div id="floatingEmojiPanel" aria-hidden="true"></div>
+<div id="youtubePlayerOverlay" aria-hidden="true">
+  <div class="youtube-player-dialog" role="dialog" aria-modal="true" aria-label="YouTube video player">
+    <div class="youtube-player-frame" id="youtubePlayerFrame"></div>
+    <div class="youtube-player-actions">
+      <a id="youtubeExternalLink" href="#" target="_blank" rel="noopener noreferrer">Open on YouTube</a>
+      <button id="youtubePlayerClose" type="button" aria-label="Close video">✕</button>
+    </div>
+  </div>
+</div>
 <div id="defPanel" aria-hidden="true">
   <div class="topRow">
     <div class="title">
@@ -2971,6 +3040,75 @@ function linkify(html) {
 
   return div.innerHTML;
 }
+
+/* =========================
+   YouTube note links
+========================= */
+const youtubePlayerOverlay = document.getElementById('youtubePlayerOverlay');
+const youtubePlayerFrame = document.getElementById('youtubePlayerFrame');
+const youtubeExternalLink = document.getElementById('youtubeExternalLink');
+const youtubePlayerClose = document.getElementById('youtubePlayerClose');
+
+function getYouTubeVideoId(rawUrl) {
+  try {
+    const url = new URL(rawUrl, location.href);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    let id = '';
+
+    if (host === 'youtu.be') id = url.pathname.split('/').filter(Boolean)[0] || '';
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+      if (url.pathname === '/watch') id = url.searchParams.get('v') || '';
+      else {
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (['shorts', 'embed', 'live'].includes(parts[0])) id = parts[1] || '';
+      }
+    }
+
+    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : '';
+  } catch {
+    return '';
+  }
+}
+
+function closeYouTubePlayer() {
+  youtubePlayerOverlay.classList.remove('is-open');
+  youtubePlayerOverlay.setAttribute('aria-hidden', 'true');
+  youtubePlayerFrame.replaceChildren();
+}
+
+function openYouTubePlayer(videoId, sourceUrl) {
+  const iframe = document.createElement('iframe');
+  iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+  iframe.title = 'YouTube video player';
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+  iframe.allowFullscreen = true;
+  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+  youtubePlayerFrame.replaceChildren(iframe);
+  youtubeExternalLink.href = sourceUrl;
+  youtubePlayerOverlay.classList.add('is-open');
+  youtubePlayerOverlay.setAttribute('aria-hidden', 'false');
+  youtubePlayerClose.focus({ preventScroll: true });
+}
+
+document.addEventListener('click', event => {
+  const link = event.target.closest?.('.chatBubble a[href]');
+  if (!link || link.classList.contains('conceptLink')) return;
+  const videoId = getYouTubeVideoId(link.href);
+  if (!videoId) return;
+  event.preventDefault();
+  event.stopPropagation();
+  openYouTubePlayer(videoId, link.href);
+}, true);
+
+youtubePlayerClose.addEventListener('click', closeYouTubePlayer);
+youtubePlayerOverlay.addEventListener('click', event => {
+  if (event.target === youtubePlayerOverlay) closeYouTubePlayer();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && youtubePlayerOverlay.classList.contains('is-open')) {
+    closeYouTubePlayer();
+  }
+});
 
 /* =========================
    Add note
