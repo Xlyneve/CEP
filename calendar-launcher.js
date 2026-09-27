@@ -83,7 +83,7 @@
     saveLayout();
     panel?.remove();
     panel = null;
-    sessionStorage.removeItem(openStateKey);
+    localStorage.removeItem(openStateKey);
     activeLauncher?.focus();
   }
   function bindPointerHandle(handle, resize) {
@@ -137,7 +137,7 @@
   }
   function openOnHome() {
     if (panel) { panel.querySelector("iframe")?.focus(); return; }
-    sessionStorage.setItem(openStateKey, "true");
+    localStorage.setItem(openStateKey, "true");
     panel = document.createElement("section");
     panel.className = "homepage-calendar";
     panel.setAttribute("aria-label", "Today calendar and to-do");
@@ -269,5 +269,5 @@
   document.addEventListener("keydown", event => { if (event.key === "Escape" && !choices.hidden) closeChoices(); });
   window.addEventListener("resize", () => { clearTimeout(hoverTimer); closeChoices(); if (panel) movePanel(panel.offsetLeft, panel.offsetTop); });
   window.addEventListener("pagehide", saveLayout);
-  if (sessionStorage.getItem(openStateKey) === "true") requestAnimationFrame(openOnHome);
+  if (localStorage.getItem(openStateKey) === "true") requestAnimationFrame(openOnHome);
 })();
