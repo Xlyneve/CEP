@@ -9,7 +9,18 @@
   const layoutKey = compactLayout
     ? "xlyneve-notepad-home-layout-mobile"
     : "xlyneve-notepad-home-layout";
+  const openStateKey = "xlyneve-notepad-home-open";
   let savedLayout = null;
+  const rememberOpenState = open => {
+    try {
+      if (open) localStorage.setItem(openStateKey, "true");
+      else localStorage.removeItem(openStateKey);
+    } catch {}
+  };
+  const rememberedOpenState = () => {
+    try { return localStorage.getItem(openStateKey) === "true"; }
+    catch { return false; }
+  };
   try {
     const value = JSON.parse(localStorage.getItem(layoutKey));
     if (value && [value.x, value.y, value.width, value.height].every(Number.isFinite) && value.width > 0 && value.height > 0) savedLayout = value;
@@ -69,6 +80,7 @@
     panel.style.top = `${Math.max(34, Math.min(y, innerHeight - panel.offsetHeight - 8))}px`;
   }
   function openOnHome() {
+    rememberOpenState(true);
     if (panel) {
       panel.hidden = false;
       restoreLayout();
@@ -159,6 +171,7 @@
       close.addEventListener("click", () => {
         saveLayout();
         panel.hidden = true;
+        rememberOpenState(false);
         launcher.focus();
       });
       purpleDot.replaceWith(close);
@@ -257,4 +270,6 @@
     closeChoices();
     restoreLayout();
   });
+  window.addEventListener("pagehide", saveLayout);
+  if (rememberedOpenState()) requestAnimationFrame(openOnHome);
 })();
