@@ -567,7 +567,10 @@ table.editable-table td{
 }
 
 #addNoteBtn,
-#cancelAddNoteBtn {
+#cancelAddNoteBtn,
+#newNoteImageBtn,
+#newNoteEmojiBtn,
+#newNoteArrowBtn {
   background: none;
   color: #666;
   border: none;
@@ -578,7 +581,10 @@ table.editable-table td{
 }
 
 #addNoteBtn:hover,
-#cancelAddNoteBtn:hover {
+#cancelAddNoteBtn:hover,
+#newNoteImageBtn:hover,
+#newNoteEmojiBtn:hover,
+#newNoteArrowBtn:hover {
   transform: scale(1.08);
 }
 
@@ -1308,6 +1314,9 @@ a.conceptLink.hasDef::before{
   <div id="notePanel" style="display:none; flex-direction: column;">
     <div id="noteInput" contenteditable="true" data-placeholder="Type or paste your note here..."></div>
     <div class="new-note-actions">
+      <button id="newNoteImageBtn" type="button" title="Insert image">🖼️</button>
+      <button id="newNoteEmojiBtn" type="button" title="Insert emoji">🌟</button>
+      <button id="newNoteArrowBtn" type="button" title="Insert symbol">↳</button>
       <button id="addNoteBtn" type="button" title="Save note">💾</button>
       <button id="cancelAddNoteBtn" type="button" title="Cancel">❌</button>
     </div>
@@ -1407,6 +1416,9 @@ const liveResults = document.getElementById('liveResults');
 const noteInput = document.getElementById('noteInput');
 const addNoteBtn = document.getElementById('addNoteBtn');
 const cancelAddNoteBtn = document.getElementById('cancelAddNoteBtn');
+const newNoteImageBtn = document.getElementById('newNoteImageBtn');
+const newNoteEmojiBtn = document.getElementById('newNoteEmojiBtn');
+const newNoteArrowBtn = document.getElementById('newNoteArrowBtn');
 const addNoteToggle = document.getElementById('addNoteToggle');
 const notePanel = document.getElementById('notePanel');
 const noteContainer = document.getElementById('noteContainer');
@@ -1502,7 +1514,7 @@ const imageUpload = document.createElement('input');
 imageUpload.type = 'file';
 imageUpload.accept = 'image/*';
 imageUpload.id = 'imageUpload';
-imageUpload.style.marginTop = '10px';
+imageUpload.style.display = 'none';
 notePanel.insertBefore(imageUpload, notePanel.querySelector('.new-note-actions'));
 
 imageUpload.addEventListener('change', function () {
@@ -2764,6 +2776,40 @@ const EMOJIS = ['°','🔴','🟠','🟡','🟢','🔵','🟣','⚫️','⚪️'
 // New: arrows / math symbols (inserted at normal text size)
 const ARROWS = ['±','⤷','⤶','⤹','⤵','↳','⤴','≥','≤','➜','⬇','⬅','⬆']
   .map(symbol => symbol + '\uFE0E');
+
+function prepareNewNotePicker(event, button, items, insertPicked) {
+  event.preventDefault();
+  event.stopPropagation();
+  activeEditable = noteInput;
+  noteInput.focus({ preventScroll: true });
+  saveCaret();
+  showPickerNearButton(button, items, picked => {
+    activeEditable = noteInput;
+    noteInput.focus({ preventScroll: true });
+    restoreCaret();
+    insertPicked(picked);
+  });
+}
+
+newNoteImageBtn.addEventListener('mousedown', event => {
+  event.preventDefault();
+  activeEditable = noteInput;
+  saveCaret();
+  imageUpload.click();
+});
+
+newNoteEmojiBtn.addEventListener('mousedown', event => {
+  prepareNewNotePicker(event, newNoteEmojiBtn, EMOJIS, insertEmojiAtCaret);
+});
+
+newNoteArrowBtn.addEventListener('mousedown', event => {
+  prepareNewNotePicker(event, newNoteArrowBtn, ARROWS, insertInlineSymbolAtCaret);
+});
+
+notePanel.querySelector('.new-note-actions').addEventListener('mousedown', () => {
+  activeEditable = noteInput;
+  saveCaret();
+}, true);
 
 function hideEmojiPanel() {
   floatingEmojiPanel.style.display = 'none';
