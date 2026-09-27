@@ -1335,6 +1335,15 @@ select option {
     html.homecal-embed-today .day.today {
       display:flex; min-width:0; min-height:calc(100dvh - 18px); margin:0; box-sizing:border-box; border-radius:13px !important;
     }
+    html.homecal-embed-today body.embed-other-notes .day.today,
+    html.homecal-embed-today body.embed-other-notes .day.has-note:not(.today) {
+      display:flex !important;
+      min-width:0;
+      min-height:110px;
+      margin:0 0 8px;
+      box-sizing:border-box;
+      border-radius:13px !important;
+    }
     html.homecal-embed-today .day-note-editor,
     html.homecal-embed-today .day-note-editor div,
     html.homecal-embed-today .day-note-editor p {
@@ -1641,8 +1650,8 @@ async function loadCalendar(scrollToday = true) {
   }
 
   // Days with notes
-  const firstRenderedDay = homeEmbedToday ? today.getDate() : 1;
-  const lastRenderedDay = homeEmbedToday ? today.getDate() : daysInMonth;
+  const firstRenderedDay = 1;
+  const lastRenderedDay = daysInMonth;
   for (let i = firstRenderedDay; i <= lastRenderedDay; i++) {
     const note = notes[i] || "";
 	const noteText = getStoredDayNoteText(note);
@@ -2665,6 +2674,16 @@ if (homeEmbedToday && embeddedTodoToggle) {
     setEmbeddedTodoOpen(Boolean(event.data.open));
   });
   if (homeEmbedTodoInitiallyOpen) setEmbeddedTodoOpen(true);
+
+  const setEmbeddedOtherNotesOpen = open => {
+    document.body.classList.toggle('embed-other-notes', open);
+    if (open) document.querySelector('.calendar-scroll-glass')?.scrollTo({ top:0, behavior:'smooth' });
+    window.parent.postMessage({ type:'homecal-embedded-other-notes', open }, location.origin);
+  };
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin || event.source !== window.parent || event.data?.type !== 'homecal-set-other-notes') return;
+    setEmbeddedOtherNotesOpen(Boolean(event.data.open));
+  });
 }
 window.addEventListener('resize', () => {
   document.querySelectorAll('.todo-item textarea, #newTodo, .day textarea').forEach(autoResizeTextarea);
