@@ -29,7 +29,7 @@
     .homepage-calendar-actions { display:flex; align-items:center; gap:4px; }
     .homepage-calendar-day-nav,.homepage-calendar-todo,.homepage-calendar-close { width:25px; height:25px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.58); color:#655b60; cursor:pointer; line-height:1; }
     .homepage-calendar-day-nav { width:20px; background:transparent; color:#fff; font:700 15px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 1px 3px rgba(55,43,50,.38); }
-    .homepage-calendar-todo { background:transparent; color:#fff36a; font:700 18px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 0 5px rgba(255,231,0,.95),0 0 10px rgba(255,211,0,.72); }
+    .homepage-calendar-todo { background:transparent; color:#ffeb3b; font:700 16px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 0 6px rgba(255,235,59,.95),0 0 12px rgba(255,235,59,.62); }
     .homepage-calendar-close { font-size:17px; }
     .homepage-calendar iframe { display:block; flex:1 1 auto; width:100%; min-height:0; border:0; background:transparent; }
     .homepage-calendar-resize { position:absolute; z-index:2; right:0; bottom:0; width:28px; height:28px; border:0; background:transparent; cursor:nwse-resize; touch-action:none; }
@@ -130,7 +130,7 @@
       }
     }
     const todoButton = panel.querySelector(".homepage-calendar-todo");
-    todoButton.textContent = "⌗";
+    todoButton.textContent = "●";
     todoButton.setAttribute("aria-expanded", String(open));
     todoButton.setAttribute("aria-label", open ? "Hide to-do list" : "Show to-do list");
   }
@@ -153,7 +153,7 @@
     const previousDay = makeDayButton("◀", -1, "Previous day");
     const nextDay = makeDayButton("▶︎", 1, "Next day");
     const todo = document.createElement("button"); todo.type = "button"; todo.className = "homepage-calendar-todo";
-    todo.textContent = "⌗"; todo.setAttribute("aria-label", "Show to-do list"); todo.setAttribute("aria-expanded", "false");
+    todo.textContent = "●"; todo.setAttribute("aria-label", "Show to-do list"); todo.setAttribute("aria-expanded", "false");
     todo.addEventListener("pointerdown", event => event.stopPropagation());
     todo.addEventListener("click", () => {
       const open = !panel.classList.contains("todo-open");
