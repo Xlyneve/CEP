@@ -1323,10 +1323,15 @@ export async function mountUniversalSearch(host, closeSearch) {
   };
   window.addEventListener('cep-search-cache-invalidated', onSearchCacheInvalidated);
   window.addEventListener('storage', onSearchStorageInvalidated);
+  const onSearchPageRestore = event => {
+    if (event.persisted) queueMountedRefresh({ detail: { dataset: 'main:' } });
+  };
+  window.addEventListener('pageshow', onSearchPageRestore);
   const mountedSearchObserver = new MutationObserver(() => {
     if (host.isConnected) return;
     window.removeEventListener('cep-search-cache-invalidated', onSearchCacheInvalidated);
     window.removeEventListener('storage', onSearchStorageInvalidated);
+    window.removeEventListener('pageshow', onSearchPageRestore);
     mountedSearchObserver.disconnect();
   });
   mountedSearchObserver.observe(document.body, { childList: true, subtree: true });
