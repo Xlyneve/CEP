@@ -1523,6 +1523,7 @@ const yearSelect = document.getElementById('yearSelect');
 const todoInput = document.getElementById('newTodo');
 const todoListEl = document.getElementById('todoList');
 const homeEmbedToday = document.documentElement.classList.contains('homecal-embed-today');
+const homeEmbedTodoInitiallyOpen = homeEmbedToday && new URLSearchParams(location.search).get('todoOpen') === '1';
 
 window.lastFocusedTextField = null;
 
@@ -2663,6 +2664,7 @@ if (homeEmbedToday && embeddedTodoToggle) {
     if (event.origin !== location.origin || event.source !== window.parent || event.data?.type !== 'homecal-set-todo') return;
     setEmbeddedTodoOpen(Boolean(event.data.open));
   });
+  if (homeEmbedTodoInitiallyOpen) setEmbeddedTodoOpen(true);
 }
 window.addEventListener('resize', () => {
   document.querySelectorAll('.todo-item textarea, #newTodo, .day textarea').forEach(autoResizeTextarea);

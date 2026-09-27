@@ -4,7 +4,7 @@
   if (!launchers.length) return;
 
   const fullUrl = "homecal.html";
-  const embeddedUrl = "homecal.html?homeEmbed=today&v=6";
+  const embeddedUrl = "homecal.html?homeEmbed=today&v=7";
   const layoutKey = "xlyneve-calendar-home-layout";
   const openStateKey = "xlyneve-calendar-home-open";
   const todoOpenStateKey = "xlyneve-calendar-home-todo-open";
@@ -147,7 +147,7 @@
     todo.addEventListener("pointerdown", event => event.stopPropagation());
     todo.addEventListener("click", () => {
       const open = !panel.classList.contains("todo-open");
-      sessionStorage.setItem(todoOpenStateKey, String(open));
+      localStorage.setItem(todoOpenStateKey, String(open));
       setPanelTodoOpen(open);
       panel?.querySelector("iframe")?.contentWindow?.postMessage({ type: "homecal-set-todo", open }, location.origin);
     });
@@ -155,23 +155,25 @@
     close.addEventListener("pointerdown", event => event.stopPropagation());
     close.textContent = "×"; close.setAttribute("aria-label", "Close homepage calendar"); close.addEventListener("click", closePanel);
     actions.append(todo, close); bar.append(label, actions);
-    const frame = document.createElement("iframe"); frame.title = "Today calendar and to-do"; frame.src = embeddedUrl;
+    const restoreTodoOpen = localStorage.getItem(todoOpenStateKey) === "true";
+    const frame = document.createElement("iframe"); frame.title = "Today calendar and to-do";
+    frame.src = `${embeddedUrl}&todoOpen=${restoreTodoOpen ? "1" : "0"}`;
     frame.addEventListener("load", () => {
-      const open = sessionStorage.getItem(todoOpenStateKey) === "true";
+      const open = localStorage.getItem(todoOpenStateKey) === "true";
       frame.contentWindow?.postMessage({ type: "homecal-set-todo", open }, location.origin);
     });
     const resize = document.createElement("button"); resize.type = "button"; resize.className = "homepage-calendar-resize";
     resize.setAttribute("aria-label", "Resize homepage calendar");
     panel.append(bar, frame, resize); document.body.appendChild(panel);
     restoreLayout();
-    setPanelTodoOpen(sessionStorage.getItem(todoOpenStateKey) === "true");
+    setPanelTodoOpen(restoreTodoOpen);
     bindPointerHandle(bar, false); bindPointerHandle(resize, true);
   }
   window.addEventListener("message", event => {
     if (!panel || event.origin !== location.origin || event.source !== panel.querySelector("iframe")?.contentWindow) return;
     if (event.data?.type !== "homecal-embedded-todo") return;
     const open = Boolean(event.data.open);
-    sessionStorage.setItem(todoOpenStateKey, String(open));
+    localStorage.setItem(todoOpenStateKey, String(open));
     setPanelTodoOpen(open);
   });
 
