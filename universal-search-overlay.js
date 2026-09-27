@@ -861,6 +861,74 @@ export function enableSearchTableZoom(table) {
 }
 
 const interactiveSearchChildSelector = 'table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)';
+
+function getYouTubeVideoId(rawUrl) {
+  try {
+    const url = new URL(rawUrl, location.href);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    let id = '';
+    if (host === 'youtu.be') id = url.pathname.split('/').filter(Boolean)[0] || '';
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+      if (url.pathname === '/watch') id = url.searchParams.get('v') || '';
+      else {
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (['shorts', 'embed', 'live'].includes(parts[0])) id = parts[1] || '';
+      }
+    }
+    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : '';
+  } catch { return ''; }
+}
+
+let searchYouTubeUi;
+function getSearchYouTubeUi() {
+  if (searchYouTubeUi?.root?.isConnected) return searchYouTubeUi;
+  if (!document.getElementById('cepSearchYouTubeStyles')) {
+    const style = document.createElement('style');
+    style.id = 'cepSearchYouTubeStyles';
+    style.textContent = `
+      .cep-search-youtube { position:fixed; inset:0; z-index:2147483647; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; background:rgba(28,24,27,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+      .cep-search-youtube[hidden] { display:none !important; }
+      .cep-search-youtube-dialog { width:min(900px,94vw); padding:12px; border:1px solid rgba(255,255,255,.55); border-radius:16px; background:rgba(250,244,245,.92); box-shadow:0 18px 60px rgba(0,0,0,.35),0 0 22px rgba(208,160,163,.3); }
+      .cep-search-youtube-frame { width:100%; aspect-ratio:16/9; overflow:hidden; border-radius:11px; background:#000; }
+      .cep-search-youtube-frame iframe { width:100%; height:100%; border:0; }
+      .cep-search-youtube-actions { display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-top:9px; font:12px Tahoma,sans-serif; }
+      .cep-search-youtube-actions a { color:#604853; }
+      .cep-search-youtube-close { border:0; background:none; color:#604853; font-size:18px; cursor:pointer; }
+    `;
+    document.head.appendChild(style);
+  }
+  const root = document.createElement('div'); root.className = 'cep-search-youtube'; root.hidden = true;
+  root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'YouTube video player');
+  const dialog = document.createElement('div'); dialog.className = 'cep-search-youtube-dialog';
+  const frame = document.createElement('div'); frame.className = 'cep-search-youtube-frame';
+  const actions = document.createElement('div'); actions.className = 'cep-search-youtube-actions';
+  const external = document.createElement('a'); external.target = '_blank'; external.rel = 'noopener noreferrer'; external.textContent = 'Open on YouTube';
+  const close = document.createElement('button'); close.type = 'button'; close.className = 'cep-search-youtube-close'; close.textContent = '✕'; close.setAttribute('aria-label', 'Close video');
+  actions.append(external, close); dialog.append(frame, actions); root.appendChild(dialog); document.body.appendChild(root);
+  const closePlayer = () => { root.hidden = true; frame.replaceChildren(); };
+  const open = (videoId, sourceUrl) => {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+    iframe.title = 'YouTube video player';
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.allowFullscreen = true; iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.replaceChildren(iframe); external.href = sourceUrl; root.hidden = false; close.focus({ preventScroll:true });
+  };
+  close.addEventListener('click', closePlayer);
+  dialog.addEventListener('click', event => event.stopPropagation());
+  root.addEventListener('click', closePlayer);
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !root.hidden) closePlayer(); });
+  searchYouTubeUi = { root, open, close: closePlayer };
+  return searchYouTubeUi;
+}
+
+function openSearchYouTubeUrl(rawUrl) {
+  const videoId = getYouTubeVideoId(rawUrl);
+  if (!videoId) return false;
+  getSearchYouTubeUi().open(videoId, rawUrl);
+  return true;
+}
+
 async function writeSearchClipboard(copyText, copyHtml) {
   const plainText = String(copyText || '').trim();
   const safeHtml = copyHtml && window.CEPSecurity?.sanitizeHTML
@@ -886,6 +954,10 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
   card.addEventListener('click', event => {
     if (isInteractiveChild(event.target)) {
       const nestedLink = event.target.closest?.('a:not(.cep-global-search-result):not(.universal-search-native-card):not(.cep-xgpt-concept):not(.xgpt-concept-link)');
+      if (nestedLink && openSearchYouTubeUrl(nestedLink.href)) {
+        event.preventDefault(); event.stopPropagation();
+        return;
+      }
       if (!nestedLink) { event.preventDefault(); event.stopPropagation(); }
       return;
     }
@@ -901,7 +973,9 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
   });
   card.addEventListener('dblclick', event => {
     if (isInteractiveChild(event.target)) { event.preventDefault(); event.stopPropagation(); return; }
-    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer); onNavigate?.(); navigate?.();
+    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer);
+    if (openSearchYouTubeUrl(card.href)) return;
+    onNavigate?.(); navigate?.();
   });
 }
 
