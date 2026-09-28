@@ -5371,15 +5371,15 @@ function resetNotesSignIn() {
 const notesGoogleRedirectUri = `${window.location.origin}${window.location.pathname}`;
 
 async function finishNotesGoogleRedirect() {
-  if (!useStandaloneGoogleToken || !window.location.hash) return;
-
-  const response = new URLSearchParams(window.location.hash.slice(1));
+  const response = new URLSearchParams(window.location.search);
+  const hashResponse = new URLSearchParams(window.location.hash.slice(1));
+  hashResponse.forEach((value, key) => response.set(key, value));
   const accessToken = response.get('access_token');
   const oauthError = response.get('error');
   if (!accessToken && !oauthError) return;
 
   // Remove the OAuth response from the address bar before updating the UI.
-  window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}`);
+  window.history.replaceState(null, document.title, window.location.pathname);
 
   if (oauthError) {
     lockInfo.textContent = `Sign in failed (${oauthError}). Please try again.`;
