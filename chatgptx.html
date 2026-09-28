@@ -1485,8 +1485,8 @@ const notesChatApp = firebase.apps.find(app => app.name === "notes-chat") ||
 const db = firebase.firestore(notesChatApp);
 const storage = firebase.storage(notesChatApp);
 const auth = firebase.auth(notesChatApp);
-const notesAuthPersistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-  .catch(error => console.warn('Unable to initialise persistent ChatGPT Notes sign-in.', error));
+// Let Firebase restore its existing durable session. Reapplying persistence
+// here can race auth restoration in an iOS Home Screen app.
 
 /* =========================
    DOM refs
