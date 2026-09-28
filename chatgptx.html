@@ -4517,6 +4517,193 @@ function conceptLinkifyHTML(html) {
 /* =========================
    Render notes into ANY container
 ========================= */
+function chooseNotePrintMode() {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      inset: '0',
+      zIndex: '1000020',
+      display: 'grid',
+      placeItems: 'center',
+      padding: '20px',
+      background: 'rgba(30, 26, 28, 0.28)',
+      backdropFilter: 'blur(6px)',
+      WebkitBackdropFilter: 'blur(6px)'
+    });
+
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', 'notePrintChoiceTitle');
+    Object.assign(dialog.style, {
+      width: 'min(360px, 100%)',
+      padding: '20px',
+      borderRadius: '16px',
+      border: '1px solid rgba(255,255,255,0.7)',
+      background: 'rgba(255,255,255,0.94)',
+      boxShadow: '0 18px 50px rgba(0,0,0,0.2)',
+      color: '#222',
+      textAlign: 'center'
+    });
+
+    const title = document.createElement('div');
+    title.id = 'notePrintChoiceTitle';
+    title.textContent = 'Print this note';
+    Object.assign(title.style, { fontWeight: '700', fontSize: '15px', marginBottom: '14px' });
+
+    const actions = document.createElement('div');
+    Object.assign(actions.style, { display: 'grid', gap: '9px' });
+
+    const finish = mode => {
+      document.removeEventListener('keydown', onKeyDown, true);
+      overlay.remove();
+      resolve(mode);
+    };
+    const onKeyDown = event => {
+      if (event.key === 'Escape') finish(null);
+    };
+
+    const choices = [
+      ['note', 'Print note only'],
+      ['definitions', 'Include concept definitions'],
+      [null, 'Cancel']
+    ];
+    choices.forEach(([mode, label]) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      Object.assign(button.style, {
+        padding: '10px 14px',
+        borderRadius: '11px',
+        border: '1px solid rgba(90,80,85,0.2)',
+        background: mode ? 'rgba(238,230,234,0.9)' : 'transparent',
+        color: '#222',
+        cursor: 'pointer',
+        font: 'inherit'
+      });
+      button.onclick = () => finish(mode);
+      actions.appendChild(button);
+    });
+
+    overlay.addEventListener('click', event => {
+      if (event.target === overlay) finish(null);
+    });
+    document.addEventListener('keydown', onKeyDown, true);
+    dialog.append(title, actions);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    actions.firstElementChild.focus();
+  });
+}
+
+function appendPrintableConceptDefinitions(printable, sourceBubble) {
+  const seen = new Set();
+  const definitions = [];
+
+  sourceBubble.querySelectorAll('a.conceptLink').forEach(link => {
+    const concept = getConceptFromLink(link);
+    const key = defKeyForConcept(concept);
+    if (!concept || seen.has(key)) return;
+    seen.add(key);
+
+    const definitionHtml = (getDefinitionHtml(concept) || '').trim();
+    const definitionText = (getDefinition(concept) || '').trim();
+    const media = getConceptMedia(concept);
+    if (!definitionHtml && !definitionText && !media?.imageUrl) return;
+    definitions.push({ concept, definitionHtml, definitionText, imageUrl: media?.imageUrl || '' });
+  });
+
+  if (!definitions.length) return;
+
+  const section = document.createElement('section');
+  section.className = 'print-definitions';
+  const heading = document.createElement('h2');
+  heading.textContent = 'Concept definitions';
+  section.appendChild(heading);
+
+  definitions.forEach(({ concept, definitionHtml, definitionText, imageUrl }) => {
+    const entry = document.createElement('article');
+    const name = document.createElement('h3');
+    name.textContent = concept;
+    const definition = document.createElement('div');
+    definition.className = 'print-definition';
+    if (definitionHtml) CEPSecurity.setHTML(definition, definitionHtml);
+    else definition.textContent = definitionText;
+    entry.append(name);
+    if (definitionHtml || definitionText) entry.appendChild(definition);
+    if (imageUrl) {
+      const image = document.createElement('img');
+      image.src = imageUrl;
+      image.alt = concept;
+      image.className = 'print-concept-image';
+      entry.appendChild(image);
+    }
+    section.appendChild(entry);
+  });
+
+  printable.appendChild(section);
+}
+
+function printNoteBubble(bubble, includeDefinitions = false) {
+  const printable = bubble.cloneNode(true);
+  printable.querySelectorAll('[data-presentation-only]').forEach(node => node.remove());
+  printable.querySelectorAll('[contenteditable]').forEach(node => node.removeAttribute('contenteditable'));
+  if (printable.firstChild?.nodeType === Node.TEXT_NODE) {
+    printable.firstChild.nodeValue = printable.firstChild.nodeValue.replace(/^🤖\s*/, '');
+  }
+  if (includeDefinitions) appendPrintableConceptDefinitions(printable, bubble);
+
+  const printWindow = window.open('', '_blank', 'width=820,height=900');
+  if (!printWindow) {
+    alert('Please allow pop-ups to print this note.');
+    return;
+  }
+
+  const title = (printable.textContent || 'Note').trim().slice(0, 60) || 'Note';
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Print note</title>
+  <style>
+    @page { margin: 18mm; }
+    body { margin: 0; color: #111; background: #fff; font: 12pt/1.55 Tahoma, Arial, sans-serif; }
+    .print-note { max-width: 760px; margin: 0 auto; overflow-wrap: anywhere; white-space: pre-wrap; }
+    img { display: block; max-width: 100%; height: auto; margin: 10px 0; }
+    table { width: 100%; border-collapse: collapse; white-space: normal; }
+    th, td { padding: 6px 8px; border: 1px solid #999; text-align: left; vertical-align: top; }
+    a { color: inherit; text-decoration: underline; }
+    .conceptLink { padding: 0; border: 0; background: none; box-shadow: none; }
+    .print-definitions { margin-top: 28px; padding-top: 20px; border-top: 1px solid #888; white-space: normal; }
+    .print-definitions h2 { margin: 0 0 18px; font-size: 16pt; }
+    .print-definitions article { break-inside: avoid; margin: 0 0 18px; }
+    .print-definitions h3 { margin: 0 0 5px; font-size: 12pt; }
+    .print-definition { white-space: pre-wrap; }
+    .print-concept-image { max-width: 100%; max-height: 110mm; object-fit: contain; margin-top: 10px; }
+  </style>
+</head>
+<body><main class="print-note">${printable.innerHTML}</main></body>
+</html>`);
+  printWindow.document.close();
+  printWindow.document.title = title;
+
+  const images = [...printWindow.document.images];
+  const imagesReady = images.map(image => image.complete
+    ? Promise.resolve()
+    : new Promise(resolve => {
+        image.addEventListener('load', resolve, { once: true });
+        image.addEventListener('error', resolve, { once: true });
+      })
+  );
+  Promise.all(imagesReady).then(() => {
+    printWindow.focus();
+    printWindow.print();
+  });
+}
+
 function displayNotesInto(targetEl, notes) {
   if (!notes.length) {
     const msg = document.createElement('div');
@@ -4546,12 +4733,20 @@ function displayNotesInto(targetEl, notes) {
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.textContent = '✏️';
+    editBtn.title = 'Edit note';
+
+    const printBtn = document.createElement('button');
+    printBtn.type = 'button';
+    printBtn.textContent = '🖨️';
+    printBtn.title = 'Print note';
+    printBtn.setAttribute('aria-label', 'Print note');
 
     const delBtn = document.createElement('button');
     delBtn.type = 'button';
     delBtn.textContent = '🗑️';
+    delBtn.title = 'Delete note';
 
-    [editBtn, delBtn].forEach(btn => Object.assign(btn.style, {
+    [editBtn, printBtn, delBtn].forEach(btn => Object.assign(btn.style, {
       background: 'none',
       border: 'none',
       color: '#666',
@@ -4560,9 +4755,14 @@ function displayNotesInto(targetEl, notes) {
       marginRight: '12px'
     }));
 
-    btns.append(editBtn, delBtn);
+    btns.append(editBtn, printBtn, delBtn);
     div.appendChild(btns);
     targetEl.appendChild(div);
+
+    printBtn.onclick = async () => {
+      const mode = await chooseNotePrintMode();
+      if (mode) printNoteBubble(bubble, mode === 'definitions');
+    };
 
     editBtn.onclick = () => {
       isEditingNote = true;
