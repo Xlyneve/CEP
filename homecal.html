@@ -1961,9 +1961,13 @@ function getTickImmediatelyBeforeCaret(editor) {
   if (!selection.rangeCount || !selection.isCollapsed || !editor.contains(selection.focusNode)) return null;
 
   let node = selection.focusNode;
-  let candidate = node.nodeType === Node.TEXT_NODE
-    ? (selection.focusOffset === 0 ? node.previousSibling : null)
-    : node.childNodes[selection.focusOffset - 1] || null;
+  let candidate = null;
+  if (node.nodeType === Node.TEXT_NODE) {
+    const textBeforeCaret = node.nodeValue.slice(0, selection.focusOffset);
+    if (/^\s*$/.test(textBeforeCaret)) candidate = node.previousSibling;
+  } else {
+    candidate = node.childNodes[selection.focusOffset - 1] || null;
+  }
 
   while (!candidate && node !== editor) {
     candidate = node.previousSibling;
@@ -1976,6 +1980,33 @@ function getTickImmediatelyBeforeCaret(editor) {
   return candidate?.nodeType === Node.ELEMENT_NODE && candidate.classList.contains('day-note-tick')
     ? candidate
     : null;
+}
+
+function getNodeBesideRange(range, editor, direction) {
+  let node = range.startContainer;
+  const offset = range.startOffset;
+
+  if (node.nodeType === Node.TEXT_NODE) {
+    if (direction === 'before' && offset > 0) return { text: node.nodeValue[offset - 1] };
+    if (direction === 'after' && offset < node.nodeValue.length) return { text: node.nodeValue[offset] };
+  } else {
+    const child = node.childNodes[offset + (direction === 'before' ? -1 : 0)];
+    if (child) return child;
+  }
+
+  while (node !== editor) {
+    const sibling = direction === 'before' ? node.previousSibling : node.nextSibling;
+    if (sibling) return sibling;
+    node = node.parentNode;
+  }
+  return null;
+}
+
+function boundaryStartsNewLine(range, editor, direction) {
+  const beside = getNodeBesideRange(range, editor, direction);
+  if (!beside) return true;
+  if (beside.text !== undefined) return beside.text === '\n';
+  return beside.nodeName === 'BR' || beside.nodeName === 'DIV' || beside.nodeName === 'P';
 }
 
 const pendingCalendarSaves = new Map();
@@ -2020,6 +2051,10 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
   editor._lastScheduledValue = getDayNoteStorageValue(editor);
 
   const rememberCaret = () => {
+    const selection = window.getSelection();
+    if (selection.rangeCount && editor.contains(selection.focusNode)) {
+      editor._lastCaretRange = selection.getRangeAt(0).cloneRange();
+    }
     editor._lastCaretPosition = getCaretOffset(editor);
   };
 
@@ -2048,7 +2083,14 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
       const tick = getTickImmediatelyBeforeCaret(editor);
       if (tick) {
         event.preventDefault();
-        tick.remove();
+        const selection = window.getSelection();
+        const deleteRange = document.createRange();
+        deleteRange.setStartBefore(tick);
+        deleteRange.setEnd(selection.focusNode, selection.focusOffset);
+        deleteRange.deleteContents();
+        deleteRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(deleteRange);
         editor._dirty = true;
         rememberCaret();
         updateDayNoteState(editor, year, month, day, dayElement);
@@ -2102,22 +2144,41 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
 }
 
 function insertTickAtCaret(editor, year, month, day, dayElement) {
-  const note = getDayNoteText(editor);
-  const position = Math.max(0, Math.min(note.length, editor._lastCaretPosition ?? note.length));
-  const needsLeadingNewline = position > 0 && note[position - 1] !== '\n';
-  const needsTrailingNewline = position < note.length && note[position] !== '\n';
-  const insertion = `${needsLeadingNewline ? '\n' : ''}☐ ${needsTrailingNewline ? '\n' : ''}`;
-  const newCaretPosition = position + insertion.length;
+  const savedRange = editor._lastCaretRange?.cloneRange() || null;
   editor._dirty = true;
   editor.focus();
-  setCaretOffset(editor, position);
-  const range = window.getSelection().getRangeAt(0);
-  const holder = document.createElement('div');
-  renderDayNoteText(holder, insertion);
+  const selection = window.getSelection();
+  const range = savedRange && editor.contains(savedRange.commonAncestorContainer)
+    ? savedRange
+    : document.createRange();
+  if (!savedRange || !editor.contains(savedRange.commonAncestorContainer)) {
+    range.selectNodeContents(editor);
+    range.collapse(false);
+  }
+  range.deleteContents();
+
+  const needsLeadingNewline = !boundaryStartsNewLine(range, editor, 'before');
+  const needsTrailingNewline = !boundaryStartsNewLine(range, editor, 'after');
   const fragment = document.createDocumentFragment();
-  fragment.append(...holder.childNodes);
+  if (needsLeadingNewline) fragment.appendChild(document.createElement('br'));
+
+  const tick = document.createElement('span');
+  tick.className = 'day-note-tick';
+  tick.textContent = '☐';
+  tick.contentEditable = 'false';
+  tick.setAttribute('role', 'checkbox');
+  tick.setAttribute('aria-checked', 'false');
+  const trailingSpace = document.createTextNode(' ');
+  fragment.append(tick, trailingSpace);
+  if (needsTrailingNewline) fragment.appendChild(document.createElement('br'));
+
   range.insertNode(fragment);
-  setCaretOffset(editor, newCaretPosition);
+  range.setStartAfter(trailingSpace);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  editor._lastCaretRange = range.cloneRange();
+  editor._lastCaretPosition = getCaretOffset(editor);
   updateDayNoteState(editor, year, month, day, dayElement);
 }
 
