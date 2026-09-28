@@ -2080,10 +2080,34 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
     }
 
     if (event.key === 'Backspace' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      const selection = window.getSelection();
+      if (selection.rangeCount && selection.isCollapsed && selection.focusNode?.nodeType === Node.TEXT_NODE) {
+        const textNode = selection.focusNode;
+        const offset = selection.focusOffset;
+        const textBeforeCaret = textNode.nodeValue.slice(0, offset);
+
+        // Safari can treat a text node beside a non-editable tick as one atomic
+        // item. Delete the intended character ourselves so the tick survives.
+        if (/\S/.test(textBeforeCaret)) {
+          event.preventDefault();
+          const previousCharacter = Array.from(textBeforeCaret).pop();
+          const deleteRange = document.createRange();
+          deleteRange.setStart(textNode, offset - previousCharacter.length);
+          deleteRange.setEnd(textNode, offset);
+          deleteRange.deleteContents();
+          deleteRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(deleteRange);
+          editor._dirty = true;
+          rememberCaret();
+          updateDayNoteState(editor, year, month, day, dayElement);
+          return;
+        }
+      }
+
       const tick = getTickImmediatelyBeforeCaret(editor);
       if (tick) {
         event.preventDefault();
-        const selection = window.getSelection();
         const deleteRange = document.createRange();
         deleteRange.setStartBefore(tick);
         deleteRange.setEnd(selection.focusNode, selection.focusOffset);
