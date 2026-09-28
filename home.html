@@ -5306,12 +5306,15 @@ function closeTable() {
         target: card.getAttribute('target') || ''
       };
     });
+    const standaloneHomeApp = window.navigator.standalone === true
+      || window.matchMedia?.('(display-mode: standalone)')?.matches === true;
     candidates.push({
       key: 'link:chatgptx.html',
       label: '🤖 Questions?',
       href: 'chatgptx.html',
       action: '',
-      target: '_blank'
+      // Keep secondary Firebase auth in the installed app's storage context.
+      target: standaloneHomeApp ? '' : '_blank'
     });
 
     const candidateMap = new Map(candidates.map(candidate => [candidate.key, candidate]));
