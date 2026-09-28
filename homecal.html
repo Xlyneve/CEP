@@ -1956,6 +1956,28 @@ function updateDayNoteState(editor, year, month, day, dayElement) {
   scheduleCalendarSave(year, month, day, storedNote);
 }
 
+function getTickImmediatelyBeforeCaret(editor) {
+  const selection = window.getSelection();
+  if (!selection.rangeCount || !selection.isCollapsed || !editor.contains(selection.focusNode)) return null;
+
+  let node = selection.focusNode;
+  let candidate = node.nodeType === Node.TEXT_NODE
+    ? (selection.focusOffset === 0 ? node.previousSibling : null)
+    : node.childNodes[selection.focusOffset - 1] || null;
+
+  while (!candidate && node !== editor) {
+    candidate = node.previousSibling;
+    node = node.parentNode;
+  }
+
+  while (candidate?.lastChild && !candidate.classList?.contains('day-note-tick')) {
+    candidate = candidate.lastChild;
+  }
+  return candidate?.nodeType === Node.ELEMENT_NODE && candidate.classList.contains('day-note-tick')
+    ? candidate
+    : null;
+}
+
 const pendingCalendarSaves = new Map();
 function calendarSaveKey(year, month, day) {
   return `${year}-${month}-${day}`;
@@ -2003,6 +2025,37 @@ function createDayNoteEditor(note, year, month, day, dayElement) {
 
   editor.addEventListener('focus', rememberCaret);
   editor.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      const lineBreak = document.createElement('br');
+      range.insertNode(lineBreak);
+      range.setStartAfter(lineBreak);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      editor._dirty = true;
+      rememberCaret();
+      updateDayNoteState(editor, year, month, day, dayElement);
+      return;
+    }
+
+    if (event.key === 'Backspace' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      const tick = getTickImmediatelyBeforeCaret(editor);
+      if (tick) {
+        event.preventDefault();
+        tick.remove();
+        editor._dirty = true;
+        rememberCaret();
+        updateDayNoteState(editor, year, month, day, dayElement);
+        return;
+      }
+    }
+
     if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
     const key = event.key.toLowerCase();
     const command = key === 'b' ? 'bold' : key === 'u' ? 'underline' : null;
