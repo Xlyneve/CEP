@@ -1464,7 +1464,6 @@ a.conceptLink.hasDef::before{
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script type="module">
 /* =========================
@@ -5354,7 +5353,6 @@ lockToggle.onclick = () => {
 
 let notesSignInTimer = 0;
 let notesSignInAttempt = 0;
-const notesGoogleClientId = '597780727252-5g9gsh73g6ag7c1qn8ki644sqh6lmbvp.apps.googleusercontent.com';
 const useStandaloneGoogleToken = (
   /iPad|iPhone|iPod/.test(navigator.userAgent)
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
@@ -5368,42 +5366,25 @@ function resetNotesSignIn() {
   unlockBtn.disabled = false;
 }
 
-function signInNotesWithGoogleToken() {
-  return new Promise((resolve, reject) => {
-    if (!window.google?.accounts?.oauth2) {
-      const error = new Error('Google sign-in is still loading. Tap Sign in again.');
-      error.code = 'auth/google-library-not-ready';
-      reject(error);
-      return;
-    }
-
-    const tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: notesGoogleClientId,
-      scope: 'openid email profile',
-      callback: async response => {
-        if (!response?.access_token || response.error) {
-          const error = new Error(response?.error_description || response?.error || 'Google did not return a sign-in token.');
-          error.code = `auth/${response?.error || 'google-token-failed'}`;
-          reject(error);
-          return;
-        }
-
-        try {
-          const credential = firebase.auth.GoogleAuthProvider.credential(null, response.access_token);
-          resolve(await auth.signInWithCredential(credential));
-        } catch (error) {
-          reject(error);
-        }
-      },
-      error_callback: response => {
-        const error = new Error(response?.message || response?.type || 'Google sign-in window failed.');
-        error.code = `auth/${response?.type || 'google-popup-failed'}`;
-        reject(error);
-      }
-    });
-
-    tokenClient.requestAccessToken({ prompt: 'select_account', hint: 'xeve06@gmail.com' });
-  });
+async function signInNotesThroughMainAuth() {
+  const bridgeConfig = {
+    apiKey: 'AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q',
+    authDomain: 'cepx-f9d2a.firebaseapp.com',
+    projectId: 'cepx-f9d2a',
+    storageBucket: 'cepx-f9d2a.firebasestorage.app',
+    messagingSenderId: '840696526325',
+    appId: '1:840696526325:web:b9bcb4669fbfad066a1cbc'
+  };
+  const bridgeApp = firebase.apps.find(app => app.name === 'xgpt-auth-bridge')
+    || firebase.initializeApp(bridgeConfig, 'xgpt-auth-bridge');
+  const bridgeAuth = firebase.auth(bridgeApp);
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
+  const result = await bridgeAuth.signInWithPopup(provider);
+  const accessToken = result.credential?.accessToken;
+  if (!accessToken) throw Object.assign(new Error('Google did not return a sign-in credential.'), { code: 'auth/missing-google-token' });
+  const notesCredential = firebase.auth.GoogleAuthProvider.credential(null, accessToken);
+  return auth.signInWithCredential(notesCredential);
 }
 
 unlockBtn.onclick = async () => {
@@ -5425,7 +5406,7 @@ unlockBtn.onclick = async () => {
     // Firebase's cross-project auth helper cannot return to the installed
     // Firebase-hosted app. In iOS standalone, obtain the Google token in the
     // current page and exchange it directly for the secondary Firebase login.
-    if (useStandaloneGoogleToken) await signInNotesWithGoogleToken();
+    if (useStandaloneGoogleToken) await signInNotesThroughMainAuth();
     else await auth.signInWithPopup(provider);
   } catch (err) {
     if (attempt !== notesSignInAttempt || auth.currentUser) return;
