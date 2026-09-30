@@ -528,6 +528,10 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
   const content = document.createElement('div');
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(content, html);
   else content.textContent = textFromHtml(html);
+  content.querySelectorAll('[style]').forEach(element => {
+    const savedColor = element.style.color;
+    if (savedColor) element.style.setProperty('-webkit-text-fill-color', savedColor, 'important');
+  });
   const nodes = [];
   const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) nodes.push(walker.currentNode);
