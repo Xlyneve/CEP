@@ -1371,6 +1371,8 @@ a.conceptLink.hasDef::before{
 #lockBtn:hover, #unlockBtn:hover { background: #ecebe8; }
 #lockInfo { color: #555; font-weight: 100; }
 
+#mobileBottomNav { display: none; }
+
 /* Responsive */
 @media (max-width: 600px) {
   html,
@@ -1380,7 +1382,7 @@ a.conceptLink.hasDef::before{
   }
 
   #chat {
-    padding: 68px 12px calc(92px + env(safe-area-inset-bottom)) 12px;
+    padding: 12px 12px calc(92px + env(safe-area-inset-bottom)) 12px;
     font-size: 14px;
     border-radius: 0;
   }
@@ -1407,14 +1409,17 @@ a.conceptLink.hasDef::before{
   #inputArea {
     left: 12px;
     right: 12px;
-    bottom: calc(10px + env(safe-area-inset-bottom));
+    bottom: calc(78px + env(safe-area-inset-bottom));
     transform: none;
     width: auto;
     max-width: none;
     min-height: 54px;
     padding: 7px 9px;
     border-radius: 16px;
+    display: none;
   }
+
+  #inputArea.mobile-open { display: flex; }
 
   #userInput {
     min-width: 0;
@@ -1424,15 +1429,10 @@ a.conceptLink.hasDef::before{
     box-sizing: border-box;
   }
 
-  #formatToggle {
-    left: 12px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
-  }
-
   #formatToolbar {
     left: 12px;
     right: 12px;
-    bottom: calc(128px + env(safe-area-inset-bottom));
+    bottom: calc(78px + env(safe-area-inset-bottom));
     width: auto;
     max-width: none;
     max-height: none;
@@ -1469,25 +1469,10 @@ a.conceptLink.hasDef::before{
     border-radius: 50%;
   }
 
-  #noteContainer {
-    top: 12px;
-    bottom: auto;
-    left: 12px;
-    right: auto;
-    width: 44px;
-    height: 44px;
-  }
-
-  #addNoteToggle {
-    width: 44px;
-    height: 44px;
-    font-size: 25px;
-  }
-
+  #formatToggle,
+  #addNoteToggle,
   #lockToggle {
-    width: 44px;
-    height: 44px;
-    line-height: 44px;
+    display: none !important;
   }
 
   #notePanel {
@@ -1507,9 +1492,70 @@ a.conceptLink.hasDef::before{
   }
 
   #lockSection {
-    top: 64px;
-    right: 10px;
+    top: auto;
+    left: 12px;
+    right: 12px;
+    bottom: calc(78px + env(safe-area-inset-bottom));
+    align-items: stretch;
     gap: 6px;
+    z-index: 112;
+  }
+
+  #mobileBottomNav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 111;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2px;
+    padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+    background: rgba(250, 247, 248, 0.94);
+    border-top: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -8px 28px rgba(54, 43, 48, 0.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-sizing: border-box;
+  }
+
+  .mobile-nav-btn {
+    min-width: 0;
+    min-height: 54px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px 2px;
+    border: 0;
+    border-radius: 13px;
+    background: transparent;
+    color: #454047;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .mobile-nav-btn[aria-selected="true"] {
+    color: #7d4657;
+    background: rgba(208, 160, 163, 0.18);
+  }
+
+  .mobile-nav-icon {
+    min-height: 24px;
+    font-size: 22px;
+    line-height: 24px;
+    font-weight: 500;
+  }
+
+  .mobile-nav-label {
+    overflow: hidden;
+    max-width: 100%;
+    font-size: 11px;
+    line-height: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 </style>
@@ -1602,6 +1648,25 @@ a.conceptLink.hasDef::before{
   <input type="text" id="userInput" placeholder='Search…  Tip: Ctrl+L = make [[concept]] (Shift+Click Recall includes pinned)' autocomplete="off" required />
   <button type="submit" id="sendBtn">Send</button>
 </form>
+
+<nav id="mobileBottomNav" aria-label="Notes controls">
+  <button class="mobile-nav-btn" id="mobileSearchBtn" type="button" aria-label="Search" aria-selected="false">
+    <span class="mobile-nav-icon" aria-hidden="true">⌕</span>
+    <span class="mobile-nav-label">Search</span>
+  </button>
+  <button class="mobile-nav-btn" id="mobileAddBtn" type="button" aria-label="Add note" aria-selected="false">
+    <span class="mobile-nav-icon" aria-hidden="true">＋</span>
+    <span class="mobile-nav-label">Add note</span>
+  </button>
+  <button class="mobile-nav-btn" id="mobileFormatBtn" type="button" aria-label="Format" aria-selected="false">
+    <span class="mobile-nav-icon" aria-hidden="true">Aa</span>
+    <span class="mobile-nav-label">Format</span>
+  </button>
+  <button class="mobile-nav-btn" id="mobileAccountBtn" type="button" aria-label="Account" aria-selected="false">
+    <span class="mobile-nav-icon" aria-hidden="true">🔒</span>
+    <span class="mobile-nav-label">Account</span>
+  </button>
+</nav>
 
 <div id="tagSuggest" aria-hidden="true"></div>
 <div id="floatingEmojiBtn" title="Insert emoji">📌</div>
@@ -5681,6 +5746,102 @@ auth.onAuthStateChanged(async (user) => {
 
 document.getElementById('formatToggle').onclick = () =>
   document.getElementById('formatToolbar').classList.toggle('visible');
+
+const mobileNavMedia = window.matchMedia('(max-width: 600px)');
+const mobileBottomNav = document.getElementById('mobileBottomNav');
+const mobileSearchBtn = document.getElementById('mobileSearchBtn');
+const mobileAddBtn = document.getElementById('mobileAddBtn');
+const mobileFormatBtn = document.getElementById('mobileFormatBtn');
+const mobileAccountBtn = document.getElementById('mobileAccountBtn');
+
+function setMobileNavSelection(selectedButton = null) {
+  mobileBottomNav?.querySelectorAll('.mobile-nav-btn').forEach(button => {
+    button.setAttribute('aria-selected', String(button === selectedButton));
+  });
+}
+
+function closeMobilePanels(except = '') {
+  if (except !== 'search') inputArea.classList.remove('mobile-open');
+  if (except !== 'format') {
+    formatToolbar.classList.remove('visible');
+    fontColorPalette?.classList.remove('visible');
+  }
+  if (except !== 'account') lockSection.style.display = 'none';
+}
+
+mobileSearchBtn?.addEventListener('click', () => {
+  if (!mobileNavMedia.matches) return;
+  const willOpen = !inputArea.classList.contains('mobile-open');
+  closeMobilePanels();
+  if (willOpen) {
+    inputArea.classList.add('mobile-open');
+    setMobileNavSelection(mobileSearchBtn);
+    userInput.focus({ preventScroll: true });
+  } else {
+    setMobileNavSelection();
+  }
+});
+
+mobileFormatBtn?.addEventListener('mousedown', () => {
+  if (!mobileNavMedia.matches || !activeEditable?.isContentEditable) return;
+  activeEditable.focus({ preventScroll: true });
+  saveCaret();
+});
+
+mobileFormatBtn?.addEventListener('click', () => {
+  if (!mobileNavMedia.matches) return;
+  const willOpen = !formatToolbar.classList.contains('visible');
+  closeMobilePanels();
+  if (willOpen) {
+    formatToolbar.classList.add('visible');
+    setMobileNavSelection(mobileFormatBtn);
+  } else {
+    setMobileNavSelection();
+  }
+});
+
+mobileAddBtn?.addEventListener('click', () => {
+  if (!mobileNavMedia.matches) return;
+  closeMobilePanels();
+  setMobileNavSelection();
+  addNoteToggle.click();
+});
+
+mobileAccountBtn?.addEventListener('click', () => {
+  if (!mobileNavMedia.matches) return;
+  const willOpen = lockSection.style.display !== 'flex';
+  closeMobilePanels();
+  if (willOpen) {
+    lockSection.style.display = 'flex';
+    setMobileNavSelection(mobileAccountBtn);
+  } else {
+    setMobileNavSelection();
+  }
+});
+
+document.addEventListener('click', event => {
+  if (!mobileNavMedia.matches) return;
+  if (
+    mobileBottomNav?.contains(event.target)
+    || inputArea.contains(event.target)
+    || formatToolbar.contains(event.target)
+    || lockSection.contains(event.target)
+  ) return;
+  closeMobilePanels();
+  setMobileNavSelection();
+});
+
+document.addEventListener('keydown', event => {
+  if (!mobileNavMedia.matches || event.key !== 'Escape') return;
+  closeMobilePanels();
+  setMobileNavSelection();
+});
+
+mobileNavMedia.addEventListener?.('change', event => {
+  if (event.matches) return;
+  closeMobilePanels();
+  setMobileNavSelection();
+});
 
 function getActiveEditor() {
   const el = activeEditable;
