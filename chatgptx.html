@@ -1818,6 +1818,14 @@ function renderWelcome() {
   refreshConceptDefBadges(liveResults);
 }
 
+function scrollAfterResultsRender() {
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    chat.scrollTo({ top: 0, behavior: 'auto' });
+    return;
+  }
+  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+}
+
 function renderLiveResults(notes, queryLabel) {
   clearLiveResults();
   renderHeaderLine(`Results for: ${queryLabel}`);
@@ -1827,7 +1835,7 @@ function renderLiveResults(notes, queryLabel) {
 
   displayNotesInto(container, notes);
   refreshConceptDefBadges(liveResults);
-  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  scrollAfterResultsRender();
 }
 
 /* =========================
@@ -2681,6 +2689,7 @@ function updateUIForLockState() {
   const mobileAccountControl = document.getElementById('mobileAccountBtn');
   const mobileAccountLabel = mobileAccountControl?.querySelector('.mobile-nav-label');
   const mobileAccountText = isUnlocked ? 'Sign out' : 'Sign in';
+  const isMobileLayout = window.matchMedia('(max-width: 600px)').matches;
   if (mobileAccountControl) mobileAccountControl.setAttribute('aria-label', mobileAccountText);
   if (mobileAccountLabel) mobileAccountLabel.textContent = mobileAccountText;
 
@@ -2693,8 +2702,8 @@ function updateUIForLockState() {
     lockBtn.style.display = 'inline-block';
 
     inputArea.style.display = 'flex';
-    noteContainer.style.display = 'block';
-    formatToggle.style.display = 'block';
+    noteContainer.style.display = isMobileLayout ? 'none' : 'block';
+    formatToggle.style.display = isMobileLayout ? 'none' : 'block';
 
     startNotesListener();
     startDefsListener();
@@ -2813,7 +2822,7 @@ function runSmartRecall({ count = 3, includePinned = false } = {}) {
   })));
 
   refreshConceptDefBadges(liveResults);
-  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  scrollAfterResultsRender();
 }
 
 if (recallBtn) {
