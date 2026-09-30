@@ -3583,9 +3583,10 @@ html body .cep-sign-out-light {
   }
 
   @keyframes quickies-panel-pop {
-    0% { opacity: .18; filter: blur(8px); clip-path: circle(7px at 20px 50%); transform: translateX(-10px) scale(.12, .2); }
-    54% { opacity: .9; filter: blur(2px); clip-path: circle(72% at 20px 50%); transform: translateX(-2px) scale(.92, .88); }
-    100% { opacity: 1; filter: blur(0); clip-path: circle(145% at 20px 50%); transform: translateX(0) scale(1); }
+    0% { opacity: .28; clip-path: polygon(0 46%, 100% 30%, 100% 70%, 0 54%); transform: translateX(-4px) scale(.035, .13) skewX(-10deg); }
+    30% { opacity: .68; clip-path: polygon(0 42%, 100% 20%, 100% 80%, 0 58%); transform: translateX(-3px) scale(.3, .46) skewX(-8deg); }
+    68% { opacity: .96; clip-path: polygon(0 16%, 100% 0, 100% 100%, 0 84%); transform: translateX(-1px) scale(.88, .97) skewX(-2deg); }
+    100% { opacity: 1; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translateX(0) scale(1) skewX(0); }
   }
 
   body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator).quickies-sucking-in {
@@ -3594,15 +3595,27 @@ html body .cep-sign-out-light {
   }
 
   @keyframes quickies-panel-suck {
-    0% { opacity: 1; filter: blur(0); clip-path: circle(145% at 20px 50%); transform: translateX(0) scale(1); }
-    48% { opacity: .82; filter: blur(2px); clip-path: circle(66% at 20px 50%); transform: translateX(-3px) scale(.86, .8); }
-    100% { opacity: .08; filter: blur(7px); clip-path: circle(7px at 20px 50%); transform: translateX(-10px) scale(.1, .16); }
+    0% { opacity: 1; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translateX(0) scale(1) skewX(0); }
+    28% { opacity: .96; clip-path: polygon(0 14%, 100% 0, 100% 100%, 0 86%); transform: translateX(-1px) scale(.93, .99) skewX(-2deg); }
+    72% { opacity: .66; clip-path: polygon(0 42%, 100% 20%, 100% 80%, 0 58%); transform: translateX(-3px) scale(.28, .44) skewX(-9deg); }
+    100% { opacity: .18; clip-path: polygon(0 47%, 100% 34%, 100% 66%, 0 53%); transform: translateX(-4px) scale(.03, .12) skewX(-12deg); }
+  }
+
+  html body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator).quickies-dot-settle :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle)::before {
+    animation: quickies-dot-settle 300ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+  @keyframes quickies-dot-settle {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    48% { transform: translate(-50%, -50%) scale(1.72); box-shadow: 0 0 0 8px color-mix(in srgb, var(--quick-accent, #39190f) 13%, transparent); }
+    100% { transform: translate(-50%, -50%) scale(1); }
   }
 }
 
 @media (min-width: 769px) and (prefers-reduced-motion: reduce) {
   body :is(.qc, .qi, .qt, .qs):not(.collapsed),
-  html body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator):not(.collapsed) :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle)::before {
+  html body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator):not(.collapsed) :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle)::before,
+  html body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator).quickies-dot-settle :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle)::before {
     animation-duration: .01ms !important;
   }
 }
@@ -5222,7 +5235,9 @@ function closeTable() {
     const finishCollapse = () => {
       panel.classList.add('collapsed');
       panel.classList.remove('quickies-sucking-in');
+      panel.classList.add('quickies-dot-settle');
       syncQuickiesToggle(panel, toggle);
+      window.setTimeout(() => panel.classList.remove('quickies-dot-settle'), 320);
     };
     panel.addEventListener('animationend', finishCollapse, { once: true });
   }
