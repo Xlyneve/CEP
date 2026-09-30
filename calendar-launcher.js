@@ -4,7 +4,7 @@
   if (!launchers.length) return;
 
   const fullUrl = "homecal.html";
-  const embeddedUrl = "homecal.html?homeEmbed=today&v=7";
+  const embeddedUrl = "homecal.html?homeEmbed=today&v=8";
   const layoutKey = "xlyneve-calendar-home-layout";
   const openStateKey = "xlyneve-calendar-home-open";
   const todoOpenStateKey = "xlyneve-calendar-home-todo-open";
