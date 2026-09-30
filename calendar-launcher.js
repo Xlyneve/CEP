@@ -159,13 +159,12 @@
         } catch {}
         calendarFrame?.postMessage({ type:"homecal-shift-day", offset }, location.origin);
       };
-      button.addEventListener("pointerup", event => {
-        if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+      button.addEventListener("touchstart", event => {
         event.preventDefault();
         event.stopPropagation();
         lastTouchActivation = Date.now();
         shiftDay();
-      });
+      }, { passive:false });
       button.addEventListener("click", () => {
         if (Date.now() - lastTouchActivation < 700) return;
         shiftDay();
