@@ -1372,6 +1372,7 @@ a.conceptLink.hasDef::before{
 #lockInfo { color: #555; font-weight: 100; }
 
 #mobileBottomNav { display: none; }
+#mobileNoteBackdrop { display: none; }
 
 /* Responsive */
 @media (max-width: 600px) {
@@ -1478,8 +1479,59 @@ a.conceptLink.hasDef::before{
     right: auto;
   }
 
-  #noteInput {
-    max-height: 50dvh;
+  #mobileNoteBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 109;
+    display: block;
+    background: rgba(47, 38, 43, 0.24);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  #mobileNoteBackdrop[hidden] { display: none !important; }
+
+  body.mobile-note-open #chat { overflow: hidden; }
+
+  #notePanel.mobile-note-sheet {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(78px + env(safe-area-inset-bottom));
+    z-index: 114;
+    width: auto;
+    max-height: 58dvh;
+    margin: 0;
+    padding: 14px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.76);
+    border-radius: 20px;
+    background: rgba(255, 253, 252, 0.96);
+    box-shadow: 0 -14px 42px rgba(54, 43, 48, 0.22);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  #notePanel.mobile-note-sheet #noteInput {
+    min-height: 150px;
+    max-height: calc(58dvh - 78px);
+    padding: 10px !important;
+    overflow-y: auto;
+    border: 1px solid rgba(104, 0, 68, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.72);
+  }
+
+  #notePanel.mobile-note-sheet .new-note-actions {
+    position: sticky;
+    bottom: 0;
+    padding-top: 8px;
+    background: rgba(255, 253, 252, 0.94);
+  }
+
+  #formatToolbar.visible {
+    z-index: 116;
   }
 
   table.editable-table {
@@ -1637,6 +1689,8 @@ a.conceptLink.hasDef::before{
   </div>
 </div>
 
+<div id="mobileNoteBackdrop" hidden aria-hidden="true"></div>
+
 <!-- Chat area + Live Results go inside this -->
 <div id="chat">
   <div id="liveResults"></div>
@@ -1768,6 +1822,7 @@ const newNoteArrowBtn = document.getElementById('newNoteArrowBtn');
 const addNoteToggle = document.getElementById('addNoteToggle');
 const notePanel = document.getElementById('notePanel');
 const noteContainer = document.getElementById('noteContainer');
+const mobileNoteBackdrop = document.getElementById('mobileNoteBackdrop');
 
 const lockToggle = document.getElementById('lockToggle');
 const lockSection = document.getElementById('lockSection');
@@ -3084,6 +3139,21 @@ function restoreCaret() {
   return true;
 }
 
+document.addEventListener('selectionchange', () => {
+  const selection = window.getSelection();
+  if (!selection?.rangeCount) return;
+
+  const range = selection.getRangeAt(0);
+  const anchorElement = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+    ? range.commonAncestorContainer
+    : range.commonAncestorContainer.parentElement;
+  const editor = anchorElement?.closest?.('#noteInput, .editableNote, #defBox, #whyBox');
+  if (!editor?.isContentEditable || !editor.contains(range.commonAncestorContainer)) return;
+
+  activeEditable = editor;
+  caretMap.set(editor, range.cloneRange());
+});
+
 function placeCaretAtEnd(el) {
   el.focus();
   const range = document.createRange();
@@ -3101,6 +3171,10 @@ function placeCaretAtEnd(el) {
 function closeNewNoteEditor({ clear = false } = {}) {
   isEditingNote = false;
   notePanel.style.display = 'none';
+  notePanel.classList.remove('mobile-note-sheet');
+  document.body.classList.remove('mobile-note-open');
+  mobileNoteBackdrop.hidden = true;
+  mobileNoteBackdrop.setAttribute('aria-hidden', 'true');
   if (clear) {
     noteInput.innerHTML = '';
     imageUpload.value = '';
@@ -3116,16 +3190,26 @@ addNoteToggle.onclick = () => {
     return;
   }
 
-  liveResults.prepend(notePanel);
+  const isMobileLayout = window.matchMedia('(max-width: 600px)').matches;
+  if (isMobileLayout) {
+    document.body.appendChild(notePanel);
+    notePanel.classList.add('mobile-note-sheet');
+    document.body.classList.add('mobile-note-open');
+    mobileNoteBackdrop.hidden = false;
+    mobileNoteBackdrop.setAttribute('aria-hidden', 'false');
+  } else {
+    liveResults.prepend(notePanel);
+  }
   notePanel.style.display = 'flex';
   isEditingNote = true;
   addNoteToggle.setAttribute('aria-expanded', 'true');
   activeEditable = noteInput;
   noteInput.focus({ preventScroll: true });
-  notePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (!isMobileLayout) notePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 cancelAddNoteBtn.onclick = () => closeNewNoteEditor({ clear: true });
+mobileNoteBackdrop.addEventListener('click', () => closeNewNoteEditor());
 
 /* =========================
    Inline Emoji Picker (your existing)
@@ -5776,9 +5860,10 @@ function closeMobilePanels(except = '') {
   if (except !== 'account') lockSection.style.display = 'none';
 }
 
-mobileFormatBtn?.addEventListener('mousedown', () => {
+mobileFormatBtn?.addEventListener('pointerdown', event => {
   if (!mobileNavMedia.matches || !activeEditable?.isContentEditable) return;
-  activeEditable.focus({ preventScroll: true });
+  event.preventDefault();
+  event.stopPropagation();
   saveCaret();
 });
 
