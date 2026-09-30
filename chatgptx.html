@@ -1592,6 +1592,7 @@ a.conceptLink.hasDef::before{
   }
 
   .mobile-nav-btn {
+    position: relative;
     min-width: 0;
     min-height: 54px;
     display: flex;
@@ -1606,6 +1607,20 @@ a.conceptLink.hasDef::before{
     color: #454047;
     font: inherit;
     cursor: pointer;
+  }
+
+  #mobileBottomNav .cep-sign-out-light {
+    position: absolute !important;
+    left: calc(33.333% - 31px) !important;
+    right: auto !important;
+    bottom: calc(24px + env(safe-area-inset-bottom)) !important;
+    width: 22px !important;
+    height: 22px !important;
+    z-index: 2 !important;
+  }
+
+  #mobileBottomNav .cep-sign-out-light::before {
+    inset: 6px !important;
   }
 
   .mobile-nav-btn[aria-selected="true"] {
@@ -5866,6 +5881,22 @@ const mobileBottomNav = document.getElementById('mobileBottomNav');
 const mobileAddBtn = document.getElementById('mobileAddBtn');
 const mobileFormatBtn = document.getElementById('mobileFormatBtn');
 const mobileAccountBtn = document.getElementById('mobileAccountBtn');
+
+function syncMobileSignOutLight() {
+  const signOutLight = document.querySelector('.cep-sign-out-light');
+  if (!signOutLight || !mobileBottomNav) return;
+
+  if (mobileNavMedia.matches) {
+    if (signOutLight.parentElement !== mobileBottomNav) mobileBottomNav.appendChild(signOutLight);
+  } else if (signOutLight.parentElement === mobileBottomNav) {
+    document.body.appendChild(signOutLight);
+  }
+}
+
+const signOutLightObserver = new MutationObserver(syncMobileSignOutLight);
+signOutLightObserver.observe(document.body, { childList: true });
+syncMobileSignOutLight();
+mobileNavMedia.addEventListener?.('change', syncMobileSignOutLight);
 
 function setMobileNavSelection(selectedButton = null) {
   mobileBottomNav?.querySelectorAll('.mobile-nav-btn').forEach(button => {
