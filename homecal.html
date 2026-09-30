@@ -2799,6 +2799,10 @@ loadCalendar();
 if (!homeEmbedToday) loadTodos();
 const embeddedTodoToggle = document.getElementById('embeddedTodoToggle');
 if (homeEmbedToday && embeddedTodoToggle) {
+  window.shiftEmbeddedCalendarDay = offset => {
+    currentDate.setDate(currentDate.getDate() + Number(offset || 0));
+    void loadCalendar(false);
+  };
   const setEmbeddedTodoOpen = open => {
     document.body.classList.toggle('embed-todo-open', open);
     embeddedTodoToggle.textContent = open ? '<<' : '>>';
@@ -2818,8 +2822,7 @@ if (homeEmbedToday && embeddedTodoToggle) {
 
   window.addEventListener('message', event => {
     if (event.origin !== location.origin || event.source !== window.parent || event.data?.type !== 'homecal-shift-day') return;
-    currentDate.setDate(currentDate.getDate() + Number(event.data.offset || 0));
-    void loadCalendar(false);
+    window.shiftEmbeddedCalendarDay(event.data.offset);
   });
 }
 window.addEventListener('resize', () => {

@@ -148,13 +148,28 @@
       const button = document.createElement("button"); button.type = "button"; button.className = "homepage-calendar-day-nav";
       button.textContent = text; button.setAttribute("aria-label", labelText); button.title = labelText;
       button.addEventListener("pointerdown", event => event.stopPropagation());
-      const shiftDay = () => frame.contentWindow?.postMessage({ type:"homecal-shift-day", offset }, location.origin);
-      button.addEventListener("touchend", event => {
+      let lastTouchActivation = 0;
+      const shiftDay = () => {
+        const calendarFrame = frame.contentWindow;
+        try {
+          if (typeof calendarFrame?.shiftEmbeddedCalendarDay === "function") {
+            calendarFrame.shiftEmbeddedCalendarDay(offset);
+            return;
+          }
+        } catch {}
+        calendarFrame?.postMessage({ type:"homecal-shift-day", offset }, location.origin);
+      };
+      button.addEventListener("pointerup", event => {
+        if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
         event.preventDefault();
         event.stopPropagation();
+        lastTouchActivation = Date.now();
         shiftDay();
-      }, { passive:false });
-      button.addEventListener("click", shiftDay);
+      });
+      button.addEventListener("click", () => {
+        if (Date.now() - lastTouchActivation < 700) return;
+        shiftDay();
+      });
       return button;
     };
     const previousDay = makeDayButton("◀", -1, "Previous day");
