@@ -361,6 +361,22 @@ input[type="file"]::file-selector-button:hover {
   color: #222;
 }
 
+#fontColorInput {
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+#fontColorInput::-webkit-color-swatch-wrapper { padding: 0; }
+#fontColorInput::-webkit-color-swatch {
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 5px;
+}
+
 .emoji {
   background: none;
   color: #444;
@@ -1367,8 +1383,7 @@ a.conceptLink.hasDef::before{
   <button class="format-btn" id="underlineBtn"><u>U</u></button>
   <button class="format-btn" id="indentBtn" title="Indent (Tab) — Shift+Click = Outdent">👉🏻</button>
   <button class="format-btn" id="highlightBtn">🟪</button>
-  <button class="format-btn" id="redFontBtn">🟥</button>
-  <button class="format-btn" id="blueFontBtn">🟦</button>
+  <input id="fontColorInput" type="color" value="#d05050" title="Choose font colour" aria-label="Choose font colour" />
 
   <button class="format-btn" id="increaseFontBtn" title="Increase Font Size">🔺A</button>
   <button class="format-btn" id="decreaseFontBtn" title="Decrease Font Size">🔻A</button>
@@ -5351,8 +5366,10 @@ bindToolbarBtn('boldBtn', 'bold');
 bindToolbarBtn('italicBtn', 'italic');
 bindToolbarBtn('underlineBtn', 'underline');
 bindToolbarBtn('highlightBtn', 'hiliteColor', '#e8dcff');
-bindToolbarBtn('redFontBtn', 'foreColor', 'red');
-bindToolbarBtn('blueFontBtn', 'foreColor', 'blue');
+
+document.getElementById('fontColorInput')?.addEventListener('input', (e) => {
+  runCmd('foreColor', e.currentTarget.value);
+});
 
 /* =========================
    (Everything below here stays as-is in your file)
