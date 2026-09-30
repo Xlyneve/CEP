@@ -5368,34 +5368,6 @@ function resetNotesSignIn() {
   unlockBtn.disabled = false;
 }
 
-const notesGoogleRedirectUri = `${window.location.origin}${window.location.pathname}`;
-
-async function finishNotesGoogleRedirect() {
-  const response = new URLSearchParams(window.location.search);
-  const hashResponse = new URLSearchParams(window.location.hash.slice(1));
-  hashResponse.forEach((value, key) => response.set(key, value));
-  const accessToken = response.get('access_token');
-  const oauthError = response.get('error');
-  if (!accessToken && !oauthError) return;
-
-  // Remove the OAuth response from the address bar before updating the UI.
-  window.history.replaceState(null, document.title, window.location.pathname);
-
-  if (oauthError) {
-    lockInfo.textContent = `Sign in failed (${oauthError}). Please try again.`;
-    return;
-  }
-
-  try {
-    lockInfo.textContent = 'Finishing Google sign in…';
-    const credential = firebase.auth.GoogleAuthProvider.credential(null, accessToken);
-    await auth.signInWithCredential(credential);
-  } catch (error) {
-    console.error(error);
-    lockInfo.textContent = `Sign in failed (${error.code || 'unknown error'}). Please try again.`;
-  }
-}
-
 function signInNotesWithGoogleToken() {
   return new Promise((resolve, reject) => {
     if (!window.google?.accounts?.oauth2) {
@@ -5408,8 +5380,6 @@ function signInNotesWithGoogleToken() {
     const tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: notesGoogleClientId,
       scope: 'openid email profile',
-      ux_mode: 'redirect',
-      redirect_uri: notesGoogleRedirectUri,
       callback: async response => {
         if (!response?.access_token || response.error) {
           const error = new Error(response?.error_description || response?.error || 'Google did not return a sign-in token.');
@@ -5435,8 +5405,6 @@ function signInNotesWithGoogleToken() {
     tokenClient.requestAccessToken({ prompt: 'select_account', hint: 'xeve06@gmail.com' });
   });
 }
-
-finishNotesGoogleRedirect();
 
 unlockBtn.onclick = async () => {
   if (unlockBtn.disabled) return;

@@ -8,6 +8,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
   <script src="auth-guard.js?v=20260826-31"></script>
   <script src="security.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -5934,6 +5935,7 @@ function closeTable() {
     getAuth,
     GoogleAuthProvider,
     onAuthStateChanged,
+    signInWithCredential,
     signInWithRedirect
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
@@ -5994,6 +5996,48 @@ const firebaseConfig = {
   // index on the first real search, cache it, and never create preview iframes.
   let chatgptSearchPromise;
   let chatgptSearchAuth;
+  const xgptGoogleClientId = '597780727252-5g9gsh73g6ag7c1qn8ki644sqh6lmbvp.apps.googleusercontent.com';
+  const useStandaloneXgptToken = (
+    /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  ) && (
+    window.navigator.standalone === true
+    || window.matchMedia?.('(display-mode: standalone)')?.matches === true
+  );
+
+  const signInToStandaloneXgpt = auth => new Promise((resolve, reject) => {
+    if (!window.google?.accounts?.oauth2) {
+      const error = new Error('Google sign-in is still loading. Tap Sign in again.');
+      error.code = 'auth/google-library-not-ready';
+      reject(error);
+      return;
+    }
+    const tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: xgptGoogleClientId,
+      scope: 'openid email profile',
+      callback: async response => {
+        if (!response?.access_token || response.error) {
+          const error = new Error(response?.error_description || response?.error || 'Google did not return a sign-in token.');
+          error.code = `auth/${response?.error || 'google-token-failed'}`;
+          reject(error);
+          return;
+        }
+        try {
+          const credential = GoogleAuthProvider.credential(null, response.access_token);
+          resolve(await signInWithCredential(auth, credential));
+        } catch (error) {
+          reject(error);
+        }
+      },
+      error_callback: response => {
+        const error = new Error(response?.message || response?.type || 'Google sign-in window failed.');
+        error.code = `auth/${response?.type || 'google-popup-failed'}`;
+        reject(error);
+      }
+    });
+    tokenClient.requestAccessToken({ prompt: 'select_account', hint: 'xeve06@gmail.com' });
+  });
+
   const loadChatgptSearchNotes = () => chatgptSearchPromise ||= (async () => {
     const chatConfig = {
       apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
@@ -6072,7 +6116,8 @@ const firebaseConfig = {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
       sessionStorage.setItem('cep-xgpt-return-search', '1');
-      await signInWithRedirect(chatgptSearchAuth, provider);
+      if (useStandaloneXgptToken) await signInToStandaloneXgpt(chatgptSearchAuth);
+      else await signInWithRedirect(chatgptSearchAuth, provider);
     } catch (error) {
       if (error?.code !== 'auth/popup-closed-by-user') console.warn('Xgpt sign-in failed.', error);
     } finally { button.disabled = false; button.textContent = 'Sign in to Xgpt'; }
