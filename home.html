@@ -3514,6 +3514,76 @@ html body .cep-sign-out-light {
   }
 }
 
+/* Desktop Quickies: minimalist theme-aware dot controls with a soft pop. */
+@media (min-width: 769px) {
+  body :is(.qc, .qi, .qt, .qs) {
+    transform-origin: left center;
+  }
+
+  body :is(.qc, .qi, .qt, .qs):not(.collapsed) {
+    animation: quickies-panel-pop 420ms cubic-bezier(.17, .88, .28, 1.16);
+  }
+
+  html body :is(.qc, .qi, .qt, .qs) :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle) {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    overflow: visible;
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    text-indent: -9999px;
+  }
+
+  html body :is(.qc, .qi, .qt, .qs) :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle)::before {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--quick-accent, #39190f);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--quick-accent, #39190f) 38%, transparent);
+    transform: translate(-50%, -50%);
+    transform-origin: center;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+
+  html body :is(.qc, .qi, .qt, .qs) :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle):hover::before,
+  html body :is(.qc, .qi, .qt, .qs) :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle):focus-visible::before {
+    transform: translate(-50%, -50%) scale(1.38);
+  }
+
+  html body :is(.qc, .qi, .qt, .qs):not(.collapsed) :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle)::before {
+    box-shadow:
+      0 0 0 7px color-mix(in srgb, var(--quick-accent, #39190f) 16%, transparent),
+      0 4px 12px color-mix(in srgb, var(--quick-accent, #39190f) 36%, transparent);
+    animation: quickies-dot-pop 420ms cubic-bezier(.2, .9, .25, 1.22) both;
+  }
+
+  @keyframes quickies-dot-pop {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    32% { transform: translate(-50%, -50%) scale(.56); }
+    70% { transform: translate(-50%, -50%) scale(1.9); }
+    100% { transform: translate(-50%, -50%) scale(1.48); }
+  }
+
+  @keyframes quickies-panel-pop {
+    0% { opacity: .35; transform: translateX(-18px) scale(.78); }
+    68% { opacity: 1; transform: translateX(5px) scale(1.025); }
+    100% { opacity: 1; transform: translateX(0) scale(1); }
+  }
+}
+
+@media (min-width: 769px) and (prefers-reduced-motion: reduce) {
+  body :is(.qc, .qi, .qt, .qs):not(.collapsed),
+  html body :is(.qc, .qi, .qt, .qs):not(.collapsed) :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle)::before {
+    animation-duration: .01ms !important;
+  }
+}
+
 </style>
 
   <link rel="stylesheet" href="site-background.css">
@@ -5376,8 +5446,12 @@ function closeTable() {
 
   toggle?.addEventListener('click', () => {
     qi.classList.toggle('collapsed');
-    toggle.textContent = qi.classList.contains('collapsed') ? '❯' : '❮';
+    const isCollapsed = qi.classList.contains('collapsed');
+    toggle.textContent = isCollapsed ? '❯' : '❮';
+    toggle.setAttribute('aria-expanded', String(!isCollapsed));
   });
+
+  if (toggle) toggle.setAttribute('aria-expanded', String(!qi.classList.contains('collapsed')));
 
   qi?.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-copy]');
@@ -5486,10 +5560,12 @@ function closeTable() {
 
   toggle.addEventListener('click', () => {
     calculator.classList.toggle('collapsed');
-
-    toggle.textContent =
-      calculator.classList.contains('collapsed') ? '❯' : '❮';
+    const isCollapsed = calculator.classList.contains('collapsed');
+    toggle.textContent = isCollapsed ? '❯' : '❮';
+    toggle.setAttribute('aria-expanded', String(!isCollapsed));
   });
+
+  toggle.setAttribute('aria-expanded', String(!calculator.classList.contains('collapsed')));
 
   resetResult();
 })();
@@ -5650,12 +5726,12 @@ function closeTable() {
 
   toggle.addEventListener('click', () => {
     calculator.classList.toggle('collapsed');
-
-    toggle.textContent =
-      calculator.classList.contains('collapsed')
-        ? '❯'
-        : '❮';
+    const isCollapsed = calculator.classList.contains('collapsed');
+    toggle.textContent = isCollapsed ? '❯' : '❮';
+    toggle.setAttribute('aria-expanded', String(!isCollapsed));
   });
+
+  toggle.setAttribute('aria-expanded', String(!calculator.classList.contains('collapsed')));
 
   resetResult();
 })();	 
