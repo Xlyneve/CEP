@@ -28,7 +28,7 @@
     .homepage-calendar-bar:active { cursor:grabbing; }
     .homepage-calendar-actions { display:flex; align-items:center; gap:4px; }
     .homepage-calendar-day-nav,.homepage-calendar-todo,.homepage-calendar-close { width:25px; height:25px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.58); color:#655b60; cursor:pointer; line-height:1; }
-    .homepage-calendar-day-nav { width:20px; background:transparent; color:#fff; font:700 15px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 1px 3px rgba(55,43,50,.38); transition:text-shadow .18s ease; }
+    .homepage-calendar-day-nav { width:20px; background:transparent; color:#fff; font:700 15px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 1px 3px rgba(55,43,50,.38); transition:text-shadow .18s ease; touch-action:manipulation; }
     .homepage-calendar-day-nav:hover,.homepage-calendar-day-nav:focus-visible { background:transparent; text-shadow:0 0 5px var(--dusty-rose,#e5cbcc),0 0 11px var(--terra-cotta,#db9e83); }
     .homepage-calendar-todo { background:transparent; color:#ffeb3b; font:700 16px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 0 6px rgba(255,235,59,.95),0 0 12px rgba(255,235,59,.62); }
     .homepage-calendar-close { font-size:17px; }
@@ -148,7 +148,13 @@
       const button = document.createElement("button"); button.type = "button"; button.className = "homepage-calendar-day-nav";
       button.textContent = text; button.setAttribute("aria-label", labelText); button.title = labelText;
       button.addEventListener("pointerdown", event => event.stopPropagation());
-      button.addEventListener("click", () => frame.contentWindow?.postMessage({ type:"homecal-shift-day", offset }, location.origin));
+      const shiftDay = () => frame.contentWindow?.postMessage({ type:"homecal-shift-day", offset }, location.origin);
+      button.addEventListener("touchend", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        shiftDay();
+      }, { passive:false });
+      button.addEventListener("click", shiftDay);
       return button;
     };
     const previousDay = makeDayButton("◀", -1, "Previous day");
