@@ -1382,7 +1382,7 @@ a.conceptLink.hasDef::before{
   }
 
   #chat {
-    padding: 12px 12px calc(92px + env(safe-area-inset-bottom)) 12px;
+    padding: 12px 12px calc(150px + env(safe-area-inset-bottom)) 12px;
     font-size: 14px;
     border-radius: 0;
   }
@@ -1416,10 +1416,8 @@ a.conceptLink.hasDef::before{
     min-height: 54px;
     padding: 7px 9px;
     border-radius: 16px;
-    display: none;
+    display: flex;
   }
-
-  #inputArea.mobile-open { display: flex; }
 
   #userInput {
     min-width: 0;
@@ -1432,7 +1430,7 @@ a.conceptLink.hasDef::before{
   #formatToolbar {
     left: 12px;
     right: 12px;
-    bottom: calc(78px + env(safe-area-inset-bottom));
+    bottom: calc(140px + env(safe-area-inset-bottom));
     width: auto;
     max-width: none;
     max-height: none;
@@ -1495,7 +1493,7 @@ a.conceptLink.hasDef::before{
     top: auto;
     left: 12px;
     right: 12px;
-    bottom: calc(78px + env(safe-area-inset-bottom));
+    bottom: calc(140px + env(safe-area-inset-bottom));
     align-items: stretch;
     gap: 6px;
     z-index: 112;
@@ -1508,7 +1506,7 @@ a.conceptLink.hasDef::before{
     bottom: 0;
     z-index: 111;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 2px;
     padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
     background: rgba(250, 247, 248, 0.94);
@@ -1650,9 +1648,9 @@ a.conceptLink.hasDef::before{
 </form>
 
 <nav id="mobileBottomNav" aria-label="Notes controls">
-  <button class="mobile-nav-btn" id="mobileSearchBtn" type="button" aria-label="Search" aria-selected="false">
-    <span class="mobile-nav-icon" aria-hidden="true">⌕</span>
-    <span class="mobile-nav-label">Search</span>
+  <button class="mobile-nav-btn" id="mobileAccountBtn" type="button" aria-label="Account" aria-selected="false">
+    <span class="mobile-nav-icon" aria-hidden="true">🔒</span>
+    <span class="mobile-nav-label">Account</span>
   </button>
   <button class="mobile-nav-btn" id="mobileAddBtn" type="button" aria-label="Add note" aria-selected="false">
     <span class="mobile-nav-icon" aria-hidden="true">＋</span>
@@ -1661,10 +1659,6 @@ a.conceptLink.hasDef::before{
   <button class="mobile-nav-btn" id="mobileFormatBtn" type="button" aria-label="Format" aria-selected="false">
     <span class="mobile-nav-icon" aria-hidden="true">Aa</span>
     <span class="mobile-nav-label">Format</span>
-  </button>
-  <button class="mobile-nav-btn" id="mobileAccountBtn" type="button" aria-label="Account" aria-selected="false">
-    <span class="mobile-nav-icon" aria-hidden="true">🔒</span>
-    <span class="mobile-nav-label">Account</span>
   </button>
 </nav>
 
@@ -2684,6 +2678,12 @@ document.addEventListener('click', (e) => {
    UI lock state
 ========================= */
 function updateUIForLockState() {
+  const mobileAccountControl = document.getElementById('mobileAccountBtn');
+  const mobileAccountLabel = mobileAccountControl?.querySelector('.mobile-nav-label');
+  const mobileAccountText = isUnlocked ? 'Sign out' : 'Sign in';
+  if (mobileAccountControl) mobileAccountControl.setAttribute('aria-label', mobileAccountText);
+  if (mobileAccountLabel) mobileAccountLabel.textContent = mobileAccountText;
+
   if (isUnlocked) {
     lockInfo.textContent = currentUser?.email
       ? `Signed in as ${currentUser.email}`
@@ -5749,7 +5749,6 @@ document.getElementById('formatToggle').onclick = () =>
 
 const mobileNavMedia = window.matchMedia('(max-width: 600px)');
 const mobileBottomNav = document.getElementById('mobileBottomNav');
-const mobileSearchBtn = document.getElementById('mobileSearchBtn');
 const mobileAddBtn = document.getElementById('mobileAddBtn');
 const mobileFormatBtn = document.getElementById('mobileFormatBtn');
 const mobileAccountBtn = document.getElementById('mobileAccountBtn');
@@ -5761,26 +5760,12 @@ function setMobileNavSelection(selectedButton = null) {
 }
 
 function closeMobilePanels(except = '') {
-  if (except !== 'search') inputArea.classList.remove('mobile-open');
   if (except !== 'format') {
     formatToolbar.classList.remove('visible');
     fontColorPalette?.classList.remove('visible');
   }
   if (except !== 'account') lockSection.style.display = 'none';
 }
-
-mobileSearchBtn?.addEventListener('click', () => {
-  if (!mobileNavMedia.matches) return;
-  const willOpen = !inputArea.classList.contains('mobile-open');
-  closeMobilePanels();
-  if (willOpen) {
-    inputArea.classList.add('mobile-open');
-    setMobileNavSelection(mobileSearchBtn);
-    userInput.focus({ preventScroll: true });
-  } else {
-    setMobileNavSelection();
-  }
-});
 
 mobileFormatBtn?.addEventListener('mousedown', () => {
   if (!mobileNavMedia.matches || !activeEditable?.isContentEditable) return;
@@ -5818,6 +5803,12 @@ mobileAccountBtn?.addEventListener('click', () => {
     setMobileNavSelection();
   }
 });
+
+const keepMobileSearchAtTop = () => {
+  if (mobileNavMedia.matches) chat.scrollTop = 0;
+};
+userInput.addEventListener('focus', keepMobileSearchAtTop);
+userInput.addEventListener('input', keepMobileSearchAtTop);
 
 document.addEventListener('click', event => {
   if (!mobileNavMedia.matches) return;
