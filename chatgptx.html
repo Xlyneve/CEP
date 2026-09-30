@@ -359,8 +359,24 @@ input[type="file"]::file-selector-button:hover {
   color: #222;
 }
 
-#fontColorInput {
+#fontColorPalette {
   display: none;
+  grid-template-columns: repeat(3, 18px);
+  gap: 5px;
+  padding: 5px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.82);
+}
+
+#fontColorPalette.visible { display: grid; }
+
+.font-color-choice {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(0,0,0,0.22);
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .emoji {
@@ -1370,7 +1386,17 @@ a.conceptLink.hasDef::before{
   <button class="format-btn" id="indentBtn" title="Indent (Tab) — Shift+Click = Outdent">👉🏻</button>
   <button class="format-btn" id="highlightBtn">🟪</button>
   <button class="format-btn" id="fontColorBtn" type="button" title="Choose font colour" aria-label="Choose font colour">🎨</button>
-  <input id="fontColorInput" type="color" value="#d05050" aria-hidden="true" tabindex="-1" />
+  <div id="fontColorPalette" aria-label="Font colours">
+    <button class="font-color-choice" type="button" data-color="#222222" style="background:#222222" title="Black"></button>
+    <button class="font-color-choice" type="button" data-color="#777777" style="background:#777777" title="Grey"></button>
+    <button class="font-color-choice" type="button" data-color="#d05050" style="background:#d05050" title="Red"></button>
+    <button class="font-color-choice" type="button" data-color="#df7b35" style="background:#df7b35" title="Orange"></button>
+    <button class="font-color-choice" type="button" data-color="#c59b20" style="background:#c59b20" title="Gold"></button>
+    <button class="font-color-choice" type="button" data-color="#408a57" style="background:#408a57" title="Green"></button>
+    <button class="font-color-choice" type="button" data-color="#3f6fc4" style="background:#3f6fc4" title="Blue"></button>
+    <button class="font-color-choice" type="button" data-color="#7652a8" style="background:#7652a8" title="Purple"></button>
+    <button class="font-color-choice" type="button" data-color="#c45887" style="background:#c45887" title="Pink"></button>
+  </div>
 
   <button class="format-btn" id="increaseFontBtn" title="Increase Font Size">🔺A</button>
   <button class="format-btn" id="decreaseFontBtn" title="Decrease Font Size">🔻A</button>
@@ -5354,13 +5380,28 @@ bindToolbarBtn('italicBtn', 'italic');
 bindToolbarBtn('underlineBtn', 'underline');
 bindToolbarBtn('highlightBtn', 'hiliteColor', '#e8dcff');
 
+const fontColorPalette = document.getElementById('fontColorPalette');
+
 document.getElementById('fontColorBtn')?.addEventListener('click', () => {
-  document.getElementById('fontColorInput')?.click();
+  fontColorPalette?.classList.toggle('visible');
 });
 
-document.getElementById('fontColorInput')?.addEventListener('input', (e) => {
-  runCmd('foreColor', e.currentTarget.value);
-});
+fontColorPalette?.addEventListener('mousedown', (e) => {
+  const choice = e.target.closest('.font-color-choice');
+  if (!choice) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const editor = getActiveEditor();
+  if (!editor) return;
+  editor.focus({ preventScroll: true });
+  restoreCaret();
+  document.execCommand('styleWithCSS', false, true);
+  document.execCommand('foreColor', false, choice.dataset.color);
+  document.execCommand('styleWithCSS', false, false);
+  saveCaret();
+  fontColorPalette.classList.remove('visible');
+}, true);
 
 /* =========================
    (Everything below here stays as-is in your file)
