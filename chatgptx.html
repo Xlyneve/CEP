@@ -1487,6 +1487,13 @@ const storage = firebase.storage(notesChatApp);
 const auth = firebase.auth(notesChatApp);
 // Let Firebase restore its existing durable session. Reapplying persistence
 // here can race auth restoration in an iOS Home Screen app.
+const xgptHandoffToken = sessionStorage.getItem('cep-xgpt-google-access-token');
+sessionStorage.removeItem('cep-xgpt-google-access-token');
+let xgptHandoffError = null;
+const xgptHandoffReady = xgptHandoffToken
+  ? auth.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(null, xgptHandoffToken))
+      .catch(error => { xgptHandoffError = error; return null; })
+  : Promise.resolve(null);
 
 /* =========================
    DOM refs
@@ -5351,81 +5358,11 @@ lockToggle.onclick = () => {
   lockSection.style.display = (lockSection.style.display === 'flex') ? 'none' : 'flex';
 };
 
-let notesSignInTimer = 0;
-let notesSignInAttempt = 0;
-const useStandaloneGoogleToken = (
-  /iPad|iPhone|iPod/.test(navigator.userAgent)
-  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-) && (
-  window.navigator.standalone === true
-  || window.matchMedia?.('(display-mode: standalone)')?.matches === true
-);
-
-function resetNotesSignIn() {
-  window.clearTimeout(notesSignInTimer);
-  unlockBtn.disabled = false;
-}
-
-async function signInNotesThroughMainAuth() {
-  const bridgeConfig = {
-    apiKey: 'AIzaSyAgYsVQNEOyQa41NkXXT2VuKClqXAxfG1Q',
-    authDomain: 'cepx-f9d2a.firebaseapp.com',
-    projectId: 'cepx-f9d2a',
-    storageBucket: 'cepx-f9d2a.firebasestorage.app',
-    messagingSenderId: '840696526325',
-    appId: '1:840696526325:web:b9bcb4669fbfad066a1cbc'
-  };
-  const bridgeApp = firebase.apps.find(app => app.name === 'xgpt-auth-bridge')
-    || firebase.initializeApp(bridgeConfig, 'xgpt-auth-bridge');
-  const bridgeAuth = firebase.auth(bridgeApp);
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
-  const result = await bridgeAuth.signInWithPopup(provider);
-  const accessToken = result.credential?.accessToken;
-  if (!accessToken) throw Object.assign(new Error('Google did not return a sign-in credential.'), { code: 'auth/missing-google-token' });
-  const notesCredential = firebase.auth.GoogleAuthProvider.credential(null, accessToken);
-  return auth.signInWithCredential(notesCredential);
-}
-
-unlockBtn.onclick = async () => {
-  if (unlockBtn.disabled) return;
-  const attempt = ++notesSignInAttempt;
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
-
-  try {
-    unlockBtn.disabled = true;
-    lockInfo.textContent = "Opening Google sign in…";
-    notesSignInTimer = window.setTimeout(() => {
-      resetNotesSignIn();
-      if (!auth.currentUser) {
-        lockInfo.textContent = "Sign-in has not completed. Finish in the Google window, or tap Sign in to try again.";
-      }
-    }, 60000);
-
-    // Firebase's cross-project auth helper cannot return to the installed
-    // Firebase-hosted app. In iOS standalone, obtain the Google token in the
-    // current page and exchange it directly for the secondary Firebase login.
-    if (useStandaloneGoogleToken) await signInNotesThroughMainAuth();
-    else await auth.signInWithPopup(provider);
-  } catch (err) {
-    if (attempt !== notesSignInAttempt || auth.currentUser) return;
-    console.error(err);
-    const messages = {
-      'auth/popup-blocked': 'Google sign-in was blocked. Allow pop-ups, then tap Sign in again.',
-      'auth/popup-closed-by-user': 'Sign-in was closed before completing. Tap Sign in to try again.',
-      'auth/cancelled-popup-request': 'Sign-in was interrupted. Tap Sign in to try again.',
-      'auth/network-request-failed': 'Could not connect to Google. Check your connection and try again.',
-      'auth/web-storage-unsupported': 'Sign-in needs site storage. Check Safari storage settings and try again.',
-      'auth/google-library-not-ready': 'Google sign-in is still loading. Wait a moment, then tap Sign in again.',
-      'auth/popup_failed_to_open': 'Google sign-in could not open. Allow pop-ups, then tap Sign in again.',
-      'auth/popup_closed': 'Sign-in was closed before completing. Tap Sign in to try again.'
-    };
-    lockInfo.textContent = messages[err.code] || `Sign in failed (${err.code || 'unknown error'}). Please try again.`;
-  } finally {
-    if (attempt === notesSignInAttempt) resetNotesSignIn();
-  }
+const openXgptAuthorization = () => {
+  location.assign('index.html?returnTo=chatgptx.html&xgptAuth=1');
 };
+
+unlockBtn.onclick = openXgptAuthorization;
 
 lockBtn.onclick = async () => {
   try {
@@ -5437,7 +5374,9 @@ lockBtn.onclick = async () => {
   }
 };
 
-auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged(async (user) => {
+  await xgptHandoffReady;
+  user = auth.currentUser;
   currentUser = user || null;
 
   if (user) {
@@ -5449,7 +5388,13 @@ auth.onAuthStateChanged((user) => {
     lockBtn.style.display = 'inline-block';
   } else {
     setUnlocked(false);
-    lockInfo.textContent = "Signed out";
+    if (xgptHandoffError) {
+      console.error(xgptHandoffError);
+      lockInfo.textContent = `Xgpt sign in failed (${xgptHandoffError.code || 'unknown error'}). Tap Sign in to try again.`;
+    } else {
+      lockInfo.textContent = "Opening secure sign in…";
+      openXgptAuthorization();
+    }
     unlockBtn.style.display = 'inline-block';
     lockBtn.style.display = 'none';
   }

@@ -277,6 +277,7 @@ updateDateTime();
     const safeReturnTo = /^[A-Za-z0-9 _.-]+\.html$/.test(requestedPage)
       ? requestedPage
       : "home.html";
+    const xgptAuthRequested = params.get("xgptAuth") === "1";
     const status = document.getElementById("signInStatus");
     const signInButton = document.getElementById("googleSignIn");
     const personalDevice = document.getElementById("personalDevice");
@@ -341,15 +342,24 @@ updateDateTime();
       }, 500);
     }
 
-    async function finishSignIn(user) {
+    async function finishSignIn(user, googleCredential = null) {
       if (!user || authCompletionStarted) return;
-      authCompletionStarted = true;
 
       if (user.emailVerified && String(user.email || "").toLowerCase() === allowedEmail) {
+        if (xgptAuthRequested && !googleCredential?.accessToken) {
+          status.textContent = "Continue with Google once to connect Xgpt Notes.";
+          signInButton.disabled = false;
+          return;
+        }
+        authCompletionStarted = true;
+        if (xgptAuthRequested) {
+          sessionStorage.setItem("cep-xgpt-google-access-token", googleCredential.accessToken);
+        }
         openSignedInPage();
         return;
       }
 
+      authCompletionStarted = true;
       await auth.signOut();
       status.textContent = `Access is restricted to ${allowedEmail}.`;
       signInButton.disabled = false;
@@ -372,7 +382,7 @@ updateDateTime();
         persistenceReady = setDevicePersistence(selectedMode);
         await persistenceReady;
         const result = await auth.getRedirectResult();
-        if (result?.user) await finishSignIn(result.user);
+        if (result?.user) await finishSignIn(result.user, result.credential);
       } catch (error) {
         console.error("Google redirect sign in failed.", error);
         status.textContent = authErrorText("Redirect sign in failed", error);
@@ -405,7 +415,7 @@ updateDateTime();
         // preference is already applied on page load and checkbox change.
         const result = await auth.signInWithPopup(provider);
         await result.user.getIdToken();
-        await finishSignIn(result.user);
+        await finishSignIn(result.user, result.credential);
       } catch (error) {
         console.error("Google sign in failed.", error);
         status.textContent = authErrorText("Sign in failed", error);

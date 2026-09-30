@@ -5934,9 +5934,7 @@ function closeTable() {
     getAuth,
     GoogleAuthProvider,
     onAuthStateChanged,
-    signInWithCredential,
-    signInWithPopup,
-    signInWithRedirect
+    signInWithCredential
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
   // Avoid an unauthenticated Firestore request and retry on page load.
@@ -5996,24 +5994,12 @@ const firebaseConfig = {
   // index on the first real search, cache it, and never create preview iframes.
   let chatgptSearchPromise;
   let chatgptSearchAuth;
-  const useStandaloneXgptToken = (
-    /iPad|iPhone|iPod/.test(navigator.userAgent)
-    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  ) && (
-    window.navigator.standalone === true
-    || window.matchMedia?.('(display-mode: standalone)')?.matches === true
-  );
-
-  const signInToStandaloneXgpt = async notesAuth => {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
-    const mainResult = await signInWithPopup(getAuth(app), provider);
-    const mainCredential = GoogleAuthProvider.credentialFromResult(mainResult);
-    if (!mainCredential?.accessToken) {
-      throw Object.assign(new Error('Google did not return a sign-in credential.'), { code: 'auth/missing-google-token' });
-    }
-    const notesCredential = GoogleAuthProvider.credential(null, mainCredential.accessToken);
-    return signInWithCredential(notesAuth, notesCredential);
+  const consumeXgptAuthHandoff = async notesAuth => {
+    const accessToken = sessionStorage.getItem('cep-xgpt-google-access-token');
+    if (!accessToken) return;
+    sessionStorage.removeItem('cep-xgpt-google-access-token');
+    const notesCredential = GoogleAuthProvider.credential(null, accessToken);
+    await signInWithCredential(notesAuth, notesCredential);
   };
 
   const loadChatgptSearchNotes = () => chatgptSearchPromise ||= (async () => {
@@ -6029,6 +6015,7 @@ const firebaseConfig = {
       initializeApp(chatConfig, 'notes-chat');
     const chatAuth = getAuth(chatApp);
     chatgptSearchAuth = chatAuth;
+    await consumeXgptAuthHandoff(chatAuth);
     if (typeof chatAuth.authStateReady === 'function') await chatAuth.authStateReady();
     watchXgptAuth();
     if (!chatAuth.currentUser) {
@@ -6052,6 +6039,7 @@ const firebaseConfig = {
   });
   window.cepUniversalLazyLoaders ||= [];
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
+  if (sessionStorage.getItem('cep-xgpt-google-access-token')) void loadChatgptSearchNotes();
   window.getCachedXgptConceptMedia = getSharedXgptConceptMedia;
   window.getCachedXgptConceptDefinition = getSharedXgptConceptDefinition;
   window.searchReferencedXgptConcepts = searchSharedReferencedXgptConcepts;
@@ -6091,11 +6079,8 @@ const firebaseConfig = {
         chatgptSearchPromise = null;
         await loadChatgptSearchNotes();
       }
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ login_hint: 'xeve06@gmail.com' });
       sessionStorage.setItem('cep-xgpt-return-search', '1');
-      if (useStandaloneXgptToken) await signInToStandaloneXgpt(chatgptSearchAuth);
-      else await signInWithRedirect(chatgptSearchAuth, provider);
+      location.assign('index.html?returnTo=home.html&xgptAuth=1');
     } catch (error) {
       if (error?.code !== 'auth/popup-closed-by-user') console.warn('Xgpt sign-in failed.', error);
     } finally { button.disabled = false; button.textContent = 'Sign in to Xgpt'; }
