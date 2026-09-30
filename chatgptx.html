@@ -973,9 +973,10 @@ mark.underlineMatch {
   font-size: 11px;
 }
 
-a.conceptLink { 
-  position: relative; 
-  overflow: visible; 
+a.conceptLink {
+  position: relative;
+  overflow: visible;
+  -webkit-touch-callout: none;
 }
 
 .conceptCount { 
@@ -5246,12 +5247,66 @@ window.addEventListener('resize', () => {
 /* =========================
    Concept click handling
 ========================= */
+let conceptLongPressTimer = null;
+let conceptLongPressLink = null;
+let conceptLongPressTriggered = false;
+let conceptLongPressStartX = 0;
+let conceptLongPressStartY = 0;
+let suppressConceptClickUntil = 0;
+
+function cancelConceptLongPress() {
+  if (conceptLongPressTimer) clearTimeout(conceptLongPressTimer);
+  conceptLongPressTimer = null;
+}
+
+document.addEventListener('touchstart', (e) => {
+  cancelConceptLongPress();
+  const link = e.target.closest?.('a.conceptLink');
+  if (!link || e.touches.length !== 1) return;
+
+  const touch = e.touches[0];
+  conceptLongPressLink = link;
+  conceptLongPressTriggered = false;
+  conceptLongPressStartX = touch.clientX;
+  conceptLongPressStartY = touch.clientY;
+  conceptLongPressTimer = setTimeout(() => {
+    let topic = getConceptFromLink(link);
+    topic = topic.replace(/^\[\[\s*/, '').replace(/\s*\]\]$/, '').trim();
+    if (!topic) return;
+
+    conceptLongPressTriggered = true;
+    suppressConceptClickUntil = Date.now() + 900;
+    navigator.vibrate?.(25);
+    openDefPanel(topic, conceptLongPressStartX, conceptLongPressStartY);
+  }, 550);
+}, { capture: true, passive: true });
+
+document.addEventListener('touchmove', (e) => {
+  if (!conceptLongPressTimer || e.touches.length !== 1) return;
+  const touch = e.touches[0];
+  if (Math.hypot(touch.clientX - conceptLongPressStartX, touch.clientY - conceptLongPressStartY) > 12) {
+    cancelConceptLongPress();
+  }
+}, { capture: true, passive: true });
+
+document.addEventListener('touchend', (e) => {
+  cancelConceptLongPress();
+  if (!conceptLongPressTriggered) return;
+  e.preventDefault();
+  e.stopPropagation();
+  conceptLongPressTriggered = false;
+}, { capture: true, passive: false });
+
+document.addEventListener('touchcancel', cancelConceptLongPress, { capture: true, passive: true });
+
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a.conceptLink');
   if (!a) return;
 
   e.preventDefault();
   e.stopPropagation();
+
+  if (a === conceptLongPressLink && Date.now() < suppressConceptClickUntil) return;
 
   let topic = getConceptFromLink(a);
   topic = topic.replace(/^\[\[\s*/, '').replace(/\s*\]\]$/, '').trim();
