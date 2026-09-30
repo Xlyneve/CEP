@@ -3583,9 +3583,20 @@ html body .cep-sign-out-light {
   }
 
   @keyframes quickies-panel-pop {
-    0% { opacity: 0; filter: blur(7px); transform: translateX(-12px) scale(.92); }
-    58% { opacity: .96; filter: blur(1px); }
-    100% { opacity: 1; filter: blur(0); transform: translateX(0) scale(1); }
+    0% { opacity: .18; filter: blur(8px); clip-path: circle(7px at 20px 50%); transform: translateX(-10px) scale(.12, .2); }
+    54% { opacity: .9; filter: blur(2px); clip-path: circle(72% at 20px 50%); transform: translateX(-2px) scale(.92, .88); }
+    100% { opacity: 1; filter: blur(0); clip-path: circle(145% at 20px 50%); transform: translateX(0) scale(1); }
+  }
+
+  body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator).quickies-sucking-in {
+    pointer-events: none;
+    animation: quickies-panel-suck 360ms cubic-bezier(.55, .06, .68, .19) both !important;
+  }
+
+  @keyframes quickies-panel-suck {
+    0% { opacity: 1; filter: blur(0); clip-path: circle(145% at 20px 50%); transform: translateX(0) scale(1); }
+    48% { opacity: .82; filter: blur(2px); clip-path: circle(66% at 20px 50%); transform: translateX(-3px) scale(.86, .8); }
+    100% { opacity: .08; filter: blur(7px); clip-path: circle(7px at 20px 50%); transform: translateX(-10px) scale(.1, .16); }
   }
 }
 
@@ -5185,6 +5196,37 @@ function closeTable() {
     }
   });
   
+  function syncQuickiesToggle(panel, toggle) {
+    const isCollapsed = panel.classList.contains('collapsed');
+    toggle.textContent = isCollapsed ? '❯' : '❮';
+    toggle.setAttribute('aria-expanded', String(!isCollapsed));
+  }
+
+  function toggleQuickiesPanel(panel, toggle) {
+    if (!panel || !toggle || panel.classList.contains('quickies-sucking-in')) return;
+
+    if (!window.matchMedia('(min-width: 769px)').matches) {
+      panel.classList.toggle('collapsed');
+      syncQuickiesToggle(panel, toggle);
+      return;
+    }
+
+    if (panel.classList.contains('collapsed')) {
+      panel.classList.remove('collapsed');
+      syncQuickiesToggle(panel, toggle);
+      return;
+    }
+
+    panel.classList.add('quickies-sucking-in');
+    toggle.setAttribute('aria-expanded', 'false');
+    const finishCollapse = () => {
+      panel.classList.add('collapsed');
+      panel.classList.remove('quickies-sucking-in');
+      syncQuickiesToggle(panel, toggle);
+    };
+    panel.addEventListener('animationend', finishCollapse, { once: true });
+  }
+
   // ===== QUICK CALC (Left Shortcut Panel) =====
 (() => {
   const qc = document.getElementById('quickCalc');
@@ -5436,14 +5478,11 @@ function closeTable() {
   });
 
   const syncQuickCalcToggle = () => {
-    const isCollapsed = qc.classList.contains('collapsed');
-    toggleBtn.textContent = isCollapsed ? '❯' : '❮';
-    toggleBtn.setAttribute('aria-expanded', String(!isCollapsed));
+    syncQuickiesToggle(qc, toggleBtn);
   };
 
   toggleBtn.addEventListener('click', () => {
-    qc.classList.toggle('collapsed');
-    syncQuickCalcToggle();
+    toggleQuickiesPanel(qc, toggleBtn);
   });
 
     // init
@@ -5457,13 +5496,10 @@ function closeTable() {
   const toggle = qi?.querySelector('.qi-toggle');
 
   toggle?.addEventListener('click', () => {
-    qi.classList.toggle('collapsed');
-    const isCollapsed = qi.classList.contains('collapsed');
-    toggle.textContent = isCollapsed ? '❯' : '❮';
-    toggle.setAttribute('aria-expanded', String(!isCollapsed));
+    toggleQuickiesPanel(qi, toggle);
   });
 
-  if (toggle) toggle.setAttribute('aria-expanded', String(!qi.classList.contains('collapsed')));
+  if (toggle) syncQuickiesToggle(qi, toggle);
 
   qi?.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-copy]');
@@ -5571,13 +5607,10 @@ function closeTable() {
   });
 
   toggle.addEventListener('click', () => {
-    calculator.classList.toggle('collapsed');
-    const isCollapsed = calculator.classList.contains('collapsed');
-    toggle.textContent = isCollapsed ? '❯' : '❮';
-    toggle.setAttribute('aria-expanded', String(!isCollapsed));
+    toggleQuickiesPanel(calculator, toggle);
   });
 
-  toggle.setAttribute('aria-expanded', String(!calculator.classList.contains('collapsed')));
+  syncQuickiesToggle(calculator, toggle);
 
   resetResult();
 })();
@@ -5737,13 +5770,10 @@ function closeTable() {
   });
 
   toggle.addEventListener('click', () => {
-    calculator.classList.toggle('collapsed');
-    const isCollapsed = calculator.classList.contains('collapsed');
-    toggle.textContent = isCollapsed ? '❯' : '❮';
-    toggle.setAttribute('aria-expanded', String(!isCollapsed));
+    toggleQuickiesPanel(calculator, toggle);
   });
 
-  toggle.setAttribute('aria-expanded', String(!calculator.classList.contains('collapsed')));
+  syncQuickiesToggle(calculator, toggle);
 
   resetResult();
 })();	 
