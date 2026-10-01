@@ -75,14 +75,6 @@
     { rgb: "225, 211, 180", solid: "#e1d3b4", ink: "#313b3a" },
   ];
 
-  const liquidGlassPalette = [
-    { rgb: "238, 226, 216", solid: "#eee2d8", ink: "#24272a" },
-    { rgb: "100, 225, 213", solid: "#64e1d5", ink: "#183838" },
-    { rgb: "139, 101, 255", solid: "#8b65ff", ink: "#ffffff" },
-    { rgb: "255, 185, 177", solid: "#ffb9b1", ink: "#3c2b2b" },
-    { rgb: "223, 231, 233", solid: "#dfe7e9", ink: "#24272a" },
-  ];
-
   const themeStorageKey = "xlyneve-color-theme";
   const excludedThemePages = new Set(["biosched1.html", "notes.html", "recalltracker.html"]);
 
@@ -92,7 +84,8 @@
   if (themeIsAllowed) {
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
-      if (storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "liquid-glass") selectedTheme = storedTheme;
+      if (storedTheme === "liquid-glass") localStorage.removeItem(themeStorageKey);
+      if (storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted") selectedTheme = storedTheme;
     } catch {}
   }
   const palette = selectedTheme === "berry"
@@ -111,8 +104,6 @@
                 ? anatomyPalette
                 : selectedTheme === "sculpted"
                   ? sculptedPalette
-                  : selectedTheme === "liquid-glass"
-                    ? liquidGlassPalette
       : originalPalette;
 
   function hash(text) {
@@ -139,8 +130,7 @@
     "palm-springs": "#1f2c2c",
     "quiet-stone": "#393831",
     anatomy: "#22211f",
-    sculpted: "#5f8889",
-    "liquid-glass": "#6754d9"
+    sculpted: "#5f8889"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
   root.style.setProperty("--masthead-bar-ink", "#ffffff");
@@ -1856,11 +1846,6 @@
         label: "Sculpted 5D",
         colors: ["#f3ebe1", "#a8cdd2", "#aec6b5", "#e0c7be", "#e1d3b4"]
       },
-      {
-        value: "liquid-glass",
-        label: "Soft Studio",
-        colors: ["#f7f4ee", "#d4e9e2", "#eedbd6", "#33413f", "#fffefa"]
-      }
     ];
 
     themeOptions.forEach((option) => {
