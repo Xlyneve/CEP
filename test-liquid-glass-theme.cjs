@@ -28,20 +28,20 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
     const style = getComputedStyle(element);
     return { radius: style.borderRadius, shadow: style.boxShadow, blur: style.backdropFilter };
   });
-  assert.equal(cardStyle.radius, "22px");
+  assert.equal(cardStyle.radius, "24px");
   assert.match(cardStyle.shadow, /rgba\(/);
-  assert.match(cardStyle.blur, /blur\(18px\)/);
+  assert.equal(cardStyle.blur, "none");
 
   await page.getByRole("button", { name: "Choose colour theme" }).click();
   const option = page.locator('.xlyneve-theme-option[data-theme="liquid-glass"]');
   await option.waitFor();
   assert.equal(await option.getAttribute("aria-pressed"), "true");
-  assert.equal((await option.innerText()).trim(), "Liquid Glass");
+  assert.equal((await option.innerText()).trim(), "Soft Studio");
 
   await page.goto("http://theme.test/biosched1.html", { waitUntil: "domcontentloaded" });
   assert.equal(await page.locator("html").getAttribute("data-xlyneve-color-theme"), null);
 
-  console.log("Passed: Liquid Glass theme loads with blur and glow styling and respects protected pages.");
+  console.log("Passed: Soft Studio theme loads with tactile styling and respects protected pages.");
   await browser.close();
 })().catch((error) => {
   console.error(error);
