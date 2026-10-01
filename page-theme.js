@@ -1255,6 +1255,71 @@
       backdrop-filter:blur(34px) saturate(142%) !important;-webkit-backdrop-filter:blur(34px) saturate(142%) !important;
     }
 
+    /* Liquid Glass advanced UI: quiet translucent neumorphism. */
+    html[data-xlyneve-color-theme="liquid-glass"],html[data-xlyneve-color-theme="liquid-glass"] body {
+      color:#354240 !important;background-color:#f3f0ea !important;
+      background-image:radial-gradient(ellipse at 22% 24%,rgba(210,237,231,.28),transparent 32%),radial-gradient(ellipse at 82% 74%,rgba(246,214,209,.3),transparent 34%),linear-gradient(145deg,#f8f6f1 0%,#f1eee8 55%,#ece9e3 100%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] body::before { opacity:0 !important;filter:none !important; }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(.note-card,.card,.acc-item,.med-section,.vaccine-section,.vaccine-card,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.day:not(.empty):not(.today),.todo-item:not(.priority)),
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .main-content .card-group.section-card-group > .card {
+      color:#354240 !important;-webkit-text-fill-color:#354240 !important;
+      background:radial-gradient(ellipse at 82% 82%,rgba(180,226,216,.36),transparent 48%),linear-gradient(145deg,rgba(255,255,255,.62),rgba(245,245,239,.34)) !important;
+      border:1px solid rgba(158,185,178,.38) !important;border-radius:22px !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.92),inset -1px -1px 0 rgba(185,204,199,.22),0 12px 24px rgba(82,101,96,.13),0 3px 7px rgba(82,101,96,.08) !important;
+      backdrop-filter:blur(18px) saturate(112%) !important;-webkit-backdrop-filter:blur(18px) saturate(112%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .section-admin > .card { background:radial-gradient(ellipse at 78% 78%,rgba(184,225,217,.42),transparent 48%),linear-gradient(145deg,rgba(255,255,255,.65),rgba(242,245,239,.36)) !important;color:#354240 !important;-webkit-text-fill-color:#354240 !important; }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .section-home > .card { background:radial-gradient(ellipse at 82% 82%,rgba(187,229,221,.4),transparent 50%),linear-gradient(145deg,rgba(255,255,255,.66),rgba(242,247,243,.38)) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .section-notes > .card { background:radial-gradient(ellipse at 84% 82%,rgba(176,221,213,.43),transparent 50%),linear-gradient(145deg,rgba(255,255,255,.64),rgba(239,246,242,.36)) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .section-prescribing > .card { background:radial-gradient(ellipse at 82% 82%,rgba(247,215,209,.4),transparent 50%),linear-gradient(145deg,rgba(255,255,255,.65),rgba(249,240,237,.38)) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .section-urgent > .card { background:radial-gradient(ellipse at 82% 82%,rgba(239,211,205,.44),transparent 50%),linear-gradient(145deg,rgba(255,255,255,.65),rgba(248,239,236,.38)) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .main-content .card-group.section-card-group > .card:hover {
+      transform:translateY(-1px) !important;filter:none !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.96),inset -1px -1px 0 rgba(185,204,199,.2),0 15px 28px rgba(82,101,96,.16),0 4px 8px rgba(82,101,96,.08) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] body > header,html[data-xlyneve-color-theme="liquid-glass"] :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header) {
+      color:#354240 !important;background:linear-gradient(145deg,rgba(255,255,255,.7),rgba(245,245,239,.42)) !important;
+      border-color:rgba(158,185,178,.34) !important;border-radius:0 0 22px 22px !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.94),0 10px 22px rgba(82,101,96,.12) !important;
+      backdrop-filter:blur(20px) saturate(108%) !important;-webkit-backdrop-filter:blur(20px) saturate(108%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .pageTitle { color:#354240 !important;-webkit-text-fill-color:#354240 !important;text-shadow:0 1px 0 rgba(255,255,255,.86) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(button,.glass-btn,.header-btn,.add-btn,.top-links a) {
+      color:#465350 !important;-webkit-text-fill-color:#465350 !important;
+      background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,239,233,.5)) !important;
+      border:1px solid rgba(173,194,188,.34) !important;border-radius:999px !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.96),inset -1px -1px 0 rgba(185,204,199,.18),0 7px 14px rgba(82,101,96,.13) !important;
+      backdrop-filter:blur(16px) saturate(108%) !important;-webkit-backdrop-filter:blur(16px) saturate(108%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(button,.glass-btn,.header-btn,.add-btn,.top-links a):hover { transform:translateY(-1px);filter:none !important;box-shadow:inset 1px 1px 0 rgba(255,255,255,.98),0 9px 17px rgba(82,101,96,.15) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(button,.glass-btn,.header-btn,.add-btn,.top-links a):active { transform:translateY(0);box-shadow:inset 2px 3px 7px rgba(82,101,96,.13),inset -1px -1px 0 rgba(255,255,255,.8),0 2px 5px rgba(82,101,96,.07) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(
+      .universal-search-mode.is-active,.universal-search-filter.is-active,
+      .cep-global-search-modes button.is-active,.cep-global-search-filters button.is-active,
+      .qc-tab.active,.qc-strength-btn.active,.pr-toggle.active
+    ) {
+      color:#fff !important;-webkit-text-fill-color:#fff !important;
+      background:linear-gradient(145deg,#9bd5ca,#78bdb3) !important;border-color:rgba(215,246,240,.74) !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.48),0 7px 14px rgba(69,128,119,.2) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(.add-btn,.checklist-add-btn,#addBtn,#addNoteBtn) { color:#fff !important;-webkit-text-fill-color:#fff !important;background:linear-gradient(145deg,#a8dcd3,#83c5bb) !important;border-color:rgba(219,248,243,.78) !important;box-shadow:inset 1px 1px 0 rgba(255,255,255,.5),0 7px 14px rgba(69,128,119,.2) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(input,select,textarea,[contenteditable="true"]) {
+      color:#465350 !important;-webkit-text-fill-color:#465350 !important;
+      background:rgba(255,255,255,.62) !important;border:1px solid rgba(173,194,188,.3) !important;border-radius:16px !important;
+      box-shadow:inset 2px 3px 7px rgba(82,101,96,.08),inset -1px -1px 0 rgba(255,255,255,.88) !important;
+      backdrop-filter:blur(12px) saturate(106%) !important;-webkit-backdrop-filter:blur(12px) saturate(106%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(odd) { color:#3e4c49 !important;background:radial-gradient(circle at 70% 75%,rgba(178,224,215,.46),transparent 55%),linear-gradient(145deg,rgba(255,255,255,.72),rgba(240,244,239,.44)) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(even) { color:#4d4847 !important;background:radial-gradient(circle at 70% 75%,rgba(246,214,209,.46),transparent 55%),linear-gradient(145deg,rgba(255,255,255,.72),rgba(248,240,237,.44)) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .dashboard-frequent-circles .circle { border-color:rgba(173,194,188,.34) !important;box-shadow:inset 1px 1px 0 rgba(255,255,255,.94),0 9px 18px rgba(82,101,96,.14) !important;backdrop-filter:blur(16px) saturate(108%) !important;-webkit-backdrop-filter:blur(16px) saturate(108%) !important; }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .universal-search,html[data-xlyneve-color-theme="liquid-glass"] .cep-global-search-panel {
+      color:#354240 !important;background:radial-gradient(ellipse at 84% 84%,rgba(181,226,217,.34),transparent 48%),linear-gradient(145deg,rgba(255,255,255,.7),rgba(244,245,239,.42)) !important;
+      border:1px solid rgba(158,185,178,.36) !important;border-radius:24px !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.94),0 16px 32px rgba(82,101,96,.17) !important;
+      backdrop-filter:blur(22px) saturate(112%) !important;-webkit-backdrop-filter:blur(22px) saturate(112%) !important;
+    }
+
     html[data-xlyneve-color-theme="autumn"] .xlyneve-theme-button {
       background: linear-gradient(135deg, #255765 0 42%, #92a6a7 42% 68%, #d7bec4 68% 100%);
     }

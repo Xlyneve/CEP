@@ -28,9 +28,9 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
     const style = getComputedStyle(element);
     return { radius: style.borderRadius, shadow: style.boxShadow, blur: style.backdropFilter };
   });
-  assert.equal(cardStyle.radius, "26px");
+  assert.equal(cardStyle.radius, "22px");
   assert.match(cardStyle.shadow, /rgba\(/);
-  assert.match(cardStyle.blur, /blur\(30px\)/);
+  assert.match(cardStyle.blur, /blur\(18px\)/);
 
   await page.getByRole("button", { name: "Choose colour theme" }).click();
   const option = page.locator('.xlyneve-theme-option[data-theme="liquid-glass"]');
