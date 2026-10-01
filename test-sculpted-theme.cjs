@@ -26,6 +26,7 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
   await page.goto("http://theme.test/home.html", { waitUntil: "domcontentloaded" });
 
   assert.equal(await page.locator("html").getAttribute("data-xlyneve-color-theme"), "sculpted");
+  assert.equal(await page.locator("html").evaluate(element => getComputedStyle(element).getPropertyValue("--theme-ink").trim()), "#393831");
   const cardStyle = await page.locator(".card").evaluate((element) => {
     const style = getComputedStyle(element);
     return { radius: style.borderRadius, shadow: style.boxShadow };
@@ -40,6 +41,7 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
   await option.waitFor();
   assert.equal(await option.getAttribute("aria-pressed"), "true");
   assert.equal((await option.innerText()).trim(), "Sculpted 5D");
+  assert.equal(await option.locator(".xlyneve-theme-swatch").count(), 6);
 
   await page.goto("http://theme.test/chatgptx.html", { waitUntil: "domcontentloaded" });
   await page.locator("html").evaluate(element => element.removeAttribute("data-xlyneve-color-theme"));
