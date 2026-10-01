@@ -59,6 +59,14 @@
     { rgb: "198, 201, 210", solid: "#c6c9d2", ink: "#393831" },
   ];
 
+  const anatomyPalette = [
+    { rgb: "250, 242, 232", solid: "#faf2e8", ink: "#22211f" },
+    { rgb: "34, 33, 31", solid: "#22211f", ink: "#ffffff" },
+    { rgb: "170, 162, 151", solid: "#aaa297", ink: "#22211f" },
+    { rgb: "246, 182, 63", solid: "#f6b63f", ink: "#22211f" },
+    { rgb: "232, 220, 205", solid: "#e8dccd", ink: "#22211f" },
+  ];
+
   const themeStorageKey = "xlyneve-color-theme";
   const excludedThemePages = new Set(["biosched1.html", "notes.html", "recalltracker.html"]);
 
@@ -68,7 +76,7 @@
   if (themeIsAllowed) {
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
-      if (storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone") selectedTheme = storedTheme;
+      if (storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy") selectedTheme = storedTheme;
     } catch {}
   }
   const palette = selectedTheme === "berry"
@@ -83,6 +91,8 @@
             ? palmSpringsPalette
             : selectedTheme === "quiet-stone"
               ? quietStonePalette
+              : selectedTheme === "anatomy"
+                ? anatomyPalette
       : originalPalette;
 
   function hash(text) {
@@ -107,7 +117,8 @@
     hoya: "#40585c",
     "lake-mist": "#443d35",
     "palm-springs": "#1f2c2c",
-    "quiet-stone": "#393831"
+    "quiet-stone": "#393831",
+    anatomy: "#22211f"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
   root.style.setProperty("--masthead-bar-ink", "#ffffff");
@@ -997,6 +1008,79 @@
     html[data-xlyneve-color-theme="quiet-stone"] body:has(.notes .notepad) .notepad { color:#000 !important;-webkit-text-fill-color:#000 !important;caret-color:#393831 !important;background:linear-gradient(rgba(240,239,230,.95),rgba(240,239,230,.95)) padding-box,repeating-linear-gradient(to bottom,transparent 0,transparent 26px,rgba(184,174,168,.25) 27px) !important; }
     html[data-xlyneve-color-theme="quiet-stone"] body:has(.notes .notepad) .dot-add { background:#393831 !important; }html[data-xlyneve-color-theme="quiet-stone"] body:has(.notes .notepad) .dot-yellow { background:#dccfc1 !important; }html[data-xlyneve-color-theme="quiet-stone"] body:has(.notes .notepad) .dot-purple { background:#c6c9d2 !important; }
     html[data-xlyneve-color-theme="quiet-stone"] .xlyneve-theme-button { background:linear-gradient(135deg,#393831 0 25%,#b8aea8 25% 43%,#dccfc1 43% 61%,#f0efe6 61% 79%,#c6c9d2 79% 100%); }
+    html[data-xlyneve-color-theme="anatomy"] {
+      --refresh-cocoa:#22211f;
+      --refresh-rose:#e8dccd;
+      --refresh-lime:#aaa297;
+      --refresh-stone:#faf2e8;
+      --refresh-blue:#d8cdbf;
+      --refresh-terracotta:#f6b63f;
+      --refresh-edge:rgba(34,33,31,.2);
+      --refresh-depth:0 12px 28px rgba(34,33,31,.12);
+      --theme-ink:#22211f;
+      --quick-panel:linear-gradient(145deg,rgba(255,250,244,.98),rgba(232,220,205,.92));
+      --quick-ink:#22211f;
+      --quick-accent:#f6b63f;
+      --quick-accent-ink:#22211f;
+      --quick-soft:rgba(246,182,63,.28);
+      --quick-field:rgba(255,250,244,.9);
+      --quick-edge:rgba(34,33,31,.28);
+      --copy-feedback-accent:#f6b63f;
+      --copy-feedback-soft:rgba(246,182,63,.42);
+      --clinical-panel:rgba(232,220,205,.9);
+      --clinical-field:rgba(255,250,244,.9);
+      --clinical-accent:#22211f;
+      --clinical-accent-ink:#fff;
+      --clinical-edge:rgba(34,33,31,.25);
+      --homecal-header:linear-gradient(135deg,rgba(34,33,31,.94),rgba(82,77,70,.9));
+      --homecal-header-ink:#fff;
+      --homecal-control:rgba(250,242,232,.92);
+      --homecal-control-ink:#22211f;
+      --homecal-header-edge:rgba(246,182,63,.58);
+      --homecal-today:linear-gradient(145deg,rgba(246,182,63,.86),rgba(232,220,205,.9));
+      --homecal-today-edge:rgba(34,33,31,.28);
+      --homecal-today-shadow:rgba(34,33,31,.14);
+    }
+    html[data-xlyneve-color-theme="anatomy"],
+    html[data-xlyneve-color-theme="anatomy"] body {
+      color:#22211f;
+      background-color:#faf2e8 !important;
+      background-image:radial-gradient(circle at 14% 10%,rgba(255,255,255,.72),transparent 35%),radial-gradient(circle at 84% 18%,rgba(246,182,63,.12),transparent 38%),linear-gradient(180deg,#fff9f1 0%,#faf2e8 58%,#f1e5d7 100%) !important;
+      background-attachment:fixed !important;
+    }
+    html[data-xlyneve-color-theme="anatomy"] body::before { opacity:.035 !important;filter:sepia(.18) saturate(.55); }
+    html[data-xlyneve-color-theme="anatomy"] :is(.note-card,.card,.acc-item,.med-section,.vaccine-section,.vaccine-card,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.day:not(.empty):not(.today),.todo-item:not(.priority)) {
+      color:var(--card-ink,#22211f) !important;-webkit-text-fill-color:var(--card-ink,#22211f);background:var(--card-glass,rgba(255,250,244,.84)) !important;background-image:none !important;border-color:rgba(34,33,31,.22) !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 10px 24px rgba(34,33,31,.09) !important;
+    }
+    html[data-xlyneve-color-theme="anatomy"] body > header,
+    html[data-xlyneve-color-theme="anatomy"] :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header) { color:var(--page-header-ink,#22211f) !important;background-color:var(--page-header-glass,rgba(250,242,232,.9)) !important;border-color:rgba(34,33,31,.22) !important;box-shadow:0 10px 26px rgba(34,33,31,.09) !important; }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .section-admin { --section-glass:rgba(34,33,31,.92);--section-glass-hover:rgba(34,33,31,.98);--section-shadow:rgba(34,33,31,.22);--section-shadow-hover:rgba(34,33,31,.3); }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .section-home { --section-glass:rgba(250,242,232,.92);--section-glass-hover:rgba(255,250,244,.98);--section-shadow:rgba(34,33,31,.09);--section-shadow-hover:rgba(34,33,31,.15); }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .section-notes { --section-glass:rgba(232,220,205,.88);--section-glass-hover:rgba(239,229,216,.96);--section-shadow:rgba(34,33,31,.09);--section-shadow-hover:rgba(34,33,31,.15); }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .section-prescribing { --section-glass:rgba(246,182,63,.78);--section-glass-hover:rgba(246,182,63,.9);--section-shadow:rgba(34,33,31,.1);--section-shadow-hover:rgba(34,33,31,.18); }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .section-urgent { --section-glass:rgba(170,162,151,.76);--section-glass-hover:rgba(184,175,163,.88);--section-shadow:rgba(34,33,31,.1);--section-shadow-hover:rgba(34,33,31,.18); }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .main-content .card-group.section-card-group > .card { background:var(--section-glass) !important; }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .main-content .card-group.section-card-group > .card:hover { background:var(--section-glass-hover) !important; }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .main-content .section-admin > .card { color:#fff !important;-webkit-text-fill-color:#fff !important; }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .main-content :is(.section-home,.section-notes,.section-prescribing,.section-urgent) > .card { color:#22211f !important;-webkit-text-fill-color:#22211f !important; }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .top-links a { color:#22211f !important;background:rgba(255,250,244,.9) !important;border-color:rgba(34,33,31,.22) !important;box-shadow:0 5px 14px rgba(34,33,31,.08) !important; }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .pageTitle { color:#22211f !important;-webkit-text-fill-color:#22211f !important;text-shadow:0 1px 0 rgba(255,255,255,.46),0 4px 18px rgba(34,33,31,.12) !important; }
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(5n + 1){background:rgba(34,33,31,.94) !important;color:#fff !important;}
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(5n + 2){background:rgba(250,242,232,.98) !important;color:#22211f !important;}
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(5n + 3){background:rgba(170,162,151,.9) !important;color:#22211f !important;}
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(5n + 4){background:rgba(246,182,63,.92) !important;color:#22211f !important;}
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(5n + 5){background:rgba(232,220,205,.96) !important;color:#22211f !important;}
+    html[data-xlyneve-color-theme="anatomy"].theme-home-glass .universal-search,
+    html[data-xlyneve-color-theme="anatomy"] .cep-global-search-panel { color:#22211f !important;background:rgba(255,250,244,.98) !important;background-image:linear-gradient(145deg,rgba(255,250,244,.99),rgba(232,220,205,.6)) !important;border-color:rgba(34,33,31,.28) !important;box-shadow:0 22px 56px rgba(34,33,31,.18) !important; }
+    html[data-xlyneve-color-theme="anatomy"] :is(.universal-search-close,.universal-search-mode,.universal-search-filter,.cep-global-search-row button,.cep-global-search-modes button,.cep-global-search-filters button) { color:#22211f !important;background:rgba(250,242,232,.92) !important;border-color:rgba(34,33,31,.24) !important; }
+    html[data-xlyneve-color-theme="anatomy"] :is(.universal-search-mode.is-active,.universal-search-filter.is-active,.cep-global-search-modes button.is-active,.cep-global-search-filters button.is-active) { color:#22211f !important;background:#f6b63f !important;border-color:rgba(34,33,31,.3) !important; }
+    html[data-xlyneve-color-theme="anatomy"] :is(.universal-search-source-title,.cep-global-search-group-title) { color:#22211f !important;-webkit-text-fill-color:#22211f !important; }
+    html[data-xlyneve-color-theme="anatomy"] :is(.universal-search-native-card,.xgpt-header-style .universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) { color:#22211f !important;-webkit-text-fill-color:#22211f !important;background:rgba(250,242,232,.9) !important;border-color:rgba(34,33,31,.2) !important;box-shadow:0 8px 20px rgba(34,33,31,.08) !important; }
+    html[data-xlyneve-color-theme="anatomy"] table,html[data-xlyneve-color-theme="anatomy"] table * { color:#22211f !important;-webkit-text-fill-color:#22211f !important; }
+    html[data-xlyneve-color-theme="anatomy"] body:has(.notes .notepad) { background:linear-gradient(145deg,#fff9f1 0%,#eee1d1 100%) !important; }
+    html[data-xlyneve-color-theme="anatomy"] body:has(.notes .notepad) main { background:rgba(255,250,244,.92) !important;border-color:rgba(34,33,31,.22) !important;box-shadow:0 18px 42px rgba(34,33,31,.14) !important; }
+    html[data-xlyneve-color-theme="anatomy"] body:has(.notes .notepad) .notepad { color:#22211f !important;-webkit-text-fill-color:#22211f !important;caret-color:#22211f !important;background:linear-gradient(rgba(255,250,244,.94),rgba(255,250,244,.94)) padding-box,repeating-linear-gradient(to bottom,transparent 0,transparent 26px,rgba(170,162,151,.32) 27px) !important; }
+    html[data-xlyneve-color-theme="anatomy"] .xlyneve-theme-button { background:linear-gradient(135deg,#22211f 0 30%,#faf2e8 30% 54%,#aaa297 54% 74%,#f6b63f 74% 100%); }
 
     html[data-xlyneve-color-theme="autumn"] .xlyneve-theme-button {
       background: linear-gradient(135deg, #255765 0 42%, #92a6a7 42% 68%, #d7bec4 68% 100%);
@@ -1504,6 +1588,11 @@
         value: "quiet-stone",
         label: "Quiet Stone",
         colors: ["#393831", "#eaeaea", "#b8aea8", "#dccfc1", "#f0efe6", "#c6c9d2"]
+      },
+      {
+        value: "anatomy",
+        label: "Anatomy",
+        colors: ["#faf2e8", "#22211f", "#aaa297", "#f6b63f", "#e8dccd"]
       }
     ];
 
