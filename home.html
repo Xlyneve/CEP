@@ -3684,6 +3684,7 @@ html body .cep-sign-out-light {
 <section class="universal-search" id="universalSearchPanel" aria-label="Universal search" hidden>
   <div class="universal-search-row">
     <input id="universalSearchInput" type="search" autocomplete="off" spellcheck="false" placeholder="Search all notes and pages…" aria-label="Words to search for">
+    <button class="universal-search-close" id="universalSearchRefresh" type="button" aria-label="Refresh search notes" title="Fetch latest notes">↻</button>
     <button class="universal-search-close" id="universalSearchClose" type="button" aria-label="Close search">×</button>
   </div>
   <div class="universal-search-modes" id="universalSearchModes" aria-label="Search mode">
@@ -4203,6 +4204,7 @@ html body .cep-sign-out-light {
     const panel = document.getElementById('universalSearchPanel');
     const input = document.getElementById('universalSearchInput');
     const close = document.getElementById('universalSearchClose');
+    const refresh = document.getElementById('universalSearchRefresh');
     const modes = document.getElementById('universalSearchModes');
     const status = document.getElementById('universalSearchStatus');
     const results = document.getElementById('universalSearchResults');
@@ -4917,6 +4919,27 @@ html body .cep-sign-out-light {
     }
     button.addEventListener('click', () => panel.hidden ? openSearch() : closeSearch());
     close.addEventListener('click', closeSearch);
+    refresh.addEventListener('click', async () => {
+      if (refresh.disabled) return;
+      refresh.disabled = true;
+      refresh.setAttribute('aria-busy', 'true');
+      refresh.textContent = '…';
+      status.textContent = 'Refreshing notes…';
+      try {
+        if (!window.refreshCepHomeSearch) throw new Error('Search is still loading.');
+        const complete = await window.refreshCepHomeSearch();
+        await runSearch();
+        if (!complete) status.textContent = 'Some notes could not refresh. Please try again.';
+        else if (!input.value.trim()) status.textContent = 'Notes refreshed. Type a word to search.';
+      } catch (error) {
+        console.warn('Search refresh failed.', error);
+        status.textContent = 'Could not refresh notes. Please try again.';
+      } finally {
+        refresh.disabled = false;
+        refresh.removeAttribute('aria-busy');
+        refresh.textContent = '↻';
+      }
+    });
     input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 180); });
     input.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeSearch();
@@ -6069,7 +6092,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=35';
+  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=36';
   import {
     getFirestore,
     collection,
@@ -6149,7 +6172,7 @@ const firebaseConfig = {
     await signInWithCredential(notesAuth, notesCredential);
   };
 
-  const loadChatgptSearchNotes = () => chatgptSearchPromise ||= (async () => {
+  const loadChatgptSearchNotes = (forceRefresh = false) => chatgptSearchPromise ||= (async () => {
     const chatConfig = {
       apiKey: 'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',
       authDomain: 'notes-chat-c5ff3.firebaseapp.com',
@@ -6170,7 +6193,7 @@ const firebaseConfig = {
       return [];
     }
     document.getElementById('homeXgptAuthPrompt')?.setAttribute('hidden', '');
-    const entries = (await loadSharedXgptEntries()).map(entry => ({
+    const entries = (await loadSharedXgptEntries({ forceRefresh: forceRefresh === true })).map(entry => ({
       ...entry,
       sourcePage: 'chatgptx.html',
       focusId: entry.id,
@@ -6182,6 +6205,7 @@ const firebaseConfig = {
   })().catch(error => {
     chatgptSearchPromise = null;
     console.warn('Lazy ChatGPT Notes search could not load.', error);
+    if (forceRefresh === true) throw error;
     return [];
   });
   window.cepUniversalLazyLoaders ||= [];
@@ -6257,10 +6281,10 @@ const firebaseConfig = {
   window.addEventListener('pageshow', event => {
     if (event.persisted) refreshInvalidatedHomeSearch({ detail: { dataset: 'main:' } });
   });
-  const loadSavedSearchNotes = () => savedSearchPromise ||= Promise.all(searchSources.map(async source => {
+  const loadSavedSearchNotes = (forceRefresh = false) => savedSearchPromise ||= Promise.all(searchSources.map(async source => {
     try {
       const userId = getAuth(app).currentUser?.uid || 'signed-in';
-      const documents = await loadPersistentSearchDocuments(db, source.collection, `main:${userId}`);
+      const documents = await loadPersistentSearchDocuments(db, source.collection, `main:${userId}`, { forceRefresh: forceRefresh === true });
       const entries = documents.map(note => {
         const data = note.data;
         const savedTitle = htmlToMultilineText(data.title).replace(/\s+/g, ' ').trim();
@@ -6298,11 +6322,25 @@ const firebaseConfig = {
       window.addUniversalSearchPages?.(
         entries.length ? entries : [{ file: source.file, title: source.title, text: '' }]
       );
+      return true;
     } catch (error) {
       console.warn(`Universal search could not load ${source.collection}.`, error);
+      return false;
     }
   }));
   window.cepUniversalLazyLoaders.push(loadSavedSearchNotes);
+  window.refreshCepHomeSearch = async () => {
+    // Finish any initial loads before replacing them, so older responses cannot
+    // overwrite the manually refreshed index or its persistent cache.
+    await Promise.allSettled([savedSearchPromise, chatgptSearchPromise].filter(Boolean));
+    savedSearchPromise = null;
+    chatgptSearchPromise = null;
+    const [sources] = await Promise.all([
+      loadSavedSearchNotes(true),
+      loadChatgptSearchNotes(true)
+    ]);
+    return sources.every(Boolean);
+  };
 
 
   const qiList = document.getElementById('qiList');

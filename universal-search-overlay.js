@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { collection, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getDocs, getDocsFromServer, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithRedirect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const sources = [
@@ -129,18 +129,20 @@ export function invalidatePersistentSearchCache(dataset = '') {
     localStorage.setItem(key, String(Date.now()));
   } catch {}
 }
-const loadPersistentSearchValue = async (key, loader) => {
-  const cached = await readPersistentSearchCache(key);
-  if (cached !== undefined) return cached;
+const loadPersistentSearchValue = async (key, loader, forceRefresh = false) => {
+  if (!forceRefresh) {
+    const cached = await readPersistentSearchCache(key);
+    if (cached !== undefined) return cached;
+  }
   const value = await loader();
   await writePersistentSearchCache(key, value);
   return value;
 };
-export function loadPersistentSearchDocuments(db, collectionName, scope) {
+export function loadPersistentSearchDocuments(db, collectionName, scope, { forceRefresh = false } = {}) {
   return loadPersistentSearchValue(`${scope}:${collectionName}:documents:v1`, async () => {
-    const snapshot = await getDocs(collection(db, collectionName));
+    const snapshot = await (forceRefresh ? getDocsFromServer : getDocs)(collection(db, collectionName));
     return snapshot.docs.map(item => ({ id: item.id, data: item.data() }));
-  });
+  }, forceRefresh);
 }
 const searchTextCache = new WeakMap();
 function getSearchText(entry) {
@@ -185,7 +187,8 @@ function getXgptAuth() {
   const app = getApps().find(candidate => candidate.name === 'notes-chat') || initializeApp(config, 'notes-chat');
   return { app, auth: getAuth(app) };
 }
-export async function loadXgptEntries() {
+export async function loadXgptEntries({ forceRefresh = false } = {}) {
+  if (forceRefresh) xgptEntriesPromise = null;
   if (xgptEntriesPromise) return xgptEntriesPromise;
   xgptEntriesPromise = (async () => {
   try {
@@ -201,7 +204,7 @@ export async function loadXgptEntries() {
     const [entries, media, definitions] = await Promise.all([
       // v2 forces one clean reload after correcting the historic Xgpt dataset label.
       loadPersistentSearchValue(`${cacheScope}:notes:v2`, async () => {
-        const snapshot = await getDocs(collection(db, 'notes'));
+        const snapshot = await (forceRefresh ? getDocsFromServer : getDocs)(collection(db, 'notes'));
         return snapshot.docs.map(note => {
           const rawHtml = note.data().content || note.data().note || note.data().text || '';
           const text = textFromHtml(rawHtml).replace(/\[\[([^\]]+)\]\]/g, '$1');
@@ -211,26 +214,26 @@ export async function loadXgptEntries() {
             title: firstLine ? `Xgpt — ${firstLine.slice(0,72)}` : 'Xgpt Note', text, richHtml: rawHtml
           };
         });
-      }),
+      }, forceRefresh),
       loadPersistentSearchValue(`${cacheScope}:media`, async () => {
-        const mediaSnapshot = await getDocs(collection(db, 'concept_media'));
+        const mediaSnapshot = await (forceRefresh ? getDocsFromServer : getDocs)(collection(db, 'concept_media'));
         return Object.fromEntries(mediaSnapshot.docs.map(item => {
           const media = item.data() || {};
           return [normalizeConcept(media.concept || item.id), { imageUrl: media.imageUrl || '', caption: media.caption || '' }];
         }));
-      }).catch(error => {
+      }, forceRefresh).catch(error => {
         console.warn('Xgpt concept images are unavailable in header search.', error);
         return {};
       }),
       loadPersistentSearchValue(`${cacheScope}:definitions`, async () => {
-        const definitionsSnapshot = await getDocs(collection(db, 'concept_defs'));
+        const definitionsSnapshot = await (forceRefresh ? getDocsFromServer : getDocs)(collection(db, 'concept_defs'));
         return Object.fromEntries(definitionsSnapshot.docs.map(item => {
           const definition = item.data() || {};
           return [normalizeConcept(definition.concept || item.id), {
             definition: definition.value || '', why: definition.why || ''
           }];
         }));
-      }).catch(error => {
+      }, forceRefresh).catch(error => {
         console.warn('Xgpt concept definitions are unavailable in search.', error);
         return {};
       })
@@ -253,7 +256,7 @@ export async function loadXgptEntries() {
     return entries;
   } catch (error) {
     xgptEntriesPromise = null;
-    if (error?.code === 'xgpt/auth-required') throw error;
+    if (forceRefresh || error?.code === 'xgpt/auth-required') throw error;
     console.warn('Search could not load Xgpt Notes.', error);
     return [];
   }
