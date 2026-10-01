@@ -68,17 +68,19 @@
       });
     });
 
-    // Same-origin Universal Search opens Home in an iframe. Firebase can emit
-    // a transient null in that new context before its persisted session has
-    // hydrated, even though the authenticated parent is already ready.
-    const embedParams = new URLSearchParams(location.search);
-    const embeddedContent = window.parent !== window && (
-      embedParams.get("cepSearchEmbed") === "1" || embedParams.get("homeEmbed") === "today"
-    );
-    if (!user && embeddedContent) {
-      await new Promise(resolve => setTimeout(resolve, 1800));
+    // A newly opened desktop page can briefly report no user while Firebase
+    // hydrates its LOCAL session. Wait and recheck every context before
+    // redirecting; otherwise ordinary internal navigation flashes sign-in.
+    if (!user) {
       if (typeof auth.authStateReady === "function") await auth.authStateReady();
       user = auth.currentUser;
+    }
+    if (!user) {
+      for (const delay of [250, 500, 1000]) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        user = auth.currentUser;
+        if (user) break;
+      }
     }
 
     const authorized =
