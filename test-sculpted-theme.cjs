@@ -41,6 +41,8 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
   assert.equal((await option.innerText()).trim(), "Sculpted 5D");
 
   await page.goto("http://theme.test/chatgptx.html", { waitUntil: "domcontentloaded" });
+  await page.locator("html").evaluate(element => element.removeAttribute("data-xlyneve-color-theme"));
+  assert.equal(await page.locator("html").getAttribute("data-xlyneve-color-theme"), null);
   const noteStyle = await page.locator(".chatBubble").evaluate((element) => {
     const style = getComputedStyle(element);
     return { radius: style.borderRadius, shadow: style.boxShadow, blur: style.backdropFilter };

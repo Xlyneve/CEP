@@ -1145,8 +1145,9 @@
     html[data-xlyneve-color-theme="sculpted"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(5n + 5){background:linear-gradient(145deg,#eadfbe,#c2ab75) !important;color:#313b3a !important;}
     html[data-xlyneve-color-theme="sculpted"].theme-home-glass .universal-search,html[data-xlyneve-color-theme="sculpted"] .cep-global-search-panel { color:#313b3a !important;background:linear-gradient(145deg,#fffaf4,#e5d8cb) !important;border:1px solid rgba(255,255,255,.74) !important;border-radius:30px !important;box-shadow:inset 4px 4px 8px rgba(255,255,255,.8),inset -5px -6px 10px rgba(96,80,68,.12),16px 22px 45px rgba(96,80,68,.22) !important; }
     html[data-xlyneve-color-theme="sculpted"] :is(.universal-search-native-card,.xgpt-header-style .universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) { color:#313b3a !important;-webkit-text-fill-color:#313b3a !important;background:linear-gradient(145deg,rgba(255,250,244,.98),rgba(232,220,208,.94)) !important;border-color:rgba(255,255,255,.72) !important;border-radius:20px !important;box-shadow:inset 2px 2px 3px rgba(255,255,255,.8),inset -3px -4px 6px rgba(96,80,68,.1),6px 9px 16px rgba(96,80,68,.14) !important; }
-    html[data-xlyneve-color-theme="sculpted"] body:has(#chat) .message.bot { border-top:0 !important;padding-top:14px !important; }
-    html[data-xlyneve-color-theme="sculpted"] body:has(#chat) .chatBubble {
+    /* Xgpt notes keep the Sculpted 5D container in every colour theme. */
+    body:has(#chat) .message.bot { border-top:0 !important;padding-top:14px !important; }
+    body:has(#chat) .chatBubble {
       color:#313b3a !important;-webkit-text-fill-color:#313b3a !important;
       background:linear-gradient(145deg,#fffdf9 0%,#f7f0e8 58%,#ecdfd2 100%) !important;
       border:1px solid rgba(255,255,255,.9) !important;border-radius:24px !important;
@@ -1154,7 +1155,7 @@
       box-shadow:inset 3px 3px 5px rgba(255,255,255,.96),inset -4px -5px 8px rgba(113,94,79,.11),9px 12px 22px rgba(96,80,68,.17),-5px -5px 12px rgba(255,255,255,.66) !important;
       backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
     }
-    html[data-xlyneve-color-theme="sculpted"] body:has(#chat) .message.user .chatBubble {
+    body:has(#chat) .message.user .chatBubble {
       background:linear-gradient(145deg,#f7ebe7,#e3cbc3) !important;
     }
     html[data-xlyneve-color-theme="sculpted"] body:has(.notes .notepad) main { border-radius:28px !important;background:linear-gradient(145deg,#fffaf4,#e6d8ca) !important;box-shadow:inset 4px 4px 8px rgba(255,255,255,.84),inset -5px -6px 10px rgba(96,80,68,.12),14px 20px 36px rgba(96,80,68,.2) !important; }
