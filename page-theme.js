@@ -1127,6 +1127,9 @@
     html[data-xlyneve-color-theme="sculpted"].theme-home-glass .main-content .card-group.section-card-group > .card {
       box-sizing:border-box !important;min-width:0 !important;padding-left:22px !important;padding-right:22px !important;
     }
+    html[data-xlyneve-color-theme="sculpted"].theme-home-glass body.dashboard-hierarchy-active .dashboard-section-toggle {
+      box-sizing:border-box !important;padding-left:22px !important;padding-right:18px !important;
+    }
     html[data-xlyneve-color-theme="sculpted"].theme-home-glass .pageTitle { color:#313b3a !important;-webkit-text-fill-color:#313b3a !important;text-shadow:0 2px 0 rgba(255,255,255,.76),0 6px 12px rgba(96,80,68,.16) !important; }
     html[data-xlyneve-color-theme="sculpted"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(5n + 1){background:linear-gradient(145deg,#c4d8cb,#82a995) !important;color:#263535 !important;}
     html[data-xlyneve-color-theme="sculpted"].theme-home-glass .dashboard-frequent-circles .circle:nth-child(5n + 2){background:linear-gradient(145deg,#fffaf4,#e4d6ca) !important;color:#313b3a !important;}
