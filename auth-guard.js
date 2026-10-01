@@ -182,6 +182,12 @@
     signOutButton.setAttribute("aria-label", "Sign out of XlynEve");
     signOutButton.title = "Sign out";
     signOutButton.addEventListener("click", performSignOut);
+    // Cached Firebase modules can finish before a head-loaded guard reaches
+    // the document body. Wait for it instead of treating the missing body as
+    // an authentication failure and redirecting a valid desktop session.
+    if (!document.body) {
+      await new Promise(resolve => document.addEventListener("DOMContentLoaded", resolve, { once: true }));
+    }
     document.body.appendChild(signOutButton);
     window.CEP_SIGN_OUT = performSignOut;
 

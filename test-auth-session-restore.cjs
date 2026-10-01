@@ -34,6 +34,7 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
   assert.equal(await page.evaluate(() => window.CEP_AUTH_READY), true);
   assert.equal(page.url(), "http://auth.test/PN.html");
   assert.equal(await page.locator("html").evaluate(element => element.classList.contains("cep-auth-pending")), false);
+  assert.equal(await page.getByRole("button", { name: "Sign out of XlynEve" }).count(), 1);
 
   console.log("Passed: protected pages wait for a restored desktop session without redirecting.");
   await browser.close();
