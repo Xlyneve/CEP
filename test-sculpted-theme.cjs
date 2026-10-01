@@ -14,7 +14,7 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
         contentType: "text/html",
         body: name === "chatgptx.html"
           ? `<!doctype html><html><body><main id="chat"><div class="message bot"><div class="chatBubble">Note</div></div></main><script src="page-theme.js"></script></body></html>`
-          : `<!doctype html><html class="theme-home-glass"><body class="dashboard-hierarchy-active"><header><h1 class="pageTitle">Dashboard</h1></header><main class="main-content"><h2 class="dashboard-section-heading"><button class="dashboard-section-toggle">Admin</button></h2><section class="card-group section-card-group section-home"><article class="card" style="--card-ink:#fff">Card</article></section></main><script src="page-theme.js"></script></body></html>`
+          : `<!doctype html><html class="theme-home-glass"><body class="dashboard-hierarchy-active"><header><h1 class="pageTitle">Dashboard</h1></header><main class="main-content"><h2 class="dashboard-section-heading"><button class="dashboard-section-toggle">Admin</button></h2><section class="card-group section-card-group section-admin"><article class="card admin-card" style="--card-ink:#39353a">Admin</article></section><section class="card-group section-card-group section-notes"><article class="card notes-card" style="--card-ink:#fff">Notes</article></section></main><script src="page-theme.js"></script></body></html>`
       });
     }
     const file = path.join(process.cwd(), name);
@@ -27,14 +27,15 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
 
   assert.equal(await page.locator("html").getAttribute("data-xlyneve-color-theme"), "sculpted");
   assert.equal(await page.locator("html").evaluate(element => getComputedStyle(element).getPropertyValue("--theme-ink").trim()), "#39353a");
-  const cardStyle = await page.locator(".card").evaluate((element) => {
+  const cardStyle = await page.locator(".admin-card").evaluate((element) => {
     const style = getComputedStyle(element);
     return { radius: style.borderRadius, shadow: style.boxShadow };
   });
   assert.equal(cardStyle.radius, "28px");
   assert.match(cardStyle.shadow, /rgba\(/);
-  assert.equal(await page.locator(".card").evaluate(element => getComputedStyle(element).color), "rgb(57, 53, 58)");
-  assert.equal(await page.locator(".card").evaluate(element => getComputedStyle(element).paddingLeft), "22px");
+  assert.equal(await page.locator(".admin-card").evaluate(element => getComputedStyle(element).color), "rgb(255, 255, 255)");
+  assert.equal(await page.locator(".notes-card").evaluate(element => getComputedStyle(element).color), "rgb(57, 53, 58)");
+  assert.equal(await page.locator(".admin-card").evaluate(element => getComputedStyle(element).paddingLeft), "22px");
   assert.equal(await page.locator(".dashboard-section-toggle").evaluate(element => getComputedStyle(element).paddingLeft), "22px");
 
   await page.getByRole("button", { name: "Choose colour theme" }).click();
