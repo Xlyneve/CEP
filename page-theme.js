@@ -1142,14 +1142,14 @@
     body:has(#chat) .message.bot { border-top:0 !important;padding-top:14px !important; }
     body:has(#chat) .chatBubble {
       color:#313b3a !important;-webkit-text-fill-color:#313b3a !important;
-      background:linear-gradient(145deg,#fffdf9 0%,#f7f0e8 58%,#ecdfd2 100%) !important;
+      background:linear-gradient(145deg,#ffffff 0%,#f7f8f8 58%,#eceff0 100%) !important;
       border:1px solid rgba(255,255,255,.9) !important;border-radius:24px !important;
       padding:16px 20px !important;
-      box-shadow:inset 3px 3px 5px rgba(255,255,255,.96),inset -4px -5px 8px rgba(113,94,79,.11),9px 12px 22px rgba(96,80,68,.17),-5px -5px 12px rgba(255,255,255,.66) !important;
+      box-shadow:inset 3px 3px 5px rgba(255,255,255,.98),inset -4px -5px 8px rgba(94,103,105,.1),9px 12px 22px rgba(83,92,94,.16),-5px -5px 12px rgba(255,255,255,.72) !important;
       backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
     }
     body:has(#chat) .message.user .chatBubble {
-      background:linear-gradient(145deg,#f7ebe7,#e3cbc3) !important;
+      background:linear-gradient(145deg,#fafbfb,#e8ebec) !important;
     }
     html[data-xlyneve-color-theme="sculpted"] body:has(.notes .notepad) main { border-radius:28px !important;background:linear-gradient(145deg,#fffaf4,#e6d8ca) !important;box-shadow:inset 4px 4px 8px rgba(255,255,255,.84),inset -5px -6px 10px rgba(96,80,68,.12),14px 20px 36px rgba(96,80,68,.2) !important; }
     html[data-xlyneve-color-theme="sculpted"] body:has(.notes .notepad) .notepad { color:#313b3a !important;-webkit-text-fill-color:#313b3a !important;caret-color:#5f8889 !important;background:linear-gradient(rgba(255,250,244,.94),rgba(255,250,244,.94)) padding-box,repeating-linear-gradient(to bottom,transparent 0,transparent 26px,rgba(168,205,210,.34) 27px) !important; }

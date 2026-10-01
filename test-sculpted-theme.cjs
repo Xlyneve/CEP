@@ -46,11 +46,12 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
   assert.equal(await page.locator("html").getAttribute("data-xlyneve-color-theme"), null);
   const noteStyle = await page.locator(".chatBubble").evaluate((element) => {
     const style = getComputedStyle(element);
-    return { radius: style.borderRadius, shadow: style.boxShadow, blur: style.backdropFilter };
+    return { radius: style.borderRadius, shadow: style.boxShadow, blur: style.backdropFilter, background: style.backgroundImage };
   });
   assert.equal(noteStyle.radius, "24px");
   assert.match(noteStyle.shadow, /rgba\(/);
   assert.equal(noteStyle.blur, "none");
+  assert.match(noteStyle.background, /rgb\(255, 255, 255\)/);
 
   await page.goto("http://theme.test/biosched1.html", { waitUntil: "domcontentloaded" });
   assert.equal(await page.locator("html").getAttribute("data-xlyneve-color-theme"), null);
