@@ -1,0 +1,48 @@
+/* Authored text only. No font, line-height, weight, display or text-colour changes. */
+:root {
+  --cep-highlight-paper: #f1f3f5;
+  --cep-highlight-shadow: 0 2px 5px rgba(0, 0, 0, .10), inset 0 1px 0 rgba(255, 255, 255, .75);
+  --cep-highlight-dark-paper: #4f5459;
+  --cep-highlight-dark-shadow: 0 2px 5px rgba(0, 0, 0, .16), inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+/* The render helper reuses this declaration for legacy classes/inline backgrounds.
+   It creates CSS rules, never attributes or styles inside saved note content. */
+.cep-content-highlight {
+  background: var(--cep-highlight-paper) !important;
+  border-radius: 6px !important;
+  padding: 1px 4px 2px !important;
+  box-shadow: var(--cep-highlight-shadow) !important;
+  text-shadow: none !important;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+/* Override the browser's default black mark text, without overriding authored colour. */
+:where(.note-text, .note-content, .edit-note, .edit-box, .edit-notes-box,
+  .vaccine-notes-input, .note-display, #note, #noteText, #notes, #noteInput,
+  .editableNote, .chatBubble, .cep-pn-editor, .cep-source-note-text,
+  .cep-source-note-content, .cep-source-note-display, .cep-xgpt-rich-content,
+  .universal-search-native-snippet) :where(mark:not(.cep-search-match):not(.underlineMatch):not(.search-highlight):not(.search-hit)):not(:where(button *, [role="button"] *, .badge *, [class$="-badge"] *, h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, .note-title *, .cep-source-note-title *)) {
+  color: inherit;
+}
+:where(mark.gradient-highlight, mark.highlight-hue):not(:where(button *, [role="button"] *, .badge *, [class$="-badge"] *, h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, .note-title *, .cep-source-note-title *)) { color: inherit; }
+/* Search matches are intentionally flat, warm and underlined, never raised grey. */
+html body :is(.cep-search-match, .underlineMatch, .search-highlight, .search-hit,
+  .cep-concept-search-result mark) {
+  background: #fff0a6 !important;
+  color: #3b2b10 !important;
+  -webkit-text-fill-color: #3b2b10 !important;
+  border-bottom: 1px solid #98721b !important;
+  border-radius: 3px !important;
+  padding: 0 1px !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Inline !important backgrounds cannot be overridden by author CSS. An inset
+   neutral paint layer covers their fill without changing the stored style. */
+.cep-content-highlight-important-fill {
+  box-shadow: inset 0 0 0 100vmax var(--cep-highlight-paper), var(--cep-highlight-shadow) !important;
+}
+.cep-content-highlight-important-dark-fill {
+  box-shadow: inset 0 0 0 100vmax var(--cep-highlight-dark-paper), var(--cep-highlight-dark-shadow) !important;
+}

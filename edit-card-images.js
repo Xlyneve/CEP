@@ -64,13 +64,6 @@ function installStyles() {
     .cep-pn-editor-toolbar button:disabled { cursor:wait; opacity:.66; }
     .cep-pn-editor-divider { width:1px; height:20px; margin:0 2px; background:rgba(90,80,85,.16); }
     .cep-pn-editor img { max-width:min(100%,420px); height:auto; border-radius:8px; cursor:zoom-in; }
-    .gradient-highlight, .highlight-gradient, .note-gradient-highlight,
-    .note-card mark.gradient-highlight, .note-tile mark.gradient-highlight, .cep-pn-editor mark.gradient-highlight {
-      background:linear-gradient(90deg,#fff3a6 0%,#ffd7b5 52%,#ffc7da 100%) !important;
-      color:#171717 !important; border-radius:5px !important; padding:0 3px !important;
-      box-shadow:inset 0 -1px 0 rgba(110,72,20,.20),0 0 0 1px rgba(255,255,255,.5) !important;
-      -webkit-box-decoration-break:clone; box-decoration-break:clone;
-    }
     .cep-pn-editor table, .note-card table, .note-tile table {
       width:100% !important; margin:8px 0 !important; border-collapse:collapse !important; border-spacing:0 !important;
       max-width:100% !important; min-width:0 !important;
