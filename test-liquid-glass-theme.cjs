@@ -30,7 +30,7 @@ const { chromium } = require("C:/Users/xlyn0/.cache/codex-runtimes/codex-primary
   });
   assert.equal(cardStyle.radius, "26px");
   assert.match(cardStyle.shadow, /rgba\(/);
-  assert.match(cardStyle.blur, /blur\(24px\)/);
+  assert.match(cardStyle.blur, /blur\(30px\)/);
 
   await page.getByRole("button", { name: "Choose colour theme" }).click();
   const option = page.locator('.xlyneve-theme-option[data-theme="liquid-glass"]');

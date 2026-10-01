@@ -1182,6 +1182,79 @@
     html[data-xlyneve-color-theme="liquid-glass"] body:has(.notes .notepad) .notepad { color:#24272a !important;-webkit-text-fill-color:#24272a !important;caret-color:#7654ef !important;background:linear-gradient(rgba(255,255,255,.56),rgba(255,255,255,.56)) padding-box,repeating-linear-gradient(to bottom,transparent 0,transparent 26px,rgba(100,225,213,.32) 27px) !important; }
     html[data-xlyneve-color-theme="liquid-glass"] .xlyneve-theme-button { background:linear-gradient(135deg,#eee2d8 0 22%,#64e1d5 22% 44%,#8b65ff 44% 66%,#ffb9b1 66% 83%,#dfe7e9 83% 100%);box-shadow:inset 1px 1px 0 rgba(255,255,255,.88),0 8px 18px rgba(38,42,55,.22),0 0 14px rgba(100,225,213,.28),0 0 12px rgba(139,101,255,.2) !important; }
 
+    /* Liquid Glass: neutral translucent material with concentrated edge light. */
+    html[data-xlyneve-color-theme="liquid-glass"],html[data-xlyneve-color-theme="liquid-glass"] body {
+      background-color:#aaa39f !important;
+      background-image:
+        radial-gradient(ellipse at 12% 5%,rgba(255,242,230,.94) 0 7%,transparent 25%),
+        radial-gradient(ellipse at 96% 8%,rgba(50,67,82,.88) 0 11%,transparent 35%),
+        radial-gradient(ellipse at 6% 84%,rgba(239,220,207,.68) 0 9%,transparent 31%),
+        radial-gradient(ellipse at 94% 88%,rgba(67,82,96,.8) 0 12%,transparent 36%),
+        radial-gradient(circle at 78% 68%,rgba(100,225,213,.34) 0 2%,transparent 16%),
+        radial-gradient(circle at 85% 73%,rgba(139,101,255,.3) 0 2%,transparent 15%),
+        linear-gradient(118deg,#d9cec5 0%,#c0b7b1 48%,#7e8c98 100%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(.note-card,.card,.acc-item,.med-section,.vaccine-section,.vaccine-card,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.day:not(.empty):not(.today),.todo-item:not(.priority)),
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .main-content .card-group.section-card-group > .card {
+      color:#222629 !important;-webkit-text-fill-color:#222629 !important;
+      background:
+        radial-gradient(circle at 100% 100%,rgba(100,225,213,.12),transparent 30%),
+        radial-gradient(circle at 0 0,rgba(255,255,255,.28),transparent 42%),
+        linear-gradient(145deg,rgba(255,255,255,.3),rgba(255,255,255,.09)) !important;
+      border:1px solid rgba(255,255,255,.6) !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.82),inset -1px -1px 0 rgba(255,255,255,.18),0 18px 32px rgba(28,35,43,.3),0 3px 7px rgba(28,35,43,.18) !important;
+      backdrop-filter:blur(30px) saturate(132%) !important;-webkit-backdrop-filter:blur(30px) saturate(132%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .main-content .card-group.section-card-group > .card:hover {
+      background:radial-gradient(circle at 100% 100%,rgba(100,225,213,.2),transparent 32%),radial-gradient(circle at 0 0,rgba(139,101,255,.1),transparent 38%),linear-gradient(145deg,rgba(255,255,255,.38),rgba(255,255,255,.12)) !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.9),0 22px 40px rgba(28,35,43,.34),0 0 18px rgba(100,225,213,.22),0 0 12px rgba(139,101,255,.14) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] body > header,html[data-xlyneve-color-theme="liquid-glass"] :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header) {
+      background:linear-gradient(145deg,rgba(255,255,255,.3),rgba(255,255,255,.08)) !important;
+      border-color:rgba(255,255,255,.58) !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.78),0 18px 38px rgba(28,35,43,.28) !important;
+      backdrop-filter:blur(32px) saturate(135%) !important;-webkit-backdrop-filter:blur(32px) saturate(135%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(button,.glass-btn,.header-btn,.add-btn,.top-links a) {
+      color:#24272a !important;-webkit-text-fill-color:#24272a !important;
+      background:linear-gradient(145deg,rgba(255,255,255,.5),rgba(255,255,255,.14)) !important;
+      border-color:rgba(255,255,255,.68) !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.9),0 10px 20px rgba(28,35,43,.28),0 2px 5px rgba(28,35,43,.14) !important;
+      backdrop-filter:blur(24px) saturate(138%) !important;-webkit-backdrop-filter:blur(24px) saturate(138%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(
+      .universal-search-mode.is-active,.universal-search-filter.is-active,
+      .cep-global-search-modes button.is-active,.cep-global-search-filters button.is-active,
+      .qc-tab.active,.qc-strength-btn.active,.pr-toggle.active
+    ) {
+      color:#fff !important;-webkit-text-fill-color:#fff !important;
+      background:linear-gradient(135deg,rgba(139,101,255,.96),rgba(113,78,238,.9)) !important;
+      border-color:rgba(218,207,255,.84) !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.42),0 9px 20px rgba(75,46,166,.38),0 0 18px rgba(139,101,255,.5) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(.add-btn,.checklist-add-btn,#addBtn,#addNoteBtn) {
+      background:linear-gradient(135deg,rgba(100,225,213,.92),rgba(61,194,187,.86)) !important;
+      border-color:rgba(208,255,250,.86) !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.5),0 10px 22px rgba(34,135,130,.34),0 0 18px rgba(100,225,213,.46) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"] :is(input,select,textarea,[contenteditable="true"]) {
+      color:#24272a !important;-webkit-text-fill-color:#24272a !important;
+      background:rgba(255,255,255,.58) !important;border:1px solid rgba(255,255,255,.7) !important;
+      box-shadow:inset 2px 3px 8px rgba(38,42,55,.1),inset -1px -1px 0 rgba(255,255,255,.72) !important;
+      backdrop-filter:blur(18px) saturate(128%) !important;-webkit-backdrop-filter:blur(18px) saturate(128%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .dashboard-frequent-circles .circle {
+      border:1px solid rgba(255,255,255,.68) !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.7),0 13px 24px rgba(28,35,43,.3),0 0 14px rgba(100,225,213,.14) !important;
+      backdrop-filter:blur(22px) saturate(142%) !important;-webkit-backdrop-filter:blur(22px) saturate(142%) !important;
+    }
+    html[data-xlyneve-color-theme="liquid-glass"].theme-home-glass .universal-search,html[data-xlyneve-color-theme="liquid-glass"] .cep-global-search-panel {
+      background:radial-gradient(circle at 100% 100%,rgba(100,225,213,.18),transparent 28%),radial-gradient(circle at 0 100%,rgba(139,101,255,.12),transparent 26%),linear-gradient(145deg,rgba(255,255,255,.38),rgba(255,255,255,.1)) !important;
+      border-color:rgba(255,255,255,.64) !important;
+      box-shadow:inset 1px 1px 0 rgba(255,255,255,.84),0 25px 54px rgba(28,35,43,.34),0 0 24px rgba(100,225,213,.24),0 0 18px rgba(139,101,255,.16) !important;
+      backdrop-filter:blur(34px) saturate(142%) !important;-webkit-backdrop-filter:blur(34px) saturate(142%) !important;
+    }
+
     html[data-xlyneve-color-theme="autumn"] .xlyneve-theme-button {
       background: linear-gradient(135deg, #255765 0 42%, #92a6a7 42% 68%, #d7bec4 68% 100%);
     }
