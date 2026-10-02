@@ -494,6 +494,7 @@ function hideLegacyFormatting(editor) {
 }
 
 function attachEditor(editor) {
+  if (/(?:^|\/)chatgptx\.html$/i.test(location.pathname) && editor.matches('#noteInput, .editableNote')) return;
   if (attachedEditors.has(editor) || !isNoteEditor(editor)) return;
   attachedEditors.add(editor); editor.classList.add('cep-pn-editor');
   if (editor.closest('#noteInputContainer')) editor.parentElement?.classList.add('cep-pn-editor-shell');

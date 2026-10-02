@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js?v=20260823-8"></script>
+  <script src="auth-guard.js?v=20261002-1"></script>
   <script src="security.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1542,7 +1542,7 @@ a.conceptLink.hasDef::before{
     bottom: 0;
     z-index: 111;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 2px;
     padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
     background: rgba(250, 247, 248, 0.94);
@@ -1598,6 +1598,26 @@ a.conceptLink.hasDef::before{
     white-space: nowrap;
   }
 }
+
+/* One floating formatting menu, hosted inside the active note editor. */
+body > #formatToggle { display: none !important; }
+.note-format-shell { position: relative; min-width: 0; width: 100%; }
+.note-format-shell > #formatToggle {
+  position: absolute; top: 6px; right: 6px; bottom: auto; left: auto;
+  display: block !important; width: 36px; height: 36px; line-height: 32px;
+  font-size: 16px; background: rgba(255,255,255,.94); z-index: 2;
+}
+.note-format-shell > #formatToolbar {
+  position: sticky; top: auto; bottom: 0; left: auto; right: auto;
+  width: auto; max-width: 100%; max-height: 180px; overflow: auto;
+  flex-direction: row; flex-wrap: wrap; gap: 4px; padding: 6px;
+  background: rgba(255,253,252,.98); z-index: 3; box-sizing: border-box;
+}
+.note-format-shell > [contenteditable] { padding-top: 46px !important; }
+#highlightPalette { display: none; gap: 5px; padding: 5px; align-items: center; }
+#highlightPalette.visible { display: flex; }
+.highlight-color-choice { width: 28px; height: 28px; border: 1px solid #aaa; border-radius: 50%; cursor: pointer; flex: 0 0 auto; }
+
 </style>
 
 
@@ -1618,7 +1638,7 @@ a.conceptLink.hasDef::before{
 </div>
 
 
-<div id="formatToggle">📋</div>
+<button id="formatToggle" type="button" title="Format note" aria-label="Format note" aria-expanded="false" aria-controls="formatToolbar">Aa</button>
 
 <div id="formatToolbar">
   <button class="format-btn" id="recallBtn" title="Smart Recall (Shift+Click includes pinned)">📖</button>
@@ -1626,13 +1646,16 @@ a.conceptLink.hasDef::before{
   <button class="format-btn" id="italicBtn"><i>I</i></button>
   <button class="format-btn" id="underlineBtn"><u>U</u></button>
   <button class="format-btn" id="indentBtn" title="Indent (Tab) — Shift+Click = Outdent">👉🏻</button>
-  <button class="format-btn" id="highlightBtn" title="Gradient highlight" aria-label="Gradient highlight">🌈</button>
-  <button class="format-btn" id="purpleHighlightBtn" title="Purple highlight" aria-label="Purple highlight">🟪</button>
-  <button class="format-btn" id="yellowHighlightBtn" title="Yellow highlight" aria-label="Yellow highlight">🟨</button>
-  <button class="format-btn" id="greenHighlightBtn" title="Green highlight" aria-label="Green highlight">🟩</button>
-  <button class="format-btn" id="pinkHighlightBtn" title="Pink highlight" aria-label="Pink highlight">🌸</button>
-  <button class="format-btn" id="blueHighlightBtn" title="Blue highlight" aria-label="Blue highlight">🔹</button>
-  <button class="format-btn" id="removeHighlightBtn" title="Remove highlight" aria-label="Remove highlight">🧽</button>
+  <button class="format-btn" id="highlightBtn" type="button" title="Choose highlight" aria-label="Choose highlight" aria-expanded="false" aria-controls="highlightPalette">🖍️</button>
+  <div id="highlightPalette" aria-label="Highlight colours">
+    <button class="highlight-color-choice" type="button" data-color="#f1f3f5" style="background:#f1f3f5" title="Neutral highlight" aria-label="Neutral highlight"></button>
+    <button class="highlight-color-choice" type="button" data-color="#d8c4ff" style="background:#d8c4ff" title="Purple highlight" aria-label="Purple highlight"></button>
+    <button class="highlight-color-choice" type="button" data-color="#fff3a6" style="background:#fff3a6" title="Yellow highlight" aria-label="Yellow highlight"></button>
+    <button class="highlight-color-choice" type="button" data-color="#ccefd6" style="background:#ccefd6" title="Green highlight" aria-label="Green highlight"></button>
+    <button class="highlight-color-choice" type="button" data-color="#ffc7da" style="background:#ffc7da" title="Pink highlight" aria-label="Pink highlight"></button>
+    <button class="highlight-color-choice" type="button" data-color="#cfe8ff" style="background:#cfe8ff" title="Blue highlight" aria-label="Blue highlight"></button>
+    <button class="highlight-color-choice" type="button" data-color="transparent" title="Remove highlight" aria-label="Remove highlight">×</button>
+  </div>
   <button class="format-btn" id="fontColorBtn" type="button" title="Choose font colour" aria-label="Choose font colour">🎨</button>
   <div id="fontColorPalette" aria-label="Font colours">
     <button class="font-color-choice" type="button" data-color="#222222" style="background:#222222" title="Black"></button>
@@ -1701,10 +1724,6 @@ a.conceptLink.hasDef::before{
   <button class="mobile-nav-btn" id="mobileAddBtn" type="button" aria-label="Add note" aria-selected="false">
     <span class="mobile-nav-icon" aria-hidden="true">＋</span>
     <span class="mobile-nav-label">Add note</span>
-  </button>
-  <button class="mobile-nav-btn" id="mobileFormatBtn" type="button" aria-label="Format" aria-selected="false">
-    <span class="mobile-nav-icon" aria-hidden="true">Aa</span>
-    <span class="mobile-nav-label">Format</span>
   </button>
 </nav>
 
@@ -2750,7 +2769,7 @@ function updateUIForLockState() {
 
     inputArea.style.display = 'flex';
     noteContainer.style.display = isMobileLayout ? 'none' : 'block';
-    formatToggle.style.display = isMobileLayout ? 'none' : 'block';
+    // Formatting is available only within an open editor.
 
     startNotesListener();
     startDefsListener();
@@ -3162,6 +3181,7 @@ function placeCaretAtEnd(el) {
 ========================= */
 function closeNewNoteEditor({ clear = false } = {}) {
   isEditingNote = false;
+  closeEditorFormat();
   notePanel.style.display = 'none';
   notePanel.classList.remove('mobile-note-sheet');
   document.body.classList.remove('mobile-note-open');
@@ -5322,6 +5342,14 @@ arrowBtn.addEventListener('mousedown', (e) => {
       }
 
       const removeSharedEditToolbar = () => {
+        closeEditorFormat();
+        if (editable.parentElement.classList.contains('note-format-shell')) {
+          document.body.append(formatToggle, formatToolbar);
+          formatToggle.style.display = 'none';
+          const shell = editable.parentElement;
+          shell.before(editable);
+          shell.remove();
+        }
         const toolbar = editable.nextElementSibling;
         if (toolbar?.classList.contains('cep-pn-editor-toolbar')) toolbar.remove();
       };
@@ -5748,17 +5776,27 @@ function bindToolbarBtn(id, cmd, value = null) {
 bindToolbarBtn('boldBtn', 'bold');
 bindToolbarBtn('italicBtn', 'italic');
 bindToolbarBtn('underlineBtn', 'underline');
-bindToolbarBtn('highlightBtn', 'hiliteColor', '#e8dcff');
-bindToolbarBtn('purpleHighlightBtn', 'hiliteColor', '#d8c4ff');
-bindToolbarBtn('yellowHighlightBtn', 'hiliteColor', '#fff3a6');
-bindToolbarBtn('greenHighlightBtn', 'hiliteColor', '#ccefd6');
-bindToolbarBtn('pinkHighlightBtn', 'hiliteColor', '#ffc7da');
-bindToolbarBtn('blueHighlightBtn', 'hiliteColor', '#cfe8ff');
-bindToolbarBtn('removeHighlightBtn', 'hiliteColor', 'transparent');
+const highlightPalette = document.getElementById('highlightPalette');
+document.getElementById('highlightBtn').addEventListener('click', () => {
+  fontColorPalette.classList.remove('visible');
+  const open = highlightPalette.classList.toggle('visible');
+  document.getElementById('highlightBtn').setAttribute('aria-expanded', String(open));
+});
+highlightPalette.addEventListener('mousedown', event => {
+  const choice = event.target.closest('.highlight-color-choice');
+  if (!choice) return;
+  event.preventDefault();
+  event.stopPropagation();
+  runCmd('hiliteColor', choice.dataset.color);
+  highlightPalette.classList.remove('visible');
+  document.getElementById('highlightBtn').setAttribute('aria-expanded', 'false');
+});
 
 const fontColorPalette = document.getElementById('fontColorPalette');
 
 document.getElementById('fontColorBtn')?.addEventListener('click', () => {
+  highlightPalette.classList.remove('visible');
+  document.getElementById('highlightBtn').setAttribute('aria-expanded', 'false');
   fontColorPalette?.classList.toggle('visible');
 });
 
@@ -5829,13 +5867,42 @@ auth.onAuthStateChanged(async (user) => {
   }
 });
 
-document.getElementById('formatToggle').onclick = () =>
-  document.getElementById('formatToolbar').classList.toggle('visible');
+function closeEditorFormat() {
+  formatToolbar.classList.remove('visible');
+  fontColorPalette.classList.remove('visible');
+  highlightPalette.classList.remove('visible');
+  formatToggle.setAttribute('aria-expanded', 'false');
+  document.getElementById('highlightBtn').setAttribute('aria-expanded', 'false');
+}
+function attachEditorFormat(editor) {
+  if (!editor.matches('#noteInput, .editableNote')) return;
+  let shell = editor.parentElement;
+  if (!shell.classList.contains('note-format-shell')) {
+    shell = document.createElement('div');
+    shell.className = 'note-format-shell';
+    editor.before(shell);
+    shell.append(editor);
+  }
+  if (formatToggle.parentElement !== shell) {
+    closeEditorFormat();
+    shell.append(formatToggle, formatToolbar);
+  }
+  formatToggle.style.display = 'block';
+}
+document.addEventListener('focusin', event => {
+  const editor = event.target.closest?.('#noteInput, .editableNote');
+  if (editor) attachEditorFormat(editor);
+});
+formatToggle.onclick = () => {
+  const open = !formatToolbar.classList.contains('visible');
+  closeEditorFormat();
+  if (open) formatToolbar.classList.add('visible');
+  formatToggle.setAttribute('aria-expanded', String(open));
+};
 
 const mobileNavMedia = window.matchMedia('(max-width: 600px)');
 const mobileBottomNav = document.getElementById('mobileBottomNav');
 const mobileAddBtn = document.getElementById('mobileAddBtn');
-const mobileFormatBtn = document.getElementById('mobileFormatBtn');
 const mobileAccountBtn = document.getElementById('mobileAccountBtn');
 
 function syncMobileSignOutLight() {
@@ -5862,30 +5929,10 @@ function setMobileNavSelection(selectedButton = null) {
 
 function closeMobilePanels(except = '') {
   if (except !== 'format') {
-    formatToolbar.classList.remove('visible');
-    fontColorPalette?.classList.remove('visible');
+    closeEditorFormat();
   }
   if (except !== 'account') lockSection.style.display = 'none';
 }
-
-mobileFormatBtn?.addEventListener('pointerdown', event => {
-  if (!mobileNavMedia.matches || !activeEditable?.isContentEditable) return;
-  event.preventDefault();
-  event.stopPropagation();
-  saveCaret();
-});
-
-mobileFormatBtn?.addEventListener('click', () => {
-  if (!mobileNavMedia.matches) return;
-  const willOpen = !formatToolbar.classList.contains('visible');
-  closeMobilePanels();
-  if (willOpen) {
-    formatToolbar.classList.add('visible');
-    setMobileNavSelection(mobileFormatBtn);
-  } else {
-    setMobileNavSelection();
-  }
-});
 
 mobileAddBtn?.addEventListener('click', () => {
   if (!mobileNavMedia.matches) return;
@@ -5918,6 +5965,7 @@ document.addEventListener('click', event => {
     mobileBottomNav?.contains(event.target)
     || inputArea.contains(event.target)
     || formatToolbar.contains(event.target)
+    || formatToggle.contains(event.target)
     || lockSection.contains(event.target)
   ) return;
   closeMobilePanels();
