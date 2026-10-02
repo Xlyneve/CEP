@@ -1615,7 +1615,18 @@ body > #formatToggle { display: none !important; }
 }
 .note-format-shell > [contenteditable] { padding-top: 46px !important; }
 #highlightPalette { display: none; gap: 5px; padding: 5px; align-items: center; }
-#highlightPalette.visible { display: flex; }
+#highlightPalette.visible, .note-format-shell #fontColorPalette.visible {
+  display: flex; flex-wrap: wrap; flex-basis: 100%; width: 100%;
+  box-sizing: border-box; gap: 8px; padding: 8px;
+}
+.note-format-shell .highlight-color-choice,
+.note-format-shell .font-color-choice {
+  width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+  flex: 0 0 44px; margin: 0;
+}
+.note-format-shell #formatToolbar .format-btn {
+  min-width: 44px; min-height: 44px; transform: none;
+}
 .highlight-color-choice { width: 28px; height: 28px; border: 1px solid #aaa; border-radius: 50%; cursor: pointer; flex: 0 0 auto; }
 
 </style>
@@ -5782,7 +5793,8 @@ document.getElementById('highlightBtn').addEventListener('click', () => {
   const open = highlightPalette.classList.toggle('visible');
   document.getElementById('highlightBtn').setAttribute('aria-expanded', String(open));
 });
-highlightPalette.addEventListener('mousedown', event => {
+highlightPalette.addEventListener('mousedown', event => { event.preventDefault(); });
+highlightPalette.addEventListener('click', event => {
   const choice = event.target.closest('.highlight-color-choice');
   if (!choice) return;
   event.preventDefault();
@@ -5800,7 +5812,8 @@ document.getElementById('fontColorBtn')?.addEventListener('click', () => {
   fontColorPalette?.classList.toggle('visible');
 });
 
-fontColorPalette?.addEventListener('mousedown', (e) => {
+fontColorPalette?.addEventListener('mousedown', event => { event.preventDefault(); });
+fontColorPalette?.addEventListener('click', (e) => {
   const choice = e.target.closest('.font-color-choice');
   if (!choice) return;
   e.preventDefault();
