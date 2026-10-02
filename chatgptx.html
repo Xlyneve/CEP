@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js?v=20261002-2"></script>
+  <script src="auth-guard.js?v=20261002-3"></script>
   <script src="security.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1599,6 +1599,18 @@ a.conceptLink.hasDef::before{
   }
 }
 
+/* Preserve the page's existing editor typography. */
+.note-format-shell > #noteInput.cep-pn-editor {
+  font-family: inherit !important; font-size: 13px !important; line-height: normal !important;
+}
+.note-format-shell > .editableNote.cep-pn-editor {
+  font-family: Tahoma, sans-serif !important; font-size: 12px !important; line-height: normal !important;
+}
+@media (max-width: 600px) {
+  .note-format-shell > #noteInput.cep-pn-editor { font-size: 18px !important; line-height: 1.5 !important; }
+  .note-format-shell > .editableNote.cep-pn-editor { font-size: 14px !important; line-height: 1.55 !important; }
+}
+.chatBubble table.editable-table th { background: #ecebeb !important; color: inherit !important; }
 /* Explicit colour choices keep the shared subtle raised treatment. */
 .cep-chosen-highlight {
   border-radius: 6px; padding: 1px 4px 2px;
@@ -2313,7 +2325,7 @@ function makeTable(rows = 2, cols = 2) {
   for (let r = 0; r < rows; r++) {
     const tr = document.createElement('tr');
     for (let c = 0; c < cols; c++) {
-      const td = document.createElement('td');
+      const td = document.createElement(r === 0 ? 'th' : 'td');
       const cell = document.createElement('div');
       cell.className = 'cellBox';
       cell.contentEditable = 'true';
@@ -2419,7 +2431,7 @@ document.getElementById('deleteRowBtn')?.addEventListener('mousedown', (e) => {
   const ctx = getClosestTableContext();
   if (!ctx?.cell || !ctx?.table) return alert('Click inside a table cell first.');
 
-  const td = ctx.cell.closest('td');
+  const td = ctx.cell.closest('td,th');
   const tr = td?.parentElement;
   if (!tr) return;
 
@@ -2433,7 +2445,7 @@ document.getElementById('addColBtn')?.addEventListener('mousedown', (e) => {
   if (!ctx?.table) return alert('Click inside a table cell first.');
 
   [...ctx.table.rows].forEach((tr) => {
-    const td = document.createElement('td');
+    const td = document.createElement(tr.cells[0]?.tagName === 'TH' ? 'th' : 'td');
     const cell = document.createElement('div');
     cell.className = 'cellBox';
     cell.contentEditable = 'true';
@@ -2448,7 +2460,7 @@ document.getElementById('deleteColBtn')?.addEventListener('mousedown', (e) => {
   const ctx = getClosestTableContext();
   if (!ctx?.cell || !ctx?.table) return alert('Click inside a table cell first.');
 
-  const td = ctx.cell.closest('td');
+  const td = ctx.cell.closest('td,th');
   const tr = td?.parentElement;
   if (!td || !tr) return;
 
@@ -5680,7 +5692,7 @@ function setTableCellsEditable(root, editable) {
     table.querySelectorAll('th,td').forEach(cell => {
       const isHeader = cell.tagName === 'TH' || Boolean(cell.closest('thead'));
       const rowIndex = cell.closest('tr')?.rowIndex || 0;
-      const background = isHeader ? '#d5d0d3' : rowIndex % 2 ? '#f2edf4' : '#ecebeb';
+      const background = isHeader ? '#ecebeb' : rowIndex % 2 ? '#f2edf4' : '#ecebeb';
       cell.style.setProperty('background', background, 'important');
       if (isHeader) cell.style.setProperty('color', '#40363b', 'important');
     });

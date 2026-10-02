@@ -574,7 +574,12 @@ function attachEditor(editor) {
 }
 
 function styleTables(root = document) {
-  root.querySelectorAll?.('.cep-pn-editor table, .note-card table, .note-tile table').forEach(table => {
+  const selector = '.cep-pn-editor table, .note-card table, .note-tile table';
+  const tables = [...(root.querySelectorAll?.(selector) || [])];
+  // Newly inserted tables are the observer root, so include the root itself.
+  const containingTable = root.closest?.(selector);
+  if (containingTable && !tables.includes(containingTable)) tables.unshift(containingTable);
+  tables.forEach(table => {
     const gridColor = '#e5dfcc';
     table.style.setProperty('border-collapse', 'collapse', 'important');
     table.style.setProperty('table-layout', 'auto', 'important');
@@ -591,7 +596,7 @@ function styleTables(root = document) {
       const isHeader = cell.tagName === 'TH' || cell.closest('thead');
       cell.style.setProperty(
         'background',
-        isHeader ? '#d5d0d3' : cell.parentElement.rowIndex % 2 ? '#f2edf4' : '#ecebeb',
+        isHeader ? (/(?:^|\/)chatgptx\.html$/i.test(location.pathname) ? '#ecebeb' : '#d5d0d3') : cell.parentElement.rowIndex % 2 ? '#f2edf4' : '#ecebeb',
         'important'
       );
       if (isHeader) cell.style.setProperty('color', '#40363b', 'important');
