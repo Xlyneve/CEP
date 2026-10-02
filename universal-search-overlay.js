@@ -59,6 +59,7 @@ const invalidatedDatasetFromEvent = event => {
 const persistentDatasetForKey = key => {
   const parts = String(key || '').split(':');
   if (parts[0] === 'xgpt') return `xgpt:${parts[3] || ''}`;
+  if (parts[0] === 'clinical') return 'clinical:clinicalNotes';
   if (parts[0] === 'main') return `main:${parts[2] || ''}`;
   return '';
 };
@@ -156,6 +157,21 @@ function getSearchText(entry) {
   return indexed;
 }
 
+let clinicalEntriesPromise;
+export async function loadClinicalNotesEntries({ forceRefresh = false } = {}) {
+  if (forceRefresh) clinicalEntriesPromise = null;
+  if (!clinicalEntriesPromise) clinicalEntriesPromise = (async () => {
+    const config = { apiKey:'AIzaSyDcM4E3wFhjUwZBYbnZoi1AAQtMe7TzNL8', authDomain:'notes-bcba6.firebaseapp.com', projectId:'notes-bcba6', storageBucket:'notes-bcba6.appspot.com', messagingSenderId:'101524739050', appId:'1:101524739050:web:7e5fe1c8fa224d69909893' };
+    const app = getApps().find(app => app.name === 'clinical-notes') || initializeApp(config, 'clinical-notes');
+    const auth = getAuth(app);
+    await auth.authStateReady();
+    if (!auth.currentUser) throw Object.assign(new Error('Open Clinical Notes and sign in, then return to search.'), { code:'clinical/auth-required' });
+    const docs = await loadPersistentSearchDocuments(getFirestore(app), 'clinicalNotes', `clinical:${auth.currentUser.uid}`, { forceRefresh });
+    return docs.map(record => ({ id:record.id, file:'Clinicalnotes.html', sourceTitle:'Clinical Notes', title:textFromHtml(record.data.title) || 'Untitled', text:[textFromHtml(record.data.title),textFromHtml(record.data.note)].join('\n'), displayText:textFromHtml(record.data.note), richHtml:record.data.note || '', record }));
+  })().catch(error => { clinicalEntriesPromise = null; throw error; });
+  return clinicalEntriesPromise;
+}
+
 let entriesPromise;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
@@ -164,6 +180,7 @@ let xgptConceptDefinitions = {};
 let xgptConceptCounts = new Map();
 let xgptConceptLabels = new Map();
 const clearInMemorySearchCache = () => {
+  clinicalEntriesPromise = null;
   entriesPromise = null;
   xgptEntriesPromise = null;
   xgptConceptMedia = {};
@@ -599,7 +616,7 @@ export function renderStructuredSearchContent(parent, html, terms = []) {
 }
 
 const sourceCardTypes = {
-  'pn.html':'pn', 'notes.html':'notes', 'ecg.html':'ecg', 'urgent_care.html':'urgent',
+  'clinicalnotes.html':'clinical', 'pn.html':'pn', 'notes.html':'notes', 'ecg.html':'ecg', 'urgent_care.html':'urgent',
   'face.html':'urgent', 'hand.html':'urgent', 'sha.html':'urgent', 'abdo.html':'urgent',
   'spine.html':'urgent', 'lf.html':'urgent', 'practicen.html':'practice', 'info.html':'info',
   'explain.html':'explain', 'recalls.html':'pn', 'forms.html':'forms'
@@ -650,6 +667,16 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
   parent.dataset.sourceCardType = type;
   if (entry.cardColour) parent.style.background = entry.cardColour;
 
+  if (type === 'clinical') {
+    const title = document.createElement('div'); title.className = 'cep-source-note-title';
+    addHighlightedText(title, data.title || 'Untitled', terms); parent.appendChild(title);
+    appendSourceRichContent(parent, data.note || '', terms, 'cep-source-note-content');
+    parent.style.borderRadius = '24px'; parent.style.padding = '14px';
+    parent.style.background = 'linear-gradient(145deg,rgba(255,255,255,.32),rgba(255,255,255,.11))';
+    title.style.fontSize = '13.5px'; title.style.fontWeight = '600';
+    const body = parent.querySelector('.cep-source-note-content'); body.style.fontSize = '12.5px'; body.style.whiteSpace = 'pre-wrap';
+    return true;
+  }
   if (type === 'forms') {
     const view = document.createElement('div'); view.className = 'cep-source-card-view';
     const title = document.createElement('strong'); title.textContent = data.title || 'Untitled'; view.appendChild(title);
@@ -1056,6 +1083,7 @@ export async function mountUniversalSearch(host, closeSearch) {
     <div class="cep-global-search-modes" aria-label="Search mode">
       <button type="button" class="is-active" data-search-mode="default" aria-pressed="true">Default</button>
       <button type="button" data-search-mode="concepts" aria-pressed="false">Concepts</button>
+      <button type="button" data-search-mode="clinical" aria-pressed="false">C.Notes</button>
     </div>
     <div class="cep-global-search-filters" aria-label="Filter search by section"></div>
     <div class="cep-global-search-status" aria-live="polite">Preparing saved-note sections…</div>
@@ -1069,6 +1097,7 @@ export async function mountUniversalSearch(host, closeSearch) {
   const xgptPrompt = panel.querySelector('.cep-xgpt-auth-prompt');
   const results = panel.querySelector('.cep-global-search-results');
   panel.querySelector('button').addEventListener('click', closeSearch);
+  let clinicalEntries = [];
   let entries = [], activeSource = 'All', searchMode = 'default', timer, conceptRequestId = 0;
   const mergeXgptEntries = xgptEntries => {
     const existingIds = new Set(entries.filter(entry => entry.file === 'chatgptx.html').map(entry => entry.id));
@@ -1142,7 +1171,7 @@ export async function mountUniversalSearch(host, closeSearch) {
       : terms;
     results.replaceChildren();
     if (!query) { status.textContent = 'Type a word to search.'; return; }
-    const scoredMatches = entries.map(entry => {
+    const scoredMatches = (searchMode === 'clinical' ? clinicalEntries : entries).map(entry => {
       const indexed = getSearchText(entry);
       const { title, text } = indexed;
       if (commaGroups) {
@@ -1191,7 +1220,7 @@ export async function mountUniversalSearch(host, closeSearch) {
         }
       }
       return { entry, score, fuzzy };
-    }).filter(Boolean).filter(match => activeSource === 'All' || match.entry.sourceTitle === activeSource)
+    }).filter(Boolean).filter(match => searchMode === 'clinical' || activeSource === 'All' || match.entry.sourceTitle === activeSource)
       .sort((a,b) => commaGroups
         ? b.matchedGroupCount - a.matchedGroupCount || b.score - a.score
         : b.score - a.score);
@@ -1281,15 +1310,20 @@ export async function mountUniversalSearch(host, closeSearch) {
     });
   };
   modes.querySelectorAll('[data-search-mode]').forEach(modeButton => {
-    modeButton.addEventListener('click', () => {
+    modeButton.addEventListener('click', async () => {
       searchMode = modeButton.dataset.searchMode;
       modes.querySelectorAll('[data-search-mode]').forEach(button => {
         const active = button === modeButton;
         button.classList.toggle('is-active', active);
         button.setAttribute('aria-pressed', String(active));
       });
-      filters.hidden = searchMode === 'concepts';
-      input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : 'Search all notes and pages…';
+      filters.hidden = searchMode !== 'default';
+      input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : searchMode === 'clinical' ? 'Search Clinical Notes titles and text…' : 'Search all notes and pages…';
+      if (searchMode === 'clinical') {
+        status.textContent = 'Loading cached Clinical Notes…';
+        try { clinicalEntries = await loadClinicalNotesEntries(); } catch (error) { results.replaceChildren(); status.textContent = error.message; return; }
+        if (searchMode !== 'clinical') return;
+      }
       runSearch();
       input.focus();
     });

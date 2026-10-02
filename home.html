@@ -3691,6 +3691,7 @@ html body .cep-sign-out-light {
   <div class="universal-search-modes" id="universalSearchModes" aria-label="Search mode">
     <button class="universal-search-mode is-active" type="button" data-search-mode="default" aria-pressed="true">Default</button>
     <button class="universal-search-mode" type="button" data-search-mode="concepts" aria-pressed="false">Concepts</button>
+    <button class="universal-search-mode" type="button" data-search-mode="clinical" aria-pressed="false">C.Notes</button>
   </div>
   <div class="universal-search-status" id="universalSearchStatus" aria-live="polite">Type a word to search.</div>
   <div class="home-xgpt-auth-prompt" id="homeXgptAuthPrompt" hidden><span>Sign in to include Xgpt Notes and concept images.</span><button id="homeXgptAuthButton" type="button">Sign in to Xgpt</button></div>
@@ -4621,13 +4622,23 @@ html body .cep-sign-out-light {
       const renderTerms = commaGroups
         ? [...new Set(commaGroups.flatMap(group => group.terms))]
         : terms;
-      await (indexPromise ||= buildIndex());
+      let candidates = searchIndex;
+      if (searchMode === 'clinical') {
+        try {
+          const clinical = await window.loadClinicalNotesEntries();
+          if (requestId !== searchRequestId || searchMode !== 'clinical') return;
+          candidates = clinical.map(entry => ({ ...entry, focusId:entry.id, searchable:`${entry.title} ${entry.text}`.toLocaleLowerCase() }));
+        } catch (error) { results.replaceChildren(); status.textContent = error.message; return; }
+      } else {
+        await (indexPromise ||= buildIndex());
+        candidates = searchIndex;
+      }
       // Start any slower remote indexes without holding back results that are
       // already available from the primary project.
-      window.cepUniversalLazyLoaders.forEach(loader => void loader(query));
+      if (searchMode !== 'clinical') window.cepUniversalLazyLoaders.forEach(loader => void loader(query));
       if (requestId !== searchRequestId || normalizeSearchValue(input.value) !== query) return;
-      const scoredMatches = searchIndex
-        .filter(page => activeSource === 'all' || page.sourceTitle === activeSource)
+      const scoredMatches = candidates
+        .filter(page => searchMode === 'clinical' || activeSource === 'all' || page.sourceTitle === activeSource)
         .map(page => commaGroups ? scoreCommaPage(page, commaGroups) : scorePage(page, query, terms))
         .filter(Boolean)
         .sort((a, b) => commaGroups
@@ -4896,8 +4907,8 @@ html body .cep-sign-out-light {
           button.classList.toggle('is-active', active);
           button.setAttribute('aria-pressed', String(active));
         });
-        filters.hidden = searchMode === 'concepts';
-        input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : 'Search all notes and pages…';
+        filters.hidden = searchMode !== 'default';
+        input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : searchMode === 'clinical' ? 'Search Clinical Notes titles and text…' : 'Search all notes and pages…';
         void runSearch();
         input.focus();
       });
@@ -4928,7 +4939,9 @@ html body .cep-sign-out-light {
       status.textContent = 'Refreshing notes…';
       try {
         if (!window.refreshCepHomeSearch) throw new Error('Search is still loading.');
-        const complete = await window.refreshCepHomeSearch();
+        const complete = searchMode === 'clinical'
+          ? !!(await window.loadClinicalNotesEntries({ forceRefresh:true }))
+          : await window.refreshCepHomeSearch();
         await runSearch();
         if (!complete) status.textContent = 'Some notes could not refresh. Please try again.';
         else if (!input.value.trim()) status.textContent = 'Notes refreshed. Type a word to search.';
@@ -6093,7 +6106,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=36';
+  import { loadClinicalNotesEntries, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=37';
   import {
     getFirestore,
     collection,
@@ -6212,6 +6225,7 @@ const firebaseConfig = {
   window.cepUniversalLazyLoaders ||= [];
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
   if (sessionStorage.getItem('cep-xgpt-google-access-token')) void loadChatgptSearchNotes();
+  window.loadClinicalNotesEntries = loadClinicalNotesEntries;
   window.getCachedXgptConceptMedia = getSharedXgptConceptMedia;
   window.getCachedXgptConceptDefinition = getSharedXgptConceptDefinition;
   window.searchReferencedXgptConcepts = searchSharedReferencedXgptConcepts;
