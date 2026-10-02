@@ -1749,7 +1749,7 @@ body > #formatToggle { display: none !important; }
 <div id="noteContainer">
   <button id="addNoteToggle" title="Add Note">＋</button>
   <div id="notePanel" style="display:none; flex-direction: column;">
-    <div id="noteInput" contenteditable="true" data-placeholder="Type or paste your note here..."></div>
+    <div id="noteInput" contenteditable="true" spellcheck="true" lang="en-NZ" data-placeholder="Type or paste your note here..."></div>
     <div class="new-note-actions note-editor-actions">
       <button id="newNoteImageBtn" type="button" title="Insert image">🖼️</button>
       <button id="newNoteEmojiBtn" type="button" title="Insert emoji">🌟</button>
@@ -5252,6 +5252,8 @@ function displayNotesInto(targetEl, notes) {
 
       const editable = document.createElement('div');
       editable.contentEditable = true;
+      editable.spellcheck = true;
+      editable.lang = 'en-NZ';
       const canonicalNote = notesCache.find(cached => cached.id === note.id);
       const canonicalContent = canonicalNote?.content ?? note.content ?? '';
       CEPSecurity.setHTML(editable, deLinkifyConceptAnchors(canonicalContent));
@@ -5718,6 +5720,7 @@ document.addEventListener('click', (e) => {
 
 function setTableCellsEditable(root, editable) {
   if (!root) return;
+  if (root.classList?.contains('chatBubble')) root.spellcheck = false;
   root.querySelectorAll('table').forEach(table => {
     table.style.setProperty('background', '#ecebeb', 'important');
     table.querySelectorAll('th,td').forEach(cell => {
@@ -5730,6 +5733,7 @@ function setTableCellsEditable(root, editable) {
   });
   root.querySelectorAll('.cellBox').forEach(cell => {
     cell.contentEditable = editable ? 'true' : 'false';
+    cell.spellcheck = editable;
     if (!editable) {
       cell.setAttribute('tabindex', '-1');
       cell.style.caretColor = 'transparent';
