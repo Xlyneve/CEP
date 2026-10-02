@@ -6,7 +6,7 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-  <script src="auth-guard.js?v=20261002-1"></script>
+  <script src="auth-guard.js?v=20261002-2"></script>
   <script src="security.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1599,6 +1599,13 @@ a.conceptLink.hasDef::before{
   }
 }
 
+/* Explicit colour choices keep the shared subtle raised treatment. */
+.cep-chosen-highlight {
+  border-radius: 6px; padding: 1px 4px 2px;
+  box-shadow: var(--cep-highlight-shadow); box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.cep-removed-highlight { background: transparent !important; box-shadow: none !important; padding: 0 !important; }
 /* One floating formatting menu, hosted inside the active note editor. */
 body > #formatToggle { display: none !important; }
 .note-format-shell { position: relative; min-width: 0; width: 100%; }
@@ -1635,7 +1642,7 @@ body > #formatToggle { display: none !important; }
   <link rel="stylesheet" href="site-background.css">
   <script src="page-theme.js?v=20261001-2"></script>
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
-  <script src="content-highlights.js?v=20261001-1" defer></script>
+  <script src="content-highlights.js?v=20261002-2" defer></script>
 </head>
 
 <body>
@@ -5787,6 +5794,35 @@ function bindToolbarBtn(id, cmd, value = null) {
 bindToolbarBtn('boldBtn', 'bold');
 bindToolbarBtn('italicBtn', 'italic');
 bindToolbarBtn('underlineBtn', 'underline');
+function applyChosenHighlight(color) {
+  const editor = getActiveEditor();
+  if (!editor) return;
+  activeEditable = editor;
+  editor.focus({ preventScroll: true });
+  restoreCaret();
+  const selection = window.getSelection();
+  if (!selection?.rangeCount || selection.isCollapsed) return;
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return;
+  const fragment = range.extractContents();
+  fragment.querySelectorAll('mark,span,font').forEach(element => {
+    element.style.removeProperty('background');
+    element.style.removeProperty('background-color');
+    element.style.removeProperty('background-image');
+    element.classList.remove('cep-chosen-highlight');
+  });
+  const highlight = document.createElement('span');
+  highlight.className = color === 'transparent' ? 'cep-removed-highlight' : 'cep-chosen-highlight';
+  highlight.style.backgroundColor = color;
+  highlight.append(fragment);
+  range.insertNode(highlight);
+  range.selectNodeContents(highlight);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  saveCaret();
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 const highlightPalette = document.getElementById('highlightPalette');
 document.getElementById('highlightBtn').addEventListener('click', () => {
   fontColorPalette.classList.remove('visible');
@@ -5799,7 +5835,7 @@ highlightPalette.addEventListener('click', event => {
   if (!choice) return;
   event.preventDefault();
   event.stopPropagation();
-  runCmd('hiliteColor', choice.dataset.color);
+  applyChosenHighlight(choice.dataset.color);
   highlightPalette.classList.remove('visible');
   document.getElementById('highlightBtn').setAttribute('aria-expanded', 'false');
 });

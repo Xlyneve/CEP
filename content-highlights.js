@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const scopes = '.note-text,.note-content,.edit-note,.edit-box,.edit-notes-box,.vaccine-notes-input,.note-display,#note,#noteText,#notes,#noteInput,.editableNote,.chatBubble,.cep-pn-editor,.cep-source-note-text,.cep-source-note-content,.cep-source-note-display,.cep-xgpt-rich-content,.universal-search-native-snippet';
+  const explicitColours = /(?:^|\/)chatgptx\.html$/i.test(location.pathname);
   const authored = '.gradient-highlight,.highlight-gradient,.note-gradient-highlight,mark.highlight-hue,.cep-content-highlight';
   const search = '.cep-search-match,.underlineMatch,.search-highlight,.search-hit';
   const excluded = 'button,[role="button"],.badge,[class$="-badge"],h1,h2,h3,h4,h5,h6,.note-title,.cep-source-note-title,.editor-buttons,.format-buttons,.cep-pn-editor-toolbar';
@@ -61,15 +62,20 @@
     const selectors = [], darkSelectors = [], emptySelectors = [], glowSelectors = [], importantSelectors = [], importantDarkSelectors = [];
     const importantFill = [...source.cssRules].find(rule => rule.selectorText === '.cep-content-highlight-important-fill').style.cssText;
     const importantDarkFill = [...source.cssRules].find(rule => rule.selectorText === '.cep-content-highlight-important-dark-fill').style.cssText;
+    const chosenSelectors = [];
     highlights.forEach(element => {
       if (!eligible(element)) return;
+      if (explicitColours && element.closest('.cep-removed-highlight')) return;
+      const chosen = explicitColours && element.closest('.cep-chosen-highlight');
+      if (chosen && chosen !== element) return;
       const selector = path(element);
       if (!element.textContent.trim() && !element.querySelector('img,svg,table')) {
         emptySelectors.push(selector); return;
       }
-      selectors.push(selector);
+      if (chosen) chosenSelectors.push(selector);
+      else selectors.push(selector);
       const important = ['background','background-color','background-image'].some(property => element.style.getPropertyPriority(property) === 'important');
-      if (important) importantSelectors.push(selector);
+      if (important && !chosen) importantSelectors.push(selector);
       if (element.matches('.ml-highlight')) glowSelectors.push(`${selector}::before`);
       const textParents = new Set();
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
@@ -92,6 +98,7 @@
       }
     });
     const rules = [];
+    if (chosenSelectors.length) rules.push(`${chosenSelectors.join(',')} {${declaration.replace(/background:[^;]*;/, '')}}`);
     if (selectors.length) rules.push(`${[...new Set(selectors)].join(',')} {${declaration}}`);
     if (darkSelectors.length) rules.push(`${[...new Set(darkSelectors)].join(',')} {background:var(--cep-highlight-dark-paper) !important;box-shadow:var(--cep-highlight-dark-shadow) !important;}`);
     if (importantSelectors.length) rules.push(`${importantSelectors.join(',')} {${importantFill}}`);
