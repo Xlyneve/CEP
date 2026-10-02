@@ -1618,13 +1618,13 @@ a.conceptLink.hasDef::before{
   -webkit-box-decoration-break: clone;
 }
 .cep-removed-highlight { background: transparent !important; box-shadow: none !important; padding: 0 !important; }
-/* One floating formatting menu, hosted inside the active note editor. */
+/* One formatting menu, with its button alongside the editor actions. */
 body > #formatToggle { display: none !important; }
 .note-format-shell { position: relative; min-width: 0; width: 100%; }
-.note-format-shell > #formatToggle {
-  position: absolute; top: 6px; right: 6px; bottom: auto; left: auto;
-  display: block !important; width: 36px; height: 36px; line-height: 32px;
-  font-size: 16px; background: rgba(255,255,255,.94); z-index: 2;
+.note-editor-actions > #formatToggle {
+  position: static; display: inline-flex !important; align-items: center;
+  justify-content: center; width: 40px; height: 40px; line-height: normal;
+  font-size: 16px; flex: 0 0 auto; margin: 0 8px 0 0;
 }
 .note-format-shell > #formatToolbar {
   position: sticky; top: auto; bottom: 0; left: auto; right: auto;
@@ -1632,7 +1632,7 @@ body > #formatToggle { display: none !important; }
   flex-direction: row; flex-wrap: wrap; gap: 4px; padding: 6px;
   background: rgba(255,253,252,.98); z-index: 3; box-sizing: border-box;
 }
-.note-format-shell > [contenteditable] { padding-top: 46px !important; }
+
 #highlightPalette { display: none; gap: 5px; padding: 5px; align-items: center; }
 #highlightPalette.visible, .note-format-shell #fontColorPalette.visible {
   display: flex; flex-wrap: wrap; flex-basis: 100%; width: 100%;
@@ -1724,7 +1724,7 @@ body > #formatToggle { display: none !important; }
   <button id="addNoteToggle" title="Add Note">＋</button>
   <div id="notePanel" style="display:none; flex-direction: column;">
     <div id="noteInput" contenteditable="true" data-placeholder="Type or paste your note here..."></div>
-    <div class="new-note-actions">
+    <div class="new-note-actions note-editor-actions">
       <button id="newNoteImageBtn" type="button" title="Insert image">🖼️</button>
       <button id="newNoteEmojiBtn" type="button" title="Insert emoji">🌟</button>
       <button id="newNoteArrowBtn" type="button" title="Insert symbol">↳</button>
@@ -5319,6 +5319,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
       });
 
       const actions = document.createElement('div');
+      actions.className = 'note-editor-actions';
       actions.style.textAlign = 'center';
       actions.style.marginTop = '6px';
 
@@ -5944,9 +5945,14 @@ function attachEditorFormat(editor) {
     editor.before(shell);
     shell.append(editor);
   }
-  if (formatToggle.parentElement !== shell) {
+  const actions = editor.id === 'noteInput'
+    ? notePanel.querySelector('.new-note-actions')
+    : shell.nextElementSibling;
+  if (!actions?.classList.contains('note-editor-actions')) return;
+  if (formatToggle.parentElement !== actions) {
     closeEditorFormat();
-    shell.append(formatToggle, formatToolbar);
+    actions.prepend(formatToggle);
+    shell.append(formatToolbar);
   }
   formatToggle.style.display = 'block';
 }
