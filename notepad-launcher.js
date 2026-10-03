@@ -171,21 +171,19 @@
         }
         .dot-purple { cursor:pointer; }
         .dot-purple:focus-visible { outline:2px solid #8c7bb5; outline-offset:4px; }
-        .homepage-notepad-drag-bar { position:absolute; top:0; left:0; right:0; height:36px; z-index:3; border-radius:14px 14px 0 0; cursor:grab; touch-action:none; user-select:none; }
-        .homepage-notepad-drag-bar:active { cursor:grabbing; }
-        .homepage-notepad-drag-bar:focus-visible { outline:2px solid #8c7bb5; outline-offset:-2px; }
-        .dot-yellow { cursor:grab; touch-action:none; }
-        .dot-yellow:active { cursor:grabbing; }
+        .homepage-notepad-drag-bar { position:absolute; top:0; left:0; right:0; height:36px; z-index:3; border-radius:14px 14px 0 0; cursor:default; user-select:none; }
+        .homepage-notepad-drag-handle { position:absolute; inset:0 44px 0 84px; cursor:grab; touch-action:none; }
+        .homepage-notepad-drag-handle:active { cursor:grabbing; }
+        .homepage-notepad-drag-handle:focus-visible { outline:2px solid #8c7bb5; outline-offset:-2px; }
+        .dot-yellow { cursor:default; }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"] body .dot-add { background:#f0d9e4 !important; }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"] body .dot-yellow { background:#806c79 !important; }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"] body .dot-purple { background:#c1a0ac !important; }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"] body .dot { outline:1px solid rgba(255,255,255,.45); }
         .dot-yellow:focus-visible { outline:2px solid #ad8e20; outline-offset:4px; }
       `;
       doc.head.append(embeddedStyle);
-      const handle = doc.createElement("button");
-      handle.type = "button";
-      handle.className = "dot dot-yellow";
-      handle.setAttribute("aria-label", "Move notepad: drag or use arrow keys");
-      handle.title = "Drag to move, or use arrow keys";
-      yellowDot.replaceWith(handle);
-      bindHandle(handle, false);
+      yellowDot.title = "Drag the middle of the top bar to move notepad";
       const close = doc.createElement("button");
       close.type = "button";
       close.className = "dot dot-purple";
@@ -200,7 +198,12 @@
       purpleDot.replaceWith(close);
       const topBar = doc.createElement("div");
       topBar.className = "homepage-notepad-drag-bar";
-      topBar.tabIndex = 0;
+      const dragHandle = doc.createElement("div");
+      dragHandle.className = "homepage-notepad-drag-handle";
+      dragHandle.tabIndex = 0;
+      dragHandle.setAttribute("role", "button");
+      dragHandle.setAttribute("aria-label", "Move notepad: drag or use arrow keys");
+      topBar.appendChild(dragHandle);
       topBar.setAttribute("role", "toolbar");
       topBar.setAttribute("aria-label", "Notepad title bar: drag or use arrow keys to move");
       topBar.title = "Drag the top bar to move notepad";
@@ -209,7 +212,7 @@
       doc.querySelector("main").prepend(topBar);
       if (controls) topBar.appendChild(controls);
       if (openOptions) topBar.appendChild(openOptions);
-      bindHandle(topBar, false);
+      bindHandle(dragHandle, false);
     }
     frame.addEventListener("load", prepareEmbeddedNotepad);
     bindHandle(resize, true);
