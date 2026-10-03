@@ -106,6 +106,7 @@
       let gesture = null;
       handle.addEventListener("pointerdown", event => {
         if (event.button !== 0) return;
+        if (event.target !== handle && event.target.closest("button,a,input,select,textarea,[contenteditable]")) return;
         gesture = { x:event.screenX, y:event.screenY, left:panel.offsetLeft, top:panel.offsetTop, width:panel.offsetWidth, height:panel.offsetHeight };
         handle.setPointerCapture(event.pointerId);
         event.preventDefault();
@@ -122,6 +123,7 @@
         handle.addEventListener(name, () => { if (gesture) saveLayout(); gesture = null; });
       }
       handle.addEventListener("keydown", event => {
+        if (event.target !== handle && event.target.closest("button,a,input,select,textarea,[contenteditable]")) return;
         const delta = { ArrowLeft:[-16,0], ArrowRight:[16,0], ArrowUp:[0,-16], ArrowDown:[0,16] }[event.key];
         if (!delta) return;
         event.preventDefault();
@@ -151,6 +153,9 @@
         .timestamp { right:28px; }
         .dot-purple { cursor:pointer; }
         .dot-purple:focus-visible { outline:2px solid #8c7bb5; outline-offset:4px; }
+        .homepage-notepad-drag-bar { position:absolute; top:0; left:0; right:0; height:36px; z-index:3; border-radius:14px 14px 0 0; cursor:grab; touch-action:none; user-select:none; }
+        .homepage-notepad-drag-bar:active { cursor:grabbing; }
+        .homepage-notepad-drag-bar:focus-visible { outline:2px solid #8c7bb5; outline-offset:-2px; }
         .dot-yellow { cursor:grab; touch-action:none; }
         .dot-yellow:active { cursor:grabbing; }
         .dot-yellow:focus-visible { outline:2px solid #ad8e20; outline-offset:4px; }
@@ -175,6 +180,18 @@
         launcher.focus();
       });
       purpleDot.replaceWith(close);
+      const topBar = doc.createElement("div");
+      topBar.className = "homepage-notepad-drag-bar";
+      topBar.tabIndex = 0;
+      topBar.setAttribute("role", "toolbar");
+      topBar.setAttribute("aria-label", "Notepad title bar: drag or use arrow keys to move");
+      topBar.title = "Drag the top bar to move notepad";
+      const controls = doc.querySelector(".pad-controls");
+      const openOptions = doc.querySelector(".pad-open-options");
+      doc.querySelector("main").prepend(topBar);
+      if (controls) topBar.appendChild(controls);
+      if (openOptions) topBar.appendChild(openOptions);
+      bindHandle(topBar, false);
     }
     frame.addEventListener("load", prepareEmbeddedNotepad);
     bindHandle(resize, true);
