@@ -1682,6 +1682,11 @@ body > #formatToggle { display: none !important; }
   min-width: 44px; min-height: 44px; transform: none;
 }
 .highlight-color-choice { width: 28px; height: 28px; border: 1px solid #aaa; border-radius: 50%; cursor: pointer; flex: 0 0 auto; }
+#highlightPalette .highlight-remove-choice {
+  width: auto; min-width: 44px; padding: 0 10px; flex: 0 0 auto;
+  border-radius: 8px; font-size: 12px;
+}
+
 
 </style>
 
@@ -1719,7 +1724,7 @@ body > #formatToggle { display: none !important; }
     <button class="highlight-color-choice" type="button" data-color="#ccefd6" style="background:#ccefd6" title="Green highlight" aria-label="Green highlight"></button>
     <button class="highlight-color-choice" type="button" data-color="#ffc7da" style="background:#ffc7da" title="Pink highlight" aria-label="Pink highlight"></button>
     <button class="highlight-color-choice" type="button" data-color="#cfe8ff" style="background:#cfe8ff" title="Blue highlight" aria-label="Blue highlight"></button>
-    <button class="highlight-color-choice" type="button" data-color="transparent" title="Remove highlight" aria-label="Remove highlight">×</button>
+    <button class="highlight-color-choice highlight-remove-choice" id="removeHighlightBtn" type="button" data-color="transparent" title="Remove highlight from selected text" aria-label="Remove highlight">Remove highlight</button>
   </div>
   <button class="format-btn" id="fontColorBtn" type="button" title="Choose font colour" aria-label="Choose font colour">🎨</button>
   <div id="fontColorPalette" aria-label="Font colours">
@@ -5852,6 +5857,46 @@ function bindToolbarBtn(id, cmd, value = null) {
 bindToolbarBtn('boldBtn', 'bold');
 bindToolbarBtn('italicBtn', 'italic');
 bindToolbarBtn('underlineBtn', 'underline');
+// Lift each boundary outside highlight wrappers so transparent text is not
+// left sitting on its parent's coloured background. Split only that wrapper's
+// ancestry, keeping the surrounding text and other inline formatting intact.
+function isolateHighlightSelection(range, editor) {
+  const classes = '.cep-chosen-highlight,.cep-removed-highlight,.gradient-highlight,.highlight-gradient,.note-gradient-highlight,.highlight-hue,.cep-content-highlight,span.highlight';
+  const isHighlight = element => element.matches(`mark,${classes}`) ||
+    (element.matches('span,font') && (element.style.backgroundColor || element.style.backgroundImage));
+  const start = document.createComment('highlight-start');
+  const end = document.createComment('highlight-end');
+  const endRange = range.cloneRange();
+  endRange.collapse(false);
+  endRange.insertNode(end);
+  const startRange = range.cloneRange();
+  startRange.collapse(true);
+  startRange.insertNode(start);
+  function lift(marker) {
+    let outer = null;
+    for (let parent = marker.parentElement; parent && parent !== editor; parent = parent.parentElement) {
+      if (isHighlight(parent)) outer = parent;
+    }
+    if (!outer) return;
+    const stop = outer.parentNode;
+    while (marker.parentNode !== stop) {
+      const before = marker.parentNode;
+      const after = before.cloneNode(false);
+      after.removeAttribute('id');
+      while (marker.nextSibling) after.appendChild(marker.nextSibling);
+      before.after(marker, after);
+      if (!before.hasChildNodes()) before.remove();
+      if (!after.hasChildNodes()) after.remove();
+    }
+  }
+  lift(start);
+  lift(end);
+  range.setStartAfter(start);
+  range.setEndBefore(end);
+  start.remove();
+  end.remove();
+}
+
 function applyChosenHighlight(color) {
   const editor = getActiveEditor();
   if (!editor) return;
@@ -5862,12 +5907,24 @@ function applyChosenHighlight(color) {
   if (!selection?.rangeCount || selection.isCollapsed) return;
   const range = selection.getRangeAt(0);
   if (!editor.contains(range.commonAncestorContainer)) return;
+  isolateHighlightSelection(range, editor);
   const fragment = range.extractContents();
   fragment.querySelectorAll('mark,span,font').forEach(element => {
+    const highlighted = element.matches('mark,.cep-chosen-highlight,.cep-removed-highlight,.gradient-highlight,.highlight-gradient,.note-gradient-highlight,.highlight-hue,.cep-content-highlight,span.highlight') || Boolean(element.style.backgroundColor || element.style.backgroundImage);
+
     element.style.removeProperty('background');
     element.style.removeProperty('background-color');
     element.style.removeProperty('background-image');
-    element.classList.remove('cep-chosen-highlight');
+    element.classList.remove('cep-chosen-highlight', 'cep-removed-highlight', 'gradient-highlight', 'highlight-gradient', 'note-gradient-highlight', 'highlight-hue', 'cep-content-highlight', 'highlight');
+    if (highlighted) {
+      ['box-shadow', 'text-shadow', 'border-radius', 'padding'].forEach(property => element.style.removeProperty(property));
+    }
+    if (element.tagName === 'MARK') {
+      const span = document.createElement('span');
+      [...element.attributes].forEach(attribute => span.setAttribute(attribute.name, attribute.value));
+      span.append(...element.childNodes);
+      element.replaceWith(span);
+    }
   });
   const highlight = document.createElement('span');
   highlight.className = color === 'transparent' ? 'cep-removed-highlight' : 'cep-chosen-highlight';
