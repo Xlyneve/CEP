@@ -142,6 +142,7 @@
         return;
       }
       doc.documentElement.dataset.homeNotepadReady = "1";
+      doc.documentElement.classList.add("home-notepad-embedded");
       const embeddedStyle = doc.createElement("style");
       embeddedStyle.textContent = `
         html, body { background:transparent; }
@@ -151,20 +152,20 @@
         .note-card { margin:0 0 9px; border:0; border-radius:10px; box-shadow:none; }
         .note-card, .notepad { background:white; }
         .timestamp { right:28px; }
-        html:root[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body main {
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body main {
           background:#16131f !important;
         }
-        html:root[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body .note-card {
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body .note-card {
           background:#806c79 !important;
           box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 5px 12px rgba(0,0,0,.35),0 0 0 1px rgba(240,217,228,.18) !important;
         }
-        html:root[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body .notepad {
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body .notepad {
           background:#4a3f4b !important;
           color:#ffffff !important;
           -webkit-text-fill-color:#ffffff !important;
           caret-color:#ffffff !important;
         }
-        html:root[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body :is(.timestamp,.open-options-icon) {
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body :is(.timestamp,.open-options-icon) {
           color:#ffffff !important;
           -webkit-text-fill-color:#ffffff !important;
         }
