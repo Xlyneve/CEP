@@ -169,6 +169,17 @@
           color:#ffffff !important;
           -webkit-text-fill-color:#ffffff !important;
         }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="sculpted"][data-home-notepad-ready="1"] body main {
+          background:linear-gradient(145deg,#cdb2cb,#a288b7) !important;
+          box-shadow:inset 2px 2px 5px rgba(255,255,255,.45),inset -3px -3px 7px rgba(57,53,58,.18) !important;
+        }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="sculpted"][data-home-notepad-ready="1"] body .note-card {
+          background:#f1e6e8 !important;
+          box-shadow:inset 2px 2px 4px rgba(255,255,255,.8),inset -2px -3px 5px rgba(57,53,58,.1),0 6px 10px rgba(57,53,58,.26),0 0 0 1px rgba(255,255,255,.45) !important;
+        }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="sculpted"][data-home-notepad-ready="1"] body .notepad {
+          background:#f1e6e8 !important;
+        }
         .dot-purple { cursor:pointer; }
         .dot-purple:focus-visible { outline:2px solid #8c7bb5; outline-offset:4px; }
         .homepage-notepad-drag-bar { position:absolute; top:0; left:0; right:0; height:36px; z-index:3; border-radius:14px 14px 0 0; cursor:default; user-select:none; }
