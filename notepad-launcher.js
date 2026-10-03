@@ -151,6 +151,22 @@
         .note-card { margin:0 0 9px; border:0; border-radius:10px; box-shadow:none; }
         .note-card, .notepad { background:white; }
         .timestamp { right:28px; }
+        html[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body main {
+          background:#4a3f4b !important;
+        }
+        html[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body .note-card {
+          background:#806c79 !important;
+        }
+        html[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body .notepad {
+          background:#4a3f4b !important;
+          color:#ffffff !important;
+          -webkit-text-fill-color:#ffffff !important;
+          caret-color:#ffffff !important;
+        }
+        html[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body :is(.timestamp,.open-options-icon) {
+          color:#ffffff !important;
+          -webkit-text-fill-color:#ffffff !important;
+        }
         .dot-purple { cursor:pointer; }
         .dot-purple:focus-visible { outline:2px solid #8c7bb5; outline-offset:4px; }
         .homepage-notepad-drag-bar { position:absolute; top:0; left:0; right:0; height:36px; z-index:3; border-radius:14px 14px 0 0; cursor:grab; touch-action:none; user-select:none; }
