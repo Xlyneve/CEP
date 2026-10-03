@@ -1814,6 +1814,20 @@
       .xlyneve-theme-button { width: 42px; height: 42px; }
     }
   `;
+  // Final overrides include the selectors used by page-specific card themes.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(.note-card,.note-tile,.med-card,.acc-item,.med-section,.vaccine-section,.vaccine-card,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-meta-card,.dose-modal-card,.cep-concept-search-result,.cep-global-search-result,.universal-search-native-card):not(#recallBtn),
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .main-content .card-group.section-card-group > .card,
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-clinical body #pinnedNotesList > .pinned-note,
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      box-shadow:inset 4px 4px 7px rgba(255,255,255,.9),inset -5px -6px 10px rgba(185,166,210,.32),10px 14px 24px rgba(128,108,121,.24),-5px -5px 12px rgba(255,255,255,.75) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .main-content .card-group.section-card-group > .card:hover {
+      box-shadow:inset 4px 4px 7px rgba(255,255,255,.94),inset -5px -6px 10px rgba(185,166,210,.28),12px 17px 28px rgba(128,108,121,.26),-6px -6px 14px rgba(255,255,255,.78) !important;
+    }
+  `;
+
   const headerSelector = [
     ".header",
     ".header-bg",
