@@ -1263,7 +1263,7 @@
       background:linear-gradient(145deg,#fafbfb,#e8ebec) !important;
     }
     html[data-xlyneve-color-theme="sculpted"] body:has(.notes .notepad) main { border-radius:28px !important;background:linear-gradient(145deg,#f1e6e8,#cdb2cb) !important;box-shadow:inset 4px 4px 8px rgba(255,255,255,.84),inset -5px -6px 10px rgba(57,53,58,.12),14px 20px 36px rgba(57,53,58,.2) !important; }
-    html[data-xlyneve-color-theme="sculpted"] body:has(.notes .notepad) .notepad { color:#39353a !important;-webkit-text-fill-color:#39353a !important;caret-color:#a288b7 !important;background:linear-gradient(rgba(241,230,232,.94),rgba(241,230,232,.94)) padding-box,repeating-linear-gradient(to bottom,transparent 0,transparent 26px,rgba(109,175,191,.34) 27px) !important; }
+    html[data-xlyneve-color-theme="sculpted"] body:has(.notes .notepad) .notepad { border-radius:0 !important;color:#39353a !important;-webkit-text-fill-color:#39353a !important;caret-color:#a288b7 !important;background:linear-gradient(rgba(241,230,232,.94),rgba(241,230,232,.94)) padding-box,repeating-linear-gradient(to bottom,transparent 0,transparent 26px,rgba(109,175,191,.34) 27px) !important; }
     html[data-xlyneve-color-theme="sculpted"] .xlyneve-theme-button { background:linear-gradient(135deg,#a288b7 0 20%,#6dafbf 20% 40%,#ba928d 40% 60%,#cdb2cb 60% 80%,#b7bdb4 80% 100%);box-shadow:inset 2px 2px 3px rgba(255,255,255,.84),inset -3px -3px 5px rgba(57,53,58,.16),5px 7px 13px rgba(57,53,58,.18) !important; }
 
     html[data-xlyneve-color-theme="liquid-glass"] {
