@@ -133,6 +133,8 @@
 
   const pageColor = palette[hash(pageName) % palette.length];
   const root = document.documentElement;
+  const urgentCarePages = new Set(["anatomicald.html", "face.html", "hand.html", "sha.html", "abdo.html", "spine.html", "lf.html", "urgent_care.html"]);
+  if (urgentCarePages.has(pageName)) root.classList.add("theme-urgent-care");
   if (selectedTheme !== "original") root.dataset.xlyneveColorTheme = selectedTheme;
   root.style.setProperty("--page-header-glass", `rgba(${pageColor.rgb}, 0.78)`);
   root.style.setProperty("--page-header-solid", pageColor.solid);
@@ -1070,6 +1072,16 @@
     html[data-xlyneve-color-theme="warm-medley"],html[data-xlyneve-color-theme="warm-medley"] body { color:#f0d9e4;background-color:#16131f !important;background-image:radial-gradient(circle at 86% 18%,rgba(128,108,121,.24),transparent 42%),radial-gradient(circle at 12% 86%,rgba(74,63,75,.38),transparent 44%),linear-gradient(145deg,#16131f 0%,#29222d 58%,#4a3f4b 100%) !important;background-attachment:fixed !important; }
     html[data-xlyneve-color-theme="warm-medley"].theme-home-glass body :is(.dashboard-frequent-heading,.main-content > h2,.dashboard-section-toggle,.dashboard-section-toggle > span:first-child) {
       color:#f0d9e4 !important; -webkit-text-fill-color:#f0d9e4 !important;
+    }
+    /* Task editors must use their card's contrast colour, rather than homecal's black input reset. */
+    html[data-xlyneve-color-theme="warm-medley"].theme-homecal body .todo-item:not(.done):not(.priority) :is(textarea,input[type="text"]) {
+      color:var(--card-ink,#16131f) !important;
+      -webkit-text-fill-color:var(--card-ink,#16131f) !important;
+    }
+    html[data-xlyneve-color-theme="warm-medley"].theme-homecal body .todo-title,
+    html[data-xlyneve-color-theme="warm-medley"].theme-urgent-care body > h1 {
+      color:#ffffff !important;
+      -webkit-text-fill-color:#ffffff !important;
     }
     html[data-xlyneve-color-theme="warm-medley"] body::before { opacity:.06 !important;filter:sepia(.08) hue-rotate(326deg) saturate(.82); }
     html[data-xlyneve-color-theme="warm-medley"] :is(.note-card,.card,.acc-item,.med-section,.vaccine-section,.vaccine-card,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.day:not(.empty):not(.today),.todo-item:not(.priority)) { color:var(--card-ink,#16131f) !important;-webkit-text-fill-color:var(--card-ink,#16131f);background:var(--card-glass,rgba(240,217,228,.8)) !important;background-image:none !important;border-color:rgba(255,255,255,.88) !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 12px 28px rgba(22,19,31,.11) !important; }
