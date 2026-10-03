@@ -1,3 +1,4 @@
+import "./concept-photo-gallery.js?v=20261003-1";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, getDocs, getDocsFromServer, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithRedirect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -316,7 +317,7 @@ export function createXgptPhotoStrip(media, { height = 220, className = '', alt 
     if (zoom) enableSearchImageZoom(image);
     strip.appendChild(image);
   });
-  return strip;
+  return window.CEPPhotoGallery.decorate(strip);
 }
 
 export function getCachedXgptConceptMedia(concept) {
@@ -780,6 +781,10 @@ function getSearchImageZoomUi() {
   const stage = document.createElement('div'); stage.className = 'cep-search-image-viewer-stage'; viewport.appendChild(stage);
   panel.append(controls, viewport); root.appendChild(panel); document.body.appendChild(root);
   let scale = 1; let image; let baseWidth = 0; let baseHeight = 0; let previousBodyOverflow = '';
+  let gallery = [], galleryIndex = 0;
+  const galleryNav = window.CEPPhotoGallery.navigation(index => { galleryIndex = index; show(gallery[index]); });
+  galleryNav.bar.style.color = '#fff';
+  panel.appendChild(galleryNav.bar);
   const sizeStage = () => {
     if (!image || !baseWidth || !baseHeight) return;
     const scaledWidth = Math.ceil(baseWidth * scale); const scaledHeight = Math.ceil(baseHeight * scale);
@@ -799,27 +804,47 @@ function getSearchImageZoomUi() {
     if (root.hidden) return;
     root.hidden = true; stage.replaceChildren(); image = null; baseWidth = 0; baseHeight = 0;
     document.body.style.overflow = previousBodyOverflow;
+    gallery = []; galleryIndex = 0;
   };
-  const open = sourceImage => {
+  const show = sourceImage => {
     image = sourceImage.cloneNode(true); image.removeAttribute('id'); image.className = 'cep-search-image-viewer-image';
-    image.removeAttribute('loading'); stage.replaceChildren(image); scale = 1;
-    previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; root.hidden = false;
+    image.removeAttribute('loading'); image.removeAttribute('style'); stage.replaceChildren(image); scale = 1;
+    galleryNav.update(galleryIndex, gallery.length);
+    const currentImage = image;
     const prepare = () => requestAnimationFrame(() => {
+      if (root.hidden || image !== currentImage) return;
       const sourceRect = sourceImage.getBoundingClientRect(); const naturalWidth = image.naturalWidth || sourceRect.width || 1;
       const naturalHeight = image.naturalHeight || sourceRect.height || 1;
       const fit = Math.min(1, Math.max(.01, (viewport.clientWidth - 12) / naturalWidth), Math.max(.01, (viewport.clientHeight - 12) / naturalHeight));
       baseWidth = Math.max(1, Math.round(naturalWidth * fit)); baseHeight = Math.max(1, Math.round(naturalHeight * fit));
       image.style.width = `${baseWidth}px`; image.style.height = `${baseHeight}px`; sizeStage();
-      viewport.scrollTo({ left: 0, top: 0 }); close.focus();
+      viewport.scrollTo({ left: 0, top: 0 });
     });
     if (image.complete) prepare(); else image.addEventListener('load', prepare, { once: true });
+  };
+  const open = sourceImage => {
+    gallery = window.CEPPhotoGallery.photosFor(sourceImage);
+    galleryIndex = Math.max(0, gallery.indexOf(sourceImage));
+    galleryNav.bar.hidden = !sourceImage.closest('.cep-photo-gallery');
+    galleryNav.bar.style.display = galleryNav.bar.hidden ? 'none' : 'flex';
+    if (root.hidden) previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden'; root.hidden = false;
+    show(sourceImage); close.focus();
   };
   minus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale - .25); });
   plus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale + .25); });
   reset.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(1); });
   close.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); closeViewer(); });
-  root.addEventListener('click', event => { if (!event.target.closest('.cep-search-image-viewer-image,.cep-search-image-viewer-controls')) closeViewer(); });
-  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !root.hidden) closeViewer(); });
+  root.addEventListener('click', event => { if (!event.target.closest('.cep-search-image-viewer-image,.cep-search-image-viewer-controls,.cep-photo-navigation')) closeViewer(); });
+  document.addEventListener('keydown', event => {
+    if (root.hidden) return;
+    if (event.key === 'Escape') closeViewer();
+    if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && gallery.length > 1) {
+      event.preventDefault(); event.stopPropagation();
+      galleryIndex = Math.max(0, Math.min(gallery.length - 1, galleryIndex + (event.key === 'ArrowRight' ? 1 : -1)));
+      show(gallery[galleryIndex]);
+    }
+  }, true);
   imageZoomUi = { root, open, close: closeViewer };
   return imageZoomUi;
 }
@@ -1043,8 +1068,7 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
 function installXgptMediaUi() {
   if (document.querySelector('.cep-xgpt-media-tip')) return;
   const tip = document.createElement('div'); tip.className = 'cep-xgpt-media-tip'; tip.hidden = true;
-  const zoom = document.createElement('div'); zoom.className = 'cep-xgpt-image-zoom';
-  const zoomImage = document.createElement('img'); zoom.append(zoomImage); document.body.append(tip, zoom);
+  document.body.appendChild(tip);
   let hideTimer; const hide = () => { hideTimer = setTimeout(() => { tip.hidden = true; tip.replaceChildren(); }, 180); };
   document.addEventListener('mouseover', async event => {
     const link = event.target.closest?.('.cep-xgpt-concept'); if (!link) return;
@@ -1055,7 +1079,7 @@ function installXgptMediaUi() {
     const definition = link.dataset.definition || '', why = link.dataset.why || '';
     if ((!link.dataset.image && !definition && !why) || !link.isConnected) return;
     clearTimeout(hideTimer); const parts = [];
-    const photos = createXgptPhotoStrip(getCachedXgptConceptMedia(link.textContent) || { imageUrl: link.dataset.image }, { alt: link.textContent });
+    const photos = createXgptPhotoStrip(getCachedXgptConceptMedia(link.textContent) || { imageUrl: link.dataset.image }, { alt: link.textContent, zoom: true });
     if (photos) parts.push(photos);
     if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
     const appendSection = (labelText, bodyText) => {
@@ -1073,15 +1097,7 @@ function installXgptMediaUi() {
   });
   document.addEventListener('mouseout', event => { if (event.target.closest?.('.cep-xgpt-concept') && !tip.contains(event.relatedTarget)) hide(); });
   tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
-  tip.addEventListener('click', event => { const image = event.target.closest('img'); if (!image) return; event.preventDefault(); event.stopPropagation(); zoomImage.src = image.src; zoom.classList.add('is-open'); });
-  zoom.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    zoom.classList.remove('is-open');
-    zoomImage.src = '';
-  });
   document.addEventListener('click', event => { if (event.target.closest?.('.cep-xgpt-concept')) { event.preventDefault(); event.stopPropagation(); } }, true);
-  document.addEventListener('keydown', event => { if (event.key === 'Escape' && zoom.classList.contains('is-open')) zoom.click(); });
 }
 
 function editDistance(a, b) {

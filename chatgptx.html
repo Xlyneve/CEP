@@ -1702,6 +1702,7 @@ body > #formatToggle { display: none !important; }
 
 
   <link rel="stylesheet" href="site-background.css">
+  <script src="concept-photo-gallery.js?v=20261003-1"></script>
   <script src="page-theme.js?v=20261001-2"></script>
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
   <script src="content-highlights.js?v=20261002-2" defer></script>
@@ -2684,6 +2685,11 @@ const zoomOutBtn = imgZoomOverlay.querySelector('#zoomOutBtn');
 const zoomResetBtn = imgZoomOverlay.querySelector('#zoomResetBtn');
 const zoomCloseBtn = imgZoomOverlay.querySelector('#zoomCloseBtn');
 
+let zoomGallery = [];
+let zoomGalleryIndex = 0;
+const zoomGalleryNav = CEPPhotoGallery.navigation(index => showZoomPhoto(index));
+zoomGalleryNav.bar.style.cssText += 'position:fixed;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1000002;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.65);color:white;';
+imgZoomOverlay.appendChild(zoomGalleryNav.bar);
 let zoomOpen = false;
 let zScale = 1;
 let zX = 0;
@@ -2734,7 +2740,17 @@ function zoomBy(factor, centerClientX, centerClientY) {
   applyZoomTransform();
 }
 
-function openZoom(src) {
+function openZoom(src, photos = []) {
+  zoomGallery = photos.map(photo => typeof photo === 'string' ? photo : photo.src || photo.imageUrl).filter(Boolean);
+  if (!zoomGallery.length) zoomGallery = [src];
+  zoomGalleryIndex = Math.max(0, zoomGallery.indexOf(src));
+  showZoomPhoto(zoomGalleryIndex);
+}
+
+function showZoomPhoto(index) {
+  zoomGalleryIndex = Math.max(0, Math.min(zoomGallery.length - 1, index));
+  const src = zoomGallery[zoomGalleryIndex];
+  zoomGalleryNav.update(zoomGalleryIndex, zoomGallery.length);
   if (!src) return;
 
   zoomOpen = true;
@@ -2756,11 +2772,14 @@ function openZoom(src) {
 
   imgZoomImg.src = '';
   imgZoomImg.src = src;
+  imgZoomImg.alt = `Concept photo ${zoomGalleryIndex + 1} of ${zoomGallery.length}`;
 
   requestAnimationFrame(applyZoomTransform);
 }
 
 function closeZoom() {
+  zoomGallery = [];
+  zoomGalleryIndex = 0;
   zoomOpen = false;
   imgZoomOverlay.style.display = 'none';
   imgZoomControls.style.display = 'none';
@@ -2813,7 +2832,12 @@ window.addEventListener('mouseup', () => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && zoomOpen) closeZoom();
+  if (!zoomOpen) return;
+  if (e.key === 'Escape') closeZoom();
+  if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && zoomGallery.length > 1) {
+    e.preventDefault(); e.stopPropagation();
+    showZoomPhoto(zoomGalleryIndex + (e.key === 'ArrowRight' ? 1 : -1));
+  }
 }, true);
 
 function isViewingNoteImage(img) {
@@ -4007,16 +4031,17 @@ function setKbPreview(images = [], caption = '') {
     gallery = document.createElement('div');
     gallery.id = 'kbPreviewGallery';
     gallery.setAttribute('aria-label', 'Concept photo previews');
-    gallery.style.cssText = 'display:flex;gap:8px;overflow-x:auto;max-height:180px;';
+    gallery.style.cssText = 'display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;';
     kbPreviewImg.after(gallery);
   }
   gallery.replaceChildren(...images.map(({ imageUrl }, index) => {
     const image = document.createElement('img');
     image.src = imageUrl;
     image.alt = `Concept photo ${index + 1}`;
-    image.style.cssText = 'max-width:100%;max-height:180px;object-fit:contain;border-radius:12px;flex-shrink:0;';
+    image.style.cssText = 'width:100%;min-width:0;max-width:100%;height:180px;object-fit:contain;border-radius:12px;flex:0 0 100%;scroll-snap-align:start;';
     return image;
   }));
+  CEPPhotoGallery.decorate(gallery, { onOpen: (image, photos) => openZoom(image.src, photos) });
   kbPreviewWrap.style.display = images.length ? 'block' : 'none';
   kbCaptionInput.value = caption || '';
 }
@@ -4328,6 +4353,7 @@ function showDefTip(defText, whyText, imageUrl, caption, x, y, defHtml = '', why
   const tipHtml = renderTip(defText, whyText, imageUrl, caption, defHtml, whyHtml, images);
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(defTip, tipHtml);
   else defTip.textContent = [defText, whyText].filter(Boolean).join('\n\n');
+  defTip.querySelectorAll('.kbPhotoStrip').forEach(strip => CEPPhotoGallery.decorate(strip));
   defTip.style.display = 'block';
   tipOpen = true;
 
@@ -4555,8 +4581,9 @@ defTip.addEventListener('mousedown', (e) => {
   const src = img.getAttribute('src') || '';
   if (!src) return;
 
+  const photos = CEPPhotoGallery.photosFor(img);
   hideDefTip();
-  openZoom(src);
+  openZoom(src, photos);
 }, true);
 
 function closeDefPanel() {
