@@ -152,10 +152,11 @@
         .note-card, .notepad { background:white; }
         .timestamp { right:28px; }
         html:root[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body main {
-          background:#4a3f4b !important;
+          background:#16131f !important;
         }
         html:root[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body .note-card {
           background:#806c79 !important;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 5px 12px rgba(0,0,0,.35),0 0 0 1px rgba(240,217,228,.18) !important;
         }
         html:root[data-xlyneve-color-theme="warm-medley"][data-home-notepad-ready="1"] body .notepad {
           background:#4a3f4b !important;
