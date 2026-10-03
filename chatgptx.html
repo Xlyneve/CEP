@@ -1119,6 +1119,16 @@ a.conceptLink.hasDef::before{
   pointer-events: auto; 
   white-space: normal;
 }
+#defTip .kbPhotoStrip {
+  display: flex; gap: 8px; max-width: 100%; min-width: 0;
+  overflow-x: auto; overflow-y: hidden; margin-bottom: 8px;
+  scroll-snap-type: x proximity; overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+#defTip .kbPhotoStrip > .kbHoverImage {
+  flex: 0 0 100%; min-width: 0; max-width: 100%; height: 170px;
+  margin-bottom: 0; scroll-snap-align: start;
+}
 #defTip .kbHoverImage{
   display: block;
   width: 100%;
@@ -4384,7 +4394,7 @@ function renderTip(defText, whyText, imageUrl = '', caption = '', defHtml = '', 
 
   return `
     ${photos.length ? `
-      ${photos.map((image, index) => `<img class="kbHoverImage" src="${escapeHtml(image.imageUrl)}" alt="Concept photo ${index + 1}">`).join('')}
+      <div class="kbPhotoStrip" tabindex="0" role="region" aria-label="Concept photos — scroll horizontally">${photos.map((image, index) => `<img class="kbHoverImage" src="${escapeHtml(image.imageUrl)}" alt="Concept photo ${index + 1}">`).join('')}</div>
       ${capSafe ? `<div class="defLabel tipCaption" style="margin-bottom:8px;">${capSafe}</div>` : ''}
     ` : ''}
 

@@ -295,6 +295,30 @@ export function getXgptConceptImages(media) {
   return images.length ? images : media?.imageUrl ? [{ imageUrl: media.imageUrl }] : [];
 }
 
+// Shared by home search, universal search and their concept tooltips.
+export function createXgptPhotoStrip(media, { height = 220, className = '', alt = 'Concept photo', zoom = false } = {}) {
+  const images = getXgptConceptImages(media);
+  if (!images.length) return null;
+  const strip = document.createElement('div');
+  strip.className = 'cep-concept-photo-strip';
+  strip.tabIndex = 0;
+  strip.setAttribute('role', 'region');
+  strip.setAttribute('aria-label', 'Concept photos — scroll horizontally');
+  strip.style.cssText = 'display:flex;gap:8px;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;';
+  images.forEach(({ imageUrl }, index) => {
+    const image = document.createElement('img');
+    image.className = className;
+    image.src = imageUrl;
+    image.alt = `${alt} ${index + 1}`;
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    image.style.cssText = `flex:0 0 100%;min-width:0;max-width:100%;width:100%;height:${height}px;max-height:${height}px;object-fit:contain;scroll-snap-align:start;`;
+    if (zoom) enableSearchImageZoom(image);
+    strip.appendChild(image);
+  });
+  return strip;
+}
+
 export function getCachedXgptConceptMedia(concept) {
   return xgptConceptMedia[normalizeConcept(concept)] || null;
 }
@@ -390,11 +414,8 @@ export function renderReferencedXgptConceptResults(container, concepts, terms = 
     };
     appendSection('Definition', concept.definition);
     appendSection('Why it matters', concept.why);
-    for (const { imageUrl } of getXgptConceptImages(concept)) {
-      const image = document.createElement('img'); image.className = 'cep-concept-search-image';
-      image.src = imageUrl; image.alt = concept.caption || concept.label; image.loading = 'lazy'; image.decoding = 'async';
-      enableSearchImageZoom(image); card.appendChild(image);
-    }
+    const photos = createXgptPhotoStrip(concept, { height: 240, className: 'cep-concept-search-image', alt: concept.caption || concept.label, zoom: true });
+    if (photos) card.appendChild(photos);
     appendSection('Image note', concept.caption);
     return card;
   });
@@ -1034,7 +1055,8 @@ function installXgptMediaUi() {
     const definition = link.dataset.definition || '', why = link.dataset.why || '';
     if ((!link.dataset.image && !definition && !why) || !link.isConnected) return;
     clearTimeout(hideTimer); const parts = [];
-    for (const { imageUrl } of getXgptConceptImages(getCachedXgptConceptMedia(link.textContent) || { imageUrl: link.dataset.image })) { const image = document.createElement('img'); image.src = imageUrl; image.alt = link.textContent; parts.push(image); }
+    const photos = createXgptPhotoStrip(getCachedXgptConceptMedia(link.textContent) || { imageUrl: link.dataset.image }, { alt: link.textContent });
+    if (photos) parts.push(photos);
     if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
     const appendSection = (labelText, bodyText) => {
       if (!bodyText) return;
