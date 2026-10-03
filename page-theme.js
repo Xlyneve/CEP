@@ -1231,7 +1231,7 @@
       color:var(--card-ink,#39353a) !important;-webkit-text-fill-color:var(--card-ink,#39353a);background:var(--card-glass,linear-gradient(145deg,rgba(241,230,232,.96),rgba(205,178,203,.9))) !important;border:1px solid rgba(255,255,255,.7) !important;border-radius:24px !important;box-shadow:inset 3px 3px 5px rgba(255,255,255,.88),inset -4px -5px 9px rgba(57,53,58,.12),10px 14px 28px rgba(57,53,58,.18),-5px -5px 14px rgba(255,255,255,.62) !important;
     }
     /* Task text is part of the raised card, not a second raised input panel. */
-    html[data-xlyneve-color-theme="sculpted"].theme-homecal body .todo-item :is(textarea,input[type="text"]) {
+    html:is([data-xlyneve-color-theme="sculpted"],[data-xlyneve-color-theme="pastel-jumper"]).theme-homecal body .todo-item :is(textarea,input[type="text"]) {
       background:transparent !important;
       background-image:none !important;
       border:0 !important;
@@ -1836,6 +1836,12 @@
     @media (max-width: 600px) {
       .xlyneve-theme-control { right: 10px; bottom: 10px; }
       .xlyneve-theme-button { width: 42px; height: 42px; }
+    }
+  `;
+  themeStyle.textContent += `
+    html:is([data-xlyneve-color-theme="sculpted"],[data-xlyneve-color-theme="pastel-jumper"]).theme-homecal body .todo-item {
+      border-radius:20px !important;
+      box-shadow:inset 0 1px 2px rgba(255,255,255,.7),inset 0 -2px 3px rgba(128,108,121,.16),0 6px 10px rgba(128,108,121,.25),-2px -2px 5px rgba(255,255,255,.45) !important;
     }
   `;
   // Final overrides include the selectors used by page-specific card themes.
