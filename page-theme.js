@@ -1230,6 +1230,14 @@
     html[data-xlyneve-color-theme="sculpted"] :is(.note-card,.card,.acc-item,.med-section,.vaccine-section,.vaccine-card,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.day:not(.empty):not(.today),.todo-item:not(.priority)) {
       color:var(--card-ink,#39353a) !important;-webkit-text-fill-color:var(--card-ink,#39353a);background:var(--card-glass,linear-gradient(145deg,rgba(241,230,232,.96),rgba(205,178,203,.9))) !important;border:1px solid rgba(255,255,255,.7) !important;border-radius:24px !important;box-shadow:inset 3px 3px 5px rgba(255,255,255,.88),inset -4px -5px 9px rgba(57,53,58,.12),10px 14px 28px rgba(57,53,58,.18),-5px -5px 14px rgba(255,255,255,.62) !important;
     }
+    /* Task text is part of the raised card, not a second raised input panel. */
+    html[data-xlyneve-color-theme="sculpted"].theme-homecal body .todo-item :is(textarea,input[type="text"]) {
+      background:transparent !important;
+      background-image:none !important;
+      border:0 !important;
+      border-radius:0 !important;
+      box-shadow:none !important;
+    }
     html[data-xlyneve-color-theme="sculpted"] body > header,html[data-xlyneve-color-theme="sculpted"] :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header) { color:var(--page-header-ink,#39353a) !important;background:linear-gradient(145deg,rgba(241,230,232,.94),rgba(205,178,203,.88)) !important;border:1px solid rgba(255,255,255,.7) !important;border-radius:0 0 28px 28px !important;box-shadow:inset 0 2px 2px rgba(255,255,255,.9),0 15px 30px rgba(57,53,58,.17) !important; }
     html[data-xlyneve-color-theme="sculpted"] :is(button,.glass-btn,.header-btn,.add-btn,.top-links a,input,select,textarea) { border-radius:999px !important; }
     html[data-xlyneve-color-theme="sculpted"] :is(button,.glass-btn,.header-btn,.add-btn,.top-links a) { border-color:rgba(255,255,255,.72) !important;box-shadow:inset 2px 2px 3px rgba(255,255,255,.9),inset -3px -4px 6px rgba(57,56,49,.13),5px 7px 14px rgba(57,56,49,.16),-3px -3px 8px rgba(255,255,255,.58) !important;transform:translateY(0);transition:transform .18s ease,box-shadow .18s ease !important; }
