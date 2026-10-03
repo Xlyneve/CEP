@@ -137,6 +137,10 @@
   root.style.setProperty("--page-header-glass", `rgba(${pageColor.rgb}, 0.78)`);
   root.style.setProperty("--page-header-solid", pageColor.solid);
   root.style.setProperty("--page-header-ink", pageColor.ink);
+  // Match the monogram to the contrast already chosen for the theme's header.
+  const headerUsesLightInk = pageColor.ink.toLowerCase() === "#ffffff";
+  root.style.setProperty("--page-logo-filter", headerUsesLightInk ? "brightness(0) invert(1)" : "contrast(1.08)");
+  root.style.setProperty("--page-logo-opacity", headerUsesLightInk ? "0.96" : "0.85");
   const mastheadBarColors = {
     original: "#596b57",
     berry: "#680044",
