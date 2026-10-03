@@ -26,6 +26,19 @@
     .homepage-calendar { position:fixed; z-index:10020; display:flex; flex-direction:column; width:min(380px,calc(100vw - 16px)); height:min(460px,calc(100dvh - 42px)); overflow:hidden; border:1px solid rgba(255,255,255,.72); border-radius:16px; background:#e8e8e8; box-shadow:0 12px 36px #39263730; }
     .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; cursor:grab; touch-action:none; user-select:none; }
     .homepage-calendar-bar:active { cursor:grabbing; }
+    html[data-xlyneve-color-theme] .homepage-calendar-bar {
+      background:var(--page-header-solid,#4a3f4b);
+      color:var(--page-header-ink,#ffffff);
+      -webkit-text-fill-color:var(--page-header-ink,#ffffff);
+    }
+    html[data-xlyneve-color-theme] .homepage-calendar-bar :is(.homepage-calendar-day-nav,.homepage-calendar-close) {
+      color:inherit;
+      -webkit-text-fill-color:currentColor;
+      background:transparent;
+      text-shadow:none;
+    }
+    html[data-xlyneve-color-theme] .homepage-calendar-todo { -webkit-text-fill-color:currentColor; }
+
     .homepage-calendar-actions { display:flex; align-items:center; gap:4px; }
     .homepage-calendar-day-nav,.homepage-calendar-todo,.homepage-calendar-close { width:25px; height:25px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.58); color:#655b60; cursor:pointer; line-height:1; }
     .homepage-calendar-day-nav { width:20px; background:transparent; color:#fff; font:700 15px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 1px 3px rgba(55,43,50,.38); transition:text-shadow .18s ease; touch-action:manipulation; }
