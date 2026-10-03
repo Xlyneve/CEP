@@ -1032,6 +1032,30 @@
 
     html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body :is(.dashboard-frequent-heading,.main-content > h2,.dashboard-section-toggle,.dashboard-section-toggle > span:first-child) { color:#393644 !important;-webkit-text-fill-color:#393644 !important; }
     html[data-xlyneve-color-theme="pastel-jumper"] .xlyneve-theme-button { background:linear-gradient(135deg,#b9a6d2 0 33%,#e7a1a1 33% 66%,#f1edcf 66% 100%); }
+    /* Sculpted depth for the jumper palette; surface colours stay pastel. */
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(.note-card,.card,.calculator,.vaccine-card,.med-section,.cep-global-search-result,.universal-search-native-card) {
+      box-shadow:inset 3px 3px 5px rgba(255,255,255,.84),inset -4px -5px 8px rgba(185,166,210,.24),8px 11px 22px rgba(128,108,121,.19),-4px -4px 10px rgba(255,255,255,.7) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .dashboard-frequent-circles .circle,
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(button,.glass-btn,.add-btn):not(:where(#recallBtn,.dashboard-section-toggle,.xlyneve-theme-option)) {
+      box-shadow:inset 2px 2px 4px rgba(255,255,255,.88),inset -3px -4px 6px rgba(185,166,210,.28),6px 8px 16px rgba(128,108,121,.22),-3px -3px 8px rgba(255,255,255,.7) !important;
+      transition:box-shadow .18s ease,transform .18s ease;
+    }
+    @media (hover:hover) {
+      html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .dashboard-frequent-circles .circle:hover {
+        transform:translateY(-2px);
+        box-shadow:inset 2px 2px 4px rgba(255,255,255,.9),inset -3px -4px 6px rgba(185,166,210,.24),9px 13px 22px rgba(128,108,121,.24),-4px -4px 10px rgba(255,255,255,.74) !important;
+      }
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(button,.circle):not(:where(#recallBtn,.dashboard-section-toggle,.xlyneve-theme-option)):active {
+      box-shadow:inset 3px 4px 7px rgba(128,108,121,.22),inset -2px -2px 5px rgba(255,255,255,.8),2px 3px 6px rgba(128,108,121,.14) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select) {
+      box-shadow:inset 2px 3px 6px rgba(128,108,121,.16),inset -2px -2px 5px rgba(255,255,255,.85) !important;
+    }
+    @media (prefers-reduced-motion:reduce) {
+      html[data-xlyneve-color-theme="pastel-jumper"] body :is(button,.circle) { transition:none !important; }
+    }
     html[data-xlyneve-color-theme="warm-medley"] {
       --refresh-cocoa:#16131f;--refresh-rose:#c1a0ac;--refresh-lime:#4a3f4b;--refresh-stone:#f0d9e4;--refresh-blue:#f0d9e4;--refresh-terracotta:#4a3f4b;
       --refresh-edge:rgba(255,255,255,.84);--refresh-depth:0 12px 30px rgba(22,19,31,.14);--theme-ink:#16131f;
