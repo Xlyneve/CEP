@@ -4514,7 +4514,11 @@ function cancelHideDefTip() {
   clearTimeout(defTipHideTimer);
 }
 
-document.addEventListener('scroll', hideDefTip, true);
+document.addEventListener('scroll', (event) => {
+  // Gallery arrows, swipes and long definitions scroll inside the open window.
+  if (event.target instanceof Node && defTip.contains(event.target)) return;
+  hideDefTip();
+}, true);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideDefTip(); }, true);
 
 function autoGrowBox(el) {
