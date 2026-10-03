@@ -1100,6 +1100,9 @@ a.conceptLink.hasDef::before{
 }
 
 #defTip{
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  box-sizing: border-box;
   position: fixed;
   z-index: 999999;
   max-width: min(320px, 70vw);
@@ -1838,13 +1841,13 @@ body > #formatToggle { display: none !important; }
     font-size:12px;
   " />
 
-  <input id="kbUploadInput" type="file" accept="image/*" style="display:none;" />
+  <input id="kbUploadInput" multiple type="file" accept="image/*" style="display:none;" />
 </div>
 </div>
 
 <div class="btnRow">
-  <button class="miniBtn" id="kbUploadBtn" title="Upload concept image">🖼️</button>
-  <button class="miniBtn danger" id="kbRemoveBtn" title="Remove concept image">🧹</button>
+  <button class="miniBtn" id="kbUploadBtn" title="Add concept photos" aria-label="Add concept photos">🖼️</button>
+  <button class="miniBtn danger" id="kbRemoveBtn" title="Remove all concept photos" aria-label="Remove all concept photos">🧹</button>
   <button class="miniBtn danger" id="defDeleteBtn" title="Delete definition">🗑️</button>
   <button class="miniBtn" id="defSaveBtn" title="Save definition">💾</button>
 </div>
@@ -1922,7 +1925,7 @@ let defsCache = {}; // { normalizedKey: { value: "", why: "", valueHtml: "", why
 
 let unsubscribeConceptMedia = null;
 let conceptMediaCache = {};
-// { normalizedKey: { concept, imageUrl, caption, storagePath } }
+// { normalizedKey: { concept, images, imageUrl, caption, storagePath } }
 
 let liveTimer = null;
 let lastLiveQuery = '';
@@ -3168,7 +3171,8 @@ function startConceptMediaListener() {
             concept: typeof d.concept === 'string' ? d.concept : '',
             imageUrl: typeof d.imageUrl === 'string' ? d.imageUrl : '',
             caption: typeof d.caption === 'string' ? d.caption : '',
-            storagePath: typeof d.storagePath === 'string' ? d.storagePath : ''
+            storagePath: typeof d.storagePath === 'string' ? d.storagePath : '',
+            images: conceptImages(d)
           };
         });
 		
@@ -3972,26 +3976,39 @@ function safeStorageName(s) {
     .replace(/^-+|-+$/g, '') || 'concept';
 }
 
-function setKbPreview(imageUrl = '', caption = '') {
-  if (imageUrl) {
-    kbPreviewImg.src = imageUrl;
-    kbPreviewWrap.style.display = 'block';
-  } else {
-    kbPreviewImg.src = '';
-    kbPreviewWrap.style.display = 'none';
-  }
+// Legacy single-photo records remain readable without migrating saved content.
+function conceptImages(media) {
+  const images = Array.isArray(media?.images) ? media.images.filter(image =>
+    typeof image?.imageUrl === 'string' && image.imageUrl) : [];
+  return images.length ? images : media?.imageUrl
+    ? [{ imageUrl: media.imageUrl, storagePath: media.storagePath || '' }] : [];
+}
 
+function setKbPreview(images = [], caption = '') {
+  if (!Array.isArray(images)) images = images ? [{ imageUrl: images }] : [];
+  kbPreviewImg.style.display = 'none';
+  let gallery = document.getElementById('kbPreviewGallery');
+  if (!gallery) {
+    gallery = document.createElement('div');
+    gallery.id = 'kbPreviewGallery';
+    gallery.setAttribute('aria-label', 'Concept photo previews');
+    gallery.style.cssText = 'display:flex;gap:8px;overflow-x:auto;max-height:180px;';
+    kbPreviewImg.after(gallery);
+  }
+  gallery.replaceChildren(...images.map(({ imageUrl }, index) => {
+    const image = document.createElement('img');
+    image.src = imageUrl;
+    image.alt = `Concept photo ${index + 1}`;
+    image.style.cssText = 'max-width:100%;max-height:180px;object-fit:contain;border-radius:12px;flex-shrink:0;';
+    return image;
+  }));
+  kbPreviewWrap.style.display = images.length ? 'block' : 'none';
   kbCaptionInput.value = caption || '';
 }
 
 function clearPendingKbImage() {
-  pendingKbImageBlob = null;
-  pendingKbOriginalExt = 'jpg';
-
-  if (pendingKbImagePreviewUrl) {
-    URL.revokeObjectURL(pendingKbImagePreviewUrl);
-    pendingKbImagePreviewUrl = '';
-  }
+  pendingKbImages.forEach(image => URL.revokeObjectURL(image.imageUrl));
+  pendingKbImages = [];
 }
 
 async function compressImageFile(file, {
@@ -4036,71 +4053,52 @@ async function compressImageFile(file, {
   return blob;
 }
 
-async function uploadConceptMedia(concept, fileOrBlob, caption = '') {
+async function uploadConceptMedia(concept, files, caption = '') {
   const key = mediaKeyForConcept(concept);
   if (!key) throw new Error('Missing concept key');
-
   await ensureSignedIn();
-
-  const safeName = safeStorageName(concept);
-  const fileName = `${Date.now()}-${safeName}.jpg`;
-  const storagePath = `concept_media/${safeName}/${fileName}`;
-
-  console.log('upload path', storagePath);
-
-  const ref = storage.ref().child(storagePath);
-  const task = ref.put(fileOrBlob, { contentType: 'image/jpeg' });
-
-  task.on(
-    'state_changed',
-    (snap) => {
-      const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-      console.log('upload progress', pct + '%');
-    },
-    (err) => {
-      console.error('upload task error', err);
+  const uploaded = [], paths = [];
+  try {
+    for (const file of files) {
+      const storagePath = `concept_media/${safeStorageName(concept)}/${crypto.randomUUID()}.jpg`;
+      paths.push(storagePath);
+      const ref = storage.ref().child(storagePath);
+      await ref.put(file.blob, { contentType: 'image/jpeg' });
+      uploaded.push({ imageUrl: await ref.getDownloadURL(), storagePath });
     }
-  );
-
-  await task;
-  console.log('storage upload complete');
-
-  const imageUrl = await ref.getDownloadURL();
-  console.log('download url ready', imageUrl);
-
-  await db.collection('concept_media').doc(key).set({
-    concept: (concept || '').trim(),
-    imageUrl,
-    caption: (caption || '').trim(),
-    storagePath,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
-  window.invalidateCepSearchCache?.('xgpt:media');
-
-  console.log('firestore media doc saved');
-
-  return { imageUrl, storagePath };
+    // Append atomically so uploads from another device are not overwritten.
+    const doc = db.collection('concept_media').doc(key);
+    const record = await db.runTransaction(async transaction => {
+      const snapshot = await transaction.get(doc);
+      const images = [...conceptImages(snapshot.data()), ...uploaded];
+      const value = {
+        concept: concept.trim(), images, imageUrl: images[0].imageUrl,
+        storagePath: images[0].storagePath || '', caption: caption.trim(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      transaction.set(doc, value, { merge: true });
+      return value;
+    });
+    conceptMediaCache[key] = record;
+    window.invalidateCepSearchCache?.('xgpt:media');
+    return record;
+  } catch (error) {
+    // A failed batch leaves existing photos intact and the selection retryable.
+    await Promise.allSettled(paths.map(path => storage.ref().child(path).delete()));
+    throw error;
+  }
 }
 
 async function removeConceptMedia(concept) {
   const key = mediaKeyForConcept(concept);
   if (!key) return;
-
   await ensureSignedIn();
-
-  const existing = getConceptMedia(concept);
-  const storagePath = existing?.storagePath || '';
-
-  if (storagePath) {
-    try {
-      await storage.ref().child(storagePath).delete();
-    } catch (err) {
-      console.warn('Storage delete skipped/failed:', err);
-    }
-  }
-
+  const images = conceptImages(getConceptMedia(concept));
   await db.collection('concept_media').doc(key).delete();
+  delete conceptMediaCache[key];
   window.invalidateCepSearchCache?.('xgpt:media');
+  await Promise.allSettled(images.filter(image => image.storagePath)
+    .map(image => storage.ref().child(image.storagePath).delete()));
 }
 
 // legacy-safe getters: handle both {value,why} objects and old string cache entries
@@ -4293,9 +4291,9 @@ enableSoftLineBreaks(whyBox);
 });
 
 let currentDefConcept = '';
-let pendingKbImageBlob = null;
-let pendingKbImagePreviewUrl = '';
-let pendingKbOriginalExt = 'jpg';
+let pendingKbImages = [];
+let preparingKbImages = false;
+let conceptMediaPanelSession = 0;
 
 /* =========================
    Floating definition tooltip (always above tables)
@@ -4309,10 +4307,10 @@ let tipOpen = false;
 let defTipPinned = false;
 let defTipHideTimer = null;
 
-function showDefTip(defText, whyText, imageUrl, caption, x, y, defHtml = '', whyHtml = '') {
+function showDefTip(defText, whyText, imageUrl, caption, x, y, defHtml = '', whyHtml = '', images = []) {
   if (!defText && !whyText && !imageUrl) return;
 
-  const tipHtml = renderTip(defText, whyText, imageUrl, caption, defHtml, whyHtml);
+  const tipHtml = renderTip(defText, whyText, imageUrl, caption, defHtml, whyHtml, images);
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(defTip, tipHtml);
   else defTip.textContent = [defText, whyText].filter(Boolean).join('\n\n');
   defTip.style.display = 'block';
@@ -4373,14 +4371,15 @@ function renderDefinitionContent(html, fallbackText) {
   return linkifyText(fallbackText);
 }
 
-function renderTip(defText, whyText, imageUrl = '', caption = '', defHtml = '', whyHtml = '') {
+function renderTip(defText, whyText, imageUrl = '', caption = '', defHtml = '', whyHtml = '', images = []) {
+  const photos = images.length ? images : conceptImages({ imageUrl });
   const defSafe = renderDefinitionContent(defHtml, defText);
   const whySafe = renderDefinitionContent(whyHtml, whyText);
   const capSafe = linkifyText(caption);
 
   return `
-    ${imageUrl ? `
-      <img class="kbHoverImage" src="${escapeHtml(imageUrl)}" alt="">
+    ${photos.length ? `
+      ${photos.map((image, index) => `<img class="kbHoverImage" src="${escapeHtml(image.imageUrl)}" alt="Concept photo ${index + 1}">`).join('')}
       ${capSafe ? `<div class="defLabel tipCaption" style="margin-bottom:8px;">${capSafe}</div>` : ''}
     ` : ''}
 
@@ -4432,7 +4431,7 @@ document.addEventListener('mouseover', (e) => {
   const caption = (a.getAttribute('data-kb-caption') || '').trim();
 
   if (!def && !why && !imageUrl) return;
-  showDefTip(def, why, imageUrl, caption, e.clientX, e.clientY, defHtml, whyHtml);
+  showDefTip(def, why, imageUrl, caption, e.clientX, e.clientY, defHtml, whyHtml, conceptImages(getConceptMedia(concept)));
 }, true);
 
 // Use capture so tables/cells don’t swallow hover
@@ -4495,6 +4494,7 @@ function setDefinitionEditorContent(editor, html, fallbackText) {
 }
 
 function openDefPanel(concept, clientX, clientY) {
+  conceptMediaPanelSession++;
   currentDefConcept = (concept || '').trim();
   if (!currentDefConcept) return;
 
@@ -4505,7 +4505,7 @@ function openDefPanel(concept, clientX, clientY) {
   clearPendingKbImage();
 
   const existingMedia = getConceptMedia(currentDefConcept);
-  setKbPreview(existingMedia?.imageUrl || '', existingMedia?.caption || '');
+  setKbPreview(conceptImages(existingMedia), existingMedia?.caption || '');
 
   if (!defPanel) return;
 
@@ -4549,6 +4549,7 @@ function closeDefPanel() {
   defPanel.style.display = 'none';
   defPanel.setAttribute('aria-hidden', 'true');
   currentDefConcept = '';
+  conceptMediaPanelSession++;
   clearPendingKbImage();
 }
 
@@ -4562,7 +4563,13 @@ defSaveBtn?.addEventListener('click', async (e) => {
   e.preventDefault();
   e.stopPropagation();
 
-  if (!currentDefConcept) return;
+  if (!currentDefConcept || preparingKbImages) return;
+  const concept = currentDefConcept;
+  const files = [...pendingKbImages];
+  const caption = kbCaptionInput?.value || '';
+  const session = conceptMediaPanelSession;
+  const controls = [kbUploadBtn, kbRemoveBtn, defCloseBtn, defDeleteBtn].filter(Boolean);
+  controls.forEach(control => { control.disabled = true; });
 
   const prev = defSaveBtn.textContent;
   defSaveBtn.disabled = true;
@@ -4572,7 +4579,7 @@ defSaveBtn?.addEventListener('click', async (e) => {
     console.log('SAVE START', currentDefConcept);
 
     await setDefinition(
-      currentDefConcept,
+      concept,
       defBox?.innerText || defBox?.textContent || '',
       whyBox?.innerText || whyBox?.textContent || '',
       defBox?.innerHTML || '',
@@ -4580,26 +4587,20 @@ defSaveBtn?.addEventListener('click', async (e) => {
     );
     console.log('definition saved');
 
-    if (pendingKbImageBlob) {
-      const caption = kbCaptionInput?.value || '';
-      console.log('uploading image...', {
-        sizeKB: Math.round((pendingKbImageBlob.size || 0) / 1024),
-        caption
-      });
-
-      const result = await uploadConceptMedia(currentDefConcept, pendingKbImageBlob, caption);
-      console.log('image uploaded', result);
-
-      clearPendingKbImage();
-      setKbPreview(result.imageUrl, caption);
+    if (files.length) {
+      const result = await uploadConceptMedia(concept, files, caption);
+      if (session === conceptMediaPanelSession) {
+        clearPendingKbImage();
+        setKbPreview(result.images, caption);
+      }
     } else {
-      const existing = getConceptMedia(currentDefConcept);
+      const existing = getConceptMedia(concept);
       if (existing?.imageUrl) {
         console.log('updating caption only');
 
-        await db.collection('concept_media').doc(mediaKeyForConcept(currentDefConcept)).set({
-          concept: currentDefConcept.trim(),
-          caption: (kbCaptionInput?.value || '').trim(),
+        await db.collection('concept_media').doc(mediaKeyForConcept(concept)).set({
+          concept: concept.trim(),
+          caption: caption.trim(),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
         window.invalidateCepSearchCache?.('xgpt:media');
@@ -4612,7 +4613,7 @@ defSaveBtn?.addEventListener('click', async (e) => {
 
     defSaveBtn.textContent = 'Saved ✓';
     setTimeout(() => {
-      closeDefPanel();
+      if (session === conceptMediaPanelSession) closeDefPanel();
       defSaveBtn.textContent = prev;
     }, 450);
 
@@ -4623,6 +4624,7 @@ defSaveBtn?.addEventListener('click', async (e) => {
     setTimeout(() => (defSaveBtn.textContent = prev), 900);
   } finally {
     defSaveBtn.disabled = false;
+    controls.forEach(control => { control.disabled = false; });
   }
 });
 
@@ -4669,28 +4671,31 @@ kbUploadBtn?.addEventListener('click', (e) => {
 });
 
 kbUploadInput?.addEventListener('change', async () => {
-  const file = kbUploadInput.files?.[0];
-  if (!file || !currentDefConcept) return;
-
+  const files = Array.from(kbUploadInput.files || []);
+  if (!files.length || !currentDefConcept || preparingKbImages) return;
+  const concept = currentDefConcept;
+  const session = conceptMediaPanelSession;
+  preparingKbImages = true;
+  const controls = [defSaveBtn, kbUploadBtn, kbRemoveBtn].filter(Boolean);
+  controls.forEach(control => { control.disabled = true; });
+  const prepared = [];
   try {
-    clearPendingKbImage();
-
-    const compressed = await compressImageFile(file, {
-      maxW: 900,
-      maxH: 900,
-      quality: 0.72,
-      mimeType: 'image/jpeg'
-    });
-
-    pendingKbImageBlob = compressed;
-    pendingKbOriginalExt = 'jpg';
-
-    pendingKbImagePreviewUrl = URL.createObjectURL(compressed);
-    setKbPreview(pendingKbImagePreviewUrl, kbCaptionInput.value || '');
+    for (const file of files) {
+      const blob = await compressImageFile(file);
+      prepared.push({ blob, imageUrl: URL.createObjectURL(blob) });
+    }
+    if (session !== conceptMediaPanelSession) {
+      prepared.forEach(image => URL.revokeObjectURL(image.imageUrl));
+      return;
+    }
+    pendingKbImages.push(...prepared);
+    setKbPreview([...conceptImages(getConceptMedia(concept)), ...pendingKbImages], kbCaptionInput.value);
   } catch (err) {
-    console.error(err);
+    prepared.forEach(image => URL.revokeObjectURL(image.imageUrl));
     alert('Image preparation failed: ' + (err?.message || err));
   } finally {
+    preparingKbImages = false;
+    controls.forEach(control => { control.disabled = false; });
     kbUploadInput.value = '';
   }
 });
@@ -4702,12 +4707,12 @@ kbRemoveBtn?.addEventListener('click', async (e) => {
   if (!currentDefConcept) return;
 
   const existing = getConceptMedia(currentDefConcept);
-  if (!existing?.imageUrl && !pendingKbImageBlob) {
+  if (!existing?.imageUrl && !pendingKbImages.length) {
     setKbPreview('', '');
     return;
   }
 
-  if (!confirm('Remove this concept image?')) return;
+  if (!confirm('Remove all photos from this concept?')) return;
 
   try {
     clearPendingKbImage();
@@ -5061,7 +5066,7 @@ function appendPrintableConceptDefinitions(printable, sourceBubble) {
     const definitionText = (getDefinition(concept) || '').trim();
     const media = getConceptMedia(concept);
     if (!definitionHtml && !definitionText && !media?.imageUrl) return;
-    definitions.push({ concept, definitionHtml, definitionText, imageUrl: media?.imageUrl || '' });
+    definitions.push({ concept, definitionHtml, definitionText, images: conceptImages(media) });
   });
 
   if (!definitions.length) return;
@@ -5072,7 +5077,7 @@ function appendPrintableConceptDefinitions(printable, sourceBubble) {
   heading.textContent = 'Concept definitions';
   section.appendChild(heading);
 
-  definitions.forEach(({ concept, definitionHtml, definitionText, imageUrl }) => {
+  definitions.forEach(({ concept, definitionHtml, definitionText, images }) => {
     const entry = document.createElement('article');
     const name = document.createElement('h3');
     name.textContent = concept;
@@ -5082,7 +5087,7 @@ function appendPrintableConceptDefinitions(printable, sourceBubble) {
     else definition.textContent = definitionText;
     entry.append(name);
     if (definitionHtml || definitionText) entry.appendChild(definition);
-    if (imageUrl) {
+    for (const { imageUrl } of images) {
       const image = document.createElement('img');
       image.src = imageUrl;
       image.alt = concept;
