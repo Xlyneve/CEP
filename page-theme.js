@@ -1840,8 +1840,14 @@
   `;
   themeStyle.textContent += `
     html:is([data-xlyneve-color-theme="sculpted"],[data-xlyneve-color-theme="pastel-jumper"]).theme-homecal body .todo-item {
-      border-radius:20px !important;
-      box-shadow:inset 0 1px 2px rgba(255,255,255,.7),inset 0 -2px 3px rgba(128,108,121,.16),0 6px 10px rgba(128,108,121,.25),-2px -2px 5px rgba(255,255,255,.45) !important;
+      border-radius:22px !important;
+      border:1px solid rgba(255,255,255,.75) !important;
+      box-shadow:inset 4px 4px 7px rgba(255,255,255,.8),inset -5px -6px 9px rgba(102,81,115,.28),6px 9px 13px rgba(102,81,115,.3),-3px -3px 7px rgba(255,255,255,.65) !important;
+    }
+  `;
+  themeStyle.textContent += `
+    html:is([data-xlyneve-color-theme="sculpted"],[data-xlyneve-color-theme="pastel-jumper"]).theme-homecal body .todo-item:not(.priority) {
+      background:linear-gradient(145deg,rgba(255,255,255,.3),transparent 42%,rgba(128,108,121,.16)),var(--card-glass,#d1bbd3) !important;
     }
   `;
   // Final overrides include the selectors used by page-specific card themes.
