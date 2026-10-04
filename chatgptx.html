@@ -1836,6 +1836,14 @@ body > #formatToggle { display: none !important; }
     <button class="closeBtn" id="defCloseBtn" title="Close">✕</button>
   </div>
 
+  <div id="conceptFormatToolbar" role="toolbar" aria-label="Concept text formatting" style="display:flex;flex-wrap:wrap;gap:4px;flex:0 0 auto;padding:6px 0;">
+    <button type="button" class="miniBtn" data-concept-command="bold" aria-label="Bold" title="Bold"><b>B</b></button>
+    <button type="button" class="miniBtn" data-concept-command="italic" aria-label="Italic" title="Italic"><i>I</i></button>
+    <button type="button" class="miniBtn" data-concept-command="underline" aria-label="Underline" title="Underline"><u>U</u></button>
+    <button id="conceptSymbolBtn" type="button" class="miniBtn" aria-label="Insert arrow or symbol" title="Insert arrow or symbol">↳</button>
+    <label class="miniBtn" title="Font colour" style="display:flex;align-items:center;gap:4px;">A <input id="conceptFontColor" type="color" value="#333333" aria-label="Concept font colour" style="width:26px;height:26px;padding:0;border:0;background:transparent;"></label>
+  </div>
+  <div id="conceptSymbolPicker" hidden role="group" aria-label="Arrows and symbols" style="flex:0 0 auto;max-height:100px;overflow:auto;"></div>
   <div class="panelScroll">
   <div id="defBox" contenteditable="true" data-placeholder="Definition…"></div>
 
@@ -4339,6 +4347,58 @@ enableSoftLineBreaks(whyBox);
   });
 });
 
+// Keep this compact toolbar scoped to the two concept editors.
+const conceptFormatToolbar = document.getElementById('conceptFormatToolbar');
+function runConceptFormat(command, value = null) {
+  if (activeEditable !== defBox && activeEditable !== whyBox) activeEditable = defBox;
+  runCmd(command, value);
+  autoGrowBox(activeEditable);
+}
+conceptFormatToolbar?.querySelectorAll('[data-concept-command]').forEach(button => {
+  button.addEventListener('pointerdown', event => { event.preventDefault(); event.stopPropagation(); });
+  button.addEventListener('click', event => {
+    event.preventDefault(); event.stopPropagation();
+    runConceptFormat(button.dataset.conceptCommand);
+  });
+});
+const conceptSymbolBtn = document.getElementById('conceptSymbolBtn');
+const conceptSymbolPicker = document.getElementById('conceptSymbolPicker');
+conceptSymbolBtn?.addEventListener('pointerdown', event => { event.preventDefault(); event.stopPropagation(); });
+conceptSymbolBtn?.addEventListener('click', event => {
+  event.preventDefault(); event.stopPropagation();
+  if (activeEditable !== defBox && activeEditable !== whyBox) activeEditable = defBox;
+  const editor = activeEditable;
+  saveCaret();
+  conceptSymbolPicker.hidden = !conceptSymbolPicker.hidden;
+  conceptSymbolBtn.setAttribute('aria-expanded', String(!conceptSymbolPicker.hidden));
+  conceptSymbolPicker.replaceChildren();
+  ARROWS.forEach(symbol => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'miniBtn'; button.textContent = symbol;
+    button.addEventListener('pointerdown', event => event.preventDefault());
+    button.addEventListener('click', event => {
+      event.preventDefault(); event.stopPropagation();
+      activeEditable = editor; editor.focus({ preventScroll: true }); restoreCaret();
+      insertInlineSymbolAtCaret(symbol);
+      autoGrowBox(editor);
+      conceptSymbolPicker.hidden = true;
+      conceptSymbolBtn.setAttribute('aria-expanded', 'false');
+    });
+    conceptSymbolPicker.appendChild(button);
+  });
+});
+const conceptFontColor = document.getElementById('conceptFontColor');
+conceptFontColor?.addEventListener('pointerdown', () => saveCaret());
+conceptFontColor?.addEventListener('input', () => {
+  if (activeEditable !== defBox && activeEditable !== whyBox) activeEditable = defBox;
+  activeEditable.focus({ preventScroll: true });
+  restoreCaret();
+  document.execCommand('styleWithCSS', false, true);
+  document.execCommand('foreColor', false, conceptFontColor.value);
+  document.execCommand('styleWithCSS', false, false);
+  saveCaret();
+});
+
 let currentDefConcept = '';
 let pendingKbImages = [];
 let preparingKbImages = false;
@@ -4562,6 +4622,8 @@ function setDefinitionEditorContent(editor, html, fallbackText) {
 }
 
 function openDefPanel(concept, clientX, clientY) {
+  conceptSymbolPicker.hidden = true;
+  conceptSymbolBtn.setAttribute('aria-expanded', 'false');
   conceptMediaPanelSession++;
   currentDefConcept = (concept || '').trim();
   if (!currentDefConcept) return;
