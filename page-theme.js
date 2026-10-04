@@ -2266,10 +2266,10 @@
   // Search cards share the clean raised material, including dynamically added results.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) {
-      background:#fff !important;
+      background:#e9ebf6 !important;
       background-image:none !important;
       color:#28263c !important;
-      border:1px solid transparent !important;
+      border:1px solid rgba(255,255,248,.82) !important;
       border-radius:24px !important;
       box-shadow:var(--aurora-raised) !important;
       backdrop-filter:none !important;
@@ -2295,6 +2295,12 @@
     html[data-xlyneve-color-theme="aurora"].theme-home-glass body .universal-search-native-card :is(.universal-search-native-title,.cep-source-note-title) { font-size:16px;line-height:1.3; }
     html[data-xlyneve-color-theme="aurora"].theme-home-glass body .universal-search-native-card :is(.universal-search-native-snippet,.cep-source-note-text,.cep-source-note-content) { font-size:14px;line-height:1.5; }
 
+    html[data-xlyneve-color-theme="aurora"] body .cep-global-search-result { padding:16px 14px !important; }
+    html[data-xlyneve-color-theme="aurora"] body .cep-global-search-result.cep-source-card--pn::before { content:none; }
+    html[data-xlyneve-color-theme="aurora"] body .cep-global-search-result :is(.cep-source-note-title),
+    html[data-xlyneve-color-theme="aurora"] body .cep-global-search-result > strong { font-size:16px;line-height:1.3; }
+    html[data-xlyneve-color-theme="aurora"] body .cep-global-search-result :is(.cep-source-note-text,.cep-source-note-content,.cep-xgpt-rich-content,.cep-structured-rich-content),
+    html[data-xlyneve-color-theme="aurora"] body .cep-global-search-result > span { font-size:14px;line-height:1.5; }
     html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result):focus-visible {
       outline:2px solid #9d46c4;
       outline-offset:3px;
