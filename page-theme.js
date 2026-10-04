@@ -100,6 +100,9 @@
   const softStonePalette = [
     { rgb:"225, 226, 230", solid:"#e1e2e6", ink:"#303238" },
   ];
+  const auroraPalette = [
+    { rgb:"233, 235, 246", solid:"#e9ebf6", ink:"#28263c" },
+  ];
   const themeStorageKey = "xlyneve-color-theme";
   const excludedThemePages = new Set(["biosched1.html", "notes.html", "recalltracker.html"]);
 
@@ -110,10 +113,10 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass") localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
-  const palette = selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -163,10 +166,11 @@
     anatomy: "#22211f",
     sculpted: "#a288b7",
     "mint-ceramic": "#e0c797",
-    "soft-stone": "#e1e2e6"
+    "soft-stone": "#e1e2e6",
+    aurora: "#e1e4f2"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
-  root.style.setProperty("--masthead-bar-ink", ["mint-ceramic","soft-stone"].includes(selectedTheme) ? "#414342" : "#ffffff");
+  root.style.setProperty("--masthead-bar-ink", ["mint-ceramic","soft-stone","aurora"].includes(selectedTheme) ? "#414342" : "#ffffff");
 
   const themeStyle = document.createElement("style");
   themeStyle.id = "xlyneve-color-theme-styles";
@@ -2138,6 +2142,162 @@
     }
   `;
 
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="aurora"] {
+      --theme-ink:#28263c; --theme-muted-ink:#79778f;
+      --refresh-cocoa:#28263c; --refresh-rose:#e9ebf6; --refresh-lime:#e9ebf6;
+      --refresh-stone:#e9ebf6; --refresh-blue:#e9ebf6; --refresh-terracotta:#9d46c4;
+      --refresh-edge:transparent; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
+      --aurora-grain:none;
+      --aurora-raised:inset 1px 1px 2px rgba(255,255,255,.25),6px 6px 12px rgba(169,172,197,.32),-6px -6px 12px rgba(255,255,255,.82);
+      --aurora-pressed:inset 4px 4px 7px rgba(169,172,197,.32),inset -4px -4px 7px rgba(255,255,255,.8);
+      --quick-panel:linear-gradient(145deg,#e9ebf6,#e9ebf6); --quick-ink:#28263c;
+      --quick-accent:#e9ebf6; --quick-accent-ink:#28263c; --quick-soft:#e9ebf6; --quick-field:#e9ebf6; --quick-edge:transparent;
+      --clinical-panel:#e9ebf6; --clinical-field:#e9ebf6; --clinical-accent:#9d46c4; --clinical-accent-ink:#28263c; --clinical-edge:transparent;
+      --copy-feedback-accent:#9d46c4; --copy-feedback-soft:#e9ebf6;
+      --homecal-header:linear-gradient(145deg,#e9ebf6,#e9ebf6); --homecal-header-ink:#28263c;
+      --homecal-control:#e9ebf6; --homecal-control-ink:#28263c; --homecal-header-edge:transparent;
+      --homecal-today:linear-gradient(145deg,#e9ebf6,#9d46c4); --homecal-today-edge:transparent; --homecal-today-shadow:rgba(68,73,59,.24);
+    }
+    html[data-xlyneve-color-theme="aurora"],html[data-xlyneve-color-theme="aurora"] body {
+      color:#28263c; background-color:#e9ebf6 !important;
+      background-image:none !important;
+      background-attachment:fixed !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body::before { background:none !important;opacity:0 !important; }
+    html[data-xlyneve-color-theme="aurora"] body :is(.note-card,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty):not(.today),.todo-item:not(.priority)),
+    html[data-xlyneve-color-theme="aurora"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .main-content .card-group.section-card-group > .card,
+    html[data-xlyneve-color-theme="aurora"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      color:#28263c !important;
+      background-color:#e9ebf6 !important;
+      background-image:none !important;
+      border:1px solid rgba(255,255,248,.82) !important;
+      border-radius:24px !important; box-shadow:var(--aurora-raised) !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body > header,
+    html[data-xlyneve-color-theme="aurora"] body :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header) {
+      color:var(--page-header-ink,#28263c) !important; background-color:#e9ebf6 !important;
+      background-image:none !important;
+      border-color:transparent !important; box-shadow:var(--aurora-raised) !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) {
+      color:#28263c !important; -webkit-text-fill-color:#28263c !important;
+      background-color:#e9ebf6 !important;
+      background-image:none !important;
+      border-color:#e9ebf6 !important; box-shadow:var(--aurora-raised) !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body :is(button,.glass-btn,.add-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)):active {
+      box-shadow:var(--aurora-pressed) !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
+      color:#28263c; background:#e9ebf6 !important;
+      border-color:#e9ebf6 !important; box-shadow:var(--aurora-pressed) !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body :is(input,select,textarea,.editableNote,#noteText.editable):focus-visible {
+      outline:2px solid #9d46c4; outline-offset:3px;
+    }
+    html[data-xlyneve-color-theme="aurora"] body .todo-item :is(textarea,input[type="text"]),
+    html[data-xlyneve-color-theme="aurora"] body #notes .notepad {
+      background:transparent !important; border:0 !important; box-shadow:none !important;
+    }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .dashboard-section-toggle {
+      box-sizing:border-box !important; min-height:40px; padding:6px 22px !important;
+    }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .dashboard-section-chevron {
+      font-size:16px; line-height:1; flex:0 0 20px; text-align:center;
+    }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body :is(.dashboard-frequent-heading,.main-content > h2,.dashboard-section-toggle) {
+      color:#28263c !important;-webkit-text-fill-color:#28263c !important;
+    }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle {
+      color:var(--aurora-button-ink,#28263c) !important;-webkit-text-fill-color:var(--aurora-button-ink,#28263c) !important;
+      background-color:var(--aurora-button-surface,#e9ebf6) !important;
+      background-image:none !important;
+    }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body.dashboard-hierarchy-active .dashboard-section-toggle { border-radius:18px !important; }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 1) { --aurora-button-surface:#e9ebf6;--aurora-button-ink:#28263c; }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 2) { --aurora-button-surface:#e9ebf6;--aurora-button-ink:#28263c; }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 3) { --aurora-button-surface:#e9ebf6;--aurora-button-ink:#28263c; }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 4) { --aurora-button-surface:#e9ebf6;--aurora-button-ink:#28263c; }
+    html[data-xlyneve-color-theme="aurora"] .xlyneve-theme-button {
+      background:linear-gradient(135deg,#e9ebf6 0 50%,#e9ebf6 50% 100%);color:#28263c;
+    }
+    @media (prefers-reduced-motion:no-preference) {
+      html[data-xlyneve-color-theme="aurora"] body :is(button,.glass-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)) { transition:box-shadow .15s ease; }
+    }
+  `;
+
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+      background:#e9ebf6 !important;
+      color:#28263c !important;box-shadow:var(--aurora-raised) !important;
+      border:1px solid #e9ebf6 !important;border-radius:16px !important;
+    }
+  `;
+
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="aurora"] body #notes .note-card :is(.notepad,.timestamp) {
+      color:#28263c !important;-webkit-text-fill-color:#28263c !important;
+    }
+  `;
+
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="aurora"] body :is(.note-card,.card,.med-card,.todo-item) {
+      color:#28263c !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body .todo-item :is(textarea,input[type="text"]) {
+      background:transparent !important;box-shadow:none !important;
+    }
+  `;
+
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="aurora"] body :is(input[type="checkbox"],input[type="radio"]) { accent-color:#9d46c4; }
+    html[data-xlyneve-color-theme="aurora"] body :is(.dashboard-section-chevron,.note-actions-toggle)::before { color:#79778f; }
+    html[data-xlyneve-color-theme="aurora"] body .dashboard-section-toggle { border-color:transparent !important; }
+    html[data-xlyneve-color-theme="aurora"] body .xlyneve-theme-button { background:#e9ebf6;box-shadow:var(--aurora-raised); }
+  `;
+
+  // Search cards share the clean raised material, including dynamically added results.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) {
+      background:#e9ebf6 !important;
+      background-image:none !important;
+      color:#28263c !important;
+      border:1px solid transparent !important;
+      border-radius:24px !important;
+      box-shadow:var(--aurora-raised) !important;
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result):focus-visible {
+      outline:2px solid #9d46c4;
+      outline-offset:3px;
+    }
+    html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result) .cep-source-note-display {
+      background:transparent !important;
+      box-shadow:none !important;
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
+    }
+  `;
+
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="aurora"],html[data-xlyneve-color-theme="aurora"] body {
+      background-color:#d9ddef !important;
+      background-image:url("aurora-background.svg?v=20261004-1") !important;
+      background-size:cover !important;
+      background-position:center !important;
+      background-repeat:no-repeat !important;
+      background-attachment:fixed !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body :is(.cep-global-search-panel,.universal-search-panel) {
+      background:rgba(233,235,246,.95) !important;
+    }
+    html[data-xlyneve-color-theme="aurora"] body .dashboard-section-toggle { background:#e9ebf6 !important; }
+  `;
+
   // Ceramic finish for the existing jumper colours; palette values stay unchanged.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="pastel-jumper"] {
@@ -2353,6 +2513,7 @@
       },
     ];
 
+    themeOptions.push({ value:"aurora", label:"Aurora 5D", colors:["#e9ebf6","#8154c4","#7d9aeb","#d091b0","#cee878"] });
     themeOptions.push({ value:"soft-stone", label:"Soft Stone 5D", colors:["#e1e2e6","#dfb53e","#72757c"] });
     themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#f4dada","#f9e5d6","#fdf9f3","#e0c797"] });
     themeOptions.push({ value:"pastel-jumper", label:"Pastel Jumper", colors:["#b9a6d2", "#e7a1a1", "#f1edcf", "#d8cbe7", "#faf6e5"] });
