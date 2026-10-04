@@ -91,6 +91,14 @@
     { rgb: "250, 246, 229", solid: "#faf6e5", ink: "#393644" },
   ];
 
+  const mintCeramicPalette = [
+    { rgb:"184, 221, 200", solid:"#b8ddc8", ink:"#303530" },
+    { rgb:"238, 237, 230", solid:"#eeede6", ink:"#303530" },
+    { rgb:"210, 218, 204", solid:"#d2dacc", ink:"#303530" },
+    { rgb:"229, 235, 224", solid:"#e5ebe0", ink:"#303530" },
+    { rgb:"176, 203, 185", solid:"#b0cbb9", ink:"#303530" },
+  ];
+
   const themeStorageKey = "xlyneve-color-theme";
   const excludedThemePages = new Set(["biosched1.html", "notes.html", "recalltracker.html"]);
 
@@ -101,10 +109,10 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass") localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
-  const palette = selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -152,10 +160,11 @@
     "palm-springs": "#1f2c2c",
     "quiet-stone": "#393831",
     anatomy: "#22211f",
-    sculpted: "#a288b7"
+    sculpted: "#a288b7",
+    "mint-ceramic": "#c3dac8"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
-  root.style.setProperty("--masthead-bar-ink", "#ffffff");
+  root.style.setProperty("--masthead-bar-ink", selectedTheme === "mint-ceramic" ? "#303530" : "#ffffff");
 
   const themeStyle = document.createElement("style");
   themeStyle.id = "xlyneve-color-theme-styles";
@@ -1885,6 +1894,101 @@
     }
   `;
 
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="mint-ceramic"] {
+      --theme-ink:#303530; --theme-muted-ink:#61675f;
+      --refresh-cocoa:#303530; --refresh-rose:#b9d8c8; --refresh-lime:#d9e3d9;
+      --refresh-stone:#eeede6; --refresh-blue:#adc9ba; --refresh-terracotta:#c9ccc3;
+      --refresh-edge:#fafaf4; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
+      --mint-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.055' filter='url(%23grain)'/%3E%3C/svg%3E");
+      --mint-raised:inset 2px 2px 3px rgba(255,255,251,.95),inset -3px -4px 5px rgba(98,104,89,.18),0 3px 2px rgba(78,83,70,.2),7px 10px 18px rgba(68,73,59,.23),-5px -5px 12px rgba(255,255,251,.88);
+      --mint-pressed:inset 3px 4px 7px rgba(72,81,69,.3),inset -3px -3px 6px rgba(255,255,251,.95);
+      --quick-panel:linear-gradient(145deg,#f4f4ed,#dfE3d9); --quick-ink:#303530;
+      --quick-accent:#b8ddc8; --quick-accent-ink:#303530; --quick-soft:#dbe7dd; --quick-field:#f1f2eb; --quick-edge:#fafaf4;
+      --clinical-panel:#eeede6; --clinical-field:#f2f2eb; --clinical-accent:#9cc3ad; --clinical-accent-ink:#303530; --clinical-edge:#fafaf4;
+      --copy-feedback-accent:#9cc3ad; --copy-feedback-soft:#dbe9de;
+      --homecal-header:linear-gradient(145deg,#e9f0e5,#c2dccc); --homecal-header-ink:#303530;
+      --homecal-control:#f0f2e9; --homecal-control-ink:#303530; --homecal-header-edge:#fafaf4;
+      --homecal-today:linear-gradient(145deg,#d7e9db,#afd1bb); --homecal-today-edge:#fafaf4; --homecal-today-shadow:rgba(68,73,59,.24);
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"],html[data-xlyneve-color-theme="mint-ceramic"] body {
+      color:#303530; background-color:#e7e8df !important;
+      background-image:var(--mint-grain),linear-gradient(135deg,#efefe8,#e2e4da) !important;
+      background-attachment:fixed !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"] body::before { background:none !important;opacity:0 !important; }
+    html[data-xlyneve-color-theme="mint-ceramic"] body :is(.note-card,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty):not(.today),.todo-item:not(.priority)),
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .main-content .card-group.section-card-group > .card,
+    html[data-xlyneve-color-theme="mint-ceramic"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      color:var(--card-ink,#303530) !important;
+      background-color:#eeeee7 !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,#f5f5ee,var(--card-glass,#e1e5da)) !important;
+      border:1px solid rgba(255,255,248,.82) !important;
+      border-radius:22px !important; box-shadow:var(--mint-raised) !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"] body > header,
+    html[data-xlyneve-color-theme="mint-ceramic"] body :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header) {
+      color:#303530 !important; background-color:#eeeee7 !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,#f5f5ee,#dfe3d8) !important;
+      border-color:#fafaf4 !important; box-shadow:var(--mint-raised) !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) {
+      color:#303530 !important; -webkit-text-fill-color:#303530 !important;
+      background-color:#d7e8dc !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,#d7efdf,#a9cfb9) !important;
+      border-color:#e8f6eb !important; box-shadow:var(--mint-raised) !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.add-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)):active {
+      box-shadow:var(--mint-pressed) !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
+      color:#303530; background:#e9ece3 !important;
+      border-color:#d0d8cb !important; box-shadow:var(--mint-pressed) !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"] body :is(input,select,textarea,.editableNote,#noteText.editable):focus-visible {
+      outline:2px solid #a7d8ba; outline-offset:3px;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"] body .todo-item :is(textarea,input[type="text"]),
+    html[data-xlyneve-color-theme="mint-ceramic"] body #notes .notepad {
+      background:transparent !important; border:0 !important; box-shadow:none !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .dashboard-section-toggle {
+      box-sizing:border-box !important; min-height:40px; padding:6px 22px !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .dashboard-section-chevron {
+      font-size:16px; line-height:1; flex:0 0 20px; text-align:center;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body :is(.dashboard-frequent-heading,.main-content > h2,.dashboard-section-toggle) {
+      color:#303530 !important;-webkit-text-fill-color:#303530 !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle {
+      color:#303530 !important;-webkit-text-fill-color:#303530 !important;
+      background-color:#bfdcca !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,#d7efdf,#a9cfb9) !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-section-toggle { border-radius:18px !important; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(even) {
+
+      background-image:var(--mint-grain),linear-gradient(145deg,#f3f3eb,#d7dccf) !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"] .xlyneve-theme-button {
+      background:linear-gradient(135deg,#b8ddc8 0 50%,#eeede6 50% 100%);color:#303530;
+    }
+    @media (prefers-reduced-motion:no-preference) {
+      html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)) { transition:box-shadow .15s ease; }
+    }
+  `;
+
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+      background:var(--mint-grain),linear-gradient(145deg,#d7efdf,#a9cfb9) !important;
+      color:#303530 !important;box-shadow:var(--mint-raised) !important;
+      border:1px solid #e8f6eb !important;border-radius:16px !important;
+    }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
@@ -2038,6 +2142,7 @@
       },
     ];
 
+    themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#b8ddc8","#eeede6","#d2dacc","#e5ebe0","#b0cbb9"] });
     themeOptions.push({ value:"pastel-jumper", label:"Pastel Jumper", colors:["#b9a6d2", "#e7a1a1", "#f1edcf", "#d8cbe7", "#faf6e5"] });
     themeOptions.push({ value:"warm-medley", label:"Warm Medley", colors:["#16131f", "#f0d9e4", "#c1a0ac", "#4a3f4b", "#806c79"] });
     themeOptions.forEach((option) => {
