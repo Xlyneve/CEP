@@ -180,6 +180,7 @@
         html:root.home-notepad-embedded:is([data-xlyneve-color-theme="sculpted"],[data-xlyneve-color-theme="pastel-jumper"])[data-home-notepad-ready="1"] body .notepad {
           background:#f1e6e8 !important;
         }
+        .pad-controls .dot { width:12px; height:12px; }
         .dot-purple { cursor:pointer; }
         .dot-purple:focus-visible { outline:2px solid #8c7bb5; outline-offset:4px; }
         .homepage-notepad-drag-bar { position:absolute; top:0; left:0; right:0; height:36px; z-index:3; border-radius:14px 14px 0 0; cursor:default; user-select:none; }
