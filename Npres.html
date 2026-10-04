@@ -1358,7 +1358,8 @@
               <button
                 class="mini-table-btn icon-btn delete-table-btn"
                 type="button"
-                title="Remove table"
+                title="Remove last row / table"
+                aria-label="Remove last row, or remove table when only one row remains"
                 onclick="deleteTreatmentTable(${index}, '${fieldName}')"
               >－</button>
             `
@@ -1988,11 +1989,9 @@ ${
 
         if (bodyRows.length > 1) {
           bodyRows[bodyRows.length - 1].remove();
-        } else if (bodyRows.length === 1) {
-          const cells = bodyRows[0].querySelectorAll("td");
-          cells.forEach((cell) => {
-            cell.innerHTML = "&nbsp;";
-          });
+        } else {
+          // Remove the table itself when its final row is removed.
+          table.remove();
         }
 
         medicationRows[index][fieldName] = wrapper.innerHTML;
