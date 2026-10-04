@@ -2003,7 +2003,7 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="soft-stone"] {
-      --cep-highlight-paper:#e8e9ec;
+      --cep-highlight-paper:#e3dfd5;
       --cep-highlight-shadow:0 1px 2px rgba(80,84,96,.04),inset 0 1px 0 rgba(255,255,255,.4);
       --cep-highlight-dark-paper:#4c5059;
       --cep-highlight-dark-shadow:0 1px 2px rgba(32,36,45,.08),inset 0 1px 0 rgba(255,255,255,.08);

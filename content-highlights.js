@@ -72,7 +72,11 @@
       if (!element.textContent.trim() && !element.querySelector('img,svg,table')) {
         emptySelectors.push(selector); return;
       }
-      if (chosen) chosenSelectors.push(selector);
+      // The neutral editor option follows Soft Stone's render-only theme tint.
+      // Explicit purple/yellow/green/pink/blue choices retain their saved colours.
+      const themeNeutral = chosen && document.documentElement.dataset.xlyneveColorTheme === 'soft-stone' &&
+        element.style.backgroundColor === 'rgb(241, 243, 245)';
+      if (chosen && !themeNeutral) chosenSelectors.push(selector);
       else selectors.push(selector);
       const important = ['background','background-color','background-image'].some(property => element.style.getPropertyPriority(property) === 'important');
       if (important && !chosen) importantSelectors.push(selector);
