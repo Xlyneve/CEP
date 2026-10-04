@@ -98,9 +98,7 @@
     { rgb:"224, 199, 151", solid:"#e0c797", ink:"#303530" },
   ];
   const softStonePalette = [
-    { rgb:"214, 214, 212", solid:"#d6d6d4", ink:"#414342" },
-    { rgb:"222, 222, 219", solid:"#dededb", ink:"#414342" },
-    { rgb:"208, 209, 205", solid:"#d0d1cd", ink:"#414342" },
+    { rgb:"225, 226, 230", solid:"#e1e2e6", ink:"#303238" },
   ];
   const themeStorageKey = "xlyneve-color-theme";
   const excludedThemePages = new Set(["biosched1.html", "notes.html", "recalltracker.html"]);
@@ -165,7 +163,7 @@
     anatomy: "#22211f",
     sculpted: "#a288b7",
     "mint-ceramic": "#e0c797",
-    "soft-stone": "#d0d1cd"
+    "soft-stone": "#e1e2e6"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
   root.style.setProperty("--masthead-bar-ink", ["mint-ceramic","soft-stone"].includes(selectedTheme) ? "#414342" : "#ffffff");
@@ -2001,24 +1999,24 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="soft-stone"] {
-      --theme-ink:#414342; --theme-muted-ink:#626560;
-      --refresh-cocoa:#414342; --refresh-rose:#d6d6d4; --refresh-lime:#dededb;
-      --refresh-stone:#dededb; --refresh-blue:#d6d6d4; --refresh-terracotta:#d0d1cd;
-      --refresh-edge:#eeeeeb; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
-      --stone-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.025' filter='url(%23grain)'/%3E%3C/svg%3E");
-      --stone-raised:inset 1px 1px 3px rgba(255,255,255,.65),inset -1px -2px 3px rgba(92,94,90,.08),8px 10px 16px rgba(106,108,103,.28),-7px -7px 14px rgba(255,255,255,.75);
-      --stone-pressed:inset 4px 4px 8px rgba(105,107,103,.28),inset -4px -4px 8px rgba(255,255,255,.72);
-      --quick-panel:linear-gradient(145deg,#d6d6d4,#dededb); --quick-ink:#414342;
-      --quick-accent:#d6d6d4; --quick-accent-ink:#414342; --quick-soft:#d6d6d4; --quick-field:#d6d6d4; --quick-edge:#eeeeeb;
-      --clinical-panel:#dededb; --clinical-field:#d6d6d4; --clinical-accent:#d0d1cd; --clinical-accent-ink:#414342; --clinical-edge:#eeeeeb;
-      --copy-feedback-accent:#d0d1cd; --copy-feedback-soft:#d6d6d4;
-      --homecal-header:linear-gradient(145deg,#d6d6d4,#dededb); --homecal-header-ink:#414342;
-      --homecal-control:#d6d6d4; --homecal-control-ink:#414342; --homecal-header-edge:#eeeeeb;
-      --homecal-today:linear-gradient(145deg,#d6d6d4,#d0d1cd); --homecal-today-edge:#eeeeeb; --homecal-today-shadow:rgba(68,73,59,.24);
+      --theme-ink:#303238; --theme-muted-ink:#72757c;
+      --refresh-cocoa:#303238; --refresh-rose:#e1e2e6; --refresh-lime:#e1e2e6;
+      --refresh-stone:#e1e2e6; --refresh-blue:#e1e2e6; --refresh-terracotta:#dfb53e;
+      --refresh-edge:transparent; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
+      --stone-grain:none;
+      --stone-raised:inset 1px 1px 2px rgba(255,255,255,.25),6px 6px 12px rgba(166,169,179,.42),-6px -6px 12px rgba(255,255,255,.82);
+      --stone-pressed:inset 4px 4px 7px rgba(166,169,179,.42),inset -4px -4px 7px rgba(255,255,255,.8);
+      --quick-panel:linear-gradient(145deg,#e1e2e6,#e1e2e6); --quick-ink:#303238;
+      --quick-accent:#e1e2e6; --quick-accent-ink:#303238; --quick-soft:#e1e2e6; --quick-field:#e1e2e6; --quick-edge:transparent;
+      --clinical-panel:#e1e2e6; --clinical-field:#e1e2e6; --clinical-accent:#dfb53e; --clinical-accent-ink:#303238; --clinical-edge:transparent;
+      --copy-feedback-accent:#dfb53e; --copy-feedback-soft:#e1e2e6;
+      --homecal-header:linear-gradient(145deg,#e1e2e6,#e1e2e6); --homecal-header-ink:#303238;
+      --homecal-control:#e1e2e6; --homecal-control-ink:#303238; --homecal-header-edge:transparent;
+      --homecal-today:linear-gradient(145deg,#e1e2e6,#dfb53e); --homecal-today-edge:transparent; --homecal-today-shadow:rgba(68,73,59,.24);
     }
     html[data-xlyneve-color-theme="soft-stone"],html[data-xlyneve-color-theme="soft-stone"] body {
-      color:#414342; background-color:#dededb !important;
-      background-image:var(--stone-grain),linear-gradient(135deg,#dededb,#d6d6d4) !important;
+      color:#303238; background-color:#e1e2e6 !important;
+      background-image:none !important;
       background-attachment:fixed !important;
     }
     html[data-xlyneve-color-theme="soft-stone"] body::before { background:none !important;opacity:0 !important; }
@@ -2026,34 +2024,34 @@
     html[data-xlyneve-color-theme="soft-stone"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
     html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body .main-content .card-group.section-card-group > .card,
     html[data-xlyneve-color-theme="soft-stone"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
-      color:#414342 !important;
-      background-color:#d6d6d4 !important;
-      background-image:var(--stone-grain),linear-gradient(145deg,color-mix(in srgb,#d6d6d4 92%,white),#d6d6d4) !important;
+      color:#303238 !important;
+      background-color:#e1e2e6 !important;
+      background-image:none !important;
       border:1px solid rgba(255,255,248,.82) !important;
-      border-radius:22px !important; box-shadow:var(--stone-raised) !important;
+      border-radius:24px !important; box-shadow:var(--stone-raised) !important;
       backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
     html[data-xlyneve-color-theme="soft-stone"] body > header,
     html[data-xlyneve-color-theme="soft-stone"] body :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header) {
-      color:var(--page-header-ink,#414342) !important; background-color:#d6d6d4 !important;
-      background-image:var(--stone-grain),linear-gradient(145deg,color-mix(in srgb,#d6d6d4 92%,white),#d6d6d4) !important;
-      border-color:#eeeeeb !important; box-shadow:var(--stone-raised) !important;
+      color:var(--page-header-ink,#303238) !important; background-color:#e1e2e6 !important;
+      background-image:none !important;
+      border-color:transparent !important; box-shadow:var(--stone-raised) !important;
     }
     html[data-xlyneve-color-theme="soft-stone"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) {
-      color:#414342 !important; -webkit-text-fill-color:#414342 !important;
-      background-color:#d6d6d4 !important;
-      background-image:var(--stone-grain),linear-gradient(145deg,#d6d6d4,#d6d6d4) !important;
-      border-color:#dededb !important; box-shadow:var(--stone-raised) !important;
+      color:#303238 !important; -webkit-text-fill-color:#303238 !important;
+      background-color:#e1e2e6 !important;
+      background-image:none !important;
+      border-color:#e1e2e6 !important; box-shadow:var(--stone-raised) !important;
     }
     html[data-xlyneve-color-theme="soft-stone"] body :is(button,.glass-btn,.add-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)):active {
       box-shadow:var(--stone-pressed) !important;
     }
     html[data-xlyneve-color-theme="soft-stone"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
-      color:#414342; background:#d6d6d4 !important;
-      border-color:#dededb !important; box-shadow:var(--stone-pressed) !important;
+      color:#303238; background:#e1e2e6 !important;
+      border-color:#e1e2e6 !important; box-shadow:var(--stone-pressed) !important;
     }
     html[data-xlyneve-color-theme="soft-stone"] body :is(input,select,textarea,.editableNote,#noteText.editable):focus-visible {
-      outline:2px solid #d0d1cd; outline-offset:3px;
+      outline:2px solid #dfb53e; outline-offset:3px;
     }
     html[data-xlyneve-color-theme="soft-stone"] body .todo-item :is(textarea,input[type="text"]),
     html[data-xlyneve-color-theme="soft-stone"] body #notes .notepad {
@@ -2066,20 +2064,20 @@
       font-size:16px; line-height:1; flex:0 0 20px; text-align:center;
     }
     html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body :is(.dashboard-frequent-heading,.main-content > h2,.dashboard-section-toggle) {
-      color:#414342 !important;-webkit-text-fill-color:#414342 !important;
+      color:#303238 !important;-webkit-text-fill-color:#303238 !important;
     }
     html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle {
-      color:var(--stone-button-ink,#414342) !important;-webkit-text-fill-color:var(--stone-button-ink,#414342) !important;
-      background-color:var(--stone-button-surface,#d6d6d4) !important;
-      background-image:var(--stone-grain),linear-gradient(145deg,color-mix(in srgb,var(--stone-button-surface,#d6d6d4) 92%,white),var(--stone-button-surface,#d6d6d4)) !important;
+      color:var(--stone-button-ink,#303238) !important;-webkit-text-fill-color:var(--stone-button-ink,#303238) !important;
+      background-color:var(--stone-button-surface,#e1e2e6) !important;
+      background-image:none !important;
     }
     html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-section-toggle { border-radius:18px !important; }
-    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 1) { --stone-button-surface:#d6d6d4;--stone-button-ink:#414342; }
-    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 2) { --stone-button-surface:#d5c2b9;--stone-button-ink:#414342; }
-    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 3) { --stone-button-surface:#c1cbb8;--stone-button-ink:#414342; }
-    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 4) { --stone-button-surface:#d6bc8d;--stone-button-ink:#414342; }
+    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 1) { --stone-button-surface:#e1e2e6;--stone-button-ink:#303238; }
+    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 2) { --stone-button-surface:#e1e2e6;--stone-button-ink:#303238; }
+    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 3) { --stone-button-surface:#e1e2e6;--stone-button-ink:#303238; }
+    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 4) { --stone-button-surface:#e1e2e6;--stone-button-ink:#303238; }
     html[data-xlyneve-color-theme="soft-stone"] .xlyneve-theme-button {
-      background:linear-gradient(135deg,#d6d6d4 0 50%,#dededb 50% 100%);color:#414342;
+      background:linear-gradient(135deg,#e1e2e6 0 50%,#e1e2e6 50% 100%);color:#303238;
     }
     @media (prefers-reduced-motion:no-preference) {
       html[data-xlyneve-color-theme="soft-stone"] body :is(button,.glass-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)) { transition:box-shadow .15s ease; }
@@ -2088,25 +2086,32 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
-      background:var(--stone-grain),linear-gradient(145deg,#d6d6d4,#d6d6d4) !important;
-      color:#414342 !important;box-shadow:var(--stone-raised) !important;
-      border:1px solid #dededb !important;border-radius:16px !important;
+      background:#e1e2e6 !important;
+      color:#303238 !important;box-shadow:var(--stone-raised) !important;
+      border:1px solid #e1e2e6 !important;border-radius:16px !important;
     }
   `;
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="soft-stone"] body #notes .note-card :is(.notepad,.timestamp) {
-      color:#414342 !important;-webkit-text-fill-color:#414342 !important;
+      color:#303238 !important;-webkit-text-fill-color:#303238 !important;
     }
   `;
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="soft-stone"] body :is(.note-card,.card,.med-card,.todo-item) {
-      color:#414342 !important;
+      color:#303238 !important;
     }
     html[data-xlyneve-color-theme="soft-stone"] body .todo-item :is(textarea,input[type="text"]) {
       background:transparent !important;box-shadow:none !important;
     }
+  `;
+
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="soft-stone"] body :is(input[type="checkbox"],input[type="radio"]) { accent-color:#dfb53e; }
+    html[data-xlyneve-color-theme="soft-stone"] body :is(.dashboard-section-chevron,.note-actions-toggle)::before { color:#72757c; }
+    html[data-xlyneve-color-theme="soft-stone"] body .dashboard-section-toggle { border-color:transparent !important; }
+    html[data-xlyneve-color-theme="soft-stone"] body .xlyneve-theme-button { background:#e1e2e6;box-shadow:var(--stone-raised); }
   `;
 
   // Ceramic finish for the existing jumper colours; palette values stay unchanged.
@@ -2324,7 +2329,7 @@
       },
     ];
 
-    themeOptions.push({ value:"soft-stone", label:"Soft Stone 5D", colors:["#d6d6d4","#d5c2b9","#c1cbb8","#d6bc8d"] });
+    themeOptions.push({ value:"soft-stone", label:"Soft Stone 5D", colors:["#e1e2e6","#dfb53e","#72757c"] });
     themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#f4dada","#f9e5d6","#fdf9f3","#e0c797"] });
     themeOptions.push({ value:"pastel-jumper", label:"Pastel Jumper", colors:["#b9a6d2", "#e7a1a1", "#f1edcf", "#d8cbe7", "#faf6e5"] });
     themeOptions.push({ value:"warm-medley", label:"Warm Medley", colors:["#16131f", "#f0d9e4", "#c1a0ac", "#4a3f4b", "#806c79"] });
