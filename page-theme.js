@@ -2535,6 +2535,22 @@
       overflow-y:auto;
       box-sizing:border-box;
     }
+    #xlyneveThemePanel .xlyneve-theme-heading { display:flex;align-items:center;justify-content:space-between;gap:8px; }
+    #xlyneveThemePanel .xlyneve-theme-title { margin:0; }
+    #xlyneveThemePanel .xlyneve-theme-manage {
+      display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;
+      padding:0 !important;border:0 !important;background:transparent !important;
+      background-image:none !important;box-shadow:none !important;cursor:pointer;
+    }
+    #xlyneveThemePanel .xlyneve-theme-manage::before {
+      content:"";width:16px;height:16px;border-radius:50%;
+      background:var(--copy-feedback-accent,#8154c4);
+      border:1px solid rgba(255,255,255,.9);
+      box-shadow:0 0 7px rgba(129,84,196,.35),inset 0 1px 2px rgba(255,255,255,.55);
+    }
+    #xlyneveThemePanel .xlyneve-theme-manage[aria-pressed="true"]::before { outline:2px solid #8154c4;outline-offset:3px; }
+    #xlyneveThemePanel .xlyneve-theme-manage:focus-visible { outline:2px solid #8154c4;outline-offset:-2px; }
+    #xlyneveThemePanel:not(.is-managing-themes) :is(.xlyneve-theme-delete,.xlyneve-theme-restore) { display:none !important; }
     #xlyneveThemePanel .xlyneve-theme-row { display:flex;align-items:center;gap:4px; }
     #xlyneveThemePanel .xlyneve-theme-option { flex:1;min-width:0;gap:7px;margin-top:0; }
     #xlyneveThemePanel .xlyneve-theme-swatches { flex-shrink:0;gap:2px; }
@@ -2579,7 +2595,22 @@
     const title = document.createElement("p");
     title.className = "xlyneve-theme-title";
     title.textContent = "Colour theme";
-    panel.appendChild(title);
+    const heading = document.createElement("div");
+    heading.className = "xlyneve-theme-heading";
+    const manage = document.createElement("button");
+    manage.type = "button";
+    manage.className = "xlyneve-theme-manage";
+    manage.setAttribute("aria-label", "Show or hide theme delete buttons");
+    manage.setAttribute("aria-pressed", "false");
+    manage.title = "Show delete buttons";
+    const setDeleteMode = (open) => {
+      panel.classList.toggle("is-managing-themes", open);
+      manage.setAttribute("aria-pressed", String(open));
+      manage.title = open ? "Hide delete buttons" : "Show delete buttons";
+    };
+    manage.addEventListener("click", () => setDeleteMode(manage.getAttribute("aria-pressed") !== "true"));
+    heading.append(title, manage);
+    panel.appendChild(heading);
 
     const themeOptions = [
       {
@@ -2715,12 +2746,14 @@
     drawOptions();
 
     const closePicker = () => {
+      setDeleteMode(false);
       panel.hidden = true;
       toggle.setAttribute("aria-expanded", "false");
     };
 
     toggle.addEventListener("click", () => {
       const open = panel.hidden;
+      setDeleteMode(false);
       panel.hidden = !open;
       toggle.setAttribute("aria-expanded", String(open));
       if (open) panel.querySelector("button")?.focus();
