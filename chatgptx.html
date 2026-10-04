@@ -1707,6 +1707,8 @@ body > #formatToggle { display: none !important; }
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
   <script src="content-highlights.js?v=20261002-2" defer></script>
 <script src="typing-spellcheck.js?v=20261002-1" defer></script>
+<link rel="stylesheet" href="concept-links.css?v=20261004-1">
+<script src="concept-preview.js?v=20261004-1"></script>
 </head>
 
 <body>
@@ -4346,6 +4348,8 @@ document.body.appendChild(defTip);
 let tipOpen = false;
 let defTipPinned = false;
 let defTipHideTimer = null;
+let defTipLocked = false;
+let conceptHoverTimer = null;
 
 function showDefTip(defText, whyText, imageUrl, caption, x, y, defHtml = '', whyHtml = '', images = []) {
   if (!defText && !whyText && !imageUrl) return;
@@ -4437,13 +4441,16 @@ function renderTip(defText, whyText, imageUrl = '', caption = '', defHtml = '', 
 }
 
 function hideDefTip() {
+  defTipLocked = false;
+  defTipPinned = false;
+  clearTimeout(conceptHoverTimer);
   tipOpen = false;
   defTip.style.display = 'none';
   defTip.innerHTML = '';
 }
 
 document.addEventListener('mousemove', (e) => {
-  if (!tipOpen || defTipPinned) return;
+  if (!tipOpen || defTipPinned || defTipLocked) return;
 
   const pad = 12;
   const r = defTip.getBoundingClientRect();
@@ -4459,8 +4466,9 @@ document.addEventListener('mousemove', (e) => {
 
 document.addEventListener('mouseover', (e) => {
   const a = e.target.closest?.('a.conceptLink');
-  if (!a) return;
-
+  if (!a || defTipLocked || !matchMedia('(hover: hover)').matches) return;
+  if (a.contains(e.relatedTarget)) return;
+  clearTimeout(conceptHoverTimer);
   cancelHideDefTip();
 
   const concept = getConceptFromLink(a);
@@ -4472,7 +4480,10 @@ document.addEventListener('mouseover', (e) => {
   const caption = (a.getAttribute('data-kb-caption') || '').trim();
 
   if (!def && !why && !imageUrl) return;
+  conceptHoverTimer = setTimeout(() => {
+    if (!a.isConnected || defTipLocked) return;
   showDefTip(def, why, imageUrl, caption, e.clientX, e.clientY, defHtml, whyHtml, conceptImages(getConceptMedia(concept)));
+  }, 250);
 }, true);
 
 // Use capture so tables/cells don’t swallow hover
@@ -4480,6 +4491,7 @@ document.addEventListener('mouseover', (e) => {
 
 document.addEventListener('mouseout', (e) => {
   const from = e.target.closest?.('a.conceptLink');
+  if (from && !from.contains(e.relatedTarget)) clearTimeout(conceptHoverTimer);
   if (!from) return;
 
   const toConcept = e.relatedTarget?.closest?.('a.conceptLink');
@@ -4504,6 +4516,7 @@ defTip.addEventListener('mouseleave', (e) => {
 
 
 function scheduleHideDefTip(delay = 120) {
+  if (defTipLocked) return;
   clearTimeout(defTipHideTimer);
   defTipHideTimer = setTimeout(() => {
     hideDefTip();
@@ -4520,6 +4533,9 @@ document.addEventListener('scroll', (event) => {
   hideDefTip();
 }, true);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideDefTip(); }, true);
+document.addEventListener('pointerdown', e => {
+  if (defTipLocked && !defTip.contains(e.target) && !e.target.closest?.('a.conceptLink')) hideDefTip();
+}, true);
 
 function autoGrowBox(el) {
   if (!el) return;
@@ -5770,6 +5786,17 @@ document.addEventListener('click', (e) => {
     return;
   }
 
+  const def = getDefinition(topic) || '';
+  const why = getWhy(topic) || '';
+  const media = getConceptMedia(topic);
+  if (def || why || media?.imageUrl) {
+    clearTimeout(conceptHoverTimer);
+    cancelHideDefTip();
+    showDefTip(def, why, media?.imageUrl || '', media?.caption || '', e.clientX, e.clientY, getDefinitionHtml(topic), getWhyHtml(topic), conceptImages(media));
+    defTipLocked = true;
+    defTipPinned = true;
+    return;
+  }
   userInput.value = `"${topic}"`;
   userInput.focus();
   runLiveSearch(userInput.value.trim(), true);

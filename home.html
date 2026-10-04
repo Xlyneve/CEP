@@ -3635,6 +3635,8 @@ html body .cep-sign-out-light {
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
   <script src="content-highlights.js?v=20261001-1" defer></script>
 <script src="typing-spellcheck.js?v=20261002-1" defer></script>
+<link rel="stylesheet" href="concept-links.css?v=20261004-1">
+<script src="concept-preview.js?v=20261004-1"></script>
 </head>
 
 <body>
@@ -4444,7 +4446,8 @@ html body .cep-sign-out-light {
           fragment.append(document.createTextNode(text.slice(last, offset)));
           const concept = String(inner || '').trim();
           const link = document.createElement('a');
-          link.href = '#'; link.className = 'xgpt-concept-link'; link.textContent = concept;
+          link.href = '#'; link.className = 'xgpt-concept-link';
+          const label = document.createElement('span'); label.className = 'cep-xgpt-concept-label'; label.textContent = concept; link.appendChild(label);
           const media = window.getCachedXgptConceptMedia?.(concept) || chatgptConceptMediaCache[normalizeXgptConcept(concept)];
           if (media?.imageUrl) {
             link.classList.add('has-image');
@@ -4466,9 +4469,7 @@ html body .cep-sign-out-light {
       if (document.querySelector('.xgpt-media-tip')) return;
       const tip = document.createElement('div'); tip.className = 'xgpt-media-tip';
       document.body.appendChild(tip);
-      let hideTimer;
-      const hide = () => { hideTimer = setTimeout(() => { tip.style.display = 'none'; tip.replaceChildren(); }, 180); };
-      document.addEventListener('mouseover', async event => {
+      const showConceptPreview = async (event, isCurrent) => {
         const link = event.target.closest?.('.xgpt-concept-link'); if (!link) return;
         if (!link.dataset.image && window.fetchXgptConceptMedia) {
           const media = await window.fetchXgptConceptMedia(link.textContent);
@@ -4476,7 +4477,8 @@ html body .cep-sign-out-light {
         }
         const definition = link.dataset.definition || '', why = link.dataset.why || '';
         if ((!link.dataset.image && !definition && !why) || !link.isConnected) return;
-        clearTimeout(hideTimer); const parts = [];
+        if (!isCurrent()) return;
+        const parts = [];
         const photos = window.createXgptPhotoStrip(window.getCachedXgptConceptMedia?.(link.textContent) || { imageUrl: link.dataset.image }, { alt: link.textContent, zoom: true });
         if (photos) parts.push(photos);
         if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'xgpt-media-tip-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
@@ -4492,10 +4494,9 @@ html body .cep-sign-out-light {
         const rect = link.getBoundingClientRect(), tipRect = tip.getBoundingClientRect();
         tip.style.left = `${Math.max(12, Math.min(innerWidth - tipRect.width - 12, rect.left))}px`;
         tip.style.top = `${Math.max(12, Math.min(innerHeight - tipRect.height - 12, rect.bottom + 8))}px`;
-      });
-      document.addEventListener('mouseout', event => { if (event.target.closest?.('.xgpt-concept-link') && !tip.contains(event.relatedTarget)) hide(); });
-      tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
-      document.addEventListener('click', event => { if (event.target.closest?.('.xgpt-concept-link')) { event.preventDefault(); event.stopPropagation(); } }, true);
+      };
+      window.CEPConceptPreview.install({ selector: '.xgpt-concept-link:not(.cep-xgpt-concept)', tip, show: showConceptPreview,
+        close: () => { tip.style.display = 'none'; tip.replaceChildren(); } });
     }
     installXgptMediaInteractions();
     function makeSnippet(page, terms) {
@@ -6093,7 +6094,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=40';
+  import { createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=41';
   import {
     getFirestore,
     collection,

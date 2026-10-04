@@ -1,3 +1,8 @@
+import "./concept-preview.js?v=20261004-1";
+const conceptStyle = document.createElement('link');
+conceptStyle.rel = 'stylesheet';
+conceptStyle.href = new URL('./concept-links.css?v=20261004-1', import.meta.url).href;
+document.head.appendChild(conceptStyle);
 import "./concept-photo-gallery.js?v=20261003-1";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, getDocs, getDocsFromServer, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -1069,8 +1074,7 @@ function installXgptMediaUi() {
   if (document.querySelector('.cep-xgpt-media-tip')) return;
   const tip = document.createElement('div'); tip.className = 'cep-xgpt-media-tip'; tip.hidden = true;
   document.body.appendChild(tip);
-  let hideTimer; const hide = () => { hideTimer = setTimeout(() => { tip.hidden = true; tip.replaceChildren(); }, 180); };
-  document.addEventListener('mouseover', async event => {
+  const showConceptPreview = async (event, isCurrent) => {
     const link = event.target.closest?.('.cep-xgpt-concept'); if (!link) return;
     if (!link.dataset.image) {
       const media = await loadXgptConceptMedia(link.textContent);
@@ -1078,7 +1082,8 @@ function installXgptMediaUi() {
     }
     const definition = link.dataset.definition || '', why = link.dataset.why || '';
     if ((!link.dataset.image && !definition && !why) || !link.isConnected) return;
-    clearTimeout(hideTimer); const parts = [];
+    if (!isCurrent()) return;
+    const parts = [];
     const photos = createXgptPhotoStrip(getCachedXgptConceptMedia(link.textContent) || { imageUrl: link.dataset.image }, { alt: link.textContent, zoom: true });
     if (photos) parts.push(photos);
     if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
@@ -1094,10 +1099,9 @@ function installXgptMediaUi() {
     const rect = link.getBoundingClientRect(), tipRect = tip.getBoundingClientRect();
     tip.style.left = `${Math.max(12, Math.min(innerWidth - tipRect.width - 12, rect.left))}px`;
     tip.style.top = `${Math.max(12, Math.min(innerHeight - tipRect.height - 12, rect.bottom + 8))}px`;
-  });
-  document.addEventListener('mouseout', event => { if (event.target.closest?.('.cep-xgpt-concept') && !tip.contains(event.relatedTarget)) hide(); });
-  tip.addEventListener('mouseenter', () => clearTimeout(hideTimer)); tip.addEventListener('mouseleave', hide);
-  document.addEventListener('click', event => { if (event.target.closest?.('.cep-xgpt-concept')) { event.preventDefault(); event.stopPropagation(); } }, true);
+  };
+  window.CEPConceptPreview.install({ selector: '.cep-xgpt-concept', tip, show: showConceptPreview,
+    close: () => { tip.hidden = true; tip.replaceChildren(); } });
 }
 
 function editDistance(a, b) {
