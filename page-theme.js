@@ -2003,6 +2003,10 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="soft-stone"] {
+      --cep-highlight-paper:#e8e9ec;
+      --cep-highlight-shadow:0 1px 2px rgba(80,84,96,.04),inset 0 1px 0 rgba(255,255,255,.4);
+      --cep-highlight-dark-paper:#4c5059;
+      --cep-highlight-dark-shadow:0 1px 2px rgba(32,36,45,.08),inset 0 1px 0 rgba(255,255,255,.08);
       --theme-ink:#303238; --theme-muted-ink:#72757c;
       --refresh-cocoa:#303238; --refresh-rose:#e1e2e6; --refresh-lime:#e1e2e6;
       --refresh-stone:#e1e2e6; --refresh-blue:#e1e2e6; --refresh-terracotta:#dfb53e;
