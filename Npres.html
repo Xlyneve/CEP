@@ -1319,6 +1319,14 @@
           .join("");
       }
 
+      function hasVisibleMedicationContent(html) {
+        const content = document.createElement("div");
+        content.innerHTML = String(html || "");
+        content.querySelectorAll("script, style, template").forEach(node => node.remove());
+        const text = (content.textContent || "").replace(/[\s\u200B-\u200D\uFEFF]/g, "");
+        return Boolean(text || content.querySelector("img, svg, video, audio, iframe, canvas, hr"));
+      }
+
       function renderCards(rowsData) {
         refreshMedicationTagOptions();
 
@@ -1358,15 +1366,22 @@
               <button
                 class="mini-table-btn icon-btn delete-table-btn"
                 type="button"
-                title="Remove last row / table"
-                aria-label="Remove last row, or remove table when only one row remains"
+                title="Remove last row"
+                aria-label="Remove last row"
                 onclick="deleteTreatmentTable(${index}, '${fieldName}')"
               >－</button>
+              <button
+                class="mini-table-btn icon-btn delete-table-btn"
+                type="button"
+                title="Remove entire table"
+                aria-label="Remove entire table"
+                onclick="removeEntireTreatmentTable(${index}, '${fieldName}')"
+              >✕</button>
             `
               : "";
 
           const treatmentSection = (className, fieldName, content) => {
-            if (!cardEditable && !String(content || "").trim()) return "";
+            if (!cardEditable && !hasVisibleMedicationContent(content)) return "";
             return `
                 <div class="med-section treatment-section ${className}">
                   <div class="med-section-header">
@@ -1391,7 +1406,7 @@
           ${treatmentSection("allergy-second-section", "allergySecondLine", allergySecondLine)}
 
           ${
-            cardEditable || String(extraNotes || "").trim()
+            cardEditable || hasVisibleMedicationContent(extraNotes)
               ? `<div class="med-section notes-section">
             <div class="med-section-content" contenteditable="${cardEditable}" data-field="notes">${extraNotes}</div>
           </div>`
@@ -1998,6 +2013,17 @@ ${
         renderCards(medicationRows);
       }
 
+      function removeEntireTreatmentTable(index, fieldName) {
+        if (!medicationRows[index]) return;
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = medicationRows[index][fieldName] || "";
+        const table = wrapper.querySelector("table");
+        if (!table) return;
+        table.remove();
+        medicationRows[index][fieldName] = wrapper.innerHTML;
+        renderCards(medicationRows);
+      }
+
       function insertLineBreakAtCursor() {
         const sel = window.getSelection();
         if (!sel || sel.rangeCount === 0) return;
@@ -2405,6 +2431,7 @@ ${
       window.editSingleCard = editSingleCard;
       window.saveSingleCard = saveSingleCard;
       window.cancelSingleCardEdit = cancelSingleCardEdit;
+      window.removeEntireTreatmentTable = removeEntireTreatmentTable;
       window.deleteTreatmentTable = deleteTreatmentTable;
       window.toggleCardBold = toggleCardBold;
       window.deleteCard = deleteCard;
