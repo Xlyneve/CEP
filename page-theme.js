@@ -2266,7 +2266,7 @@
   // Search cards share the clean raised material, including dynamically added results.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) {
-      background:#e9ebf6 !important;
+      background:#fff !important;
       background-image:none !important;
       color:#28263c !important;
       border:1px solid transparent !important;
@@ -2309,16 +2309,15 @@
       border-color:rgba(255,255,255,.7) !important;
       box-shadow:var(--aurora-raised) !important;
     }
-    html[data-xlyneve-color-theme="aurora"] body :is(.glass-pill-link,.cep-global-search-result,.cep-concept-search-result,.universal-search-native-card) {
+    html[data-xlyneve-color-theme="aurora"] body .glass-pill-link {
       --aurora-accent-surface:#e6dcf4;
       background:var(--aurora-accent-surface) !important;
       color:#28263c !important;
       border-color:transparent !important;
     }
-    html[data-xlyneve-color-theme="aurora"] body :is(.glass-pill-link,.cep-global-search-result,.cep-concept-search-result,.universal-search-result):nth-child(4n + 2) { --aurora-accent-surface:#dfe8f9; }
-    html[data-xlyneve-color-theme="aurora"] body :is(.glass-pill-link,.cep-global-search-result,.cep-concept-search-result,.universal-search-result):nth-child(4n + 3) { --aurora-accent-surface:#e5eed1; }
-    html[data-xlyneve-color-theme="aurora"] body :is(.glass-pill-link,.cep-global-search-result,.cep-concept-search-result,.universal-search-result):nth-child(4n + 4) { --aurora-accent-surface:#f0dfe8; }
-    html[data-xlyneve-color-theme="aurora"] body .universal-search-result > .universal-search-native-card { --aurora-accent-surface:inherit;background:var(--aurora-accent-surface,#e6dcf4) !important; }
+    html[data-xlyneve-color-theme="aurora"] body .glass-pill-link:nth-child(4n + 2) { --aurora-accent-surface:#dfe8f9; }
+    html[data-xlyneve-color-theme="aurora"] body .glass-pill-link:nth-child(4n + 3) { --aurora-accent-surface:#e5eed1; }
+    html[data-xlyneve-color-theme="aurora"] body .glass-pill-link:nth-child(4n + 4) { --aurora-accent-surface:#f0dfe8; }
     html[data-xlyneve-color-theme="aurora"] body :is(.glass-pill-link:hover,.glass-pill-link:focus-visible) {
       background:var(--aurora-accent-surface) !important;
       box-shadow:var(--aurora-raised) !important;
