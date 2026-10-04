@@ -104,6 +104,13 @@
     { rgb:"233, 235, 246", solid:"#e9ebf6", ink:"#28263c" },
   ];
   const themeStorageKey = "xlyneve-color-theme";
+  const deletedThemeStorageKey = "xlyneve-deleted-themes";
+  let deletedThemes = new Set();
+  try {
+    const saved = JSON.parse(localStorage.getItem(deletedThemeStorageKey) || "[]");
+    if (Array.isArray(saved)) deletedThemes = new Set(saved.filter(value => typeof value === "string" && value !== "original"));
+  } catch {}
+
   const excludedThemePages = new Set(["biosched1.html", "notes.html", "recalltracker.html"]);
 
   const pageName = (location.pathname.split("/").pop() || "index.html").toLowerCase();
@@ -115,6 +122,10 @@
       if (storedTheme === "liquid-glass") localStorage.removeItem(themeStorageKey);
       if (storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
+  }
+  if (deletedThemes.has(selectedTheme)) {
+    selectedTheme = "original";
+    try { localStorage.removeItem(themeStorageKey); } catch {}
   }
   const palette = selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
     ? berryPalette
@@ -2517,6 +2528,32 @@
     });
   }
 
+  themeStyle.textContent += `
+    html body #xlyneveThemePanel {
+      width:min(280px,calc(100vw - 48px));
+      max-height:calc(100dvh - 100px);
+      overflow-y:auto;
+      box-sizing:border-box;
+    }
+    #xlyneveThemePanel .xlyneve-theme-row { display:flex;align-items:center;gap:4px; }
+    #xlyneveThemePanel .xlyneve-theme-option { flex:1;min-width:0;gap:7px;margin-top:0; }
+    #xlyneveThemePanel .xlyneve-theme-swatches { flex-shrink:0;gap:2px; }
+    #xlyneveThemePanel .xlyneve-theme-swatch { width:8px;height:8px; }
+    #xlyneveThemePanel :is(.xlyneve-theme-delete,.xlyneve-theme-restore) {
+      background:transparent !important;background-image:none !important;
+      color:#594c52 !important;-webkit-text-fill-color:#594c52 !important;
+      border:0 !important;box-shadow:none !important;
+      min-height:44px;padding:8px;cursor:pointer;
+      font:11px/1.3 Arial,sans-serif;
+    }
+    #xlyneveThemePanel .xlyneve-theme-delete { flex:0 0 48px; }
+    #xlyneveThemePanel .xlyneve-theme-restore { width:100%;text-align:left;text-decoration:underline; }
+    #xlyneveThemePanel .xlyneve-theme-restore[hidden] { display:none; }
+    #xlyneveThemePanel :is(.xlyneve-theme-delete,.xlyneve-theme-restore):focus-visible { outline:2px solid #8154c4;outline-offset:-2px; }
+    #xlyneveThemePanel .xlyneve-theme-status { margin:4px 8px 0;color:#594c52;font:11px/1.4 Arial,sans-serif; }
+    #xlyneveThemePanel .xlyneve-theme-status:empty { display:none; }
+  `;
+
   function createThemePicker() {
     if (pageName !== "home.html" || !themeIsAllowed || document.getElementById("xlyneveThemeControl")) return;
 
@@ -2597,7 +2634,21 @@
     themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#f4dada","#f9e5d6","#fdf9f3","#e0c797"] });
     themeOptions.push({ value:"pastel-jumper", label:"Pastel Jumper", colors:["#b9a6d2", "#e7a1a1", "#f1edcf", "#d8cbe7", "#faf6e5"] });
     themeOptions.push({ value:"warm-medley", label:"Warm Medley", colors:["#16131f", "#f0d9e4", "#c1a0ac", "#4a3f4b", "#806c79"] });
-    themeOptions.forEach((option) => {
+    const list = document.createElement("div");
+    const status = document.createElement("p");
+    status.className = "xlyneve-theme-status";
+    status.setAttribute("role", "status");
+    const restore = document.createElement("button");
+    restore.type = "button";
+    restore.className = "xlyneve-theme-restore";
+    restore.textContent = "Restore deleted themes";
+    const drawOptions = () => {
+      list.replaceChildren();
+      restore.hidden = deletedThemes.size === 0;
+      themeOptions.filter(option => !deletedThemes.has(option.value)).forEach((option) => {
+      const row = document.createElement("div");
+      row.className = "xlyneve-theme-row";
+
       const button = document.createElement("button");
       button.className = "xlyneve-theme-option";
       button.type = "button";
@@ -2624,8 +2675,44 @@
         } catch {}
         location.reload();
       });
-      panel.appendChild(button);
+      row.appendChild(button);
+      if (option.value !== "original") {
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "xlyneve-theme-delete";
+        remove.textContent = "Delete";
+        remove.setAttribute("aria-label", `Delete ${option.label} theme`);
+        remove.title = `Delete ${option.label} from this browser`;
+        remove.addEventListener("click", () => {
+          const next = new Set(deletedThemes);
+          next.add(option.value);
+          try { localStorage.setItem(deletedThemeStorageKey, JSON.stringify([...next])); }
+          catch { status.textContent = "Could not save the change. Try again."; return; }
+          deletedThemes = next;
+          if (selectedTheme === option.value) {
+            try { localStorage.removeItem(themeStorageKey); } catch {}
+            location.reload();
+            return;
+          }
+          drawOptions();
+          status.textContent = `${option.label} deleted from this browser.`;
+          list.querySelector("button")?.focus();
+        });
+        row.appendChild(remove);
+      }
+      list.appendChild(row);
     });
+    };
+    restore.addEventListener("click", () => {
+      try { localStorage.removeItem(deletedThemeStorageKey); }
+      catch { status.textContent = "Could not restore themes. Try again."; return; }
+      deletedThemes = new Set();
+      drawOptions();
+      status.textContent = "Deleted themes restored.";
+      list.querySelector("button")?.focus();
+    });
+    panel.append(list, restore, status);
+    drawOptions();
 
     const closePicker = () => {
       panel.hidden = true;
@@ -2685,7 +2772,7 @@
   }
 
   window.addEventListener("storage", (event) => {
-    if (event.key === themeStorageKey) location.reload();
+    if (event.key === themeStorageKey || event.key === deletedThemeStorageKey) location.reload();
   });
 
   if (document.readyState === "loading") {
