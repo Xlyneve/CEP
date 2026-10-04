@@ -2114,6 +2114,30 @@
     html[data-xlyneve-color-theme="soft-stone"] body .xlyneve-theme-button { background:#e1e2e6;box-shadow:var(--stone-raised); }
   `;
 
+  // Search cards share the clean raised material, including dynamically added results.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="soft-stone"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) {
+      background:#e1e2e6 !important;
+      background-image:none !important;
+      color:#303238 !important;
+      border:1px solid transparent !important;
+      border-radius:24px !important;
+      box-shadow:var(--stone-raised) !important;
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
+    }
+    html[data-xlyneve-color-theme="soft-stone"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result):focus-visible {
+      outline:2px solid #dfb53e;
+      outline-offset:3px;
+    }
+    html[data-xlyneve-color-theme="soft-stone"] body :is(.universal-search-native-card,.cep-global-search-result) .cep-source-note-display {
+      background:transparent !important;
+      box-shadow:none !important;
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
+    }
+  `;
+
   // Ceramic finish for the existing jumper colours; palette values stay unchanged.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="pastel-jumper"] {
