@@ -2281,6 +2281,9 @@
     html[data-xlyneve-color-theme="aurora"] body .universal-search-native-card:hover { transform:translateY(-1px); }
     /* Only home cards adopt the established universal-card layout. */
     html[data-xlyneve-color-theme="aurora"].theme-home-glass body .universal-search-native-card {
+      background:#e9ebf6 !important;
+      border:1px solid rgba(255,255,248,.82) !important;
+      padding:16px 14px !important;
       display:flex;
       flex-direction:column;
       gap:6px;
@@ -2288,7 +2291,10 @@
       min-width:0;
       box-sizing:border-box;
     }
-    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .universal-search-native-card.cep-source-card--forms { box-sizing:border-box; }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .universal-search-native-card.cep-source-card--pn::before { content:none; }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .universal-search-native-card :is(.universal-search-native-title,.cep-source-note-title) { font-size:16px;line-height:1.3; }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .universal-search-native-card :is(.universal-search-native-snippet,.cep-source-note-text,.cep-source-note-content) { font-size:14px;line-height:1.5; }
+
     html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result):focus-visible {
       outline:2px solid #9d46c4;
       outline-offset:3px;
