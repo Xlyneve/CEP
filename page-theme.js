@@ -2144,6 +2144,10 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="aurora"] {
+      --cep-highlight-paper:#e4def0;
+      --cep-highlight-shadow:0 1px 3px rgba(73,61,103,.06),inset 0 1px 0 rgba(255,255,255,.5);
+      --cep-highlight-dark-paper:#514c60;
+      --cep-highlight-dark-shadow:0 1px 3px rgba(38,31,56,.1),inset 0 1px 0 rgba(255,255,255,.1);
       --theme-ink:#28263c; --theme-muted-ink:#79778f;
       --refresh-cocoa:#28263c; --refresh-rose:#e9ebf6; --refresh-lime:#e9ebf6;
       --refresh-stone:#e9ebf6; --refresh-blue:#e9ebf6; --refresh-terracotta:#9d46c4;
