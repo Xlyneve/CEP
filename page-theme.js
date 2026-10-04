@@ -2031,7 +2031,7 @@
       --copy-feedback-accent:#dfb53e; --copy-feedback-soft:#e1e2e6;
       --homecal-header:linear-gradient(145deg,#e1e2e6,#e1e2e6); --homecal-header-ink:#303238;
       --homecal-control:#e1e2e6; --homecal-control-ink:#303238; --homecal-header-edge:transparent;
-      --homecal-today:linear-gradient(145deg,#e1e2e6,#dfb53e); --homecal-today-edge:transparent; --homecal-today-shadow:rgba(68,73,59,.24);
+      --homecal-today:linear-gradient(145deg,#fff9e5,#f2e4ac); --homecal-today-edge:transparent; --homecal-today-shadow:rgba(68,73,59,.24);
     }
     html[data-xlyneve-color-theme="soft-stone"],html[data-xlyneve-color-theme="soft-stone"] body {
       color:#303238; background-color:#e1e2e6 !important;
