@@ -41,11 +41,11 @@
         if (!link || pinned || !matchMedia('(hover: hover)').matches || link.contains(event.relatedTarget)) return;
         cancelTimers();
         hoverTimer = setTimeout(() => open(link, event, false), 250);
-      });
+      }, true);
       document.addEventListener('mouseout', event => {
         const link = event.target.closest?.(selector);
         if (link && !link.contains(event.relatedTarget) && !tip.contains(event.relatedTarget)) scheduleClose();
-      });
+      }, true);
       tip.addEventListener('mouseenter', cancelTimers);
       tip.addEventListener('mouseleave', scheduleClose);
       document.addEventListener('click', event => {

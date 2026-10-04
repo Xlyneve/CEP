@@ -1,8 +1,8 @@
 import "./concept-markup.js?v=20261004-1";
-import "./concept-preview.js?v=20261004-1";
+import "./concept-preview.js?v=20261004-2";
 const conceptStyle = document.createElement('link');
 conceptStyle.rel = 'stylesheet';
-conceptStyle.href = new URL('./concept-links.css?v=20261004-1', import.meta.url).href;
+conceptStyle.href = new URL('./concept-links.css?v=20261004-2', import.meta.url).href;
 document.head.appendChild(conceptStyle);
 import "./concept-photo-gallery.js?v=20261003-1";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -578,7 +578,23 @@ function prepareScrollableSearchTable(table) {
   table.before(scroll); scroll.appendChild(table);
 }
 
+function searchConceptName(link) {
+  return (link.dataset.concept || link.querySelector('.conceptLabel,.cep-xgpt-concept-label')?.textContent || link.textContent || '').trim();
+}
+function hydrateSearchConceptLink(link) {
+  const concept = searchConceptName(link);
+  link.dataset.concept = concept;
+  if (!link.hasAttribute('href')) link.href = '#';
+  link.classList.add('cep-xgpt-concept', 'xgpt-concept-link');
+  const media = getCachedXgptConceptMedia(concept);
+  const details = getCachedXgptConceptDefinition(concept);
+  if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption || ''; }
+  if (details?.definition) link.dataset.definition = details.definition;
+  else if (link.dataset.def) link.dataset.definition = link.dataset.def;
+  if (details?.why) link.dataset.why = details.why;
+}
 export function renderXgptSearchRichContent(parent, html, terms = []) {
+  installXgptMediaUi();
   const content = document.createElement('div');
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(content, html);
   else content.textContent = textFromHtml(html);
@@ -603,6 +619,7 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
       }
       return link;
   });
+  content.querySelectorAll('a.conceptLink,a.cep-xgpt-concept,a.xgpt-concept-link').forEach(hydrateSearchConceptLink);
   const richTextNodes = []; const highlightWalker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
   while (highlightWalker.nextNode()) richTextNodes.push(highlightWalker.currentNode);
   richTextNodes.forEach(node => {
@@ -1066,15 +1083,18 @@ function installXgptMediaUi() {
   document.body.appendChild(tip);
   const showConceptPreview = async (event, isCurrent) => {
     const link = event.target.closest?.('.cep-xgpt-concept'); if (!link) return;
+    const concept = searchConceptName(link);
     if (!link.dataset.image) {
-      const media = await loadXgptConceptMedia(link.textContent);
+      const media = await loadXgptConceptMedia(concept);
       if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption; }
     }
-    const definition = link.dataset.definition || '', why = link.dataset.why || '';
+    hydrateSearchConceptLink(link);
+    const details = getCachedXgptConceptDefinition(concept);
+    const definition = details?.definition || link.dataset.definition || '', why = details?.why || link.dataset.why || '';
     if ((!link.dataset.image && !definition && !why) || !link.isConnected) return;
     if (!isCurrent()) return;
     const parts = [];
-    const photos = createXgptPhotoStrip(getCachedXgptConceptMedia(link.textContent) || { imageUrl: link.dataset.image }, { alt: link.textContent, zoom: true });
+    const photos = createXgptPhotoStrip(getCachedXgptConceptMedia(concept) || { imageUrl: link.dataset.image }, { alt: concept, zoom: true });
     if (photos) parts.push(photos);
     if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
     const appendSection = (labelText, bodyText) => {
