@@ -2266,12 +2266,6 @@
   // Search cards share the clean raised material, including dynamically added results.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) {
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      box-sizing:border-box;
-      min-width:0;
-      min-height:0;
       background:#fff !important;
       background-image:none !important;
       color:#28263c !important;
@@ -2281,10 +2275,20 @@
       backdrop-filter:none !important;
       -webkit-backdrop-filter:none !important;
     }
-    html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result):not(.cep-source-card) { padding:13px 14px; }
+    html[data-xlyneve-color-theme="aurora"] body .universal-search-native-card:not(.cep-source-card) { padding:13px 14px; }
     html[data-xlyneve-color-theme="aurora"] body .universal-search-native-title { margin:0; }
     html[data-xlyneve-color-theme="aurora"] body .universal-search-native-snippet { font:11.5px/1.45 Arial,sans-serif; }
     html[data-xlyneve-color-theme="aurora"] body .universal-search-native-card:hover { transform:translateY(-1px); }
+    /* Only home cards adopt the established universal-card layout. */
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .universal-search-native-card {
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-height:auto;
+      min-width:0;
+      box-sizing:border-box;
+    }
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .universal-search-native-card.cep-source-card--forms { box-sizing:border-box; }
     html[data-xlyneve-color-theme="aurora"] body :is(.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result):focus-visible {
       outline:2px solid #9d46c4;
       outline-offset:3px;
