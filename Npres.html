@@ -1360,7 +1360,8 @@
               <button
                 class="mini-table-btn icon-btn"
                 type="button"
-                title="Add table"
+                title="Add row"
+                aria-label="Add row"
                 onclick="insertTreatmentTable(${index}, '${fieldName}')"
               >＋</button>
               <button
@@ -1381,7 +1382,7 @@
               : "";
 
           const treatmentSection = (className, fieldName, content) => {
-            if (!cardEditable && !hasVisibleMedicationContent(content)) return "";
+            if (!hasVisibleMedicationContent(content)) return "";
             return `
                 <div class="med-section treatment-section ${className}">
                   <div class="med-section-header">
@@ -1400,6 +1401,7 @@
 
           <div class="med-mechanism" contenteditable="${cardEditable}" data-field="mechanism">${mechanism}</div>
 
+          ${cardEditable ? `<button type="button" class="mini-table-btn" onclick="addMedicationTable(${index})" style="margin:8px 0;">＋ Add table</button>` : ""}
           ${treatmentSection("first-line-section", "firstLine", firstLine)}
           ${treatmentSection("second-line-section", "secondLine", secondLine)}
           ${treatmentSection("allergy-first-section", "allergyFirstLine", allergyFirstLine)}
@@ -1658,10 +1660,10 @@ ${
           });
         });
 
-        const tableCells = document.querySelectorAll(".mini-treatment-table td");
+        const tableCells = document.querySelectorAll(".mini-treatment-table td, .mini-treatment-table th");
 
         tableCells.forEach((cell) => {
-          cell.setAttribute("contenteditable", "true");
+          cell.setAttribute("contenteditable", String(cell.closest(".med-section-content")?.getAttribute("contenteditable") === "true"));
 
           cell.addEventListener("mousedown", function (e) {
             e.stopPropagation();
@@ -1917,6 +1919,27 @@ ${
         });
 
         card.dataset.search = buildSearchBlob(medicationRows[index]);
+      }
+
+      function addMedicationTable(index) {
+        const row = medicationRows[index];
+        if (!row?.isEditing) return;
+        const fields = ["firstLine", "secondLine", "allergyFirstLine", "allergySecondLine"];
+        const field = fields.find(name => !hasVisibleMedicationContent(row[name]));
+        if (!field) {
+          alert("All four treatment sections are in use. You can add rows to an existing table or remove a table first.");
+          return;
+        }
+        row[field] = "";
+        insertTreatmentTable(index, field);
+        const heading = document.querySelector(`.med-card[data-index="${index}"] [data-field="${field}"] .table-section-title-row th`);
+        if (heading) {
+          heading.focus();
+          const range = document.createRange();
+          range.selectNodeContents(heading);
+          const selection = window.getSelection();
+          selection.removeAllRanges(); selection.addRange(range);
+        }
       }
 
       function insertTreatmentTable(index, fieldName) {
@@ -2427,6 +2450,7 @@ ${
       window.addRow = addRow;
       window.saveTableToFirebase = saveTableToFirebase;
       window.filterTable = filterTable;
+      window.addMedicationTable = addMedicationTable;
       window.insertTreatmentTable = insertTreatmentTable;
       window.editSingleCard = editSingleCard;
       window.saveSingleCard = saveSingleCard;
