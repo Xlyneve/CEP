@@ -1989,6 +1989,67 @@
     }
   `;
 
+  // Ceramic finish for the existing jumper colours; palette values stay unchanged.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="pastel-jumper"] {
+      --pastel-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.055' filter='url(%23grain)'/%3E%3C/svg%3E");
+      --pastel-ceramic-raised:inset 2px 2px 3px rgba(255,255,251,.95),inset -3px -4px 5px rgba(98,104,89,.18),0 3px 2px rgba(78,83,70,.2),7px 10px 18px rgba(68,73,59,.23),-5px -5px 12px rgba(255,255,251,.88);
+      --pastel-ceramic-pressed:inset 3px 4px 7px rgba(72,81,69,.3),inset -3px -3px 6px rgba(255,255,251,.95);
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"],html[data-xlyneve-color-theme="pastel-jumper"] body {
+      background-image:var(--pastel-grain),radial-gradient(circle at 14% 10%,rgba(250,246,229,.98),transparent 34%),radial-gradient(circle at 86% 20%,rgba(231,161,161,.3),transparent 40%),radial-gradient(circle at 18% 86%,rgba(185,166,210,.22),transparent 38%),linear-gradient(180deg,#faf6e5 0%,#f1edcf 58%,#f1edcf 100%) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"] body::before { opacity:0 !important; }
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(.note-card,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty):not(.today),.todo-item:not(.priority)),
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-clinical body #pinnedNotesList > .pinned-note,
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .main-content .card-group.section-card-group > .card,
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      background-image:var(--pastel-grain) !important;
+      box-shadow:var(--pastel-ceramic-raised) !important;
+      backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"] body > header,
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header),
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-homecal body .calendar-header {
+      background-image:var(--pastel-grain) !important;
+      box-shadow:var(--pastel-ceramic-raised) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)),
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle {
+      background-image:var(--pastel-grain) !important;
+      box-shadow:var(--pastel-ceramic-raised) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(button,.glass-btn,.add-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)):active {
+      box-shadow:var(--pastel-ceramic-pressed) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
+      background-image:var(--pastel-grain) !important;box-shadow:var(--pastel-ceramic-pressed) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"] body .todo-item :is(textarea,input[type="text"]),
+    html:root.home-notepad-embedded[data-xlyneve-color-theme="pastel-jumper"][data-home-notepad-ready="1"] body .notepad {
+      background-image:none !important;box-shadow:none !important;
+    }
+    html:root.home-notepad-embedded[data-xlyneve-color-theme="pastel-jumper"][data-home-notepad-ready="1"] body #notes > .note-card:not(.copy-feedback):not(.copied-feedback) {
+      background-image:var(--pastel-grain) !important;box-shadow:var(--pastel-ceramic-raised) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body.dashboard-hierarchy-active .dashboard-section-toggle {
+      box-sizing:border-box !important;min-height:40px;padding:6px 22px !important;border-radius:18px !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .dashboard-section-chevron { font-size:16px;line-height:1;flex:0 0 20px;text-align:center; }
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+      background-image:var(--pastel-grain) !important;box-shadow:var(--pastel-ceramic-raised) !important;border-radius:16px !important;
+    }
+  `;
+
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(.chatBubble,.form-card,.library-card,.template-card,.panel,.med-card),
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      background-color:var(--card-glass,rgba(250,246,229,.92)) !important;
+    }
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-homecal body .calendar-header { background-color:rgba(185,166,210,.94) !important; }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
