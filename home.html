@@ -3637,6 +3637,7 @@ html body .cep-sign-out-light {
 <script src="typing-spellcheck.js?v=20261002-1" defer></script>
 <link rel="stylesheet" href="concept-links.css?v=20261004-1">
 <script src="concept-preview.js?v=20261004-1"></script>
+<script src="concept-markup.js?v=20261004-1"></script>
 </head>
 
 <body>
@@ -4431,23 +4432,10 @@ html body .cep-sign-out-light {
     const normalizeXgptConcept = value => String(value || '').toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
     let chatgptConceptMediaCache = {};
     function linkifyXgptConcepts(root) {
-      const nodes = [];
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-      while (walker.nextNode()) nodes.push(walker.currentNode);
-      nodes.forEach(node => {
-        if (node.parentElement?.closest('a,button')) return;
-        const text = node.nodeValue || '';
-        const pattern = /\[\[([^\]\[]+?)\]\]/g;
-        if (!pattern.test(text)) return;
-        pattern.lastIndex = 0;
-        const fragment = document.createDocumentFragment();
-        let last = 0;
-        text.replace(pattern, (match, inner, offset) => {
-          fragment.append(document.createTextNode(text.slice(last, offset)));
-          const concept = String(inner || '').trim();
+      CEPConceptMarkup.linkify(root, (concept, contentFragment) => {
           const link = document.createElement('a');
           link.href = '#'; link.className = 'xgpt-concept-link';
-          const label = document.createElement('span'); label.className = 'cep-xgpt-concept-label'; label.textContent = concept; link.appendChild(label);
+          const label = document.createElement('span'); label.className = 'cep-xgpt-concept-label'; label.appendChild(contentFragment); link.appendChild(label);
           const media = window.getCachedXgptConceptMedia?.(concept) || chatgptConceptMediaCache[normalizeXgptConcept(concept)];
           if (media?.imageUrl) {
             link.classList.add('has-image');
@@ -4457,12 +4445,7 @@ html body .cep-sign-out-light {
           const details = window.getCachedXgptConceptDefinition?.(concept);
           if (details?.definition) link.dataset.definition = details.definition;
           if (details?.why) link.dataset.why = details.why;
-          fragment.append(link);
-          last = offset + match.length;
-          return match;
-        });
-        fragment.append(document.createTextNode(text.slice(last)));
-        node.replaceWith(fragment);
+          return link;
       });
     }
     function installXgptMediaInteractions() {
@@ -6094,7 +6077,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=41';
+  import { createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=42';
   import {
     getFirestore,
     collection,

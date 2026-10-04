@@ -1709,6 +1709,7 @@ body > #formatToggle { display: none !important; }
 <script src="typing-spellcheck.js?v=20261002-1" defer></script>
 <link rel="stylesheet" href="concept-links.css?v=20261004-1">
 <script src="concept-preview.js?v=20261004-1"></script>
+<script src="concept-markup.js?v=20261004-1"></script>
 </head>
 
 <body>
@@ -3077,7 +3078,13 @@ function deLinkifyConceptAnchors(html) {
       }
     }
 
-    a.replaceWith(document.createTextNode(`[[${concept}]]`));
+    const label = a.querySelector('.conceptLabel');
+    const fragment = document.createDocumentFragment();
+    fragment.append(document.createTextNode('[['));
+    if (label) fragment.append(...Array.from(label.childNodes, node => node.cloneNode(true)));
+    else fragment.append(document.createTextNode(concept));
+    fragment.append(document.createTextNode(']]'));
+    a.replaceWith(fragment);
   });
 
   div.querySelectorAll('mark.underlineMatch').forEach(mark => mark.replaceWith(...mark.childNodes));
@@ -4948,39 +4955,9 @@ document.addEventListener('mousedown', (e) => {
 ========================= */
 function conceptLinkifyHTML(html) {
   if (!html) return html;
-
   const wrap = document.createElement('div');
   wrap.innerHTML = html;
-
-  const re = /\[\[([^\]\[]+?)\]\]/g;
-
-  const walker = document.createTreeWalker(wrap, NodeFilter.SHOW_TEXT, null);
-  const textNodes = [];
-  while (walker.nextNode()) textNodes.push(walker.currentNode);
-
-  textNodes.forEach(node => {
-    const parent = node.parentElement;
-    if (!parent) return;
-
-    if (parent.closest('a, button')) return;
-
-    const txt = node.nodeValue || '';
-    if (!re.test(txt)) return;
-    re.lastIndex = 0;
-
-    const frag = document.createDocumentFragment();
-    let last = 0;
-
-    txt.replace(re, (m, inner, offset) => {
-      frag.appendChild(document.createTextNode(txt.slice(last, offset)));
-
-      const concept = (inner || '').trim();
-      if (!concept) {
-        frag.appendChild(document.createTextNode(m));
-        last = offset + m.length;
-        return m;
-      }
-
+  CEPConceptMarkup.linkify(wrap, (concept, content) => {
       const normalized = normalizeText(concept);
       const count = conceptCountMap.get(normalized) || 0;
 
@@ -4991,7 +4968,7 @@ function conceptLinkifyHTML(html) {
 
       const label = document.createElement('span');
       label.className = 'conceptLabel';
-      label.textContent = concept;
+      label.appendChild(content);
       a.appendChild(label);
 
       const def = (getDefinition(concept) || '').trim();
@@ -5018,16 +4995,8 @@ function conceptLinkifyHTML(html) {
         a.appendChild(badge);
       }
 
-      frag.appendChild(a);
-
-      last = offset + m.length;
-      return m;
-    });
-
-    frag.appendChild(document.createTextNode(txt.slice(last)));
-    node.parentNode.replaceChild(frag, node);
+      return a;
   });
-
   return wrap.innerHTML;
 }
 

@@ -1,3 +1,4 @@
+import "./concept-markup.js?v=20261004-1";
 import "./concept-preview.js?v=20261004-1";
 const conceptStyle = document.createElement('link');
 conceptStyle.rel = 'stylesheet';
@@ -585,19 +586,10 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
     const savedColor = element.style.color;
     if (savedColor) element.style.setProperty('-webkit-text-fill-color', savedColor, 'important');
   });
-  const nodes = [];
-  const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
-  while (walker.nextNode()) nodes.push(walker.currentNode);
-  nodes.forEach(node => {
-    if (node.parentElement?.closest('a,button')) return;
-    const text = node.nodeValue || '', pattern = /\[\[([^\]\[]+?)\]\]/g;
-    if (!pattern.test(text)) return;
-    pattern.lastIndex = 0; const fragment = document.createDocumentFragment(); let last = 0;
-    text.replace(pattern, (match, inner, offset) => {
-      fragment.append(document.createTextNode(text.slice(last, offset)));
-      const concept = String(inner || '').trim(); const link = document.createElement('a');
+  CEPConceptMarkup.linkify(content, (concept, contentFragment) => {
+      const link = document.createElement('a');
       link.href = '#'; link.className = 'cep-xgpt-concept xgpt-concept-link';
-      const label = document.createElement('span'); label.className = 'cep-xgpt-concept-label'; label.textContent = concept;
+      const label = document.createElement('span'); label.className = 'cep-xgpt-concept-label'; label.appendChild(contentFragment);
       link.appendChild(label);
       const media = xgptConceptMedia[normalizeConcept(concept)];
       if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption || ''; }
@@ -609,9 +601,7 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
         const badge = document.createElement('span'); badge.className = 'cep-xgpt-concept-count';
         badge.dataset.count = String(count); badge.setAttribute('aria-hidden', 'true'); link.appendChild(badge);
       }
-      fragment.append(link); last = offset + match.length; return match;
-    });
-    fragment.append(document.createTextNode(text.slice(last))); node.replaceWith(fragment);
+      return link;
   });
   const richTextNodes = []; const highlightWalker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
   while (highlightWalker.nextNode()) richTextNodes.push(highlightWalker.currentNode);
