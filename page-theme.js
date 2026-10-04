@@ -1875,6 +1875,15 @@
     }
   `;
 
+  // Keep text on the shared pale table surfaces readable in every theme.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme] body table,
+    html[data-xlyneve-color-theme] body table * {
+      color:#000 !important;
+      -webkit-text-fill-color:#000 !important;
+    }
+  `;
+
   const headerSelector = [
     ".header",
     ".header-bg",
