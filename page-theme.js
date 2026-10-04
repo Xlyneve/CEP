@@ -80,7 +80,7 @@
     { rgb: "240, 217, 228", solid: "#f0d9e4", ink: "#16131f" },
     { rgb: "193, 160, 172", solid: "#c1a0ac", ink: "#16131f" },
     { rgb: "74, 63, 75", solid: "#4a3f4b", ink: "#ffffff" },
-    { rgb: "128, 108, 121", solid: "#806c79", ink: "#16131f" },
+    { rgb: "128, 108, 121", solid: "#806c79", ink: "#ffffff" },
   ];
 
   const pastelJumperPalette = [
@@ -1848,6 +1848,17 @@
   themeStyle.textContent += `
     html:is([data-xlyneve-color-theme="sculpted"],[data-xlyneve-color-theme="pastel-jumper"]).theme-homecal body .todo-item:not(.priority) {
       background:linear-gradient(145deg,rgba(255,255,255,.3),transparent 42%,rgba(128,108,121,.16)),var(--card-glass,#d1bbd3) !important;
+    }
+  `;
+  // Default card labels follow their actual themed parent; explicit note colours stay authored.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme] body :is(.note-card,.card,.acc-item,.med-section,.vaccine-section,.vaccine-card)[data-shared-palette-color="true"] :is(.note-text,.note-title,.card-title,h2,h3,h4,p,li):not([style*="color"]) {
+      color:inherit !important;
+      -webkit-text-fill-color:currentColor !important;
+    }
+    html[data-xlyneve-color-theme].theme-homecal body .todo-item:not(.done):not(.priority) :is(textarea,input[type="text"]) {
+      color:var(--card-ink,#22211f) !important;
+      -webkit-text-fill-color:currentColor !important;
     }
   `;
   // Final overrides include the selectors used by page-specific card themes.

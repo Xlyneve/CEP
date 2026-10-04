@@ -184,6 +184,18 @@
         .dot-purple { cursor:pointer; }
         .dot-purple:focus-visible { outline:2px solid #8c7bb5; outline-offset:4px; }
         .homepage-notepad-drag-bar { position:absolute; top:0; left:0; right:0; height:36px; z-index:3; border-radius:14px 14px 0 0; cursor:default; user-select:none; }
+        html:root.home-notepad-embedded .homepage-notepad-drag-bar {
+          background:var(--page-header-solid,#e8e8e8);
+          color:var(--page-header-ink,#39353a);
+          -webkit-text-fill-color:currentColor;
+        }
+        html:root.home-notepad-embedded .homepage-notepad-drag-bar .open-options-icon {
+          color:var(--page-header-ink,#39353a) !important;
+          -webkit-text-fill-color:currentColor !important;
+        }
+        html:root.home-notepad-embedded .homepage-notepad-drag-bar .dot {
+          box-shadow:0 0 0 1px var(--page-header-ink,#39353a);
+        }
         .homepage-notepad-drag-handle { position:absolute; inset:0 44px 0 84px; cursor:grab; touch-action:none; }
         .homepage-notepad-drag-handle:active { cursor:grabbing; }
         .homepage-notepad-drag-handle:focus-visible { outline:2px solid #8c7bb5; outline-offset:-2px; }
