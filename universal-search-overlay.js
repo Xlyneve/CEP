@@ -239,7 +239,8 @@ export async function loadXgptEntries({ forceRefresh = false } = {}) {
           };
         });
       }, forceRefresh),
-      loadPersistentSearchValue(`${cacheScope}:media`, async () => {
+      // Version the media cache: older records kept only imageUrl and lost the gallery.
+      loadPersistentSearchValue(`${cacheScope}:media:v2`, async () => {
         const mediaSnapshot = await (forceRefresh ? getDocsFromServer : getDocs)(collection(db, 'concept_media'));
         return Object.fromEntries(mediaSnapshot.docs.map(item => {
           const media = item.data() || {};
