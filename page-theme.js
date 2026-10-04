@@ -92,13 +92,12 @@
   ];
 
   const mintCeramicPalette = [
-    { rgb:"184, 221, 200", solid:"#b8ddc8", ink:"#303530" },
-    { rgb:"238, 237, 230", solid:"#eeede6", ink:"#303530" },
-    { rgb:"210, 218, 204", solid:"#d2dacc", ink:"#303530" },
-    { rgb:"229, 235, 224", solid:"#e5ebe0", ink:"#303530" },
-    { rgb:"176, 203, 185", solid:"#b0cbb9", ink:"#303530" },
+    { rgb:"74, 87, 89", solid:"#4a5759", ink:"#ffffff" },
+    { rgb:"176, 196, 177", solid:"#b0c4b1", ink:"#303530" },
+    { rgb:"222, 219, 210", solid:"#dedbd2", ink:"#303530" },
+    { rgb:"247, 225, 215", solid:"#f7e1d7", ink:"#303530" },
+    { rgb:"237, 175, 184", solid:"#edafb8", ink:"#303530" },
   ];
-
   const themeStorageKey = "xlyneve-color-theme";
   const excludedThemePages = new Set(["biosched1.html", "notes.html", "recalltracker.html"]);
 
@@ -161,10 +160,10 @@
     "quiet-stone": "#393831",
     anatomy: "#22211f",
     sculpted: "#a288b7",
-    "mint-ceramic": "#c3dac8"
+    "mint-ceramic": "#4a5759"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
-  root.style.setProperty("--masthead-bar-ink", selectedTheme === "mint-ceramic" ? "#303530" : "#ffffff");
+  root.style.setProperty("--masthead-bar-ink", "#ffffff");
 
   const themeStyle = document.createElement("style");
   themeStyle.id = "xlyneve-color-theme-styles";
@@ -1897,23 +1896,23 @@
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="mint-ceramic"] {
       --theme-ink:#303530; --theme-muted-ink:#61675f;
-      --refresh-cocoa:#303530; --refresh-rose:#b9d8c8; --refresh-lime:#d9e3d9;
-      --refresh-stone:#eeede6; --refresh-blue:#adc9ba; --refresh-terracotta:#c9ccc3;
+      --refresh-cocoa:#303530; --refresh-rose:#b0c4b1; --refresh-lime:#dedbd2;
+      --refresh-stone:#dedbd2; --refresh-blue:#b0c4b1; --refresh-terracotta:#edafb8;
       --refresh-edge:#fafaf4; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
       --mint-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.055' filter='url(%23grain)'/%3E%3C/svg%3E");
       --mint-raised:inset 2px 2px 3px rgba(255,255,251,.95),inset -3px -4px 5px rgba(98,104,89,.18),0 3px 2px rgba(78,83,70,.2),7px 10px 18px rgba(68,73,59,.23),-5px -5px 12px rgba(255,255,251,.88);
       --mint-pressed:inset 3px 4px 7px rgba(72,81,69,.3),inset -3px -3px 6px rgba(255,255,251,.95);
-      --quick-panel:linear-gradient(145deg,#f4f4ed,#dfE3d9); --quick-ink:#303530;
-      --quick-accent:#b8ddc8; --quick-accent-ink:#303530; --quick-soft:#dbe7dd; --quick-field:#f1f2eb; --quick-edge:#fafaf4;
-      --clinical-panel:#eeede6; --clinical-field:#f2f2eb; --clinical-accent:#9cc3ad; --clinical-accent-ink:#303530; --clinical-edge:#fafaf4;
-      --copy-feedback-accent:#9cc3ad; --copy-feedback-soft:#dbe9de;
-      --homecal-header:linear-gradient(145deg,#e9f0e5,#c2dccc); --homecal-header-ink:#303530;
-      --homecal-control:#f0f2e9; --homecal-control-ink:#303530; --homecal-header-edge:#fafaf4;
-      --homecal-today:linear-gradient(145deg,#d7e9db,#afd1bb); --homecal-today-edge:#fafaf4; --homecal-today-shadow:rgba(68,73,59,.24);
+      --quick-panel:linear-gradient(145deg,#f7e1d7,#dedbd2); --quick-ink:#303530;
+      --quick-accent:#b0c4b1; --quick-accent-ink:#303530; --quick-soft:#f7e1d7; --quick-field:#f7e1d7; --quick-edge:#fafaf4;
+      --clinical-panel:#dedbd2; --clinical-field:#f7e1d7; --clinical-accent:#4a5759; --clinical-accent-ink:#ffffff; --clinical-edge:#fafaf4;
+      --copy-feedback-accent:#4a5759; --copy-feedback-soft:#f7e1d7;
+      --homecal-header:linear-gradient(145deg,#b0c4b1,#dedbd2); --homecal-header-ink:#303530;
+      --homecal-control:#f7e1d7; --homecal-control-ink:#303530; --homecal-header-edge:#fafaf4;
+      --homecal-today:linear-gradient(145deg,#f7e1d7,#edafb8); --homecal-today-edge:#fafaf4; --homecal-today-shadow:rgba(68,73,59,.24);
     }
     html[data-xlyneve-color-theme="mint-ceramic"],html[data-xlyneve-color-theme="mint-ceramic"] body {
-      color:#303530; background-color:#e7e8df !important;
-      background-image:var(--mint-grain),linear-gradient(135deg,#efefe8,#e2e4da) !important;
+      color:#303530; background-color:#dedbd2 !important;
+      background-image:var(--mint-grain),linear-gradient(135deg,#f7e1d7,#dedbd2) !important;
       background-attachment:fixed !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body::before { background:none !important;opacity:0 !important; }
@@ -1922,33 +1921,33 @@
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .main-content .card-group.section-card-group > .card,
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       color:var(--card-ink,#303530) !important;
-      background-color:#eeeee7 !important;
-      background-image:var(--mint-grain),linear-gradient(145deg,#f5f5ee,var(--card-glass,#e1e5da)) !important;
+      background-color:var(--card-solid,#dedbd2) !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--card-solid,#dedbd2) 92%,white),var(--card-solid,#dedbd2)) !important;
       border:1px solid rgba(255,255,248,.82) !important;
       border-radius:22px !important; box-shadow:var(--mint-raised) !important;
       backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body > header,
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header) {
-      color:#303530 !important; background-color:#eeeee7 !important;
-      background-image:var(--mint-grain),linear-gradient(145deg,#f5f5ee,#dfe3d8) !important;
+      color:var(--page-header-ink,#303530) !important; background-color:var(--page-header-solid,#dedbd2) !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--page-header-solid,#dedbd2) 92%,white),var(--page-header-solid,#dedbd2)) !important;
       border-color:#fafaf4 !important; box-shadow:var(--mint-raised) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) {
       color:#303530 !important; -webkit-text-fill-color:#303530 !important;
-      background-color:#d7e8dc !important;
-      background-image:var(--mint-grain),linear-gradient(145deg,#d7efdf,#a9cfb9) !important;
+      background-color:#b0c4b1 !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,#b0c4b1,#b0c4b1) !important;
       border-color:#e8f6eb !important; box-shadow:var(--mint-raised) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.add-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)):active {
       box-shadow:var(--mint-pressed) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
-      color:#303530; background:#e9ece3 !important;
-      border-color:#d0d8cb !important; box-shadow:var(--mint-pressed) !important;
+      color:#303530; background:#f7e1d7 !important;
+      border-color:#dedbd2 !important; box-shadow:var(--mint-pressed) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(input,select,textarea,.editableNote,#noteText.editable):focus-visible {
-      outline:2px solid #a7d8ba; outline-offset:3px;
+      outline:2px solid #edafb8; outline-offset:3px;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body .todo-item :is(textarea,input[type="text"]),
     html[data-xlyneve-color-theme="mint-ceramic"] body #notes .notepad {
@@ -1964,17 +1963,18 @@
       color:#303530 !important;-webkit-text-fill-color:#303530 !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle {
-      color:#303530 !important;-webkit-text-fill-color:#303530 !important;
-      background-color:#bfdcca !important;
-      background-image:var(--mint-grain),linear-gradient(145deg,#d7efdf,#a9cfb9) !important;
+      color:var(--mint-button-ink,#303530) !important;-webkit-text-fill-color:var(--mint-button-ink,#303530) !important;
+      background-color:var(--mint-button-surface,#b0c4b1) !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--mint-button-surface,#b0c4b1) 92%,white),var(--mint-button-surface,#b0c4b1)) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-section-toggle { border-radius:18px !important; }
-    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(even) {
-
-      background-image:var(--mint-grain),linear-gradient(145deg,#f3f3eb,#d7dccf) !important;
-    }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(5n + 1) { --mint-button-surface:#4a5759;--mint-button-ink:#ffffff; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(5n + 2) { --mint-button-surface:#b0c4b1;--mint-button-ink:#303530; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(5n + 3) { --mint-button-surface:#dedbd2;--mint-button-ink:#303530; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(5n + 4) { --mint-button-surface:#f7e1d7;--mint-button-ink:#303530; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(5n + 5) { --mint-button-surface:#edafb8;--mint-button-ink:#303530; }
     html[data-xlyneve-color-theme="mint-ceramic"] .xlyneve-theme-button {
-      background:linear-gradient(135deg,#b8ddc8 0 50%,#eeede6 50% 100%);color:#303530;
+      background:linear-gradient(135deg,#b0c4b1 0 50%,#dedbd2 50% 100%);color:#303530;
     }
     @media (prefers-reduced-motion:no-preference) {
       html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)) { transition:box-shadow .15s ease; }
@@ -1983,9 +1983,15 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
-      background:var(--mint-grain),linear-gradient(145deg,#d7efdf,#a9cfb9) !important;
+      background:var(--mint-grain),linear-gradient(145deg,#b0c4b1,#b0c4b1) !important;
       color:#303530 !important;box-shadow:var(--mint-raised) !important;
       border:1px solid #e8f6eb !important;border-radius:16px !important;
+    }
+  `;
+
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="mint-ceramic"] body #notes .note-card :is(.notepad,.timestamp) {
+      color:var(--card-ink,#303530) !important;-webkit-text-fill-color:var(--card-ink,#303530) !important;
     }
   `;
 
@@ -2124,6 +2130,7 @@
       const color = palette[hash(seed) % palette.length];
       card.style.setProperty("--card-glass", `rgba(${color.rgb}, 0.74)`);
       card.style.setProperty("--card-ink", color.ink);
+      card.style.setProperty("--card-solid", color.solid);
       card.dataset.sharedPaletteColor = "true";
     });
   }
@@ -2203,7 +2210,7 @@
       },
     ];
 
-    themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#b8ddc8","#eeede6","#d2dacc","#e5ebe0","#b0cbb9"] });
+    themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#4a5759","#b0c4b1","#dedbd2","#f7e1d7","#edafb8"] });
     themeOptions.push({ value:"pastel-jumper", label:"Pastel Jumper", colors:["#b9a6d2", "#e7a1a1", "#f1edcf", "#d8cbe7", "#faf6e5"] });
     themeOptions.push({ value:"warm-medley", label:"Warm Medley", colors:["#16131f", "#f0d9e4", "#c1a0ac", "#4a3f4b", "#806c79"] });
     themeOptions.forEach((option) => {
