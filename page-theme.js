@@ -1875,6 +1875,16 @@
     }
   `;
 
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="sculpted"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback) {
+      box-shadow:
+        inset 3px 3px 6px rgba(255,255,255,.88),
+        inset -4px -5px 9px rgba(91,71,105,.15),
+        7px 10px 20px rgba(57,53,58,.18),
+        -3px -3px 9px rgba(255,255,255,.55) !important;
+    }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
