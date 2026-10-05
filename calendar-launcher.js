@@ -27,9 +27,9 @@
     .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; cursor:grab; touch-action:none; user-select:none; }
     .homepage-calendar-bar:active { cursor:grabbing; }
     @media (hover:hover) and (pointer:fine) {
-      .homepage-calendar-bar { opacity:0; transition:opacity 140ms ease; }
+      .homepage-calendar-bar { position:absolute; top:0; left:0; right:0; height:34px; box-sizing:border-box; z-index:3; opacity:0; pointer-events:none; transform:translateY(-100%); transition:opacity 140ms ease,transform 140ms ease; }
       .homepage-calendar:hover .homepage-calendar-bar,
-      .homepage-calendar-bar:focus-within { opacity:1; }
+      .homepage-calendar-bar:focus-within { opacity:1; pointer-events:auto; transform:translateY(0); }
     }
     @media (prefers-reduced-motion:reduce) {
       .homepage-calendar-bar { transition:none; }
