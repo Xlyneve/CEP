@@ -3539,13 +3539,12 @@ html body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculato
 @media (min-width: 769px) {
   body :is(.qc, .qi, .qt, .qs) {
     transform-origin: left center;
-    transition-duration: 220ms;
-    transition-timing-function: cubic-bezier(.22, 1, .36, 1);
+    transition: none;
   }
 
   body :is(.qc, .qi, .qt, .qs):not(.collapsed) {
     left: 8px !important;
-    animation: quickies-panel-pop 240ms cubic-bezier(.22, 1, .36, 1);
+    animation: quickies-panel-pop 160ms cubic-bezier(.22, 1, .36, 1);
   }
 
   body :is(.qc, .qi, .qt, .qs):not(.collapsed) :is(.qc-head, .qi-head, .qt-head, .qs-head) {
@@ -3616,22 +3615,18 @@ html body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculato
   }
 
   @keyframes quickies-panel-pop {
-    0% { clip-path: circle(6px at 20px 22px); }
-    34% { clip-path: circle(24px at 20px 22px); }
-    72% { clip-path: circle(78% at 20px 22px); }
-    100% { clip-path: circle(180% at 20px 22px); }
+    from { opacity: 0; transform: translateY(-4px) scale(.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator).quickies-sucking-in {
     pointer-events: none;
-    animation: quickies-panel-suck 200ms cubic-bezier(.55, .06, .68, .19) both !important;
+    animation: quickies-panel-suck 120ms ease-in both !important;
   }
 
   @keyframes quickies-panel-suck {
-    0% { clip-path: circle(180% at 20px 22px); }
-    28% { clip-path: circle(76% at 20px 22px); }
-    68% { clip-path: circle(25px at 20px 22px); }
-    100% { clip-path: circle(6px at 20px 22px); }
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-4px) scale(.97); }
   }
 
   html body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator).quickies-dot-settle :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle)::before {
@@ -5321,17 +5316,23 @@ function closeTable() {
     panel.classList.add('quickies-sucking-in');
     toggle.setAttribute('aria-expanded', 'false');
     let collapseFinished = false;
+    let collapseTimer;
+    const onCollapseEnd = event => {
+      if (event.target === panel && event.animationName === "quickies-panel-suck") finishCollapse();
+    };
     const finishCollapse = () => {
       if (collapseFinished) return;
       collapseFinished = true;
+      window.clearTimeout(collapseTimer);
+      panel.removeEventListener("animationend", onCollapseEnd);
       panel.classList.add('collapsed');
       panel.classList.remove('quickies-sucking-in');
       panel.classList.add('quickies-dot-settle');
       syncQuickiesToggle(panel, toggle);
       window.setTimeout(() => panel.classList.remove('quickies-dot-settle'), 160);
     };
-    panel.addEventListener('animationend', finishCollapse, { once: true });
-    window.setTimeout(finishCollapse, 350);
+    panel.addEventListener("animationend", onCollapseEnd);
+    collapseTimer = window.setTimeout(finishCollapse, 180);
   }
 
   // ===== QUICK CALC (Left Shortcut Panel) =====
