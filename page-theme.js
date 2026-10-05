@@ -2712,8 +2712,9 @@
 
   themeStyle.textContent += `
     html:root[data-xlyneve-color-theme="porcelain"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle {
-      box-shadow:var(--porcelain-recessed) !important;
-      border:1px solid transparent !important;
+      box-sizing:border-box !important;
+      border:6px solid #e9e9e1 !important;
+      box-shadow:5px 6px 10px rgba(125,133,122,.35),-4px -4px 9px rgba(255,255,255,.9),inset 5px 5px 8px rgba(58,68,78,.46),inset -4px -4px 7px rgba(255,255,255,.88) !important;
     }
   `;
 
