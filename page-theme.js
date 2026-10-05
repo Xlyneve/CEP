@@ -2181,7 +2181,7 @@
       --copy-feedback-accent:#9fb5d1; --copy-feedback-soft:#e9e9e1;
       --homecal-header:linear-gradient(145deg,#e9e9e1,#e9e9e1); --homecal-header-ink:#353833;
       --homecal-control:#e9e9e1; --homecal-control-ink:#353833; --homecal-header-edge:transparent;
-      --homecal-today:#bcc1bc; --homecal-today-edge:transparent; --homecal-today-shadow:rgba(68,73,59,.24);
+      --homecal-today:#eed5d2; --homecal-today-edge:transparent; --homecal-today-shadow:rgba(68,73,59,.24);
     }
     html:root[data-xlyneve-color-theme="porcelain"],html:root[data-xlyneve-color-theme="porcelain"] body {
       color:#353833; background-color:#e9e9e1 !important;
@@ -2685,12 +2685,28 @@
       background:#d5d7d2 !important; background-image:none !important;
     }
     html:root[data-xlyneve-color-theme="porcelain"].theme-homecal body .day.today:not(.empty) {
-      background:#bcc1bc !important; background-image:none !important;
+      background:#eed5d2 !important; background-image:none !important;
     }
     html:root[data-xlyneve-color-theme="porcelain"].theme-homecal body .day .date-number {
       text-align:center !important; padding:2px 8px !important;
       width:100%; box-sizing:border-box; margin:0 auto 5px !important;
       color:#353833 !important;
+    }
+  `;
+
+  themeStyle.textContent += `
+    html:root[data-xlyneve-color-theme="porcelain"].theme-homecal body #todoPanel {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root[data-xlyneve-color-theme="porcelain"].theme-homecal body #todoPanel::before {
+      content:none !important; background:none !important; box-shadow:none !important;
+    }
+    html:root[data-xlyneve-color-theme="porcelain"].theme-homecal body #todoList .todo-item :is(textarea,input[type="text"]) {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
   `;
 
