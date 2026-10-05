@@ -196,6 +196,20 @@
         html:root.home-notepad-embedded .homepage-notepad-drag-bar .dot {
           box-shadow:0 0 0 1px var(--page-header-ink,#39353a);
         }
+        @media (hover:hover) and (pointer:fine) {
+          html:root.home-notepad-embedded body .notes { inset:0 !important; }
+          html:root.home-notepad-embedded .homepage-notepad-drag-bar {
+            opacity:0; pointer-events:none; transform:translateY(-100%);
+            transition:opacity 140ms ease,transform 140ms ease;
+          }
+          html:root.home-notepad-embedded body:hover .homepage-notepad-drag-bar,
+          html:root.home-notepad-embedded .homepage-notepad-drag-bar:focus-within {
+            opacity:1; pointer-events:auto; transform:translateY(0);
+          }
+        }
+        @media (prefers-reduced-motion:reduce) {
+          html:root.home-notepad-embedded .homepage-notepad-drag-bar { transition:none; }
+        }
         .homepage-notepad-drag-handle { position:absolute; inset:0 44px 0 84px; cursor:grab; touch-action:none; }
         .homepage-notepad-drag-handle:active { cursor:grabbing; }
         .homepage-notepad-drag-handle:focus-visible { outline:2px solid #8c7bb5; outline-offset:-2px; }
