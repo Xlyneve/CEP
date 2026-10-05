@@ -2174,7 +2174,7 @@
       --porcelain-grain:none;
       --porcelain-raised:inset 1px 1px 2px rgba(255,255,255,.25),8px 9px 14px rgba(153,157,146,.42),-8px -8px 14px rgba(255,255,255,.94);
       --porcelain-pressed:inset 4px 4px 8px rgba(153,157,146,.4),inset -4px -4px 7px rgba(255,255,255,.8);
-      --porcelain-recessed:0 0 0 4px #e9e9e1,9px 10px 16px rgba(153,157,146,.42),-9px -9px 16px rgba(255,255,255,.94),inset 4px 4px 7px rgba(153,157,146,.44),inset -4px -4px 7px rgba(255,255,255,.9);
+      --porcelain-recessed:0 0 0 3px #e9e9e1,4px 5px 9px rgba(153,157,146,.25),inset 4px 4px 7px rgba(153,157,146,.44),inset -4px -4px 7px rgba(255,255,255,.9);
       --quick-panel:linear-gradient(145deg,#e9e9e1,#e9e9e1); --quick-ink:#353833;
       --quick-accent:#e9e9e1; --quick-accent-ink:#353833; --quick-soft:#e9e9e1; --quick-field:#e9e9e1; --quick-edge:transparent;
       --clinical-panel:#e9e9e1; --clinical-field:#e9e9e1; --clinical-accent:#9fb5d1; --clinical-accent-ink:#353833; --clinical-edge:transparent;
@@ -2647,6 +2647,7 @@
     html[data-xlyneve-color-theme="porcelain"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator),
     html:root.home-notepad-embedded[data-xlyneve-color-theme="porcelain"][data-home-notepad-ready="1"] body #notes > .note-card:not(.copy-feedback):not(.copied-feedback) {
       box-shadow:var(--porcelain-recessed) !important;
+      border:1px solid transparent !important; border-radius:30px !important;
     }
   `;
 
@@ -2661,7 +2662,7 @@
       border:1px solid rgba(255,255,255,.85) !important;
     }
     html[data-xlyneve-color-theme="porcelain"] body :is(.cep-global-search-result,.universal-search-native-card,.cep-concept-search-result) {
-      box-shadow:0 0 0 3px #e9e9e1,4px 5px 9px rgba(153,157,146,.25),inset 4px 4px 7px rgba(153,157,146,.44),inset -4px -4px 7px rgba(255,255,255,.9) !important;
+      box-shadow:var(--porcelain-recessed) !important;
     }
     html[data-xlyneve-color-theme="porcelain"] body :is(.cep-global-search-group-cards,.universal-search-result-group) {
       background:transparent !important; box-shadow:none !important;
