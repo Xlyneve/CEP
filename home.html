@@ -3632,6 +3632,11 @@ html body .cep-sign-out-light {
 </style>
 
   <link rel="stylesheet" href="site-background.css">
+  <style>
+    html body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator):not(.collapsed) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+      display:none !important;
+    }
+  </style>
   <script src="page-theme.js?v=20261005-6"></script>
   <link rel="stylesheet" href="affected-pages-theme.css?v=20260826-3">
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
@@ -5254,6 +5259,20 @@ function closeTable() {
     }
   });
   
+  document.addEventListener('pointerdown', (event) => {
+    document.querySelectorAll('#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator').forEach(panel => {
+      if (panel.classList.contains('collapsed') || panel.contains(event.target)) return;
+      toggleQuickiesPanel(panel, panel.querySelector('.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle'));
+    });
+  }, true);
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator').forEach(panel => {
+      if (!panel.classList.contains('collapsed')) toggleQuickiesPanel(panel, panel.querySelector('.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle'));
+    });
+  });
+
   function syncQuickiesToggle(panel, toggle) {
     const isCollapsed = panel.classList.contains('collapsed');
     toggle.textContent = isCollapsed ? '❯' : '❮';
@@ -5277,7 +5296,10 @@ function closeTable() {
 
     panel.classList.add('quickies-sucking-in');
     toggle.setAttribute('aria-expanded', 'false');
+    let collapseFinished = false;
     const finishCollapse = () => {
+      if (collapseFinished) return;
+      collapseFinished = true;
       panel.classList.add('collapsed');
       panel.classList.remove('quickies-sucking-in');
       panel.classList.add('quickies-dot-settle');
@@ -5285,6 +5307,7 @@ function closeTable() {
       window.setTimeout(() => panel.classList.remove('quickies-dot-settle'), 160);
     };
     panel.addEventListener('animationend', finishCollapse, { once: true });
+    window.setTimeout(finishCollapse, 350);
   }
 
   // ===== QUICK CALC (Left Shortcut Panel) =====
