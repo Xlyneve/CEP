@@ -198,6 +198,10 @@
         }
         @media (hover:hover) and (pointer:fine) {
           html:root.home-notepad-embedded body .notes { inset:0 !important; }
+          html:root.home-notepad-embedded body:hover .notes,
+          html:root.home-notepad-embedded body:has(.homepage-notepad-drag-bar:focus-within) .notes {
+            top:36px !important;
+          }
           html:root.home-notepad-embedded .homepage-notepad-drag-bar {
             opacity:0; pointer-events:none; transform:translateY(-100%);
             transition:opacity 140ms ease,transform 140ms ease;
