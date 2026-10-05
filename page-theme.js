@@ -2650,6 +2650,23 @@
     }
   `;
 
+  // Keep filter pills and search-card edges clean inside scrolling containers.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="porcelain"] body :is(.cep-global-search-filters,.cep-global-search-modes,.universal-search-filters,.universal-search-modes) {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important;
+    }
+    html[data-xlyneve-color-theme="porcelain"] body :is(.cep-global-search-filters,.cep-global-search-modes,.universal-search-filters,.universal-search-modes) button {
+      box-shadow:none !important; border:1px solid rgba(255,255,255,.7) !important;
+    }
+    html[data-xlyneve-color-theme="porcelain"] body :is(.cep-global-search-result,.universal-search-native-card,.cep-concept-search-result) {
+      box-shadow:0 0 0 3px #e9e9e1,4px 5px 9px rgba(153,157,146,.25),inset 4px 4px 7px rgba(153,157,146,.44),inset -4px -4px 7px rgba(255,255,255,.9) !important;
+    }
+    html[data-xlyneve-color-theme="porcelain"] body :is(.cep-global-search-group-cards,.universal-search-result-group) {
+      background:transparent !important; box-shadow:none !important;
+    }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
