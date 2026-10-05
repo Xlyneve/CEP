@@ -26,6 +26,14 @@
     .homepage-calendar { position:fixed; z-index:10020; display:flex; flex-direction:column; width:min(380px,calc(100vw - 16px)); height:min(460px,calc(100dvh - 42px)); overflow:hidden; border:1px solid rgba(255,255,255,.72); border-radius:16px; background:#e8e8e8; box-shadow:0 12px 36px #39263730; }
     .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; cursor:grab; touch-action:none; user-select:none; }
     .homepage-calendar-bar:active { cursor:grabbing; }
+    @media (hover:hover) and (pointer:fine) {
+      .homepage-calendar-bar { opacity:0; transition:opacity 140ms ease; }
+      .homepage-calendar:hover .homepage-calendar-bar,
+      .homepage-calendar-bar:focus-within { opacity:1; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      .homepage-calendar-bar { transition:none; }
+    }
     html[data-xlyneve-color-theme] .homepage-calendar-bar {
       background:var(--page-header-solid,#4a3f4b);
       color:var(--page-header-ink,#ffffff);
@@ -85,12 +93,12 @@
       x: Math.max(8, innerWidth - fallbackWidth - 24), y: compact ? 110 : 90,
       width: fallbackWidth, height: fallbackHeight
     };
-    collapsedWidth = Math.min(Math.max(300, layout.width), innerWidth - 16);
+    collapsedWidth = Math.min(Math.max(240, layout.width), innerWidth - 16);
     expandedPanelWidth = Number.isFinite(layout.expandedWidth)
       ? Math.min(Math.max(collapsedWidth, layout.expandedWidth), innerWidth - 16)
       : 0;
     panel.style.width = `${collapsedWidth}px`;
-    panel.style.height = `${Math.min(Math.max(260, layout.height), innerHeight - 42)}px`;
+    panel.style.height = `${Math.min(Math.max(200, layout.height), innerHeight - 42)}px`;
     movePanel(layout.x, layout.y);
   }
   function closePanel() {
@@ -115,8 +123,8 @@
       if (!gesture) return;
       const dx = event.screenX - gesture.x, dy = event.screenY - gesture.y;
       if (resize) {
-        panel.style.width = `${Math.min(Math.max(300, gesture.width + dx), innerWidth - panel.offsetLeft - 8)}px`;
-        panel.style.height = `${Math.min(Math.max(260, gesture.height + dy), innerHeight - panel.offsetTop - 8)}px`;
+        panel.style.width = `${Math.min(Math.max(240, gesture.width + dx), innerWidth - panel.offsetLeft - 8)}px`;
+        panel.style.height = `${Math.min(Math.max(200, gesture.height + dy), innerHeight - panel.offsetTop - 8)}px`;
         if (panel.classList.contains("todo-open")) expandedPanelWidth = panel.offsetWidth;
         else collapsedWidth = panel.offsetWidth;
       } else movePanel(gesture.left + dx, gesture.top + dy);
