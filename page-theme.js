@@ -2710,6 +2710,13 @@
     }
   `;
 
+  themeStyle.textContent += `
+    html:root[data-xlyneve-color-theme="porcelain"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle {
+      box-shadow:var(--porcelain-recessed) !important;
+      border:1px solid transparent !important;
+    }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
