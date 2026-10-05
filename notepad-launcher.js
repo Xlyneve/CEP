@@ -59,6 +59,14 @@
       .homepage-notepad-resize { width:34px; height:34px; }
       .homepage-notepad-resize::after { right:8px; bottom:8px; width:10px; height:10px; }
     }
+    html:root body #homepage-notepad-resize {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important; outline:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root body #homepage-notepad-resize::before,
+    html:root body #homepage-notepad-resize::after { content:none !important; }
+    html:root body #homepage-notepad-resize:focus-visible { outline:2px solid currentColor !important; outline-offset:-4px; }
   `;
   document.head.append(style);
   const choices = document.createElement("div");
@@ -95,6 +103,7 @@
     frame.src = url;
     const resize = document.createElement("button");
     resize.className = "homepage-notepad-resize";
+    resize.id = "homepage-notepad-resize";
     resize.type = "button";
     resize.setAttribute("aria-label", "Resize notepad: drag or use arrow keys");
     resize.title = "Drag to resize, or use arrow keys";

@@ -57,6 +57,14 @@
     .homepage-calendar iframe { display:block; flex:1 1 auto; width:100%; min-height:0; border:0; background:transparent; }
     .homepage-calendar-resize { position:absolute; z-index:2; right:0; bottom:0; width:28px; height:28px; border:0; background:transparent; cursor:nwse-resize; touch-action:none; }
     .homepage-calendar-resize::after { content:""; position:absolute; right:7px; bottom:7px; width:8px; height:8px; border-right:2px solid #aaa; border-bottom:2px solid #aaa; }
+    html:root body #homepage-calendar-resize {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important; outline:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root body #homepage-calendar-resize::before,
+    html:root body #homepage-calendar-resize::after { content:none !important; }
+    html:root body #homepage-calendar-resize:focus-visible { outline:2px solid currentColor !important; outline-offset:-4px; }
   `;
   document.head.appendChild(style);
 
@@ -217,6 +225,7 @@
     });
     const resize = document.createElement("button"); resize.type = "button"; resize.className = "homepage-calendar-resize";
     resize.setAttribute("aria-label", "Resize homepage calendar");
+    resize.id = "homepage-calendar-resize";
     panel.append(bar, frame, resize); document.body.appendChild(panel);
     restoreLayout();
     setPanelTodoOpen(restoreTodoOpen);
