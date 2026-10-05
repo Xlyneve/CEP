@@ -2718,6 +2718,23 @@
     }
   `;
 
+  // Task text stays directly on the rounded card, in every calendar theme.
+  themeStyle.textContent += `
+    html:root.theme-homecal body #todoPanel {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root.theme-homecal body #todoPanel::before {
+      content:none !important; background:none !important; box-shadow:none !important;
+    }
+    html:root.theme-homecal body #todoList .todo-item :is(textarea,input[type="text"]) {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
