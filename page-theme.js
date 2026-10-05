@@ -2657,7 +2657,8 @@
       border:0 !important; box-shadow:none !important;
     }
     html[data-xlyneve-color-theme="porcelain"] body :is(.cep-global-search-filters,.cep-global-search-modes,.universal-search-filters,.universal-search-modes) button {
-      box-shadow:none !important; border:1px solid rgba(255,255,255,.7) !important;
+      box-shadow:inset 2px 2px 3px rgba(255,255,255,.95),inset -2px -3px 4px rgba(153,157,146,.48) !important;
+      border:1px solid rgba(255,255,255,.85) !important;
     }
     html[data-xlyneve-color-theme="porcelain"] body :is(.cep-global-search-result,.universal-search-native-card,.cep-concept-search-result) {
       box-shadow:0 0 0 3px #e9e9e1,4px 5px 9px rgba(153,157,146,.25),inset 4px 4px 7px rgba(153,157,146,.44),inset -4px -4px 7px rgba(255,255,255,.9) !important;
