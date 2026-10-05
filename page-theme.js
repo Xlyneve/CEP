@@ -111,7 +111,7 @@
     if (Array.isArray(saved)) deletedThemes = new Set(saved.filter(value => typeof value === "string" && value !== "original"));
   } catch {}
 
-  const excludedThemePages = new Set(["biosched1.html", "notes.html", "recalltracker.html"]);
+  const excludedThemePages = new Set(["biosched1.html", "recalltracker.html"]);
 
   const pageName = (location.pathname.split("/").pop() || "index.html").toLowerCase();
   const themeIsAllowed = !excludedThemePages.has(pageName);

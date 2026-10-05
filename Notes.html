@@ -376,10 +376,28 @@ h1 {
   text-align: right;
   margin-top: 4px;
 }
+/* Follow the selected theme while keeping the original note colours intact. */
+html[data-xlyneve-color-theme] .note-tile :is(.note-display,textarea,.note-date) {
+  color:inherit !important;
+  -webkit-text-fill-color:currentColor !important;
+}
+html[data-xlyneve-color-theme] .note-display {
+  background:transparent;
+  backdrop-filter:none;
+}
+html[data-xlyneve-color-theme] .header-container {
+  background:var(--page-header-glass);
+  color:var(--page-header-ink);
+}
+html[data-xlyneve-color-theme] .header-container h1 {
+  color:var(--page-header-ink,var(--theme-ink,#303039)) !important;
+  -webkit-text-fill-color:currentColor;
+  text-shadow:none;
+}
 </style>
 
   <link rel="stylesheet" href="site-background.css?v=20260730">
-  <script src="page-theme.js?v=1"></script>
+  <script src="page-theme.js?v=20261005-5"></script>
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
   <script src="content-highlights.js?v=20261001-1" defer></script>
 <script src="typing-spellcheck.js?v=20261002-1" defer></script>
@@ -472,7 +490,7 @@ function displayNotes(notesArray, filter = "") {
 
   filtered.forEach(note => {
     const tile = document.createElement("div");
-    tile.className = "note-tile";
+    tile.className = "note-tile note-card";
     tile.dataset.id = note.id;
     tile.style.background = note.color || "#C0B7BB";
 
