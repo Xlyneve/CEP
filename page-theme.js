@@ -103,14 +103,60 @@
   const auroraPalette = [
     { rgb:"233, 235, 246", solid:"#e9ebf6", ink:"#28263c" },
   ];
-  const themeStorageKey = "xlyneve-color-theme";
-  const deletedThemeStorageKey = "xlyneve-deleted-themes";
-  let deletedThemes = new Set();
-  try {
-    const saved = JSON.parse(localStorage.getItem(deletedThemeStorageKey) || "[]");
-    if (Array.isArray(saved)) deletedThemes = new Set(saved.filter(value => typeof value === "string" && value !== "original"));
-  } catch {}
+  const themeOptions = [
+      {
+        value: "original",
+        label: "Original",
+        colors: ["#e5cbcc", "#d3e0df", "#e1e2c3", "#db9e83"]
+      },
+      {
+        value: "berry",
+        label: "Berry",
+        colors: ["#680044", "#e86598", "#d9bedc", "#ffb82e"]
+      },
+      {
+        value: "autumn",
+        label: "Autumn",
+        colors: ["#255765", "#92a6a7", "#d7bec4", "#a9a8b0"]
+      },
+      {
+        value: "hoya",
+        label: "Hoya",
+        colors: ["#40585c", "#8b9466", "#daa23e", "#f8e5dd"]
+      },
+      {
+        value: "lake-mist",
+        label: "Lake Mist",
+        colors: ["#bfc6c6", "#f3f2ed", "#dbcad0", "#443d35", "#d6cfca", "#a2ac9e"]
+      },
+      {
+        value: "palm-springs",
+        label: "Palm Springs",
+        colors: ["#1f2c2c", "#c6a0a8", "#bda487", "#f1e7e3", "#fbf8f5"]
+      },
+      {
+        value: "quiet-stone",
+        label: "Quiet Stone",
+        colors: ["#a288b7", "#6dafbf", "#ba928d", "#cdb2cb", "#b7bdb4"]
+      },
+      {
+        value: "anatomy",
+        label: "Anatomy",
+        colors: ["#faf2e8", "#22211f", "#aaa297", "#f6b63f", "#e8dccd"]
+      },
+      {
+        value: "sculpted",
+        label: "Sculpted 5D",
+        colors: ["#a288b7", "#6dafbf", "#ba928d", "#cdb2cb", "#b7bdb4"]
+      },
+      { value:"aurora", label:"Aurora 5D", colors:["#e9ebf6","#8154c4","#7d9aeb","#d091b0","#cee878"] },
+      { value:"soft-stone", label:"Soft Stone 5D", colors:["#e1e2e6","#dfb53e","#72757c"] },
+      { value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#f4dada","#f9e5d6","#fdf9f3","#e0c797"] },
+      { value:"pastel-jumper", label:"Pastel Jumper", colors:["#b9a6d2", "#e7a1a1", "#f1edcf", "#d8cbe7", "#faf6e5"] },
+      { value:"warm-medley", label:"Warm Medley", colors:["#16131f", "#f0d9e4", "#c1a0ac", "#4a3f4b", "#806c79"] },
+    ];
 
+  const themeStorageKey = "xlyneve-color-theme";
   const excludedThemePages = new Set(["biosched1.html", "recalltracker.html"]);
 
   const pageName = (location.pathname.split("/").pop() || "index.html").toLowerCase();
@@ -120,12 +166,8 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass") localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (themeOptions.some(option => option.value === storedTheme)) selectedTheme = storedTheme;
     } catch {}
-  }
-  if (deletedThemes.has(selectedTheme)) {
-    selectedTheme = "original";
-    try { localStorage.removeItem(themeStorageKey); } catch {}
   }
   const palette = selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
     ? berryPalette
@@ -2612,71 +2654,13 @@
     heading.append(title, manage);
     panel.appendChild(heading);
 
-    const themeOptions = [
-      {
-        value: "original",
-        label: "Original",
-        colors: ["#e5cbcc", "#d3e0df", "#e1e2c3", "#db9e83"]
-      },
-      {
-        value: "berry",
-        label: "Berry",
-        colors: ["#680044", "#e86598", "#d9bedc", "#ffb82e"]
-      },
-      {
-        value: "autumn",
-        label: "Autumn",
-        colors: ["#255765", "#92a6a7", "#d7bec4", "#a9a8b0"]
-      },
-      {
-        value: "hoya",
-        label: "Hoya",
-        colors: ["#40585c", "#8b9466", "#daa23e", "#f8e5dd"]
-      },
-      {
-        value: "lake-mist",
-        label: "Lake Mist",
-        colors: ["#bfc6c6", "#f3f2ed", "#dbcad0", "#443d35", "#d6cfca", "#a2ac9e"]
-      },
-      {
-        value: "palm-springs",
-        label: "Palm Springs",
-        colors: ["#1f2c2c", "#c6a0a8", "#bda487", "#f1e7e3", "#fbf8f5"]
-      },
-      {
-        value: "quiet-stone",
-        label: "Quiet Stone",
-        colors: ["#a288b7", "#6dafbf", "#ba928d", "#cdb2cb", "#b7bdb4"]
-      },
-      {
-        value: "anatomy",
-        label: "Anatomy",
-        colors: ["#faf2e8", "#22211f", "#aaa297", "#f6b63f", "#e8dccd"]
-      },
-      {
-        value: "sculpted",
-        label: "Sculpted 5D",
-        colors: ["#a288b7", "#6dafbf", "#ba928d", "#cdb2cb", "#b7bdb4"]
-      },
-    ];
-
-    themeOptions.push({ value:"aurora", label:"Aurora 5D", colors:["#e9ebf6","#8154c4","#7d9aeb","#d091b0","#cee878"] });
-    themeOptions.push({ value:"soft-stone", label:"Soft Stone 5D", colors:["#e1e2e6","#dfb53e","#72757c"] });
-    themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#f4dada","#f9e5d6","#fdf9f3","#e0c797"] });
-    themeOptions.push({ value:"pastel-jumper", label:"Pastel Jumper", colors:["#b9a6d2", "#e7a1a1", "#f1edcf", "#d8cbe7", "#faf6e5"] });
-    themeOptions.push({ value:"warm-medley", label:"Warm Medley", colors:["#16131f", "#f0d9e4", "#c1a0ac", "#4a3f4b", "#806c79"] });
     const list = document.createElement("div");
     const status = document.createElement("p");
     status.className = "xlyneve-theme-status";
     status.setAttribute("role", "status");
-    const restore = document.createElement("button");
-    restore.type = "button";
-    restore.className = "xlyneve-theme-restore";
-    restore.textContent = "Restore deleted themes";
     const drawOptions = () => {
       list.replaceChildren();
-      restore.hidden = deletedThemes.size === 0;
-      themeOptions.filter(option => !deletedThemes.has(option.value)).forEach((option) => {
+      themeOptions.forEach((option) => {
       const row = document.createElement("div");
       row.className = "xlyneve-theme-row";
 
@@ -2713,36 +2697,28 @@
         remove.className = "xlyneve-theme-delete";
         remove.textContent = "Delete";
         remove.setAttribute("aria-label", `Delete ${option.label} theme`);
-        remove.title = `Delete ${option.label} from this browser`;
-        remove.addEventListener("click", () => {
-          const next = new Set(deletedThemes);
-          next.add(option.value);
-          try { localStorage.setItem(deletedThemeStorageKey, JSON.stringify([...next])); }
-          catch { status.textContent = "Could not save the change. Try again."; return; }
-          deletedThemes = next;
-          if (selectedTheme === option.value) {
-            try { localStorage.removeItem(themeStorageKey); } catch {}
+        remove.title = `Permanently delete ${option.label} from the website and GitHub`;
+        remove.addEventListener("click", async () => {
+          remove.disabled = true;
+          status.textContent = `Deleting ${option.label} from GitHub…`;
+          try {
+            const { deleteTheme } = await import("./theme-management.js?v=20261005-1");
+            await deleteTheme(option.value, message => { status.textContent = message; });
+            if (selectedTheme === option.value) {
+              try { localStorage.removeItem(themeStorageKey); } catch {}
+            }
             location.reload();
-            return;
+          } catch (error) {
+            status.textContent = error.message || "Theme deletion failed. Try again.";
+            remove.disabled = false;
           }
-          drawOptions();
-          status.textContent = `${option.label} deleted from this browser.`;
-          list.querySelector("button")?.focus();
         });
         row.appendChild(remove);
       }
       list.appendChild(row);
     });
     };
-    restore.addEventListener("click", () => {
-      try { localStorage.removeItem(deletedThemeStorageKey); }
-      catch { status.textContent = "Could not restore themes. Try again."; return; }
-      deletedThemes = new Set();
-      drawOptions();
-      status.textContent = "Deleted themes restored.";
-      list.querySelector("button")?.focus();
-    });
-    panel.append(list, restore, status);
+    panel.append(list, status);
     drawOptions();
 
     const closePicker = () => {
@@ -2805,7 +2781,7 @@
   }
 
   window.addEventListener("storage", (event) => {
-    if (event.key === themeStorageKey || event.key === deletedThemeStorageKey) location.reload();
+    if (event.key === themeStorageKey) location.reload();
   });
 
   if (document.readyState === "loading") {
