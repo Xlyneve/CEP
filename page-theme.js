@@ -2174,6 +2174,7 @@
       --porcelain-grain:none;
       --porcelain-raised:inset 1px 1px 2px rgba(255,255,255,.25),8px 9px 14px rgba(153,157,146,.42),-8px -8px 14px rgba(255,255,255,.94);
       --porcelain-pressed:inset 4px 4px 8px rgba(153,157,146,.4),inset -4px -4px 7px rgba(255,255,255,.8);
+      --porcelain-recessed:0 0 0 4px #e9e9e1,9px 10px 16px rgba(153,157,146,.42),-9px -9px 16px rgba(255,255,255,.94),inset 4px 4px 7px rgba(153,157,146,.44),inset -4px -4px 7px rgba(255,255,255,.9);
       --quick-panel:linear-gradient(145deg,#e9e9e1,#e9e9e1); --quick-ink:#353833;
       --quick-accent:#e9e9e1; --quick-accent-ink:#353833; --quick-soft:#e9e9e1; --quick-field:#e9e9e1; --quick-edge:transparent;
       --clinical-panel:#e9e9e1; --clinical-field:#e9e9e1; --clinical-accent:#9fb5d1; --clinical-accent-ink:#353833; --clinical-edge:transparent;
@@ -2636,6 +2637,17 @@
     html[data-xlyneve-color-theme="porcelain"] body .dot-add { background:#9fb5d1 !important; }
     html[data-xlyneve-color-theme="porcelain"] body .dot-yellow { background:#e8c2c0 !important; }
     html[data-xlyneve-color-theme="porcelain"] body .dot-purple { background:#aebcaf !important; }
+  `;
+
+  // A raised porcelain rim surrounds the recessed face, without an overlay on text.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="porcelain"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty),.todo-item,.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result,.dashboard-section-toggle),
+    html[data-xlyneve-color-theme="porcelain"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
+    html[data-xlyneve-color-theme="porcelain"].theme-home-glass body .main-content .card-group.section-card-group > .card,
+    html[data-xlyneve-color-theme="porcelain"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator),
+    html:root.home-notepad-embedded[data-xlyneve-color-theme="porcelain"][data-home-notepad-ready="1"] body #notes > .note-card:not(.copy-feedback):not(.copied-feedback) {
+      box-shadow:var(--porcelain-recessed) !important;
+    }
   `;
 
   // Keep text on the shared pale table surfaces readable in every theme.
