@@ -30,6 +30,9 @@
       .homepage-calendar-bar { position:absolute; top:0; left:0; right:0; height:34px; box-sizing:border-box; z-index:3; opacity:0; pointer-events:none; transform:translateY(-100%); transition:opacity 140ms ease,transform 140ms ease; }
       .homepage-calendar:hover .homepage-calendar-bar,
       .homepage-calendar-bar:focus-within { opacity:1; pointer-events:auto; transform:translateY(0); }
+      .homepage-calendar:hover iframe,
+      .homepage-calendar:has(.homepage-calendar-bar:focus-within) iframe { margin-top:34px; }
+
     }
     @media (prefers-reduced-motion:reduce) {
       .homepage-calendar-bar { transition:none; }
