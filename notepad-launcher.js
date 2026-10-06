@@ -71,6 +71,11 @@
     .notepad-choice-icon svg { width:20px; height:20px; pointer-events:none; }
     .notepad-choices button:hover, .notepad-choices button:focus-visible { background:#eee5ef; }
     .homepage-notepad { position:fixed; z-index:10000; width:min(320px, calc(100vw - 16px)); height:min(340px, calc(100dvh - 42px)); overflow:visible; border-radius:14px; background:var(--light-dove-grey, #e8e8e8); box-shadow:0 12px 36px #39263730; }
+    html:root body #homepage-notepad {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
     .homepage-notepad iframe { display:block; width:100%; height:100%; border:0; border-radius:14px; background:transparent; }
     .homepage-notepad-resize { position:absolute; z-index:2; border:0; background:transparent; color:#777; cursor:pointer; }
     .homepage-notepad-resize { right:0; bottom:0; width:24px; height:24px; cursor:nwse-resize; touch-action:none; }
@@ -117,6 +122,7 @@
     }
     panel = document.createElement("section");
     panel.className = "homepage-notepad";
+    panel.id = "homepage-notepad";
     panel.setAttribute("aria-label", "Homepage notepad");
     const frame = document.createElement("iframe");
     frame.title = "Mini notepad";
@@ -172,6 +178,7 @@
       }
       doc.documentElement.dataset.homeNotepadReady = "1";
       doc.documentElement.classList.add("home-notepad-embedded");
+      doc.querySelector("main").id = "homepage-notepad-surface";
       const embeddedStyle = doc.createElement("style");
       embeddedStyle.textContent = `
         html, body { background:transparent; }
@@ -246,6 +253,14 @@
         html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"] body .dot-purple { background:#c1a0ac !important; }
         html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"] body .dot { outline:1px solid rgba(255,255,255,.45); }
         .dot-yellow:focus-visible { outline:2px solid #ad8e20; outline-offset:4px; }
+        html:root.home-notepad-embedded body #homepage-notepad-surface,
+        html:root.home-notepad-embedded body #notes {
+          background:transparent !important; background-image:none !important;
+          border:0 !important; box-shadow:none !important;
+          backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+        }
+        html:root.home-notepad-embedded body #notes { padding:0 !important; scrollbar-width:none !important; }
+        html:root.home-notepad-embedded body #notes::-webkit-scrollbar { display:none !important; width:0 !important; height:0 !important; }
       `;
       doc.head.append(embeddedStyle);
       yellowDot.title = "Drag the middle of the top bar to move notepad";
