@@ -167,7 +167,7 @@
       if (open) {
         collapsedWidth = panel.offsetWidth;
         panel.classList.add("todo-open");
-        const nextExpandedWidth = expandedPanelWidth || Math.max(collapsedWidth + 330, 620);
+        const nextExpandedWidth = expandedPanelWidth || Math.max(collapsedWidth + 240, 540);
         expandedPanelWidth = Math.min(Math.max(collapsedWidth, nextExpandedWidth), innerWidth - 16);
         panel.style.width = `${expandedPanelWidth}px`;
         movePanel(rightEdge - expandedPanelWidth, panel.offsetTop);
