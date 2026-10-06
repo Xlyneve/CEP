@@ -25,6 +25,26 @@
     const value = JSON.parse(localStorage.getItem(layoutKey));
     if (value && [value.x, value.y, value.width, value.height].every(Number.isFinite) && value.width > 0 && value.height > 0) savedLayout = value;
   } catch {}
+  function bindToolbarLongPress(doc, toggle) {
+    let timer = null, start = null, activated = false;
+    const cancel = () => { clearTimeout(timer); timer = null; start = null; };
+    doc.addEventListener("pointerdown", event => {
+      if (event.button !== 0 || event.target.closest("button,a,input,select,.homepage-notepad-drag-handle,.homepage-calendar-bar")) return;
+      cancel(); activated = false;
+      start = { x:event.clientX, y:event.clientY };
+      timer = setTimeout(() => { timer = null; activated = true; toggle(); }, 600);
+    }, true);
+    doc.addEventListener("pointermove", event => {
+      if (start && Math.hypot(event.clientX-start.x,event.clientY-start.y)>8) cancel();
+    }, true);
+    ["pointerup","pointercancel"].forEach(type => doc.addEventListener(type,cancel,true));
+    doc.addEventListener("contextmenu", event => { if (timer || activated) { event.preventDefault(); activated = false; } }, true);
+    doc.addEventListener("keydown", event => {
+      if (event.altKey && event.key.toLowerCase()==="t") { event.preventDefault(); cancel(); toggle(); }
+    });
+    doc.addEventListener("scroll",cancel,true);
+    doc.defaultView?.addEventListener("blur",cancel);
+  }
   function saveLayout() {
     if (!panel || panel.hidden) return;
     savedLayout = { x:panel.offsetLeft, y:panel.offsetTop, width:panel.offsetWidth, height:panel.offsetHeight };
@@ -205,20 +225,14 @@
         html:root.home-notepad-embedded .homepage-notepad-drag-bar .dot {
           box-shadow:0 0 0 1px var(--page-header-ink,#39353a);
         }
-        @media (hover:hover) and (pointer:fine) {
-          html:root.home-notepad-embedded body .notes { inset:0 !important; }
-          html:root.home-notepad-embedded body:hover .notes,
-          html:root.home-notepad-embedded body:has(.homepage-notepad-drag-bar:focus-within) .notes {
-            top:36px !important;
-          }
-          html:root.home-notepad-embedded .homepage-notepad-drag-bar {
-            opacity:0; pointer-events:none; transform:translateY(-100%);
-            transition:opacity 140ms ease,transform 140ms ease;
-          }
-          html:root.home-notepad-embedded body:hover .homepage-notepad-drag-bar,
-          html:root.home-notepad-embedded .homepage-notepad-drag-bar:focus-within {
-            opacity:1; pointer-events:auto; transform:translateY(0);
-          }
+        html:root.home-notepad-embedded body .notes { inset:0 !important; }
+        html:root.home-notepad-embedded.toolbar-visible body .notes { top:36px !important; }
+        html:root.home-notepad-embedded .homepage-notepad-drag-bar {
+          opacity:0; pointer-events:none; transform:translateY(-100%);
+          transition:opacity 140ms ease,transform 140ms ease;
+        }
+        html:root.home-notepad-embedded.toolbar-visible .homepage-notepad-drag-bar {
+          opacity:1; pointer-events:auto; transform:translateY(0);
         }
         @media (prefers-reduced-motion:reduce) {
           html:root.home-notepad-embedded .homepage-notepad-drag-bar { transition:none; }
@@ -264,6 +278,7 @@
       if (controls) topBar.appendChild(controls);
       if (openOptions) topBar.appendChild(openOptions);
       bindHandle(dragHandle, false);
+      bindToolbarLongPress(doc, () => doc.documentElement.classList.toggle("toolbar-visible"));
     }
     frame.addEventListener("load", prepareEmbeddedNotepad);
     bindHandle(resize, true);
