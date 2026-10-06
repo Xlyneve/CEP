@@ -1345,6 +1345,19 @@ select option {
       height:14px;
       margin-right:4px;
     }
+    .embedded-add-toggle { display:none; }
+    html:root.homecal-embed-today body #todoPanel { position:relative; }
+    html:root.homecal-embed-today body #todoPanel:not(.composer-open) .add-todo { display:none !important; }
+    html:root.homecal-embed-today body #todoPanel .todo-list { padding-bottom:32px; }
+    html:root.homecal-embed-today body #todoPanel.composer-open .add-todo { margin-bottom:32px; }
+    html:root.homecal-embed-today body #embeddedAddToggle {
+      display:grid !important; place-items:center; position:absolute; z-index:4; bottom:7px; right:9px;
+      width:26px; height:26px; padding:0; border:0 !important; border-radius:50% !important;
+      background:var(--card-glass,rgba(255,255,255,.6)) !important; color:var(--theme-ink,#39353a) !important;
+      -webkit-text-fill-color:currentColor !important; box-shadow:0 2px 6px rgba(0,0,0,.1) !important;
+      font:20px/1 sans-serif; opacity:.7; cursor:pointer;
+    }
+    html:root.homecal-embed-today body #embeddedAddToggle:is(:hover,:focus-visible) { opacity:1; }
     .embedded-todo-toggle { display:none; }
     html.homecal-embed-today .embedded-todo-toggle { display:none !important; }
     html.homecal-embed-today .cep-sign-out-light { display:none !important; }
@@ -1465,7 +1478,8 @@ select option {
 
   <div class="todo-list" id="todoList"></div>
 
-  <div class="add-todo">
+  <button id="embeddedAddToggle" class="embedded-add-toggle" type="button" aria-label="Show add task" aria-expanded="false" aria-controls="todoComposer">+</button>
+  <div class="add-todo" id="todoComposer">
     <textarea id="newTodo" placeholder="Add new task..."></textarea>
     <button onclick="addTodo()">Add</button>
   </div>
@@ -1473,6 +1487,25 @@ select option {
 
 
 
+<script>
+(() => {
+  if (!document.documentElement.classList.contains('homecal-embed-today')) return;
+  const panel = document.getElementById('todoPanel');
+  const toggle = document.getElementById('embeddedAddToggle');
+  const input = document.getElementById('newTodo');
+  const setOpen = open => {
+    panel.classList.toggle('composer-open', open);
+    toggle.textContent = open ? '×' : '+';
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Hide add task' : 'Show add task');
+    if (open) input.focus();
+  };
+  toggle.addEventListener('click', () => setOpen(!panel.classList.contains('composer-open')));
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { event.preventDefault(); setOpen(false); toggle.focus(); }
+  });
+})();
+</script>
 <script type="module">
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
