@@ -2735,6 +2735,15 @@
     }
   `;
 
+  // Hover definitions use a solid surface so underlying content cannot bleed through.
+  themeStyle.textContent += `
+    html:root body :is(.xgpt-media-tip,.cep-xgpt-media-tip,#defTip) {
+      background:#ffffff !important; background-image:none !important; opacity:1 !important;
+      color:#39353a !important; -webkit-text-fill-color:currentColor !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
