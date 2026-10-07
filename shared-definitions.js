@@ -27,7 +27,7 @@
   }
   function refresh() {
     scheduled = false;
-    const scopes = document.querySelectorAll('.note-content,.chatBubble,.universal-search-native-snippet,.cep-source-note-content,.cep-source-rich-content');
+    const scopes = document.querySelectorAll('.theme-pn .note-title,.note-content,.chatBubble,.universal-search-native-snippet,.cep-source-note-content,.cep-source-rich-content');
     for (const scope of scopes) {
       if (scope.closest('[contenteditable="true"],.editing-note')) continue;
       scope.querySelectorAll('.cep-shared-definition').forEach(word => word.replaceWith(...word.childNodes));
