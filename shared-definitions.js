@@ -72,15 +72,16 @@
   function plain(html){const node=document.createElement('div');window.CEPSecurity?.setHTML(node,html||'');return node.textContent||'';}
   const style=document.createElement('style');style.textContent='.cep-shared-definition { text-decoration:underline dotted; text-underline-offset:3px; cursor:pointer; } #cep-shared-tip { position:fixed;z-index:2147483646;max-width:min(320px,calc(100vw - 24px));padding:12px;border-radius:12px;background:var(--clinical-panel,#fff);color:var(--theme-ink,#39353a);box-shadow:0 6px 22px #0002;font:12px/1.5 Tahoma,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere; } #cep-shared-tip[hidden]{display:none}';document.head.append(style);
   const tip=document.createElement('div');tip.id='cep-shared-tip';tip.hidden=true;tip.setAttribute('role','tooltip');document.body.append(tip);
-  let hideTimer;
+  let hideTimer, activeWord;
+  function hide(){clearTimeout(hideTimer);tip.hidden=true;activeWord=null;}
   const previewSelector = location.pathname.toLowerCase().endsWith('/pn.html') ? '.cep-shared-definition' : '.cep-shared-definition,.pn-definition[data-pn-definition]';
-  function show(word){clearTimeout(hideTimer);const record=find(word.dataset.sharedTerm||word.textContent);const value=record?.value||plain(record?.valueHtml)||word.dataset.pnDefinition;if(!value)return;tip.textContent=value;tip.hidden=false;const box=word.getBoundingClientRect();tip.style.left=Math.max(12,Math.min(box.left,innerWidth-tip.offsetWidth-12))+'px';tip.style.top=Math.max(12,Math.min(box.bottom+6,innerHeight-tip.offsetHeight-12))+'px';}
+  function show(word){clearTimeout(hideTimer);const record=find(word.dataset.sharedTerm||word.textContent);const value=record?.value||plain(record?.valueHtml)||word.dataset.pnDefinition;if(!value)return;activeWord=word;tip.textContent=value;tip.hidden=false;const box=word.getBoundingClientRect();tip.style.left=Math.max(12,Math.min(box.left,innerWidth-tip.offsetWidth-12))+'px';tip.style.top=Math.max(12,Math.min(box.bottom+6,innerHeight-tip.offsetHeight-12))+'px';}
   document.addEventListener('mouseover',e=>{const word=e.target.closest(previewSelector);if(word)show(word);},true);
-  document.addEventListener('mouseout',e=>{const word=e.target.closest(previewSelector);if(word&&!word.contains(e.relatedTarget)){clearTimeout(hideTimer);tip.hidden=true;}},true);
+  document.addEventListener('mouseout',e=>{const word=e.target.closest(previewSelector);if(word&&!word.contains(e.relatedTarget)&&!tip.contains(e.relatedTarget)){clearTimeout(hideTimer);hideTimer=setTimeout(hide,200);}},true);
   document.addEventListener('focusin',e=>{if(e.target.matches(previewSelector))show(e.target);});
   document.addEventListener('click',e=>{const word=e.target.closest(previewSelector);if(word){e.preventDefault();e.stopPropagation();show(word);}else if(!tip.contains(e.target))tip.hidden=true;},true);
   document.addEventListener('keydown',e=>{if(e.key==='Escape')tip.hidden=true;});
-  tip.onmouseenter=()=>clearTimeout(hideTimer);tip.onmouseleave=()=>tip.hidden=true;
+  tip.onmouseenter=()=>clearTimeout(hideTimer);tip.onmouseleave=e=>{if(!activeWord?.contains(e.relatedTarget))hide();};
   const observer=new MutationObserver(records=>{if(records.some(record=>!record.target.closest?.('#cep-shared-tip,#pn-definition-tip,#pn-definition-dialog')))schedule();});observer.observe(document.body,{childList:true,subtree:true});
   window.CEPSharedDefinitions={normalize,find,update,save,remove,connect(value){adapter=value;},plain};
 })();

@@ -113,8 +113,8 @@
     const word = event.target.closest(selector); if (word) { event.preventDefault(); show(word); }
   });
   document.addEventListener('mouseover', event => { const word = event.target.closest(selector); if (word) show(word); });
-  document.addEventListener('mouseout', event => { if (event.target.closest(selector) && !event.target.closest(selector).contains(event.relatedTarget)) hide(); });
-  tip.onmouseenter = () => clearTimeout(timer); tip.onmouseleave = () => { timer = setTimeout(hide, 200); };
+  document.addEventListener('mouseout', event => { const word = event.target.closest(selector); if (word && !word.contains(event.relatedTarget) && !tip.contains(event.relatedTarget)) { clearTimeout(timer); timer = setTimeout(hide, 200); } });
+  tip.onmouseenter = () => clearTimeout(timer); tip.onmouseleave = event => { if (!activeWord?.contains(event.relatedTarget)) hide(); };
   document.addEventListener('focusin', event => { if (event.target.matches(selector)) show(event.target); });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') hide(); });
   window.addEventListener('resize', hide); document.addEventListener('scroll', event => { if (!tip.contains(event.target)) hide(); }, true);
