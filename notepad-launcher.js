@@ -178,6 +178,7 @@
       }
       doc.documentElement.dataset.homeNotepadReady = "1";
       doc.documentElement.classList.add("home-notepad-embedded");
+      doc.body.id = "homepage-notepad-document";
       doc.querySelector("main").id = "homepage-notepad-surface";
       const embeddedStyle = doc.createElement("style");
       embeddedStyle.textContent = `
@@ -246,7 +247,7 @@
         }
         .homepage-notepad-drag-handle { position:absolute; inset:0 44px 0 84px; cursor:grab; touch-action:none; }
         .homepage-notepad-drag-handle:active { cursor:grabbing; }
-        .homepage-notepad-drag-handle:focus-visible { outline:2px solid #8c7bb5; outline-offset:-2px; }
+        html:root.home-notepad-embedded .homepage-notepad-drag-handle:focus { outline:none !important; }
         .dot-yellow { cursor:default; }
         html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"] body .dot-add { background:#f0d9e4 !important; }
         html:root.home-notepad-embedded[data-xlyneve-color-theme="warm-medley"] body .dot-yellow { background:#806c79 !important; }
@@ -261,6 +262,64 @@
         }
         html:root.home-notepad-embedded body #notes { padding:0 !important; scrollbar-width:none !important; }
         html:root.home-notepad-embedded body #notes::-webkit-scrollbar { display:none !important; width:0 !important; height:0 !important; }
+        /* Let the Home background continue through the embedded pad in every theme. */
+        html:root.home-notepad-embedded,
+        html:root.home-notepad-embedded body#homepage-notepad-document {
+          background:transparent !important; background-image:none !important;
+        }
+        html:root.home-notepad-embedded body #homepage-notepad-surface .homepage-notepad-drag-bar {
+          background:transparent !important; border:0 !important; box-shadow:none !important;
+          color:var(--theme-ink,#39353a) !important;
+        }
+        html:root.home-notepad-embedded body #homepage-notepad-surface .open-options-icon {
+          color:var(--theme-ink,#39353a) !important; -webkit-text-fill-color:currentColor !important;
+        }
+        html:root.home-notepad-embedded body #homepage-notepad-surface #notes .notepad {
+          background:transparent !important; background-image:none !important; box-shadow:none !important;
+          color:var(--theme-ink,#39353a) !important; -webkit-text-fill-color:currentColor !important;
+          caret-color:currentColor !important;
+        }
+        html:root.home-notepad-embedded:not([data-xlyneve-color-theme="porcelain"]) body #homepage-notepad-surface #notes .note-card {
+          background:transparent !important; background-image:none !important;
+          color:var(--theme-ink,#39353a) !important;
+          border:1px solid color-mix(in srgb,var(--theme-ink,#39353a) 12%,transparent) !important;
+          border-radius:14px !important;
+          box-shadow:0 2px 5px color-mix(in srgb,var(--theme-ink,#39353a) 5%,transparent) !important;
+          margin-bottom:10px !important;
+          backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+        }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="soft-stone"] body #homepage-notepad-surface #notes .note-card {
+          background:#e1e2e6 !important; background-image:none !important;
+          border:1px solid rgba(255,255,248,.82) !important;
+          border-radius:24px !important; box-shadow:var(--stone-raised) !important;
+          margin-bottom:16px !important;
+        }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="soft-stone"] body #homepage-notepad-surface #notes { padding:12px !important; }
+        html:root.home-notepad-embedded body #homepage-notepad-surface #notes .timestamp {
+          color:var(--theme-muted-ink,var(--theme-ink,#777)) !important;
+          -webkit-text-fill-color:currentColor !important;
+        }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="sculpted"] body #homepage-notepad-surface #notes .note-card {
+          border:1px solid rgba(255,255,255,.7) !important; border-radius:24px !important;
+          box-shadow:inset 3px 3px 5px rgba(255,255,255,.88),inset -4px -5px 9px rgba(57,53,58,.12),10px 14px 28px rgba(57,53,58,.18),-5px -5px 14px rgba(255,255,255,.62) !important;
+          margin-bottom:22px !important;
+        }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="sculpted"] body #homepage-notepad-surface #notes { padding:16px !important; }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="mint-ceramic"] body #homepage-notepad-surface #notes .note-card {
+          border:1px solid rgba(255,255,248,.82) !important; border-radius:22px !important;
+          box-shadow:var(--mint-raised) !important; margin-bottom:22px !important;
+        }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="mint-ceramic"] body #homepage-notepad-surface #notes { padding:16px !important; }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="pastel-jumper"] body #homepage-notepad-surface #notes .note-card {
+          border:1px solid rgba(255,255,255,.72) !important; border-radius:24px !important;
+          box-shadow:var(--pastel-ceramic-raised) !important; margin-bottom:22px !important;
+        }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="pastel-jumper"] body #homepage-notepad-surface #notes { padding:16px !important; }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="aurora"] body #homepage-notepad-surface #notes .note-card {
+          border:1px solid rgba(255,255,255,.7) !important; border-radius:24px !important;
+          box-shadow:var(--aurora-raised) !important; margin-bottom:20px !important;
+        }
+        html:root.home-notepad-embedded[data-xlyneve-color-theme="aurora"] body #homepage-notepad-surface #notes { padding:12px !important; }
       `;
       doc.head.append(embeddedStyle);
       yellowDot.title = "Drag the middle of the top bar to move notepad";
@@ -293,7 +352,7 @@
       if (controls) topBar.appendChild(controls);
       if (openOptions) topBar.appendChild(openOptions);
       bindHandle(dragHandle, false);
-      bindToolbarLongPress(doc, () => doc.documentElement.classList.toggle("toolbar-visible"));
+      doc.documentElement.classList.add("toolbar-visible");
     }
     frame.addEventListener("load", prepareEmbeddedNotepad);
     bindHandle(resize, true);

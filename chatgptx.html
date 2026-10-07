@@ -1712,6 +1712,16 @@ body > #formatToggle { display: none !important; }
 <link rel="stylesheet" href="concept-links.css?v=20261004-2">
 <script src="concept-preview.js?v=20261004-2"></script>
 <script src="concept-markup.js?v=20261004-1"></script>
+<style>
+  html:root body .message .note-icon-actions,
+  html:root body .message .note-icon-actions > button {
+    background:transparent !important; background-image:none !important;
+    border:0 !important; box-shadow:none !important;
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+  }
+  html:root body .message .note-icon-actions > button::before,
+  html:root body .message .note-icon-actions > button::after { content:none !important; }
+</style>
 </head>
 
 <body>
@@ -1848,6 +1858,8 @@ body > #formatToggle { display: none !important; }
   <div id="conceptSymbolPicker" hidden role="group" aria-label="Arrows and symbols" style="flex:0 0 auto;max-height:100px;overflow:auto;"></div>
   <div class="panelScroll">
   <div id="defBox" contenteditable="true" data-placeholder="Definition…"></div>
+  <label for="sharedDefinitionAliases">Aliases (comma-separated)</label>
+  <input id="sharedDefinitionAliases" placeholder="e.g. T-cells" style="box-sizing:border-box;width:100%;padding:6px;font:12px Tahoma,sans-serif" />
 
   <div id="whyBox" contenteditable="true" data-placeholder="Why / memory hook…"></div>
 
@@ -1881,6 +1893,7 @@ body > #formatToggle { display: none !important; }
   <button class="miniBtn" id="defSaveBtn" title="Save definition">💾</button>
 </div>
 </div>
+<script src="shared-definitions.js?v=20261007-3"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -1906,6 +1919,10 @@ const notesChatApp = firebase.apps.find(app => app.name === "notes-chat") ||
 const db = firebase.firestore(notesChatApp);
 const storage = firebase.storage(notesChatApp);
 const auth = firebase.auth(notesChatApp);
+window.CEPSharedDefinitions.connect({
+  save:async (id,data)=>{await ensureSignedIn();await db.collection('concept_defs').doc(id).set({...data,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});},
+  remove:async id=>{await ensureSignedIn();await db.collection('concept_defs').doc(id).set({disabled:true},{merge:true});}
+});
 // Let Firebase restore its existing durable session. Reapplying persistence
 // here can race auth restoration in an iOS Home Screen app.
 const xgptHandoffToken = sessionStorage.getItem('cep-xgpt-google-access-token');
@@ -3180,6 +3197,7 @@ function startDefsListener() {
         const next = {};
         snap.forEach(doc => {
           const d = doc.data() || {};
+          if (d.disabled) return;
 
           // legacy-safe: if earlier docs stored just "value" string in your old cache shape
           const value = typeof d.value === 'string' ? d.value : '';
@@ -3188,10 +3206,11 @@ function startDefsListener() {
           const whyHtml = typeof d.whyHtml === 'string' ? d.whyHtml : '';
           const concept = typeof d.concept === 'string' ? d.concept : '';
 
-          next[doc.id] = { value, why, valueHtml, whyHtml, concept };
+          next[doc.id] = { value, why, valueHtml, whyHtml, concept, aliases:Array.isArray(d.aliases)?d.aliases:[] };
         });
 
         defsCache = next;
+        window.CEPSharedDefinitions.update(Object.entries(next).map(([id,data])=>({id,...data})));
 
         refreshConceptDefBadges(liveResults);
       }, (err) => {
@@ -3206,6 +3225,7 @@ function stopDefsListener() {
     unsubscribeDefs = null;
   }
   defsCache = {};
+  window.CEPSharedDefinitions.update([]);
 }
 
 function startConceptMediaListener() {
@@ -4010,7 +4030,7 @@ function makeInlineImagePickerButton(onPicked) {
    Concept Definitions (Firestore-backed)
 ========================= */
 function defKeyForConcept(concept) {
-  return normalizeText(concept || '');
+  return window.CEPSharedDefinitions?.find(concept)?.id || normalizeText(concept || '');
 }
 
 function mediaKeyForConcept(concept) {
@@ -4189,6 +4209,12 @@ function getWhyHtml(concept) {
 async function setDefinition(concept, value, why, valueHtml = '', whyHtml = '') {
   const k = defKeyForConcept(concept);
   if (!k) return;
+  const sharedRecord = window.CEPSharedDefinitions.find(concept);
+  const sharedAliases = document.getElementById('sharedDefinitionAliases').value.split(',').map(value=>value.trim()).filter(Boolean);
+  for (const alias of sharedAliases) {
+    const conflict = window.CEPSharedDefinitions.find(alias);
+    if (conflict && conflict.id !== k) throw new Error(`“${alias}” already belongs to “${conflict.concept}”.`);
+  }
 
   await ensureSignedIn();
 
@@ -4200,11 +4226,13 @@ async function setDefinition(concept, value, why, valueHtml = '', whyHtml = '') 
     : '';
 
   await db.collection('concept_defs').doc(k).set({
-    concept: (concept || '').trim(),
+    concept: sharedRecord?.concept || (concept || '').trim(),
     value: (value || '').trim(),
     why: (why || '').trim(),
     valueHtml: safeValueHtml.trim(),
     whyHtml: safeWhyHtml.trim(),
+    aliases: sharedAliases,
+    disabled:false,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
   window.invalidateCepSearchCache?.('xgpt:definitions');
@@ -4215,7 +4243,7 @@ async function deleteDefinition(concept) {
   if (!k) return;
 
   await ensureSignedIn();
-  await db.collection('concept_defs').doc(k).delete();
+  await db.collection('concept_defs').doc(k).set({disabled:true}, {merge:true});
   window.invalidateCepSearchCache?.('xgpt:definitions');
 }
 
@@ -4562,9 +4590,8 @@ document.addEventListener('mouseout', (e) => {
   const toConcept = e.relatedTarget?.closest?.('a.conceptLink');
   const intoTip = defTip.contains(e.relatedTarget);
 
-  if (toConcept || intoTip) return;
-
-  scheduleHideDefTip(220);
+  if (from.contains(e.relatedTarget)) return;
+  scheduleHideDefTip(0);
 }, true);
 
 defTip.addEventListener('mouseenter', () => {
@@ -4627,6 +4654,7 @@ function openDefPanel(concept, clientX, clientY) {
   if (!currentDefConcept) return;
 
   if (defTitle) defTitle.textContent = currentDefConcept;
+  document.getElementById('sharedDefinitionAliases').value = (window.CEPSharedDefinitions.find(currentDefConcept)?.aliases || []).join(', ');
 
   setDefinitionEditorContent(defBox, getDefinitionHtml(currentDefConcept), getDefinition(currentDefConcept));
   setDefinitionEditorContent(whyBox, getWhyHtml(currentDefConcept), getWhy(currentDefConcept));
@@ -5265,6 +5293,7 @@ function printNoteBubble(bubble, includeDefinitions = false) {
     .print-definition { white-space: pre-wrap; }
     .print-concept-image { max-width: 100%; max-height: 110mm; object-fit: contain; margin-top: 10px; }
   </style>
+
 </head>
 <body><main class="print-note">${printable.innerHTML}</main></body>
 </html>`);
@@ -5309,6 +5338,7 @@ function displayNotesInto(targetEl, notes) {
     div.appendChild(bubble);
 
     const btns = document.createElement('div');
+    btns.className = 'note-icon-actions';
     btns.style.textAlign = 'center';
     btns.style.marginTop = '6px';
 

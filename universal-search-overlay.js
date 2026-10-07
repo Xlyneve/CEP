@@ -1,4 +1,6 @@
 import "./concept-markup.js?v=20261004-1";
+import "./shared-definitions.js?v=20261007-3";
+import "./pn-shared-definitions.js?v=20261007-3";
 import "./concept-preview.js?v=20261004-2";
 const conceptStyle = document.createElement('link');
 conceptStyle.rel = 'stylesheet';
@@ -959,7 +961,7 @@ export function enableSearchTableZoom(table) {
   table.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') open(event); });
 }
 
-const interactiveSearchChildSelector = 'table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)';
+const interactiveSearchChildSelector = 'table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-shared-definition,.pn-definition,.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)';
 
 function getYouTubeVideoId(rawUrl) {
   try {

@@ -107,6 +107,7 @@
     { rgb:"233, 233, 225", solid:"#e9e9e1", ink:"#353833" },
   ];
   const themeStorageKey = "xlyneve-color-theme";
+  const removedThemes = new Set(["berry", "anatomy"]);
   const deletedThemeStorageKey = "xlyneve-deleted-themes";
   let deletedThemes = new Set();
   try {
@@ -126,7 +127,7 @@
       if (storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
-  if (deletedThemes.has(selectedTheme)) {
+  if (deletedThemes.has(selectedTheme) || removedThemes.has(selectedTheme)) {
     selectedTheme = "original";
     try { localStorage.removeItem(themeStorageKey); } catch {}
   }
@@ -1934,7 +1935,7 @@
     }
     html[data-xlyneve-color-theme="mint-ceramic"],html[data-xlyneve-color-theme="mint-ceramic"] body {
       color:#303530; background-color:#fdf9f3 !important;
-      background-image:var(--mint-grain),linear-gradient(135deg,#fdf9f3,#f9e5d6) !important;
+      background-image:var(--mint-grain),linear-gradient(135deg,#fffefa,#fdf9f3) !important;
       background-attachment:fixed !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body::before { background:none !important;opacity:0 !important; }
@@ -2309,8 +2310,8 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="aurora"] {
-      --cep-highlight-paper:#e4def0;
-      --cep-highlight-shadow:0 1px 3px rgba(73,61,103,.06),inset 0 1px 0 rgba(255,255,255,.5);
+      --cep-highlight-paper:#c5b0e3;
+      --cep-highlight-shadow:inset 0 0 0 1px rgba(129,84,196,.3),0 1px 3px rgba(73,61,103,.12),inset 0 1px 0 rgba(255,255,255,.5);
       --cep-highlight-dark-paper:#514c60;
       --cep-highlight-dark-shadow:0 1px 3px rgba(38,31,56,.1),inset 0 1px 0 rgba(255,255,255,.1);
       --theme-ink:#28263c; --theme-muted-ink:#79778f;
@@ -2481,7 +2482,7 @@
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="aurora"],html[data-xlyneve-color-theme="aurora"] body {
       background-color:#d9ddef !important;
-      background-image:url("aurora-background.svg?v=20261004-1") !important;
+      background-image:none !important;
       background-size:cover !important;
       background-position:center !important;
       background-repeat:no-repeat !important;
@@ -2972,7 +2973,7 @@
     const drawOptions = () => {
       list.replaceChildren();
       restore.hidden = deletedThemes.size === 0;
-      themeOptions.filter(option => !deletedThemes.has(option.value)).forEach((option) => {
+      themeOptions.filter(option => !deletedThemes.has(option.value) && !removedThemes.has(option.value)).forEach((option) => {
       const row = document.createElement("div");
       row.className = "xlyneve-theme-row";
 

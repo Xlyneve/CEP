@@ -4,7 +4,7 @@
   if (!launchers.length) return;
 
   const fullUrl = "homecal.html";
-  const embeddedUrl = "homecal.html?homeEmbed=today&v=8";
+  const embeddedUrl = "homecal.html?homeEmbed=today&v=10";
   const layoutKey = "xlyneve-calendar-home-layout";
   const openStateKey = "xlyneve-calendar-home-open";
   const todoOpenStateKey = "xlyneve-calendar-home-todo-open";
@@ -24,6 +24,11 @@
     .calendar-launch-choices button { display:block; width:100%; padding:10px 14px; border:0; border-radius:8px; background:transparent; color:#493d49; font:14px system-ui; text-align:left; cursor:pointer; }
     .calendar-launch-choices button:hover,.calendar-launch-choices button:focus-visible { background:#eee5ef; }
     .homepage-calendar { position:fixed; z-index:10020; display:flex; flex-direction:column; width:min(380px,calc(100vw - 16px)); height:min(460px,calc(100dvh - 42px)); overflow:hidden; border:1px solid rgba(255,255,255,.72); border-radius:16px; background:#e8e8e8; box-shadow:0 12px 36px #39263730; }
+    html:root body #homepage-calendar {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
     .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; cursor:grab; touch-action:none; user-select:none; }
     .homepage-calendar-bar:active { cursor:grabbing; }
     .homepage-calendar-bar { position:absolute; top:0; left:0; right:0; height:34px; box-sizing:border-box; z-index:3; opacity:0; pointer-events:none; transform:translateY(-100%); transition:opacity 140ms ease,transform 140ms ease; }
@@ -159,6 +164,37 @@
       handle.addEventListener(name, () => { if (gesture) saveLayout(); gesture = null; })
     );
   }
+  function bindContainerDrag(doc) {
+    let gesture = null;
+    doc.addEventListener("pointerdown", event => {
+      const target = event.target;
+      if (!panel || event.button !== 0 || !event.isPrimary ||
+          !target.matches("body,.calendar-container,.calendar-scroll-glass,.calendar,.day,.day-header,.todo-container,.todo-list") ||
+          target.closest("[contenteditable],button,a,input,textarea,select,.todo-resizer")) return;
+      // Leave the scrollbar gutter available for scrolling.
+      const bounds = target.getBoundingClientRect();
+      if (target.scrollHeight > target.clientHeight && event.clientX >= bounds.left + target.clientLeft + target.clientWidth) return;
+      gesture = { target, id:event.pointerId, x:event.screenX, y:event.screenY,
+        left:panel.offsetLeft, top:panel.offsetTop, moved:false };
+      target.setPointerCapture(event.pointerId);
+    });
+    doc.addEventListener("pointermove", event => {
+      if (!gesture || event.pointerId !== gesture.id || !panel) return;
+      const dx = event.screenX - gesture.x, dy = event.screenY - gesture.y;
+      if (!gesture.moved && Math.hypot(dx, dy) < 8) return;
+      gesture.moved = true;
+      event.preventDefault();
+      movePanel(gesture.left + dx, gesture.top + dy);
+    }, { passive:false });
+    const finish = event => {
+      if (!gesture || event.pointerId !== gesture.id) return;
+      if (gesture.moved) saveLayout();
+      const { target, id } = gesture;
+      gesture = null;
+      if (target.hasPointerCapture(id)) target.releasePointerCapture(id);
+    };
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(type => doc.addEventListener(type, finish));
+  }
   function setPanelTodoOpen(open) {
     if (!panel) return;
     const isOpen = panel.classList.contains("todo-open");
@@ -188,6 +224,7 @@
     localStorage.setItem(openStateKey, "true");
     panel = document.createElement("section");
     panel.className = "homepage-calendar";
+    panel.id = "homepage-calendar";
     panel.setAttribute("aria-label", "Today calendar and to-do");
     const bar = document.createElement("div"); bar.className = "homepage-calendar-bar";
     const label = document.createElement("span"); label.textContent = "Today";
@@ -233,14 +270,26 @@
     const close = document.createElement("button"); close.type = "button"; close.className = "homepage-calendar-close";
     close.addEventListener("pointerdown", event => event.stopPropagation());
     close.textContent = "×"; close.setAttribute("aria-label", "Close homepage calendar"); close.addEventListener("click", closePanel);
-    actions.append(previousDay, nextDay, todo, close); bar.append(label, actions);
+    const addTask = document.createElement("button"); addTask.type = "button"; addTask.className = "homepage-calendar-close homepage-calendar-add";
+    addTask.textContent = "+"; addTask.setAttribute("aria-label", "Add to-do task"); addTask.title = "Add to-do task";
+    addTask.addEventListener("pointerdown", event => event.stopPropagation());
+    addTask.addEventListener("click", () => {
+      localStorage.setItem(todoOpenStateKey, "true"); setPanelTodoOpen(true);
+      const calendarFrame = panel?.querySelector("iframe")?.contentWindow;
+      calendarFrame?.postMessage({ type:"homecal-set-todo", open:true }, location.origin);
+      calendarFrame?.postMessage({ type:"homecal-add-task" }, location.origin);
+    });
+    actions.append(previousDay, nextDay, todo, addTask, close); bar.append(label, actions);
     const restoreTodoOpen = localStorage.getItem(todoOpenStateKey) === "true";
     const frame = document.createElement("iframe"); frame.title = "Today calendar and to-do";
     frame.src = `${embeddedUrl}&todoOpen=${restoreTodoOpen ? "1" : "0"}`;
     const toggleToolbar = () => panel?.classList.toggle("toolbar-visible");
     bindToolbarLongPress(panel, toggleToolbar);
     frame.addEventListener("load", () => {
-      if (frame.contentDocument) bindToolbarLongPress(frame.contentDocument, toggleToolbar);
+      if (frame.contentDocument) {
+        bindToolbarLongPress(frame.contentDocument, toggleToolbar);
+        bindContainerDrag(frame.contentDocument);
+      }
       const open = localStorage.getItem(todoOpenStateKey) === "true";
       frame.contentWindow?.postMessage({ type: "homecal-set-todo", open }, location.origin);
     });

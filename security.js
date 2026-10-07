@@ -10,7 +10,7 @@
   ]);
 
   const GLOBAL_ATTRIBUTES = new Set([
-    "class", "colspan", "rowspan", "scope", "title"
+    "class", "colspan", "rowspan", "scope", "title", "data-pn-definition"
   ]);
 
   const ALLOWED_STYLE_PROPERTIES = new Set([
