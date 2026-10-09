@@ -987,6 +987,25 @@ function getYouTubeVideoId(rawUrl) {
   } catch { return ''; }
 }
 
+export function matchesSearchMedia(entry, kind = 'all') {
+  if (kind === 'all') return true;
+  const data = entry.record?.data || {};
+  const urls = [data.url, entry.url, entry.directUrl].filter(Boolean);
+  const content = document.createElement('div');
+  const html = entry.richHtml || data.note || data.text || '';
+  if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(content, html);
+  else content.textContent = html;
+  content.querySelectorAll('a[href]').forEach(link => urls.push(link.getAttribute('href')));
+  return urls.some(raw => {
+    try {
+      const url = new URL(raw);
+      if (!['http:', 'https:'].includes(url.protocol)) return false;
+      const video = Boolean(getYouTubeVideoId(url.href));
+      return kind === 'videos' ? video : !video;
+    } catch { return false; }
+  });
+}
+
 let searchYouTubeUi;
 function getSearchYouTubeUi() {
   if (searchYouTubeUi?.root?.isConnected) return searchYouTubeUi;
@@ -1153,6 +1172,11 @@ export async function mountUniversalSearch(host, closeSearch) {
       <button type="button" data-search-mode="concepts" aria-pressed="false">Concepts</button>
       <button type="button" data-search-mode="clinical" aria-pressed="false">C.Notes</button>
     </div>
+    <div class="cep-global-search-modes cep-search-media-filters" aria-label="Filter by link type">
+      <button type="button" class="is-active" data-search-media="all" aria-pressed="true">All</button>
+      <button type="button" data-search-media="videos" aria-pressed="false">🎬 Videos</button>
+      <button type="button" data-search-media="links" aria-pressed="false">🔗 Links</button>
+    </div>
     <div class="cep-global-search-filters" aria-label="Filter search by section"></div>
     <div class="cep-global-search-status" aria-live="polite">Preparing saved-note sections…</div>
     <div class="cep-xgpt-auth-prompt" hidden><span>Sign in to include Xgpt Notes and concept images.</span><button type="button">Sign in to Xgpt</button></div>
@@ -1161,6 +1185,8 @@ export async function mountUniversalSearch(host, closeSearch) {
   const input = panel.querySelector('input');
   const modes = panel.querySelector('.cep-global-search-modes');
   const filters = panel.querySelector('.cep-global-search-filters');
+  const mediaFilters = panel.querySelector('.cep-search-media-filters');
+  let mediaFilter = 'all';
   const status = panel.querySelector('.cep-global-search-status');
   const xgptPrompt = panel.querySelector('.cep-xgpt-auth-prompt');
   const results = panel.querySelector('.cep-global-search-results');
@@ -1238,8 +1264,8 @@ export async function mountUniversalSearch(host, closeSearch) {
       ? [...new Set(commaGroups.flatMap(group => group.terms))]
       : terms;
     results.replaceChildren();
-    if (!query) { status.textContent = 'Type a word to search.'; return; }
-    const scoredMatches = (searchMode === 'clinical' ? clinicalEntries : entries).map(entry => {
+    if (!query && mediaFilter === 'all') { status.textContent = 'Type a word to search.'; return; }
+    const scoredMatches = (searchMode === 'clinical' ? clinicalEntries : entries).filter(entry => matchesSearchMedia(entry, mediaFilter)).map(entry => {
       const indexed = getSearchText(entry);
       const { title, text } = indexed;
       if (commaGroups) {
@@ -1385,6 +1411,7 @@ export async function mountUniversalSearch(host, closeSearch) {
         button.classList.toggle('is-active', active);
         button.setAttribute('aria-pressed', String(active));
       });
+      mediaFilters.hidden = searchMode === 'concepts';
       filters.hidden = searchMode !== 'default';
       input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : searchMode === 'clinical' ? 'Search Clinical Notes titles and text…' : 'Search all notes and pages…';
       if (searchMode === 'clinical') {
@@ -1395,6 +1422,17 @@ export async function mountUniversalSearch(host, closeSearch) {
       runSearch();
       input.focus();
     });
+  });
+  mediaFilters.addEventListener('click', event => {
+    const selected = event.target.closest('[data-search-media]');
+    if (!selected) return;
+    mediaFilter = selected.dataset.searchMedia;
+    mediaFilters.querySelectorAll('button').forEach(button => {
+      const active = button === selected;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    runSearch(); input.focus();
   });
   let mountedRefreshPromise = Promise.resolve();
   const refreshMountedEntries = async dataset => {

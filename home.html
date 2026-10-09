@@ -3741,6 +3741,11 @@ html[data-xlyneve-color-theme="sculpted"].theme-home-glass body.dashboard-hierar
     <button class="universal-search-mode" type="button" data-search-mode="concepts" aria-pressed="false">Concepts</button>
     <button class="universal-search-mode" type="button" data-search-mode="clinical" aria-pressed="false">C.Notes</button>
   </div>
+  <div class="universal-search-modes" id="universalSearchMedia" aria-label="Filter by link type">
+    <button class="universal-search-mode is-active" type="button" data-search-media="all" aria-pressed="true">All</button>
+    <button class="universal-search-mode" type="button" data-search-media="videos" aria-pressed="false">🎬 Videos</button>
+    <button class="universal-search-mode" type="button" data-search-media="links" aria-pressed="false">🔗 Links</button>
+  </div>
   <div class="universal-search-status" id="universalSearchStatus" aria-live="polite">Type a word to search.</div>
   <div class="home-xgpt-auth-prompt" id="homeXgptAuthPrompt" hidden><span>Sign in to include Xgpt Notes and concept images.</span><button id="homeXgptAuthButton" type="button">Sign in to Xgpt</button></div>
   <div class="universal-search-results" id="universalSearchResults"></div>
@@ -4266,7 +4271,8 @@ html[data-xlyneve-color-theme="sculpted"].theme-home-glass body.dashboard-hierar
     };
     let indexPromise, searchIndex = [], dynamicSearchEntries = [], timer, searchRequestId = 0, searchMode = 'default';
     window.cepUniversalLazyLoaders ||= [];
-    let activeSource = 'all';
+    let activeSource = 'all', mediaFilter = 'all';
+    const mediaFilters = document.getElementById('universalSearchMedia');
     const searchUseKey = 'cep-universal-search-use-v1';
     let searchUse = {};
     try { searchUse = JSON.parse(localStorage.getItem(searchUseKey) || '{}') || {}; } catch {}
@@ -4603,7 +4609,7 @@ html[data-xlyneve-color-theme="sculpted"].theme-home-glass body.dashboard-hierar
       }
       results.replaceChildren();
       previewFrames.clear();
-      if (!query) {
+      if (!query && (mediaFilter === 'all' || searchMode === 'concepts')) {
         status.textContent = searchMode === 'concepts' ? 'Type a word to search referenced concepts.' : 'Type a word to search.';
         return;
       }
@@ -4662,6 +4668,7 @@ html[data-xlyneve-color-theme="sculpted"].theme-home-glass body.dashboard-hierar
       if (searchMode !== 'clinical') window.cepUniversalLazyLoaders.forEach(loader => void loader(query));
       if (requestId !== searchRequestId || normalizeSearchValue(input.value) !== query) return;
       const scoredMatches = candidates
+        .filter(page => window.matchesSearchMedia?.(page, mediaFilter) ?? mediaFilter === 'all')
         .filter(page => searchMode === 'clinical' || activeSource === 'all' || page.sourceTitle === activeSource)
         .map(page => commaGroups ? scoreCommaPage(page, commaGroups) : scorePage(page, query, terms))
         .filter(Boolean)
@@ -4931,11 +4938,23 @@ html[data-xlyneve-color-theme="sculpted"].theme-home-glass body.dashboard-hierar
           button.classList.toggle('is-active', active);
           button.setAttribute('aria-pressed', String(active));
         });
+        mediaFilters.hidden = searchMode === 'concepts';
         filters.hidden = searchMode !== 'default';
         input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : searchMode === 'clinical' ? 'Search Clinical Notes titles and text…' : 'Search all notes and pages…';
         void runSearch();
         input.focus();
       });
+    });
+    mediaFilters.addEventListener('click', event => {
+      const selected = event.target.closest('[data-search-media]');
+      if (!selected) return;
+      mediaFilter = selected.dataset.searchMedia;
+      mediaFilters.querySelectorAll('button').forEach(button => {
+        const active = button === selected;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+      void runSearch(); input.focus();
     });
     function openSearch() {
       panel.hidden = false; button.setAttribute('aria-expanded', 'true'); input.focus();
@@ -6154,7 +6173,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=44';
+  import { matchesSearchMedia, createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=44';
   import {
     getFirestore,
     collection,
@@ -6278,6 +6297,7 @@ const firebaseConfig = {
   window.getXgptConceptImages = getXgptConceptImages;
   window.getCachedXgptConceptMedia = getSharedXgptConceptMedia;
   window.getCachedXgptConceptDefinition = getSharedXgptConceptDefinition;
+  window.matchesSearchMedia = matchesSearchMedia;
   window.searchReferencedXgptConcepts = searchSharedReferencedXgptConcepts;
   window.renderReferencedXgptConceptResults = renderSharedReferencedXgptConceptResults;
   window.renderXgptSearchRichContent = renderSharedXgptSearchRichContent;
