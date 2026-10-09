@@ -699,7 +699,7 @@ const appendSourceLink = (parent, url, label) => {
   const wrap = document.createElement('div'); wrap.className = 'cep-source-card-url';
   const link = document.createElement('a'); link.href = safeUrl; link.target = '_blank'; link.rel = 'noopener noreferrer';
   const isVideo = Boolean(getYouTubeVideoId(safeUrl));
-  link.textContent = isVideo ? '▶ Play video' : '🔗 Open link';
+  link.textContent = isVideo ? '🎬 Play video' : '🔗 Open link';
   link.setAttribute('aria-label', isVideo ? 'Play YouTube video' : (label || 'Open link'));
   link.title = isVideo ? 'Play YouTube video' : (label || 'Open link');
   wrap.appendChild(link); parent.appendChild(wrap);
