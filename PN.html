@@ -1755,6 +1755,18 @@ const youtubePlayerFrame = document.getElementById('youtubePlayerFrame');
 const youtubeExternalLink = document.getElementById('youtubeExternalLink');
 const youtubePlayerClose = document.getElementById('youtubePlayerClose');
 
+function getFacebookVideoUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    const facebook = ['facebook.com', 'm.facebook.com', 'web.facebook.com'].includes(host);
+    const path = url.pathname;
+    if (host === 'fb.watch' || (facebook && (/\/(?:videos|reel|reels)\/[^/]+/.test(path) || /^\/share\/(?:v|r)\/[^/]+/.test(path) || ((path === '/watch' || path === '/watch/' || path === '/video.php') && url.searchParams.has('v'))))) return url.href;
+  } catch {}
+  return '';
+}
+
 function getYouTubeVideoId(rawUrl) {
   try {
     const parsed = new URL(rawUrl, location.href);
@@ -1784,13 +1796,16 @@ function closeYouTubePlayer() {
 
 function openYouTubePlayer(videoId, sourceUrl) {
   const iframe = document.createElement('iframe');
-  iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
-  iframe.title = 'YouTube video player';
+  const facebookUrl = getFacebookVideoUrl(sourceUrl);
+  iframe.src = facebookUrl ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(facebookUrl)}&show_text=false&width=900&autoplay=true` : `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+  iframe.title = facebookUrl ? 'Facebook video player' : 'YouTube video player';
+  youtubePlayerOverlay.querySelector('[role="dialog"]').setAttribute('aria-label', iframe.title);
   iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
   iframe.allowFullscreen = true;
   iframe.referrerPolicy = 'strict-origin-when-cross-origin';
   youtubePlayerFrame.replaceChildren(iframe);
   youtubeExternalLink.href = sourceUrl;
+  youtubeExternalLink.textContent = facebookUrl ? 'Open on Facebook' : 'Open on YouTube';
   youtubePlayerOverlay.classList.add('is-open');
   youtubePlayerOverlay.setAttribute('aria-hidden', 'false');
   youtubePlayerClose.focus({ preventScroll: true });
@@ -1897,16 +1912,16 @@ actionsToggle.addEventListener('click', (e) => {
 
     const noteUrlLink = div.querySelector('.note-url a');
     if (noteUrlLink) {
-      const isVideo = Boolean(getYouTubeVideoId(noteUrlLink.href));
+      const isVideo = Boolean(getYouTubeVideoId(noteUrlLink.href) || getFacebookVideoUrl(noteUrlLink.href));
       noteUrlLink.textContent = isVideo ? '🎬 Play video' : '🔗 Open link';
       if (isVideo) {
         noteUrlLink.style.setProperty('font-size', '14px', 'important');
         noteUrlLink.style.setProperty('font-weight', '700', 'important');
       }
-      noteUrlLink.setAttribute('aria-label', isVideo ? 'Play YouTube video' : 'Open link');
+      noteUrlLink.setAttribute('aria-label', isVideo ? 'Play video' : 'Open link');
       noteUrlLink.addEventListener('click', event => {
         const videoId = getYouTubeVideoId(noteUrlLink.href);
-        if (!videoId) return;
+        if (!videoId && !getFacebookVideoUrl(noteUrlLink.href)) return;
         event.preventDefault();
         event.stopPropagation();
         openYouTubePlayer(videoId, noteUrlLink.href);

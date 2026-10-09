@@ -698,14 +698,14 @@ const appendSourceLink = (parent, url, label) => {
   if (!safeUrl) return;
   const wrap = document.createElement('div'); wrap.className = 'cep-source-card-url';
   const link = document.createElement('a'); link.href = safeUrl; link.target = '_blank'; link.rel = 'noopener noreferrer';
-  const isVideo = Boolean(getYouTubeVideoId(safeUrl));
+  const isVideo = Boolean(getYouTubeVideoId(safeUrl) || getFacebookVideoUrl(safeUrl));
   link.textContent = isVideo ? '🎬 Play video' : '🔗 Open link';
   if (isVideo) {
     link.style.setProperty('font-size', '14px', 'important');
     link.style.setProperty('font-weight', '700', 'important');
   }
-  link.setAttribute('aria-label', isVideo ? 'Play YouTube video' : (label || 'Open link'));
-  link.title = isVideo ? 'Play YouTube video' : (label || 'Open link');
+  link.setAttribute('aria-label', isVideo ? 'Play video' : (label || 'Open link'));
+  link.title = isVideo ? 'Play video' : (label || 'Open link');
   wrap.appendChild(link); parent.appendChild(wrap);
 };
 
@@ -970,6 +970,18 @@ export function enableSearchTableZoom(table) {
 
 const interactiveSearchChildSelector = 'table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-shared-definition,.pn-definition,.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)';
 
+function getFacebookVideoUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    const facebook = ['facebook.com', 'm.facebook.com', 'web.facebook.com'].includes(host);
+    const path = url.pathname;
+    if (host === 'fb.watch' || (facebook && (/\/(?:videos|reel|reels)\/[^/]+/.test(path) || /^\/share\/(?:v|r)\/[^/]+/.test(path) || ((path === '/watch' || path === '/watch/' || path === '/video.php') && url.searchParams.has('v'))))) return url.href;
+  } catch {}
+  return '';
+}
+
 function getYouTubeVideoId(rawUrl) {
   try {
     const url = new URL(rawUrl, location.href);
@@ -1000,7 +1012,7 @@ export function matchesSearchMedia(entry, kind = 'all') {
     try {
       const url = new URL(raw);
       if (!['http:', 'https:'].includes(url.protocol)) return false;
-      const video = Boolean(getYouTubeVideoId(url.href));
+      const video = Boolean(getYouTubeVideoId(url.href) || getFacebookVideoUrl(url.href));
       return kind === 'videos' ? video : !video;
     } catch { return false; }
   });
@@ -1035,8 +1047,11 @@ function getSearchYouTubeUi() {
   const closePlayer = () => { root.hidden = true; frame.replaceChildren(); };
   const open = (videoId, sourceUrl) => {
     const iframe = document.createElement('iframe');
-    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
-    iframe.title = 'YouTube video player';
+    const facebookUrl = getFacebookVideoUrl(sourceUrl);
+    iframe.src = facebookUrl ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(facebookUrl)}&show_text=false&width=900&autoplay=true` : `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+    iframe.title = facebookUrl ? 'Facebook video player' : 'YouTube video player';
+    root.setAttribute('aria-label', iframe.title);
+    external.textContent = facebookUrl ? 'Open on Facebook' : 'Open on YouTube';
     iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
     iframe.allowFullscreen = true; iframe.referrerPolicy = 'strict-origin-when-cross-origin';
     frame.replaceChildren(iframe); external.href = sourceUrl; root.hidden = false; close.focus({ preventScroll:true });
@@ -1051,7 +1066,7 @@ function getSearchYouTubeUi() {
 
 function openSearchYouTubeUrl(rawUrl) {
   const videoId = getYouTubeVideoId(rawUrl);
-  if (!videoId) return false;
+  if (!videoId && !getFacebookVideoUrl(rawUrl)) return false;
   getSearchYouTubeUi().open(videoId, rawUrl);
   return true;
 }
