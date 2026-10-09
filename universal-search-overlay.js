@@ -700,6 +700,10 @@ const appendSourceLink = (parent, url, label) => {
   const link = document.createElement('a'); link.href = safeUrl; link.target = '_blank'; link.rel = 'noopener noreferrer';
   const isVideo = Boolean(getYouTubeVideoId(safeUrl));
   link.textContent = isVideo ? '🎬 Play video' : '🔗 Open link';
+  if (isVideo) {
+    link.style.setProperty('font-size', '14px', 'important');
+    link.style.setProperty('font-weight', '700', 'important');
+  }
   link.setAttribute('aria-label', isVideo ? 'Play YouTube video' : (label || 'Open link'));
   link.title = isVideo ? 'Play YouTube video' : (label || 'Open link');
   wrap.appendChild(link); parent.appendChild(wrap);
