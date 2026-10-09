@@ -1160,22 +1160,33 @@ function editDistance(a, b) {
 
 export async function mountUniversalSearch(host, closeSearch) {
   installXgptMediaUi();
+  if (!document.getElementById('cep-search-input-media-style')) {
+    const style = document.createElement('style'); style.id = 'cep-search-input-media-style';
+    style.textContent = `.cep-search-input-wrap { position:relative; flex:1; min-width:0; }
+.cep-search-input-wrap input { box-sizing:border-box; width:100%; padding-right:86px !important; }
+.cep-search-input-wrap .cep-search-media-filters { position:absolute; right:9px; top:50%; transform:translateY(-50%); display:flex; gap:4px; }
+.cep-search-media-filters[hidden] { display:none !important; }
+.cep-search-input-wrap .cep-search-media-filters button { width:30px; height:30px; padding:0 !important; flex:none; display:grid; place-items:center; border:1px solid transparent; border-radius:9px; background:transparent; color:var(--theme-ink,#40363b); font:17px/1 sans-serif !important; cursor:pointer; }
+.cep-search-input-wrap .cep-search-media-filters button[aria-pressed="true"] { background:rgba(128,128,128,.18) !important; border:1px solid currentColor !important; }
+`; document.head.append(style);
+  }
   const panel = document.createElement('section');
   panel.className = 'cep-global-search-panel';
   panel.innerHTML = `
     <div class="cep-global-search-row">
+      <div class="cep-search-input-wrap">
       <input type="search" autocomplete="off" spellcheck="false" placeholder="Search all notes and pages…" aria-label="Words to search for">
+        <div class="cep-search-media-filters" aria-label="Filter by link type">
+          <button type="button" data-search-media="videos" aria-pressed="false" aria-label="Videos" title="Videos">🎬</button>
+          <button type="button" data-search-media="links" aria-pressed="false" aria-label="Links" title="Links">🔗</button>
+        </div>
+      </div>
       <button type="button" aria-label="Close search">×</button>
     </div>
     <div class="cep-global-search-modes" aria-label="Search mode">
       <button type="button" class="is-active" data-search-mode="default" aria-pressed="true">Default</button>
       <button type="button" data-search-mode="concepts" aria-pressed="false">Concepts</button>
       <button type="button" data-search-mode="clinical" aria-pressed="false">C.Notes</button>
-    </div>
-    <div class="cep-global-search-modes cep-search-media-filters" aria-label="Filter by link type">
-      <button type="button" class="is-active" data-search-media="all" aria-pressed="true">All</button>
-      <button type="button" data-search-media="videos" aria-pressed="false">🎬 Videos</button>
-      <button type="button" data-search-media="links" aria-pressed="false">🔗 Links</button>
     </div>
     <div class="cep-global-search-filters" aria-label="Filter search by section"></div>
     <div class="cep-global-search-status" aria-live="polite">Preparing saved-note sections…</div>
@@ -1187,10 +1198,11 @@ export async function mountUniversalSearch(host, closeSearch) {
   const filters = panel.querySelector('.cep-global-search-filters');
   const mediaFilters = panel.querySelector('.cep-search-media-filters');
   let mediaFilter = 'all';
+  const selectedMedia = new Set();
   const status = panel.querySelector('.cep-global-search-status');
   const xgptPrompt = panel.querySelector('.cep-xgpt-auth-prompt');
   const results = panel.querySelector('.cep-global-search-results');
-  panel.querySelector('button').addEventListener('click', closeSearch);
+  panel.querySelector('[aria-label="Close search"]').addEventListener('click', closeSearch);
   let clinicalEntries = [];
   let entries = [], activeSource = 'All', searchMode = 'default', timer, conceptRequestId = 0;
   const mergeXgptEntries = xgptEntries => {
@@ -1426,9 +1438,11 @@ export async function mountUniversalSearch(host, closeSearch) {
   mediaFilters.addEventListener('click', event => {
     const selected = event.target.closest('[data-search-media]');
     if (!selected) return;
-    mediaFilter = selected.dataset.searchMedia;
+    const kind = selected.dataset.searchMedia;
+    if (selectedMedia.has(kind)) selectedMedia.delete(kind); else selectedMedia.add(kind);
+    mediaFilter = selectedMedia.size === 1 ? [...selectedMedia][0] : 'all';
     mediaFilters.querySelectorAll('button').forEach(button => {
-      const active = button === selected;
+      const active = selectedMedia.has(button.dataset.searchMedia);
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-pressed', String(active));
     });
