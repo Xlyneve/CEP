@@ -2801,10 +2801,10 @@
       width:18px; height:18px;
     }
     html:root.theme-pn body .note-url a.cep-media-link {
-      width:48px !important; height:48px !important; border-radius:15px !important;
+      width:30px !important; height:30px !important; border-radius:9px !important;
     }
     html:root.theme-pn body .note-url a.cep-media-link svg {
-      width:28px; height:28px;
+      width:18px; height:18px;
     }
   `;
 
