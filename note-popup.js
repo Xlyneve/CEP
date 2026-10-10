@@ -14,7 +14,8 @@
     html:root body .cep-note-notice { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:20010; display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 4px 24px #0003; font:13px Tahoma,sans-serif; max-width:calc(100vw - 32px); box-sizing:border-box; }
     .cep-note-notice button { cursor:pointer; white-space:nowrap; }
     html:root body .note-card.cep-note-saved { outline:3px solid #b89cc9 !important; outline-offset:4px; }
-    html:root body :is(.cep-note-popup,.pn-edit-popup) .cep-add-layout { display:grid !important; grid-template-columns:minmax(0,220px) minmax(0,1fr); gap:20px; align-items:start; }
+    html:root body :is(.cep-note-popup,.pn-edit-popup) .cep-add-layout { display:grid !important; grid-template-columns:minmax(0,220px) minmax(0,1fr); grid-template-rows:auto 1fr; gap:20px; min-height:420px; align-items:stretch; }
+    html:root body .cep-add-controls { grid-column:1; grid-row:1; }
     html:root body .cep-add-controls { display:flex; flex-direction:column; gap:12px; min-width:0; }
     html:root body .cep-add-controls > input:not([type=file]) { flex:0 0 auto !important; height:36px !important; min-height:0 !important; max-height:none !important; margin:0 !important; width:100% !important; box-sizing:border-box; }
     html:root body .cep-add-controls :is(.editor-buttons,.format-buttons,.formatting-buttons,.action-buttons) { display:flex !important; flex-wrap:wrap; gap:6px; width:100% !important; margin:0 !important; box-sizing:border-box; }
@@ -29,13 +30,15 @@
     .cep-saved-note-body { overflow-wrap:anywhere; font:13px/1.6 Tahoma,sans-serif; }
     .cep-saved-note-body img,.cep-saved-note-image { max-width:100%; height:auto; }
     .cep-saved-note-actions { display:flex; gap:10px; margin-top:20px; }
-    html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:52px; }
+    html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:32px; grid-column:1; grid-row:2; align-self:end; }
     html:root body .cep-add-actions button { width:auto !important; margin:0 !important; }
-    html:root body .cep-add-body { min-width:0; }
-    html:root body .cep-add-body :is(textarea,[contenteditable=true]) { width:100% !important; min-height:340px !important; max-height:60dvh !important; overflow:auto; margin:0 !important; box-sizing:border-box; }
+    html:root body .cep-add-body { min-width:0; grid-column:2; grid-row:1 / span 2; }
+    html:root body .cep-add-body :is(textarea,[contenteditable=true]) { width:100% !important; height:100% !important; min-height:340px !important; max-height:none !important; overflow:auto; margin:0 !important; box-sizing:border-box; }
     @media (max-width:600px) {
-      html:root body :is(.cep-note-popup,.pn-edit-popup) .cep-add-layout { grid-template-columns:minmax(0,1fr); gap:16px; }
-      html:root body .cep-add-body :is(textarea,[contenteditable=true]) { min-height:220px !important; }
+      html:root body :is(.cep-note-popup,.pn-edit-popup) .cep-add-layout { grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto auto; gap:16px; min-height:0; }
+      html:root body .cep-add-body { grid-column:1; grid-row:2; }
+      html:root body .cep-add-actions { grid-column:1; grid-row:3; margin-top:8px; }
+      html:root body .cep-add-body :is(textarea,[contenteditable=true]) { height:220px !important; min-height:220px !important; }
     }
   `;
   document.head.append(style);
@@ -195,8 +198,7 @@
       if (extra.children.length || extra.textContent.trim() || extra.matches('input,label,button')) controls.append(extra);
       else extra.remove();
     });
-    controls.append(actions);
-    form.replaceChildren(controls,body);
+    form.replaceChildren(controls,body,actions);
     form.classList.add('cep-add-layout');
     const syncToolbar = () => {
       const toolbar = form.querySelector('.cep-pn-editor-toolbar');
