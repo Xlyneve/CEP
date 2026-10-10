@@ -863,13 +863,23 @@ textarea:focus {
     text-underline-offset: 4px;
   }
   .email-copy:focus-visible { outline: 2px solid #e4b923; outline-offset: 3px; }
-  .note-text { position: relative; }
-  .email-copy-status {
-    position: absolute; right: 0; bottom: 0; pointer-events: none;
-    background: #fffbe8; color: #332e20; border-radius: 6px;
-    font-size: 12px; padding: 3px 7px; box-shadow: 0 2px 5px #0002;
+  html:root body .email-copy { position: relative; }
+  html:root body .email-copy.email-copied { margin-inline-end: 22px; }
+  html:root body .email-copy.email-copied::after {
+    content: '✓'; position: absolute; left: calc(100% + 4px); top: 50%;
+    transform: translateY(-50%); width: 17px; height: 17px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #fffbe8 !important; color: #334b38 !important;
+    -webkit-text-fill-color: #334b38 !important;
+    border: 1px solid #c8c6af; border-radius: 50%;
+    font: 700 12px/1 Arial, sans-serif; text-decoration: none;
+    pointer-events: none; z-index: 1;
   }
-  .email-copy-status:empty { display: none; }
+  .email-copy-status {
+    position: absolute; width: 1px; height: 1px; padding: 0;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    pointer-events: none;
+  }
   </style>
 	<link rel="stylesheet" href="site-background.css?v=20260722-4">
   <script src="page-theme.js?v=20260823-1"></script>
@@ -1107,9 +1117,15 @@ function enableEmailCopy(root) {
             status = document.createElement('span'); status.className = 'email-copy-status';
             status.setAttribute('role','status'); root.parentElement.append(status); root._emailCopyStatus = status;
           }
-          status.textContent = 'Copied';
+          status.textContent = 'Email address copied';
           clearTimeout(root._emailCopyTimer);
-          root._emailCopyTimer = setTimeout(() => { status.textContent = ''; control.title = 'Copy email address'; }, 1400);
+          root._copiedEmail?.classList.remove('email-copied');
+          root._copiedEmail = control;
+          control.classList.add('email-copied');
+          root._emailCopyTimer = setTimeout(() => {
+            status.textContent = ''; control.classList.remove('email-copied');
+            control.title = 'Copy email address';
+          }, 1400);
         });
       };
       control.addEventListener('click',copy);
