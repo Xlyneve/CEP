@@ -2768,6 +2768,21 @@
     }
   `;
 
+  // Video labels need their own text fill: dark cards otherwise pass light ink
+  // into PN's pale link button, while search links may inherit a dark colour.
+  themeStyle.textContent += `
+    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"] {
+      color:#263333 !important; -webkit-text-fill-color:#263333 !important;
+      background:#fbf8f5 !important; background-image:none !important;
+      display:inline-block; padding:4px 9px; border-radius:6px;
+      font-size:14px !important; font-weight:700 !important;
+      text-decoration:none; opacity:1 !important;
+    }
+    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"]:hover {
+      background:#f1e7e3 !important;
+    }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
