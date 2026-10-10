@@ -700,22 +700,23 @@ const appendSourceLink = (parent, url, label) => {
   const link = document.createElement('a'); link.href = safeUrl; link.target = '_blank'; link.rel = 'noopener noreferrer';
   const isVideo = Boolean(getYouTubeVideoId(safeUrl) || getFacebookVideoUrl(safeUrl));
   link.textContent = isVideo ? '🎬 Play video' : '🔗 Open link';
-  if (isVideo) {
+  {
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('aria-hidden', 'true');
     icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor');
     icon.setAttribute('stroke-width', '1.8'); icon.setAttribute('stroke-linejoin', 'round');
-    for (const [tag, attrs] of [['rect', {x:'2',y:'6',width:'14',height:'12',rx:'3'}], ['path', {d:'M16 10 22 6v12l-6-4Z'}], ['path', {d:'m7 9 4 3-4 3Z',fill:'currentColor',stroke:'none'}]]) {
+    for (const [tag, attrs] of (isVideo ? [['rect', {x:'2',y:'6',width:'14',height:'12',rx:'3'}], ['path', {d:'M16 10 22 6v12l-6-4Z'}], ['path', {d:'m7 9 4 3-4 3Z',fill:'currentColor',stroke:'none'}]] : [['path', {d:'M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'}], ['path', {d:'M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'}]])) {
       const shape = document.createElementNS('http://www.w3.org/2000/svg', tag);
       Object.entries(attrs).forEach(([key, value]) => shape.setAttribute(key, value)); icon.append(shape);
     }
     link.replaceChildren(icon);
-    link.title = 'Play video';
+    link.classList.add('cep-media-link');
+    link.title = isVideo ? 'Play video' : 'Open link';
     link.style.setProperty('font-size', '14px', 'important');
     link.style.setProperty('font-weight', '700', 'important');
   }
-  link.setAttribute('aria-label', isVideo ? 'Play video' : (label || 'Open link'));
-  link.title = isVideo ? 'Play video' : (label || 'Open link');
+  link.setAttribute('aria-label', isVideo ? 'Play video' : 'Open link');
+  link.title = isVideo ? 'Play video' : 'Open link';
   wrap.appendChild(link); parent.appendChild(wrap);
 };
 

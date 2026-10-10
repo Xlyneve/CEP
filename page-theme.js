@@ -2768,9 +2768,9 @@
     }
   `;
 
-  // A shared SVG camera button stays recognisable and readable across browsers and themes.
+  // Shared SVG media buttons stay recognisable and readable across browsers and themes.
   themeStyle.textContent += `
-    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"] {
+    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link) {
       color:#263333 !important; -webkit-text-fill-color:#263333 !important;
       background:linear-gradient(145deg,#fffdf9,#e7e3dd) !important;
       display:inline-flex !important; align-items:center; justify-content:center;
@@ -2781,17 +2781,17 @@
       text-decoration:none; opacity:1 !important; vertical-align:middle;
       transition:transform .12s ease,box-shadow .12s ease;
     }
-    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"]:hover {
+    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link):hover {
       background:linear-gradient(145deg,#fffdf9,#eee8e0) !important;
     }
-    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"] svg {
+    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link) svg {
       width:28px; height:28px; display:block; flex:none; pointer-events:none;
     }
-    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"]:active {
+    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link):active {
       transform:translateY(1px);
       box-shadow:inset 2px 3px 5px rgba(38,51,51,.2),inset -2px -2px 4px rgba(255,255,255,.8) !important;
     }
-    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"]:focus-visible {
+    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link):focus-visible {
       outline:2px solid #263333; outline-offset:3px;
     }
   `;
