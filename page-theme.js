@@ -2794,6 +2794,18 @@
     html:root body a.cep-media-link:focus-visible {
       outline:2px solid #263333; outline-offset:3px;
     }
+    html:root body a.cep-media-link:not([aria-label="Play video"]) {
+      width:30px !important; height:30px !important; border-radius:9px !important;
+    }
+    html:root body a.cep-media-link:not([aria-label="Play video"]) svg {
+      width:18px; height:18px;
+    }
+    html:root.theme-pn body .note-url a.cep-media-link {
+      width:48px !important; height:48px !important; border-radius:15px !important;
+    }
+    html:root.theme-pn body .note-url a.cep-media-link svg {
+      width:28px; height:28px;
+    }
   `;
 
   // Keep text on the shared pale table surfaces readable in every theme.
