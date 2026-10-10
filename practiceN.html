@@ -711,7 +711,7 @@ textarea:focus {
 }
 
 .note-card.new-note-highlight::after {
-  content: "NEW";
+  content: "SAVED";
   position: absolute;
   top: -12px;
   right: -10px;
@@ -1257,6 +1257,7 @@ textarea:focus {
 <!-- Floating toggle button -->
 <button id="toggleInputBtn">+</button>
 
+<script src="note-popup.js?v=20261010-1"></script>
 <script type="module">
 import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1558,6 +1559,7 @@ document.getElementById('delColMainBtn').addEventListener('mousedown', (e) => {
 /* ---------------- Create note (from add form) ---------------- */
 // Assumes #noteText is a contenteditable div (live formatting)
 document.getElementById('addBtn').addEventListener('click', async (e) => {
+  return CEPNotePopup.submit(async () => {
   e.preventDefault();
   e.stopPropagation();
 
@@ -1586,6 +1588,9 @@ document.getElementById('addBtn').addEventListener('click', async (e) => {
 
   newestNoteId = newDoc.id;
   resetAddForm();
+  CEPNotePopup.saved(newDoc.id, () => { currentSearch = ''; document.getElementById('searchInput').value = ''; renderFilteredNotes(); });
+
+  });
 });
 
 function resetAddForm() {
@@ -1603,6 +1608,7 @@ function resetAddForm() {
 
   if (inputGroup) inputGroup.classList.remove('show');
   if (toggleBtn) toggleBtn.textContent = '+';
+  CEPNotePopup.close();
 }
 
 /* ---------------- Real-time updates ---------------- */
@@ -1718,8 +1724,9 @@ function deleteTableColumn(editor) {
 }
 /* ---------------- Render ---------------- */
 function renderNotes(arr) {
+  const finishRender = CEPNotePopup.beginRender(notesContainer);
   notesContainer.innerHTML = '';
-  if (!arr.length) { notesContainer.innerHTML = '<p>No notes found.</p>'; return; }
+  if (!arr.length) { notesContainer.innerHTML = '<p>No notes found.</p>'; finishRender(); return; }
 
   renderInBatches(notesContainer, arr, note => {
     const card = document.createElement('div');
@@ -1732,14 +1739,6 @@ function renderNotes(arr) {
   (pendingNewNoteTimestamp && note.timestamp === pendingNewNoteTimestamp)
 ) {
   card.classList.add('new-note-highlight');
-
-  setTimeout(() => {
-    card.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'nearest'
-    });
-  }, 300);
 
   setTimeout(() => {
     card.classList.remove('new-note-highlight');
@@ -1867,7 +1866,7 @@ boldBtn.className = 'mini-btn bold-mini';
 boldBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  textEditor.focus();
+  textEditor.focus({ preventScroll:true });
   document.execCommand('bold');
 });
 
@@ -1878,7 +1877,7 @@ highlightBtn.className = 'mini-btn highlight-mini';
 highlightBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  textEditor.focus();
+  textEditor.focus({ preventScroll:true });
   toggleHighlightInEditor(textEditor);
 });
 
@@ -1917,7 +1916,7 @@ tableBtn.className = 'table-mini';
 tableBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  textEditor.focus();
+  textEditor.focus({ preventScroll:true });
   insertTableInEditor(textEditor, 3, 3);
 });
 
@@ -1927,7 +1926,7 @@ addRowBtn.className = 'table-mini';
 addRowBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  textEditor.focus();
+  textEditor.focus({ preventScroll:true });
   addTableRow(textEditor);
 });
 
@@ -1937,7 +1936,7 @@ addColBtn.className = 'table-mini';
 addColBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  textEditor.focus();
+  textEditor.focus({ preventScroll:true });
   addTableColumn(textEditor);
 });
 
@@ -1947,7 +1946,7 @@ delRowBtn.className = 'table-mini';
 delRowBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  textEditor.focus();
+  textEditor.focus({ preventScroll:true });
   deleteTableRow(textEditor);
 });
 
@@ -1957,7 +1956,7 @@ delColBtn.className = 'table-mini';
 delColBtn.addEventListener('mousedown', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  textEditor.focus();
+  textEditor.focus({ preventScroll:true });
   deleteTableColumn(textEditor);
 });
 
@@ -2023,7 +2022,7 @@ card.addEventListener('touchcancel', endPress);
 });
     });
     return card;
-  }, { initialBatchSize: 12, batchSize: 8 });
+  }, { initialBatchSize: 12, batchSize: 8, onComplete:finishRender });
 }
 
 function renderFilteredNotes() {
@@ -2050,6 +2049,13 @@ function toggleEdit(card, editing) {
   const [editBtn, saveBtn, cancelBtn] = btnGroup.querySelectorAll('button');
 
   if (editing) {
+    const savedNote = notes.find(note => note.id === card.dataset.id);
+    if (savedNote) {
+      titleInput.value = savedNote.title || '';
+      urlInput.value = savedNote.url || '';
+      CEPSecurity.setHTML(textEditor, savedNote.text || '');
+    }
+    CEPNotePopup.open(card, "Edit note", () => toggleEdit(card, false));
     card.classList.add('is-editing', 'actions-visible');
 
     titleEl.style.display = 'none';
@@ -2067,8 +2073,9 @@ function toggleEdit(card, editing) {
     cancelBtn.style.display = 'none';
 
     editorBtns.style.display = 'flex';
-    textEditor.focus();
+    textEditor.focus({ preventScroll:true });
   } else {
+    CEPNotePopup.close();
     card.classList.remove('is-editing', 'actions-visible');
 
     titleEl.style.display = 'block';
@@ -2088,6 +2095,7 @@ function toggleEdit(card, editing) {
 }
 
 async function saveEdit(card) {
+  return CEPNotePopup.submit(async () => {
   const id = card.dataset.id;
   const textEditor = card.querySelector('.edit-note');
   const titleInput = card.querySelector('.edit-title');
@@ -2109,6 +2117,9 @@ async function saveEdit(card) {
   window.invalidateCepSearchCache?.('main:practiceNNotes');
 
   toggleEdit(card, false);
+  CEPNotePopup.saved(id, () => { currentSearch = ''; document.getElementById('searchInput').value = ''; renderFilteredNotes(); });
+
+  });
 }
 
 async function deleteNote(id) {
@@ -2135,11 +2146,13 @@ const inputGroup = document.getElementById('inputGroup');
 function openAddPanel() {
   inputGroup.classList.add('show');
   toggleBtn.textContent = '×';
+  CEPNotePopup.open(inputGroup, 'Add note', closeAddPanel, true);
 }
 
 function closeAddPanel() {
   inputGroup.classList.remove('show');
   toggleBtn.textContent = '+';
+  CEPNotePopup.close();
 }
 
 toggleBtn.addEventListener('pointerdown', (e) => {
@@ -2160,6 +2173,7 @@ inputGroup.addEventListener('pointerdown', (e) => {
 document.addEventListener('pointerdown', (e) => {
   if (
     inputGroup.classList.contains('show') &&
+    !e.target.closest('.cep-note-overlay') &&
     !inputGroup.contains(e.target) &&
     !toggleBtn.contains(e.target)
   ) {

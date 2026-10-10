@@ -461,7 +461,7 @@ h2 {
 }
 
 .note-card.new-note-highlight::after {
-  content: "NEW";
+  content: "SAVED";
   position: absolute;
   top: -12px;
   right: -10px;
@@ -1083,6 +1083,7 @@ button:focus,
   <img id="modalImg" src="" alt="Zoomed Image" />
 </div>
 
+<script src="note-popup.js?v=20261010-1"></script>
 <script type="module">
 import { debounceSearch } from "./search-scheduler.js";
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1113,6 +1114,7 @@ const firebaseConfig = {
 	let latestNotesSnapshot = null;
 
   async function addNote() {
+  return CEPNotePopup.submit(async () => {
   const title = nurseTitle.value.trim();
 const note = sanitizeNoteHtml(nurseNote.innerHTML.trim());
 const url = nurseURL.value.trim();
@@ -1139,6 +1141,9 @@ const url = nurseURL.value.trim();
 
   newestNoteId = newDoc.id;
   resetAddForm();
+  CEPNotePopup.saved(newDoc.id, () => { currentSearch = ''; document.getElementById('searchInput').value = ''; buildNoteCards(latestNotesSnapshot); });
+
+  });
 }
 
 function readFileAsDataURL(file) {
@@ -1347,7 +1352,9 @@ function showCopyFeedback(card, clientX, clientY) {
 
 
   function enableEditing(card, id, title, note) {
-  card.classList.add('editing-note');
+  card = document.createElement('div');
+  card.className = 'note-card editing-note';
+  card.dataset.id = id;
 
   card.innerHTML = `
     <input type="text" class="edit-title" value="${escapeHtml(title)}" />
@@ -1375,6 +1382,7 @@ function showCopyFeedback(card, clientX, clientY) {
   const btnHighlight = card.querySelector('.btn-highlight');
 
   btnSave.addEventListener('click', async (e) => {
+  return CEPNotePopup.submit(async () => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -1386,13 +1394,16 @@ function showCopyFeedback(card, clientX, clientY) {
   .trim();
 
     await saveEdit(id, updatedTitle, updatedNote);
-    renderNotesOnce();
+    CEPNotePopup.close();
+    CEPNotePopup.saved(id, () => { currentSearch = ''; document.getElementById('searchInput').value = ''; buildNoteCards(latestNotesSnapshot); });
+
   });
+});
 
   btnCancel.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    renderNotesOnce();
+    CEPNotePopup.close();
   });
 
   btnBold.addEventListener('mousedown', (e) => {
@@ -1407,11 +1418,13 @@ function showCopyFeedback(card, clientX, clientY) {
     e.stopPropagation();
     toggleGradientHighlight(editableDiv);
   });
+  CEPNotePopup.open(card, "Edit note", () => btnCancel.click());
 }
 
 
   function buildNoteCards(snapshot) {
   const list = document.getElementById('nurseNotesList');
+  const finishRender = CEPNotePopup.beginRender(list);
   list.innerHTML = '';
 
   snapshot.forEach(docSnap => {
@@ -1439,14 +1452,6 @@ function showCopyFeedback(card, clientX, clientY) {
       (pendingNewNoteTime && time === pendingNewNoteTime)
     ) {
       div.classList.add('new-note-highlight');
-
-      setTimeout(() => {
-        div.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest'
-        });
-      }, 300);
 
       setTimeout(() => {
         div.classList.remove('new-note-highlight');
@@ -1532,6 +1537,7 @@ div.addEventListener('pointerleave', () => {
   });
 
   setupImageZoom();
+  finishRender();
 }
 
 function renderNotes() {
@@ -1592,11 +1598,13 @@ const nurseForm = document.getElementById('nurseFormWrapper');
 function openAddPanel() {
   nurseForm.classList.add('show');
   toggleBtn.textContent = '×';
+  CEPNotePopup.open(nurseForm, 'Add note', closeAddPanel, true);
 }
 
 function closeAddPanel() {
   nurseForm.classList.remove('show');
   toggleBtn.textContent = '+';
+  CEPNotePopup.close();
 }
 
 toggleBtn.addEventListener('pointerdown', (e) => {
@@ -1617,6 +1625,7 @@ nurseForm.addEventListener('pointerdown', (e) => {
 document.addEventListener('pointerdown', (e) => {
   if (
     nurseForm.classList.contains('show') &&
+    !e.target.closest('.cep-note-overlay') &&
     !nurseForm.contains(e.target) &&
     !toggleBtn.contains(e.target)
   ) {

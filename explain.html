@@ -378,7 +378,7 @@ button:hover,
 }
 
 .note-card.new-note-highlight::after {
-  content: "NEW";
+  content: "SAVED";
   position: absolute;
   top: -12px;
   right: -10px;
@@ -842,6 +842,7 @@ button:hover,
 <button id="toggleInput">+</button>
 
 
+<script src="note-popup.js?v=20261010-1"></script>
 <script type="module">
 import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -872,6 +873,7 @@ let forceExitEditingId = null;
 
 // --- Add new note ---
 document.querySelector('.add-btn').addEventListener('click', async (e) => {
+  return CEPNotePopup.submit(async () => {
   e.preventDefault();
   e.stopPropagation();
 
@@ -897,6 +899,9 @@ document.querySelector('.add-btn').addEventListener('click', async (e) => {
 
   newestNoteId = newDoc.id;
   resetAddForm();
+  CEPNotePopup.saved(newDoc.id, () => { currentFilter = ''; document.getElementById('searchInput').value = ''; renderNotes(allNotes); });
+
+  });
 });
 
 function resetAddForm() {
@@ -916,6 +921,7 @@ function resetAddForm() {
 // --- Render notes ---
 function renderNotes(notesToRender = allNotes) {
   const container = document.getElementById('notesContainer');
+  const finishRender = CEPNotePopup.beginRender(container);
   container.innerHTML = '';
 
   notesToRender.forEach((note) => {
@@ -931,21 +937,13 @@ function renderNotes(notesToRender = allNotes) {
   card.classList.add('new-note-highlight');
 
   setTimeout(() => {
-    card.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'nearest'
-    });
-  }, 300);
-
-  setTimeout(() => {
     card.classList.remove('new-note-highlight');
     newestNoteId = null;
     pendingNewNoteTimestamp = null;
   }, 2600);
 }
 
-    if (note.editing) {
+    if (note.editing && CEPNotePopup.editorId !== note.id) {
       card.innerHTML = `
         <input type="text" id="editTitle-${note.id}" class="edit-title" value="${escapeAttr(note.title)}" />
         <div id="editText-${note.id}" class="edit-box" contenteditable="true">${note.text || ''}</div>
@@ -1001,6 +999,7 @@ card.innerHTML = `
 
     container.appendChild(card);
   });
+  finishRender();
 }
 
 // ✅ Attach this ONCE globally (outside renderNotes)
@@ -1012,7 +1011,7 @@ document.addEventListener('click', (e) => {
 });
 
 // ✅ Delegated Edit/Delete (outside renderNotes)
-document.getElementById('notesContainer').addEventListener('mousedown', (e) => {
+document.addEventListener('mousedown', (e) => {
   const card = e.target.closest('.note-card');
   if (!card) return;
 
@@ -1068,7 +1067,7 @@ if (e.target.closest('.btn-highlight-edit')) {
 }
 });
 
-document.getElementById('notesContainer').addEventListener('paste', (e) => {
+document.addEventListener('paste', (e) => {
   const editBox = e.target.closest('.edit-box');
   if (!editBox) return;
 
@@ -1122,10 +1121,13 @@ window.toggleEdit = (id) => {
   note._originalText = note.text;
   note.editing = true;
   renderNotes(getFilteredNotes());
+  const card = [...document.querySelectorAll("#notesContainer .note-card")].find(card => card.dataset.id === id);
+  CEPNotePopup.open(card, "Edit note", () => window.cancelEdit(id));
 };
 
 // Save edits
 window.saveEdit = async (id) => {
+  return CEPNotePopup.submit(async () => {
   const note = allNotes.find(n => n.id === id);
   if (!note) return;
 
@@ -1135,26 +1137,24 @@ window.saveEdit = async (id) => {
   const newTitle = (titleEl?.value || '').trim();
   const newText = (textEl?.innerHTML || '').trim();
 
-  // Important: force card out of edit mode BEFORE Firestore refreshes
-  forceExitEditingId = id;
-  note.title = newTitle || 'Untitled';
-  note.text = newText;
-  note.editing = false;
-  delete note._originalTitle;
-  delete note._originalText;
-
-  renderNotes(getFilteredNotes());
-
   await updateDoc(doc(db, 'explainNotes', id), {
-    title: newTitle || 'Untitled',
-    text: newText,
-    timestamp: new Date().toISOString()
+    title:newTitle || 'Untitled', text:newText, timestamp:new Date().toISOString()
   });
   window.invalidateCepSearchCache?.('main:explainNotes');
+  forceExitEditingId = id;
+  const savedNote = allNotes.find(n => n.id === id) || note;
+  savedNote.title = newTitle || 'Untitled'; savedNote.text = newText; savedNote.editing = false;
+  delete savedNote._originalTitle; delete savedNote._originalText;
+  CEPNotePopup.close();
+  renderNotes(getFilteredNotes());
+  CEPNotePopup.saved(id, () => { currentFilter = ''; document.getElementById('searchInput').value = ''; renderNotes(allNotes); });
+
+  });
 };
 
 // Cancel edits
 window.cancelEdit = (id) => {
+  CEPNotePopup.close();
   const note = allNotes.find(n => n.id === id);
   if (!note) return;
 
@@ -1575,11 +1575,13 @@ const noteText = document.getElementById('noteText');
 function openAddPanel() {
   inputGroup.classList.add('show');
   toggleBtn.textContent = '×';
+  CEPNotePopup.open(inputGroup, 'Add note', closeAddPanel, true);
 }
 
 function closeAddPanel() {
   inputGroup.classList.remove('show');
   toggleBtn.textContent = '+';
+  CEPNotePopup.close();
 }
 
 toggleBtn.addEventListener('pointerdown', (e) => {
@@ -1600,6 +1602,7 @@ inputGroup.addEventListener('pointerdown', (e) => {
 document.addEventListener('pointerdown', (e) => {
   if (
     inputGroup.classList.contains('show') &&
+    !e.target.closest('.cep-note-overlay') &&
     !inputGroup.contains(e.target) &&
     !toggleBtn.contains(e.target)
   ) {
