@@ -45,6 +45,10 @@ export function renderInBatches(container, items, createElement, options = {}) {
   const job = { cancelled: false, handle: null };
   activeRenders.set(container, job);
   let index = 0;
+  // Balanced columns redistribute every visible card whenever a batch is added.
+  // Build these layouts offscreen and publish the completed cards together.
+  const columnCount = Number.parseInt(getComputedStyle(container).columnCount, 10);
+  const staged = columnCount > 1 ? document.createDocumentFragment() : null;
 
   const appendBatch = (count) => {
     const fragment = document.createDocumentFragment();
@@ -55,15 +59,19 @@ export function renderInBatches(container, items, createElement, options = {}) {
       index += 1;
       if (element) {
         fragment.appendChild(element);
-        reveal(element);
+        if (!staged) reveal(element);
       }
     }
 
-    container.appendChild(fragment);
-    onBatch?.({ rendered: index, total: items.length });
+    (staged || container).appendChild(fragment);
+    if (!staged) onBatch?.({ rendered: index, total: items.length });
   };
 
   const finish = () => {
+    if (staged) {
+      container.appendChild(staged);
+      onBatch?.({ rendered: index, total: items.length });
+    }
     if (activeRenders.get(container) === job) activeRenders.delete(container);
     onComplete?.();
   };
