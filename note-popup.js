@@ -25,6 +25,10 @@
     html:root body .cep-add-controls .cep-pn-editor-divider { display:none; }
     html:root body .cep-add-definition-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
     .cep-add-definition-label { flex-basis:100%; font:12px Tahoma,sans-serif; }
+    .cep-saved-note-title { margin:0 0 14px; font:600 16px Tahoma,sans-serif; overflow-wrap:anywhere; }
+    .cep-saved-note-body { overflow-wrap:anywhere; font:13px/1.6 Tahoma,sans-serif; }
+    .cep-saved-note-body img,.cep-saved-note-image { max-width:100%; height:auto; }
+    .cep-saved-note-actions { display:flex; gap:10px; margin-top:20px; }
     html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:52px; }
     html:root body .cep-add-actions button { width:auto !important; margin:0 !important; }
     html:root body .cep-add-body { min-width:0; }
@@ -112,6 +116,40 @@
     notice.querySelectorAll('button')[1].onclick = () => notice.remove();
     document.body.append(notice);
   }
+  function preview(id, note, reveal) {
+    document.querySelector('.cep-note-notice')?.remove();
+    document.querySelector('.pn-save-notice')?.remove();
+    const content = document.createElement('div');
+    const title = document.createElement('h3'); title.className = 'cep-saved-note-title'; title.textContent = note.title || 'Untitled';
+    const body = document.createElement('div'); body.className = 'cep-saved-note-body note-content';
+    if (window.CEPSecurity) CEPSecurity.setHTML(body,note.note || note.text || '');
+    else body.textContent = note.note || note.text || '';
+    content.append(title,body);
+    if (note.image && /^(https?:|data:image\/(?:png|jpeg|gif|webp);base64,)/i.test(note.image)) {
+      const image = document.createElement('img'); image.className = 'cep-saved-note-image'; image.src = note.image; image.alt = 'Note image'; content.append(image);
+    }
+    if (note.url) {
+      try {
+        const url = new URL(note.url,location.href);
+        if (/^https?:$/.test(url.protocol)) {
+          const link = document.createElement('a'); link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Open URL';
+          const row = document.createElement('p'); row.append(link); content.append(row);
+        }
+      } catch {}
+    }
+    const actions = document.createElement('div'); actions.className = 'cep-saved-note-actions';
+    const closeButton = document.createElement('button'); closeButton.type = 'button'; closeButton.textContent = 'Close'; closeButton.onclick = close;
+    const viewButton = document.createElement('button'); viewButton.type = 'button'; viewButton.textContent = 'View in page';
+    viewButton.onclick = () => {
+      close();
+      const card = find(id);
+      if (card) { card.scrollIntoView({ behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'center' }); highlight(card); }
+      else { revealId = id; reveal(); }
+    };
+    actions.append(closeButton,viewButton); content.append(actions);
+    open(content,'Note saved',close);
+    closeButton.focus({ preventScroll:true });
+  }
   function beginRender(container) {
     const pos = active?.pos || position();
     container.style.minHeight = container.getBoundingClientRect().height + 'px';
@@ -196,5 +234,5 @@
     syncToolbar();
     new MutationObserver(syncToolbar).observe(form, { childList:true, subtree:true });
   }
-  window.CEPNotePopup = { open, close, saved, beginRender, submit, arrangeAdd, get editorId() { return active?.content.dataset.id; } };
+  window.CEPNotePopup = { open, close, saved, preview, beginRender, submit, arrangeAdd, get editorId() { return active?.content.dataset.id; } };
 })();

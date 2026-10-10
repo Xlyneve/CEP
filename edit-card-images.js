@@ -160,6 +160,7 @@ function revealSavedCard(card) {
 }
 
 function findPendingCard() {
+  if (window.CEPNotePopup) { pendingCardReveal = null; return; }
   if (!pendingCardReveal || Date.now() > pendingCardReveal.expires) {
     pendingCardReveal = null;
     return;
@@ -187,6 +188,8 @@ function findPendingCard() {
 document.addEventListener('click', event => {
   const button = event.target.closest?.('button');
   if (!button) return;
+  // Popup note pages reveal a saved card only when the user chooses to view it.
+  if (window.CEPNotePopup) { pendingCardReveal = null; return; }
   const label = `${button.textContent || ''} ${button.title || ''}`.trim().toLocaleLowerCase();
   const card = button.closest('.note-card, .note-tile');
   const isSave = card && (/\bsave\b/.test(label) || button.matches('.btn-save,.btn-save-edit,.save-mini'));

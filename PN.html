@@ -1276,7 +1276,7 @@ html:root body .pn-save-notice { position:fixed; bottom:24px; left:50%; transfor
 
  
 
-<script src="note-popup.js?v=20261010-3"></script>
+<script src="note-popup.js?v=20261010-4"></script>
 <script type="module">
 import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1340,7 +1340,7 @@ async function addNote() {
 
   newestNoteId = newDoc.id;
   resetAddForm();
-  showSavedNote(newDoc.id);
+  CEPNotePopup.preview(newDoc.id, {title:title || 'Untitled',note,url,image:imageUrl}, () => { currentSearchQuery = ''; document.getElementById('searchInput').value = ''; buildNoteCards(latestNotesSnapshot); });
   } catch (error) {
     pendingNewNoteTime = null;
     alert('The note could not be saved. Please try again.');
@@ -1920,9 +1920,7 @@ document.addEventListener('keydown', event => {
 
 function buildNoteCards(snapshot, revealId = null) {
   const list = document.getElementById('nurseNotesList');
-  const previousScroll = window.scrollY;
-  const previousBodyScroll = document.body.scrollTop;
-  list.style.minHeight = list.getBoundingClientRect().height + 'px';
+  const finishRender = CEPNotePopup.beginRender(list);
   list.innerHTML = '';
   // Firestore can return new document wrappers on each access to snapshot.docs.
   // Keep the text index by snapshot and document ID instead of wrapper identity.
@@ -2057,9 +2055,7 @@ return div;
     initialBatchSize: 12,
     batchSize: 8,
     onComplete: () => {
-      list.style.minHeight = '';
-      window.scrollTo({ top:previousScroll, behavior:'instant' });
-      document.body.scrollTop = previousBodyScroll;
+      finishRender();
       if (revealId) {
         const target = [...list.children].find(card => card.dataset.id === revealId);
         target?.scrollIntoView({ behavior:'smooth', block:'center' });
