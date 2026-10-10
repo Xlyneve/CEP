@@ -6,8 +6,8 @@ function cancelScheduled(handle) {
   else clearTimeout(handle.id);
 }
 
-function schedule(callback) {
-  if ("requestIdleCallback" in window) {
+function schedule(callback, immediate = false) {
+  if (!immediate && "requestIdleCallback" in window) {
     return {
       type: "idle",
       id: requestIdleCallback(callback, { timeout: 250 })
@@ -16,7 +16,7 @@ function schedule(callback) {
 
   return {
     type: "timeout",
-    id: setTimeout(() => callback(), 16)
+    id: setTimeout(() => callback(), immediate ? 0 : 16)
   };
 }
 
@@ -78,14 +78,18 @@ export function renderInBatches(container, items, createElement, options = {}) {
 
   const continueRendering = () => {
     if (job.cancelled) return;
-    appendBatch(batchSize);
+    const started = performance.now();
+    do {
+      appendBatch(batchSize);
+    } while (staged && index < items.length && performance.now() - started < 8);
 
-    if (index < items.length) job.handle = schedule(continueRendering);
+    if (index < items.length) job.handle = schedule(continueRendering, !!staged);
     else finish();
   };
 
   appendBatch(initialBatchSize);
-  if (index < items.length) job.handle = schedule(continueRendering);
+  if (index < items.length && staged) continueRendering();
+  else if (index < items.length) job.handle = schedule(continueRendering);
   else finish();
 
   return () => {
