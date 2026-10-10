@@ -2768,18 +2768,31 @@
     }
   `;
 
-  // Video labels need their own text fill: dark cards otherwise pass light ink
-  // into PN's pale link button, while search links may inherit a dark colour.
+  // A shared SVG camera button stays recognisable and readable across browsers and themes.
   themeStyle.textContent += `
     html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"] {
       color:#263333 !important; -webkit-text-fill-color:#263333 !important;
-      background:#fbf8f5 !important; background-image:none !important;
-      display:inline-block; padding:4px 9px; border-radius:6px;
-      font-size:14px !important; font-weight:700 !important;
-      text-decoration:none; opacity:1 !important;
+      background:linear-gradient(145deg,#fffdf9,#e7e3dd) !important;
+      display:inline-flex !important; align-items:center; justify-content:center;
+      width:48px !important; height:48px !important; padding:0 !important;
+      box-sizing:border-box; border-radius:15px !important;
+      border:1px solid rgba(255,255,255,.9) !important;
+      box-shadow:4px 5px 9px rgba(38,51,51,.22),-2px -2px 5px rgba(255,255,255,.5),inset 2px 2px 3px rgba(255,255,255,.95),inset -2px -3px 4px rgba(38,51,51,.15) !important;
+      text-decoration:none; opacity:1 !important; vertical-align:middle;
+      transition:transform .12s ease,box-shadow .12s ease;
     }
     html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"]:hover {
-      background:#f1e7e3 !important;
+      background:linear-gradient(145deg,#fffdf9,#eee8e0) !important;
+    }
+    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"] svg {
+      width:28px; height:28px; display:block; flex:none; pointer-events:none;
+    }
+    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"]:active {
+      transform:translateY(1px);
+      box-shadow:inset 2px 3px 5px rgba(38,51,51,.2),inset -2px -2px 4px rgba(255,255,255,.8) !important;
+    }
+    html:root body :is(.note-url,.cep-source-card-url) a[aria-label="Play video"]:focus-visible {
+      outline:2px solid #263333; outline-offset:3px;
     }
   `;
 

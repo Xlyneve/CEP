@@ -701,6 +701,16 @@ const appendSourceLink = (parent, url, label) => {
   const isVideo = Boolean(getYouTubeVideoId(safeUrl) || getFacebookVideoUrl(safeUrl));
   link.textContent = isVideo ? '🎬 Play video' : '🔗 Open link';
   if (isVideo) {
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('aria-hidden', 'true');
+    icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('stroke-width', '1.8'); icon.setAttribute('stroke-linejoin', 'round');
+    for (const [tag, attrs] of [['rect', {x:'2',y:'6',width:'14',height:'12',rx:'3'}], ['path', {d:'M16 10 22 6v12l-6-4Z'}], ['path', {d:'m7 9 4 3-4 3Z',fill:'currentColor',stroke:'none'}]]) {
+      const shape = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      Object.entries(attrs).forEach(([key, value]) => shape.setAttribute(key, value)); icon.append(shape);
+    }
+    link.replaceChildren(icon);
+    link.title = 'Play video';
     link.style.setProperty('font-size', '14px', 'important');
     link.style.setProperty('font-weight', '700', 'important');
   }
