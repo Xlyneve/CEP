@@ -17,8 +17,11 @@
     html:root body .cep-add-controls :is(.editor-buttons,.format-buttons,.formatting-buttons,.action-buttons) { display:flex !important; flex-wrap:wrap; gap:6px; width:100% !important; margin:0 !important; box-sizing:border-box; }
     html:root body .cep-add-layout [hidden] { display:none !important; }
     html:root body .cep-add-has-toolbar :is(.main-editor-buttons,.format-buttons,.formatting-buttons) { display:none !important; }
-    html:root body .cep-add-controls .cep-pn-editor-toolbar { display:flex; flex-wrap:wrap; gap:4px; width:100%; margin:0; box-sizing:border-box; }
+    html:root body .cep-add-controls .cep-pn-editor-toolbar { display:flex; flex-direction:column; align-items:flex-start; gap:6px; width:100%; margin:0; box-sizing:border-box; }
+    html:root body .cep-add-format-row { display:flex; gap:4px; align-items:center; }
+    html:root body .cep-add-controls .cep-pn-editor-divider { display:none; }
     html:root body .cep-add-definition-actions { display:flex; flex-wrap:wrap; gap:6px; }
+    .cep-add-definition-label { flex-basis:100%; font:12px Tahoma,sans-serif; }
     html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; }
     html:root body .cep-add-actions button { width:auto !important; margin:0 !important; }
     html:root body .cep-add-body { min-width:0; }
@@ -152,11 +155,22 @@
       form.classList.add('cep-add-has-toolbar');
       const anchor = url || title;
       if (anchor && anchor.nextElementSibling !== toolbar) anchor.after(toolbar);
+      if (!toolbar.querySelector('.cep-add-format-row')) {
+        const buttons = [...toolbar.querySelectorAll('button')];
+        const formatting = document.createElement('div'); formatting.className = 'cep-add-format-row';
+        const tables = document.createElement('div'); tables.className = 'cep-add-format-row';
+        buttons.slice(0,3).forEach(button => formatting.append(button));
+        const labels = ['Table','R+','R-','C+','C-'];
+        buttons.slice(3,8).forEach((button,index) => { button.textContent = labels[index]; tables.append(button); });
+        toolbar.prepend(formatting,tables);
+      }
       const definitionButtons = [...form.querySelectorAll('.pn-add-definition,.pn-edit-definition,.pn-remove-definition')];
       let definitions = controls.querySelector('.cep-add-definition-actions');
       if (definitionButtons.length && !definitions) {
         definitions = document.createElement('div');
         definitions.className = 'cep-add-definition-actions';
+        const heading = document.createElement('span'); heading.className = 'cep-add-definition-label'; heading.textContent = 'Definition:';
+        definitions.append(heading);
         toolbar.after(definitions);
       }
       definitionButtons.forEach(button => {
@@ -164,7 +178,7 @@
         const label = button.classList.contains('pn-add-definition') ? 'Add definition' : button.classList.contains('pn-edit-definition') ? 'Edit definition' : 'Remove definition';
         button.title = label;
         button.setAttribute('aria-label',label);
-        button.textContent = label;
+        button.textContent = button.classList.contains('pn-add-definition') ? 'Add' : button.classList.contains('pn-edit-definition') ? 'Edit' : 'Remove';
         definitions.append(button);
       });
     };
