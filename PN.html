@@ -1184,6 +1184,8 @@ button:focus,
 
 
 .pn-edit-overlay { position:fixed; inset:0; z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; background:#0005; }
+.pn-edit-overlay[hidden] { display:none; }
+html:root body .pn-edit-popup #nurseFormWrapper { position:static; width:100%; padding:0; opacity:1; transition:none; background:none; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; box-sizing:border-box; }
 html:root body .pn-edit-popup { width:min(720px,100%); max-height:calc(100dvh - 32px); overflow:auto; padding:20px; box-sizing:border-box; border-radius:16px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 16px 48px #0004; }
 .pn-edit-popup h2 { margin:0 0 14px; font:600 18px Tahoma,sans-serif; }
 html:root body .pn-edit-popup .pn-edit-fields { transform:none; box-shadow:none; background:none; }
@@ -1252,6 +1254,7 @@ html:root body .pn-save-notice { position:fixed; bottom:24px; left:50%; transfor
     <input type="file" id="nurseImage" accept="image/*" style="display:none;" />
     <label for="nurseImage" class="custom-file-btn">Choose File</label>
     <button class="add-btn" onclick="addNote()">Add</button>
+    <button type="button" id="cancelAddNote">Cancel</button>
   </div>
 
   <!-- Notes container -->
@@ -1307,6 +1310,11 @@ let unsubscribeNotes = null;
 let latestNotesSnapshot = null;
 /* ---------------- CRUD ---------------- */
 async function addNote() {
+  const addButton = document.querySelector('#nurseFormWrapper .add-btn');
+  if (addButton.disabled) return;
+  addButton.disabled = true;
+  document.getElementById('cancelAddNote').disabled = true;
+  try {
   const title = nurseTitle.value.trim();
   const note = nurseNote.innerHTML.trim();
   const url = nurseURL.value.trim();
@@ -1332,6 +1340,13 @@ async function addNote() {
   newestNoteId = newDoc.id;
   resetAddForm();
   showSavedNote(newDoc.id);
+  } catch (error) {
+    pendingNewNoteTime = null;
+    alert('The note could not be saved. Please try again.');
+  } finally {
+    addButton.disabled = false;
+    document.getElementById('cancelAddNote').disabled = false;
+  }
 }
 
 
@@ -1348,6 +1363,7 @@ function resetAddForm() {
 
   if (nurseForm) nurseForm.classList.remove('show');
   if (toggleBtn) toggleBtn.textContent = '+';
+  closeAddPopup();
 }
 async function deleteNote(id, imageUrl = "") {
   if (confirm("Delete this note?")) {
@@ -2250,12 +2266,46 @@ renderNotes();
  // Toggle form
 const toggleBtn = document.getElementById('toggleFormBtn');
 const nurseForm = document.getElementById('nurseFormWrapper');
+const addOverlay = document.createElement('div');
+addOverlay.className = 'pn-edit-overlay';
+addOverlay.hidden = true;
+addOverlay.innerHTML = '<section class="pn-edit-popup" role="dialog" aria-modal="true" aria-label="Add note"><h2>Add note</h2></section>';
+addOverlay.querySelector('section').appendChild(nurseForm);
+document.body.appendChild(addOverlay);
+let addPopupPosition = null;
+function closeAddPopup() {
+  if (addOverlay.hidden) return;
+  addOverlay.hidden = true;
+  nurseForm.classList.remove('show');
+  toggleBtn.textContent = '+';
+  document.body.style.overflow = addPopupPosition.overflow;
+  document.body.scrollTop = addPopupPosition.body;
+  window.scrollTo({ top:addPopupPosition.window, behavior:'instant' });
+  toggleBtn.focus({ preventScroll:true });
+}
+document.getElementById('cancelAddNote').addEventListener('click', closeAddPopup);
+addOverlay.addEventListener('keydown', event => {
+  if (document.querySelector('#pn-definition-dialog[open]')) return;
+  if (event.key === 'Escape' && !document.querySelector('#nurseFormWrapper .add-btn').disabled) {
+    event.preventDefault();
+    closeAddPopup();
+  }
+  if (event.key === 'Tab') {
+    const controls = [...nurseForm.querySelectorAll('input:not([type="file"]),button,[contenteditable="true"]')].filter(el => !el.disabled);
+    const first = controls[0], last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+});
 
 toggleBtn.addEventListener('click', () => {
-  nurseForm.classList.toggle('show');
-
-  // Optional: change + to × when open
-  toggleBtn.textContent = nurseForm.classList.contains('show') ? '×' : '+';
+  if (!addOverlay.hidden) { closeAddPopup(); return; }
+  addPopupPosition = { window:window.scrollY, body:document.body.scrollTop, overflow:document.body.style.overflow };
+  addOverlay.hidden = false;
+  nurseForm.classList.add('show');
+  document.body.style.overflow = 'hidden';
+  toggleBtn.textContent = '×';
+  document.getElementById('nurseTitle').focus({ preventScroll:true });
 });
 
 
