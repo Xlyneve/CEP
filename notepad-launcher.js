@@ -380,8 +380,13 @@
     ["home", "Open on homepage", openOnHome],
     ["tab", "Open in new tab", () => window.open(url, "_blank", "noopener")],
     ["window", "Open in new window", () => {
+      saveLayout();
+      const width = Math.round(savedLayout?.width || 320);
+      const height = Math.round(savedLayout?.height || 340);
       if (!notepadWindow || notepadWindow.closed) {
-        notepadWindow = window.open(url, "xlyneveMiniNotepad", "popup=yes,width=300,height=633,resizable=yes,scrollbars=no,location=no,toolbar=no,menubar=no,status=no");
+        notepadWindow = window.open(url, "xlyneveMiniNotepad", `popup=yes,width=${width},height=${height},resizable=yes,scrollbars=no,location=no,toolbar=no,menubar=no,status=no`);
+      } else {
+        notepadWindow.resizeTo(width + Math.max(0, notepadWindow.outerWidth - notepadWindow.innerWidth), height + Math.max(0, notepadWindow.outerHeight - notepadWindow.innerHeight));
       }
       notepadWindow?.focus();
     }]
