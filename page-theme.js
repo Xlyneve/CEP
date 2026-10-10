@@ -2748,6 +2748,18 @@
     }
   `;
 
+  // A gentle ceramic rim and shallow inset keep Palm Springs softer than the 5D themes.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="palm-springs"] {
+      --palm-soft-depth:0 1px 0 rgba(251,248,245,.65),0 4px 9px rgba(31,44,44,.11),inset 2px 2px 4px rgba(31,44,44,.12),inset -2px -2px 4px rgba(251,248,245,.48);
+    }
+    html:root[data-xlyneve-color-theme="palm-springs"] body :is(.note-card,.card,.acc-item,.med-card,.med-section,.vaccine-section,.vaccine-card,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.panel,.input-panel,.pinned-note,.day:not(.empty),.todo-item,.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result,.cep-note-popup,.pn-edit-popup),
+    html:root[data-xlyneve-color-theme="palm-springs"].theme-home-glass body .main-content .card-group.section-card-group > .card {
+      border:1px solid rgba(251,248,245,.55) !important;
+      box-shadow:var(--palm-soft-depth) !important;
+    }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
