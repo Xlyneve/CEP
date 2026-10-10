@@ -505,7 +505,7 @@ h2 {
 }
 
 .note-card.new-note-highlight::after {
-  content: "NEW";
+  content: "SAVED";
   position: absolute;
   top: -12px;
   right: -10px;
@@ -1183,6 +1183,14 @@ button:focus,
 }
 
 
+.pn-edit-overlay { position:fixed; inset:0; z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; background:#0005; }
+html:root body .pn-edit-popup { width:min(720px,100%); max-height:calc(100dvh - 32px); overflow:auto; padding:20px; box-sizing:border-box; border-radius:16px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 16px 48px #0004; }
+.pn-edit-popup h2 { margin:0 0 14px; font:600 18px Tahoma,sans-serif; }
+html:root body .pn-edit-popup .pn-edit-fields { transform:none; box-shadow:none; background:none; }
+html:root body .pn-edit-popup .edit-note { width:100% !important; min-height:220px !important; box-sizing:border-box; }
+html:root body .pn-edit-popup input { width:100% !important; box-sizing:border-box; }
+html:root body .pn-save-notice { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:20010; display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 4px 24px #0003; font:13px Tahoma,sans-serif; max-width:calc(100vw - 32px); box-sizing:border-box; }
+.pn-save-notice button { cursor:pointer; white-space:nowrap; }
 </style>
   <link rel="stylesheet" href="site-background.css?v=20260722-3">
   <script src="page-theme.js?v=20261005-1"></script>
@@ -1323,7 +1331,10 @@ async function addNote() {
 
   newestNoteId = newDoc.id;
   resetAddForm();
+  showSavedNote(newDoc.id);
 }
+
+
 function resetAddForm() {
   nurseTitle.value = '';
   nurseNote.innerHTML = '';
@@ -1645,6 +1656,34 @@ function deleteTableColumn(editor) {
 }
 /* ---------------- Editing ---------------- */
 function enableEditing(card, id, title, note, url = "") {
+  const originalFocus = document.activeElement;
+  const originalOverflow = document.body.style.overflow;
+  const originalScroll = { window:window.scrollY, body:document.body.scrollTop };
+  const overlay = document.createElement('div');
+  overlay.className = 'pn-edit-overlay';
+  overlay.innerHTML = '<section class="pn-edit-popup" role="dialog" aria-modal="true" aria-label="Edit note"><h2>Edit note</h2><div class="pn-edit-fields"></div></section>';
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  card = overlay.querySelector('.pn-edit-fields');
+  const closeEditor = () => {
+    overlay.remove();
+    document.body.style.overflow = originalOverflow;
+    document.body.scrollTop = originalScroll.body;
+    window.scrollTo({ top:originalScroll.window, behavior:'instant' });
+    document.removeEventListener('keydown', handleEditorKey);
+    if (originalFocus?.isConnected) originalFocus.focus({ preventScroll:true });
+  };
+  const handleEditorKey = event => {
+    if (document.querySelector('#pn-definition-dialog[open]')) return;
+    if (event.key === 'Escape' && !btnSave.disabled) { event.preventDefault(); closeEditor(); }
+    if (event.key === 'Tab') {
+      const controls = [...overlay.querySelectorAll('input,button,[contenteditable="true"]')].filter(el => !el.disabled);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  };
+  document.addEventListener('keydown', handleEditorKey);
   card.classList.add('editing-note');
 
   card.innerHTML = `
@@ -1704,11 +1743,22 @@ function enableEditing(card, id, title, note, url = "") {
   const updatedNote = editableDiv.innerHTML.trim();
   const updatedUrl = inputUrl.value.trim();
 
-  await saveEdit(id, updatedTitle, updatedNote, updatedUrl);
+  btnSave.disabled = true;
+  btnCancel.disabled = true;
+  try {
+    await saveEdit(id, updatedTitle, updatedNote, updatedUrl);
+    closeEditor();
+    showSavedNote(id);
+  } catch (error) {
+    alert('The note could not be saved. Please try again.');
+  } finally {
+    btnSave.disabled = false;
+    btnCancel.disabled = false;
+  }
 });
 
   btnCancel.addEventListener('click', () => {
-  renderNotesOnce();
+  closeEditor();
 });
 
   btnBold.addEventListener('mousedown', (e) => {
@@ -1746,6 +1796,36 @@ function enableEditing(card, id, title, note, url = "") {
     e.preventDefault();
     deleteTableColumn(editableDiv);
   });
+  inputTitle.focus({ preventScroll:true });
+}
+function highlightSavedNote(card) {
+  if (!card) return;
+  card.classList.remove('new-note-highlight');
+  void card.offsetWidth;
+  card.classList.add('new-note-highlight');
+  setTimeout(() => card.classList.remove('new-note-highlight'), 2600);
+}
+function showSavedNote(id) {
+  document.querySelector('.pn-save-notice')?.remove();
+  const findCard = () => [...document.querySelectorAll('#nurseNotesList .note-card')].find(card => card.dataset.id === id);
+  highlightSavedNote(findCard());
+  const notice = document.createElement('div');
+  notice.className = 'pn-save-notice';
+  notice.innerHTML = '<span role="status">Note saved</span> <button type="button">View note</button> <button type="button" aria-label="Dismiss saved notification">×</button>';
+  notice.querySelector('button').onclick = () => {
+    let target = findCard();
+    if (!target && latestNotesSnapshot) {
+      currentSearchQuery = '';
+      const search = document.getElementById('searchInput');
+      if (search) search.value = '';
+      buildNoteCards(latestNotesSnapshot, id);
+      return;
+    }
+    target?.scrollIntoView({ behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'center' });
+    highlightSavedNote(target);
+  };
+  notice.querySelectorAll('button')[1].onclick = () => notice.remove();
+  document.body.appendChild(notice);
 }
 /* ---------------- Rendering ---------------- */
 const noteSearchText = new WeakMap();
@@ -1821,8 +1901,11 @@ document.addEventListener('keydown', event => {
   }
 });
 
-function buildNoteCards(snapshot) {
+function buildNoteCards(snapshot, revealId = null) {
   const list = document.getElementById('nurseNotesList');
+  const previousScroll = window.scrollY;
+  const previousBodyScroll = document.body.scrollTop;
+  list.style.minHeight = list.getBoundingClientRect().height + 'px';
   list.innerHTML = '';
   // Firestore can return new document wrappers on each access to snapshot.docs.
   // Keep the text index by snapshot and document ID instead of wrapper identity.
@@ -1857,14 +1940,6 @@ function buildNoteCards(snapshot) {
       (pendingNewNoteTime && time === pendingNewNoteTime)
     ) {
       div.classList.add('new-note-highlight');
-
-      setTimeout(() => {
-        div.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest'
-        });
-      }, 300);
 
       setTimeout(() => {
         div.classList.remove('new-note-highlight');
@@ -1963,7 +2038,17 @@ div.addEventListener('click', (event) => {
 return div;
   }, {
     initialBatchSize: 12,
-    batchSize: 8
+    batchSize: 8,
+    onComplete: () => {
+      list.style.minHeight = '';
+      window.scrollTo({ top:previousScroll, behavior:'instant' });
+      document.body.scrollTop = previousBodyScroll;
+      if (revealId) {
+        const target = [...list.children].find(card => card.dataset.id === revealId);
+        target?.scrollIntoView({ behavior:'smooth', block:'center' });
+        highlightSavedNote(target);
+      }
+    }
   });
 }
 
