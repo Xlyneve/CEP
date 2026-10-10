@@ -2273,11 +2273,16 @@ addOverlay.hidden = true;
 addOverlay.innerHTML = '<section class="pn-edit-popup" role="dialog" aria-modal="true" aria-label="Add note"><h2>Add note</h2></section>';
 addOverlay.querySelector('section').appendChild(nurseForm);
 document.body.appendChild(addOverlay);
+const closeAddButton = document.createElement('button');
+closeAddButton.type = 'button'; closeAddButton.className = 'cep-note-close'; closeAddButton.textContent = '×'; closeAddButton.setAttribute('aria-label','Close add note');
+closeAddButton.onclick = () => { if (!document.querySelector('#nurseFormWrapper .add-btn').disabled) closeAddPopup(); };
+addOverlay.querySelector('section').append(closeAddButton);
 CEPNotePopup.arrangeAdd(nurseForm);
 let addPopupPosition = null;
 function closeAddPopup() {
   if (addOverlay.hidden) return;
   addOverlay.hidden = true;
+  document.body.classList.remove('cep-add-popup-open');
   nurseForm.classList.remove('show');
   toggleBtn.textContent = '+';
   document.body.style.overflow = addPopupPosition.overflow;
@@ -2293,7 +2298,7 @@ addOverlay.addEventListener('keydown', event => {
     closeAddPopup();
   }
   if (event.key === 'Tab') {
-    const controls = [...nurseForm.querySelectorAll('input:not([type="file"]),button,[contenteditable="true"]')].filter(el => !el.disabled);
+    const controls = [...addOverlay.querySelectorAll('input:not([type="file"]),button,[contenteditable="true"]')].filter(el => !el.disabled);
     const first = controls[0], last = controls[controls.length - 1];
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
@@ -2304,6 +2309,7 @@ toggleBtn.addEventListener('click', () => {
   if (!addOverlay.hidden) { closeAddPopup(); return; }
   addPopupPosition = { window:window.scrollY, body:document.body.scrollTop, overflow:document.body.style.overflow };
   addOverlay.hidden = false;
+  document.body.classList.add('cep-add-popup-open');
   nurseForm.classList.add('show');
   document.body.style.overflow = 'hidden';
   toggleBtn.textContent = '×';

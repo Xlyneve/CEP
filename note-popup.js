@@ -5,6 +5,9 @@
     .cep-note-overlay { position:fixed; inset:0; z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; background:#0005; }
     html:root body .cep-note-popup { width:min(720px,100%); max-height:calc(100dvh - 32px); overflow:auto; padding:20px; box-sizing:border-box; border-radius:16px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 16px 48px #0004; }
     .cep-note-popup h2 { margin:0 0 14px; font:600 18px Tahoma,sans-serif; }
+    html:root body :is(.cep-note-popup,.pn-edit-popup) { position:relative; }
+    html:root body .cep-note-close { position:absolute; top:12px; right:12px; width:32px; height:32px; padding:0; border:0; background:transparent; box-shadow:none; color:inherit; font:24px/1 Tahoma,sans-serif; cursor:pointer; }
+    html:root body.cep-add-popup-open :is(#toggleFormBtn,#toggleInputBtn,#toggleInput) { z-index:20001 !important; }
     html:root body .cep-note-popup [data-popup-content] { position:static !important; width:100% !important; max-width:none !important; min-width:0 !important; margin:0 !important; padding:0 !important; opacity:1 !important; transform:none !important; transition:none !important; background:none !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-sizing:border-box; }
     html:root body .cep-note-popup :is(input:not([type=file]),textarea,.edit-note,.edit-box) { width:100% !important; box-sizing:border-box; }
     html:root body .cep-note-popup :is(textarea,.edit-note,.edit-box) { min-height:220px !important; max-height:none !important; }
@@ -45,6 +48,7 @@
     if (!active) return;
     const state = active;
     active = null;
+    document.body.classList.remove('cep-add-popup-open');
     if (state.placeholder.isConnected) state.placeholder.replaceWith(state.content);
     state.content.removeAttribute('data-popup-content');
     state.overlay.remove();
@@ -66,6 +70,13 @@
     popup.setAttribute('role','dialog'); popup.setAttribute('aria-modal','true'); popup.setAttribute('aria-label',title);
     const heading = document.createElement('h2'); heading.textContent = title;
     popup.append(heading,content); overlay.append(popup); document.body.append(overlay);
+    if (add) {
+      document.body.classList.add('cep-add-popup-open');
+      const closeButton = document.createElement('button');
+      closeButton.type = 'button'; closeButton.className = 'cep-note-close'; closeButton.textContent = '×'; closeButton.setAttribute('aria-label','Close add note');
+      closeButton.onclick = () => { if (!active?.busy) active?.cancel(); };
+      popup.append(closeButton);
+    }
     content.setAttribute('data-popup-content','');
     if (add && !content.querySelector('.cep-note-cancel,#cancelAddNote')) {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'cep-note-cancel'; button.textContent = 'Cancel';
