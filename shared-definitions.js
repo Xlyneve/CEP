@@ -27,7 +27,7 @@
   }
   function refresh() {
     scheduled = false;
-    const scopes = document.querySelectorAll('.theme-pn .note-title,.note-content,.chatBubble,.universal-search-native-title,.universal-search-native-snippet,.cep-source-note-title,.cep-source-note-content,.cep-source-rich-content');
+    const scopes = document.querySelectorAll('.theme-pn .note-title,.theme-explain .note-text,.note-content,.chatBubble,.universal-search-native-title,.universal-search-native-snippet,.cep-source-note-title,.cep-source-note-content,.cep-source-rich-content');
     for (const scope of scopes) {
       if (scope.closest('[contenteditable="true"],.editing-note')) continue;
       scope.querySelectorAll('.cep-shared-definition').forEach(word => word.replaceWith(...word.childNodes));
@@ -74,7 +74,7 @@
   const tip=document.createElement('div');tip.id='cep-shared-tip';tip.hidden=true;tip.setAttribute('role','tooltip');document.body.append(tip);
   let hideTimer, activeWord;
   function hide(){clearTimeout(hideTimer);tip.hidden=true;activeWord=null;}
-  const previewSelector = location.pathname.toLowerCase().endsWith('/pn.html') ? '.cep-shared-definition' : '.cep-shared-definition,.pn-definition[data-pn-definition]';
+  const previewSelector = /\/(?:pn|explain)\.html$/i.test(location.pathname) ? '.cep-shared-definition' : '.cep-shared-definition,.pn-definition[data-pn-definition]';
   function show(word){clearTimeout(hideTimer);const record=find(word.dataset.sharedTerm||word.textContent);const value=record?.value||plain(record?.valueHtml)||word.dataset.pnDefinition;if(!value)return;activeWord=word;tip.textContent=value;tip.hidden=false;const box=word.getBoundingClientRect();tip.style.left=Math.max(12,Math.min(box.left,innerWidth-tip.offsetWidth-12))+'px';tip.style.top=Math.max(12,Math.min(box.bottom+6,innerHeight-tip.offsetHeight-12))+'px';}
   document.addEventListener('mouseover',e=>{const word=e.target.closest(previewSelector);if(word)show(word);},true);
   document.addEventListener('mouseout',e=>{const word=e.target.closest(previewSelector);if(word&&!word.contains(e.relatedTarget)&&!tip.contains(e.relatedTarget)){clearTimeout(hideTimer);hideTimer=setTimeout(hide,200);}},true);

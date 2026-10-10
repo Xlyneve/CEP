@@ -224,7 +224,8 @@ body::after {
 
 /* Glassy input fields */
 .input-group input[type="text"],
-.input-group textarea {
+.input-group textarea,
+.input-group .edit-note {
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -253,6 +254,7 @@ body::after {
   max-height: 320px;
   font-size: 14px;
 }
+.input-group .edit-note:empty::before { content:attr(data-placeholder); color:#777; pointer-events:none; }
 
 /* Focus effect */
 .input-group input[type="text"]:focus,
@@ -833,7 +835,13 @@ button:hover,
 <!-- Floating add-note panel -->
 <div class="input-group">
   <input type="text" id="noteTitle" placeholder="Title" />
-  <textarea id="noteText" placeholder="Write your template"></textarea>
+  <div id="noteText" class="edit-note" contenteditable="true" data-placeholder="Write your template"></div>
+  <input type="text" id="noteUrl" placeholder="Optional URL" />
+  <div class="editor-buttons main-editor-buttons">
+    <button type="button" class="pn-add-definition">Add definition</button>
+    <button type="button" class="pn-edit-definition">Edit definition</button>
+    <button type="button" class="pn-remove-definition">Remove definition</button>
+  </div>
 
   <button class="add-btn">Add Note</button>
 </div>
@@ -881,25 +889,25 @@ document.querySelector('.add-btn').addEventListener('click', async (e) => {
   const textEl = document.getElementById('noteText');
 
   const title = titleEl.value.trim();
-  const rawText = textEl.value.trim();
+  const text = textEl.innerHTML.trim();
+  const url = normalizeExplainURL(document.getElementById('noteUrl').value);
 
-  if (!title && !rawText) return;
+  if (!title && !text) return;
 
   const createdAt = new Date().toISOString();
   pendingNewNoteTimestamp = createdAt;
 
-  const text = plainTextToHTML(rawText);
-
   const newDoc = await addDoc(collection(db, 'explainNotes'), {
     title: title || 'Untitled',
     text,
+    url,
     timestamp: createdAt
   });
   window.invalidateCepSearchCache?.('main:explainNotes');
 
   newestNoteId = newDoc.id;
   resetAddForm();
-  CEPNotePopup.preview(newDoc.id, {title:title || 'Untitled',text}, () => { currentFilter = ''; document.getElementById('searchInput').value = ''; renderNotes(allNotes); });
+  CEPNotePopup.preview(newDoc.id, {title:title || 'Untitled',text,url}, () => { currentFilter = ''; document.getElementById('searchInput').value = ''; renderNotes(allNotes); });
 
   });
 });
@@ -912,11 +920,18 @@ function resetAddForm() {
 
   if (titleEl) titleEl.value = '';
   if (textEl) {
-    textEl.value = '';
+    textEl.innerHTML = '';
     textEl.style.height = '';
   }
 
   closeAddPanel();
+  document.getElementById('noteUrl').value = '';
+}
+function normalizeExplainURL(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  try { const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(text) ? text : 'https://' + text); return /^https?:$/.test(url.protocol) ? url.href : ''; }
+  catch { return ''; }
 }
 // --- Render notes ---
 function renderNotes(notesToRender = allNotes) {
@@ -946,12 +961,14 @@ function renderNotes(notesToRender = allNotes) {
     if (note.editing && CEPNotePopup.editorId !== note.id) {
       card.innerHTML = `
         <input type="text" id="editTitle-${note.id}" class="edit-title" value="${escapeAttr(note.title)}" />
-        <div id="editText-${note.id}" class="edit-box" contenteditable="true">${note.text || ''}</div>
+        <input type="text" id="editUrl-${note.id}" class="edit-url" placeholder="Optional URL" value="${escapeAttr(note.url || '')}" />
+        <div id="editText-${note.id}" class="edit-box edit-note" contenteditable="true">${note.text || ''}</div>
         <div class="formatting-buttons">
   <button type="button" class="btn-bold-edit">Bold</button>
 <button type="button" class="btn-underline-edit">Underline</button>
 <button type="button" class="btn-highlight-edit">Highlight</button>
 </div>
+        <div class="editor-buttons definition-edit-actions"><button type="button" class="pn-add-definition">Add definition</button><button type="button" class="pn-edit-definition">Edit definition</button><button type="button" class="pn-remove-definition">Remove definition</button></div>
         <div class="timestamp">Last updated: ${formatTS(note.timestamp)}</div>
         <div class="edit-controls" style="display:flex; gap:8px; margin-top:8px;">
   <button type="button" class="btn-save-edit">Save</button>
@@ -967,6 +984,7 @@ function renderNotes(notesToRender = allNotes) {
 card.innerHTML = `
   <div class="note-title">${escapeHTML(note.title)}</div>
   <div class="note-text">${displayText}</div>
+  ${normalizeExplainURL(note.url) ? `<div class="note-url"><a href="${escapeAttr(normalizeExplainURL(note.url))}" target="_blank" rel="noopener noreferrer">Open URL</a></div>` : ''}
   <div class="timestamp">Saved on ${formatTS(note.timestamp)}</div>
   <div class="btn-group">
     <button class="btn-edit" title="Edit">✎</button>
@@ -1136,14 +1154,15 @@ window.saveEdit = async (id) => {
 
   const newTitle = (titleEl?.value || '').trim();
   const newText = (textEl?.innerHTML || '').trim();
+  const newUrl = normalizeExplainURL(document.getElementById(`editUrl-${id}`)?.value);
 
   await updateDoc(doc(db, 'explainNotes', id), {
-    title:newTitle || 'Untitled', text:newText, timestamp:new Date().toISOString()
+    title:newTitle || 'Untitled', text:newText, url:newUrl, timestamp:new Date().toISOString()
   });
   window.invalidateCepSearchCache?.('main:explainNotes');
   forceExitEditingId = id;
   const savedNote = allNotes.find(n => n.id === id) || note;
-  savedNote.title = newTitle || 'Untitled'; savedNote.text = newText; savedNote.editing = false;
+  savedNote.title = newTitle || 'Untitled'; savedNote.text = newText; savedNote.url = newUrl; savedNote.editing = false;
   delete savedNote._originalTitle; delete savedNote._originalText;
   CEPNotePopup.close();
   renderNotes(getFilteredNotes());
@@ -1602,7 +1621,7 @@ inputGroup.addEventListener('pointerdown', (e) => {
 document.addEventListener('pointerdown', (e) => {
   if (
     inputGroup.classList.contains('show') &&
-    !e.target.closest('.cep-note-overlay') &&
+    !e.target.closest('.cep-note-overlay,#pn-definition-dialog') &&
     !inputGroup.contains(e.target) &&
     !toggleBtn.contains(e.target)
   ) {
@@ -1624,11 +1643,7 @@ function formatFloatingText(command) {
   }
 }
 
-// Auto-resize textarea
-noteText.addEventListener('input', () => {
-  noteText.style.height = 'auto';
-  noteText.style.height = noteText.scrollHeight + 'px';
-});
+
 
 // Auto-resize editable title
 document.addEventListener('input', (e) => {
@@ -1641,5 +1656,8 @@ document.addEventListener('input', (e) => {
 </script>
     <script src="header-rays.js?v=48"></script>
 	<script src="emoji-picker.js?v=1"></script>
+<script src="shared-definitions.js?v=20261010-1"></script>
+<script src="pn-definitions.js?v=20261007-3"></script>
+<script type="module" src="pn-shared-definitions.js?v=20261007-3"></script>
 </body>
 </html>
