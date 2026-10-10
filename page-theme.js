@@ -2768,6 +2768,41 @@
     }
   `;
 
+  // Note creation and editing always have an opaque, theme-matched surface.
+  themeStyle.textContent += `
+    html { --note-editor-depth:none; --note-editor-inset:none; --note-editor-radius:16px; }
+    html[data-xlyneve-color-theme="sculpted"] {
+      --note-editor-depth:inset 3px 3px 5px rgba(255,255,255,.88),inset -4px -5px 9px rgba(57,53,58,.12),10px 14px 28px rgba(57,53,58,.18),-5px -5px 14px rgba(255,255,255,.62);
+      --note-editor-inset:inset 4px 4px 7px rgba(57,53,58,.2),inset -4px -4px 7px rgba(255,255,255,.8);
+      --note-editor-radius:24px;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"] { --note-editor-depth:var(--mint-raised); --note-editor-inset:var(--mint-pressed); --note-editor-radius:22px; }
+    html[data-xlyneve-color-theme="pastel-jumper"] { --note-editor-depth:var(--pastel-ceramic-raised); --note-editor-inset:var(--pastel-ceramic-pressed); --note-editor-radius:22px; }
+    html[data-xlyneve-color-theme="soft-stone"] { --note-editor-depth:var(--stone-raised); --note-editor-inset:var(--stone-pressed); --note-editor-radius:26px; }
+    html[data-xlyneve-color-theme="aurora"] { --note-editor-depth:var(--aurora-raised); --note-editor-inset:var(--aurora-pressed); --note-editor-radius:26px; }
+    html[data-xlyneve-color-theme="porcelain"] { --note-editor-depth:var(--porcelain-recessed); --note-editor-inset:var(--porcelain-pressed); --note-editor-radius:30px; }
+    html[data-xlyneve-color-theme="palm-springs"] { --note-editor-depth:var(--palm-soft-depth); --note-editor-inset:var(--palm-soft-depth); --note-editor-radius:22px; }
+    html:root:root body :is(.cep-note-popup,.pn-edit-popup,#inputGroup,#nurseFormWrapper,.input-panel,#formCard,#notePanel,.note-card.editing-note,.note-card.is-editing),
+    html:root:root body .note-card:has(:is(.note-content[contenteditable="true"],.editableNote[contenteditable="true"],.edit-note[style*="display: block"],.edit-note[style*="display:block"])) {
+      background:linear-gradient(var(--clinical-panel,#fff),var(--clinical-panel,#fff)),#fff !important;
+      opacity:1 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+      color:var(--theme-ink,#39353a) !important;
+      border:1px solid var(--clinical-edge,#dedbd7) !important;
+      border-radius:var(--note-editor-radius) !important;
+      box-shadow:var(--note-editor-depth) !important;
+    }
+    html:root:root body :is(.cep-note-popup,.pn-edit-popup) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) {
+      background:none !important; border:0 !important; box-shadow:none !important;
+    }
+    html:root:root body :is(.edit-note,.edit-box,.editableNote[contenteditable="true"],#noteInput,#noteText.editable,#nurseNote,#noteContent,#noteTextInput),
+    html:root:root body :is(.cep-note-popup,.pn-edit-popup,.input-panel,#inputGroup,#nurseFormWrapper,#formCard,#notePanel) :is(textarea,[contenteditable="true"]) {
+      background:linear-gradient(var(--clinical-field,#fff),var(--clinical-field,#fff)),#fff !important;
+      opacity:1 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+      box-shadow:var(--note-editor-inset) !important;
+      border-radius:12px;
+    }
+  `;
+
   // Shared SVG media buttons stay recognisable and readable across browsers and themes.
   themeStyle.textContent += `
     html:root body a.cep-media-link {

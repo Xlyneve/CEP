@@ -3,15 +3,15 @@
   const style = document.createElement('style');
   style.textContent = `
     .cep-note-overlay { position:fixed; inset:0; z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; background:#0005; }
-    html:root body .cep-note-popup { width:min(720px,100%); max-height:calc(100dvh - 32px); overflow:auto; padding:20px; box-sizing:border-box; border-radius:16px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 16px 48px #0004; }
+    html:root body .cep-note-popup { width:min(720px,100%); max-height:calc(100dvh - 32px); overflow:auto; padding:20px; box-sizing:border-box; border-radius:16px; background:linear-gradient(var(--clinical-panel,#fff),var(--clinical-panel,#fff)),#fff; color:var(--theme-ink,#39353a); box-shadow:0 16px 48px #0004; }
     .cep-note-popup h2 { margin:0 0 14px; font:600 18px Tahoma,sans-serif; }
-    html:root body :is(.cep-note-popup,.pn-edit-popup) { position:relative; }
+    html:root body :is(.cep-note-popup,.pn-edit-popup) { position:relative; background:linear-gradient(var(--clinical-panel,#fff),var(--clinical-panel,#fff)),#fff !important; opacity:1 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-shadow:var(--note-editor-depth,none) !important; }
     html:root body .cep-note-close { position:absolute; top:12px; right:12px; width:32px; height:32px; padding:0; border:0; background:transparent; box-shadow:none; color:inherit; font:24px/1 Tahoma,sans-serif; cursor:pointer; }
     html:root body.cep-add-popup-open :is(#toggleFormBtn,#toggleInputBtn,#toggleInput) { z-index:20001 !important; }
     html:root body .cep-note-popup [data-popup-content] { position:static !important; width:100% !important; max-width:none !important; min-width:0 !important; margin:0 !important; padding:0 !important; opacity:1 !important; transform:none !important; transition:none !important; background:none !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-sizing:border-box; }
     html:root body .cep-note-popup :is(input:not([type=file]),textarea,.edit-note,.edit-box) { width:100% !important; box-sizing:border-box; }
     html:root body .cep-note-popup :is(textarea,.edit-note,.edit-box) { min-height:220px !important; max-height:none !important; }
-    html:root body .cep-note-notice { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:20010; display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 4px 24px #0003; font:13px Tahoma,sans-serif; max-width:calc(100vw - 32px); box-sizing:border-box; }
+    html:root body .cep-note-notice { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:20010; display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; background:linear-gradient(var(--clinical-panel,#fff),var(--clinical-panel,#fff)),#fff; color:var(--theme-ink,#39353a); box-shadow:0 4px 24px #0003; font:13px Tahoma,sans-serif; max-width:calc(100vw - 32px); box-sizing:border-box; }
     .cep-note-notice button { cursor:pointer; white-space:nowrap; }
     html:root body .note-card.cep-note-saved { outline:3px solid #b89cc9 !important; outline-offset:4px; }
     html:root body :is(.cep-note-popup,.pn-edit-popup) .cep-add-layout { display:grid !important; grid-template-columns:minmax(0,220px) minmax(0,1fr); grid-template-rows:auto 1fr; gap:20px; min-height:420px; align-items:stretch; }
@@ -40,7 +40,7 @@
         color:var(--theme-ink,#39353a) !important;
         opacity:1 !important;
         border:1px solid var(--clinical-edge,rgba(255,255,255,.7));
-        box-shadow:var(--porcelain-recessed,0 16px 48px #0004) !important;
+        box-shadow:var(--note-editor-depth,none) !important;
         width:100%; max-width:720px; max-height:calc(100dvh - 32px);
         overflow:auto; overscroll-behavior:contain;
       }
