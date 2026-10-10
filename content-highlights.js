@@ -1,7 +1,7 @@
 /* Render-only styling: no note DOM, attributes, saved HTML or editor commands change. */
 (() => {
   'use strict';
-  const scopes = '.note-text,.note-content,.edit-note,.edit-box,.edit-notes-box,.vaccine-notes-input,.note-display,#note,#noteText,#notes,#noteInput,.editableNote,.chatBubble,.cep-pn-editor,.cep-source-note-text,.cep-source-note-content,.cep-source-note-display,.cep-xgpt-rich-content,.universal-search-native-snippet';
+  const scopes = '.note-text,.note-content,.edit-note,.edit-box,.edit-notes-box,.vaccine-notes-input,.note-display,#note,#noteText,#notes,#noteInput,#nurseNote,.editableNote,.chatBubble,.cep-pn-editor,.cep-source-note-text,.cep-source-note-content,.cep-source-note-display,.cep-xgpt-rich-content,.universal-search-native-snippet';
   const explicitColours = /(?:^|\/)chatgptx\.html$/i.test(location.pathname);
   const authored = '.gradient-highlight,.highlight-gradient,.note-gradient-highlight,mark.highlight-hue,.cep-content-highlight';
   const search = '.cep-search-match,.underlineMatch,.search-highlight,.search-hit';
@@ -63,13 +63,16 @@
     const importantFill = [...source.cssRules].find(rule => rule.selectorText === '.cep-content-highlight-important-fill').style.cssText;
     const importantDarkFill = [...source.cssRules].find(rule => rule.selectorText === '.cep-content-highlight-important-dark-fill').style.cssText;
     const chosenSelectors = [];
+    document.querySelectorAll(`${authored},${search}`).forEach(element => {
+      if (!element.closest(excluded) && !element.textContent.trim() && !element.querySelector('img,svg,table,video,audio,iframe,input,button')) emptySelectors.push(path(element));
+    });
     highlights.forEach(element => {
       if (!eligible(element)) return;
       if (explicitColours && element.closest('.cep-removed-highlight')) return;
       const chosen = explicitColours && element.closest('.cep-chosen-highlight');
       if (chosen && chosen !== element) return;
       const selector = path(element);
-      if (!element.textContent.trim() && !element.querySelector('img,svg,table')) {
+      if (!element.textContent.trim() && !element.querySelector('img,svg,table,video,audio,iframe,input,button')) {
         emptySelectors.push(selector); return;
       }
       // The neutral editor option follows Soft Stone's render-only theme tint.
@@ -107,7 +110,7 @@
     if (darkSelectors.length) rules.push(`${[...new Set(darkSelectors)].join(',')} {background:var(--cep-highlight-dark-paper) !important;box-shadow:var(--cep-highlight-dark-shadow) !important;}`);
     if (importantSelectors.length) rules.push(`${importantSelectors.join(',')} {${importantFill}}`);
     if (importantDarkSelectors.length) rules.push(`${importantDarkSelectors.join(',')} {${importantDarkFill}}`);
-    if (emptySelectors.length) rules.push(`${emptySelectors.join(',')} {background:transparent !important;padding:0 !important;box-shadow:none !important;}`);
+    if (emptySelectors.length) rules.push(`${[...new Set(emptySelectors)].join(',')} {background:transparent !important;padding:0 !important;box-shadow:none !important;visibility:hidden !important;}`);
     if (glowSelectors.length) rules.push(`${glowSelectors.join(',')} {content:none !important;}`);
     const css = rules.join('\n');
     if (runtime.textContent !== css) runtime.textContent = css;
