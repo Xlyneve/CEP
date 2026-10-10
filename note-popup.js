@@ -154,7 +154,7 @@
       try {
         const url = new URL(note.url,location.href);
         if (/^https?:$/.test(url.protocol)) {
-          const link = document.createElement('a'); link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Open URL';
+          const link = document.createElement('a'); link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Open URL'; link.className = 'cep-saved-url';
           const row = document.createElement('p'); row.append(link); content.append(row);
         }
       } catch {}

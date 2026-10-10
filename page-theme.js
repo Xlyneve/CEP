@@ -2770,7 +2770,7 @@
 
   // Shared SVG media buttons stay recognisable and readable across browsers and themes.
   themeStyle.textContent += `
-    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link) {
+    html:root body a.cep-media-link {
       color:#263333 !important; -webkit-text-fill-color:#263333 !important;
       background:linear-gradient(145deg,#fffdf9,#e7e3dd) !important;
       display:inline-flex !important; align-items:center; justify-content:center;
@@ -2781,17 +2781,17 @@
       text-decoration:none; opacity:1 !important; vertical-align:middle;
       transition:transform .12s ease,box-shadow .12s ease;
     }
-    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link):hover {
+    html:root body a.cep-media-link:hover {
       background:linear-gradient(145deg,#fffdf9,#eee8e0) !important;
     }
-    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link) svg {
+    html:root body a.cep-media-link svg {
       width:28px; height:28px; display:block; flex:none; pointer-events:none;
     }
-    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link):active {
+    html:root body a.cep-media-link:active {
       transform:translateY(1px);
       box-shadow:inset 2px 3px 5px rgba(38,51,51,.2),inset -2px -2px 4px rgba(255,255,255,.8) !important;
     }
-    html:root body :is(.note-url,.cep-source-card-url) a:is([aria-label="Play video"],.cep-media-link):focus-visible {
+    html:root body a.cep-media-link:focus-visible {
       outline:2px solid #263333; outline-offset:3px;
     }
   `;
@@ -3161,4 +3161,35 @@
   } else {
     start();
   }
+})();
+
+// Decorate dedicated saved URL controls without changing inline links or navigation.
+(() => {
+  const selector = '.note-url a[href], a.note-link[href], a.cep-saved-url[href], a.vaccine-link[href]';
+  function decorate(root) {
+    const links = [...(root.matches?.(selector) ? [root] : []), ...root.querySelectorAll(selector)];
+    for (const link of links) {
+      if (link.classList.contains('cep-media-link') || link.closest('[contenteditable="true"]')) continue;
+      const label = link.textContent.trim().replace(/^🔗\s*/, '');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      for (const [name,value] of Object.entries({viewBox:'0 0 24 24','aria-hidden':'true',fill:'none',stroke:'currentColor','stroke-width':'1.8','stroke-linejoin':'round'})) svg.setAttribute(name,value);
+      for (const d of ['M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71','M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71']) {
+        const path = document.createElementNS(svg.namespaceURI,'path'); path.setAttribute('d',d); svg.append(path);
+      }
+      link.replaceChildren(svg);
+      link.classList.add('cep-media-link');
+      link.title = /^(Open(?: URL| link)?|URL Link)$/i.test(label) ? 'Open link' : (label || 'Open link');
+      link.setAttribute('aria-label',link.title);
+    }
+  }
+  function start() {
+    decorate(document);
+    new MutationObserver(records => {
+      for (const record of records) for (const node of record.addedNodes) {
+        if (node.nodeType === 1 && node.isConnected) decorate(node);
+      }
+    }).observe(document.body,{childList:true,subtree:true});
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
