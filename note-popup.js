@@ -18,6 +18,7 @@
     html:root body .cep-add-layout [hidden] { display:none !important; }
     html:root body .cep-add-has-toolbar :is(.main-editor-buttons,.format-buttons,.formatting-buttons) { display:none !important; }
     html:root body .cep-add-controls .cep-pn-editor-toolbar { display:flex; flex-wrap:wrap; gap:4px; width:100%; margin:0; box-sizing:border-box; }
+    html:root body .cep-add-definition-actions { display:flex; flex-wrap:wrap; gap:6px; }
     html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; }
     html:root body .cep-add-actions button { width:auto !important; margin:0 !important; }
     html:root body .cep-add-body { min-width:0; }
@@ -152,13 +153,19 @@
       const anchor = url || title;
       if (anchor && anchor.nextElementSibling !== toolbar) anchor.after(toolbar);
       const definitionButtons = [...form.querySelectorAll('.pn-add-definition,.pn-edit-definition,.pn-remove-definition')];
+      let definitions = controls.querySelector('.cep-add-definition-actions');
+      if (definitionButtons.length && !definitions) {
+        definitions = document.createElement('div');
+        definitions.className = 'cep-add-definition-actions';
+        toolbar.after(definitions);
+      }
       definitionButtons.forEach(button => {
-        if (button.parentElement === toolbar) return;
-        const label = button.textContent.trim();
+        if (button.parentElement === definitions) return;
+        const label = button.classList.contains('pn-add-definition') ? 'Add definition' : button.classList.contains('pn-edit-definition') ? 'Edit definition' : 'Remove definition';
         button.title = label;
         button.setAttribute('aria-label',label);
-        button.textContent = button.classList.contains('pn-add-definition') ? 'D+' : button.classList.contains('pn-edit-definition') ? 'D✎' : 'D−';
-        toolbar.append(button);
+        button.textContent = label;
+        definitions.append(button);
       });
     };
     syncToolbar();
