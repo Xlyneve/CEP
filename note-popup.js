@@ -11,6 +11,18 @@
     html:root body .cep-note-notice { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:20010; display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 4px 24px #0003; font:13px Tahoma,sans-serif; max-width:calc(100vw - 32px); box-sizing:border-box; }
     .cep-note-notice button { cursor:pointer; white-space:nowrap; }
     html:root body .note-card.cep-note-saved { outline:3px solid #b89cc9 !important; outline-offset:4px; }
+    html:root body :is(.cep-note-popup,.pn-edit-popup) .cep-add-layout { display:grid !important; grid-template-columns:minmax(0,220px) minmax(0,1fr); gap:20px; align-items:start; }
+    html:root body .cep-add-controls { display:flex; flex-direction:column; gap:12px; min-width:0; }
+    html:root body .cep-add-controls > input:not([type=file]) { flex:0 0 auto !important; height:36px !important; min-height:0 !important; max-height:none !important; margin:0 !important; width:100% !important; box-sizing:border-box; }
+    html:root body .cep-add-controls :is(.editor-buttons,.format-buttons,.formatting-buttons,.action-buttons) { display:flex !important; flex-wrap:wrap; gap:6px; width:100% !important; margin:0 !important; box-sizing:border-box; }
+    html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    html:root body .cep-add-actions button { width:auto !important; margin:0 !important; }
+    html:root body .cep-add-body { min-width:0; }
+    html:root body .cep-add-body :is(textarea,[contenteditable=true]) { width:100% !important; min-height:340px !important; max-height:60dvh !important; overflow:auto; margin:0 !important; box-sizing:border-box; }
+    @media (max-width:600px) {
+      html:root body :is(.cep-note-popup,.pn-edit-popup) .cep-add-layout { grid-template-columns:minmax(0,1fr); gap:16px; }
+      html:root body .cep-add-body :is(textarea,[contenteditable=true]) { min-height:220px !important; }
+    }
   `;
   document.head.append(style);
   let active = null, revealId = null, recentId = null, recentUntil = 0;
@@ -48,10 +60,11 @@
     const heading = document.createElement('h2'); heading.textContent = title;
     popup.append(heading,content); overlay.append(popup); document.body.append(overlay);
     content.setAttribute('data-popup-content','');
-    if (add && !content.querySelector('.cep-note-cancel')) {
+    if (add && !content.querySelector('.cep-note-cancel,#cancelAddNote')) {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'cep-note-cancel'; button.textContent = 'Cancel';
       button.onclick = () => active?.cancel(); content.append(button);
     }
+    if (add) arrangeAdd(content);
     const keyHandler = event => {
       if (document.querySelector('dialog[open]')) return;
       if (event.key === 'Escape') { event.preventDefault(); if (!active?.busy) active?.cancel(); }
@@ -108,5 +121,27 @@
       if (state) state.busy = false;
     }
   }
-  window.CEPNotePopup = { open, close, saved, beginRender, submit, get editorId() { return active?.content.dataset.id; } };
+  function arrangeAdd(form) {
+    if (form.classList.contains('cep-add-layout')) return;
+    const editor = form.querySelector('#noteText,#nurseNote');
+    if (!editor) return;
+    const controls = document.createElement('div'); controls.className = 'cep-add-controls';
+    const body = document.createElement('div'); body.className = 'cep-add-body';
+    const actions = document.createElement('div'); actions.className = 'cep-add-actions';
+    body.append(editor);
+    const title = form.querySelector('#noteTitle,#nurseTitle');
+    const url = form.querySelector('#noteUrl,#nurseURL');
+    if (title) controls.append(title);
+    if (url) controls.append(url);
+    form.querySelectorAll('.editor-buttons,.format-buttons,.formatting-buttons').forEach(toolbar => controls.append(toolbar));
+    form.querySelectorAll('.add-btn,#cancelAddNote,.cep-note-cancel').forEach(button => actions.append(button));
+    [...form.children].forEach(extra => {
+      if (extra.children.length || extra.textContent.trim() || extra.matches('input,label,button')) controls.append(extra);
+      else extra.remove();
+    });
+    controls.append(actions);
+    form.replaceChildren(controls,body);
+    form.classList.add('cep-add-layout');
+  }
+  window.CEPNotePopup = { open, close, saved, beginRender, submit, arrangeAdd, get editorId() { return active?.content.dataset.id; } };
 })();
