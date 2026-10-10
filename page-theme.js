@@ -1,6 +1,9 @@
 (function () {
   "use strict";
 
+  // Consultation Templates keeps its own design regardless of the Home theme.
+  if ((location.pathname.split("/").pop() || "").toLowerCase() === "rncnp.html") return;
+
   const originalPalette = [
     { rgb: "229, 203, 204", solid: "#e5cbcc", ink: "#39190f" },
     { rgb: "211, 224, 223", solid: "#d3e0df", ink: "#39190f" },
