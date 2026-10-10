@@ -34,6 +34,25 @@
     html:root body .cep-add-actions button { width:auto !important; margin:0 !important; }
     html:root body .cep-add-body { min-width:0; grid-column:2; grid-row:1 / span 2; }
     html:root body .cep-add-body :is(textarea,[contenteditable=true]) { width:100% !important; height:100% !important; min-height:340px !important; max-height:none !important; overflow:auto; margin:0 !important; box-sizing:border-box; }
+    @media (max-width:768px) {
+      html:root body :is(.cep-note-popup,.pn-edit-popup) {
+        background:linear-gradient(var(--clinical-panel,#fff),var(--clinical-panel,#fff)),#fff !important;
+        color:var(--theme-ink,#39353a) !important;
+        opacity:1 !important;
+        border:1px solid var(--clinical-edge,rgba(255,255,255,.7));
+        box-shadow:var(--porcelain-recessed,0 16px 48px #0004) !important;
+        width:100%; max-width:720px; max-height:calc(100dvh - 32px);
+        overflow:auto; overscroll-behavior:contain;
+      }
+      html:root body .pn-edit-popup #nurseFormWrapper,
+      html:root body .cep-note-popup :is(#inputGroup,#nurseFormWrapper,[data-popup-content]) {
+        position:static !important; inset:auto !important; width:100% !important;
+        max-width:none !important; max-height:none !important; padding:0 !important;
+        margin:0 !important; transform:none !important; opacity:1 !important;
+        background:none !important; box-shadow:none !important; overflow:visible !important;
+        backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+      }
+    }
     @media (max-width:600px) {
       html:root body :is(.cep-note-popup,.pn-edit-popup) .cep-add-layout { grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto auto; gap:16px; min-height:0; }
       html:root body .cep-add-body { grid-column:1; grid-row:2; }
