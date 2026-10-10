@@ -15,6 +15,9 @@
     html:root body .cep-add-controls { display:flex; flex-direction:column; gap:12px; min-width:0; }
     html:root body .cep-add-controls > input:not([type=file]) { flex:0 0 auto !important; height:36px !important; min-height:0 !important; max-height:none !important; margin:0 !important; width:100% !important; box-sizing:border-box; }
     html:root body .cep-add-controls :is(.editor-buttons,.format-buttons,.formatting-buttons,.action-buttons) { display:flex !important; flex-wrap:wrap; gap:6px; width:100% !important; margin:0 !important; box-sizing:border-box; }
+    html:root body .cep-add-layout [hidden] { display:none !important; }
+    html:root body .cep-add-has-toolbar :is(.main-editor-buttons,.format-buttons,.formatting-buttons) { display:none !important; }
+    html:root body .cep-add-controls .cep-pn-editor-toolbar { display:flex; flex-wrap:wrap; gap:4px; width:100%; margin:0; box-sizing:border-box; }
     html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; }
     html:root body .cep-add-actions button { width:auto !important; margin:0 !important; }
     html:root body .cep-add-body { min-width:0; }
@@ -142,6 +145,24 @@
     controls.append(actions);
     form.replaceChildren(controls,body);
     form.classList.add('cep-add-layout');
+    const syncToolbar = () => {
+      const toolbar = form.querySelector('.cep-pn-editor-toolbar');
+      if (!toolbar) return;
+      form.classList.add('cep-add-has-toolbar');
+      const anchor = url || title;
+      if (anchor && anchor.nextElementSibling !== toolbar) anchor.after(toolbar);
+      const definitionButtons = [...form.querySelectorAll('.pn-add-definition,.pn-edit-definition,.pn-remove-definition')];
+      definitionButtons.forEach(button => {
+        if (button.parentElement === toolbar) return;
+        const label = button.textContent.trim();
+        button.title = label;
+        button.setAttribute('aria-label',label);
+        button.textContent = button.classList.contains('pn-add-definition') ? 'D+' : button.classList.contains('pn-edit-definition') ? 'D✎' : 'D−';
+        toolbar.append(button);
+      });
+    };
+    syncToolbar();
+    new MutationObserver(syncToolbar).observe(form, { childList:true, subtree:true });
   }
   window.CEPNotePopup = { open, close, saved, beginRender, submit, arrangeAdd, get editorId() { return active?.content.dataset.id; } };
 })();
