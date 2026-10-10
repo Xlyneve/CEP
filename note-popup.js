@@ -22,7 +22,7 @@
     html:root body .cep-add-controls .cep-pn-editor-divider { display:none; }
     html:root body .cep-add-definition-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
     .cep-add-definition-label { flex-basis:100%; font:12px Tahoma,sans-serif; }
-    html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:36px; }
     html:root body .cep-add-actions button { width:auto !important; margin:0 !important; }
     html:root body .cep-add-body { min-width:0; }
     html:root body .cep-add-body :is(textarea,[contenteditable=true]) { width:100% !important; min-height:340px !important; max-height:60dvh !important; overflow:auto; margin:0 !important; box-sizing:border-box; }
