@@ -854,6 +854,22 @@ textarea:focus {
 }
 
 
+  .email-copy {
+    cursor: pointer;
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: #e4b923;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  .email-copy:focus-visible { outline: 2px solid #e4b923; outline-offset: 3px; }
+  .note-text { position: relative; }
+  .email-copy-status {
+    position: absolute; right: 0; bottom: 0; pointer-events: none;
+    background: #fffbe8; color: #332e20; border-radius: 6px;
+    font-size: 12px; padding: 3px 7px; box-shadow: 0 2px 5px #0002;
+  }
+  .email-copy-status:empty { display: none; }
   </style>
 	<link rel="stylesheet" href="site-background.css?v=20260722-4">
   <script src="page-theme.js?v=20260823-1"></script>
@@ -1062,6 +1078,49 @@ function toggleHighlightInEditor(editor) {
     document.execCommand('insertHTML', false, `<mark class="gradient-highlight">${html}</mark>`);
   }
 }
+function enableEmailCopy(root) {
+  const pattern = /[A-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?)+/gi;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (!node.parentElement.closest('button,script,style,.email-copy,[contenteditable="true"]')) nodes.push(node);
+  }
+  for (const node of nodes) {
+    const matches = [...node.textContent.matchAll(pattern)];
+    if (!matches.length) continue;
+    const fragment = document.createDocumentFragment();
+    let offset = 0;
+    for (const match of matches) {
+      fragment.append(document.createTextNode(node.textContent.slice(offset, match.index)));
+      const email = match[0];
+      const control = document.createElement('span');
+      control.className = 'email-copy'; control.textContent = email;
+      control.tabIndex = 0; control.setAttribute('role','button');
+      control.title = 'Copy email address'; control.setAttribute('aria-label','Copy email address: ' + email);
+      const copy = event => {
+        event.preventDefault(); event.stopPropagation();
+        copyPlainText(email, () => {
+          control.title = 'Copied';
+          let status = root._emailCopyStatus;
+          if (!status) {
+            status = document.createElement('span'); status.className = 'email-copy-status';
+            status.setAttribute('role','status'); root.parentElement.append(status); root._emailCopyStatus = status;
+          }
+          status.textContent = 'Copied';
+          clearTimeout(root._emailCopyTimer);
+          root._emailCopyTimer = setTimeout(() => { status.textContent = ''; control.title = 'Copy email address'; }, 1400);
+        });
+      };
+      control.addEventListener('click',copy);
+      control.addEventListener('keydown',event => { if (event.key === 'Enter' || event.key === ' ') copy(event); });
+      for (const type of ['mousedown','touchstart']) control.addEventListener(type,event => event.stopPropagation(),{passive:true});
+      fragment.append(control); offset = match.index + email.length;
+    }
+    fragment.append(document.createTextNode(node.textContent.slice(offset))); node.replaceWith(fragment);
+  }
+}
+
 async function copyPlainText(text, onDone) {
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1314,6 +1373,7 @@ urlInput.style.display = 'none';
     const textDisplay = document.createElement('div');
     textDisplay.className = 'note-text';
     CEPSecurity.setHTML(textDisplay, maybeParseLegacy(note.text || ''));
+    enableEmailCopy(textDisplay);
 
     // Text editor
     const textEditor = document.createElement('div');
@@ -1376,6 +1436,7 @@ urlInput.style.display = 'none';
       if(e.target.closest('.btn-group')) return;
       if(e.target.closest('.editor-buttons')) return;
       if(e.target.closest('.note-url')) return;
+      if(e.target.closest('.email-copy,.email-copy-status')) return;
       copyPlainText(textDisplay.innerText, ()=>{
         showCopyFeedback(card, e.clientX, e.clientY);
       });
