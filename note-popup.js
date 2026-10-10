@@ -17,12 +17,12 @@
     html:root body .cep-add-controls :is(.editor-buttons,.format-buttons,.formatting-buttons,.action-buttons) { display:flex !important; flex-wrap:wrap; gap:6px; width:100% !important; margin:0 !important; box-sizing:border-box; }
     html:root body .cep-add-layout [hidden] { display:none !important; }
     html:root body .cep-add-has-toolbar :is(.main-editor-buttons,.format-buttons,.formatting-buttons) { display:none !important; }
-    html:root body .cep-add-controls .cep-pn-editor-toolbar { display:flex; flex-direction:column; align-items:flex-start; gap:6px; width:100%; margin:0; box-sizing:border-box; }
+    html:root body .cep-add-controls .cep-pn-editor-toolbar { display:flex; flex-direction:column; align-items:flex-start; gap:6px; width:100%; margin:12px 0 0; box-sizing:border-box; }
     html:root body .cep-add-format-row { display:flex; gap:4px; align-items:center; }
     html:root body .cep-add-controls .cep-pn-editor-divider { display:none; }
-    html:root body .cep-add-definition-actions { display:flex; flex-wrap:wrap; gap:6px; }
+    html:root body .cep-add-definition-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
     .cep-add-definition-label { flex-basis:100%; font:12px Tahoma,sans-serif; }
-    html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    html:root body .cep-add-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
     html:root body .cep-add-actions button { width:auto !important; margin:0 !important; }
     html:root body .cep-add-body { min-width:0; }
     html:root body .cep-add-body :is(textarea,[contenteditable=true]) { width:100% !important; min-height:340px !important; max-height:60dvh !important; overflow:auto; margin:0 !important; box-sizing:border-box; }
