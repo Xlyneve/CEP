@@ -50,6 +50,16 @@
     savedLayout = { x:panel.offsetLeft, y:panel.offsetTop, width:panel.offsetWidth, height:panel.offsetHeight };
     try { localStorage.setItem(layoutKey, JSON.stringify(savedLayout)); } catch {}
   }
+  function closeOnHome() {
+    saveLayout();
+    if (panel) panel.hidden = true;
+    rememberOpenState(false);
+  }
+  window.addEventListener("message", event => {
+    if (event.origin !== location.origin || event.data?.type !== "cep-notepad-moved-to-window") return;
+    if (event.source !== panel?.querySelector("iframe")?.contentWindow) return;
+    closeOnHome();
+  });
   function restoreLayout() {
     if (!panel || panel.hidden) return;
     const mobileWidth = Math.min(320, innerWidth - 24);
@@ -389,7 +399,10 @@
       if (!notepadWindow || notepadWindow.closed) {
         notepadWindow = window.open(url + "&view=window", "xlyneveMiniNotepad", `popup=yes,width=${width},height=${height},resizable=yes,scrollbars=no,location=no,toolbar=no,menubar=no,status=no`);
       }
-      notepadWindow?.focus();
+      if (notepadWindow) {
+        closeOnHome();
+        notepadWindow.focus();
+      }
     }]
   ];
   for (const [mode, text, action] of modes) {

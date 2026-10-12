@@ -211,6 +211,9 @@
       status.hidden = false;
       return;
     }
+    if (newWindow && window.parent !== window) {
+      window.parent.postMessage({type:"cep-notepad-moved-to-window"},location.origin);
+    }
     opened.focus();
     // Script-opened notepads can close themselves; a directly visited page stays open.
     if (window.opener) window.close();
