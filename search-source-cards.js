@@ -49,11 +49,17 @@ function installThemeStyles() {
     .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) { display:block; position:relative; width:100%; min-width:0; height:auto; margin:0 !important; box-sizing:border-box; overflow-wrap:anywhere; }
     .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) > * { position:relative; z-index:1; }
     html:root:root body .cep-search-source[data-source-file="chatgptx.html"] > .cep-source-chat {
-      max-height:min(480px,60vh); overflow:auto; overscroll-behavior:contain;
-      -webkit-overflow-scrolling:touch;
+      max-height:none; overflow:visible; font-size:14px !important;
     }
     html:root:root body .cep-search-source[data-source-file="chatgptx.html"] .cep-source-chat > :is(.cep-xgpt-rich-content,.universal-search-native-snippet) {
-      min-width:560px; max-width:none; overflow-wrap:normal; word-break:normal;
+      min-width:0; max-width:100%; overflow-wrap:anywhere; word-break:normal;
+      zoom:.85;
+    }
+    html:root:root body .cep-search-source[data-source-file="chatgptx.html"] {
+      grid-column:1 / -1; min-width:0; align-self:start;
+    }
+    @media (max-width:600px) {
+      html:root:root body .cep-search-source[data-source-file="chatgptx.html"] > .cep-source-chat { font-size:13px !important; }
     }
     html:root:root body dialog.cep-chat-search-preview {
       width:min(900px,92vw); max-height:85vh; box-sizing:border-box;
@@ -69,8 +75,10 @@ function installThemeStyles() {
       background:#fff; color:#333; cursor:pointer;
     }
     html:root:root body .cep-chat-search-preview .cep-search-source > .cep-source-chat {
-      max-height:none; overflow:visible;
+      max-height:none; overflow:visible; font-size:16px !important;
     }
+    html:root:root body .cep-chat-search-preview .cep-xgpt-rich-content,
+    html:root:root body .cep-chat-search-preview .universal-search-native-snippet { zoom:1; }
     html:root:root body .cep-search-source:is([data-source-file="pn.html"],[data-source-file="recalls.html"]) a.cep-media-link { width:30px !important;height:30px !important;border-radius:9px !important; }
     html:root:root body .cep-search-source:is([data-source-file="pn.html"],[data-source-file="recalls.html"]) a.cep-media-link svg { width:18px;height:18px; }
   `);
@@ -88,12 +96,14 @@ function openChatSearchPreview(card, surface) {
   const fullNote = surface.cloneNode(true);
   fullNote.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
   content.append(fullNote); dialog.append(close,content); document.body.append(dialog);
-  close.addEventListener('click', () => dialog.close());
+  close.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); dialog.close(); });
   dialog.addEventListener('click', event => {
+    event.stopPropagation();
     if (event.target !== dialog) return;
     const bounds = dialog.getBoundingClientRect();
     if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
   });
+  dialog.addEventListener('keydown', event => { if (event.key === 'Escape') event.stopPropagation(); });
   dialog.addEventListener('close', () => dialog.remove(), {once:true});
   dialog.showModal();
 }
