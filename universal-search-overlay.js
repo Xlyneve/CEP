@@ -1,3 +1,4 @@
+import { applySourceSearchSkin } from "./search-source-cards.js?v=20261012-1";
 import "./concept-markup.js?v=20261004-1";
 import "./shared-definitions.js?v=20261007-3";
 import "./pn-shared-definitions.js?v=20261007-3";
@@ -176,7 +177,8 @@ export async function loadClinicalNotesEntries({ forceRefresh = false } = {}) {
     await auth.authStateReady();
     if (!auth.currentUser) throw Object.assign(new Error('Open Clinical Notes and sign in, then return to search.'), { code:'clinical/auth-required' });
     const docs = await loadPersistentSearchDocuments(getFirestore(app), 'clinicalNotes', `clinical:${auth.currentUser.uid}`, { forceRefresh });
-    return docs.map(record => ({ id:record.id, file:'Clinicalnotes.html', sourceTitle:'Clinical Notes', title:textFromHtml(record.data.title) || 'Untitled', text:[textFromHtml(record.data.title),textFromHtml(record.data.note)].join('\n'), displayText:textFromHtml(record.data.note), richHtml:record.data.note || '', record }));
+    const sourceOrder = new Map([...docs].sort((a,b)=>new Date(b.data.time)-new Date(a.data.time)).map((record,index)=>[record.id,index]));
+    return docs.map(record => ({ id:record.id, sourceIndex:sourceOrder.get(record.id), file:'Clinicalnotes.html', sourceTitle:'Clinical Notes', title:textFromHtml(record.data.title) || 'Untitled', text:[textFromHtml(record.data.title),textFromHtml(record.data.note)].join('\n'), displayText:textFromHtml(record.data.note), richHtml:record.data.note || '', record }));
   })().catch(error => { clinicalEntriesPromise = null; throw error; });
   return clinicalEntriesPromise;
 }
@@ -442,7 +444,7 @@ async function loadEntries(onProgress) {
       try {
         const documents = await loadPersistentSearchDocuments(db, collectionName, `main:${userId}`);
         onProgress?.(sourceTitle);
-        return documents.map(note => {
+        return documents.map((note, sourceIndex) => {
           const data = note.data;
           const title = textFromHtml(data.title).replace(/\s+/g, ' ').trim() || sourceTitle;
           const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
@@ -454,7 +456,7 @@ async function loadEntries(onProgress) {
           ].filter(Boolean))];
           const directUrl = directField && data[directField];
           return {
-            id: note.id, file, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`,
+            id: note.id, file, sourceIndex, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`,
             text, displayText, directUrl, cardColour: file === 'Notes.html' ? (data.color || '#C0B7BB') : '',
             imageUrl: data.image || '', imageUrls, richHtml, record: { id: note.id, data }
           };
@@ -1430,6 +1432,7 @@ export async function mountUniversalSearch(host, closeSearch) {
         renderStructuredSearchContent(cardBody, entry.richHtml, renderTerms);
       } else addHighlightedText(cardBody, snippetText, renderTerms);
       if (!sourceCardRendered) appendSearchResultContent(link, entry.file === 'chatgptx.html' ? null : title, cardBody, resultImages, entry.file);
+      applySourceSearchSkin(link, entry);
       installSearchCardInteractions(link, {
         copyText: entry.displayText || entry.text || entry.title,
         copyHtml: getSearchCopyHtml(entry),

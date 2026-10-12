@@ -4875,6 +4875,7 @@ html[data-xlyneve-color-theme="sculpted"].theme-home-glass body.dashboard-hierar
           addHighlightedText(nativeSnippet, snippetText, renderTerms);
           appendSearchResultContent(nativeCard, nativeTitle, nativeSnippet, resultImages, page.file);
         }
+        window.applySourceSearchSkin?.(nativeCard, page);
         result.appendChild(nativeCard);
         group.appendChild(result);
         group.classList.add('has-ready-results');
@@ -6381,7 +6382,7 @@ const firebaseConfig = {
     try {
       const userId = getAuth(app).currentUser?.uid || 'signed-in';
       const documents = await loadPersistentSearchDocuments(db, source.collection, `main:${userId}`, { forceRefresh: forceRefresh === true });
-      const entries = documents.map(note => {
+      const entries = documents.map((note, sourceIndex) => {
         const data = note.data;
         const savedTitle = htmlToMultilineText(data.title).replace(/\s+/g, ' ').trim();
         const text = source.fields
@@ -6395,6 +6396,7 @@ const firebaseConfig = {
         ].filter(Boolean))];
         return {
           file: source.file,
+          sourceIndex,
           sourcePage: source.file,
           title: savedTitle ? `${source.title} — ${savedTitle}` : source.title,
           text,

@@ -2909,6 +2909,12 @@
     });
   }
 
+  // Search uses the existing palette and source order, without loading source records again.
+  window.getCepSourceCardColour = (file, index, className = "note-card") => {
+    const seed = `${String(file).toLowerCase()}:${Number.isInteger(index) ? index : 0}::${className}`;
+    return palette[hash(seed) % palette.length];
+  };
+
   function colorCards(scope, getPageOrder) {
     const cards = [];
     if (scope.nodeType === 1 && scope.matches(cardSelector)) cards.push(scope);
