@@ -2,6 +2,24 @@
   "use strict";
 
   const storageKey = "xlyneve-mini-notepad";
+  const windowSizeKey = "xlyneve-notepad-window-size";
+  const readWindowSize = () => {
+    try {
+      const size = JSON.parse(localStorage.getItem(windowSizeKey));
+      if (size && Number.isFinite(size.width) && Number.isFinite(size.height) && size.width >= 180 && size.height >= 160) return size;
+    } catch {}
+    return null;
+  };
+  if (window.top === window && (new URLSearchParams(location.search).get("view") === "window" || window.name === "xlyneveMiniNotepad")) {
+    let sizeTimer;
+    const rememberWindowSize = () => {
+      if (innerWidth < 180 || innerHeight < 160) return;
+      try { localStorage.setItem(windowSizeKey, JSON.stringify({width:innerWidth,height:innerHeight})); } catch {}
+    };
+    window.addEventListener("resize", () => { clearTimeout(sizeTimer); sizeTimer = setTimeout(rememberWindowSize,150); });
+    window.addEventListener("pagehide", rememberWindowSize);
+  }
+
   const notesElement = document.getElementById("notes");
   const addButton = document.getElementById("addNote");
   let saveTimer = 0;
@@ -181,9 +199,12 @@
       return;
     }
     const destination = new URL(location.href);
-    destination.searchParams.set("v", "20260916-8");
+    destination.searchParams.set("v", "20261012-1");
+    if (newWindow) destination.searchParams.set("view","window");
+    else destination.searchParams.delete("view");
+    const windowSize = readWindowSize() || {width:900,height:760};
     const opened = newWindow
-      ? window.open(destination.href, "_blank", "popup=yes,width=900,height=760,resizable=yes,scrollbars=yes")
+      ? window.open(destination.href, "_blank", `popup=yes,width=${Math.round(windowSize.width)},height=${Math.round(windowSize.height)},resizable=yes,scrollbars=yes`)
       : window.open(destination.href, "_blank");
     if (!opened) {
       status.textContent = "The browser blocked the new view. Allow popups for this site and try again.";

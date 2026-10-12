@@ -2,7 +2,7 @@
   "use strict";
   const launcher = document.querySelector(".pageTitle");
   if (!launcher) return;
-  const url = "notepad.html?v=20260916-8";
+  const url = "notepad.html?v=20261012-1";
   let notepadWindow = null;
   let panel = null;
   const compactLayout = matchMedia("(max-width: 600px)").matches;
@@ -381,12 +381,13 @@
     ["tab", "Open in new tab", () => window.open(url, "_blank", "noopener")],
     ["window", "Open in new window", () => {
       saveLayout();
-      const width = Math.round(savedLayout?.width || 320);
-      const height = Math.round(savedLayout?.height || 340);
+      let windowSize;
+      try { windowSize = JSON.parse(localStorage.getItem("xlyneve-notepad-window-size")); } catch {}
+      const validSize = windowSize && Number.isFinite(windowSize.width) && Number.isFinite(windowSize.height) && windowSize.width >= 180 && windowSize.height >= 160;
+      const width = Math.round(validSize ? windowSize.width : savedLayout?.width || 320);
+      const height = Math.round(validSize ? windowSize.height : savedLayout?.height || 340);
       if (!notepadWindow || notepadWindow.closed) {
-        notepadWindow = window.open(url, "xlyneveMiniNotepad", `popup=yes,width=${width},height=${height},resizable=yes,scrollbars=no,location=no,toolbar=no,menubar=no,status=no`);
-      } else {
-        notepadWindow.resizeTo(width + Math.max(0, notepadWindow.outerWidth - notepadWindow.innerWidth), height + Math.max(0, notepadWindow.outerHeight - notepadWindow.innerHeight));
+        notepadWindow = window.open(url + "&view=window", "xlyneveMiniNotepad", `popup=yes,width=${width},height=${height},resizable=yes,scrollbars=no,location=no,toolbar=no,menubar=no,status=no`);
       }
       notepadWindow?.focus();
     }]
