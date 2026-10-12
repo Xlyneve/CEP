@@ -63,14 +63,15 @@ function installThemeStyles() {
     }
     html:root:root body dialog.cep-chat-search-preview {
       width:min(900px,92vw); max-height:85vh; box-sizing:border-box;
-      padding:40px 12px 12px; border:1px solid var(--clinical-edge,#ddd);
+      padding:8px 12px 12px; border:1px solid var(--clinical-edge,#ddd);
       border-radius:24px; background-color:#f5f4f0;
       color:var(--theme-ink,#222); overflow:auto;
       box-shadow:0 16px 50px rgba(0,0,0,.25);
     }
     dialog.cep-chat-search-preview::backdrop { background:rgba(0,0,0,.35); }
     html:root:root body .cep-chat-preview-close {
-      position:absolute; top:7px; right:12px; width:28px; height:28px;
+      position:sticky; top:0; display:block; margin:0 0 6px auto; z-index:10;
+      width:28px; height:28px; flex:none;
       padding:0; font-size:22px; line-height:1; border:0; border-radius:50%;
       background:#fff; color:#333; cursor:pointer;
     }
@@ -99,6 +100,8 @@ function openChatSearchPreview(card, surface) {
   fullNote.querySelectorAll('mark.cep-search-match').forEach(mark => mark.replaceWith(...mark.childNodes));
   fullNote.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
   content.append(fullNote); dialog.append(close,content); document.body.append(dialog);
+  dialog.addEventListener('pointerdown', event => event.stopPropagation());
+  dialog.addEventListener('mousedown', event => event.stopPropagation());
   close.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); dialog.close(); });
   dialog.addEventListener('click', event => {
     event.stopPropagation();
