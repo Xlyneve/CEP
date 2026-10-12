@@ -48,6 +48,13 @@ function installThemeStyles() {
     html:root:root body .cep-search-source::before,html:root:root body .cep-search-source::after { content:none !important; }
     .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) { display:block; position:relative; width:100%; min-width:0; height:auto; margin:0 !important; box-sizing:border-box; overflow-wrap:anywhere; }
     .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) > * { position:relative; z-index:1; }
+    html:root:root body .cep-search-source[data-source-file="chatgptx.html"] > .cep-source-chat {
+      max-height:min(480px,60vh); overflow:auto; overscroll-behavior:contain;
+      -webkit-overflow-scrolling:touch;
+    }
+    html:root:root body .cep-search-source[data-source-file="chatgptx.html"] .cep-source-chat > :is(.cep-xgpt-rich-content,.universal-search-native-snippet) {
+      min-width:560px; max-width:none; overflow-wrap:normal; word-break:normal;
+    }
     html:root:root body .cep-search-source:is([data-source-file="pn.html"],[data-source-file="recalls.html"]) a.cep-media-link { width:30px !important;height:30px !important;border-radius:9px !important; }
     html:root:root body .cep-search-source:is([data-source-file="pn.html"],[data-source-file="recalls.html"]) a.cep-media-link svg { width:18px;height:18px; }
   `);
