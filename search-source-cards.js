@@ -55,11 +55,55 @@ function installThemeStyles() {
     html:root:root body .cep-search-source[data-source-file="chatgptx.html"] .cep-source-chat > :is(.cep-xgpt-rich-content,.universal-search-native-snippet) {
       min-width:560px; max-width:none; overflow-wrap:normal; word-break:normal;
     }
+    html:root:root body .cep-chat-preview-button {
+      display:flex; align-items:center; justify-content:center;
+      position:absolute; top:6px; right:6px; z-index:4;
+      width:28px; height:28px; margin:0; padding:0;
+      font-size:17px; line-height:1; border-radius:50%; cursor:pointer;
+      color:#333; background:#fff; border:1px solid #ddd;
+    }
+    html:root:root body dialog.cep-chat-search-preview {
+      width:min(900px,92vw); max-height:85vh; box-sizing:border-box;
+      padding:40px 12px 12px; border:1px solid var(--clinical-edge,#ddd);
+      border-radius:24px; background-color:#f5f4f0;
+      color:var(--theme-ink,#222); overflow:auto;
+      box-shadow:0 16px 50px rgba(0,0,0,.25);
+    }
+    dialog.cep-chat-search-preview::backdrop { background:rgba(0,0,0,.35); }
+    html:root:root body .cep-chat-preview-close {
+      position:absolute; top:7px; right:12px; width:28px; height:28px;
+      padding:0; font-size:22px; line-height:1; border:0; border-radius:50%;
+      background:#fff; color:#333; cursor:pointer;
+    }
+    html:root:root body .cep-chat-search-preview .cep-search-source > .cep-source-chat {
+      max-height:none; overflow:visible;
+    }
     html:root:root body .cep-search-source:is([data-source-file="pn.html"],[data-source-file="recalls.html"]) a.cep-media-link { width:30px !important;height:30px !important;border-radius:9px !important; }
     html:root:root body .cep-search-source:is([data-source-file="pn.html"],[data-source-file="recalls.html"]) a.cep-media-link svg { width:18px;height:18px; }
   `);
   const style = document.createElement('style'); style.id = 'cep-search-source-theme-styles';
   style.textContent = output.join('\n'); document.head.append(style); installed = true;
+}
+function openChatSearchPreview(card, surface) {
+  const dialog = document.createElement('dialog');
+  dialog.className = 'cep-chat-search-preview';
+  const close = document.createElement('button');
+  close.type = 'button'; close.className = 'cep-chat-preview-close';
+  close.textContent = '×'; close.setAttribute('aria-label','Close full note');
+  const content = document.createElement('div');
+  content.className = 'cep-search-source'; content.dataset.sourceFile = 'chatgptx.html';
+  const fullNote = surface.cloneNode(true);
+  fullNote.querySelectorAll('.cep-chat-preview-button').forEach(node => node.remove());
+  fullNote.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+  content.append(fullNote); dialog.append(close,content); document.body.append(dialog);
+  close.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', event => {
+    if (event.target !== dialog) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+  });
+  dialog.addEventListener('close', () => dialog.remove(), {once:true});
+  dialog.showModal();
 }
 export function applySourceSearchSkin(parent, entry) {
   const file = String(entry?.file || '').toLowerCase();
@@ -73,6 +117,17 @@ export function applySourceSearchSkin(parent, entry) {
   const index = entry.sourceIndex ?? entry.cardIndex ?? 0;
   surface.dataset.sourceMod5 = String(index % 5); surface.dataset.sourceMod6 = String(index % 6);
   surface.append(...parent.childNodes); parent.append(surface);
+  if (file === 'chatgptx.html') {
+    const preview = document.createElement('button');
+    preview.type = 'button'; preview.className = 'cep-chat-preview-button';
+    preview.textContent = '👁'; preview.setAttribute('aria-label','View full note');
+    preview.addEventListener('click', event => {
+      event.preventDefault(); event.stopPropagation(); openChatSearchPreview(parent,surface);
+    });
+    preview.addEventListener('dblclick', event => { event.preventDefault(); event.stopPropagation(); });
+    parent.append(preview);
+  }
+
   parent.classList.add('cep-search-source'); parent.dataset.sourceFile = file;
   const cardClass = file === 'notes.html' ? 'note-tile note-card' : 'note-card';
   if (surface.classList.contains('cep-source-surface')) {
