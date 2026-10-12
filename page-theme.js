@@ -2843,6 +2843,15 @@
     }
   `;
 
+  // Mint Ceramic controls sink into their surface while pressed.
+  themeStyle.textContent += `
+    html:root[data-xlyneve-color-theme="mint-ceramic"] body :is(button,a.cep-media-link,.glass-btn,.add-btn,.header-btn,.circle,.dashboard-section-toggle,[role="button"],.toggle-icon,.header-search-trigger):active {
+      box-shadow:var(--mint-pressed) !important;
+      translate:0 2px !important;
+      scale:.96 !important;
+    }
+  `;
+
   // Keep text on the shared pale table surfaces readable in every theme.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme] body table,
