@@ -1102,7 +1102,7 @@ function installSearchCopyFeedback() {
       -webkit-text-fill-color:#334b38 !important; border:1px solid #c8c6af;
       font:700 14px/1 Arial,sans-serif; pointer-events:none; z-index:2;
     }
-    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state="copied"]::after { content:'✓' !important; }
+    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state="copied"]::after { content:none !important; }
     html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state="error"]::after { content:'!' !important; }
   `;
   document.head.append(style);
