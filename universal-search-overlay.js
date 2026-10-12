@@ -1084,11 +1084,31 @@ function openSearchYouTubeUrl(rawUrl) {
   return true;
 }
 
-async function writeSearchClipboard(copyText, copyHtml) {
-  const plainText = String(copyText || '').trim();
-  const safeHtml = copyHtml && window.CEPSecurity?.sanitizeHTML
-    ? window.CEPSecurity.sanitizeHTML(String(copyHtml))
-    : '';
+function prepareSearchClipboard(copyText, copyHtml) {
+  return {
+    plainText: String(copyText || '').trim(),
+    safeHtml: copyHtml && window.CEPSecurity?.sanitizeHTML ? window.CEPSecurity.sanitizeHTML(String(copyHtml)) : ''
+  };
+}
+function installSearchCopyFeedback() {
+  if (document.getElementById('cep-search-copy-feedback')) return;
+  const style = document.createElement('style'); style.id = 'cep-search-copy-feedback';
+  style.textContent = `
+    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state] { position:relative; }
+    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state]::after {
+      content:'…' !important; position:absolute; right:8px; bottom:8px;
+      width:22px; height:22px; display:flex; align-items:center; justify-content:center;
+      border-radius:50%; background:#fffbe8 !important; color:#334b38 !important;
+      -webkit-text-fill-color:#334b38 !important; border:1px solid #c8c6af;
+      font:700 14px/1 Arial,sans-serif; pointer-events:none; z-index:2;
+    }
+    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state="copied"]::after { content:'✓' !important; }
+    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state="error"]::after { content:'!' !important; }
+  `;
+  document.head.append(style);
+}
+async function writeSearchClipboard(copyText, copyHtml, prepared) {
+  const { plainText, safeHtml } = prepared || prepareSearchClipboard(copyText, copyHtml);
   if (safeHtml && navigator.clipboard?.write && typeof ClipboardItem === 'function') {
     const item = new ClipboardItem({
       'text/plain': new Blob([plainText], { type:'text/plain' }),
@@ -1104,7 +1124,9 @@ async function writeSearchClipboard(copyText, copyHtml) {
   await navigator.clipboard.writeText(plainText);
 }
 export function installSearchCardInteractions(card, { copyText, copyHtml, navigate, onNavigate } = {}) {
-  let clickTimer;
+  installSearchCopyFeedback();
+  let clickTimer, feedbackTimer, clipboardPayload, attempt = 0;
+  const clearFeedback = () => { clearTimeout(feedbackTimer); card.removeAttribute('data-copy-state'); };
   const isInteractiveChild = target => target instanceof Element && Boolean(target.closest(interactiveSearchChildSelector));
   card.addEventListener('click', event => {
     if (isInteractiveChild(event.target)) {
@@ -1117,18 +1139,27 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
       return;
     }
     event.preventDefault();
-    clearTimeout(clickTimer);
+    clearTimeout(clickTimer); clearTimeout(feedbackTimer);
+    const currentAttempt = ++attempt;
+    card.dataset.copyState = 'pending';
     clickTimer = setTimeout(async () => {
       try {
-        await writeSearchClipboard(copyText, copyHtml);
-        card.classList.remove('is-copied'); void card.offsetWidth; card.classList.add('is-copied');
-        setTimeout(() => card.classList.remove('is-copied'), 720);
-      } catch (error) { console.warn('Search result could not be copied.', error); }
+        clipboardPayload ||= prepareSearchClipboard(copyText, copyHtml);
+        await writeSearchClipboard(copyText, copyHtml, clipboardPayload);
+        if (currentAttempt !== attempt) return;
+        card.dataset.copyState = 'copied';
+        feedbackTimer = setTimeout(clearFeedback, 900);
+      } catch (error) {
+        if (currentAttempt === attempt) {
+          card.dataset.copyState = 'error'; feedbackTimer = setTimeout(clearFeedback, 1400);
+        }
+        console.warn('Search result could not be copied.', error);
+      }
     }, 260);
   });
   card.addEventListener('dblclick', event => {
     if (isInteractiveChild(event.target)) { event.preventDefault(); event.stopPropagation(); return; }
-    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer);
+    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer); ++attempt; clearFeedback();
     if (openSearchYouTubeUrl(card.href)) return;
     onNavigate?.(); navigate?.();
   });
