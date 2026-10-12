@@ -1090,23 +1090,6 @@ function prepareSearchClipboard(copyText, copyHtml) {
     safeHtml: copyHtml && window.CEPSecurity?.sanitizeHTML ? window.CEPSecurity.sanitizeHTML(String(copyHtml)) : ''
   };
 }
-function installSearchCopyFeedback() {
-  if (document.getElementById('cep-search-copy-feedback')) return;
-  const style = document.createElement('style'); style.id = 'cep-search-copy-feedback';
-  style.textContent = `
-    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state] { position:relative; }
-    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state]::after {
-      content:'…' !important; position:absolute; right:8px; bottom:8px;
-      width:22px; height:22px; display:flex; align-items:center; justify-content:center;
-      border-radius:50%; background:#fffbe8 !important; color:#334b38 !important;
-      -webkit-text-fill-color:#334b38 !important; border:1px solid #c8c6af;
-      font:700 14px/1 Arial,sans-serif; pointer-events:none; z-index:2;
-    }
-    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state="copied"]::after { content:none !important; }
-    html:root:root body :is(.universal-search-native-card,.cep-global-search-result)[data-copy-state="error"]::after { content:'!' !important; }
-  `;
-  document.head.append(style);
-}
 async function writeSearchClipboard(copyText, copyHtml, prepared) {
   const { plainText, safeHtml } = prepared || prepareSearchClipboard(copyText, copyHtml);
   if (safeHtml && navigator.clipboard?.write && typeof ClipboardItem === 'function') {
@@ -1124,10 +1107,30 @@ async function writeSearchClipboard(copyText, copyHtml, prepared) {
   await navigator.clipboard.writeText(plainText);
 }
 export function installSearchCardInteractions(card, { copyText, copyHtml, navigate, onNavigate } = {}) {
-  installSearchCopyFeedback();
-  let clickTimer, feedbackTimer, clipboardPayload, attempt = 0;
-  const clearFeedback = () => { clearTimeout(feedbackTimer); card.removeAttribute('data-copy-state'); };
+  let clickTimer, clipboardPayload, pressAnimation, pressed = false;
   const isInteractiveChild = target => target instanceof Element && Boolean(target.closest(interactiveSearchChildSelector));
+  const animatePress = down => {
+    pressAnimation?.cancel();
+    if (typeof card.animate !== 'function' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    pressAnimation = card.animate(
+      down ? [{ scale:'1', translate:'0 0' }, { scale:'0.99', translate:'0 2px' }]
+           : [{ scale:'0.99', translate:'0 2px' }, { scale:'1', translate:'0 0' }],
+      { duration:down ? 80 : 120, easing:'ease-out', fill:down ? 'forwards' : 'none' }
+    );
+  };
+  const releasePress = () => {
+    if (!pressed) return;
+    pressed = false; animatePress(false);
+  };
+  card.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || isInteractiveChild(event.target)) return;
+    pressed = true; animatePress(true);
+  });
+  card.addEventListener('pointerup', releasePress);
+  card.addEventListener('pointercancel', releasePress);
+  card.addEventListener('pointerleave', releasePress);
+  card.addEventListener('lostpointercapture', releasePress);
+
   card.addEventListener('click', event => {
     if (isInteractiveChild(event.target)) {
       const nestedLink = event.target.closest?.('a:not(.cep-global-search-result):not(.universal-search-native-card):not(.cep-xgpt-concept):not(.xgpt-concept-link)');
@@ -1139,27 +1142,20 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
       return;
     }
     event.preventDefault();
-    clearTimeout(clickTimer); clearTimeout(feedbackTimer);
-    const currentAttempt = ++attempt;
-    card.dataset.copyState = 'pending';
+    clearTimeout(clickTimer);
     clickTimer = setTimeout(async () => {
       try {
         clipboardPayload ||= prepareSearchClipboard(copyText, copyHtml);
         await writeSearchClipboard(copyText, copyHtml, clipboardPayload);
-        if (currentAttempt !== attempt) return;
-        card.dataset.copyState = 'copied';
-        feedbackTimer = setTimeout(clearFeedback, 900);
+
       } catch (error) {
-        if (currentAttempt === attempt) {
-          card.dataset.copyState = 'error'; feedbackTimer = setTimeout(clearFeedback, 1400);
-        }
         console.warn('Search result could not be copied.', error);
       }
     }, 260);
   });
   card.addEventListener('dblclick', event => {
     if (isInteractiveChild(event.target)) { event.preventDefault(); event.stopPropagation(); return; }
-    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer); ++attempt; clearFeedback();
+    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer); releasePress();
     if (openSearchYouTubeUrl(card.href)) return;
     onNavigate?.(); navigate?.();
   });
