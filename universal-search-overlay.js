@@ -1107,7 +1107,38 @@ async function writeSearchClipboard(copyText, copyHtml, prepared) {
   await navigator.clipboard.writeText(plainText);
 }
 export function installSearchCardInteractions(card, { copyText, copyHtml, navigate, onNavigate } = {}) {
-  let clickTimer, clipboardPayload, pressAnimation, pressed = false;
+  let clickTimer, clipboardPayload, pressAnimation, glow, glowAnimation, attempt = 0, pressed = false;
+  if (!document.getElementById('cep-search-copy-glow-style')) {
+    const style = document.createElement('style');
+    style.id = 'cep-search-copy-glow-style';
+    style.textContent = `
+      html:root:root body :is(.universal-search-native-card,.cep-global-search-result) { position:relative; }
+      html:root:root body .cep-search-copy-glow {
+        position:absolute !important; inset:0 !important; pointer-events:none !important;
+        margin:0 !important; padding:0 !important; background:none !important;
+        border:2px solid rgba(160,190,204,.85) !important;
+        box-shadow:0 0 12px rgba(168,204,218,.6),inset 0 0 5px rgba(255,255,255,.65) !important;
+        z-index:3; opacity:0;
+      }
+    `;
+    document.head.append(style);
+  }
+  const clearGlow = () => { glowAnimation?.cancel(); glow?.remove(); glow = null; };
+  const showCopyGlow = () => {
+    clearGlow();
+    glow = document.createElement('span');
+    glow.className = 'cep-search-copy-glow'; glow.setAttribute('aria-hidden','true');
+    const surface = card.querySelector('.cep-source-surface,.cep-source-notebook,.cep-source-form,.cep-source-chat') || card;
+    glow.style.borderRadius = getComputedStyle(surface).borderRadius;
+    card.append(glow);
+    const currentGlow = glow;
+    if (typeof glow.animate !== 'function' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      glow.style.opacity = '1'; setTimeout(() => currentGlow.remove(), 650); return;
+    }
+    glowAnimation = glow.animate([{opacity:0},{opacity:1,offset:.16},{opacity:1,offset:.4},{opacity:0}],
+      {duration:700,easing:'ease-out'});
+    glowAnimation.onfinish = () => currentGlow.remove();
+  };
   const isInteractiveChild = target => target instanceof Element && Boolean(target.closest(interactiveSearchChildSelector));
   const animatePress = down => {
     pressAnimation?.cancel();
@@ -1142,11 +1173,13 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
       return;
     }
     event.preventDefault();
-    clearTimeout(clickTimer);
+    clearTimeout(clickTimer); clearGlow();
+    const currentAttempt = ++attempt;
     clickTimer = setTimeout(async () => {
       try {
         clipboardPayload ||= prepareSearchClipboard(copyText, copyHtml);
         await writeSearchClipboard(copyText, copyHtml, clipboardPayload);
+        if (currentAttempt === attempt) showCopyGlow();
 
       } catch (error) {
         console.warn('Search result could not be copied.', error);
@@ -1155,7 +1188,7 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
   });
   card.addEventListener('dblclick', event => {
     if (isInteractiveChild(event.target)) { event.preventDefault(); event.stopPropagation(); return; }
-    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer); releasePress();
+    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer); ++attempt; clearGlow(); releasePress();
     if (openSearchYouTubeUrl(card.href)) return;
     onNavigate?.(); navigate?.();
   });
