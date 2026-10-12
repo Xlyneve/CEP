@@ -75,10 +75,11 @@ function installThemeStyles() {
       background:#fff; color:#333; cursor:pointer;
     }
     html:root:root body .cep-chat-search-preview .cep-search-source > .cep-source-chat {
-      max-height:none; overflow:visible; font-size:16px !important;
+      max-height:none; overflow:visible; font-size:12px !important;
+      overflow-wrap:normal; word-break:normal;
     }
-    html:root:root body .cep-chat-search-preview .cep-xgpt-rich-content,
-    html:root:root body .cep-chat-search-preview .universal-search-native-snippet { zoom:1; }
+    html:root:root body .cep-chat-search-preview .cep-search-source[data-source-file="chatgptx.html"] .cep-source-chat > .cep-xgpt-rich-content,
+    html:root:root body .cep-chat-search-preview .cep-search-source[data-source-file="chatgptx.html"] .cep-source-chat > .universal-search-native-snippet { zoom:1; overflow-wrap:normal; max-width:none; }
     html:root:root body .cep-search-source:is([data-source-file="pn.html"],[data-source-file="recalls.html"]) a.cep-media-link { width:30px !important;height:30px !important;border-radius:9px !important; }
     html:root:root body .cep-search-source:is([data-source-file="pn.html"],[data-source-file="recalls.html"]) a.cep-media-link svg { width:18px;height:18px; }
   `);
@@ -94,6 +95,8 @@ function openChatSearchPreview(card, surface) {
   const content = document.createElement('div');
   content.className = 'cep-search-source'; content.dataset.sourceFile = 'chatgptx.html';
   const fullNote = surface.cloneNode(true);
+  // Remove only search matches; retain saved highlighting and formatting.
+  fullNote.querySelectorAll('mark.cep-search-match').forEach(mark => mark.replaceWith(...mark.childNodes));
   fullNote.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
   content.append(fullNote); dialog.append(close,content); document.body.append(dialog);
   close.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); dialog.close(); });
