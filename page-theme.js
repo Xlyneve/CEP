@@ -3292,7 +3292,7 @@
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] {
       --theme-ink:#373d44; --theme-muted-ink:#70757d;
       --pearl-base:#ebebeb; --pearl-card:rgba(250,250,247,.92);
-      --pearl-reflection:linear-gradient(118deg,rgba(223,236,240,.7) 0%,rgba(252,251,247,.9) 24%,rgba(226,227,234,.75) 48%,rgba(247,247,245,.92) 68%,rgba(226,231,240,.6) 100%);
+      --pearl-reflection:linear-gradient(118deg,rgba(223,236,240,.7) 0%,rgba(249,234,227,.62) 24%,rgba(226,227,234,.75) 48%,rgba(247,247,245,.92) 68%,rgba(226,231,240,.6) 100%);
       --pearl-depth:0 7px 16px rgba(85,90,103,.14),inset 0 1px 1px rgba(255,255,255,.96),inset 0 -1px 1px rgba(132,139,149,.12);
       --pearl-inset:inset 2px 3px 6px rgba(100,108,119,.15),inset -2px -2px 5px rgba(255,255,255,.9);
       --glass-light:rgba(250,250,247,.92); --glass-edge:rgba(102,110,121,.25); --glass-shadow:rgba(85,90,103,.14);
@@ -3309,7 +3309,7 @@
     }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"],html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body {
       background-color:#ebebeb !important;
-      background-image:radial-gradient(ellipse at 8% 12%,rgba(228,240,244,.7),transparent 42%),radial-gradient(ellipse at 92% 65%,rgba(230,229,241,.6),transparent 44%),linear-gradient(125deg,transparent 25%,rgba(255,255,249,.5) 35%,transparent 44%,rgba(219,233,240,.25) 69%,transparent 76%) !important;
+      background-image:radial-gradient(ellipse at 8% 12%,rgba(228,240,244,.7),transparent 42%),radial-gradient(ellipse at 92% 65%,rgba(230,229,241,.6),transparent 44%),radial-gradient(ellipse at 75% 8%,rgba(245,222,210,.25),transparent 38%),linear-gradient(125deg,transparent 25%,rgba(255,255,249,.5) 35%,transparent 44%,rgba(219,233,240,.25) 69%,transparent 76%) !important;
       background-attachment:fixed !important; color:#373d44;
     }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body::before { background:none !important; opacity:0 !important; }
