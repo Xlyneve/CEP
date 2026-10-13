@@ -109,6 +109,12 @@
   const porcelainPalette = [
     { rgb:"233, 233, 225", solid:"#e9e9e1", ink:"#353833" },
   ];
+  const frostOutlinePalette = [
+    {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(55,158,233,.48)"},
+    {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(36,88,223,.36)"},
+    {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(180,82,201,.4)"},
+    {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(42,175,193,.48)"}
+  ];
   const themeStorageKey = "xlyneve-color-theme";
   const removedThemes = new Set(["berry", "anatomy"]);
   const deletedThemeStorageKey = "xlyneve-deleted-themes";
@@ -127,14 +133,14 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass") localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
   if (deletedThemes.has(selectedTheme) || removedThemes.has(selectedTheme)) {
     selectedTheme = "original";
     try { localStorage.removeItem(themeStorageKey); } catch {}
   }
-  const palette = selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -185,11 +191,12 @@
     sculpted: "#a288b7",
     "mint-ceramic": "#e0c797",
     "soft-stone": "#e1e2e6",
+    "frost-outline":"#d5e0e8",
     porcelain: "#e9e9e1",
     aurora: "#e1e4f2"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
-  root.style.setProperty("--masthead-bar-ink", ["mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
+  root.style.setProperty("--masthead-bar-ink", ["frost-outline","mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
 
   const themeStyle = document.createElement("style");
   themeStyle.id = "xlyneve-color-theme-styles";
@@ -2933,6 +2940,7 @@
       card.style.setProperty("--card-glass", `rgba(${color.rgb}, 0.74)`);
       card.style.setProperty("--card-ink", color.ink);
       card.style.setProperty("--card-solid", color.solid);
+      if (color.outline) card.style.setProperty("--card-outline",color.outline);
       card.dataset.sharedPaletteColor = "true";
     });
   }
@@ -3069,6 +3077,7 @@
       },
     ];
 
+    themeOptions.push({ value:"frost-outline", label:"Frost Outline 5D", colors:["#d5e0e8","#379ee9","#2458df","#b452c9","#2aafc1"] });
     themeOptions.push({ value:"porcelain", label:"Porcelain Blush 5D", colors:["#e9e9e1","#9fb5d1","#e8c2c0"] });
     themeOptions.push({ value:"aurora", label:"Aurora 5D", colors:["#e9ebf6","#8154c4","#7d9aeb","#d091b0","#cee878"] });
     themeOptions.push({ value:"soft-stone", label:"Soft Stone 5D", colors:["#e1e2e6","#dfb53e","#72757c"] });
@@ -3180,6 +3189,75 @@
     control.append(toggle, panel);
     document.body.appendChild(control);
   }
+
+  themeStyle.textContent += `
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] {
+      --frost-surface:#d5e0e8; --frost-ink:#34434f;
+      --frost-raised:7px 7px 14px rgba(115,133,147,.38),-7px -7px 15px rgba(255,255,255,.82),inset 1px 1px 2px rgba(255,255,255,.48);
+      --frost-inset:inset 5px 5px 9px rgba(115,133,147,.36),inset -5px -5px 9px rgba(255,255,255,.75);
+      --theme-ink:#34434f; --theme-muted-ink:#627584;
+      --glass-light:#d5e0e8; --glass-edge:rgba(140,176,207,.45); --glass-shadow:rgba(115,133,147,.3);
+      --refresh-cocoa:#34434f; --refresh-rose:#d5e0e8; --refresh-lime:#d5e0e8;
+      --refresh-stone:#d5e0e8; --refresh-blue:#d5e0e8; --refresh-terracotta:#379ee9;
+      --quick-panel:#d5e0e8; --quick-ink:#34434f; --quick-field:#d5e0e8; --quick-soft:#d5e0e8;
+      --quick-accent:#2c69e8; --quick-accent-ink:#fff; --quick-edge:rgba(140,176,207,.45);
+      --clinical-panel:#d5e0e8; --clinical-field:#d5e0e8; --clinical-accent:#2c69e8; --clinical-accent-ink:#fff; --clinical-edge:rgba(140,176,207,.45);
+      --homecal-header:#d5e0e8; --homecal-header-ink:#34434f; --homecal-control:#d5e0e8; --homecal-control-ink:#34434f;
+      --homecal-header-edge:rgba(140,176,207,.45); --homecal-today:#d5e0e8; --homecal-today-edge:#bc86ce; --homecal-today-shadow:rgba(115,133,147,.3);
+      --cal-light:#d5e0e8; --cal-ink:#34434f; --cal-edge:rgba(140,176,207,.45);
+      --note-editor-depth:var(--frost-raised); --note-editor-inset:var(--frost-inset); --note-editor-radius:24px;
+      --cep-highlight-paper:#e1e9ee; --cep-highlight-shadow:none;
+      --copy-feedback-accent:#379ee9; --copy-feedback-soft:#e1e9ee;
+    }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"],html:root:root:root[data-xlyneve-color-theme="frost-outline"] body {
+      background:#d5e0e8 !important; background-image:none !important; color:#34434f;
+    }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body::before { background:none !important; opacity:0 !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty),.todo-item,.file-item),
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"].theme-clinical body #notesList > .note-card,
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"].theme-home-glass body .main-content .card-group.section-card-group > .card {
+      background:#d5e0e8 !important; background-image:none !important; color:#34434f !important;
+      border:1px solid var(--card-outline,rgba(89,154,210,.4)) !important;
+      border-radius:24px !important; box-shadow:var(--frost-raised) !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.day.today,.day.current-day) { border:2px solid #bc86ce !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.day.weekend,.day.saturday,.day.sunday) { border-color:rgba(70,175,186,.55) !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .todo-item :is(input[type="text"],textarea) { background:transparent !important; box-shadow:none !important; border:0 !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.calendar-container,.todo-container,.homepage-notepad,.homepage-calendar,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      background:#d5e0e8 !important; background-image:none !important; color:#34434f !important;
+      border:1px solid rgba(255,255,255,.35) !important; border-radius:28px !important;
+      box-shadow:var(--frost-raised) !important; backdrop-filter:none !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.masthead,.dashboard-section-toggle) {
+      background:#d5e0e8 !important; background-image:none !important; color:#34434f !important;
+      box-shadow:var(--frost-raised) !important; border-color:rgba(255,255,255,.35) !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .dashboard-section-toggle { border-radius:22px !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle,a.cep-media-link):not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick,.cep-search-copy-glow)) {
+      background:linear-gradient(145deg,#66baf0,#379ee9) !important; color:#17354a !important; -webkit-text-fill-color:#17354a !important;
+      border:1px solid rgba(255,255,255,.22) !important; box-shadow:var(--frost-raised) !important;
+      backdrop-filter:none !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n + 2):not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#3267d8,#214fc4) !important; color:#fff !important; -webkit-text-fill-color:#fff !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n + 3):not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#cd81db,#b452c9) !important; color:#301735 !important; -webkit-text-fill-color:#301735 !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n):not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#65d3dc,#2aafc1) !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):active:not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { box-shadow:var(--frost-inset) !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
+      background:#d5e0e8 !important; color:#34434f !important; border:1px solid rgba(255,255,255,.2) !important;
+      box-shadow:var(--frost-inset) !important; border-radius:18px;
+    }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(input,textarea,select):focus-visible { outline:2px solid #379ee9; outline-offset:2px; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(#notes .notepad,.note-card.editing-note,.note-card.is-editing,.cep-note-popup,.pn-edit-popup) {
+      background:#d5e0e8 !important; box-shadow:var(--frost-raised) !important; color:#34434f !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .pad-controls,
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .homepage-notepad-drag-bar { background:transparent !important; box-shadow:none !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
+
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .todo-item.todo-item:not(#cep-frost-no-task) :is(input[type="text"],textarea) { background:transparent !important; box-shadow:none !important; border:0 !important; }
+
+  `;
 
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);

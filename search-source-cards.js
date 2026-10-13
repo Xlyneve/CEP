@@ -139,6 +139,7 @@ export function applySourceSearchSkin(parent, entry) {
       surface.style.setProperty('--card-glass',`rgba(${colour.rgb}, .74)`);
       surface.style.setProperty('--card-solid',colour.solid);
       surface.style.setProperty('--card-ink',colour.ink);
+      if (colour.outline) surface.style.setProperty('--card-outline',colour.outline);
       surface.dataset.sharedPaletteColor = 'true';
     }
   }
