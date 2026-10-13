@@ -3234,15 +3234,15 @@
       box-shadow:var(--frost-raised) !important; border-color:rgba(255,255,255,.35) !important;
     }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .dashboard-section-toggle { border-radius:22px !important; }
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle,a.cep-media-link):not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick,.cep-search-copy-glow)) {
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle,a.cep-media-link):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick,.cep-search-copy-glow)) {
       background:linear-gradient(145deg,#66baf0,#379ee9) !important; color:#17354a !important; -webkit-text-fill-color:#17354a !important;
       border:1px solid rgba(255,255,255,.22) !important; box-shadow:var(--frost-raised) !important;
       backdrop-filter:none !important;
     }
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n + 2):not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#3267d8,#214fc4) !important; color:#fff !important; -webkit-text-fill-color:#fff !important; }
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n + 3):not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#cd81db,#b452c9) !important; color:#301735 !important; -webkit-text-fill-color:#301735 !important; }
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n):not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#65d3dc,#2aafc1) !important; }
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):active:not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { box-shadow:var(--frost-inset) !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n + 2):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#3267d8,#214fc4) !important; color:#fff !important; -webkit-text-fill-color:#fff !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n + 3):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#cd81db,#b452c9) !important; color:#301735 !important; -webkit-text-fill-color:#301735 !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#65d3dc,#2aafc1) !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):active:not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { box-shadow:var(--frost-inset) !important; }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
       background:#d5e0e8 !important; color:#34434f !important; border:1px solid rgba(255,255,255,.2) !important;
       box-shadow:var(--frost-inset) !important; border-radius:18px;
