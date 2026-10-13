@@ -1116,8 +1116,8 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
       html:root:root body .cep-search-copy-glow {
         position:absolute !important; inset:0 !important; pointer-events:none !important;
         margin:0 !important; padding:0 !important; background:none !important;
-        border:6px solid rgba(255,255,255,.9) !important;
-        box-shadow:0 0 12px rgba(255,255,255,.7),inset 0 0 5px rgba(255,255,255,.65) !important;
+        box-sizing:border-box !important; border:2px solid rgba(239,251,255,.95) !important;
+        box-shadow:0 0 8px 2px rgba(235,251,255,.9),0 0 22px 6px rgba(160,213,255,.65),inset 0 0 12px 2px rgba(218,246,255,.7) !important;
         z-index:3; opacity:0;
       }
     `;
