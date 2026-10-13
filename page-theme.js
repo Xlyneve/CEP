@@ -115,6 +115,7 @@
     {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(180,82,201,.4)"},
     {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(42,175,193,.48)"}
   ];
+  const pearlSilverPalette = [{rgb:"250, 250, 247",solid:"#fafaf7",ink:"#373d44"}];
   const themeStorageKey = "xlyneve-color-theme";
   const removedThemes = new Set(["berry", "anatomy"]);
   const deletedThemeStorageKey = "xlyneve-deleted-themes";
@@ -133,14 +134,14 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass") localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
   if (deletedThemes.has(selectedTheme) || removedThemes.has(selectedTheme)) {
     selectedTheme = "original";
     try { localStorage.removeItem(themeStorageKey); } catch {}
   }
-  const palette = selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -191,12 +192,13 @@
     sculpted: "#a288b7",
     "mint-ceramic": "#e0c797",
     "soft-stone": "#e1e2e6",
+    "pearl-silver":"#e6e8e9",
     "frost-outline":"#d5e0e8",
     porcelain: "#e9e9e1",
     aurora: "#e1e4f2"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
-  root.style.setProperty("--masthead-bar-ink", ["frost-outline","mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
+  root.style.setProperty("--masthead-bar-ink", ["pearl-silver","frost-outline","mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
 
   const themeStyle = document.createElement("style");
   themeStyle.id = "xlyneve-color-theme-styles";
@@ -3077,6 +3079,7 @@
       },
     ];
 
+    themeOptions.push({ value:"pearl-silver", label:"Silver Pearl Glass", colors:["#ebebeb","#fafaf7","#dfecef","#e2e3ea"] });
     themeOptions.push({ value:"frost-outline", label:"Frost Outline 5D", colors:["#d5e0e8","#66baf0","#9acff2","#b452c9","#2aafc1"] });
     themeOptions.push({ value:"porcelain", label:"Porcelain Blush 5D", colors:["#e9e9e1","#9fb5d1","#e8c2c0"] });
     themeOptions.push({ value:"aurora", label:"Aurora 5D", colors:["#e9ebf6","#8154c4","#7d9aeb","#d091b0","#cee878"] });
@@ -3285,12 +3288,91 @@
 
   `;
 
+  themeStyle.textContent += `
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] {
+      --theme-ink:#373d44; --theme-muted-ink:#70757d;
+      --pearl-base:#ebebeb; --pearl-card:rgba(250,250,247,.92);
+      --pearl-reflection:linear-gradient(118deg,rgba(223,236,240,.7) 0%,rgba(252,251,247,.9) 24%,rgba(226,227,234,.75) 48%,rgba(247,247,245,.92) 68%,rgba(226,231,240,.6) 100%);
+      --pearl-depth:0 7px 16px rgba(85,90,103,.14),inset 0 1px 1px rgba(255,255,255,.96),inset 0 -1px 1px rgba(132,139,149,.12);
+      --pearl-inset:inset 2px 3px 6px rgba(100,108,119,.15),inset -2px -2px 5px rgba(255,255,255,.9);
+      --glass-light:rgba(250,250,247,.92); --glass-edge:rgba(102,110,121,.25); --glass-shadow:rgba(85,90,103,.14);
+      --refresh-cocoa:#373d44; --refresh-rose:#eeeeed; --refresh-lime:#f6f6f1; --refresh-stone:#ebebeb; --refresh-blue:#e4eaf0; --refresh-terracotta:#d9dce6;
+      --quick-panel:#f2f2f0; --quick-field:#f6f6f3; --quick-ink:#373d44; --quick-soft:#e9edf0;
+      --quick-accent:#d8e2e9; --quick-accent-ink:#373d44; --quick-edge:rgba(102,110,121,.25);
+      --clinical-panel:#f6f6f3; --clinical-field:#fafaf7; --clinical-accent:#d8e2e9; --clinical-accent-ink:#373d44; --clinical-edge:rgba(102,110,121,.25);
+      --homecal-header:var(--pearl-reflection); --homecal-header-ink:#373d44; --homecal-control:#f3f4f3; --homecal-control-ink:#373d44;
+      --homecal-header-edge:rgba(102,110,121,.25); --homecal-today:#e5ecf0; --homecal-today-edge:#a4b9c7; --homecal-today-shadow:rgba(85,90,103,.14);
+      --cal-light:#ebebeb; --cal-ink:#373d44; --cal-edge:rgba(102,110,121,.25);
+      --note-editor-depth:var(--pearl-depth); --note-editor-inset:var(--pearl-inset); --note-editor-radius:22px;
+      --cep-highlight-paper:#e7e9ed; --cep-highlight-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+      --copy-feedback-accent:#b9c9d4; --copy-feedback-soft:#f6f6f3;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"],html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body {
+      background-color:#ebebeb !important;
+      background-image:radial-gradient(ellipse at 8% 12%,rgba(228,240,244,.7),transparent 42%),radial-gradient(ellipse at 92% 65%,rgba(230,229,241,.6),transparent 44%),linear-gradient(125deg,transparent 25%,rgba(255,255,249,.5) 35%,transparent 44%,rgba(219,233,240,.25) 69%,transparent 76%) !important;
+      background-attachment:fixed !important; color:#373d44;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body::before { background:none !important; opacity:0 !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.panel,.pinned-note,.day:not(.empty),.todo-item,.file-item),
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"].theme-clinical body #notesList > .note-card,
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"].theme-home-glass body .main-content .card-group.section-card-group > .card {
+      background:rgba(250,250,247,.92) !important; background-image:none !important;
+      color:#373d44 !important; border:1px solid rgba(255,255,255,.85) !important;
+      border-radius:22px !important; box-shadow:var(--pearl-depth) !important;
+      backdrop-filter:blur(8px) !important; -webkit-backdrop-filter:blur(8px) !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.day.weekend,.day.saturday,.day.sunday) { background:#f1f2f2 !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body .day.today { background:#e5ecf0 !important; border:1px solid #a4b9c7 !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.calendar-container,.todo-container,.homepage-notepad,.homepage-calendar,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      background:linear-gradient(145deg,rgba(255,255,253,.9),rgba(240,241,239,.94)) !important;
+      color:#373d44 !important; border:1px solid rgba(255,255,255,.92) !important;
+      border-radius:26px !important; box-shadow:var(--pearl-depth) !important;
+      backdrop-filter:blur(12px) !important; -webkit-backdrop-filter:blur(12px) !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.masthead,.dashboard-section-toggle) {
+      background:var(--pearl-reflection) !important; color:#373d44 !important;
+      border-color:rgba(255,255,255,.85) !important; box-shadow:var(--pearl-depth) !important;
+      backdrop-filter:blur(8px) !important; -webkit-backdrop-filter:blur(8px) !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body .dashboard-section-toggle { border:1px solid rgba(102,110,121,.25) !important; border-radius:20px !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle,a.cep-media-link):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) {
+      background:var(--pearl-reflection) !important; color:#373d44 !important; -webkit-text-fill-color:#373d44 !important;
+      border:1px solid rgba(90,102,114,.48) !important; box-shadow:var(--pearl-depth) !important;
+      backdrop-filter:blur(8px) !important; -webkit-backdrop-filter:blur(8px) !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(button,.circle,a.cep-media-link):active:not(:where(.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { box-shadow:var(--pearl-inset) !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
+      background:#f6f6f3 !important; color:#373d44 !important;
+      border:1px solid rgba(102,110,121,.35) !important; border-radius:14px; box-shadow:var(--pearl-inset) !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(input,textarea,select):focus-visible { outline:2px solid #9eb9cb; outline-offset:2px; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.cep-note-popup,.pn-edit-popup,#inputGroup,#nurseFormWrapper,.input-panel,#formCard,#notePanel,.note-card.editing-note,.note-card.is-editing) {
+      background:#f6f6f3 !important; color:#373d44 !important; opacity:1 !important;
+      box-shadow:var(--pearl-depth) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body .todo-item.todo-item:not(#cep-pearl-no-task) :is(input[type="text"],textarea) { background:transparent !important; box-shadow:none !important; border:0 !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body #notes .notepad { background:#fafaf7 !important; color:#373d44 !important; box-shadow:var(--pearl-depth) !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-pill,.qt-pill,.qs-pill,.qc-result,.qt-result,.qs-result) { background:#f6f6f3 !important; color:#373d44 !important; border-color:rgba(102,110,121,.25) !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"]) { border:2px solid #9eb9cb !important; box-shadow:var(--pearl-inset) !important; }
+    @media (max-width:600px) {
+      html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.note-card,.card,.day,.todo-item,.note-tile) { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+    }
+
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.cep-note-popup,.pn-edit-popup) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) { background:none !important; border:0 !important; box-shadow:none !important; }
+
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
       if (pageName === "home.html" && header.matches("body > header")) return;
-      header.style.setProperty("background", `rgba(${pageColor.rgb}, 0.78)`, "important");
-      header.style.setProperty("background-image", "none", "important");
+      if (selectedTheme === "pearl-silver") {
+        header.style.setProperty("background", "var(--pearl-reflection)", "important");
+      } else {
+        header.style.setProperty("background", `rgba(${pageColor.rgb}, 0.78)`, "important");
+        header.style.setProperty("background-image", "none", "important");
+      }
       header.style.setProperty("color", pageColor.ink, "important");
     });
     colorCards(document);
