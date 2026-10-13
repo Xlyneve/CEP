@@ -111,7 +111,7 @@
   ];
   const frostOutlinePalette = [
     {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(55,158,233,.48)"},
-    {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(36,88,223,.36)"},
+    {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(102,186,240,.5)"},
     {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(180,82,201,.4)"},
     {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(42,175,193,.48)"}
   ];
@@ -3077,7 +3077,7 @@
       },
     ];
 
-    themeOptions.push({ value:"frost-outline", label:"Frost Outline 5D", colors:["#d5e0e8","#379ee9","#2458df","#b452c9","#2aafc1"] });
+    themeOptions.push({ value:"frost-outline", label:"Frost Outline 5D", colors:["#d5e0e8","#66baf0","#9acff2","#b452c9","#2aafc1"] });
     themeOptions.push({ value:"porcelain", label:"Porcelain Blush 5D", colors:["#e9e9e1","#9fb5d1","#e8c2c0"] });
     themeOptions.push({ value:"aurora", label:"Aurora 5D", colors:["#e9ebf6","#8154c4","#7d9aeb","#d091b0","#cee878"] });
     themeOptions.push({ value:"soft-stone", label:"Soft Stone 5D", colors:["#e1e2e6","#dfb53e","#72757c"] });
@@ -3200,8 +3200,8 @@
       --refresh-cocoa:#34434f; --refresh-rose:#d5e0e8; --refresh-lime:#d5e0e8;
       --refresh-stone:#d5e0e8; --refresh-blue:#d5e0e8; --refresh-terracotta:#379ee9;
       --quick-panel:#d5e0e8; --quick-ink:#34434f; --quick-field:#d5e0e8; --quick-soft:#d5e0e8;
-      --quick-accent:#2c69e8; --quick-accent-ink:#fff; --quick-edge:rgba(140,176,207,.45);
-      --clinical-panel:#d5e0e8; --clinical-field:#d5e0e8; --clinical-accent:#2c69e8; --clinical-accent-ink:#fff; --clinical-edge:rgba(140,176,207,.45);
+      --quick-accent:#75bde9; --quick-accent-ink:#17354a; --quick-edge:rgba(140,176,207,.45);
+      --clinical-panel:#d5e0e8; --clinical-field:#d5e0e8; --clinical-accent:#75bde9; --clinical-accent-ink:#17354a; --clinical-edge:rgba(140,176,207,.45);
       --homecal-header:#d5e0e8; --homecal-header-ink:#34434f; --homecal-control:#d5e0e8; --homecal-control-ink:#34434f;
       --homecal-header-edge:rgba(140,176,207,.45); --homecal-today:#d5e0e8; --homecal-today-edge:#bc86ce; --homecal-today-shadow:rgba(115,133,147,.3);
       --cal-light:#d5e0e8; --cal-ink:#34434f; --cal-edge:rgba(140,176,207,.45);
@@ -3235,11 +3235,11 @@
     }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .dashboard-section-toggle { border-radius:22px !important; }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle,a.cep-media-link):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick,.cep-search-copy-glow)) {
-      background:linear-gradient(145deg,#66baf0,#379ee9) !important; color:#17354a !important; -webkit-text-fill-color:#17354a !important;
+      background:linear-gradient(145deg,#b1dcf5,#75bde9) !important; color:#17354a !important; -webkit-text-fill-color:#17354a !important;
       border:1px solid rgba(255,255,255,.22) !important; box-shadow:var(--frost-raised) !important;
       backdrop-filter:none !important;
     }
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n + 2):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#3267d8,#214fc4) !important; color:#fff !important; -webkit-text-fill-color:#fff !important; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n + 2):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#b1dcf5,#75bde9) !important; color:#17354a !important; -webkit-text-fill-color:#17354a !important; }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n + 3):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#cd81db,#b452c9) !important; color:#301735 !important; -webkit-text-fill-color:#301735 !important; }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):nth-child(4n):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { background:linear-gradient(145deg,#65d3dc,#2aafc1) !important; }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(button,.circle,a.cep-media-link):active:not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) { box-shadow:var(--frost-inset) !important; }
@@ -3247,7 +3247,7 @@
       background:#d5e0e8 !important; color:#34434f !important; border:1px solid rgba(255,255,255,.2) !important;
       box-shadow:var(--frost-inset) !important; border-radius:18px;
     }
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(input,textarea,select):focus-visible { outline:2px solid #379ee9; outline-offset:2px; }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(input,textarea,select):focus-visible { outline:2px solid #75bde9; outline-offset:2px; }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(#notes .notepad,.note-card.editing-note,.note-card.is-editing,.cep-note-popup,.pn-edit-popup) {
       background:#d5e0e8 !important; box-shadow:var(--frost-raised) !important; color:#34434f !important;
     }
@@ -3265,7 +3265,7 @@
       box-shadow:var(--frost-raised) !important; backdrop-filter:none !important;
     }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"].theme-home-glass body .dashboard-frequent-circles .circle:nth-child(4n + 2),
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .qi { --frost-home-outline:rgba(36,88,223,.36); }
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .qi { --frost-home-outline:rgba(102,186,240,.5); }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"].theme-home-glass body .dashboard-frequent-circles .circle:nth-child(4n + 3),
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .qt { --frost-home-outline:rgba(180,82,201,.4); }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"].theme-home-glass body .dashboard-frequent-circles .circle:nth-child(4n),
@@ -3280,7 +3280,7 @@
       box-shadow:var(--frost-raised) !important;
     }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"],:active) {
-      border:2px solid #379ee9 !important; box-shadow:var(--frost-inset) !important;
+      border:2px solid #75bde9 !important; box-shadow:var(--frost-inset) !important;
     }
 
   `;
