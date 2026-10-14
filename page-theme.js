@@ -3411,12 +3411,12 @@
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="lavender-glass"] {
       --duo-base:#d7c6ec; --duo-panel:#eee7f6; --duo-field:#f6f1fb;
-      --duo-material:linear-gradient(125deg,rgba(255,255,255,.58) 0%,rgba(255,255,255,.12) 24%,rgba(255,255,255,.04) 46%,rgba(215,232,255,.24) 70%,rgba(255,255,255,.32) 100%),linear-gradient(155deg,rgba(244,235,255,.24),rgba(210,201,238,.2));
+      --duo-material:linear-gradient(125deg,rgba(255,255,255,.65) 0%,rgba(255,255,255,.08) 21%,rgba(255,255,255,.02) 46%,rgba(215,232,255,.18) 70%,rgba(255,255,255,.4) 100%),linear-gradient(155deg,rgba(244,235,255,.16),rgba(210,201,238,.13));
       --duo-scene:radial-gradient(ellipse at 10% 8%,rgba(242,227,255,.9),transparent 48%),radial-gradient(ellipse at 90% 30%,rgba(188,205,242,.7),transparent 44%),radial-gradient(ellipse at 15% 90%,rgba(237,216,239,.7),transparent 44%),linear-gradient(125deg,#dac8ee,#cfcbef 60%,#dfcdeb);
     }
     html[data-xlyneve-color-theme="grey-lavender"] {
       --duo-base:#ebebeb; --duo-panel:#f0eff5; --duo-field:#f7f6fa;
-      --duo-material:linear-gradient(125deg,rgba(255,255,255,.68) 0%,rgba(255,255,255,.15) 24%,rgba(255,255,255,.06) 46%,rgba(219,229,251,.25) 70%,rgba(255,255,255,.4) 100%),linear-gradient(155deg,rgba(245,244,252,.22),rgba(214,214,233,.2));
+      --duo-material:linear-gradient(125deg,rgba(255,255,255,.74) 0%,rgba(255,255,255,.1) 21%,rgba(255,255,255,.03) 46%,rgba(219,229,251,.18) 70%,rgba(255,255,255,.48) 100%),linear-gradient(155deg,rgba(245,244,252,.15),rgba(214,214,233,.13));
       --duo-scene:radial-gradient(ellipse at 10% 8%,rgba(249,249,254,.9),transparent 48%),radial-gradient(ellipse at 90% 30%,rgba(218,213,237,.5),transparent 44%),radial-gradient(ellipse at 15% 90%,rgba(228,236,241,.65),transparent 44%),linear-gradient(125deg,#ebebeb,#e6e7ed 60%,#ece9ef);
     }
     html:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) {
