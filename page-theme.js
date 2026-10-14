@@ -3363,6 +3363,23 @@
 
   `;
 
+  // Embedded Home windows have no material shell; only their actual cards are themed.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root body :is(#homepage-calendar,#homepage-notepad),
+    html:root:root:root#homecal-embedded-document.homecal-embed-today,
+    html:root:root:root#homecal-embedded-document.homecal-embed-today body#homecal-surface,
+    html:root:root:root#homecal-embedded-document.homecal-embed-today body#homecal-surface :is(.calendar-container,.calendar-scroll-glass,.calendar,.todo-container,.todo-list),
+    html:root:root:root.home-notepad-embedded,
+    html:root:root:root.home-notepad-embedded body#homepage-notepad-document,
+    html:root:root:root.home-notepad-embedded body :is(#homepage-notepad-surface,#notes) {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; box-shadow:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root:root:root#homecal-embedded-document.homecal-embed-today body#homecal-surface :is(.calendar-container,.todo-container)::before,
+    html:root:root:root#homecal-embedded-document.homecal-embed-today body#homecal-surface :is(.calendar-container,.todo-container)::after { content:none !important; }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
