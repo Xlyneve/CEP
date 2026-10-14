@@ -535,6 +535,20 @@ textarea:focus {
   border-radius: 13px;
 }
 
+html:root:root body #imgModal #highlightMenuBtn { width:34px; height:34px; display:grid;place-items:center;color:#27323a !important;-webkit-text-fill-color:#27323a !important;background:var(--clinical-field,#f6f6f3) !important;box-shadow:0 2px 8px #0002 !important; }
+html:root:root body #imgModal #highlightMenuBtn::before { content:none !important; }
+html:root:root body #imgModal #highlightControls { background:var(--clinical-field,#f6f6f3) !important;color:#27323a;backdrop-filter:none;padding:6px;max-width:calc(92vw - 70px); }
+html:root:root body #imgModal #highlightControls :is(button,select,summary) { color:#27323a !important;-webkit-text-fill-color:#27323a !important;background:linear-gradient(var(--clinical-field,#f6f6f3),var(--clinical-field,#f6f6f3)),#fff !important;font:12px/1.2 Tahoma,sans-serif; }
+html:root:root body #imgModal #highlightControls button[aria-pressed="true"] { outline:2px solid #6b8799;outline-offset:-2px; }
+html:root:root body #imgModal #highlightControls button:disabled { opacity:.4;cursor:default; }
+html:root:root body #imgModal #highlightControls .color-preset { background:var(--swatch) !important;color:transparent !important;-webkit-text-fill-color:transparent !important; }
+#highlightControls { position:relative; }
+#highlightMore { position:static; }
+#highlightMore summary { cursor:pointer;padding:8px;list-style:none; }
+#highlightMore .highlight-more-controls { position:absolute;top:100%;left:0;right:auto;display:flex;flex-wrap:wrap;gap:6px;width:min(230px,70vw);box-sizing:border-box;padding:8px;border:1px solid #aaa6;border-radius:10px;background:var(--clinical-field,#f6f6f3);box-shadow:0 3px 12px #0003; }
+#highlightMore:not([open]) .highlight-more-controls { display:none; }
+#highlightControls .sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%); }
+
 #highlightToolbar.open #highlightControls {
   display: flex;
 }
@@ -1602,6 +1616,7 @@ function initImageZoomModal(){
   const highlightDirection = document.getElementById("highlightDirection");
   const highlightColor = document.getElementById("highlightColor");
   const clearHighlightsBtn = document.getElementById("clearHighlightsBtn");
+  const undoHighlightsBtn = document.getElementById("undoHighlightsBtn");
   const panModeBtn = document.getElementById("panModeBtn");
   const highlightToolbar = document.getElementById("highlightToolbar");
   const highlightMenuBtn = document.getElementById("highlightMenuBtn");
@@ -1641,6 +1656,7 @@ function initImageZoomModal(){
   let startX = 0, startY = 0;
   let activeHighlight = null;
   let highlightStrokes = [];
+  let highlightHistory = [];
   let currentHighlightSource = "";
   const highlightStorageKey = "cep-info-image-highlights-v1";
   let savedImageHighlights = {};
@@ -1652,9 +1668,19 @@ function initImageZoomModal(){
     currentHighlightSource = String(src || "");
     const saved = savedImageHighlights[currentHighlightSource];
     highlightStrokes = Array.isArray(saved) ? saved.map(stroke => ({ ...stroke })) : [];
+    highlightHistory = []; updateHighlightActions();
   }
 
+  function updateHighlightActions(){
+    if (undoHighlightsBtn) undoHighlightsBtn.disabled = !highlightHistory.length;
+    if (clearHighlightsBtn) clearHighlightsBtn.disabled = !highlightStrokes.length;
+  }
+  function rememberHighlightChange(){
+    highlightHistory.push(highlightStrokes.map(stroke => ({...stroke})));
+    if (highlightHistory.length > 30) highlightHistory.shift();
+  }
   function saveHighlights(){
+    updateHighlightActions();
     if (!currentHighlightSource) return;
     if (highlightStrokes.length) savedImageHighlights[currentHighlightSource] = highlightStrokes;
     else delete savedImageHighlights[currentHighlightSource];
@@ -1682,8 +1708,10 @@ function initImageZoomModal(){
     rulerMode = !!on;
     if (rulerMode) panMode = false;
     canvas.style.pointerEvents = rulerMode ? "auto" : "none";
-    if (rulerToggleBtn) rulerToggleBtn.textContent = `Highlight: ${rulerMode ? "ON" : "OFF"}`;
-    if (panModeBtn) panModeBtn.textContent = `✋ Pan: ${panMode ? "ON" : "OFF"}`;
+    if (rulerToggleBtn) rulerToggleBtn.textContent = "Highlight";
+    if (panModeBtn) panModeBtn.textContent = "Pan";
+    rulerToggleBtn?.setAttribute("aria-pressed",String(rulerMode));
+    panModeBtn?.setAttribute("aria-pressed",String(panMode));
     stage.style.cursor = rulerMode ? "crosshair" : (panMode ? "grab" : "default");
   }
 
@@ -1691,14 +1719,17 @@ function initImageZoomModal(){
     panMode = !!on;
     if (panMode) rulerMode = false;
     canvas.style.pointerEvents = rulerMode ? "auto" : "none";
-    if (rulerToggleBtn) rulerToggleBtn.textContent = `Highlight: ${rulerMode ? "ON" : "OFF"}`;
-    if (panModeBtn) panModeBtn.textContent = `✋ Pan: ${panMode ? "ON" : "OFF"}`;
+    if (rulerToggleBtn) rulerToggleBtn.textContent = "Highlight";
+    if (panModeBtn) panModeBtn.textContent = "Pan";
+    rulerToggleBtn?.setAttribute("aria-pressed",String(rulerMode));
+    panModeBtn?.setAttribute("aria-pressed",String(panMode));
     stage.style.cursor = panMode ? "grab" : (rulerMode ? "crosshair" : "default");
   }
 
   function setHighlightMenuOpen(open){
     highlightToolbar?.classList.toggle("open", !!open);
     highlightMenuBtn?.setAttribute("aria-expanded", String(!!open));
+    if (!open) document.getElementById("highlightMore").open = false;
   }
 
   function hexToRgba(hex, alpha = 0.34){
@@ -1834,10 +1865,17 @@ function initImageZoomModal(){
     });
   }
 
+  undoHighlightsBtn?.addEventListener("click", event => {
+    event.preventDefault(); event.stopPropagation();
+    if (!highlightHistory.length) return;
+    highlightStrokes = highlightHistory.pop(); activeHighlight = null;
+    saveHighlights(); redrawHighlights();
+  });
   if (clearHighlightsBtn) {
     clearHighlightsBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (highlightStrokes.length) rememberHighlightChange();
       highlightStrokes = [];
       activeHighlight = null;
       saveHighlights();
@@ -1976,6 +2014,7 @@ function initImageZoomModal(){
         activeHighlight.endY - activeHighlight.startY
       );
       if (distance > 3) {
+        rememberHighlightChange();
         highlightStrokes.push(activeHighlight);
         saveHighlights();
       }
@@ -1984,6 +2023,8 @@ function initImageZoomModal(){
     }
     isPanning = false;
     isDrawing = false;
+    rulerToggleBtn?.setAttribute("aria-pressed",String(rulerMode));
+    panModeBtn?.setAttribute("aria-pressed",String(panMode));
     stage.style.cursor = rulerMode ? "crosshair" : (panMode ? "grab" : "default");
   }
 
@@ -2093,24 +2134,28 @@ if (document.readyState === "loading") {
         aria-label="Open image highlighter tools"
         aria-expanded="false"
         title="Highlighter tools"
-      ></button>
+      ><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 3 7 7-9 9H5v-7zM12 5l7 7M5 19l-2 2h5"/></svg></button>
       <div id="highlightControls">
-        <button id="rulerToggleBtn" type="button" title="Turn highlighting on or off">Highlight: OFF</button>
+        <button id="rulerToggleBtn" type="button" title="Turn highlighting on or off" aria-pressed="false">Highlight</button>
+        <label style="display:flex;align-items:center;gap:4px;color:inherit;">
+          <span class="sr-only">Colour</span>
+          <input id="highlightColor" type="color" value="#ffe278" aria-label="Custom highlight color">
+        </label>
+        <button id="undoHighlightsBtn" type="button" title="Undo the last highlight or clear" disabled>↶ Undo</button>
+        <button id="panModeBtn" type="button" title="Pan the zoomed image" aria-pressed="false">Pan</button>
+        <details id="highlightMore"><summary>More</summary><div class="highlight-more-controls">
         <select id="highlightDirection" aria-label="Highlight direction">
           <option value="horizontal">↔ Horizontal</option>
           <option value="vertical">↕ Vertical</option>
           <option value="free" selected>↗ Free angle</option>
         </select>
-        <label style="display:flex;align-items:center;gap:4px;color:white;">
-          🎨
-          <input id="highlightColor" type="color" value="#ffe278" aria-label="Custom highlight color">
-        </label>
-        <button class="color-preset" type="button" data-highlight-color="#ffe278" aria-label="Yellow highlight" title="Yellow" style="background:#ffe278;">●</button>
-        <button class="color-preset" type="button" data-highlight-color="#7edaff" aria-label="Blue highlight" title="Blue" style="background:#7edaff;">●</button>
-        <button class="color-preset" type="button" data-highlight-color="#acf687" aria-label="Green highlight" title="Green" style="background:#acf687;">●</button>
-        <button class="color-preset" type="button" data-highlight-color="#ff9fd2" aria-label="Pink highlight" title="Pink" style="background:#ff9fd2;">●</button>
-        <button id="clearHighlightsBtn" type="button" title="Clear all highlights">🧹 Clear</button>
-        <button id="panModeBtn" type="button" title="Pan the zoomed image">✋ Pan: OFF</button>
+
+        <button class="color-preset" type="button" data-highlight-color="#ffe278" aria-label="Yellow highlight" title="Yellow" style="--swatch:#ffe278; background:#ffe278;">●</button>
+        <button class="color-preset" type="button" data-highlight-color="#7edaff" aria-label="Blue highlight" title="Blue" style="--swatch:#7edaff; background:#7edaff;">●</button>
+        <button class="color-preset" type="button" data-highlight-color="#acf687" aria-label="Green highlight" title="Green" style="--swatch:#acf687; background:#acf687;">●</button>
+        <button class="color-preset" type="button" data-highlight-color="#ff9fd2" aria-label="Pink highlight" title="Pink" style="--swatch:#ff9fd2; background:#ff9fd2;">●</button>
+        <button id="clearHighlightsBtn" type="button" title="Clear all highlights">Clear</button>
+        </div></details>
       </div>
     </div>
 
