@@ -90,7 +90,7 @@
   document.addEventListener('click', async event => {
     const definitionButton = event.target.closest('.pn-add-definition,.pn-edit-definition,.pn-remove-definition');
     if (definitionButton && selectedTitle?.input.isConnected) {
-      const scope = definitionButton.closest('.note-card') || document;
+      const scope = definitionButton.closest('.pn-edit-fields,.pn-edit-popup,.cep-note-popup,.note-card') || document;
       if ((scope === document ? selectedTitle.input.matches("#nurseTitle") : scope.contains(selectedTitle.input)) && selectedEditor === selectedTitle.input) {
         event.preventDefault();
         const {input,text} = selectedTitle;
@@ -108,7 +108,7 @@
     const manageButton = event.target.closest('.pn-edit-definition,.pn-remove-definition');
     if (manageButton) {
       event.preventDefault();
-      const scope = manageButton.closest('.note-card') || document;
+      const scope = manageButton.closest('.pn-edit-fields,.pn-edit-popup,.cep-note-popup,.note-card') || document;
       const editor = scope.querySelector('.edit-note[contenteditable="true"]');
       const node = selectedRange?.startContainer;
       const word = node && (node.nodeType === 1 ? node : node.parentElement).closest(selector);
@@ -132,7 +132,7 @@
     if (event.target.closest('.pn-add-definition')) {
       event.preventDefault();
       const button = event.target.closest('.pn-add-definition');
-      const scope = button.closest('.note-card') || document;
+      const scope = button.closest('.pn-edit-fields,.pn-edit-popup,.cep-note-popup,.note-card') || document;
       const editor = scope.querySelector('.edit-note[contenteditable="true"]');
       if (!selectedRange || selectedEditor !== editor || !editor?.contains(selectedRange.commonAncestorContainer) || !selectedRange.toString().trim()) {
         alert('Select a word or phrase in the note first.'); return;
