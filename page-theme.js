@@ -3398,6 +3398,13 @@
     html:root:root:root#homecal-embedded-document.homecal-embed-today body#homecal-surface :is(.calendar-container,.todo-container)::after { content:none !important; }
   `;
 
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root.theme-home-glass body .dashboard-section-toggle {
+      box-sizing:border-box !important; min-height:48px !important;
+      padding:10px 22px !important; line-height:1.3 !important; align-items:center !important;
+    }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
