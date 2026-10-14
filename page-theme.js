@@ -3379,6 +3379,27 @@
       border:1px solid rgba(90,102,114,.3) !important; box-shadow:var(--pearl-card-depth) !important;
     }
 
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {
+      background:transparent !important; background-image:none !important;
+      border:0 !important; border-radius:0 !important; box-shadow:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+      width:36px !important; min-width:36px !important; height:36px !important; padding:0 !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) {
+      width:36px !important; height:36px !important; padding:0 !important;
+      background:transparent !important; border:0 !important; box-shadow:none !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+      width:36px !important; height:36px !important; min-width:36px !important;
+      padding:0 !important; border-radius:50% !important;
+      background:var(--pearl-reflection),#fafaf7 !important; color:#373d44 !important;
+      border:1px solid rgba(90,102,114,.48) !important; box-shadow:var(--pearl-depth) !important;
+      font-size:14px !important; line-height:1 !important;
+    }
+    @media (max-width:768px) {
+      html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) { font-size:0 !important; }
+    }
+
   `;
 
   // Embedded Home windows have no material shell; only their actual cards are themed.
