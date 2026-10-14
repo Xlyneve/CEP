@@ -3411,17 +3411,17 @@
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="lavender-glass"] {
       --duo-base:#d7c6ec; --duo-panel:#eee7f6; --duo-field:#f6f1fb;
-      --duo-material:linear-gradient(135deg,rgba(255,255,255,.48),rgba(229,219,248,.62) 55%,rgba(232,237,253,.5));
+      --duo-material:linear-gradient(125deg,rgba(255,255,255,.58) 0%,rgba(255,255,255,.12) 24%,rgba(255,255,255,.04) 46%,rgba(215,232,255,.24) 70%,rgba(255,255,255,.32) 100%),linear-gradient(155deg,rgba(244,235,255,.24),rgba(210,201,238,.2));
       --duo-scene:radial-gradient(ellipse at 10% 8%,rgba(242,227,255,.9),transparent 48%),radial-gradient(ellipse at 90% 30%,rgba(188,205,242,.7),transparent 44%),radial-gradient(ellipse at 15% 90%,rgba(237,216,239,.7),transparent 44%),linear-gradient(125deg,#dac8ee,#cfcbef 60%,#dfcdeb);
     }
     html[data-xlyneve-color-theme="grey-lavender"] {
       --duo-base:#ebebeb; --duo-panel:#f0eff5; --duo-field:#f7f6fa;
-      --duo-material:linear-gradient(135deg,rgba(255,255,255,.62),rgba(235,233,244,.62) 55%,rgba(226,231,243,.5));
+      --duo-material:linear-gradient(125deg,rgba(255,255,255,.68) 0%,rgba(255,255,255,.15) 24%,rgba(255,255,255,.06) 46%,rgba(219,229,251,.25) 70%,rgba(255,255,255,.4) 100%),linear-gradient(155deg,rgba(245,244,252,.22),rgba(214,214,233,.2));
       --duo-scene:radial-gradient(ellipse at 10% 8%,rgba(249,249,254,.9),transparent 48%),radial-gradient(ellipse at 90% 30%,rgba(218,213,237,.5),transparent 44%),radial-gradient(ellipse at 15% 90%,rgba(228,236,241,.65),transparent 44%),linear-gradient(125deg,#ebebeb,#e6e7ed 60%,#ece9ef);
     }
     html:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) {
       --theme-ink:#44335d; --theme-muted-ink:#716680;
-      --duo-depth:inset 0 1px 2px rgba(255,255,255,.9),inset 0 -1px 2px rgba(192,192,228,.25),0 0 8px rgba(255,255,255,.5),0 7px 18px rgba(89,68,119,.12);
+      --duo-depth:inset 0 2px 3px rgba(255,255,255,.96),inset 1px 0 2px rgba(255,255,255,.65),inset 0 -1px 2px rgba(110,96,153,.18),0 0 9px rgba(235,235,255,.42),0 9px 20px rgba(89,68,119,.16);
       --duo-inset:inset 3px 3px 7px rgba(89,68,119,.15),inset -3px -3px 7px rgba(255,255,255,.8);
       --glass-light:var(--duo-panel); --glass-edge:rgba(255,255,255,.85); --glass-shadow:rgba(89,68,119,.12);
       --refresh-cocoa:#44335d; --refresh-rose:var(--duo-panel); --refresh-lime:var(--duo-panel); --refresh-stone:var(--duo-base); --refresh-blue:#dedcf2; --refresh-terracotta:#c5b5e3;
@@ -3440,17 +3440,17 @@
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]).theme-clinical body #notesList > .note-card,
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body:has(#chat) .chatBubble {
       background:var(--duo-material) !important; color:#44335d !important;
-      border:1px solid rgba(255,255,255,.88) !important; border-radius:24px !important;
-      box-shadow:var(--duo-depth) !important; backdrop-filter:blur(8px) !important; -webkit-backdrop-filter:blur(8px) !important;
+      border:1px solid rgba(255,255,255,.96) !important; border-radius:24px !important;
+      box-shadow:var(--duo-depth) !important; backdrop-filter:blur(12px) saturate(135%) !important; -webkit-backdrop-filter:blur(12px) saturate(135%) !important;
     }
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.calendar-container,.todo-container,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       background:var(--duo-material) !important; color:#44335d !important;
       border-color:rgba(255,255,255,.85) !important; box-shadow:var(--duo-depth) !important; backdrop-filter:blur(10px) !important; -webkit-backdrop-filter:blur(10px) !important;
     }
-    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body .dashboard-section-toggle { border:1px solid rgba(255,255,255,.88) !important; border-radius:24px !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body .dashboard-section-toggle { border:1px solid rgba(255,255,255,.96) !important; border-radius:24px !important; }
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(button,.circle,.glass-btn,.header-btn,.add-btn,a.cep-media-link):not(:where(.dot,.pick,.xlyneve-theme-option,.xlyneve-theme-button)) {
       background:var(--duo-material) !important; color:#44335d !important; -webkit-text-fill-color:#44335d !important;
-      border:1px solid rgba(255,255,255,.88) !important; box-shadow:var(--duo-depth) !important; backdrop-filter:blur(6px) !important; -webkit-backdrop-filter:blur(6px) !important;
+      border:1px solid rgba(255,255,255,.96) !important; box-shadow:var(--duo-depth) !important; backdrop-filter:blur(8px) saturate(135%) !important; -webkit-backdrop-filter:blur(8px) saturate(135%) !important;
     }
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(button,.circle,a.cep-media-link):active:not(:where(.dot,.pick,.xlyneve-theme-option,.xlyneve-theme-button)) { box-shadow:var(--duo-inset) !important; }
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
@@ -3470,7 +3470,7 @@
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) { background:transparent !important; border:0 !important; box-shadow:none !important; padding:0 !important; }
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) { width:36px !important; height:36px !important; padding:0 !important; border-radius:50% !important; }
     @media (max-width:600px) {
-      html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(.note-card,.note-tile,.day,.todo-item,.card) { backdrop-filter:blur(3px) !important; -webkit-backdrop-filter:blur(3px) !important; }
+      html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(.note-card,.note-tile,.day,.todo-item,.card) { backdrop-filter:blur(5px) saturate(125%) !important; -webkit-backdrop-filter:blur(5px) saturate(125%) !important; }
     }
 
   `;
