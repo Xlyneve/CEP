@@ -25,7 +25,8 @@ function installThemeStyles() {
         const context = Object.keys(pageContexts).find(name=>selector.includes('.'+name));
         if (selector.includes('body:has(#chat)')) {
           if (selector.includes('.message.user')) continue;
-          selector = selector.replace('body:has(#chat)','html body .cep-search-source[data-source-file="chatgptx.html"]:not(#cep-source-no-chat-id)');
+          const chatScope = 'body .cep-search-source[data-source-file="chatgptx.html"]:not(#cep-source-no-chat-id)';
+          selector = selector.replace('body:has(#chat)', /^html\b/.test(selector) ? chatScope : 'html ' + chatScope);
         } else if (context) {
           const hadListId = selector.includes('#notesList');
           selector = selector.replace('.'+context,'').replace(/#notesList\s*>?\s*/g,'');

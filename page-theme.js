@@ -3293,6 +3293,7 @@
       --theme-ink:#373d44; --theme-muted-ink:#70757d;
       --pearl-base:#ebebeb; --pearl-card:rgba(250,250,247,.92);
       --pearl-reflection:linear-gradient(118deg,rgba(223,236,240,.7) 0%,rgba(249,234,227,.62) 24%,rgba(226,227,234,.75) 48%,rgba(247,247,245,.92) 68%,rgba(226,231,240,.6) 100%);
+      --pearl-card-depth:inset 4px 4px 8px rgba(85,90,103,.16),inset -4px -4px 8px rgba(255,255,255,.94),0 1px 2px rgba(85,90,103,.08);
       --pearl-depth:0 7px 16px rgba(85,90,103,.14),inset 0 1px 1px rgba(255,255,255,.96),inset 0 -1px 1px rgba(132,139,149,.12);
       --pearl-inset:inset 2px 3px 6px rgba(100,108,119,.15),inset -2px -2px 5px rgba(255,255,255,.9);
       --glass-light:rgba(250,250,247,.92); --glass-edge:rgba(102,110,121,.25); --glass-shadow:rgba(85,90,103,.14);
@@ -3303,7 +3304,7 @@
       --homecal-header:var(--pearl-reflection); --homecal-header-ink:#373d44; --homecal-control:#f3f4f3; --homecal-control-ink:#373d44;
       --homecal-header-edge:rgba(102,110,121,.25); --homecal-today:#e5ecf0; --homecal-today-edge:#a4b9c7; --homecal-today-shadow:rgba(85,90,103,.14);
       --cal-light:#ebebeb; --cal-ink:#373d44; --cal-edge:rgba(102,110,121,.25);
-      --note-editor-depth:var(--pearl-depth); --note-editor-inset:var(--pearl-inset); --note-editor-radius:22px;
+      --note-editor-depth:var(--pearl-card-depth); --note-editor-inset:var(--pearl-inset); --note-editor-radius:22px;
       --cep-highlight-paper:#e7e9ed; --cep-highlight-shadow:inset 0 1px 0 rgba(255,255,255,.5);
       --copy-feedback-accent:#b9c9d4; --copy-feedback-soft:#f6f6f3;
     }
@@ -3313,12 +3314,12 @@
       background-attachment:fixed !important; color:#373d44;
     }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body::before { background:none !important; opacity:0 !important; }
-    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.panel,.pinned-note,.day:not(.empty),.todo-item,.file-item),
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.pinned-note,.day:not(.empty),.todo-item,.file-item),
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"].theme-clinical body #notesList > .note-card,
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"].theme-home-glass body .main-content .card-group.section-card-group > .card {
-      background:rgba(250,250,247,.92) !important; background-image:none !important;
-      color:#373d44 !important; border:1px solid rgba(255,255,255,.85) !important;
-      border-radius:22px !important; box-shadow:var(--pearl-depth) !important;
+      background:var(--pearl-reflection),#fafaf7 !important;
+      color:#373d44 !important; border:1px solid rgba(90,102,114,.3) !important;
+      border-radius:22px !important; box-shadow:var(--pearl-card-depth) !important;
       backdrop-filter:blur(8px) !important; -webkit-backdrop-filter:blur(8px) !important;
     }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.day.weekend,.day.saturday,.day.sunday) { background:#f1f2f2 !important; }
@@ -3348,10 +3349,10 @@
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(input,textarea,select):focus-visible { outline:2px solid #9eb9cb; outline-offset:2px; }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.cep-note-popup,.pn-edit-popup,#inputGroup,#nurseFormWrapper,.input-panel,#formCard,#notePanel,.note-card.editing-note,.note-card.is-editing) {
       background:#f6f6f3 !important; color:#373d44 !important; opacity:1 !important;
-      box-shadow:var(--pearl-depth) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+      box-shadow:var(--pearl-card-depth) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body .todo-item.todo-item:not(#cep-pearl-no-task) :is(input[type="text"],textarea) { background:transparent !important; box-shadow:none !important; border:0 !important; }
-    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body #notes .notepad { background:#fafaf7 !important; color:#373d44 !important; box-shadow:var(--pearl-depth) !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body #notes .notepad { background:var(--pearl-reflection),#fafaf7 !important; color:#373d44 !important; box-shadow:var(--pearl-card-depth) !important; }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-pill,.qt-pill,.qs-pill,.qc-result,.qt-result,.qs-result) { background:#f6f6f3 !important; color:#373d44 !important; border-color:rgba(102,110,121,.25) !important; }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"]) { border:2px solid #9eb9cb !important; box-shadow:var(--pearl-inset) !important; }
@@ -3360,6 +3361,19 @@
     }
 
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.cep-note-popup,.pn-edit-popup) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) { background:none !important; border:0 !important; box-shadow:none !important; }
+
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body:has(#chat) .chatBubble {
+      background:var(--pearl-reflection),#fafaf7 !important; color:#373d44 !important;
+      border:1px solid rgba(90,102,114,.3) !important; box-shadow:var(--pearl-card-depth) !important;
+    }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body .day.today { background:var(--pearl-reflection),#e5ecf0 !important; }
+
+    html:root#homecal-embedded-document[data-xlyneve-color-theme="pearl-silver"] body#homecal-surface .day.embedded-selected-day,
+    html:root#homecal-embedded-document[data-xlyneve-color-theme="pearl-silver"] body#homecal-surface #todoPanel #todoList .todo-item,
+    html:root.home-notepad-embedded[data-xlyneve-color-theme="pearl-silver"] body #homepage-notepad-surface #notes .notepad {
+      background:var(--pearl-reflection),#fafaf7 !important;
+      border:1px solid rgba(90,102,114,.3) !important; box-shadow:var(--pearl-card-depth) !important;
+    }
 
   `;
 
