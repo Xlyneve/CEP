@@ -29,15 +29,30 @@
   const aliases = document.createElement('input'); aliases.placeholder = 'Aliases, separated by commas (e.g. T-cells)'; aliases.setAttribute('aria-label','Definition aliases'); aliases.style.cssText='box-sizing:border-box;width:100%;padding:8px;margin-bottom:10px'; field.after(aliases);
   dialog.querySelector('p').textContent = 'This definition and its aliases are shared across PN and chatgptx. Save the note to keep your edits.';
   let selectedRange = null, selectedEditor = null, activeWord = null, pendingWord = null, pendingRange = null, pendingEditor = null, timer;
+  const titleSelector = '#nurseTitle,input.edit-title';
+  let selectedTitle = null;
+  const captureTitleSelection = () => {
+    const input = document.activeElement;
+    if (!input?.matches(titleSelector)) return false;
+    const start = input.selectionStart, end = input.selectionEnd;
+    if (!Number.isInteger(start) || end <= start) { selectedTitle = null; selectedRange = null; return true; }
+    selectedTitle = {input,text:input.value.slice(start,end)};
+    selectedEditor = input; selectedRange = null;
+    return true;
+  };
+  ['select','keyup','pointerup'].forEach(type => document.addEventListener(type,event => {
+    if (event.target.matches?.(titleSelector)) captureTitleSelection();
+  }));
   const editorOf = element => element?.closest('#nurseNote,.edit-note[contenteditable="true"]');
   document.addEventListener('selectionchange', () => {
+    if (captureTitleSelection()) return;
     const selection = getSelection();
     if (!selection.rangeCount) return;
     const range = selection.getRangeAt(0);
     const parent = node => node.nodeType === 1 ? node : node.parentElement;
     const editor = editorOf(parent(range.startContainer));
     if (editor && editor === editorOf(parent(range.endContainer))) {
-      selectedEditor = editor; selectedRange = range.cloneRange();
+      selectedTitle = null; selectedEditor = editor; selectedRange = range.cloneRange();
     }
   });
   function hide() { clearTimeout(timer); tip.hidden = true; activeWord = null; }
@@ -73,6 +88,23 @@
     else if (!tip.contains(event.target) && !event.target.closest(selector)) hide();
   });
   document.addEventListener('click', async event => {
+    const definitionButton = event.target.closest('.pn-add-definition,.pn-edit-definition,.pn-remove-definition');
+    if (definitionButton && selectedTitle?.input.isConnected) {
+      const scope = definitionButton.closest('.note-card') || document;
+      if ((scope === document ? selectedTitle.input.matches("#nurseTitle") : scope.contains(selectedTitle.input)) && selectedEditor === selectedTitle.input) {
+        event.preventDefault();
+        const {input,text} = selectedTitle;
+        const shared = window.CEPSharedDefinitions?.find(text);
+        if (definitionButton.matches('.pn-remove-definition')) {
+          if (!shared) { alert('Select a title word with a definition first.'); return; }
+          try { await window.CEPSharedDefinitions.remove(shared.concept); hide(); input.focus(); }
+          catch(error) { alert(error.message); }
+        } else if (definitionButton.matches('.pn-edit-definition') && !shared) {
+          alert('Select a title word with a definition first.');
+        } else openDialog(input,{toString:() => text},null);
+        return;
+      }
+    }
     const manageButton = event.target.closest('.pn-edit-definition,.pn-remove-definition');
     if (manageButton) {
       event.preventDefault();
@@ -124,6 +156,10 @@
     try { await window.CEPSharedDefinitions.save(pendingWord?.textContent || pendingRange.toString(), value, aliases.value.split(',')); }
     catch(error) { alert(error.message); submit.disabled = false; return; }
     submit.disabled = false;
+    if (pendingEditor.matches(titleSelector)) {
+      pendingEditor.dispatchEvent(new Event('input', {bubbles:true}));
+      dialog.close(); pendingEditor.focus(); return;
+    }
     let word = pendingWord;
     if (!word) {
       word = document.createElement('span'); word.className = 'pn-definition';
