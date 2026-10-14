@@ -3335,7 +3335,11 @@
       border-color:rgba(255,255,255,.85) !important; box-shadow:var(--pearl-depth) !important;
       backdrop-filter:blur(8px) !important; -webkit-backdrop-filter:blur(8px) !important;
     }
-    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body .dashboard-section-toggle { border:1px solid rgba(102,110,121,.25) !important; border-radius:20px !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body .dashboard-section-toggle {
+      box-sizing:border-box !important; min-height:48px !important; padding:10px 22px !important;
+      line-height:1.3 !important; align-items:center !important;
+      border:1px solid rgba(102,110,121,.25) !important; border-radius:24px !important;
+    }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle,a.cep-media-link):not(:where(.dashboard-section-toggle,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) {
       background:var(--pearl-reflection) !important; color:#373d44 !important; -webkit-text-fill-color:#373d44 !important;
       border:1px solid rgba(90,102,114,.48) !important; box-shadow:var(--pearl-depth) !important;
