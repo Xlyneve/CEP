@@ -3437,21 +3437,17 @@
   `;
 
   themeStyle.textContent += `
-    html[data-xlyneve-color-theme="autumn"] { --classic-recessed-shade:rgba(54,53,54,.2); }
-    html[data-xlyneve-color-theme="hoya"] { --classic-recessed-shade:rgba(51,75,80,.2); }
-    html[data-xlyneve-color-theme="lake-mist"] { --classic-recessed-shade:rgba(68,61,53,.2); }
-    html[data-xlyneve-color-theme="palm-springs"] { --classic-recessed-shade:rgba(31,44,44,.2); }
-    html[data-xlyneve-color-theme="quiet-stone"] { --classic-recessed-shade:rgba(57,56,49,.2); }
+    html[data-xlyneve-color-theme="autumn"] { --classic-recessed-shade:rgba(54,53,54,.28); }
+    html[data-xlyneve-color-theme="hoya"] { --classic-recessed-shade:rgba(51,75,80,.28); }
+    html[data-xlyneve-color-theme="lake-mist"] { --classic-recessed-shade:rgba(68,61,53,.28); }
+    html[data-xlyneve-color-theme="palm-springs"] { --classic-recessed-shade:rgba(31,44,44,.28); }
+    html[data-xlyneve-color-theme="quiet-stone"] { --classic-recessed-shade:rgba(57,56,49,.28); }
     html:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) {
-      --classic-recessed:inset 4px 4px 8px var(--classic-recessed-shade),inset -4px -4px 8px rgba(255,255,255,.7);
-      --note-editor-depth:var(--classic-recessed); --note-editor-inset:var(--classic-recessed);
+      --classic-recessed:inset 5px 5px 8px var(--classic-recessed-shade),inset -1px -1px 2px rgba(255,255,255,.16);
     }
-    html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.panel,.pinned-note,.day:not(.empty),.todo-item,.file-item,.dashboard-section-toggle,.circle,.glass-btn,.header-btn,.add-btn,button,a.cep-media-link),
-    html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]).theme-clinical body #notesList > .note-card,
-    html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable),
-    html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) body :is(.calendar-container,.todo-container,.cep-global-search-panel,.universal-search,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) { box-shadow:var(--classic-recessed) !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) body :is(.note-card,.note-tile,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.file-item),
+    html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]).theme-clinical body #notesList > .note-card { box-shadow:var(--classic-recessed) !important; }
     html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) body:has(#chat) .chatBubble { box-shadow:var(--classic-recessed) !important; }
-    html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) body .todo-item.todo-item:not(#cep-classic-no-task) :is(input[type="text"],textarea) { box-shadow:none !important; }
   `;
 
   function start() {
