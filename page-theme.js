@@ -116,6 +116,8 @@
     {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(42,175,193,.48)"}
   ];
   const pearlSilverPalette = [{rgb:"250, 250, 247",solid:"#fafaf7",ink:"#373d44"}];
+  const lavenderGlassPalette = [{rgb:"238, 231, 246",solid:"#eee7f6",ink:"#44335d"}];
+  const greyLavenderPalette = [{rgb:"240, 239, 245",solid:"#f0eff5",ink:"#44335d"}];
   const themeStorageKey = "xlyneve-color-theme";
   const removedThemes = new Set(["berry", "anatomy"]);
   const deletedThemeStorageKey = "xlyneve-deleted-themes";
@@ -134,14 +136,14 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass") localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
   if (deletedThemes.has(selectedTheme) || removedThemes.has(selectedTheme)) {
     selectedTheme = "original";
     try { localStorage.removeItem(themeStorageKey); } catch {}
   }
-  const palette = selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -192,13 +194,15 @@
     sculpted: "#a288b7",
     "mint-ceramic": "#e0c797",
     "soft-stone": "#e1e2e6",
+    "lavender-glass":"#d8cdec",
+    "grey-lavender":"#e8e7ef",
     "pearl-silver":"#e6e8e9",
     "frost-outline":"#d5e0e8",
     porcelain: "#e9e9e1",
     aurora: "#e1e4f2"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
-  root.style.setProperty("--masthead-bar-ink", ["pearl-silver","frost-outline","mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
+  root.style.setProperty("--masthead-bar-ink", ["lavender-glass","grey-lavender","pearl-silver","frost-outline","mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
 
   const themeStyle = document.createElement("style");
   themeStyle.id = "xlyneve-color-theme-styles";
@@ -3079,6 +3083,8 @@
       },
     ];
 
+    themeOptions.push({ value:"lavender-glass", label:"Lavender Glass", colors:["#d7c6ec","#eee7f6","#cfd3f2","#44335d"] });
+    themeOptions.push({ value:"grey-lavender", label:"Grey Lavender Glass", colors:["#ebebeb","#f0eff5","#d8cdec","#44335d"] });
     themeOptions.push({ value:"pearl-silver", label:"Silver Pearl Glass", colors:["#ebebeb","#fafaf7","#dfecef","#e2e3ea"] });
     themeOptions.push({ value:"frost-outline", label:"Frost Outline 5D", colors:["#d5e0e8","#66baf0","#9acff2","#b452c9","#2aafc1"] });
     themeOptions.push({ value:"porcelain", label:"Porcelain Blush 5D", colors:["#e9e9e1","#9fb5d1","#e8c2c0"] });
@@ -3402,6 +3408,73 @@
 
   `;
 
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="lavender-glass"] {
+      --duo-base:#d7c6ec; --duo-panel:#eee7f6; --duo-field:#f6f1fb;
+      --duo-material:linear-gradient(135deg,rgba(255,255,255,.48),rgba(229,219,248,.62) 55%,rgba(232,237,253,.5));
+      --duo-scene:radial-gradient(ellipse at 10% 8%,rgba(242,227,255,.9),transparent 48%),radial-gradient(ellipse at 90% 30%,rgba(188,205,242,.7),transparent 44%),radial-gradient(ellipse at 15% 90%,rgba(237,216,239,.7),transparent 44%),linear-gradient(125deg,#dac8ee,#cfcbef 60%,#dfcdeb);
+    }
+    html[data-xlyneve-color-theme="grey-lavender"] {
+      --duo-base:#ebebeb; --duo-panel:#f0eff5; --duo-field:#f7f6fa;
+      --duo-material:linear-gradient(135deg,rgba(255,255,255,.62),rgba(235,233,244,.62) 55%,rgba(226,231,243,.5));
+      --duo-scene:radial-gradient(ellipse at 10% 8%,rgba(249,249,254,.9),transparent 48%),radial-gradient(ellipse at 90% 30%,rgba(218,213,237,.5),transparent 44%),radial-gradient(ellipse at 15% 90%,rgba(228,236,241,.65),transparent 44%),linear-gradient(125deg,#ebebeb,#e6e7ed 60%,#ece9ef);
+    }
+    html:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) {
+      --theme-ink:#44335d; --theme-muted-ink:#716680;
+      --duo-depth:inset 0 1px 2px rgba(255,255,255,.9),inset 0 -1px 2px rgba(192,192,228,.25),0 0 8px rgba(255,255,255,.5),0 7px 18px rgba(89,68,119,.12);
+      --duo-inset:inset 3px 3px 7px rgba(89,68,119,.15),inset -3px -3px 7px rgba(255,255,255,.8);
+      --glass-light:var(--duo-panel); --glass-edge:rgba(255,255,255,.85); --glass-shadow:rgba(89,68,119,.12);
+      --refresh-cocoa:#44335d; --refresh-rose:var(--duo-panel); --refresh-lime:var(--duo-panel); --refresh-stone:var(--duo-base); --refresh-blue:#dedcf2; --refresh-terracotta:#c5b5e3;
+      --quick-panel:var(--duo-panel); --quick-field:var(--duo-field); --quick-ink:#44335d; --quick-soft:#e4dcef; --quick-accent:#d3c6ea; --quick-accent-ink:#44335d; --quick-edge:rgba(255,255,255,.85);
+      --clinical-panel:var(--duo-panel); --clinical-field:var(--duo-field); --clinical-accent:#d3c6ea; --clinical-accent-ink:#44335d; --clinical-edge:rgba(255,255,255,.85);
+      --homecal-header:var(--duo-material); --homecal-header-ink:#44335d; --homecal-control:var(--duo-field); --homecal-control-ink:#44335d;
+      --homecal-header-edge:rgba(255,255,255,.85); --homecal-today:#e3d8f3; --homecal-today-edge:#baa4da; --homecal-today-shadow:rgba(89,68,119,.12);
+      --cal-light:var(--duo-base); --cal-ink:#44335d; --cal-edge:rgba(255,255,255,.85);
+      --note-editor-depth:var(--duo-depth); --note-editor-inset:var(--duo-inset); --note-editor-radius:24px;
+      --cep-highlight-paper:#e6def1; --cep-highlight-shadow:none; --copy-feedback-accent:#bba6d9; --copy-feedback-soft:var(--duo-field);
+    }
+    html:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]),
+    html:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body { background-color:var(--duo-base) !important; background-image:var(--duo-scene) !important; background-attachment:fixed !important; color:#44335d; }
+    html:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body::before { background:none !important; opacity:0 !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.day:not(.empty),.todo-item,.file-item),
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]).theme-clinical body #notesList > .note-card,
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body:has(#chat) .chatBubble {
+      background:var(--duo-material) !important; color:#44335d !important;
+      border:1px solid rgba(255,255,255,.88) !important; border-radius:24px !important;
+      box-shadow:var(--duo-depth) !important; backdrop-filter:blur(8px) !important; -webkit-backdrop-filter:blur(8px) !important;
+    }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.calendar-container,.todo-container,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      background:var(--duo-material) !important; color:#44335d !important;
+      border-color:rgba(255,255,255,.85) !important; box-shadow:var(--duo-depth) !important; backdrop-filter:blur(10px) !important; -webkit-backdrop-filter:blur(10px) !important;
+    }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body .dashboard-section-toggle { border:1px solid rgba(255,255,255,.88) !important; border-radius:24px !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(button,.circle,.glass-btn,.header-btn,.add-btn,a.cep-media-link):not(:where(.dot,.pick,.xlyneve-theme-option,.xlyneve-theme-button)) {
+      background:var(--duo-material) !important; color:#44335d !important; -webkit-text-fill-color:#44335d !important;
+      border:1px solid rgba(255,255,255,.88) !important; box-shadow:var(--duo-depth) !important; backdrop-filter:blur(6px) !important; -webkit-backdrop-filter:blur(6px) !important;
+    }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(button,.circle,a.cep-media-link):active:not(:where(.dot,.pick,.xlyneve-theme-option,.xlyneve-theme-button)) { box-shadow:var(--duo-inset) !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
+      background:var(--duo-field) !important; color:#44335d !important; border:1px solid rgba(255,255,255,.85) !important; border-radius:16px; box-shadow:var(--duo-inset) !important;
+    }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(.cep-note-popup,.pn-edit-popup,#inputGroup,#nurseFormWrapper,.input-panel,#formCard,#notePanel,.note-card.editing-note,.note-card.is-editing) {
+      background:var(--duo-panel) !important; color:#44335d !important; opacity:1 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-shadow:var(--duo-depth) !important;
+    }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(.cep-note-popup,.pn-edit-popup) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) { background:none !important; border:0 !important; box-shadow:none !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body .todo-item.todo-item:not(#cep-duo-no-task) :is(input[type="text"],textarea) { background:transparent !important; box-shadow:none !important; border:0 !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body #notes .notepad { background:var(--duo-material),var(--duo-field) !important; color:#44335d !important; box-shadow:var(--duo-depth) !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body .day.today { background:linear-gradient(145deg,rgba(234,222,249,.95),rgba(209,196,235,.85)) !important; border-color:#baa4da !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {
+      background:transparent !important; background-image:none !important; box-shadow:none !important; border:0 !important; backdrop-filter:none !important; width:36px !important; height:36px !important; padding:0 !important;
+    }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) { background:transparent !important; border:0 !important; box-shadow:none !important; padding:0 !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) { width:36px !important; height:36px !important; padding:0 !important; border-radius:50% !important; }
+    @media (max-width:600px) {
+      html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(.note-card,.note-tile,.day,.todo-item,.card) { backdrop-filter:blur(3px) !important; -webkit-backdrop-filter:blur(3px) !important; }
+    }
+
+  `;
+
   // Embedded Home windows have no material shell; only their actual cards are themed.
   themeStyle.textContent += `
     html:root:root:root:root:root:root body :is(#homepage-calendar,#homepage-notepad),
@@ -3470,7 +3543,9 @@
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
       if (pageName === "home.html" && header.matches("body > header")) return;
-      if (selectedTheme === "pearl-silver") {
+      if (selectedTheme === "lavender-glass" || selectedTheme === "grey-lavender") {
+        header.style.setProperty("background", "var(--duo-material)", "important");
+      } else if (selectedTheme === "pearl-silver") {
         header.style.setProperty("background", "var(--pearl-reflection)", "important");
       } else {
         header.style.setProperty("background", `rgba(${pageColor.rgb}, 0.78)`, "important");
