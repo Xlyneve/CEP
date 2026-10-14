@@ -116,7 +116,7 @@
     {rgb:"213, 224, 232",solid:"#d5e0e8",ink:"#34434f",outline:"rgba(42,175,193,.48)"}
   ];
   const pearlSilverPalette = [{rgb:"250, 250, 247",solid:"#fafaf7",ink:"#373d44"}];
-  const lavenderGlassPalette = [{rgb:"238, 231, 246",solid:"#eee7f6",ink:"#44335d"}];
+  const lavenderGlassPalette = [{rgb:"234, 236, 243",solid:"#eaecf3",ink:"#44335d"}];
   const greyLavenderPalette = [{rgb:"240, 239, 245",solid:"#f0eff5",ink:"#44335d"}];
   const themeStorageKey = "xlyneve-color-theme";
   const removedThemes = new Set(["berry", "anatomy"]);
@@ -3410,9 +3410,9 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="lavender-glass"] {
-      --duo-base:#d7c6ec; --duo-panel:#eee7f6; --duo-field:#f6f1fb;
-      --duo-material:linear-gradient(125deg,rgba(255,255,255,.65) 0%,rgba(255,255,255,.08) 21%,rgba(255,255,255,.02) 46%,rgba(215,232,255,.18) 70%,rgba(255,255,255,.4) 100%),linear-gradient(155deg,rgba(244,235,255,.16),rgba(210,201,238,.13));
-      --duo-scene:radial-gradient(ellipse at 10% 8%,rgba(242,227,255,.9),transparent 48%),radial-gradient(ellipse at 90% 30%,rgba(188,205,242,.7),transparent 44%),radial-gradient(ellipse at 15% 90%,rgba(237,216,239,.7),transparent 44%),linear-gradient(125deg,#dac8ee,#cfcbef 60%,#dfcdeb);
+      --duo-base:#e1e3eb; --duo-panel:#eaecf3; --duo-field:#f3f5f9;
+      --duo-material:linear-gradient(125deg,rgba(255,255,255,.65) 0%,rgba(255,255,255,.08) 21%,rgba(255,255,255,.02) 46%,rgba(215,232,255,.18) 70%,rgba(255,255,255,.4) 100%),linear-gradient(155deg,rgba(240,242,249,.16),rgba(205,222,240,.13));
+      --duo-scene:radial-gradient(ellipse at 10% 8%,rgba(238,233,248,.65),transparent 48%),radial-gradient(ellipse at 90% 30%,rgba(202,225,245,.65),transparent 44%),radial-gradient(ellipse at 15% 90%,rgba(238,239,243,.75),transparent 44%),linear-gradient(125deg,#e3e3ec,#dce6f0 60%,#e6e2ed);
     }
     html[data-xlyneve-color-theme="grey-lavender"] {
       --duo-base:#ebebeb; --duo-panel:#f0eff5; --duo-field:#f7f6fa;
