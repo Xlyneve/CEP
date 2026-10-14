@@ -3405,6 +3405,16 @@
     }
   `;
 
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root body :is(#universalSearchRefresh,#universalSearchClose),
+    html:root:root:root:root:root:root body .cep-global-search-row > button[aria-label="Close search"] {
+      box-sizing:border-box !important; flex:0 0 30px !important;
+      width:30px !important; height:30px !important; min-width:30px !important; min-height:30px !important;
+      align-self:center !important; display:grid !important; place-items:center !important;
+      padding:0 !important; border-radius:9px !important; font-size:19px !important; line-height:1 !important;
+    }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
