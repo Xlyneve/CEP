@@ -3450,6 +3450,22 @@
     html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) body:has(#chat) .chatBubble { box-shadow:var(--classic-recessed) !important; }
   `;
 
+  // Editing fields use their own ink rather than the saved card's light ink.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root body :is(.note-title,.pinned-note-title,.note-content,.note-text,.editableNote)[contenteditable="true"],
+    html:root:root:root:root:root body :is(.cep-note-popup,.pn-edit-popup,.note-card.is-editing,.note-card.editing-note,.input-panel,#inputGroup,#nurseFormWrapper,#formCard,#notePanel) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),textarea,[contenteditable="true"]) {
+      background:linear-gradient(var(--clinical-field,#fafafa),var(--clinical-field,#fafafa)),#fff !important;
+      color:var(--theme-ink,#27323a) !important;
+      -webkit-text-fill-color:var(--theme-ink,#27323a) !important;
+      caret-color:var(--theme-ink,#27323a) !important;
+      opacity:1 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root:root:root:root:root:root body :is(.note-title,.pinned-note-title,.note-content,.note-text,.editableNote)[contenteditable="true"] :not([style*="color"]):not(table):not(table *),
+    html:root:root:root:root:root:root body :is(.cep-note-popup,.pn-edit-popup,.note-card.is-editing,.note-card.editing-note) [contenteditable="true"] :not([style*="color"]):not(table):not(table *) {
+      color:inherit !important; -webkit-text-fill-color:currentColor !important;
+    }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
