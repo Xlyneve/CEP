@@ -43,13 +43,20 @@ async function compressImage(file, { maxDimension, quality }) {
   let outputQuality = quality;
   let compressed = await canvasToBlob(canvas, "image/webp", outputQuality);
 
+  // Safari may return PNG when WebP encoding is unsupported. Use JPEG rather
+  // than uploading PNG bytes labelled as WebP.
+  const uploadType = compressed.type === "image/webp" ? "image/webp" : "image/jpeg";
+  if (compressed.type !== uploadType) {
+    compressed = await canvasToBlob(canvas, uploadType, outputQuality);
+  }
+
   // Preserve detail first, then reduce quality/size only when needed to stay
   // below the Storage rule's 2 MB limit.
   while (compressed.size > MAX_UPLOAD_BYTES && outputQuality > 0.7) {
     outputQuality = Math.max(0.7, outputQuality - 0.06);
-    compressed = await canvasToBlob(canvas, "image/webp", outputQuality);
+    compressed = await canvasToBlob(canvas, uploadType, outputQuality);
   }
-  while (compressed.size > MAX_UPLOAD_BYTES && Math.max(canvas.width, canvas.height) > 1600) {
+  while (compressed.size > MAX_UPLOAD_BYTES && Math.max(canvas.width, canvas.height) > 320) {
     const resized = document.createElement("canvas");
     resized.width = Math.max(1, Math.round(canvas.width * 0.86));
     resized.height = Math.max(1, Math.round(canvas.height * 0.86));
@@ -57,7 +64,13 @@ async function compressImage(file, { maxDimension, quality }) {
     canvas.width = resized.width;
     canvas.height = resized.height;
     canvas.getContext("2d", { alpha: false }).drawImage(resized, 0, 0);
-    compressed = await canvasToBlob(canvas, "image/webp", Math.max(0.76, outputQuality));
+    compressed = await canvasToBlob(canvas, uploadType, outputQuality);
+  }
+  if (compressed.size > MAX_UPLOAD_BYTES) {
+    throw new Error("This image could not be reduced below the 2 MB upload limit. Please choose a smaller photo.");
+  }
+  if (!["image/webp", "image/jpeg"].includes(compressed.type)) {
+    throw new Error("This browser could not prepare a supported image. Please try another browser.");
   }
   return compressed;
 }
@@ -70,10 +83,11 @@ export async function uploadReferenceImage(app, file, folder, options = {}) {
   const { getStorage, ref, uploadBytes, getDownloadURL } = await getStorageModule();
   const compressed = await compressImage(file, { maxDimension, quality });
   const id = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const imageRef = ref(getStorage(app), `reference-images/${folder}/${id}.webp`);
+  const extension = compressed.type === "image/webp" ? "webp" : "jpg";
+  const imageRef = ref(getStorage(app), `reference-images/${folder}/${id}.${extension}`);
 
   await uploadBytes(imageRef, compressed, {
-    contentType: "image/webp",
+    contentType: compressed.type,
     cacheControl: "private,no-store,max-age=0"
   });
   return getDownloadURL(imageRef);
