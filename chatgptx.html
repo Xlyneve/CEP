@@ -1798,7 +1798,7 @@ body > #formatToggle { display: none !important; }
     <div class="new-note-actions note-editor-actions">
       <button id="newNoteImageBtn" type="button" title="Insert image">🖼️</button>
       <button id="newNoteEmojiBtn" type="button" title="Insert emoji">🌟</button>
-      <button id="newNoteArrowBtn" type="button" title="Insert movable arrow">↳</button>
+      <button id="newNoteArrowBtn" type="button" title="Insert symbol">↳</button>
       <button id="addNoteBtn" type="button" title="Save note">💾</button>
       <button id="cancelAddNoteBtn" type="button" title="Cancel">❌</button>
     </div>
@@ -3416,14 +3416,8 @@ newNoteEmojiBtn.addEventListener('mousedown', event => {
   prepareNewNotePicker(event, newNoteEmojiBtn, EMOJIS, insertEmojiAtCaret);
 });
 
-newNoteArrowBtn.addEventListener('mousedown', event => event.preventDefault());
-newNoteArrowBtn.addEventListener('click', event => {
-  event.preventDefault();
-  event.stopPropagation();
-  activeEditable = noteInput;
-  noteInput.focus({ preventScroll: true });
-  restoreCaret();
-  window.CEPNoteArrows?.insert(noteInput);
+newNoteArrowBtn.addEventListener('mousedown', event => {
+  prepareNewNotePicker(event, newNoteArrowBtn, ARROWS, insertInlineSymbolAtCaret);
 });
 
 notePanel.querySelector('.new-note-actions').addEventListener('mousedown', () => {
@@ -5460,15 +5454,18 @@ Object.assign(arrowBtn.style, {
   marginRight: '12px'
 });
 
-arrowBtn.title = 'Insert movable arrow';
-arrowBtn.addEventListener('mousedown', event => event.preventDefault());
-arrowBtn.addEventListener('click', event => {
-  event.preventDefault();
-  event.stopPropagation();
+arrowBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
   activeEditable = editable;
   editable.focus({ preventScroll: true });
-  restoreCaret();
-  window.CEPNoteArrows?.insert(editable);
+  saveCaret();
+  showPickerNearButton(arrowBtn, ARROWS, (picked) => {
+    activeEditable = editable;
+    editable.focus({ preventScroll: true });
+    restoreCaret();
+    insertInlineSymbolAtCaret(picked);
+  });
 });
 
       emojiBtn.addEventListener('mousedown', (e) => {
@@ -6381,6 +6378,5 @@ document.addEventListener('keydown', (e) => {
 updateUIForLockState();
 </script>
 
-<script src="note-arrows.js?v=20261015-2" defer></script>
 </body>
 </html>
