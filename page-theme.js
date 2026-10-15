@@ -3539,6 +3539,34 @@
     }
   `;
 
+
+  // Both search locations show a persistent, theme-matched selected mode.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="autumn"] { --search-mode-selected:#e2c5af; }
+    html[data-xlyneve-color-theme="hoya"] { --search-mode-selected:#b7d9d3; }
+    html[data-xlyneve-color-theme="lake-mist"] { --search-mode-selected:#c2d6df; }
+    html[data-xlyneve-color-theme="palm-springs"] { --search-mode-selected:#d3ddbd; }
+    html[data-xlyneve-color-theme="quiet-stone"] { --search-mode-selected:#d8d2bf; }
+    html[data-xlyneve-color-theme="sculpted"] { --search-mode-selected:#d7d7de; }
+    html[data-xlyneve-color-theme="warm-medley"] { --search-mode-selected:#e9cfb5; }
+    html[data-xlyneve-color-theme="pastel-jumper"] { --search-mode-selected:#c6d6eb; }
+    html[data-xlyneve-color-theme="mint-ceramic"] { --search-mode-selected:#bddbd5; }
+    html[data-xlyneve-color-theme="soft-stone"] { --search-mode-selected:#e5cfb8; }
+    html[data-xlyneve-color-theme="aurora"] { --search-mode-selected:#d8c9ec; }
+    html[data-xlyneve-color-theme="porcelain"] { --search-mode-selected:#d8d0e8; }
+    html[data-xlyneve-color-theme="frost-outline"] { --search-mode-selected:#b4daf0; }
+    html[data-xlyneve-color-theme="pearl-silver"] { --search-mode-selected:#d2dce6; }
+    html[data-xlyneve-color-theme="lavender-glass"] { --search-mode-selected:#c8daef; }
+    html[data-xlyneve-color-theme="grey-lavender"] { --search-mode-selected:#cdd9e9; }
+    html:root:root:root:root:root:root:root:root body :is(.universal-search-mode,.cep-global-search-modes button)[data-search-mode][aria-pressed="true"]:not(#cep-search-mode-unused) {
+      background:var(--search-mode-selected,#c8deee) !important;
+      background-image:none !important;
+      color:#253544 !important; -webkit-text-fill-color:#253544 !important;
+      border-color:#8197aa !important; outline:2px solid rgba(71,100,124,.38) !important;
+      outline-offset:-2px; opacity:1 !important;
+    }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
