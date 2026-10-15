@@ -5995,7 +5995,8 @@ bindToolbarBtn('underlineBtn', 'underline');
 function isolateHighlightSelection(range, editor) {
   const classes = '.cep-chosen-highlight,.cep-removed-highlight,.gradient-highlight,.highlight-gradient,.note-gradient-highlight,.highlight-hue,.cep-content-highlight,span.highlight';
   const isHighlight = element => element.matches(`mark,${classes}`) ||
-    (element.matches('span,font') && (element.style.backgroundColor || element.style.backgroundImage));
+    (!element.matches('table,thead,tbody,tfoot,tr,td,th') &&
+      (element.style.backgroundColor || element.style.backgroundImage || element.hasAttribute('bgcolor')));
   const start = document.createComment('highlight-start');
   const end = document.createComment('highlight-end');
   const endRange = range.cloneRange();
@@ -6041,12 +6042,15 @@ function applyChosenHighlight(color) {
   if (!editor.contains(range.commonAncestorContainer)) return;
   isolateHighlightSelection(range, editor);
   const fragment = range.extractContents();
-  fragment.querySelectorAll('mark,span,font').forEach(element => {
+  fragment.querySelectorAll('*').forEach(element => {
+    // Cell fills belong to the table, not to text highlighting.
+    if (element.matches('table,thead,tbody,tfoot,tr,td,th')) return;
     const highlighted = element.matches('mark,.cep-chosen-highlight,.cep-removed-highlight,.gradient-highlight,.highlight-gradient,.note-gradient-highlight,.highlight-hue,.cep-content-highlight,span.highlight') || Boolean(element.style.backgroundColor || element.style.backgroundImage);
 
     element.style.removeProperty('background');
     element.style.removeProperty('background-color');
     element.style.removeProperty('background-image');
+    element.removeAttribute('bgcolor');
     element.classList.remove('cep-chosen-highlight', 'cep-removed-highlight', 'gradient-highlight', 'highlight-gradient', 'note-gradient-highlight', 'highlight-hue', 'cep-content-highlight', 'highlight');
     if (highlighted) {
       ['box-shadow', 'text-shadow', 'border-radius', 'padding'].forEach(property => element.style.removeProperty(property));
@@ -6063,6 +6067,16 @@ function applyChosenHighlight(color) {
   highlight.style.backgroundColor = color;
   highlight.append(fragment);
   range.insertNode(highlight);
+  // Splitting at the start/end can leave empty coloured wrappers. Their
+  // padding still paints a patch even though no selectable text remains.
+  editor.querySelectorAll('mark,.cep-chosen-highlight,.gradient-highlight,.highlight-gradient,.note-gradient-highlight,.highlight-hue,.cep-content-highlight,span.highlight,[style],[bgcolor]').forEach(element => {
+    if (element.matches('table,thead,tbody,tfoot,tr,td,th')) return;
+    if (!element.matches('mark,span,font,.cep-chosen-highlight,.gradient-highlight,.highlight-gradient,.note-gradient-highlight,.highlight-hue,.cep-content-highlight,.highlight') && !element.style.backgroundColor && !element.style.backgroundImage && !element.hasAttribute('bgcolor')) return;
+    if (element === highlight || element.contains(highlight)) return;
+    if (!element.textContent && !element.querySelector('img,br,table,video,iframe,hr')) {
+      element.remove();
+    }
+  });
   range.selectNodeContents(highlight);
   selection.removeAllRanges();
   selection.addRange(range);
