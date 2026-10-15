@@ -2145,6 +2145,7 @@ formatToggle.addEventListener('mousedown', (e) => {
 
 // Prevent toolbar from stealing focus; keep editor active while clicking buttons
 const formatToolbar = document.getElementById('formatToolbar');
+const editorHighlightButton = formatToolbar.querySelector('#highlightBtn');
 formatToolbar.addEventListener('mousedown', (e) => {
   if (activeEditable?.isContentEditable) {
     activeEditable.focus({ preventScroll: true });
@@ -6084,10 +6085,10 @@ function applyChosenHighlight(color) {
 }
 
 const highlightPalette = document.getElementById('highlightPalette');
-document.getElementById('highlightBtn').addEventListener('click', () => {
+editorHighlightButton?.addEventListener('click', () => {
   fontColorPalette.classList.remove('visible');
   const open = highlightPalette.classList.toggle('visible');
-  document.getElementById('highlightBtn').setAttribute('aria-expanded', String(open));
+  editorHighlightButton?.setAttribute('aria-expanded', String(open));
 });
 highlightPalette.addEventListener('mousedown', event => { event.preventDefault(); });
 highlightPalette.addEventListener('click', event => {
@@ -6097,14 +6098,14 @@ highlightPalette.addEventListener('click', event => {
   event.stopPropagation();
   applyChosenHighlight(choice.dataset.color);
   highlightPalette.classList.remove('visible');
-  document.getElementById('highlightBtn').setAttribute('aria-expanded', 'false');
+  editorHighlightButton?.setAttribute('aria-expanded', 'false');
 });
 
 const fontColorPalette = document.getElementById('fontColorPalette');
 
 document.getElementById('fontColorBtn')?.addEventListener('click', () => {
   highlightPalette.classList.remove('visible');
-  document.getElementById('highlightBtn').setAttribute('aria-expanded', 'false');
+  editorHighlightButton?.setAttribute('aria-expanded', 'false');
   fontColorPalette?.classList.toggle('visible');
 });
 
@@ -6181,7 +6182,7 @@ function closeEditorFormat() {
   fontColorPalette.classList.remove('visible');
   highlightPalette.classList.remove('visible');
   formatToggle.setAttribute('aria-expanded', 'false');
-  document.getElementById('highlightBtn').setAttribute('aria-expanded', 'false');
+  editorHighlightButton?.setAttribute('aria-expanded', 'false');
 }
 function attachEditorFormat(editor) {
   if (!editor.matches('#noteInput, .editableNote')) return;
