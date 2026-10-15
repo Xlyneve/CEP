@@ -172,6 +172,7 @@
 
   const pageColor = palette[hash(pageName) % palette.length];
   const root = document.documentElement;
+  if (pageName === "vs.html") root.classList.add("theme-vitals-table");
   // Selected modes use the accent rather than the neutral card surface.
   const searchAccent = selectedTheme === 'original'
     ? [originalPalette[0].solid, originalPalette[0].ink]
@@ -3560,6 +3561,40 @@
       color:var(--search-mode-selected-ink,#253544) !important; -webkit-text-fill-color:var(--search-mode-selected-ink,#253544) !important;
       border-color:#8197aa !important; outline:2px solid rgba(71,100,124,.38) !important;
       outline-offset:-2px; opacity:1 !important;
+    }
+  `;
+
+
+  // Vital-signs reference: theme materials and ink, with no changes to values.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root:root body #vital-signs-table,
+    html:root:root:root:root:root:root:root:root.theme-vitals-table body > table {
+      background:var(--duo-material,var(--pearl-reflection,var(--quick-panel,var(--clinical-panel,#efede8)))) !important;
+      color:var(--theme-ink,var(--page-header-ink,#39190f)) !important;
+      border:1px solid var(--clinical-edge,rgba(120,120,120,.25)) !important;
+      border-radius:var(--note-editor-radius,16px) !important;
+      box-shadow:var(--classic-recessed,var(--note-editor-depth,0 8px 24px rgba(40,40,40,.15))) !important;
+    }
+    html:root:root:root:root:root:root:root:root body #vital-signs-table :is(th,td),
+    html:root:root:root:root:root:root:root:root.theme-vitals-table body > table :is(th,td):not(#cep-vitals-unused) {
+      background:var(--clinical-field,var(--quick-field,#f5f3ef)) !important;
+      color:var(--theme-ink,var(--page-header-ink,#39190f)) !important;
+      -webkit-text-fill-color:currentColor !important;
+      border:1px solid var(--clinical-edge,rgba(120,120,120,.25)) !important;
+      text-shadow:none !important;
+    }
+    html:root:root:root:root:root:root:root:root body #vital-signs-table th,
+    html:root:root:root:root:root:root:root:root.theme-vitals-table body > table th:not(#cep-vitals-unused),
+    html:root:root:root:root:root:root:root:root body #vital-signs-table tbody tr:hover td,
+    html:root:root:root:root:root:root:root:root.theme-vitals-table body > table tbody tr:hover td:not(#cep-vitals-unused) {
+      background:var(--search-mode-selected,var(--clinical-accent,#e5cbcc)) !important;
+      color:var(--search-mode-selected-ink,var(--clinical-accent-ink,#39190f)) !important;
+      -webkit-text-fill-color:currentColor !important;
+    }
+    html:root:root:root:root:root:root:root:root body #vital-signs-table h2,
+    html:root:root:root:root:root:root:root:root.theme-vitals-table body > h1 {
+      color:var(--theme-ink,var(--page-header-ink,#39190f)) !important;
+      -webkit-text-fill-color:currentColor !important;
     }
   `;
 
