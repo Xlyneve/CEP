@@ -1,7 +1,6 @@
 (() => {
   'use strict';
   const PREFIX='CEP-NOTE-ARROW-1:', EDITORS='#noteInput[contenteditable="true"],.editableNote[contenteditable="true"]';
-  const attached=new WeakMap();
   let selected=null,drag=null,frame=0;
   const style=document.createElement('style');
   style.textContent=`img.cep-note-arrow{display:inline-block!important;vertical-align:middle;max-width:100%;height:auto;cursor:move;user-select:none;touch-action:none} .cep-arrow-tools{position:fixed;inset:0;pointer-events:none;z-index:2147483640} html:root:root:root:root:root:root:root body .cep-arrow-tools:not(#cep-arrow-unused) button{position:absolute;pointer-events:auto;touch-action:none;box-sizing:border-box;width:24px!important;height:24px!important;min-height:0!important;min-width:0!important;padding:0!important;border:2px solid white!important;border-radius:50%!important;background:#507cac!important;color:white!important;-webkit-text-fill-color:white!important;box-shadow:0 0 0 1px #507cac!important;font:16px/20px Arial,sans-serif!important} .cep-arrow-tools svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none} .cep-arrow-help{position:absolute;max-width:260px;padding:5px 8px;border-radius:7px;background:#f5f7fb;color:#33465d;font:12px/1.3 Arial,sans-serif;box-shadow:0 1px 5px #29384c30} .cep-arrow-add{font-size:14px!important}`;
@@ -36,6 +35,12 @@
   tools.querySelector('[data-delete]').addEventListener('pointerup',event=>{event.preventDefault();event.stopPropagation();const editor=selected?.closest(EDITORS);selected?.remove();hide();notify(editor);});
   window.addEventListener('scroll',()=>{if(selected)position();},true);window.addEventListener('resize',position);
   document.addEventListener('keydown',event=>{if(event.key==='Escape')hide();});
-  function attach(){document.querySelectorAll(EDITORS).forEach(editor=>{if(attached.get(editor)?.isConnected)return;let range;const button=document.createElement('button');button.type='button';button.className='cep-arrow-add';button.textContent='↗ Arrow';button.title='Insert a movable arrow';button.addEventListener('pointerdown',event=>{const s=getSelection();range=s?.rangeCount&&editor.contains(s.getRangeAt(0).commonAncestorContainer)?s.getRangeAt(0).cloneRange():null;event.preventDefault();});button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();add(editor,range);});attached.set(editor,button);const host=editor.closest('.note-format-shell')||editor.parentElement;const toolbar=editor.id==='noteInput'?document.querySelector('.new-note-actions'):host.querySelector('.note-icon-actions,.cep-pn-editor-toolbar');(toolbar||host).append(button);});}
-  let queued=false;new MutationObserver(records=>{if(records.every(r=>tools.contains(r.target)))return;if(!queued){queued=true;queueMicrotask(()=>{queued=false;attach();if(selected&&!selected.isConnected)hide();});}}).observe(document.body,{childList:true,subtree:true});attach();
+  window.CEPNoteArrows=Object.freeze({insert(editor){
+    if(!editor?.isContentEditable)return;
+    const selection=getSelection();
+    const range=selection?.rangeCount&&editor.contains(selection.getRangeAt(0).commonAncestorContainer)?selection.getRangeAt(0).cloneRange():null;
+    add(editor,range);
+    selected?.scrollIntoView({block:'nearest',inline:'nearest'});
+    position();
+  }});
 })();
