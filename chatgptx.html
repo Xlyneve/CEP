@@ -3660,9 +3660,7 @@ document.addEventListener('keydown', event => {
 addNoteBtn.onclick = async () => {
   if (!isUnlocked) return alert('Locked.');
 
-  let raw;
-  try { raw = (window.CEPFlowchart ? await window.CEPFlowchart.serializeEditor(noteInput) : noteInput.innerHTML).trim(); }
-  catch (error) { alert(error.message || "Could not prepare the flowchart."); return; }
+  const raw = noteInput.innerHTML.trim();
   const noteContent = deLinkifyConceptAnchors(linkify(raw));
 
   if (!noteContent || noteContent === '<br>') return alert('Note is required.');
@@ -5574,10 +5572,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
       };
 
       saveBtn.onclick = async () => {
-        let prepared;
-        try { prepared = window.CEPFlowchart ? await window.CEPFlowchart.serializeEditor(editable) : editable.innerHTML; }
-        catch (error) { alert(error.message || "Could not prepare the flowchart."); return; }
-        const updated = linkify(deLinkifyConceptAnchors(prepared.trim()));
+        const updated = linkify(deLinkifyConceptAnchors(editable.innerHTML.trim()));
         if (!updated) return alert('Cannot save empty note');
 
         try {
@@ -6393,6 +6388,6 @@ document.addEventListener('keydown', (e) => {
 updateUIForLockState();
 </script>
 
-<script src="chatgptx-flowchart.js?v=20261015-2" defer></script>
+<script src="note-arrows.js?v=20261015-1" defer></script>
 </body>
 </html>
