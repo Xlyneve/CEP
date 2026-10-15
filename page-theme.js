@@ -172,9 +172,16 @@
 
   const pageColor = palette[hash(pageName) % palette.length];
   const root = document.documentElement;
-  // Use the theme's actual palette, consistently in both search locations.
-  root.style.setProperty('--search-mode-selected', palette[0].solid);
-  root.style.setProperty('--search-mode-selected-ink', palette[0].ink);
+  // Selected modes use the accent rather than the neutral card surface.
+  const searchAccent = selectedTheme === 'original'
+    ? [originalPalette[0].solid, originalPalette[0].ink]
+    : selectedTheme === 'soft-stone' || selectedTheme === 'porcelain'
+      ? [palette[0].ink, '#ffffff']
+      : selectedTheme === 'aurora'
+        ? ['#c5b0e3', palette[0].ink]
+        : [`var(--quick-accent,${palette[0].solid})`, `var(--quick-accent-ink,${palette[0].ink})`];
+  root.style.setProperty('--search-mode-selected', searchAccent[0]);
+  root.style.setProperty('--search-mode-selected-ink', searchAccent[1]);
 
 
   const urgentCarePages = new Set(["anatomicald.html", "face.html", "hand.html", "sha.html", "abdo.html", "spine.html", "lf.html", "urgent_care.html"]);
