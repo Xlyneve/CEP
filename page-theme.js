@@ -2356,7 +2356,7 @@
       --copy-feedback-accent:#9d46c4; --copy-feedback-soft:#e9ebf6;
       --homecal-header:linear-gradient(145deg,#e9ebf6,#e9ebf6); --homecal-header-ink:#28263c;
       --homecal-control:#e9ebf6; --homecal-control-ink:#28263c; --homecal-header-edge:transparent;
-      --homecal-today:linear-gradient(145deg,#e9ebf6,#9d46c4); --homecal-today-edge:transparent; --homecal-today-shadow:rgba(68,73,59,.24);
+      --homecal-today:linear-gradient(145deg,#e7e7f2,#d8d4e7); --homecal-today-edge:rgba(169,172,197,.35); --homecal-today-shadow:rgba(169,172,197,.24);
     }
     html[data-xlyneve-color-theme="aurora"],html[data-xlyneve-color-theme="aurora"] body {
       color:#28263c; background-color:#e9ebf6 !important;
