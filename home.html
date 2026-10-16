@@ -6506,5 +6506,27 @@ const firebaseConfig = {
 <script type="module" src="pn-shared-definitions.js?v=20261007-3"></script>
 <script src="notepad-launcher.js?v=20261012-2"></script>
 <script src="calendar-launcher.js?v=27"></script>
+<script>
+// Home only: the theme control shares the sign-out button's material.
+(function matchHomeThemeButton() {
+  const properties = ['background','border','border-radius','box-shadow','backdrop-filter','-webkit-backdrop-filter','padding','color'];
+  let observer;
+  function match() {
+    const theme = document.querySelector('.xlyneve-theme-button');
+    const signOut = document.querySelector('.cep-sign-out-light');
+    if (!theme || !signOut) return;
+    const material = getComputedStyle(signOut);
+    properties.forEach(property => theme.style.setProperty(property, material.getPropertyValue(property), 'important'));
+    observer?.disconnect();
+  }
+  function start() {
+    observer = new MutationObserver(match);
+    observer.observe(document.body, {childList:true,subtree:true});
+    match();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
+  else start();
+})();
+</script>
 </body>
 </html>
