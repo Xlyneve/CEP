@@ -3232,7 +3232,7 @@
       --copy-feedback-accent:#379ee9; --copy-feedback-soft:#e1e9ee;
     }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"],html:root:root:root[data-xlyneve-color-theme="frost-outline"] body {
-      background:#d5e0e8 !important; background-image:none !important; color:#34434f;
+      background:#d5e0e8 !important; background-image:linear-gradient(125deg,rgba(249,218,229,.22),rgba(249,218,229,.05) 55%,rgba(249,218,229,.14)) !important; color:#34434f;
     }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body::before { background:none !important; opacity:0 !important; }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty),.todo-item,.file-item),
