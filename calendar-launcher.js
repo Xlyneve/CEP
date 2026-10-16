@@ -114,7 +114,7 @@
   function movePanel(x, y) {
     if (!panel) return;
     panel.style.left = `${Math.max(8, Math.min(x, innerWidth - panel.offsetWidth - 8))}px`;
-    panel.style.top = `${Math.max(34, Math.min(y, innerHeight - panel.offsetHeight - 8))}px`;
+    panel.style.top = `${Math.max(0, Math.min(y, innerHeight - panel.offsetHeight - 8))}px`;
   }
   function restoreLayout() {
     const compact = matchMedia("(max-width:600px)").matches;
