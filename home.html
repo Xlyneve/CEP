@@ -3706,6 +3706,12 @@ html:root:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="auro
   box-shadow:var(--aurora-raised) !important;
   color:#28263c !important; -webkit-text-fill-color:currentColor !important;
 }
+
+html:root:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="aurora"] body .xlyneve-theme-button::after {
+  position:static !important; display:inline !important; font:inherit !important;
+  letter-spacing:inherit !important; color:inherit !important; background:none !important;
+  transform:none !important; filter:none !important; animation:none !important;
+}
 </style>
 
   <link rel="stylesheet" href="site-background.css">
@@ -6562,6 +6568,13 @@ const firebaseConfig = {
     if (!theme || !signOut) return;
     const material = getComputedStyle(signOut);
     properties.forEach(property => theme.style.setProperty(property, material.getPropertyValue(property), 'important'));
+    if (document.documentElement.dataset.xlyneveColorTheme === 'aurora') {
+      ['font','letter-spacing','text-transform'].forEach(property => theme.style.setProperty(property, material.getPropertyValue(property), 'important'));
+      theme.style.setProperty('box-sizing', 'border-box', 'important');
+      theme.style.setProperty('width', signOut.offsetWidth + 'px', 'important');
+      theme.style.setProperty('height', signOut.offsetHeight + 'px', 'important');
+      theme.style.setProperty('justify-content', 'center', 'important');
+    }
     observer?.disconnect();
   }
   function start() {
