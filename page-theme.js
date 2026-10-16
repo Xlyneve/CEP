@@ -1114,10 +1114,10 @@
       }
     }
     html[data-xlyneve-color-theme="pastel-jumper"] body :is(button,.circle):not(:where(#recallBtn,.dashboard-section-toggle,.xlyneve-theme-option)):active {
-      box-shadow:inset 0 0 0 1px rgba(128,108,121,.18),inset 0 0 0 9999px rgba(128,108,121,.035) !important;
+      box-shadow:inset 3px 4px 7px rgba(128,108,121,.22),inset -2px -2px 5px rgba(255,255,255,.8),2px 3px 6px rgba(128,108,121,.14) !important;
     }
     html[data-xlyneve-color-theme="pastel-jumper"] body :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select) {
-      box-shadow:inset 0 0 0 1px rgba(128,108,121,.18),inset 0 0 0 9999px rgba(128,108,121,.035) !important;
+      box-shadow:inset 2px 3px 6px rgba(128,108,121,.16),inset -2px -2px 5px rgba(255,255,255,.85) !important;
     }
     @media (prefers-reduced-motion:reduce) {
       html[data-xlyneve-color-theme="pastel-jumper"] body :is(button,.circle) { transition:none !important; }
@@ -1953,7 +1953,7 @@
       --refresh-edge:#fafaf4; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
       --mint-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.055' filter='url(%23grain)'/%3E%3C/svg%3E");
       --mint-raised:inset 2px 2px 3px rgba(255,255,251,.95),inset -3px -4px 5px rgba(98,104,89,.18),0 3px 2px rgba(78,83,70,.2),7px 10px 18px rgba(68,73,59,.23),-5px -5px 12px rgba(255,255,251,.88);
-      --mint-pressed:inset 0 0 0 1px rgba(72,81,69,.18),inset 0 0 0 9999px rgba(72,81,69,.035);
+      --mint-pressed:inset 3px 4px 7px rgba(72,81,69,.3),inset -3px -3px 6px rgba(255,255,251,.95);
       --quick-panel:linear-gradient(145deg,#f4dada,#fdf9f3); --quick-ink:#303530;
       --quick-accent:#f9e5d6; --quick-accent-ink:#303530; --quick-soft:#f4dada; --quick-field:#f4dada; --quick-edge:#fafaf4;
       --clinical-panel:#fdf9f3; --clinical-field:#f4dada; --clinical-accent:#e0c797; --clinical-accent-ink:#303530; --clinical-edge:#fafaf4;
@@ -2058,7 +2058,7 @@
       --refresh-edge:transparent; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
       --stone-grain:none;
       --stone-raised:inset 1px 1px 2px rgba(255,255,255,.25),6px 6px 12px rgba(166,169,179,.42),-6px -6px 12px rgba(255,255,255,.82);
-      --stone-pressed:inset 0 0 0 1px rgba(116,121,137,.18),inset 0 0 0 9999px rgba(116,121,137,.035);
+      --stone-pressed:inset 4px 4px 7px rgba(166,169,179,.42),inset -4px -4px 7px rgba(255,255,255,.8);
       --quick-panel:linear-gradient(145deg,#e1e2e6,#e1e2e6); --quick-ink:#303238;
       --quick-accent:#e1e2e6; --quick-accent-ink:#303238; --quick-soft:#e1e2e6; --quick-field:#e1e2e6; --quick-edge:transparent;
       --clinical-panel:#e1e2e6; --clinical-field:#e1e2e6; --clinical-accent:#dfb53e; --clinical-accent-ink:#303238; --clinical-edge:transparent;
@@ -2203,8 +2203,8 @@
       --refresh-edge:transparent; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
       --porcelain-grain:none;
       --porcelain-raised:inset 1px 1px 2px rgba(255,255,255,.25),8px 9px 14px rgba(153,157,146,.42),-8px -8px 14px rgba(255,255,255,.94);
-      --porcelain-pressed:inset 0 0 0 1px rgba(123,132,115,.18),inset 0 0 0 9999px rgba(123,132,115,.035);
-      --porcelain-recessed:inset 0 0 0 1px rgba(123,132,115,.18),inset 0 0 0 9999px rgba(123,132,115,.035);
+      --porcelain-pressed:inset 4px 4px 8px rgba(153,157,146,.4),inset -4px -4px 7px rgba(255,255,255,.8);
+      --porcelain-recessed:0 0 0 3px #e9e9e1,4px 5px 9px rgba(153,157,146,.25),inset 4px 4px 7px rgba(153,157,146,.44),inset -4px -4px 7px rgba(255,255,255,.9);
       --quick-panel:linear-gradient(145deg,#e9e9e1,#e9e9e1); --quick-ink:#353833;
       --quick-accent:#e9e9e1; --quick-accent-ink:#353833; --quick-soft:#e9e9e1; --quick-field:#e9e9e1; --quick-edge:transparent;
       --clinical-panel:#e9e9e1; --clinical-field:#e9e9e1; --clinical-accent:#9fb5d1; --clinical-accent-ink:#353833; --clinical-edge:transparent;
@@ -2349,7 +2349,7 @@
       --refresh-edge:transparent; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
       --aurora-grain:none;
       --aurora-raised:inset 1px 1px 2px rgba(255,255,255,.25),6px 6px 12px rgba(169,172,197,.32),-6px -6px 12px rgba(255,255,255,.82);
-      --aurora-pressed:inset 0 0 0 1px rgba(119,124,162,.18),inset 0 0 0 9999px rgba(119,124,162,.035);
+      --aurora-pressed:inset 4px 4px 7px rgba(169,172,197,.32),inset -4px -4px 7px rgba(255,255,255,.8);
       --quick-panel:linear-gradient(145deg,#e9ebf6,#e9ebf6); --quick-ink:#28263c;
       --quick-accent:#e9ebf6; --quick-accent-ink:#28263c; --quick-soft:#e9ebf6; --quick-field:#e9ebf6; --quick-edge:transparent;
       --clinical-panel:#e9ebf6; --clinical-field:#e9ebf6; --clinical-accent:#9d46c4; --clinical-accent-ink:#28263c; --clinical-edge:transparent;
@@ -2573,7 +2573,7 @@
     html[data-xlyneve-color-theme="pastel-jumper"] {
       --pastel-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.055' filter='url(%23grain)'/%3E%3C/svg%3E");
       --pastel-ceramic-raised:inset 2px 2px 3px rgba(255,255,251,.95),inset -3px -4px 5px rgba(98,104,89,.18),0 3px 2px rgba(78,83,70,.2),7px 10px 18px rgba(68,73,59,.23),-5px -5px 12px rgba(255,255,251,.88);
-      --pastel-ceramic-pressed:inset 0 0 0 1px rgba(72,81,69,.18),inset 0 0 0 9999px rgba(72,81,69,.035);
+      --pastel-ceramic-pressed:inset 3px 4px 7px rgba(72,81,69,.3),inset -3px -3px 6px rgba(255,255,251,.95);
     }
     html[data-xlyneve-color-theme="pastel-jumper"],html[data-xlyneve-color-theme="pastel-jumper"] body {
       background-image:var(--pastel-grain),radial-gradient(circle at 14% 10%,rgba(250,246,229,.98),transparent 34%),radial-gradient(circle at 86% 20%,rgba(231,161,161,.3),transparent 40%),radial-gradient(circle at 18% 86%,rgba(185,166,210,.22),transparent 38%),linear-gradient(180deg,#faf6e5 0%,#f1edcf 58%,#f1edcf 100%) !important;
@@ -2777,7 +2777,7 @@
   // A gentle ceramic rim and shallow inset keep Palm Springs softer than the 5D themes.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="palm-springs"] {
-      --palm-soft-depth:inset 0 0 0 1px rgba(31,44,44,.18),inset 0 0 0 9999px rgba(31,44,44,.035);
+      --palm-soft-depth:0 1px 0 rgba(251,248,245,.65),0 3px 7px rgba(31,44,44,.1),inset 5px 5px 8px rgba(31,44,44,.22),inset -4px -4px 7px rgba(251,248,245,.65);
     }
     html:root[data-xlyneve-color-theme="palm-springs"] body :is(.note-card,.card,.acc-item,.med-card,.med-section,.vaccine-section,.vaccine-card,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.panel,.input-panel,.pinned-note,.day:not(.empty),.todo-item,.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result,.cep-note-popup,.pn-edit-popup),
     html:root[data-xlyneve-color-theme="palm-springs"].theme-home-glass body .main-content .card-group.section-card-group > .card {
@@ -2799,7 +2799,7 @@
     html { --note-editor-depth:none; --note-editor-inset:none; --note-editor-radius:16px; }
     html[data-xlyneve-color-theme="sculpted"] {
       --note-editor-depth:inset 3px 3px 5px rgba(255,255,255,.88),inset -4px -5px 9px rgba(57,53,58,.12),10px 14px 28px rgba(57,53,58,.18),-5px -5px 14px rgba(255,255,255,.62);
-      --note-editor-inset:inset 0 0 0 1px rgba(57,53,58,.18),inset 0 0 0 9999px rgba(57,53,58,.035);
+      --note-editor-inset:inset 4px 4px 7px rgba(57,53,58,.2),inset -4px -4px 7px rgba(255,255,255,.8);
       --note-editor-radius:24px;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] { --note-editor-depth:var(--mint-raised); --note-editor-inset:var(--mint-pressed); --note-editor-radius:22px; }
@@ -3216,7 +3216,7 @@
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] {
       --frost-surface:#d5e0e8; --frost-ink:#34434f;
       --frost-raised:7px 7px 14px rgba(115,133,147,.38),-7px -7px 15px rgba(255,255,255,.82),inset 1px 1px 2px rgba(255,255,255,.48);
-      --frost-inset:inset 0 0 0 1px rgba(95,116,133,.18),inset 0 0 0 9999px rgba(95,116,133,.035);
+      --frost-inset:inset 5px 5px 9px rgba(115,133,147,.36),inset -5px -5px 9px rgba(255,255,255,.75);
       --theme-ink:#34434f; --theme-muted-ink:#627584;
       --glass-light:#d5e0e8; --glass-edge:rgba(140,176,207,.45); --glass-shadow:rgba(115,133,147,.3);
       --refresh-cocoa:#34434f; --refresh-rose:#d5e0e8; --refresh-lime:#d5e0e8;
@@ -3312,9 +3312,9 @@
       --theme-ink:#373d44; --theme-muted-ink:#70757d;
       --pearl-base:#ebebeb; --pearl-card:rgba(250,250,247,.92);
       --pearl-reflection:linear-gradient(118deg,rgba(223,236,240,.7) 0%,rgba(249,234,227,.62) 24%,rgba(226,227,234,.75) 48%,rgba(247,247,245,.92) 68%,rgba(226,231,240,.6) 100%);
-      --pearl-card-depth:inset 0 0 0 1px rgba(85,90,103,.18),inset 0 0 0 9999px rgba(85,90,103,.035);
+      --pearl-card-depth:inset 4px 4px 8px rgba(85,90,103,.16),inset -4px -4px 8px rgba(255,255,255,.94),0 1px 2px rgba(85,90,103,.08);
       --pearl-depth:0 7px 16px rgba(85,90,103,.14),inset 0 1px 1px rgba(255,255,255,.96),inset 0 -1px 1px rgba(132,139,149,.12);
-      --pearl-inset:inset 0 0 0 1px rgba(100,108,119,.18),inset 0 0 0 9999px rgba(100,108,119,.035);
+      --pearl-inset:inset 2px 3px 6px rgba(100,108,119,.15),inset -2px -2px 5px rgba(255,255,255,.9);
       --glass-light:rgba(250,250,247,.92); --glass-edge:rgba(102,110,121,.25); --glass-shadow:rgba(85,90,103,.14);
       --refresh-cocoa:#373d44; --refresh-rose:#eeeeed; --refresh-lime:#f6f6f1; --refresh-stone:#ebebeb; --refresh-blue:#e4eaf0; --refresh-terracotta:#d9dce6;
       --quick-panel:#f2f2f0; --quick-field:#f6f6f3; --quick-ink:#373d44; --quick-soft:#e9edf0;
@@ -3435,7 +3435,7 @@
     html:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) {
       --theme-ink:#44335d; --theme-muted-ink:#716680;
       --duo-depth:inset 0 2px 3px rgba(255,255,255,.96),inset 1px 0 2px rgba(255,255,255,.65),inset 0 -1px 2px rgba(110,96,153,.18),0 0 9px rgba(235,235,255,.42),0 9px 20px rgba(89,68,119,.16);
-      --duo-inset:inset 0 0 0 1px rgba(89,68,119,.18),inset 0 0 0 9999px rgba(89,68,119,.035);
+      --duo-inset:inset 3px 3px 7px rgba(89,68,119,.15),inset -3px -3px 7px rgba(255,255,255,.8);
       --glass-light:var(--duo-panel); --glass-edge:rgba(255,255,255,.85); --glass-shadow:rgba(89,68,119,.12);
       --refresh-cocoa:#44335d; --refresh-rose:var(--duo-panel); --refresh-lime:var(--duo-panel); --refresh-stone:var(--duo-base); --refresh-blue:#dedcf2; --refresh-terracotta:#c5b5e3;
       --quick-panel:var(--duo-panel); --quick-field:var(--duo-field); --quick-ink:#44335d; --quick-soft:#e4dcef; --quick-accent:#d3c6ea; --quick-accent-ink:#44335d; --quick-edge:rgba(255,255,255,.85);
@@ -3529,7 +3529,7 @@
     html[data-xlyneve-color-theme="palm-springs"] { --classic-recessed-shade:rgba(31,44,44,.28); }
     html[data-xlyneve-color-theme="quiet-stone"] { --classic-recessed-shade:rgba(57,56,49,.28); }
     html:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) {
-      --classic-recessed:inset 0 0 0 1px var(--classic-recessed-shade),inset 0 0 0 9999px rgba(40,40,40,.025);
+      --classic-recessed:inset 5px 5px 8px var(--classic-recessed-shade),inset -1px -1px 2px rgba(255,255,255,.16);
     }
     html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) body :is(.note-card,.note-tile,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.file-item),
     html:root:root:root:root:is([data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]).theme-clinical body #notesList > .note-card { box-shadow:var(--classic-recessed) !important; }
