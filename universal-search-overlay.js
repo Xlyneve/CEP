@@ -1092,6 +1092,25 @@ function prepareSearchClipboard(copyText, copyHtml) {
 }
 async function writeSearchClipboard(copyText, copyHtml, prepared) {
   const { plainText, safeHtml } = prepared || prepareSearchClipboard(copyText, copyHtml);
+  // A native copy event can commit both formats synchronously, avoiding the
+  // delayed rich-clipboard promise on some desktop browsers. Keep the async
+  // API as a fallback when the browser does not permit this command.
+  if (typeof document.execCommand === 'function') {
+    let populated = false;
+    const nativeCopy = event => {
+      if (!event.clipboardData) return;
+      event.clipboardData.setData('text/plain', plainText);
+      if (safeHtml) event.clipboardData.setData('text/html', safeHtml);
+      event.preventDefault(); event.stopImmediatePropagation();
+      populated = true;
+    };
+    document.addEventListener('copy', nativeCopy, true);
+    try {
+      if (document.execCommand('copy') && populated) return;
+    } catch (_) { /* Continue with the standard clipboard API. */ }
+    finally { document.removeEventListener('copy', nativeCopy, true); }
+  }
+
   if (safeHtml && navigator.clipboard?.write && typeof ClipboardItem === 'function') {
     const item = new ClipboardItem({
       'text/plain': new Blob([plainText], { type:'text/plain' }),
