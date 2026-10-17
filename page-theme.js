@@ -3619,7 +3619,7 @@
       --rose-edge:rgba(157,119,132,.22);
     }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) {
-      --rose-base:#fbf4f2; --rose-panel:#f7e9e9; --rose-field:#fcf7f5;
+      --rose-base:#f6f5f3; --rose-panel:#f7e9e9; --rose-field:#fcf7f5;
       --rose-well:inset 2px 3px 5px rgba(111,79,88,.22),inset 0 -1px 0 rgba(255,255,255,.75);
       --theme-ink:#3c3037; --theme-muted-ink:#7d6971;
       --glass-light:#f7e9e9; --glass-edge:var(--rose-edge); --glass-shadow:rgba(137,91,104,.16);
@@ -3634,7 +3634,7 @@
       --copy-feedback-accent:#ce8a9f; --copy-feedback-soft:#f7e9e9;
     }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]),html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body {
-      background:#fbf4f2 !important; background-image:none !important; color:#3c3037;
+      background:var(--rose-base) !important; background-image:none !important; color:#3c3037;
     }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body::before { background:none !important; opacity:0 !important; }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.day:not(.empty),.todo-item,.file-item),
