@@ -3686,6 +3686,15 @@
     }
   `;
 
+
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.top-links) a,
+    html:root:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.top-links) a * {
+      color:#3c3037 !important; -webkit-text-fill-color:#3c3037 !important;
+      text-shadow:none !important;
+    }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
