@@ -3634,7 +3634,7 @@
       --quick-panel:#f0efed; --quick-field:#faf9f7; --quick-ink:#3c3037; --quick-soft:#f3cdd4; --quick-accent:#ce8a9f; --quick-accent-ink:#3c3037; --quick-edge:var(--rose-edge);
       --clinical-panel:#f0efed; --clinical-field:#faf9f7; --clinical-accent:#ce8a9f; --clinical-accent-ink:#3c3037; --clinical-edge:var(--rose-edge);
       --homecal-header:#f0efed; --homecal-header-ink:#3c3037; --homecal-control:#faf9f7; --homecal-control-ink:#3c3037; --homecal-header-edge:var(--rose-edge);
-      --homecal-today:linear-gradient(145deg,#f5dce2,#ecc7d2); --homecal-today-edge:#d6a9b8; --homecal-today-shadow:rgba(137,91,104,.12);
+      --homecal-today:#f8e1be; --homecal-today-edge:#dfc69f; --homecal-today-shadow:rgba(137,91,104,.12);
       --cal-light:#fbf4f2; --cal-ink:#3c3037; --cal-edge:var(--rose-edge);
       --note-editor-depth:var(--rose-depth); --note-editor-inset:var(--rose-well); --note-editor-radius:24px;
       --cep-highlight-paper:#f3dfe6; --cep-highlight-shadow:none;
@@ -3681,7 +3681,7 @@
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(.cep-note-popup,.pn-edit-popup) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) { background:none !important; border:0 !important; box-shadow:none !important; }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body .todo-item.todo-item:not(#cep-rose-no-task) :is(input[type="text"],textarea) { background:transparent !important; border:0 !important; box-shadow:none !important; }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body #notes .notepad { background:#faf9f7 !important; color:#3c3037 !important; box-shadow:var(--rose-depth) !important; }
-    html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body .day.today:not(.empty) { background:var(--homecal-today) !important; border-color:#d6a9b8 !important; box-shadow:var(--rose-depth) !important; }
+    html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body .day.today:not(.empty) { background:var(--homecal-today) !important; border-color:var(--homecal-today-edge) !important; box-shadow:var(--rose-depth) !important; }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {
       background:transparent !important; background-image:none !important; border-color:transparent !important; box-shadow:none !important;
@@ -3792,6 +3792,15 @@
       box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
     html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body .top-links a::before,html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body .top-links a::after { background:none !important; border:0 !important; box-shadow:none !important; }
+  `;
+
+
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]).theme-homecal body .day:not(.empty):not(.today) {
+      background:#f0efed !important; background-image:none !important;
+      color:#3c3037 !important; -webkit-text-fill-color:currentColor !important;
+      border-color:var(--rose-edge) !important; box-shadow:var(--rose-depth) !important;
+    }
   `;
 
   function start() {
