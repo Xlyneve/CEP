@@ -118,6 +118,12 @@
   const pearlSilverPalette = [{rgb:"250, 250, 247",solid:"#fafaf7",ink:"#373d44"}];
   const lavenderGlassPalette = [{rgb:"234, 236, 243",solid:"#eaecf3",ink:"#44335d"}];
   const greyLavenderPalette = [{rgb:"240, 239, 245",solid:"#f0eff5",ink:"#44335d"}];
+  const opalPearlPalette = [
+    {rgb:"232, 241, 244",solid:"#e8f1f4",ink:"#35424d"},
+    {rgb:"244, 232, 236",solid:"#f4e8ec",ink:"#35424d"},
+    {rgb:"239, 236, 246",solid:"#efecf6",ink:"#35424d"},
+    {rgb:"247, 243, 229",solid:"#f7f3e5",ink:"#35424d"}
+  ];
   const pastelRosePalette = [
     {rgb:"243, 205, 212",solid:"#f3cdd4",ink:"#3c3037"},
     {rgb:"223, 234, 241",solid:"#dfeaf1",ink:"#3c3037"},
@@ -143,14 +149,14 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass") localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "opal-pearl" || storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "warm-medley" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
   if (deletedThemes.has(selectedTheme) || removedThemes.has(selectedTheme)) {
     selectedTheme = "original";
     try { localStorage.removeItem(themeStorageKey); } catch {}
   }
-  const palette = (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "warm-medley" ? warmMedleyPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -3103,6 +3109,7 @@
       },
     ];
 
+    themeOptions.push({value:"opal-pearl",label:"Opal Pearl 5D",colors:["#e8f1f4","#f4e8ec","#efecf6","#f7f3e5","#c9b67e"]});
     themeOptions.push({value:"pastel-rose-5d",label:"Pastel Rose 5D",colors:["#f3cdd4","#f8e1be","#dfeaf1","#f8aa80","#ce8a9f"]});
     themeOptions.push({value:"pastel-rose-recessed",label:"Pastel Rose Recessed",colors:["#f3cdd4","#f8e1be","#dfeaf1","#f8aa80","#ce8a9f"]});
     themeOptions.push({ value:"lavender-glass", label:"Lavender Glass", colors:["#d7c6ec","#eee7f6","#cfd3f2","#44335d"] });
@@ -3716,11 +3723,84 @@
     html:root:root:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body .top-links a::after { background:none !important; box-shadow:none !important; border:0 !important; }
   `;
 
+
+  // Glossy opal: pale ceramic surfaces and a static pearl wallpaper.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="opal-pearl"] {
+      --opal-panel:#f5f7f6; --opal-field:#fbfcfa;
+      --opal-surface:radial-gradient(ellipse at 18% 0%,rgba(255,255,255,.96),transparent 58%),linear-gradient(135deg,rgba(246,249,248,.98),rgba(225,238,243,.96) 35%,rgba(239,228,238,.96) 63%,rgba(249,246,234,.98));
+      --opal-depth:inset 0 2px 3px rgba(255,255,255,.95),inset 0 -2px 4px rgba(124,143,152,.12),0 7px 16px rgba(75,99,112,.2),0 1px 2px rgba(75,99,112,.1);
+      --opal-well:inset 3px 4px 7px rgba(89,111,127,.2),inset -2px -2px 4px rgba(255,255,255,.85);
+      --theme-ink:#35424d; --theme-muted-ink:#74828b;
+      --glass-light:#f5f7f6; --glass-edge:rgba(255,255,255,.9); --glass-shadow:rgba(75,99,112,.18);
+      --refresh-cocoa:#35424d; --refresh-rose:#f4e8ec; --refresh-lime:#f7f3e5; --refresh-stone:#f5f7f6; --refresh-blue:#e8f1f4; --refresh-terracotta:#c9b67e;
+      --quick-panel:#f5f7f6; --quick-field:#fbfcfa; --quick-ink:#35424d; --quick-soft:#e8f1f4; --quick-accent:#b7ceda; --quick-accent-ink:#35424d; --quick-edge:rgba(255,255,255,.9);
+      --clinical-panel:#f5f7f6; --clinical-field:#fbfcfa; --clinical-accent:#b7ceda; --clinical-accent-ink:#35424d; --clinical-edge:rgba(255,255,255,.9);
+      --homecal-header:#f5f7f6; --homecal-header-ink:#35424d; --homecal-control:#fbfcfa; --homecal-control-ink:#35424d; --homecal-header-edge:rgba(255,255,255,.9);
+      --homecal-today:linear-gradient(145deg,#f1e9ed,#e6e8f2); --homecal-today-edge:rgba(201,182,126,.6); --homecal-today-shadow:rgba(75,99,112,.14);
+      --cal-light:#f5f7f6; --cal-ink:#35424d; --cal-edge:rgba(255,255,255,.9);
+      --note-editor-depth:var(--opal-depth); --note-editor-inset:var(--opal-well); --note-editor-radius:26px;
+      --cep-highlight-paper:#e9edf2; --cep-highlight-shadow:none;
+      --copy-feedback-accent:#b7ceda; --copy-feedback-soft:#f5f7f6;
+    }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"],html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body {
+      background-color:#e8edf0 !important;
+      background-image:linear-gradient(rgba(247,249,249,.36),rgba(247,249,249,.36)),url("opal-pearl-background.webp?v=20261017-1") !important;
+      background-size:cover !important; background-position:center !important; background-repeat:no-repeat !important;
+      background-attachment:fixed !important; color:#35424d;
+    }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body::before { background:none !important; opacity:0 !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.day:not(.empty),.todo-item,.file-item),
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"].theme-clinical body #notesList > .note-card,
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body:has(#chat) .chatBubble {
+      background:var(--opal-surface) !important; color:#35424d !important;
+      border:1px solid rgba(255,255,255,.95) !important; border-bottom-color:rgba(201,182,126,.32) !important;
+      border-radius:26px !important; box-shadow:var(--opal-depth) !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      background:var(--opal-surface) !important; color:#35424d !important; border-color:rgba(255,255,255,.9) !important;
+      border-radius:26px; box-shadow:var(--opal-depth) !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(button,.circle,.glass-btn,.header-btn,.add-btn,a.cep-media-link):not(:where(.dot,.pick,.xlyneve-theme-option,.xlyneve-theme-manage)) {
+      background:var(--opal-surface) !important; color:#35424d !important; -webkit-text-fill-color:#35424d !important;
+      border:1px solid rgba(255,255,255,.95) !important; border-radius:16px; box-shadow:var(--opal-depth) !important;
+    }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body .dashboard-frequent-circles .circle { border-radius:50% !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(button,.circle,a.cep-media-link):active:not(:where(.dot,.pick,.xlyneve-theme-option,.xlyneve-theme-manage)) { box-shadow:var(--opal-well) !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
+      background:#fbfcfa !important; color:#35424d !important; border:1px solid rgba(160,179,190,.3) !important;
+      border-radius:16px; box-shadow:var(--opal-well) !important;
+    }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(.cep-note-popup,.pn-edit-popup,#inputGroup,#nurseFormWrapper,.input-panel,#formCard,#notePanel,.note-card.editing-note,.note-card.is-editing) {
+      background:#f5f7f6 !important; color:#35424d !important; opacity:1 !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important; box-shadow:var(--opal-depth) !important;
+    }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(.cep-note-popup,.pn-edit-popup) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) { background:none !important; border:0 !important; box-shadow:none !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body .todo-item.todo-item:not(#cep-opal-no-task) :is(input[type="text"],textarea) { background:transparent !important; border:0 !important; box-shadow:none !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body #notes .notepad { background:#fbfcfa !important; color:#35424d !important; box-shadow:var(--opal-depth) !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body .day.today:not(.empty) { background:var(--homecal-today) !important; border-color:var(--homecal-today-edge) !important; box-shadow:var(--opal-depth) !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed { background:transparent !important; background-image:none !important; border-color:transparent !important; box-shadow:none !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) { background:transparent !important; border:0 !important; box-shadow:none !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(.note-card,.note-tile,.chatBubble,.notepad) :is([style*="color"],font[color]) { -webkit-text-fill-color:currentColor !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.top-links) a,
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.top-links) a * { color:#35424d !important; -webkit-text-fill-color:#35424d !important; text-shadow:none !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body .top-links a {
+      background:transparent !important; background-image:none !important; border:0 !important; border-radius:0 !important;
+      box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body .top-links a::before,html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body .top-links a::after { background:none !important; border:0 !important; box-shadow:none !important; }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
       if (pageName === "home.html" && header.matches("body > header")) return;
-      if (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") {
+      if (selectedTheme === "opal-pearl") {
+        header.style.setProperty("background", "var(--opal-surface)", "important");
+      } else if (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") {
         header.style.setProperty("background", "var(--rose-panel)", "important");
       } else if (selectedTheme === "lavender-glass" || selectedTheme === "grey-lavender") {
         header.style.setProperty("background", "var(--duo-material)", "important");
