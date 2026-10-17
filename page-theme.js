@@ -3818,7 +3818,7 @@
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.todo-item,.file-item),
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"].theme-clinical body #notesList > .note-card,
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body:has(#chat) .chatBubble {
-      background:color-mix(in srgb,#deded5 84%,var(--card-solid,#f3cdd4)) !important;
+      background:var(--card-solid,#f3cdd4) !important;
       background-image:none !important;
       border:1px solid transparent !important; border-radius:30px !important;
       box-shadow:var(--rose-depth) !important;
