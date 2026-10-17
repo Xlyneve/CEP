@@ -3810,6 +3810,22 @@
     }
   `;
 
+  // The neutral rim belongs to the surrounding surface; pastel begins inside it.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.day:not(.empty),.todo-item,.file-item),
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"].theme-clinical body #notesList > .note-card,
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body:has(#chat) .chatBubble,
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body #notes .notepad {
+      border:4px solid var(--rose-base) !important;
+      background-clip:padding-box !important;
+      box-shadow:var(--rose-depth) !important;
+    }
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body :is(button,.circle,.glass-btn,.header-btn,.add-btn,a.cep-media-link):not(:where(.dot,.pick,.xlyneve-theme-option,.xlyneve-theme-manage)) {
+      border:3px solid var(--rose-base) !important;
+      background-clip:padding-box !important;
+    }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
