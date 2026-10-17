@@ -3622,8 +3622,8 @@
       --rose-edge:rgba(255,255,255,.85);
     }
     html[data-xlyneve-color-theme="pastel-rose-recessed"] {
-      --rose-depth:inset 2px 3px 5px rgba(111,79,88,.26),inset 0 -1px 0 rgba(255,255,255,.75);
-      --rose-edge:rgba(157,119,132,.22);
+      --rose-depth:inset 5px 6px 9px rgba(120,117,110,.36),inset -4px -4px 7px rgba(255,255,255,.92);
+      --rose-edge:rgba(157,151,143,.28);
     }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) {
       --rose-base:#f6f5f3; --rose-panel:#f0efed; --rose-field:#faf9f7;
@@ -3800,6 +3800,13 @@
       background:#f0efed !important; background-image:none !important;
       color:#3c3037 !important; -webkit-text-fill-color:currentColor !important;
       border-color:var(--rose-edge) !important; box-shadow:var(--rose-depth) !important;
+    }
+  `;
+
+  // Porcelain-inspired carved wells: shadow stays inside the rim.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] {
+      --rose-well:inset 4px 5px 8px rgba(120,117,110,.34),inset -3px -3px 6px rgba(255,255,255,.9);
     }
   `;
 
