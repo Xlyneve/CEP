@@ -3803,12 +3803,12 @@
     }
   `;
 
-  // Porcelain's continuous ceramic surface, with its lighting turned inward.
+  // Matte inset wells: a defined inner lip without a broad lower glow.
   themeStyle.textContent += `
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] {
       --rose-base:#e9e9e1; --rose-panel:#e9e9e1; --rose-field:#e9e9e1;
-      --rose-depth:inset 8px 9px 14px rgba(153,157,146,.36),inset -8px -8px 14px rgba(255,255,255,.94);
-      --rose-well:inset 4px 4px 8px rgba(153,157,146,.4),inset -4px -4px 7px rgba(255,255,255,.8);
+      --rose-depth:inset 0 2px 2px rgba(86,88,78,.27),inset 2px 5px 7px rgba(111,114,102,.23),inset 0 -1px 0 rgba(255,255,255,.65);
+      --rose-well:inset 0 2px 2px rgba(86,88,78,.25),inset 1px 3px 5px rgba(111,114,102,.2),inset 0 -1px 0 rgba(255,255,255,.6);
       --rose-edge:transparent;
       --quick-panel:#e9e9e1; --quick-field:#e9e9e1;
       --clinical-panel:#e9e9e1; --clinical-field:#e9e9e1;
@@ -3818,7 +3818,7 @@
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.todo-item,.file-item),
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"].theme-clinical body #notesList > .note-card,
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body:has(#chat) .chatBubble {
-      background:color-mix(in srgb,var(--rose-base) 88%,var(--card-solid,#f3cdd4)) !important;
+      background:color-mix(in srgb,#deded5 84%,var(--card-solid,#f3cdd4)) !important;
       background-image:none !important;
       border:1px solid transparent !important; border-radius:30px !important;
       box-shadow:var(--rose-depth) !important;
