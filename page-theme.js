@@ -3724,7 +3724,7 @@
   `;
 
 
-  // Glossy opal: pale ceramic surfaces and a static pearl wallpaper.
+  // Glossy opal: pearl-inspired colours and reflections over a neutral base.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="opal-pearl"] {
       --opal-panel:#f5f7f6; --opal-field:#fbfcfa;
@@ -3745,7 +3745,7 @@
     }
     html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"],html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body {
       background-color:#e8edf0 !important;
-      background-image:linear-gradient(rgba(247,249,249,.36),rgba(247,249,249,.36)),url("opal-pearl-background.webp?v=20261017-1") !important;
+      background-image:linear-gradient(145deg,#f0f3f4,#f6f3ef 48%,#edf2f5) !important;
       background-size:cover !important; background-position:center !important; background-repeat:no-repeat !important;
       background-attachment:fixed !important; color:#35424d;
     }
