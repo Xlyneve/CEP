@@ -3803,26 +3803,32 @@
     }
   `;
 
-  // Porcelain-inspired carved wells: shadow stays inside the rim.
+  // Porcelain's continuous ceramic surface, with its lighting turned inward.
   themeStyle.textContent += `
-    html:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] {
-      --rose-well:inset 4px 5px 8px rgba(120,117,110,.34),inset -3px -3px 6px rgba(255,255,255,.9);
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] {
+      --rose-base:#e9e9e1; --rose-panel:#e9e9e1; --rose-field:#e9e9e1;
+      --rose-depth:inset 8px 9px 14px rgba(153,157,146,.36),inset -8px -8px 14px rgba(255,255,255,.94);
+      --rose-well:inset 4px 4px 8px rgba(153,157,146,.4),inset -4px -4px 7px rgba(255,255,255,.8);
+      --rose-edge:transparent;
+      --quick-panel:#e9e9e1; --quick-field:#e9e9e1;
+      --clinical-panel:#e9e9e1; --clinical-field:#e9e9e1;
+      --homecal-header:#e9e9e1; --homecal-control:#e9e9e1;
+      --note-editor-radius:30px;
     }
-  `;
-
-  // The neutral rim belongs to the surrounding surface; pastel begins inside it.
-  themeStyle.textContent += `
-    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.day:not(.empty),.todo-item,.file-item),
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.todo-item,.file-item),
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"].theme-clinical body #notesList > .note-card,
-    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body:has(#chat) .chatBubble,
-    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body #notes .notepad {
-      border:4px solid var(--rose-base) !important;
-      background-clip:padding-box !important;
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body:has(#chat) .chatBubble {
+      background:color-mix(in srgb,var(--rose-base) 88%,var(--card-solid,#f3cdd4)) !important;
+      background-image:none !important;
+      border:1px solid transparent !important; border-radius:30px !important;
+      box-shadow:var(--rose-depth) !important;
+    }
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body :is(.day:not(.empty),#notes .notepad) {
+      border:1px solid transparent !important; border-radius:30px !important;
       box-shadow:var(--rose-depth) !important;
     }
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body :is(button,.circle,.glass-btn,.header-btn,.add-btn,a.cep-media-link):not(:where(.dot,.pick,.xlyneve-theme-option,.xlyneve-theme-manage)) {
-      border:3px solid var(--rose-base) !important;
-      background-clip:padding-box !important;
+      border:1px solid transparent !important;
     }
   `;
 
