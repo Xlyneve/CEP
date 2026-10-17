@@ -3775,6 +3775,16 @@
     }
   `;
 
+  // Palm Springs cards keep their palette without the carved corner shadows.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="palm-springs"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.file-item,.day:not(.empty),.todo-item,.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result),
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="palm-springs"].theme-clinical body #notesList > .note-card,
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="palm-springs"] body:has(#chat) .chatBubble,
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="palm-springs"] body #notes .notepad {
+      box-shadow:none !important;
+    }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
