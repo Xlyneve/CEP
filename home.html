@@ -5074,7 +5074,9 @@ html[data-xlyneve-color-theme="sculpted"].theme-home-glass body.dashboard-hierar
         && input.selectionStart !== input.selectionEnd;
       if (searchTextSelected) return;
       const clickPath = event.composedPath?.() || [];
-      const clickedInsideSearch = clickPath.includes(panel) || clickPath.includes(button);
+      // Link-panel controls belong to the open search, even after Close hides the panel.
+      const clickedInsideSearch = clickPath.includes(panel) || clickPath.includes(button)
+        || clickPath.some(node => node?.id === 'cepNoteLinkPanel');
       if (!panel.hidden && !clickedInsideSearch) closeSearch();
     });
     window.addEventListener('message', event => {
