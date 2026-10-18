@@ -729,6 +729,27 @@ button:hover {
 }
 
 
+
+    /* Keep the add/upload panel opaque and use the selected theme's material. */
+    html:root:root:root:root:root:root body #addForm {
+      background:#f5f5f3 !important;
+      background:linear-gradient(var(--clinical-panel,#f5f5f3),var(--clinical-panel,#f5f5f3)),#f5f5f3 !important;
+      color:var(--theme-ink,#333) !important;
+      border:1px solid var(--clinical-edge,#ddd) !important;
+      box-shadow:var(--note-editor-depth,0 8px 28px #0002) !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+      max-height:calc(100dvh - 115px); overflow:auto;
+    }
+    #pdfModeRow { display:flex; gap:6px; margin-bottom:12px; }
+    #pdfModeRow button { flex:1; font-size:12px; padding:7px; }
+    #pdfModeRow button[aria-pressed="true"] {
+      outline:2px solid var(--clinical-accent,#9b6e7d); outline-offset:1px;
+    }
+    #pdfUploadFields[hidden],#urlFields[hidden] { display:none !important; }
+    #pdfFile { display:block; width:100%; margin:8px 0; font-size:12px; }
+    #pdfUploadFields small { display:block; font-size:11px; line-height:1.5; }
+    #pdfUploadStatus { font-size:12px; line-height:1.5; white-space:normal; }
+    #pdfUploadStatus:empty { display:none; }
   </style>
   <link rel="stylesheet" href="site-background.css">
   <script src="page-theme.js?v=1"></script>
@@ -747,7 +768,16 @@ button:hover {
 
 
 <div id="addForm" class="add-form-panel" style="display:none;">
-  <div class="form-group">
+  <div id="pdfModeRow" role="group" aria-label="Add a link or PDF">
+    <button type="button" id="addUrlMode" aria-pressed="true">Add URL</button>
+    <button type="button" id="uploadPdfMode" aria-pressed="false">Upload PDF</button>
+  </div>
+  <div id="pdfUploadFields" class="form-group" hidden>
+    <label for="pdfFile">Choose PDF (up to 5 MB)</label>
+    <input type="file" id="pdfFile" accept=".pdf,application/pdf">
+    <small>PDFs will be public on your website. Avoid private or patient information.</small>
+  </div>
+  <div class="form-group" id="urlFields">
     <input type="text" id="urlInput" placeholder="Enter URL (https://...)">
   </div>
 
@@ -761,6 +791,7 @@ button:hover {
 
   <div class="form-group">
     <button type="button" id="saveUrlBtn">Save URL</button>
+    <p id="pdfUploadStatus" role="status" aria-live="polite"></p>
     <button onclick="toggleAddForm()">Cancel</button>
   </div>
 </div>
@@ -841,7 +872,65 @@ button:hover {
     return modularFirestorePromise;
   }
 
+  let addMode = 'url';
+  function setAddMode(mode) {
+    addMode = mode;
+    document.getElementById('urlFields').hidden = mode !== 'url';
+    document.getElementById('pdfUploadFields').hidden = mode !== 'pdf';
+    document.getElementById('addUrlMode').setAttribute('aria-pressed', String(mode === 'url'));
+    document.getElementById('uploadPdfMode').setAttribute('aria-pressed', String(mode === 'pdf'));
+    document.getElementById('saveUrlBtn').textContent = mode === 'pdf' ? 'Save PDF' : 'Save URL';
+    document.getElementById('pdfUploadStatus').textContent = '';
+  }
+  document.getElementById('addUrlMode').addEventListener('click', () => setAddMode('url'));
+  document.getElementById('uploadPdfMode').addEventListener('click', () => setAddMode('pdf'));
+  document.getElementById('pdfFile').addEventListener('change', event => {
+    const file = event.target.files[0];
+    const title = document.getElementById('urlTitle');
+    if (file && !title.value.trim()) title.value = file.name.replace(/\.pdf$/i, '');
+  });
+
+  async function uploadPdfEntry() {
+    const button = document.getElementById('saveUrlBtn');
+    const status = document.getElementById('pdfUploadStatus');
+    const fileInput = document.getElementById('pdfFile');
+    const controls = [button, fileInput, document.getElementById('addUrlMode'), document.getElementById('uploadPdfMode')];
+    controls.forEach(control => { control.disabled = true; });
+    let saved = false;
+    try {
+      const { uploadInformationPdf, waitForPublishedPdf } = await import('./pdf-uploads.js?v=20261018-1');
+      const result = await uploadInformationPdf(fileInput.files[0], {
+        title: document.getElementById('urlTitle').value.trim(),
+        note: document.getElementById('urlNote').value.trim(),
+        getToken: async () => {
+          if (!await window.CEP_AUTH_READY || !window.CEP_FIREBASE_APP) throw new Error('Please sign in again before uploading.');
+          const { getAuth, getIdToken } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+          const user = getAuth(window.CEP_FIREBASE_APP).currentUser;
+          if (!user) throw new Error('Please sign in again before uploading.');
+          return getIdToken(user);
+        },
+        onStatus: message => { status.textContent = message; }
+      });
+      saved = true;
+      window.invalidateCepSearchCache?.('main:urlForms');
+      await fetchURLs(document.getElementById('searchInput').value, true);
+      const published = await waitForPublishedPdf(result.url);
+      status.textContent = published ? 'PDF saved and ready to open.' :
+        'PDF saved in GitHub. Publishing is taking longer; open it again in a few minutes.';
+      fileInput.value = '';
+      document.getElementById('urlTitle').value = '';
+      document.getElementById('urlNote').value = '';
+    } catch (error) {
+      status.textContent = saved ? 'The PDF was saved. Refresh the list to view it once publishing finishes.' :
+        error.message || 'The PDF could not be saved. Please try again.';
+    } finally {
+      controls.forEach(control => { control.disabled = false; });
+      button.textContent = 'Save PDF';
+    }
+  }
+
   async function addURL() {
+    if (addMode === 'pdf') return uploadPdfEntry();
     const saveButton = document.getElementById('saveUrlBtn');
     const url = document.getElementById('urlInput').value.trim();
     const title = document.getElementById('urlTitle').value.trim() || 'Untitled';
@@ -940,8 +1029,8 @@ function renderURLDocs(urlDocs, filter) {
 	  
       div.innerHTML = `
         <div class="view-mode" id="view-${doc.id}">
-  <strong>${data.title || 'Untitled'}</strong>
-  ${data.note ? `<em>${data.note}</em>` : ''}
+  <strong>${escapeHtmlText(data.title || 'Untitled')}</strong>
+  ${data.note ? `<em>${escapeHtmlText(data.note)}</em>` : ''}
 </div>
 
         <div class="edit-mode" id="edit-${doc.id}" style="display:none; margin-top:10px;">
