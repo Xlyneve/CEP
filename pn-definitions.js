@@ -4,7 +4,7 @@
   const style = document.createElement('style');
   style.textContent = `
     .pn-definition { text-decoration:underline dotted; text-underline-offset:3px; cursor:pointer; }
-    #pn-definition-tip { position:fixed; z-index:20030; max-width:min(320px,calc(100vw - 24px)); padding:12px; border:1px solid rgba(100,90,110,.2); border-radius:12px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 6px 22px #0002; font:12px/1.5 Tahoma,sans-serif; overflow-wrap:anywhere; }
+    #pn-definition-tip { position:fixed; z-index:20030; max-width:min(320px,calc(100vw - 24px)); padding:12px; border:1px solid rgba(100,90,110,.2); border-radius:12px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 6px 22px #0002; font:12px/1.5 Tahoma,sans-serif; overflow-wrap:anywhere; max-height:calc(100dvh - 24px); overflow:auto; box-sizing:border-box; overscroll-behavior:contain; }
     #pn-definition-tip[hidden] { display:none; }
     #pn-definition-tip p { margin:0 0 8px; white-space:pre-wrap; }
     #pn-definition-tip button { font:11px Tahoma,sans-serif; margin-right:6px; }
@@ -17,7 +17,7 @@
   document.head.append(style);
   const tip = document.createElement('div');
   tip.id = 'pn-definition-tip'; tip.hidden = true; tip.setAttribute('role', 'dialog'); tip.setAttribute('aria-label', 'Word definition');
-  const meaning = document.createElement('p');
+  const meaning = document.createElement('div');
   const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = 'Edit definition';
   const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove definition';
   const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Close';
@@ -57,7 +57,13 @@
   });
   function hide() { clearTimeout(timer); tip.hidden = true; activeWord = null; }
   function show(word) {
-    clearTimeout(timer); activeWord = word; meaning.textContent = word.dataset.pnDefinition; tip.hidden = false;
+    clearTimeout(timer);
+    if (activeWord === word && !tip.hidden) return;
+    activeWord = word;
+    const shared = window.CEPSharedDefinitions;
+    if (shared?.renderPreview) shared.renderPreview(meaning, shared.find(word.dataset.sharedTerm || word.textContent), word.dataset.pnDefinition);
+    else meaning.textContent = word.dataset.pnDefinition;
+    tip.hidden = false;
     const box = word.getBoundingClientRect();
     tip.style.left = `${Math.max(12, Math.min(box.left, innerWidth - tip.offsetWidth - 12))}px`;
     tip.style.top = `${Math.max(12, Math.min(box.bottom + 6, innerHeight - tip.offsetHeight - 12))}px`;

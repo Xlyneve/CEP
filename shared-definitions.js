@@ -2,14 +2,45 @@
   'use strict';
   if (window.CEPSharedDefinitions) return;
   const normalize = value => String(value || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim();
-  let records = [], adapter, index = new Map(), scheduled = false;
+  let records = [], adapter, index = new Map(), scheduled = false, mediaIndex = new Map();
   function update(items) {
     records = items; index = new Map();
     for (const record of records) if (!record.disabled) index.set(normalize(record.concept || record.id), record);
     for (const record of records) if (!record.disabled) for (const alias of record.aliases || []) if (!index.has(normalize(alias))) index.set(normalize(alias), record);
+    for (const [key, media] of mediaIndex) {
+      if (!index.has(key) && !records.some(record => record.disabled && normalize(record.concept || record.id) === key))
+        index.set(key, media);
+    }
     schedule();
   }
   const find = term => index.get(normalize(term));
+  function updateMedia(items) {
+    mediaIndex = new Map();
+    for (const item of items) mediaIndex.set(normalize(item.concept || item.id), item);
+    update(records);
+  }
+  function photos(record) {
+    const media = mediaIndex.get(normalize(record?.concept || record?.id)) || record || {};
+    const entries = Array.isArray(media.images) && media.images.length ? media.images : media.imageUrl ? [{imageUrl:media.imageUrl}] : [];
+    return entries.filter(image => {
+      try { return ['https:','http:'].includes(new URL(image.imageUrl).protocol); } catch { return false; }
+    });
+  }
+  function renderPreview(container, record, fallback = '') {
+    container.replaceChildren();
+    const value = record?.value || plain(record?.valueHtml) || fallback;
+    if (value) { const text = document.createElement('p'); text.textContent = value; container.append(text); }
+    const media = mediaIndex.get(normalize(record?.concept || record?.id)) || record;
+    const images = photos(record);
+    for (const [index, photo] of images.entries()) {
+      const image = document.createElement('img');
+      image.src = photo.imageUrl; image.alt = (record?.concept || 'Concept') + ' — photo ' + (index + 1);
+      image.style.cssText = 'display:block;width:100%;max-height:300px;object-fit:contain;border-radius:8px;margin:8px 0';
+      container.append(image);
+    }
+    if (images.length && media?.caption) { const caption=document.createElement('p'); caption.textContent=media.caption; container.append(caption); }
+    return !!(value || images.length);
+  }
   async function save(term, value, aliases) {
     if (!adapter) throw new Error('Open chatgptx and sign in first to enable shared definitions.');
     const existing = find(term);
@@ -58,7 +89,7 @@
         const text=nodes.map(node=>node.nodeValue).join('');
         const point=offset=>{for(const node of nodes){if(offset<=node.nodeValue.length)return [node,offset];offset-=node.nodeValue.length;}};
         for(const match of [...text.matchAll(pattern)].reverse()){
-          const record=find(match[0]);if(!record||(!record.value&&!record.valueHtml))continue;
+          const record=find(match[0]);if(!record||(!record.value&&!record.valueHtml&&!photos(record).length))continue;
           const start=point(match.index),end=point(match.index+match[0].length);if(!start||!end)continue;
           const range=document.createRange();range.setStart(...start);range.setEnd(...end);
           const word=document.createElement('span');word.className='cep-shared-definition';word.tabIndex=0;
@@ -70,12 +101,12 @@
   }
   function schedule(){if(scheduled)return;scheduled=true;setTimeout(()=>{observer.disconnect();refresh();observer.observe(document.body,{childList:true,subtree:true});},0);}
   function plain(html){const node=document.createElement('div');window.CEPSecurity?.setHTML(node,html||'');return node.textContent||'';}
-  const style=document.createElement('style');style.textContent='.cep-shared-definition { text-decoration:underline dotted; text-underline-offset:3px; cursor:pointer; } #cep-shared-tip { position:fixed;z-index:2147483646;max-width:min(320px,calc(100vw - 24px));padding:12px;border-radius:12px;background:var(--clinical-panel,#fff);color:var(--theme-ink,#39353a);box-shadow:0 6px 22px #0002;font:12px/1.5 Tahoma,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere; } #cep-shared-tip[hidden]{display:none}';document.head.append(style);
+  const style=document.createElement('style');style.textContent='.cep-shared-definition { text-decoration:underline dotted; text-underline-offset:3px; cursor:pointer; } #cep-shared-tip { position:fixed;z-index:2147483646;max-width:min(320px,calc(100vw - 24px));padding:12px;border-radius:12px;background:var(--clinical-panel,#fff);color:var(--theme-ink,#39353a);box-shadow:0 6px 22px #0002;font:12px/1.5 Tahoma,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;max-height:calc(100dvh - 24px);overflow:auto;box-sizing:border-box;overscroll-behavior:contain; } #cep-shared-tip[hidden]{display:none}';document.head.append(style);
   const tip=document.createElement('div');tip.id='cep-shared-tip';tip.hidden=true;tip.setAttribute('role','tooltip');document.body.append(tip);
   let hideTimer, activeWord;
   function hide(){clearTimeout(hideTimer);tip.hidden=true;activeWord=null;}
   const previewSelector = /\/(?:pn|explain)\.html$/i.test(location.pathname) ? '.cep-shared-definition' : '.cep-shared-definition,.pn-definition[data-pn-definition]';
-  function show(word){clearTimeout(hideTimer);const record=find(word.dataset.sharedTerm||word.textContent);const value=record?.value||plain(record?.valueHtml)||word.dataset.pnDefinition;if(!value)return;activeWord=word;tip.textContent=value;tip.hidden=false;const box=word.getBoundingClientRect();tip.style.left=Math.max(12,Math.min(box.left,innerWidth-tip.offsetWidth-12))+'px';tip.style.top=Math.max(12,Math.min(box.bottom+6,innerHeight-tip.offsetHeight-12))+'px';}
+  function show(word){clearTimeout(hideTimer);const record=find(word.dataset.sharedTerm||word.textContent);const value=record?.value||plain(record?.valueHtml)||word.dataset.pnDefinition;if(activeWord===word&&!tip.hidden)return;if(!renderPreview(tip,record,value))return;activeWord=word;tip.hidden=false;const box=word.getBoundingClientRect();tip.style.left=Math.max(12,Math.min(box.left,innerWidth-tip.offsetWidth-12))+'px';tip.style.top=Math.max(12,Math.min(box.bottom+6,innerHeight-tip.offsetHeight-12))+'px';}
   document.addEventListener('mouseover',e=>{const word=e.target.closest(previewSelector);if(word)show(word);},true);
   document.addEventListener('mouseout',e=>{const word=e.target.closest(previewSelector);if(word&&!word.contains(e.relatedTarget)&&!tip.contains(e.relatedTarget)){clearTimeout(hideTimer);hideTimer=setTimeout(hide,200);}},true);
   document.addEventListener('focusin',e=>{if(e.target.matches(previewSelector))show(e.target);});
@@ -83,5 +114,5 @@
   document.addEventListener('keydown',e=>{if(e.key==='Escape')tip.hidden=true;});
   tip.onmouseenter=()=>clearTimeout(hideTimer);tip.onmouseleave=e=>{if(!activeWord?.contains(e.relatedTarget))hide();};
   const observer=new MutationObserver(records=>{if(records.some(record=>!record.target.closest?.('#cep-shared-tip,#pn-definition-tip,#pn-definition-dialog')))schedule();});observer.observe(document.body,{childList:true,subtree:true});
-  window.CEPSharedDefinitions={normalize,find,update,save,remove,connect(value){adapter=value;},plain};
+  window.CEPSharedDefinitions={normalize,find,update,updateMedia,renderPreview,save,remove,connect(value){adapter=value;},plain};
 })();
