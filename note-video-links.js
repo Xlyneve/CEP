@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  if (window.CEPNoteVideoLinks?.version === 2) return;
+  if (window.CEPNoteVideoLinks?.version === 3) return;
   document.getElementById('cep-note-video-link-styles')?.remove();
   const style = document.createElement('style');
   style.id = 'cep-note-video-link-styles';
@@ -27,12 +27,43 @@
       margin-top:10px; padding-top:3px; white-space:normal;
       background:transparent !important; border:0 !important; box-shadow:none !important;
     }
-    #cepNoteSearchVideoPlayer { box-sizing:border-box; width:min(900px,calc(100vw - 30px)); max-height:calc(100dvh - 30px); overflow:auto; padding:12px; border:1px solid var(--clinical-edge,#ddd); border-radius:16px; background:linear-gradient(var(--clinical-field,#faf9f7),var(--clinical-field,#faf9f7)),#faf9f7; color:var(--theme-ink,#37434a); }
-    #cepNoteSearchVideoPlayer::backdrop { background:rgba(28,24,27,.65); }
-    #cepNoteSearchVideoPlayer .cep-note-search-video-frame { width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; }
-    #cepNoteSearchVideoPlayer iframe { display:block; width:100%; height:100%; border:0; }
-    #cepNoteSearchVideoPlayer .cep-note-search-video-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:10px; padding-top:9px; font:12px Tahoma,sans-serif; }
-    #cepNoteSearchVideoPlayer a { color:inherit; }
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel {
+      position:fixed !important; inset:12px 12px 12px auto !important; margin:0 !important;
+      width:min(520px,42vw); min-width:300px; height:calc(100dvh - 24px); max-height:calc(100dvh - 24px);
+      box-sizing:border-box; padding:0; border:1px solid var(--clinical-edge,#d8d3d4); border-radius:16px;
+      background:linear-gradient(var(--clinical-field,#faf9f7),var(--clinical-field,#faf9f7)),#faf9f7;
+      color:var(--theme-ink,#37434a); box-shadow:var(--note-editor-depth,0 8px 28px #0003);
+      overflow:hidden; z-index:2147483647; display:none; flex-direction:column;
+    }
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel.is-open { display:flex !important; }
+    #cepNoteLinkPanel::backdrop { background:transparent; pointer-events:none; }
+    #cepNoteLinkPanel .cep-link-panel-header { display:flex; align-items:center; gap:8px; padding:8px 10px; flex:none; }
+    #cepNoteLinkPanel .cep-link-panel-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 13px/1.4 Tahoma,sans-serif; }
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel .cep-link-panel-header button {
+      flex:none; width:30px; height:30px; min-width:30px; min-height:30px; padding:0;
+      border:0 !important; border-radius:8px; background:transparent !important; box-shadow:none !important;
+      color:inherit !important; -webkit-text-fill-color:currentColor !important; font:22px/1 Tahoma,sans-serif;
+      cursor:pointer;
+    }
+    #cepNoteLinkPanel .cep-link-panel-body { display:flex; flex:1; min-height:0; flex-direction:column; overflow:auto; }
+    #cepNoteLinkPanel .cep-link-panel-frame { flex:1; min-height:0; background:#fff; }
+    #cepNoteLinkPanel iframe,#cepNoteLinkPanel video { display:block; width:100%; height:100%; border:0; }
+    #cepNoteLinkPanel .cep-link-panel-footer { display:flex; justify-content:flex-end; padding:8px 12px; flex:none; }
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel .cep-link-panel-new-tab {
+      display:inline-flex; align-items:center; gap:5px; color:inherit !important; -webkit-text-fill-color:currentColor !important;
+      font:600 12px/1.5 Tahoma,sans-serif; text-decoration:underline; background:transparent !important; border:0 !important; box-shadow:none !important;
+    }
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel.is-video { bottom:auto !important; height:auto; }
+    #cepNoteLinkPanel.is-video .cep-link-panel-frame { flex:none; aspect-ratio:16/9; background:#000; }
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel.is-collapsed { width:46px; min-width:46px; height:auto; bottom:auto !important; }
+    #cepNoteLinkPanel.is-collapsed .cep-link-panel-header { flex-direction:column; padding:6px; gap:6px; }
+    #cepNoteLinkPanel.is-collapsed :is(.cep-link-panel-title,.cep-link-panel-body,.cep-link-panel-footer) { display:none !important; }
+    @media(max-width:600px) {
+      html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel { inset:8px 8px 8px auto !important; width:calc(100vw - 16px); min-width:0; max-height:calc(100dvh - 16px); height:calc(100dvh - 16px); }
+      html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel.is-video { height:auto; }
+      html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel.is-collapsed { width:46px; min-width:46px; height:auto; }
+    }
+
   `;
   document.head.append(style);
 function getYouTubeVideoId(rawUrl) {
@@ -132,81 +163,85 @@ function decorateNoteVideoLinks(root) {
   if (footer?.children.length) root.appendChild(footer);
 }
 
-  let youtubePlayerOverlay, youtubePlayerFrame, youtubeExternalLink, youtubePlayerClose;
-  function ensurePlayer() {
-    if (youtubePlayerOverlay) return;
-    youtubePlayerOverlay = document.createElement('dialog');
-    youtubePlayerOverlay.id = 'cepNoteSearchVideoPlayer';
-    youtubePlayerOverlay.setAttribute('role','dialog');
-    youtubePlayerOverlay.setAttribute('aria-label','Video player');
-    youtubePlayerOverlay.innerHTML = '<div><div class="cep-note-search-video-frame"></div><div class="cep-note-search-video-actions"><a target="_blank" rel="noopener noreferrer">Open video</a><button type="button" aria-label="Close video">×</button></div></div>';
-    document.body.append(youtubePlayerOverlay);
-    youtubePlayerFrame = youtubePlayerOverlay.querySelector('.cep-note-search-video-frame');
-    youtubeExternalLink = youtubePlayerOverlay.querySelector('a');
-    youtubePlayerClose = youtubePlayerOverlay.querySelector('button');
-    youtubePlayerClose.onclick = () => youtubePlayerOverlay.close();
-    youtubePlayerOverlay.addEventListener('close',()=>{
-      youtubePlayerOverlay.classList.remove('is-open'); youtubePlayerOverlay.setAttribute('aria-hidden','true');
-      youtubePlayerFrame.querySelector('video')?.pause(); youtubePlayerFrame.replaceChildren();
-    });
-    youtubePlayerOverlay.addEventListener('click',event=>{
-      if (event.target !== youtubePlayerOverlay) return;
-      const r=youtubePlayerOverlay.getBoundingClientRect();
-      if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)youtubePlayerOverlay.close();
-    });
+  let panel,frame,title,newTab,collapseButton,currentUrl='',lastTrigger;
+  const dialogHosts=new WeakSet();
+  function ensurePanel(host) {
+    if(!panel){
+      panel=document.createElement('aside');panel.id='cepNoteLinkPanel';panel.setAttribute('popover','manual');
+      panel.setAttribute('role','complementary');panel.setAttribute('aria-label','Link panel');panel.setAttribute('aria-hidden','true');
+      panel.innerHTML='<div class="cep-link-panel-header"><span class="cep-link-panel-title"></span><button type="button" data-action="collapse" aria-label="Collapse link panel" aria-expanded="true">›</button><button type="button" data-action="close" aria-label="Close link panel">×</button></div><div class="cep-link-panel-body"><div class="cep-link-panel-frame"></div></div><div class="cep-link-panel-footer"><a class="cep-link-panel-new-tab" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a></div>';
+      frame=panel.querySelector('.cep-link-panel-frame');title=panel.querySelector('.cep-link-panel-title');newTab=panel.querySelector('a');collapseButton=panel.querySelector('[data-action="collapse"]');
+      panel.querySelector('[data-action="close"]').onclick=closePanel;
+      collapseButton.onclick=()=>{
+        const collapsed=panel.classList.toggle('is-collapsed');
+        collapseButton.textContent=collapsed?'‹':'›';collapseButton.setAttribute('aria-expanded',String(!collapsed));
+        collapseButton.setAttribute('aria-label',collapsed?'Expand link panel':'Collapse link panel');
+        if(collapsed)frame.querySelector('video')?.pause();
+      };
+    }
+    if(panel.parentElement!==host){
+      try{if(panel.matches(':popover-open'))panel.hidePopover();}catch{}
+      host.appendChild(panel);
+    }
+    if(host.tagName==='DIALOG'&&!dialogHosts.has(host)){
+      host.addEventListener('close',()=>{if(panel.parentElement===host)closePanel(false);});dialogHosts.add(host);
+    }
   }
-function openNoteVideoFile(sourceUrl) {
-  ensurePlayer();
-  const video = document.createElement('video');
-  video.src = sourceUrl; video.controls = true; video.autoplay = true; video.playsInline = true;
-  video.style.cssText = 'width:100%;height:100%;display:block;';
-  youtubePlayerFrame.replaceChildren(video);
-  youtubePlayerOverlay.setAttribute('aria-label','Video player');
-  youtubeExternalLink.href = sourceUrl; youtubeExternalLink.textContent = 'Open video';
-  youtubePlayerOverlay.classList.add('is-open'); youtubePlayerOverlay.setAttribute('aria-hidden','false');
-  if (!youtubePlayerOverlay.open) youtubePlayerOverlay.showModal();
-  youtubePlayerClose.focus({preventScroll:true});
-}
-
-function openNoteVideo(sourceUrl) {
-  ensurePlayer();
-  let url;
-  try { url = new URL(sourceUrl); if (!['http:','https:'].includes(url.protocol)) return; } catch { return; }
-  const kind = getNoteVideoKind(url.href);
-  if (kind === 'file') { openNoteVideoFile(url.href); return; }
-  let embedUrl = url.href, title = 'Video player', externalLabel = 'Open video';
-  if (kind === 'youtube') {
-    embedUrl = `https://www.youtube-nocookie.com/embed/${getYouTubeVideoId(url.href)}?autoplay=1&rel=0`;
-    title = 'YouTube video player'; externalLabel = 'Open on YouTube';
-  } else if (kind === 'facebook') {
-    // Same Facebook embed route used in PN.html.
-    embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url.href)}&show_text=false&width=900&autoplay=true`;
-    title = 'Facebook video player'; externalLabel = 'Open on Facebook';
-  } else if (kind === 'vimeo') {
-    const parts = url.pathname.split('/').filter(Boolean), index = parts.findIndex(part => /^\d+$/.test(part));
-    const embed = new URL('https://player.vimeo.com/video/' + parts[index]);
-    embed.searchParams.set('autoplay','1');
-    const hash = url.searchParams.get('h') || parts[index + 1];
-    if (hash && /^[a-z0-9]+$/i.test(hash)) embed.searchParams.set('h',hash);
-    embedUrl = embed.href; title = 'Vimeo video player'; externalLabel = 'Open on Vimeo';
+  function closePanel(restoreFocus=true) {
+    if(!panel)return;
+    try{panel.hidePopover?.();}catch{}
+    panel.classList.remove('is-open','is-collapsed');panel.setAttribute('aria-hidden','true');
+    frame.querySelector('video')?.pause();frame.replaceChildren();currentUrl='';
+    if(restoreFocus&&lastTrigger?.isConnected)lastTrigger.focus({preventScroll:true});
   }
-  const iframe = document.createElement('iframe');
-  iframe.src = embedUrl; iframe.title = title;
-  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-  iframe.allowFullscreen = true; iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-  youtubePlayerOverlay.setAttribute('aria-label',title);
-  youtubePlayerFrame.replaceChildren(iframe);
-  youtubeExternalLink.href = url.href; youtubeExternalLink.textContent = externalLabel;
-  youtubePlayerOverlay.classList.add('is-open'); youtubePlayerOverlay.setAttribute('aria-hidden','false');
-  if (!youtubePlayerOverlay.open) youtubePlayerOverlay.showModal();
-  youtubePlayerClose.focus({preventScroll:true});
-}
-
-  window.CEPNoteVideoLinks = Object.freeze({version:2,decorate:decorateNoteVideoLinks,kind:getNoteVideoKind,youtubeId:getYouTubeVideoId});
-  // Handle these links before search card copy/navigation handlers, including full-note previews.
+  function openLink(rawUrl,options={}) {
+    let url;try{url=new URL(rawUrl,location.href);if(!['http:','https:'].includes(url.protocol))return;}catch{return;}
+    // Keep links from Home's embedded widgets in the main window's panel.
+    if(window.parent!==window){try{if(window.parent.CEPNoteVideoLinks?.open){window.parent.CEPNoteVideoLinks.open(url.href,{video:options.video});return;}}catch{}}
+    const host=options.trigger?.closest('dialog[open]')||document.body;
+    ensurePanel(host);lastTrigger=options.trigger||null;
+    panel.classList.remove('is-collapsed');collapseButton.textContent='›';collapseButton.setAttribute('aria-expanded','true');collapseButton.setAttribute('aria-label','Collapse link panel');
+    if(currentUrl!==url.href||!frame.children.length){
+      frame.querySelector('video')?.pause();frame.replaceChildren();
+      const kind=getNoteVideoKind(url.href);let embedUrl=url.href,label=url.hostname.replace(/^www\./,'');
+      if(kind==='youtube'){embedUrl=`https://www.youtube-nocookie.com/embed/${getYouTubeVideoId(url.href)}?autoplay=1&rel=0`;label='YouTube';}
+      else if(kind==='facebook'){embedUrl=`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url.href)}&show_text=false&width=900&autoplay=true`;label='Facebook video';}
+      else if(kind==='vimeo'){
+        const parts=url.pathname.split('/').filter(Boolean),index=parts.findIndex(part=>/^\d+$/.test(part));
+        const embed=new URL('https://player.vimeo.com/video/'+parts[index]);embed.searchParams.set('autoplay','1');
+        const hash=url.searchParams.get('h')||parts[index+1];if(hash&&/^[a-z0-9]+$/i.test(hash))embed.searchParams.set('h',hash);
+        embedUrl=embed.href;label='Vimeo';
+      }
+      panel.classList.toggle('is-video',Boolean(kind||options.video));
+      if(kind==='file'){
+        const video=document.createElement('video');video.src=url.href;video.controls=true;video.autoplay=true;video.playsInline=true;frame.append(video);
+      }else{
+        const iframe=document.createElement('iframe');iframe.src=embedUrl;iframe.title=label+' preview';
+        iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.allowFullscreen=true;iframe.referrerPolicy='strict-origin-when-cross-origin';frame.append(iframe);
+      }
+      title.textContent=label;title.title=url.href;newTab.href=url.href;currentUrl=url.href;
+    }
+    panel.classList.add('is-open');panel.setAttribute('aria-hidden','false');
+    try{if(panel.showPopover&&!panel.matches(':popover-open'))panel.showPopover();}catch{}
+    collapseButton.focus({preventScroll:true});
+  }
+  window.CEPNoteVideoLinks=Object.freeze({version:3,decorate:decorateNoteVideoLinks,kind:getNoteVideoKind,youtubeId:getYouTubeVideoId,open:openLink,close:closePanel});
   window.addEventListener('click',event=>{
-    const link=event.target.closest?.('.cep-search-source[data-source-file="chatgptx.html"] a.cep-note-video-link');
-    if(!link||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
-    event.preventDefault(); event.stopImmediatePropagation(); openNoteVideo(link.href);
+    const link=event.target.closest?.('a[href]');
+    if(!link||event.defaultPrevented||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+    if(link.closest('#cepNoteLinkPanel,[contenteditable="true"]')||link.matches('[download],[role="button"],.conceptLink,.cep-xgpt-concept,.xgpt-concept-link,.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result,.cep-search-source'))return;
+    const raw=link.getAttribute('href')?.trim();if(!raw||raw.startsWith('#'))return;
+    let url;try{url=new URL(raw,location.href);if(!['http:','https:'].includes(url.protocol))return;}catch{return;}
+    const image=link.querySelector('img');
+    if(image&&(/\.(?:png|jpe?g|gif|webp|avif|svg)$/i.test(url.pathname)||url.href===image.src||link.closest('.kbPhotoStrip,.cep-photo-gallery,.image-gallery,.photo-gallery')))return;
+    const saved=link.matches('.cep-note-video-link,.note-link,.cep-saved-url,.vaccine-link')||link.closest('.note-url');
+    if(url.origin===location.origin&&!saved)return;
+    // Authentication handoffs must keep their normal browser flow.
+    if(url.hostname==='accounts.google.com'&&/oauth|signin/.test(url.pathname))return;
+    event.preventDefault();event.stopImmediatePropagation();openLink(url.href,{trigger:link,video:link.classList.contains('cep-note-video-link')});
+  },true);
+  window.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&panel?.classList.contains('is-open')){event.preventDefault();event.stopImmediatePropagation();closePanel();}
   },true);
 })();

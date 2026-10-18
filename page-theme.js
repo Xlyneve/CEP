@@ -3878,3 +3878,12 @@
   else start();
 })();
 
+
+// Shared external-link panel is available even on pages with their own theme setup.
+(() => {
+  if (window.CEPNoteVideoLinks?.version === 3 || document.querySelector('script[data-cep-link-panel-loader]')) return;
+  const script = document.createElement('script');
+  script.dataset.cepLinkPanelLoader = 'true';
+  script.src = new URL('note-video-links.js?v=20261018-3', document.currentScript?.src || location.href).href;
+  document.head.appendChild(script);
+})();

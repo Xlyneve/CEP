@@ -1,4 +1,4 @@
-import { applySourceSearchSkin } from "./search-source-cards.js?v=20261018-2";
+import { applySourceSearchSkin } from "./search-source-cards.js?v=20261018-3";
 import "./concept-markup.js?v=20261004-1";
 import "./shared-definitions.js?v=20261007-3";
 import "./pn-shared-definitions.js?v=20261007-3";
