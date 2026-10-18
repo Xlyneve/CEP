@@ -800,6 +800,7 @@ button:hover {
   <aside class="forms-sidebar" aria-label="Saved forms">
     <input type="text" id="searchInput" placeholder="Search saved forms" aria-label="Search saved forms">
     <div class="file-grid" id="fileList"></div>
+    <p id="pdfDeleteStatus" role="status" aria-live="polite" style="font-size:12px;line-height:1.5;margin:0;"></p>
   </aside>
 
   <div
@@ -872,6 +873,14 @@ button:hover {
     return modularFirestorePromise;
   }
 
+  async function getPdfAccessToken() {
+    if (!await window.CEP_AUTH_READY || !window.CEP_FIREBASE_APP) throw new Error('Please sign in again before managing PDFs.');
+    const { getAuth, getIdToken } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+    const user = getAuth(window.CEP_FIREBASE_APP).currentUser;
+    if (!user) throw new Error('Please sign in again before managing PDFs.');
+    return getIdToken(user);
+  }
+
   let addMode = 'url';
   function setAddMode(mode) {
     addMode = mode;
@@ -898,17 +907,11 @@ button:hover {
     controls.forEach(control => { control.disabled = true; });
     let saved = false;
     try {
-      const { uploadInformationPdf, waitForPublishedPdf } = await import('./pdf-uploads.js?v=20261018-1');
+      const { uploadInformationPdf, waitForPublishedPdf } = await import('./pdf-uploads.js?v=20261018-2');
       const result = await uploadInformationPdf(fileInput.files[0], {
         title: document.getElementById('urlTitle').value.trim(),
         note: document.getElementById('urlNote').value.trim(),
-        getToken: async () => {
-          if (!await window.CEP_AUTH_READY || !window.CEP_FIREBASE_APP) throw new Error('Please sign in again before uploading.');
-          const { getAuth, getIdToken } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-          const user = getAuth(window.CEP_FIREBASE_APP).currentUser;
-          if (!user) throw new Error('Please sign in again before uploading.');
-          return getIdToken(user);
-        },
+        getToken: getPdfAccessToken,
         onStatus: message => { status.textContent = message; }
       });
       saved = true;
@@ -1067,7 +1070,7 @@ function renderURLDocs(urlDocs, filter) {
 
   <div class="file-buttons">
     <button onclick="startInlineEdit('${doc.id}')" title="Edit">Edit</button>
-    <button onclick="deleteURL('${doc.id}')" title="Delete">Delete</button>
+    <button onclick="deleteURL('${doc.id}', this)" title="Delete">Delete</button>
   </div>
 
   <button
@@ -1234,11 +1237,47 @@ async function saveInlineEdit(id) {
   fetchURLs(document.getElementById('searchInput').value, true);
 }
 
-  async function deleteURL(id) {
-    if (confirm('Delete this URL entry?')) {
-      await db.collection('urlForms').doc(id).delete();
+  const deletingEntries = new Set();
+  async function deleteURL(id, button) {
+    if (deletingEntries.has(id)) return;
+    const data = cachedUrlDocs?.find(doc => doc.id === id)?.data();
+    const isPdf = Boolean(data?.pdfPath) || /^pdf-[a-f0-9]{64}$/.test(id);
+    if (!confirm(isPdf
+      ? 'Delete this PDF from Information Links, GitHub and the website? GitHub version history will remain.'
+      : 'Delete this URL entry?')) return;
+    deletingEntries.add(id);
+    if (button) { button.disabled = true; button.textContent = 'Deleting…'; }
+    const status = document.getElementById('pdfDeleteStatus');
+    try {
+      if (isPdf) {
+        status.textContent = 'Deleting PDF from GitHub…';
+        const { deleteInformationPdf } = await import('./pdf-uploads.js?v=20261018-2');
+        await deleteInformationPdf(id, getPdfAccessToken);
+        status.textContent = 'PDF removed from GitHub. Removal from the website is publishing and may take a minute or two.';
+      } else {
+        await db.collection('urlForms').doc(id).delete();
+      }
+      const selectedLink = document.getElementById('previewOpenLink');
+      if (data?.url && selectedLink.href === data.url) {
+        const frame = document.getElementById('previewFrame');
+        frame.removeAttribute('src'); frame.style.display = 'none';
+        document.getElementById('previewToolbar').style.display = 'none';
+        selectedLink.removeAttribute('href');
+        const empty = document.getElementById('previewEmpty');
+        empty.textContent = 'Select a form on the left to preview it here.'; empty.style.display = 'grid';
+        const panel = document.querySelector('.form-preview');
+        panel.classList.remove('is-external-fallback'); delete panel.dataset.externalUrl;
+        panel.removeAttribute('tabindex'); panel.setAttribute('aria-label', 'Form preview');
+      }
       window.invalidateCepSearchCache?.('main:urlForms');
-      fetchURLs(document.getElementById('searchInput').value, true);
+      try { await fetchURLs(document.getElementById('searchInput').value, true); }
+      catch { status.textContent = 'Deleted successfully. Refresh the page to update the list.'; }
+    } catch (error) {
+      if (isPdf) status.textContent = error.message || 'The PDF could not be deleted. Please try again.';
+      else alert(error.message || 'The URL entry could not be deleted.');
+    } finally {
+      deletingEntries.delete(id);
+      if (button?.isConnected) { button.disabled = false; button.textContent = 'Delete'; }
     }
   }
 

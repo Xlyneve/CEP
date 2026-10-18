@@ -58,8 +58,10 @@ after the existing Hosting workflow finishes.
 
 PDF URLs are public once deployed, including PDFs uploaded into a private GitHub
 repository. Do not upload patient information, passwords or other private files.
-Only upload files you are entitled to publish. Deleting a saved link currently
-removes the Information Links entry, not its PDF file or GitHub version history.
+Only upload files you are entitled to publish. Deleting an uploaded PDF removes its file from GitHub main and its Information
+Links entry. The Hosting deployment then removes the published copy. GitHub
+version history and copies already downloaded are not erased. Ordinary URL
+entries still delete only the saved link.
 
 ## Maintaining access
 
@@ -71,3 +73,21 @@ the CEP repository for new PDF commits to reach the website.
 The browser stores no GitHub credential. The function accepts uploads only from
 the verified approved Firebase account and only creates content-addressed files
 under `assets/pdfs/`; it cannot receive an arbitrary repository or destination path.
+
+
+## Updating an existing upload backend to support deletion
+
+No new token or Firebase secret is needed. Fetch the latest main into your local
+CEP checkout, then redeploy the existing codebase:
+
+```sh
+git fetch origin
+git switch --detach origin/main
+npx firebase-tools@14 deploy --only functions:pdfuploads --project cepx-f9d2a
+```
+
+The same authenticated endpoint now handles deletion. It looks up the saved entry
+and only permits deletion of its matching content-addressed path under
+`assets/pdfs/`. If GitHub refuses deletion, the entry stays available for retry.
+Files removed in a previous attempt are handled safely when retried. There is no
+need to change the token's Contents read/write permission.

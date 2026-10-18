@@ -40,3 +40,24 @@ export async function waitForPublishedPdf(url, attempts = 24) {
   }
   return false;
 }
+
+export async function deleteInformationPdf(id, getToken) {
+  const token = await getToken();
+  let response;
+  try {
+    response = await fetch(ENDPOINT, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id })
+    });
+  } catch {
+    throw new Error('The PDF deletion service could not be reached. The entry has been kept; please try again.');
+  }
+  let result;
+  try { result = await response.json(); }
+  catch { throw new Error('The PDF deletion service is not ready. Please deploy the updated PDF backend.'); }
+  if (result.error === 'Choose a PDF to upload.') {
+    throw new Error('PDF deletion needs the updated backend. Deploy it first; your PDF and entry have not been deleted.');
+  }
+  if (!response.ok || result.deleted !== true) throw new Error(result.error || 'The PDF could not be deleted.');
+  return result;
+}

@@ -48,13 +48,17 @@ function githubFailure(response, stage) {
   return new UploadError(502, 'GitHub returned HTTP ' + code + ' during PDF ' + stage + '. Please try again later.');
 }
 
-async function savePdfToRepository(pdf, token, request = fetch) {
-  const endpoint = `https://api.github.com/repos/${REPOSITORY}/contents/${pdf.path}`;
-  const headers = {
+function githubHeaders(token) {
+  return {
     Authorization: `Bearer ${String(token).trim()}`, Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json',
     'User-Agent': 'CEP-PDF-Uploads'
   };
+}
+
+async function savePdfToRepository(pdf, token, request = fetch) {
+  const endpoint = `https://api.github.com/repos/${REPOSITORY}/contents/${pdf.path}`;
+  const headers = githubHeaders(token);
   const existing = await request(`${endpoint}?ref=main`, { headers, signal: AbortSignal.timeout(20000) });
   if (existing.ok) return { reused: true };
   if (existing.status !== 404) throw githubFailure(existing, 'repository read');
@@ -74,4 +78,36 @@ async function savePdfToRepository(pdf, token, request = fetch) {
   return { reused: false };
 }
 
-module.exports = { MAX_BYTES, UploadError, validateUpload, savePdfToRepository };
+async function deletePdfFromRepository(path, token, request = fetch) {
+  if (!/^assets\/pdfs\/[a-f0-9]{64}\.pdf$/.test(path)) {
+    throw new UploadError(400, 'Only uploaded Information Links PDFs can be deleted.');
+  }
+  const endpoint = `https://api.github.com/repos/${REPOSITORY}/contents/${path}`;
+  const headers = githubHeaders(token);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const existing = await request(`${endpoint}?ref=main`, { headers, signal: AbortSignal.timeout(20000) });
+    if (existing.status === 404) {
+      // GitHub also uses 404 for inaccessible private repositories. Confirm repo
+      // access before treating a missing file as a successful, repeatable delete.
+      const branch = await request(`https://api.github.com/repos/${REPOSITORY}/git/ref/heads/main`,
+        { headers, signal: AbortSignal.timeout(20000) });
+      if (!branch.ok) throw githubFailure(branch, 'deletion access check');
+      return;
+    }
+    if (!existing.ok) throw githubFailure(existing, 'PDF deletion read');
+    const metadata = await existing.json();
+    if (typeof metadata.sha !== 'string' || !/^[a-f0-9]{40}$/.test(metadata.sha)) {
+      throw new UploadError(502, 'GitHub did not return a valid PDF version. Please try again.');
+    }
+    const response = await request(endpoint, {
+      method: 'DELETE', headers, signal: AbortSignal.timeout(45000),
+      body: JSON.stringify({ message: `Delete Information Links PDF ${path.split('/').pop().slice(0, 12)}`,
+        sha: metadata.sha, branch: 'main' })
+    });
+    if (response.ok) return;
+    if ([404, 409, 422].includes(response.status) && attempt < 2) continue;
+    throw githubFailure(response, 'PDF deletion');
+  }
+}
+
+module.exports = { MAX_BYTES, UploadError, validateUpload, savePdfToRepository, deletePdfFromRepository };

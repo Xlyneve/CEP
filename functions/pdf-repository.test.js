@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { validateUpload, savePdfToRepository, MAX_BYTES } = require('./pdf-repository');
+const { validateUpload, savePdfToRepository, deletePdfFromRepository, MAX_BYTES } = require('./pdf-repository');
 const content = Buffer.from('%PDF-1.4\nA test PDF body\n%%EOF\n').toString('base64');
 
 test('rejects non-PDF content, malformed base64 and oversized payloads', () => {
@@ -68,4 +68,35 @@ test('reports safe HTTP diagnostics without exposing credentials or provider res
   }
   await assert.rejects(savePdfToRepository(validateUpload({ content }), 'secret', async () =>
     ({ ok: false, status: 403, headers: { get: () => '0' } })), /rate limit reached/);
+});
+
+const pdfPath = 'assets/pdfs/' + 'a'.repeat(64) + '.pdf';
+test('deletes only a valid uploaded PDF path at its current GitHub SHA', async () => {
+  const calls = [];
+  await deletePdfFromRepository(pdfPath,'secret',async(url,options)=>{
+    calls.push({url,options});
+    return {ok:true,status:200,json:async()=>({sha:'b'.repeat(40)})};
+  });
+  assert.equal(calls.length,2);
+  assert.equal(calls[1].options.method,'DELETE');
+  const body = JSON.parse(calls[1].options.body);
+  assert.equal(body.sha,'b'.repeat(40)); assert.equal(body.branch,'main');
+  await assert.rejects(deletePdfFromRepository('forms.html','secret',()=>{throw Error('Must not run');}), /Only uploaded/);
+});
+test('an absent file is successful only after confirming repository access', async () => {
+  let calls=0;
+  await deletePdfFromRepository(pdfPath,'secret',async()=> (++calls===1
+    ? {ok:false,status:404} : {ok:true,status:200}));
+  assert.equal(calls,2);
+  await assert.rejects(deletePdfFromRepository(pdfPath,'secret',async()=>({ok:false,status:404})), /HTTP 404/);
+});
+test('retries a stale PDF SHA and does not hide deletion permission failures', async () => {
+  let reads=0,writes=0;
+  await deletePdfFromRepository(pdfPath,'secret',async(url,options)=>{
+    if(options.method==='DELETE')return {ok:++writes===2,status:writes===1?409:200};
+    reads++;return {ok:true,status:200,json:async()=>({sha:String(reads).repeat(40)})};
+  });
+  assert.equal(reads,2);assert.equal(writes,2);
+  await assert.rejects(deletePdfFromRepository(pdfPath,'secret',async(url,options)=>
+    options.method==='DELETE'?{ok:false,status:403}:{ok:true,status:200,json:async()=>({sha:'c'.repeat(40)})}), /HTTP 403/);
 });
