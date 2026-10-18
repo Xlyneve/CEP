@@ -19,8 +19,8 @@
     #cepDrawingDialog canvas { display:block; width:100%; height:auto; aspect-ratio:9 / 5; background:#fff; border:1px solid #ccc; border-radius:8px; touch-action:none; cursor:crosshair; }
     #cepDrawingDialog .cep-drawing-footer { display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:10px; margin-top:12px; }
     #cepDrawingStatus { flex:1; min-width:130px; font:13px system-ui; color:inherit; }
-    img.cep-note-drawing { display:block; max-width:100%; height:auto; margin:12px 0; background:#fff; }
-    :is(#noteInput,.editableNote) img.cep-note-drawing { cursor:pointer; outline:1px dashed #aaa; outline-offset:2px; }
+    img.cep-note-drawing { display:block; max-width:100%; height:auto; margin:8px 0; background:transparent; border:0; box-shadow:none; }
+    :is(#noteInput,.editableNote) img.cep-note-drawing { cursor:pointer; outline:none; }
     @media(max-width:600px) { #cepDrawingDialog { padding:12px; } #cepDrawingDialog button { padding:6px 9px; } }
   `;
   document.head.append(style);
@@ -30,6 +30,7 @@
   dialog.innerHTML = `<div class="cep-drawing-header"><h2 id="cepDrawingTitle">Draw in your note</h2><button type="button" data-action="cancel" aria-label="Close drawing">×</button></div>
     <div class="cep-drawing-tools" role="toolbar" aria-label="Drawing tools">
       <button type="button" data-tool="arrow" aria-pressed="true"><svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17 17 3M6 3h11v11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Arrow</button>
+      <button type="button" data-tool="move" aria-pressed="false">Move</button>
       <button type="button" data-tool="pen" aria-pressed="false">✎ Pen</button>
       <button type="button" data-tool="erase" aria-pressed="false">Eraser</button>
       <button type="button" data-action="undo" disabled>Undo</button>
@@ -43,7 +44,7 @@
   const status = dialog.querySelector('#cepDrawingStatus');
   const apply = dialog.querySelector('[data-action="apply"]');
   const undo = dialog.querySelector('[data-action="undo"]');
-  let editor = null, target = null, strokes = [], history = [], active = null, tool = 'arrow', dirty = false;
+  let editor = null, target = null, strokes = [], history = [], active = null, tool = 'arrow', dirty = false, selected = -1, returnRange = null;
   const clone = value => JSON.parse(JSON.stringify(value));
   const pointCount = () => strokes.reduce((n,s) => n + s.points.length, 0);
   function valid(raw) {
@@ -77,21 +78,31 @@
       ctx.lineTo(end[0]-size*Math.cos(angle+.45),end[1]-size*Math.sin(angle+.45));ctx.closePath();ctx.fill();
     }
   }
-  function render() {
+  function render(showSelection=true) {
     ctx.clearRect(0,0,W,H);
     strokes.forEach(paintStroke);
     if (active?.stroke) paintStroke(active.stroke);
+    if(showSelection && tool==='move' && strokes[selected]) {
+      const s=strokes[selected];ctx.fillStyle='#4384c5';ctx.strokeStyle='#fff';ctx.lineWidth=2;
+      for(const p of [s.points[0],s.points.at(-1)]){ctx.beginPath();ctx.arc(p[0],p[1],5,0,Math.PI*2);ctx.fill();ctx.stroke();}
+    }
     undo.disabled = !history.length;
     apply.textContent=target?(strokes.length?'Update drawing':'Remove drawing'):'Add drawing';
   }
   function setTool(value) {
-    tool = value;
+    tool = value;selected=-1;canvas.style.cursor=tool==='move'?'grab':'crosshair';
     dialog.querySelectorAll('[data-tool]').forEach(b => b.setAttribute('aria-pressed',String(b.dataset.tool === tool)));
-    status.textContent = tool === 'arrow' ? 'Drag to draw an arrow.' : tool === 'pen' ? 'Draw freely with your finger, stylus, or mouse.' : 'Touch or drag across a stroke to erase it.';
+    status.textContent = tool === 'arrow' ? 'Drag to draw an arrow.' : tool === 'pen' ? 'Draw freely with your finger, stylus, or mouse.' : tool==='move' ? 'Drag an arrow or pen stroke to move it.' : 'Touch or drag across a stroke to erase it.';
+    render();
   }
   function remember() { history.push(clone(strokes)); if(history.length>30)history.shift(); }
   function position(e) { const r=canvas.getBoundingClientRect();return [Math.round(Math.max(0,Math.min(W,(e.clientX-r.left)*W/r.width))*10)/10,Math.round(Math.max(0,Math.min(H,(e.clientY-r.top)*H/r.height))*10)/10]; }
   function distance(p,a,b) {const dx=b[0]-a[0],dy=b[1]-a[1],d=dx*dx+dy*dy,t=d?Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/d)):0;return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy);}
+  function hit(p) {
+    const tolerance=12*W/canvas.getBoundingClientRect().width;
+    for(let i=strokes.length-1;i>=0;i--){const s=strokes[i];if(s.points.some((a,j)=>distance(p,a,s.points[j+1]||a)<tolerance+s.width/2))return i;}
+    return -1;
+  }
   function erase(p) {
     const tolerance = 14*W/canvas.getBoundingClientRect().width;
     const next=strokes.filter(s=>!s.points.some((a,i)=>distance(p,a,s.points[i+1]||a)<tolerance+s.width/2));
@@ -101,12 +112,20 @@
     if(e.button!==0 || active)return;
     e.preventDefault(); canvas.setPointerCapture(e.pointerId);
     const p=position(e);
+    if(tool==='move'){selected=hit(p);if(selected>=0){active={id:e.pointerId,before:clone(strokes),origin:p,moveIndex:selected,changed:false};canvas.style.cursor='grabbing';}render();return;}
     if(tool==='erase'){active={id:e.pointerId,before:clone(strokes),changed:false};erase(p);return;}
     if(pointCount()+(tool==='arrow'?2:1)>MAX_POINTS||strokes.length>=500){status.textContent='Drawing is full. Remove a stroke or add another section.';return;}
     active={id:e.pointerId,stroke:{tool,colour:dialog.querySelector('[type="color"]').value,width:Number(dialog.querySelector('[type="range"]').value),points:tool==='arrow'?[p,p]:[p]}};render();
   });
   canvas.addEventListener('pointermove',e=>{
     if(active?.id!==e.pointerId)return;e.preventDefault();const p=position(e);
+    if(tool==='move'){
+      const original=active.before[active.moveIndex],xs=original.points.map(p=>p[0]),ys=original.points.map(p=>p[1]);
+      const dx=Math.max(-Math.min(...xs),Math.min(W-Math.max(...xs),p[0]-active.origin[0]));
+      const dy=Math.max(-Math.min(...ys),Math.min(H-Math.max(...ys),p[1]-active.origin[1]));
+      strokes[active.moveIndex]={...original,points:original.points.map(a=>[Math.round((a[0]+dx)*10)/10,Math.round((a[1]+dy)*10)/10])};
+      active.changed=dx!==0||dy!==0;render();return;
+    }
     if(tool==='erase'){erase(p);return;}
     const s=active.stroke;
     if(s.tool==='arrow')s.points[1]=p;
@@ -118,46 +137,60 @@
     if(cancel){if(active.before)strokes=active.before;}
     else if(active.stroke){const s=active.stroke;if(s.tool!=='arrow'||Math.hypot(s.points[1][0]-s.points[0][0],s.points[1][1]-s.points[0][1])>4){remember();strokes.push(s);dirty=true;}}
     else if(active.changed){history.push(active.before);if(history.length>30)history.shift();dirty=true;}
-    active=null;render();
+    active=null;if(tool==='move')canvas.style.cursor='grab';render();
   }
   canvas.addEventListener('pointerup',e=>finish(e));
   canvas.addEventListener('pointercancel',e=>finish(e,true));
   function close(discard=true) {
     if(discard&&dirty&&!window.confirm('Discard changes to this drawing?'))return;
-    dialog.close();const previous=editor;editor=null;target=null;active=null;previous?.focus({preventScroll:true});
+    dialog.close();const previous=editor,range=returnRange;editor=null;target=null;active=null;returnRange=null;
+    if(previous?.isConnected){
+      previous.focus({preventScroll:true});
+      const caret=range&&previous.contains(range.commonAncestorContainer)?range:document.createRange();
+      if(caret!==range){caret.selectNodeContents(previous);caret.collapse(false);}
+      const sel=window.getSelection();sel.removeAllRanges();sel.addRange(caret);
+      previous.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));
+    }
   }
   dialog.addEventListener('cancel',e=>{e.preventDefault();close();});
   dialog.addEventListener('click',e=>{
     const button=e.target.closest('button');if(!button)return;
     if(button.dataset.tool){setTool(button.dataset.tool);return;}
     if(button.dataset.action==='cancel'){close();return;}
-    if(button.dataset.action==='undo'){if(history.length){strokes=history.pop();dirty=true;render();}return;}
+    if(button.dataset.action==='undo'){if(history.length){strokes=history.pop();selected=-1;dirty=true;render();}return;}
     if(button.dataset.action==='apply')save();
   });
   function open(host,image=null) {
     if(dialog.open)return;
-    editor=host;target=image;
+    editor=host;target=image;returnRange=null;selected=-1;
+    const sel=window.getSelection();if(sel?.rangeCount&&host.contains(sel.anchorNode))returnRange=sel.getRangeAt(0).cloneRange();
     strokes=[];
     if(image){try{strokes=valid(JSON.parse(image.getAttribute('data-cep-drawing')))||[];}catch{strokes=[];}}
-    history=[];active=null;dirty=false;setTool('arrow');render();
+    history=[];active=null;dirty=false;setTool(image?'move':'arrow');render();
     apply.textContent=image?'Update drawing':'Add drawing';dialog.showModal();
   }
   function save() {
     if(active){status.textContent='Finish the current stroke first.';return;}
     if(!editor?.isConnected){close(false);return;}
     if(!strokes.length){if(target){target.remove();editor.dispatchEvent(new Event('input',{bubbles:true}));dirty=false;close(false);}else status.textContent='Draw an arrow or a pen stroke first.';return;}
-    const output=document.createElement('canvas');output.width=W;output.height=H;
-    const out=output.getContext('2d');out.fillStyle='#ffffff';out.fillRect(0,0,W,H);out.drawImage(canvas,0,0);
+    render(false);
+    const points=strokes.flatMap(s=>s.points),padding=44;
+    const left=Math.max(0,Math.floor(Math.min(...points.map(p=>p[0]))-padding)),top=Math.max(0,Math.floor(Math.min(...points.map(p=>p[1]))-padding));
+    const right=Math.min(W,Math.ceil(Math.max(...points.map(p=>p[0]))+padding)),bottom=Math.min(H,Math.ceil(Math.max(...points.map(p=>p[1]))+padding));
+    const output=document.createElement('canvas');output.width=right-left;output.height=bottom-top;
+    output.getContext('2d').drawImage(canvas,left,top,output.width,output.height,0,0,output.width,output.height);render();
     const image=document.createElement('img');image.className='cep-note-drawing';image.alt='Hand-drawn arrows and flowchart';
     image.src=output.toDataURL('image/png');image.setAttribute('data-cep-drawing',JSON.stringify({v:1,strokes}));
-    image.width=W;image.height=H;image.style.cssText='display:block;max-width:100%;width:100%;height:auto;margin:12px 0;';
+    image.width=output.width;image.height=output.height;image.style.cssText='display:block;max-width:100%;height:auto;margin:8px 0;background:transparent;border:0;';
     const bytes=new TextEncoder().encode(image.outerHTML).length;
     if(bytes>240000||new TextEncoder().encode(editor.innerHTML).length-(target?new TextEncoder().encode(target.outerHTML).length:0)+bytes>800000){status.textContent='This drawing is too large for the note. Undo some strokes and try again.';return;}
     if(target)target.replaceWith(image);
     else {
       // Use a separate block so drawing never covers or reflows typed lines.
       const block=document.createElement('div');block.append(image);
-      editor.append(block,document.createElement('br'));
+      const paragraph=document.createElement('div');paragraph.append(document.createElement('br'));
+      editor.append(block,paragraph);
+      returnRange=document.createRange();returnRange.setStart(paragraph,0);returnRange.collapse(true);
     }
     editor.dispatchEvent(new Event('input',{bubbles:true}));dirty=false;close(false);
   }
