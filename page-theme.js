@@ -3060,7 +3060,7 @@
     themeOptions.push({ value:"grey-lavender", label:"Grey Lavender Glass", colors:["#ebebeb","#f0eff5","#d8cdec","#44335d"] });
     themeOptions.push({ value:"pearl-silver", label:"Silver Pearl Glass", colors:["#ebebeb","#fafaf7","#dfecef","#e2e3ea"] });
     themeOptions.push({ value:"frost-outline", label:"Frost Outline 5D", colors:["#d5e0e8","#66baf0","#9acff2","#b452c9","#2aafc1"] });
-    themeOptions.push({ value:"porcelain", label:"Porcelain Blush 5D", colors:["#e9e9e1","#9fb5d1","#e8c2c0"] });
+    themeOptions.push({ value:"porcelain", label:"Porcelain", colors:["#e9e9e1","#9fb5d1","#e8c2c0"] });
     themeOptions.push({ value:"aurora", label:"Aurora 5D", colors:["#e9ebf6","#8154c4","#7d9aeb","#d091b0","#cee878"] });
     themeOptions.push({ value:"soft-stone", label:"Soft Stone 5D", colors:["#e1e2e6","#dfb53e","#72757c"] });
     themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#f4dada","#f9e5d6","#fdf9f3","#e0c797"] });
@@ -3561,7 +3561,7 @@
   // Pastel Rose twins: the same palette and layout, with distinct depth.
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="pastel-rose-5d"] {
-      --rose-depth:inset 0 2px 2px rgba(255,255,255,.9),0 5px 9px rgba(137,91,104,.22),0 1px 2px rgba(137,91,104,.12);
+      --rose-depth:inset 2px 2px 3px rgba(255,255,251,.95),inset -3px -4px 5px rgba(137,91,104,.18),0 3px 2px rgba(137,91,104,.2),7px 10px 18px rgba(137,91,104,.23),-5px -5px 12px rgba(255,255,251,.88);
       --rose-edge:rgba(255,255,255,.85);
     }
     html[data-xlyneve-color-theme="pastel-rose-recessed"] {
