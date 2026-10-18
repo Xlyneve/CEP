@@ -1,6 +1,7 @@
 (() => {
   'use strict';
-  if (window.CEPNoteVideoLinks) return;
+  if (window.CEPNoteVideoLinks?.version === 2) return;
+  document.getElementById('cep-note-video-link-styles')?.remove();
   const style = document.createElement('style');
   style.id = 'cep-note-video-link-styles';
   style.textContent = `
@@ -68,7 +69,44 @@ function getNoteVideoKind(rawUrl) {
   return '';
 }
 
+function linkifyPlainVideoUrls(root) {
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);
+  const runs=[]; let nodes=[],block=null;
+  const flush=()=>{if(nodes.length)runs.push(nodes);nodes=[];};
+  while(walker.nextNode()){
+    const node=walker.currentNode;
+    if(node.nodeType===1){if(node.tagName==='BR')flush();continue;}
+    if(!node.data)continue;
+    const excluded=node.parentElement.closest('a,button,script,style,code,pre,textarea,.cep-note-video-footer');
+    if(excluded&&root.contains(excluded)){flush();continue;}
+    const nextBlock=node.parentElement.closest('p,li,td,th,div,h1,h2,h3,h4,h5,h6')||root;
+    if(nextBlock!==block){flush();block=nextBlock;}
+    nodes.push(node);
+  }
+  flush();
+  for(const run of runs){
+    let total=0;
+    const pieces=run.map(node=>{const start=total;total+=node.data.length;return {node,start,end:total};});
+    const text=run.map(node=>node.data).join('');
+    const matches=[...text.matchAll(/\b(?:https?:\/\/|www\.)[^\s<>"']+/gi)].reverse();
+    for(const match of matches){
+      let value=match[0].replace(/[.,!?;:]+$/,'');
+      while(value.endsWith(')')&&(value.match(/\)/g)||[]).length>(value.match(/\(/g)||[]).length)value=value.slice(0,-1);
+      const href=/^www\./i.test(value)?'https://'+value:value;
+      if(!getNoteVideoKind(href))continue;
+      const start=match.index,end=start+value.length;
+      const first=pieces.find(piece=>piece.end>start),last=pieces.find(piece=>piece.end>=end);
+      if(!first||!last||!root.contains(first.node)||!root.contains(last.node))continue;
+      const range=document.createRange();range.setStart(first.node,start-first.start);range.setEnd(last.node,end-last.start);
+      const link=document.createElement('a');link.href=href;link.target='_blank';link.rel='noopener noreferrer';link.textContent=value;
+      range.deleteContents();range.insertNode(link);
+    }
+  }
+  root.querySelectorAll('mark.cep-search-match,mark.underlineMatch').forEach(mark=>{if(!mark.textContent&&!mark.children.length)mark.remove();});
+}
+
 function decorateNoteVideoLinks(root) {
+  linkifyPlainVideoUrls(root);
   let footer = root.querySelector(':scope > .cep-note-video-footer');
   root.querySelectorAll('a[href]').forEach(link => {
     if (link.classList.contains('conceptLink')) return;
@@ -164,7 +202,7 @@ function openNoteVideo(sourceUrl) {
   youtubePlayerClose.focus({preventScroll:true});
 }
 
-  window.CEPNoteVideoLinks = Object.freeze({decorate:decorateNoteVideoLinks,kind:getNoteVideoKind,youtubeId:getYouTubeVideoId});
+  window.CEPNoteVideoLinks = Object.freeze({version:2,decorate:decorateNoteVideoLinks,kind:getNoteVideoKind,youtubeId:getYouTubeVideoId});
   // Handle these links before search card copy/navigation handlers, including full-note previews.
   window.addEventListener('click',event=>{
     const link=event.target.closest?.('.cep-search-source[data-source-file="chatgptx.html"] a.cep-note-video-link');
