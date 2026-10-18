@@ -1724,32 +1724,16 @@ html:root:root:root:root:root:root:root:root:root body #formatToolbar :is(#highl
   box-shadow:none !important; opacity:1 !important; filter:none !important;
 }
 
-/* Video badges remain compact and readable independently of card colours. */
-html:root:root:root:root:root:root:root:root:root body .chatBubble a.cep-note-video-link {
-  display:inline-flex !important; align-items:center; gap:4px;
-  padding:3px 6px !important; margin:0 !important; border-radius:7px !important;
-  background:linear-gradient(var(--clinical-field,#faf9f7),var(--clinical-field,#faf9f7)),#faf9f7 !important;
-  color:var(--theme-ink,#37434a) !important; -webkit-text-fill-color:currentColor !important;
-  border:1px solid var(--clinical-edge,#d7c9ce) !important;
-  font:500 11px/1.3 Tahoma,sans-serif !important; text-decoration:none !important;
-}
-html:root:root:root:root:root:root:root:root:root body .chatBubble a.cep-note-video-link svg {
-  width:14px !important; height:14px !important; flex:0 0 14px;
-  fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
-}
-
 .youtube-player-actions { flex-wrap:wrap; }
 .note-video-playback-help { flex:1; color:#604853; font:12px/1.4 Tahoma,sans-serif; }
 
-.chatBubble > .cep-note-video-footer {
-  display:flex; flex-wrap:wrap; align-items:center; gap:7px;
-  margin-top:10px; padding-top:3px; white-space:normal;
-}
+
 </style>
 
 
   <link rel="stylesheet" href="site-background.css">
   <script src="concept-photo-gallery.js?v=20261003-1"></script>
+  <script src="note-video-links.js?v=20261018-1"></script>
   <script src="page-theme.js?v=20261005-1"></script>
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
   <script src="content-highlights.js?v=20261005-1" defer></script>
@@ -3638,65 +3622,9 @@ const youtubePlayerFrame = document.getElementById('youtubePlayerFrame');
 const youtubeExternalLink = document.getElementById('youtubeExternalLink');
 const youtubePlayerClose = document.getElementById('youtubePlayerClose');
 
-function getYouTubeVideoId(rawUrl) {
-  try {
-    const url = new URL(rawUrl, location.href);
-    const host = url.hostname.toLowerCase().replace(/^www\./, '');
-    let id = '';
-
-    if (host === 'youtu.be') id = url.pathname.split('/').filter(Boolean)[0] || '';
-    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
-      if (url.pathname === '/watch') id = url.searchParams.get('v') || '';
-      else {
-        const parts = url.pathname.split('/').filter(Boolean);
-        if (['shorts', 'embed', 'live'].includes(parts[0])) id = parts[1] || '';
-      }
-    }
-
-    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : '';
-  } catch {
-    return '';
-  }
-}
-
-function getNoteVideoKind(rawUrl) {
-  try {
-    const url = new URL(rawUrl, location.href);
-    if (!['https:', 'http:'].includes(url.protocol)) return '';
-    if (getYouTubeVideoId(url.href)) return 'youtube';
-    const host = url.hostname.toLowerCase().replace(/^www\./, '');
-    if (/\.(?:mp4|webm|mov|m4v|ogv)$/i.test(url.pathname)) return 'file';
-    if ((host === 'vimeo.com' || host === 'player.vimeo.com') && /\/\d+(?:\/|$)/.test(url.pathname)) return 'vimeo';
-    if (host === 'fb.watch' || ((host === 'facebook.com' || host.endsWith('.facebook.com')) && (/\/(?:videos|reel|reels|share\/(?:r|v))\//.test(url.pathname) || ((url.pathname === '/watch' || url.pathname === '/watch/' || url.pathname === '/video.php') && url.searchParams.has('v'))))) return 'facebook';
-  } catch {}
-  return '';
-}
-
-function decorateNoteVideoLinks(root) {
-  let footer = root.querySelector(':scope > .cep-note-video-footer');
-  root.querySelectorAll('a[href]').forEach(link => {
-    if (link.classList.contains('conceptLink')) return;
-    if (!link.classList.contains('cep-note-video-link') && !getNoteVideoKind(link.href)) return;
-    link.classList.add('cep-note-video-link');
-    link.title = 'Watch here — ' + link.href;
-    link.setAttribute('aria-label', 'Watch video');
-    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('aria-hidden', 'true');
-    const path = document.createElementNS(icon.namespaceURI, 'path');
-    path.setAttribute('d', 'M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm12 4 6-3v10l-6-3');
-    icon.append(path);
-    const label = document.createElement('span'); label.textContent = 'Watch here';
-    link.replaceChildren(icon, label);
-    if (!footer) { footer = document.createElement('div'); footer.className = 'cep-note-video-footer'; }
-    let parent = link.parentElement;
-    footer.appendChild(link);
-    // Remove only wrappers left empty by moving a standalone URL, never table cells.
-    while (parent && parent !== root && parent !== footer && parent.matches('p,div,span') && !parent.children.length && !parent.textContent.trim()) {
-      const next = parent.parentElement; parent.remove(); parent = next;
-    }
-  });
-  if (footer?.children.length) root.appendChild(footer);
-}
+function getYouTubeVideoId(rawUrl) { return window.CEPNoteVideoLinks.youtubeId(rawUrl); }
+function getNoteVideoKind(rawUrl) { return window.CEPNoteVideoLinks.kind(rawUrl); }
+function decorateNoteVideoLinks(root) { window.CEPNoteVideoLinks.decorate(root); }
 
 function insertNoteVideoLink(editor) {
   const savedRange = caretMap.get(editor)?.cloneRange();

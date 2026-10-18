@@ -1,3 +1,4 @@
+import './note-video-links.js?v=20261018-1';
 import { readStyleRules, splitStyleText } from './search-style-parser.js?v=20261012-1';
 // Presentation only: no Firebase imports, reads, source-page scripts, or iframe loads.
 const stylesheet = document.createElement('link');
@@ -127,6 +128,7 @@ export function applySourceSearchSkin(parent, entry) {
   surface.dataset.sourceMod5 = String(index % 5); surface.dataset.sourceMod6 = String(index % 6);
   surface.append(...parent.childNodes); parent.append(surface);
   if (file === 'chatgptx.html') {
+    window.CEPNoteVideoLinks.decorate(surface);
     parent.addEventListener('contextmenu', event => {
       if (event.target.closest('a:not(.universal-search-native-card):not(.cep-global-search-result),button,input,textarea,select,[contenteditable="true"]')) return;
       event.preventDefault(); event.stopPropagation(); openChatSearchPreview(parent,surface);
@@ -163,3 +165,4 @@ export function applySourceSearchSkin(parent, entry) {
   });
 }
 window.applySourceSearchSkin = applySourceSearchSkin;
+
