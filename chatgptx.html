@@ -1726,20 +1726,25 @@ html:root:root:root:root:root:root:root:root:root body #formatToolbar :is(#highl
 
 /* Video badges remain compact and readable independently of card colours. */
 html:root:root:root:root:root:root:root:root:root body .chatBubble a.cep-note-video-link {
-  display:inline-flex !important; align-items:center; gap:6px;
-  padding:5px 9px !important; margin:3px 0 !important; border-radius:9px !important;
+  display:inline-flex !important; align-items:center; gap:4px;
+  padding:3px 6px !important; margin:0 !important; border-radius:7px !important;
   background:linear-gradient(var(--clinical-field,#faf9f7),var(--clinical-field,#faf9f7)),#faf9f7 !important;
   color:var(--theme-ink,#37434a) !important; -webkit-text-fill-color:currentColor !important;
   border:1px solid var(--clinical-edge,#d7c9ce) !important;
-  font:600 13px/1.3 Tahoma,sans-serif !important; text-decoration:none !important;
+  font:500 11px/1.3 Tahoma,sans-serif !important; text-decoration:none !important;
 }
 html:root:root:root:root:root:root:root:root:root body .chatBubble a.cep-note-video-link svg {
-  width:18px !important; height:18px !important; flex:0 0 18px;
+  width:14px !important; height:14px !important; flex:0 0 14px;
   fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
 }
 
 .youtube-player-actions { flex-wrap:wrap; }
 .note-video-playback-help { flex:1; color:#604853; font:12px/1.4 Tahoma,sans-serif; }
+
+.chatBubble > .cep-note-video-footer {
+  display:flex; flex-wrap:wrap; align-items:center; gap:7px;
+  margin-top:10px; padding-top:3px; white-space:normal;
+}
 </style>
 
 
@@ -3668,6 +3673,7 @@ function getNoteVideoKind(rawUrl) {
 }
 
 function decorateNoteVideoLinks(root) {
+  let footer = root.querySelector(':scope > .cep-note-video-footer');
   root.querySelectorAll('a[href]').forEach(link => {
     if (link.classList.contains('conceptLink')) return;
     if (!link.classList.contains('cep-note-video-link') && !getNoteVideoKind(link.href)) return;
@@ -3681,7 +3687,15 @@ function decorateNoteVideoLinks(root) {
     icon.append(path);
     const label = document.createElement('span'); label.textContent = 'Watch here';
     link.replaceChildren(icon, label);
+    if (!footer) { footer = document.createElement('div'); footer.className = 'cep-note-video-footer'; }
+    let parent = link.parentElement;
+    footer.appendChild(link);
+    // Remove only wrappers left empty by moving a standalone URL, never table cells.
+    while (parent && parent !== root && parent !== footer && parent.matches('p,div,span') && !parent.children.length && !parent.textContent.trim()) {
+      const next = parent.parentElement; parent.remove(); parent = next;
+    }
   });
+  if (footer?.children.length) root.appendChild(footer);
 }
 
 function insertNoteVideoLink(editor) {
