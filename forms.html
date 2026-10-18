@@ -807,6 +807,10 @@ button:hover {
       box-shadow:var(--note-editor-inset,inset 2px 2px 4px #0003) !important;
     }
     #choosePdfBtn:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
+
+    .form-link-badges { display:inline-flex; align-items:center; gap:5px; margin-left:5px; vertical-align:middle; white-space:nowrap; }
+    .form-link-marker { display:inline-flex; align-items:center; gap:2px; font-size:9px; font-weight:700; line-height:1; color:inherit; }
+    .form-link-marker svg { width:13px; height:13px; flex:none; vertical-align:middle; }
   </style>
   <link rel="stylesheet" href="site-background.css">
   <script src="page-theme.js?v=1"></script>
@@ -918,6 +922,24 @@ button:hover {
     'akohiringa.co.nz',
     'healthify.nz'
   ];
+  function getFormLinkPresentation(rawUrl, record = {}) {
+    try {
+      const url = new URL(rawUrl);
+      const host = url.hostname.toLowerCase();
+      const isPdf = Boolean(record.pdfPath) || /\.pdf$/i.test(url.pathname);
+      const external = record.openExternally === true || externalOnlyHosts.some(domain =>
+        host === domain || host.endsWith('.' + domain)) ||
+        (isPdf && (host === 'sexualwellbeing.org.nz' || host.endsWith('.sexualwellbeing.org.nz')));
+      return { isPdf, external };
+    } catch { return { isPdf: false, external: false }; }
+  }
+
+  function formLinkBadges(kind) {
+    const pdf = kind.isPdf ? '<span class="form-link-marker" title="PDF document"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></svg>PDF</span>' : '';
+    const external = kind.external ? '<span class="form-link-marker" title="Opens in a new tab; preview unavailable" role="img" aria-label="Opens in a new tab; preview unavailable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4 10 14"/><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></span>' : '';
+    return pdf || external ? '<span class="form-link-badges">' + pdf + external + '</span>' : '';
+  }
+
   let modularFirestorePromise;
 
   function getModularFirestore() {
@@ -1094,15 +1116,17 @@ function renderURLDocs(urlDocs, filter) {
       const safeTitle = (data.title || '').replace(/'/g, "\\'");
       const safeNote = (data.note || '').replace(/'/g, "\\'");
       const safeUrl = data.url || '';
+      const linkKind = getFormLinkPresentation(safeUrl, data);
 
       const div = document.createElement('div');
       div.className = 'file-item';
+      div.dataset.formExternal = String(linkKind.external);
       const description = String(data.note || '').trim();
       if (description) div.title = description;
 	  
       div.innerHTML = `
         <div class="view-mode" id="view-${doc.id}">
-  <strong>${escapeHtmlText(data.title || 'Untitled')}</strong>
+  <strong>${escapeHtmlText(data.title || 'Untitled')}${formLinkBadges(linkKind)}</strong>
   ${data.note ? `<em>${escapeHtmlText(data.note)}</em>` : ''}
 </div>
 
@@ -1214,10 +1238,8 @@ function showFormPreview(url, title, selectedCard) {
     return;
   }
 
-  const hostname = parsedUrl.hostname.toLowerCase();
-  const opensExternally = externalOnlyHosts.some(host => (
-    hostname === host || hostname.endsWith(`.${host}`)
-  ));
+  const opensExternally = getFormLinkPresentation(parsedUrl.href).external ||
+    selectedCard.dataset.formExternal === 'true';
 
   document.querySelectorAll('.file-item.is-selected').forEach(card => {
     card.classList.remove('is-selected');
