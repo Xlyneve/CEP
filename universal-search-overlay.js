@@ -1,4 +1,4 @@
-import { applySourceSearchSkin } from "./search-source-cards.js?v=20261018-7";
+import { applySourceSearchSkin } from "./search-source-cards.js?v=20261018-8";
 import "./concept-markup.js?v=20261004-1";
 import "./shared-definitions.js?v=20261007-3";
 import "./pn-shared-definitions.js?v=20261007-3";
@@ -1516,7 +1516,8 @@ export async function mountUniversalSearch(host, closeSearch) {
         copyText: entry.displayText || entry.text || entry.title,
         copyHtml: getSearchCopyHtml(entry),
         navigate: () => {
-          if (entry.directUrl) window.open(link.href, '_blank', 'noopener');
+          if (entry.directUrl && entry.file === 'forms.html') window.CEPNoteVideoLinks.open(link.href, { trigger: link });
+          else if (entry.directUrl) window.open(link.href, '_blank', 'noopener');
           else location.assign(link.href);
         }
       });

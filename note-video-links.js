@@ -313,6 +313,13 @@ function decorateNoteVideoLinks(root) {
   window.addEventListener('click',event=>{
     const link=event.target.closest?.('a[href]');
     if(!link||event.defaultPrevented||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+    // Information Links cards point straight to saved URLs, rather than a note page.
+    // Open only these search cards on a single click; other result cards retain copy.
+    if(link.matches('a.cep-search-source[data-source-file="forms.html"]')){
+      let url;try{url=new URL(link.href,location.href);}catch{return;}
+      if(!['http:','https:'].includes(url.protocol))return;
+      event.preventDefault();event.stopImmediatePropagation();openLink(url.href,{trigger:link});return;
+    }
     if(link.closest('#cepNoteLinkPanel,[contenteditable="true"]')||link.matches('[download],[role="button"],.conceptLink,.cep-xgpt-concept,.xgpt-concept-link,.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result,.cep-search-source'))return;
     const raw=link.getAttribute('href')?.trim();if(!raw||raw.startsWith('#'))return;
     let url;try{url=new URL(raw,location.href);if(!['http:','https:'].includes(url.protocol))return;}catch{return;}
