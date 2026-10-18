@@ -238,10 +238,18 @@ function decorateNoteVideoLinks(root) {
     frame.querySelector('video')?.pause();frame.replaceChildren();currentUrl='';
     if(restoreFocus&&lastTrigger?.isConnected)lastTrigger.focus({preventScroll:true});
   }
+  function openExternalTab(url) {
+    // noopener prevents the external site from controlling this page.
+    window.open(url,'_blank','noopener,noreferrer');
+  }
   function openLink(rawUrl,options={}) {
     let url;try{url=new URL(rawUrl,location.href);if(!['http:','https:'].includes(url.protocol))return;}catch{return;}
     // Keep links from Home's embedded widgets in the main window's panel.
     if(window.parent!==window){try{if(window.parent.CEPNoteVideoLinks?.open){window.parent.CEPNoteVideoLinks.open(url.href,{video:options.video});return;}}catch{}}
+    // This server explicitly disallows framing its PDFs. Open during the user's
+    // click so popup blockers can recognise the new tab as user initiated.
+    const blockedPdf=url.hostname.replace(/^www\./,'')==='sexualwellbeing.org.nz'&&/\.pdf$/i.test(url.pathname);
+    if(blockedPdf){closePanel(false);openExternalTab(url.href);return;}
     const host=options.trigger?.closest('dialog[open]')||document.body;
     ensurePanel(host);lastTrigger=options.trigger||null;
     panel.classList.remove('is-collapsed');collapseButton.textContent='›';collapseButton.setAttribute('aria-expanded','true');collapseButton.setAttribute('aria-label','Collapse link panel');
@@ -257,16 +265,17 @@ function decorateNoteVideoLinks(root) {
         embedUrl=embed.href;label='Vimeo';
       }
       panel.classList.toggle('is-video',Boolean(kind||options.video));
-      const blockedPdf=url.hostname.replace(/^www\./,'')==='sexualwellbeing.org.nz'&&/\.pdf$/i.test(url.pathname);
-      if(blockedPdf){
-        const notice=document.createElement('p');notice.style.cssText='padding:24px;font:14px/1.6 Tahoma,sans-serif;color:inherit';
-        notice.textContent='This PDF is available, but Sexual Wellbeing blocks it from being displayed inside other websites. Use “Open in new tab” below to read it.';
-        frame.style.background='transparent';frame.append(notice);
-      }else if(kind==='file'){
+      if(kind==='file'){
         const video=document.createElement('video');video.src=url.href;video.controls=true;video.autoplay=true;video.playsInline=true;frame.append(video);
       }else{
         const iframe=document.createElement('iframe');iframe.src=embedUrl;iframe.title=label+' preview';
         iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.addEventListener('error',()=>{
+          // Some browser/network failures report an error; framing-policy blocks
+          // usually do not. Never guess from a timeout or cross-origin access.
+          if(currentUrl!==url.href||!iframe.isConnected)return;
+          closePanel(false);openExternalTab(url.href);
+        },{once:true});
         iframe.allowFullscreen=true;iframe.referrerPolicy='strict-origin-when-cross-origin';frame.append(iframe);
       }
       title.textContent=label;title.title=url.href;newTab.href=url.href;currentUrl=url.href;

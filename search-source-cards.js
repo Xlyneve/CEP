@@ -1,4 +1,4 @@
-import './note-video-links.js?v=20261018-4';
+import './note-video-links.js?v=20261018-5';
 import { readStyleRules, splitStyleText } from './search-style-parser.js?v=20261012-1';
 // Presentation only: no Firebase imports, reads, source-page scripts, or iframe loads.
 const stylesheet = document.createElement('link');
