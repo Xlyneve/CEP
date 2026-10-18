@@ -849,6 +849,14 @@ button:hover {
   <div class="form-group" id="urlFields">
     <input type="text" id="urlInput" placeholder="Enter URL (https://...)">
   </div>
+  <div class="form-group" id="previewModeFields">
+    <label for="urlPreviewMode" style="font-size:12px;">Website opening</label>
+    <select id="urlPreviewMode" style="width:100%;margin-top:5px;">
+      <option value="auto">Unverified — try preview</option>
+      <option value="preview">Preview works here</option>
+      <option value="external">Open in new tab</option>
+    </select>
+  </div>
 
   <div class="form-group">
     <input type="text" id="urlTitle" placeholder="Enter title">
@@ -920,25 +928,30 @@ button:hover {
   const db = firebase.firestore();
   const externalOnlyHosts = [
     'akohiringa.co.nz',
-    'healthify.nz'
+    'healthify.nz',
+    'kidshealth.org.nz'
   ];
   function getFormLinkPresentation(rawUrl, record = {}) {
     try {
       const url = new URL(rawUrl);
       const host = url.hostname.toLowerCase();
       const isPdf = Boolean(record.pdfPath) || /\.pdf$/i.test(url.pathname);
-      const external = record.openExternally === true || externalOnlyHosts.some(domain =>
+      const knownExternal = externalOnlyHosts.some(domain =>
         host === domain || host.endsWith('.' + domain)) ||
         (isPdf && (host === 'sexualwellbeing.org.nz' || host.endsWith('.sexualwellbeing.org.nz')));
-      return { isPdf, external, isWebsite: ['http:', 'https:'].includes(url.protocol) && !isPdf };
+      const external = record.previewMode === 'external' ||
+        (record.previewMode !== 'preview' && (record.openExternally === true || knownExternal));
+      const previewConfirmed = !external && (record.previewMode === 'preview' || url.origin === location.origin);
+      return { isPdf, external, previewConfirmed, isWebsite: ['http:', 'https:'].includes(url.protocol) && !isPdf };
     } catch { return { isPdf: false, external: false, isWebsite: false }; }
   }
 
   function formLinkBadges(kind) {
     const pdf = kind.isPdf ? '<span class="form-link-marker" title="PDF document"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></svg>PDF</span>' : '';
     const external = kind.external ? '<span class="form-link-marker" title="Opens in a new tab; preview unavailable" role="img" aria-label="Opens in a new tab; preview unavailable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4 10 14"/><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></span>' : '';
-    const preview = kind.isWebsite && !kind.external ? '<span class="form-link-marker" title="Preview on this page" role="img" aria-label="Preview on this page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/><path d="M14 9v11"/></svg></span>' : '';
-    return pdf || external || preview ? '<span class="form-link-badges">' + pdf + external + preview + '</span>' : '';
+    const preview = kind.isWebsite && !kind.external && kind.previewConfirmed ? '<span class="form-link-marker" title="Preview on this page" role="img" aria-label="Preview on this page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/><path d="M14 9v11"/></svg></span>' : '';
+    const unchecked = kind.isWebsite && !kind.external && !kind.previewConfirmed ? '<span class="form-link-marker" title="Website; preview not yet checked" role="img" aria-label="Website; preview not yet checked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg></span>' : '';
+    return pdf || external || preview || unchecked ? '<span class="form-link-badges">' + pdf + external + preview + unchecked + '</span>' : '';
   }
 
   let modularFirestorePromise;
@@ -973,6 +986,7 @@ button:hover {
   function setAddMode(mode) {
     addMode = mode;
     document.getElementById('urlFields').hidden = mode !== 'url';
+    document.getElementById('previewModeFields').hidden = mode !== 'url';
     document.getElementById('pdfUploadFields').hidden = mode !== 'pdf';
     document.getElementById('addUrlMode').setAttribute('aria-pressed', String(mode === 'url'));
     document.getElementById('uploadPdfMode').setAttribute('aria-pressed', String(mode === 'pdf'));
@@ -1041,12 +1055,14 @@ button:hover {
       const { firestoreSdk, firestore } = await getModularFirestore();
       await firestoreSdk.addDoc(firestoreSdk.collection(firestore, 'urlForms'), {
         url, title, note,
+        previewMode: document.getElementById('urlPreviewMode').value,
         openCount: 0,
         createdAt: firestoreSdk.serverTimestamp()
       });
       window.invalidateCepSearchCache?.('main:urlForms');
 
       document.getElementById('urlInput').value = '';
+      document.getElementById('urlPreviewMode').value = 'auto';
       document.getElementById('urlTitle').value = '';
       document.getElementById('urlNote').value = '';
       document.getElementById('addForm').style.display = 'none';
@@ -1148,6 +1164,13 @@ function renderURLDocs(urlDocs, filter) {
     style="width:100%; margin-bottom:8px;"
   >
 
+  <label for="edit-preview-mode-${doc.id}" style="font-size:11px;">Website opening</label>
+  <select id="edit-preview-mode-${doc.id}" style="width:100%;margin-bottom:8px;">
+    <option value="auto" ${(!data.previewMode && !data.openExternally) || data.previewMode === 'auto' ? 'selected' : ''}>Unverified — try preview</option>
+    <option value="preview" ${data.previewMode === 'preview' ? 'selected' : ''}>Preview works here</option>
+    <option value="external" ${data.previewMode === 'external' || (!data.previewMode && data.openExternally) ? 'selected' : ''}>Open in new tab</option>
+  </select>
+
   <textarea 
     id="edit-note-${doc.id}" 
     rows="4" 
@@ -1239,8 +1262,9 @@ function showFormPreview(url, title, selectedCard) {
     return;
   }
 
-  const opensExternally = getFormLinkPresentation(parsedUrl.href).external ||
-    selectedCard.dataset.formExternal === 'true';
+  const opensExternally = selectedCard.dataset.formExternal != null
+    ? selectedCard.dataset.formExternal === 'true'
+    : getFormLinkPresentation(parsedUrl.href).external;
 
   document.querySelectorAll('.file-item.is-selected').forEach(card => {
     card.classList.remove('is-selected');
@@ -1325,7 +1349,9 @@ async function saveInlineEdit(id) {
   await db.collection('urlForms').doc(id).update({
     title: newTitle,
     url: newUrl,
-    note: newNote
+    note: newNote,
+    previewMode: document.getElementById(`edit-preview-mode-${id}`).value,
+    openExternally: document.getElementById(`edit-preview-mode-${id}`).value === 'external'
   });
   window.invalidateCepSearchCache?.('main:urlForms');
 
