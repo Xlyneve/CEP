@@ -67,7 +67,7 @@
         const name = attribute.name.toLowerCase();
         const value = attribute.value;
         const allowedForLink = element.tagName === "A" && ["href", "target", "rel"].includes(name);
-        const allowedForImage = element.tagName === "IMG" && ["src", "alt", "width", "height"].includes(name);
+        const allowedForImage = element.tagName === "IMG" && ["src", "alt", "width", "height", "data-cep-drawing"].includes(name);
 
         if (name.startsWith("on")) {
           element.removeAttribute(attribute.name);
@@ -360,3 +360,4 @@
     startSearchFocus();
   }
 })();
+
