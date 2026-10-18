@@ -1737,6 +1737,9 @@ html:root:root:root:root:root:root:root:root:root body .chatBubble a.cep-note-vi
   width:18px !important; height:18px !important; flex:0 0 18px;
   fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
 }
+
+.youtube-player-actions { flex-wrap:wrap; }
+.note-video-playback-help { flex:1; color:#604853; font:12px/1.4 Tahoma,sans-serif; }
 </style>
 
 
@@ -1872,6 +1875,7 @@ html:root:root:root:root:root:root:root:root:root body .chatBubble a.cep-note-vi
   <div class="youtube-player-dialog" role="dialog" aria-modal="true" aria-label="Video player">
     <div class="youtube-player-frame" id="youtubePlayerFrame"></div>
     <div class="youtube-player-actions">
+      <span class="note-video-playback-help">If playback is blocked, use the link to open the video.</span>
       <a id="youtubeExternalLink" href="#" target="_blank" rel="noopener noreferrer">Open on YouTube</a>
       <button id="youtubePlayerClose" type="button" aria-label="Close video">✕</button>
     </div>
@@ -3657,8 +3661,8 @@ function getNoteVideoKind(rawUrl) {
     if (getYouTubeVideoId(url.href)) return 'youtube';
     const host = url.hostname.toLowerCase().replace(/^www\./, '');
     if (/\.(?:mp4|webm|mov|m4v|ogv)$/i.test(url.pathname)) return 'file';
-    if ((host === 'vimeo.com' || host === 'player.vimeo.com') && /\/\d+(?:\/|$)/.test(url.pathname)) return 'external';
-    if (host === 'fb.watch' || ((host === 'facebook.com' || host.endsWith('.facebook.com')) && (/\/(?:videos|reel|reels|share\/(?:r|v))\//.test(url.pathname) || ((url.pathname === '/watch' || url.pathname === '/watch/' || url.pathname === '/video.php') && url.searchParams.has('v'))))) return 'external';
+    if ((host === 'vimeo.com' || host === 'player.vimeo.com') && /\/\d+(?:\/|$)/.test(url.pathname)) return 'vimeo';
+    if (host === 'fb.watch' || ((host === 'facebook.com' || host.endsWith('.facebook.com')) && (/\/(?:videos|reel|reels|share\/(?:r|v))\//.test(url.pathname) || ((url.pathname === '/watch' || url.pathname === '/watch/' || url.pathname === '/video.php') && url.searchParams.has('v'))))) return 'facebook';
   } catch {}
   return '';
 }
@@ -3721,6 +3725,7 @@ function openNoteVideoFile(sourceUrl) {
   video.src = sourceUrl; video.controls = true; video.autoplay = true; video.playsInline = true;
   video.style.cssText = 'width:100%;height:100%;display:block;';
   youtubePlayerFrame.replaceChildren(video);
+  youtubePlayerOverlay.querySelector('[role="dialog"]').setAttribute('aria-label','Video player');
   youtubeExternalLink.href = sourceUrl; youtubeExternalLink.textContent = 'Open video';
   youtubePlayerOverlay.classList.add('is-open'); youtubePlayerOverlay.setAttribute('aria-hidden','false');
   youtubePlayerClose.focus({preventScroll:true});
@@ -3729,36 +3734,48 @@ function openNoteVideoFile(sourceUrl) {
 function closeYouTubePlayer() {
   youtubePlayerOverlay.classList.remove('is-open');
   youtubePlayerOverlay.setAttribute('aria-hidden', 'true');
+  youtubePlayerFrame.querySelector('video')?.pause();
   youtubePlayerFrame.replaceChildren();
 }
 
-function openYouTubePlayer(videoId, sourceUrl) {
+function openNoteVideo(sourceUrl) {
+  let url;
+  try { url = new URL(sourceUrl); if (!['http:','https:'].includes(url.protocol)) return; } catch { return; }
+  const kind = getNoteVideoKind(url.href);
+  if (kind === 'file') { openNoteVideoFile(url.href); return; }
+  let embedUrl = url.href, title = 'Video player', externalLabel = 'Open video';
+  if (kind === 'youtube') {
+    embedUrl = `https://www.youtube-nocookie.com/embed/${getYouTubeVideoId(url.href)}?autoplay=1&rel=0`;
+    title = 'YouTube video player'; externalLabel = 'Open on YouTube';
+  } else if (kind === 'facebook') {
+    // Same Facebook embed route used in PN.html.
+    embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url.href)}&show_text=false&width=900&autoplay=true`;
+    title = 'Facebook video player'; externalLabel = 'Open on Facebook';
+  } else if (kind === 'vimeo') {
+    const parts = url.pathname.split('/').filter(Boolean), index = parts.findIndex(part => /^\d+$/.test(part));
+    const embed = new URL('https://player.vimeo.com/video/' + parts[index]);
+    embed.searchParams.set('autoplay','1');
+    const hash = url.searchParams.get('h') || parts[index + 1];
+    if (hash && /^[a-z0-9]+$/i.test(hash)) embed.searchParams.set('h',hash);
+    embedUrl = embed.href; title = 'Vimeo video player'; externalLabel = 'Open on Vimeo';
+  }
   const iframe = document.createElement('iframe');
-  iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
-  iframe.title = 'YouTube video player';
+  iframe.src = embedUrl; iframe.title = title;
   iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-  iframe.allowFullscreen = true;
-  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+  iframe.allowFullscreen = true; iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+  youtubePlayerOverlay.querySelector('[role="dialog"]').setAttribute('aria-label',title);
   youtubePlayerFrame.replaceChildren(iframe);
-  youtubeExternalLink.href = sourceUrl;
-  youtubeExternalLink.textContent = 'Open on YouTube';
-  youtubePlayerOverlay.classList.add('is-open');
-  youtubePlayerOverlay.setAttribute('aria-hidden', 'false');
-  youtubePlayerClose.focus({ preventScroll: true });
+  youtubeExternalLink.href = url.href; youtubeExternalLink.textContent = externalLabel;
+  youtubePlayerOverlay.classList.add('is-open'); youtubePlayerOverlay.setAttribute('aria-hidden','false');
+  youtubePlayerClose.focus({preventScroll:true});
 }
 
 document.addEventListener('click', event => {
   const link = event.target.closest?.('.chatBubble a[href]');
   if (!link || link.classList.contains('conceptLink')) return;
   if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-  if (getNoteVideoKind(link.href) === 'file') {
-    event.preventDefault(); event.stopPropagation(); openNoteVideoFile(link.href); return;
-  }
-  const videoId = getYouTubeVideoId(link.href);
-  if (!videoId) return;
-  event.preventDefault();
-  event.stopPropagation();
-  openYouTubePlayer(videoId, link.href);
+  if (!link.classList.contains('cep-note-video-link') && !getNoteVideoKind(link.href)) return;
+  event.preventDefault(); event.stopPropagation(); openNoteVideo(link.href);
 }, true);
 
 youtubePlayerClose.addEventListener('click', closeYouTubePlayer);
