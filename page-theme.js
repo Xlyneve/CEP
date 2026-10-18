@@ -3785,6 +3785,14 @@
     }
   `;
 
+  // ChatGPTX keeps pastel colour at the edge rather than filling the note.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body:has(#chat) .chatBubble {
+      background:#faf9f7 !important; background-image:none !important;
+      border:1.5px solid #d9a7b8 !important;
+    }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
