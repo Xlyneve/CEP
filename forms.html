@@ -750,6 +750,33 @@ button:hover {
     #pdfUploadFields small { display:block; font-size:11px; line-height:1.5; }
     #pdfUploadStatus { font-size:12px; line-height:1.5; white-space:normal; }
     #pdfUploadStatus:empty { display:none; }
+
+    /* A small two-tone options light stays visible on every card palette. */
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #fileList .file-item button.card-light {
+      display:inline-grid !important; place-items:center !important;
+      position:relative !important; flex:0 0 20px !important;
+      width:20px !important; height:20px !important; min-width:20px !important; min-height:20px !important;
+      padding:0 !important; margin:0 !important; border:0 !important; border-radius:50% !important;
+      background:transparent !important; background-image:none !important; box-shadow:none !important;
+      opacity:1 !important; visibility:visible !important; pointer-events:auto !important;
+      filter:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+      transform:none !important;
+    }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #fileList .file-item button.card-light::before {
+      content:'' !important; display:block !important; position:static !important;
+      width:11px !important; height:11px !important; border-radius:50% !important;
+      box-sizing:border-box !important; border:1.5px solid #fff !important;
+      background:#5e454a !important;
+      background:color-mix(in srgb,var(--theme-ink,#37434a) 80%,var(--clinical-accent,#9b6e7d)) !important;
+      box-shadow:0 0 0 1px rgba(35,30,33,.45),0 1px 2px #0003 !important;
+      opacity:1 !important; transform:none !important;
+    }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #fileList .file-item button.card-light:focus-visible {
+      outline:2px solid var(--theme-ink,#37434a) !important; outline-offset:2px !important;
+    }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #fileList .file-item .card-controls.open button.card-light::before {
+      box-shadow:0 0 0 1px rgba(35,30,33,.6),0 0 0 3px rgba(255,255,255,.65) !important;
+    }
   </style>
   <link rel="stylesheet" href="site-background.css">
   <script src="page-theme.js?v=1"></script>
@@ -1077,7 +1104,8 @@ function renderURLDocs(urlDocs, filter) {
     type="button"
     class="card-light"
     title="Options"
-    aria-label="Show options">
+    aria-label="Show edit and delete options"
+    aria-expanded="false">
   </button>
 
 </div>
@@ -1090,10 +1118,11 @@ light.addEventListener('click', (e) => {
   e.stopPropagation();
 
   document.querySelectorAll('.card-controls.open').forEach(other => {
-    if (other !== controls) other.classList.remove('open');
+    if (other !== controls) { other.classList.remove('open'); other.querySelector('.card-light')?.setAttribute('aria-expanded', 'false'); }
   });
 
   controls.classList.toggle('open');
+  light.setAttribute('aria-expanded', String(controls.classList.contains('open')));
 });
 
 div.addEventListener('click', (e) => {
@@ -1400,6 +1429,7 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.card-controls')) {
     document.querySelectorAll('.card-controls.open').forEach(control => {
       control.classList.remove('open');
+      control.querySelector('.card-light')?.setAttribute('aria-expanded', 'false');
     });
   }
 });
