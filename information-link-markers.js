@@ -30,8 +30,22 @@
   }
 
 
+  const titleCollator = new Intl.Collator('en', { sensitivity: 'base', numeric: true, ignorePunctuation: true });
+  function compareTitles(left, right) {
+    return titleCollator.compare(String(left || 'Untitled').trim(), String(right || 'Untitled').trim());
+  }
+  function sortResults(matches, getEntry = entry => entry) {
+    const isInformationLink = match => String(getEntry(match)?.file || '').toLowerCase() === 'forms.html';
+    const links = matches.filter(isInformationLink).sort((left, right) => {
+      const a = getEntry(left), b = getEntry(right);
+      return compareTitles(a.record?.data?.title || a.title, b.record?.data?.title || b.title);
+    });
+    let next = 0;
+    matches.forEach((match, index) => { if (isInformationLink(match)) matches[index] = links[next++]; });
+    return matches;
+  }
   window.CEPInformationLinks = Object.freeze({
-    version: 1, classify: getFormLinkPresentation, badges: formLinkBadges
+    version: 1, classify: getFormLinkPresentation, badges: formLinkBadges, compareTitles, sortResults
   });
   const style = document.createElement('style');
   style.id = 'cep-information-link-marker-styles';

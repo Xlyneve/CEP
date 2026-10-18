@@ -1454,6 +1454,7 @@ export async function mountUniversalSearch(host, closeSearch) {
       sourceResultCounts.set(sourceName, sourceCount + 1);
       if (matches.length >= 30) break;
     }
+    window.CEPInformationLinks.sortResults(matches, match => match.entry);
     const onlySimilar = matches.length && matches.every(match => match.fuzzy);
     status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 30 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : 'No matching notes found.';
     const groups = new Map();

@@ -1154,16 +1154,8 @@ function renderURLDocs(urlDocs, filter) {
   const container = document.getElementById('fileList');
   container.innerHTML = '';
 
-  const rankedDocs = [...urlDocs].sort((leftDoc, rightDoc) => {
-    const left = leftDoc.data();
-    const right = rightDoc.data();
-    const countDifference = (Number(right.openCount) || 0) - (Number(left.openCount) || 0);
-    if (countDifference) return countDifference;
-
-    const leftOpened = left.lastOpenedAt?.toMillis?.() || 0;
-    const rightOpened = right.lastOpenedAt?.toMillis?.() || 0;
-    return rightOpened - leftOpened;
-  });
+  const rankedDocs = [...urlDocs].sort((leftDoc, rightDoc) =>
+    window.CEPInformationLinks.compareTitles(leftDoc.data().title, rightDoc.data().title));
 
   rankedDocs.forEach(doc => {
     const data = doc.data();
