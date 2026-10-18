@@ -787,6 +787,26 @@ button:hover {
     html:root:root:root:root:root:root:root:root:root:root:root:root:is([data-xlyneve-color-theme="porcelain"],[data-xlyneve-color-theme="pearl-silver"],[data-xlyneve-color-theme="pastel-rose-recessed"],[data-xlyneve-color-theme="autumn"],[data-xlyneve-color-theme="hoya"],[data-xlyneve-color-theme="lake-mist"],[data-xlyneve-color-theme="palm-springs"],[data-xlyneve-color-theme="quiet-stone"]) body #fileList .file-item .card-controls.open button.card-light::before {
       box-shadow:inset 3px 3px 4px rgba(35,30,33,.48),inset -1px -1px 2px rgba(255,255,255,.7) !important;
     }
+
+    .pdf-file-picker { display:flex; align-items:center; gap:10px; margin:8px 0; min-width:0; }
+    #pdfFileName { min-width:0; overflow-wrap:anywhere; font-size:12px; line-height:1.4; }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #pdfFile { display:none !important; }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #choosePdfBtn {
+      display:inline-flex !important; align-items:center !important; justify-content:center !important;
+      flex:0 0 38px; width:38px !important; height:38px !important; min-width:38px !important; min-height:38px !important;
+      margin:0 !important; padding:8px !important; border-radius:12px !important;
+      border:1px solid var(--clinical-edge,#d8d3d4) !important;
+      background:linear-gradient(var(--clinical-field,#faf9f7),var(--clinical-field,#faf9f7)),#faf9f7 !important;
+      color:var(--theme-ink,#37434a) !important; -webkit-text-fill-color:currentColor !important;
+      box-shadow:var(--note-editor-depth,0 2px 5px #0002) !important;
+    }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #choosePdfBtn svg {
+      width:20px !important; height:20px !important; flex:none; color:inherit !important;
+    }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #choosePdfBtn:active {
+      box-shadow:var(--note-editor-inset,inset 2px 2px 4px #0003) !important;
+    }
+    #choosePdfBtn:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
   </style>
   <link rel="stylesheet" href="site-background.css">
   <script src="page-theme.js?v=1"></script>
@@ -811,7 +831,15 @@ button:hover {
   </div>
   <div id="pdfUploadFields" class="form-group" hidden>
     <label for="pdfFile">Choose PDF (up to 5 MB)</label>
-    <input type="file" id="pdfFile" accept=".pdf,application/pdf">
+    <div class="pdf-file-picker">
+      <button type="button" id="choosePdfBtn" aria-label="Choose PDF" title="Choose PDF">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 18v-6m-3 3 3-3 3 3"/>
+        </svg>
+      </button>
+      <span id="pdfFileName" aria-live="polite">No PDF selected</span>
+      <input type="file" id="pdfFile" accept=".pdf,application/pdf">
+    </div>
     <small>PDFs will be public on your website. Avoid private or patient information.</small>
   </div>
   <div class="form-group" id="urlFields">
@@ -930,8 +958,10 @@ button:hover {
   }
   document.getElementById('addUrlMode').addEventListener('click', () => setAddMode('url'));
   document.getElementById('uploadPdfMode').addEventListener('click', () => setAddMode('pdf'));
+  document.getElementById('choosePdfBtn').addEventListener('click', () => document.getElementById('pdfFile').click());
   document.getElementById('pdfFile').addEventListener('change', event => {
     const file = event.target.files[0];
+    document.getElementById('pdfFileName').textContent = file ? file.name : 'No PDF selected';
     const title = document.getElementById('urlTitle');
     if (file && !title.value.trim()) title.value = file.name.replace(/\.pdf$/i, '');
   });
@@ -940,7 +970,7 @@ button:hover {
     const button = document.getElementById('saveUrlBtn');
     const status = document.getElementById('pdfUploadStatus');
     const fileInput = document.getElementById('pdfFile');
-    const controls = [button, fileInput, document.getElementById('addUrlMode'), document.getElementById('uploadPdfMode')];
+    const controls = [button, fileInput, document.getElementById('choosePdfBtn'), document.getElementById('addUrlMode'), document.getElementById('uploadPdfMode')];
     controls.forEach(control => { control.disabled = true; });
     let saved = false;
     try {
@@ -958,6 +988,7 @@ button:hover {
       status.textContent = published ? 'PDF saved and ready to open.' :
         'PDF saved in GitHub. Publishing is taking longer; open it again in a few minutes.';
       fileInput.value = '';
+      document.getElementById('pdfFileName').textContent = 'No PDF selected';
       document.getElementById('urlTitle').value = '';
       document.getElementById('urlNote').value = '';
     } catch (error) {
