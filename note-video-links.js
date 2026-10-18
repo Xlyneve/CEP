@@ -7,7 +7,7 @@
   style.textContent = `
     html:root:root:root:root:root:root:root:root:root:root:root body a.cep-note-video-link {
       display:inline-flex !important; align-items:center; gap:4px;
-      padding:2px 0 !important; margin:0 !important; border:0 !important; border-radius:0 !important;
+      padding:3px 7px !important; margin:0 !important; border:1.5px solid color-mix(in srgb,var(--clinical-accent,var(--quick-accent,#9b6e7d)) 65%,var(--theme-ink,#37434a)) !important; border-radius:7px !important;
       background:transparent !important; background-image:none !important; box-shadow:none !important;
       color:var(--theme-ink,#37434a) !important; -webkit-text-fill-color:currentColor !important;
       font:700 11px/1.3 Tahoma,sans-serif !important; text-decoration:none !important;
