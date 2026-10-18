@@ -65,6 +65,26 @@
     }
 
   `;
+
+  style.textContent += `
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel.is-sized:not(.is-collapsed) {
+      width:var(--panel-width) !important; height:var(--panel-height) !important;
+      min-width:0 !important; bottom:auto !important;
+    }
+    #cepNoteLinkPanel.is-sized.is-video .cep-link-panel-frame { flex:1; aspect-ratio:auto; }
+    #cepNoteLinkPanel .cep-link-panel-resize {
+      position:absolute; left:0; bottom:0; width:22px; height:22px;
+      cursor:nesw-resize; touch-action:none; z-index:2;
+    }
+    #cepNoteLinkPanel .cep-link-panel-resize::after {
+      content:''; position:absolute; left:6px; bottom:6px; width:7px; height:7px;
+      border-left:2px solid currentColor; border-bottom:2px solid currentColor; opacity:.45;
+    }
+    #cepNoteLinkPanel.is-collapsed .cep-link-panel-resize { display:none; }
+    #cepNoteLinkPanel.is-resizing iframe { pointer-events:none; }
+    #cepNoteLinkPanel .cep-link-panel-footer { flex-wrap:wrap; gap:6px 12px; }
+    #cepNoteLinkPanel .cep-link-panel-help { flex:1; font:11px/1.4 Tahoma,sans-serif; opacity:.8; }
+  `;
   document.head.append(style);
 function getYouTubeVideoId(rawUrl) {
   try {
@@ -170,6 +190,30 @@ function decorateNoteVideoLinks(root) {
       panel=document.createElement('aside');panel.id='cepNoteLinkPanel';panel.setAttribute('popover','manual');
       panel.setAttribute('role','complementary');panel.setAttribute('aria-label','Link panel');panel.setAttribute('aria-hidden','true');
       panel.innerHTML='<div class="cep-link-panel-header"><span class="cep-link-panel-title"></span><button type="button" data-action="collapse" aria-label="Collapse link panel" aria-expanded="true">›</button><button type="button" data-action="close" aria-label="Close link panel">×</button></div><div class="cep-link-panel-body"><div class="cep-link-panel-frame"></div></div><div class="cep-link-panel-footer"><a class="cep-link-panel-new-tab" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a></div>';
+      const help=document.createElement('span');help.className='cep-link-panel-help';
+      help.textContent='Some sites block embedded viewing. If blank or refused, open in a new tab.';
+      panel.querySelector('.cep-link-panel-footer').prepend(help);
+      const grip=document.createElement('div');grip.className='cep-link-panel-resize';grip.title='Drag to resize link panel';
+      panel.append(grip);
+      grip.addEventListener('pointerdown',event=>{
+        if(event.button!==0)return;
+        event.preventDefault();
+        const start=panel.getBoundingClientRect(),x=event.clientX,y=event.clientY;
+        grip.setPointerCapture(event.pointerId);panel.classList.add('is-resizing');
+        const move=e=>{
+          const width=Math.max(Math.min(260,innerWidth-16),Math.min(start.width+x-e.clientX,start.right-8));
+          const height=Math.max(Math.min(180,innerHeight-16),Math.min(start.height+e.clientY-y,innerHeight-start.top-8));
+          panel.style.setProperty('--panel-width',width+'px');panel.style.setProperty('--panel-height',height+'px');
+          panel.classList.add('is-sized');
+        };
+        const end=()=>{panel.classList.remove('is-resizing');grip.removeEventListener('pointermove',move);grip.removeEventListener('pointerup',end);grip.removeEventListener('pointercancel',end);};
+        grip.addEventListener('pointermove',move);grip.addEventListener('pointerup',end);grip.addEventListener('pointercancel',end);
+      });
+      window.addEventListener('resize',()=>{
+        if(!panel.classList.contains('is-sized'))return;
+        panel.style.setProperty('--panel-width',Math.min(parseFloat(panel.style.getPropertyValue('--panel-width')),innerWidth-24)+'px');
+        panel.style.setProperty('--panel-height',Math.min(parseFloat(panel.style.getPropertyValue('--panel-height')),innerHeight-24)+'px');
+      });
       frame=panel.querySelector('.cep-link-panel-frame');title=panel.querySelector('.cep-link-panel-title');newTab=panel.querySelector('a');collapseButton=panel.querySelector('[data-action="collapse"]');
       panel.querySelector('[data-action="close"]').onclick=closePanel;
       collapseButton.onclick=()=>{
@@ -202,7 +246,7 @@ function decorateNoteVideoLinks(root) {
     ensurePanel(host);lastTrigger=options.trigger||null;
     panel.classList.remove('is-collapsed');collapseButton.textContent='›';collapseButton.setAttribute('aria-expanded','true');collapseButton.setAttribute('aria-label','Collapse link panel');
     if(currentUrl!==url.href||!frame.children.length){
-      frame.querySelector('video')?.pause();frame.replaceChildren();
+      frame.querySelector('video')?.pause();frame.replaceChildren();frame.style.background='';
       const kind=getNoteVideoKind(url.href);let embedUrl=url.href,label=url.hostname.replace(/^www\./,'');
       if(kind==='youtube'){embedUrl=`https://www.youtube-nocookie.com/embed/${getYouTubeVideoId(url.href)}?autoplay=1&rel=0`;label='YouTube';}
       else if(kind==='facebook'){embedUrl=`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url.href)}&show_text=false&width=900&autoplay=true`;label='Facebook video';}
@@ -213,7 +257,12 @@ function decorateNoteVideoLinks(root) {
         embedUrl=embed.href;label='Vimeo';
       }
       panel.classList.toggle('is-video',Boolean(kind||options.video));
-      if(kind==='file'){
+      const blockedPdf=url.hostname.replace(/^www\./,'')==='sexualwellbeing.org.nz'&&/\.pdf$/i.test(url.pathname);
+      if(blockedPdf){
+        const notice=document.createElement('p');notice.style.cssText='padding:24px;font:14px/1.6 Tahoma,sans-serif;color:inherit';
+        notice.textContent='This PDF is available, but Sexual Wellbeing blocks it from being displayed inside other websites. Use “Open in new tab” below to read it.';
+        frame.style.background='transparent';frame.append(notice);
+      }else if(kind==='file'){
         const video=document.createElement('video');video.src=url.href;video.controls=true;video.autoplay=true;video.playsInline=true;frame.append(video);
       }else{
         const iframe=document.createElement('iframe');iframe.src=embedUrl;iframe.title=label+' preview';
