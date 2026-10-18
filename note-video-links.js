@@ -185,6 +185,33 @@ function decorateNoteVideoLinks(root) {
 
   let panel,frame,title,newTab,collapseButton,currentUrl='',lastTrigger;
   const dialogHosts=new WeakSet();
+  const preferredSizes={};
+  let sizeKind='link';
+  function readPanelSize(kind) {
+    if(preferredSizes[kind])return preferredSizes[kind];
+    try {
+      const value=JSON.parse(localStorage.getItem('cep-link-panel-size-'+kind));
+      if(value&&Number.isFinite(value.width)&&Number.isFinite(value.height)&&value.width>0&&value.height>0)
+        return preferredSizes[kind]=value;
+    }catch{}
+    return null;
+  }
+  function restorePanelSize() {
+    const size=readPanelSize(sizeKind);
+    panel.classList.toggle('is-sized',Boolean(size));
+    if(!size){panel.style.removeProperty('--panel-width');panel.style.removeProperty('--panel-height');return;}
+    // Clamp only the displayed dimensions; keep the preferred desktop size.
+    panel.style.setProperty('--panel-width',Math.min(size.width,Math.max(1,innerWidth-24))+'px');
+    panel.style.setProperty('--panel-height',Math.min(size.height,Math.max(1,innerHeight-24))+'px');
+  }
+  function savePanelSize() {
+    if(!panel.classList.contains('is-sized'))return;
+    const width=parseFloat(panel.style.getPropertyValue('--panel-width'));
+    const height=parseFloat(panel.style.getPropertyValue('--panel-height'));
+    if(!Number.isFinite(width)||!Number.isFinite(height))return;
+    preferredSizes[sizeKind]={width,height};
+    try{localStorage.setItem('cep-link-panel-size-'+sizeKind,JSON.stringify({width,height}));}catch{}
+  }
   function ensurePanel(host) {
     if(!panel){
       panel=document.createElement('aside');panel.id='cepNoteLinkPanel';panel.setAttribute('popover','manual');
@@ -206,14 +233,10 @@ function decorateNoteVideoLinks(root) {
           panel.style.setProperty('--panel-width',width+'px');panel.style.setProperty('--panel-height',height+'px');
           panel.classList.add('is-sized');
         };
-        const end=()=>{panel.classList.remove('is-resizing');grip.removeEventListener('pointermove',move);grip.removeEventListener('pointerup',end);grip.removeEventListener('pointercancel',end);};
+        const end=()=>{savePanelSize();panel.classList.remove('is-resizing');grip.removeEventListener('pointermove',move);grip.removeEventListener('pointerup',end);grip.removeEventListener('pointercancel',end);};
         grip.addEventListener('pointermove',move);grip.addEventListener('pointerup',end);grip.addEventListener('pointercancel',end);
       });
-      window.addEventListener('resize',()=>{
-        if(!panel.classList.contains('is-sized'))return;
-        panel.style.setProperty('--panel-width',Math.min(parseFloat(panel.style.getPropertyValue('--panel-width')),innerWidth-24)+'px');
-        panel.style.setProperty('--panel-height',Math.min(parseFloat(panel.style.getPropertyValue('--panel-height')),innerHeight-24)+'px');
-      });
+      window.addEventListener('resize',restorePanelSize);
       frame=panel.querySelector('.cep-link-panel-frame');title=panel.querySelector('.cep-link-panel-title');newTab=panel.querySelector('a');collapseButton=panel.querySelector('[data-action="collapse"]');
       panel.querySelector('[data-action="close"]').onclick=closePanel;
       collapseButton.onclick=()=>{
@@ -265,6 +288,8 @@ function decorateNoteVideoLinks(root) {
         embedUrl=embed.href;label='Vimeo';
       }
       panel.classList.toggle('is-video',Boolean(kind||options.video));
+      sizeKind=kind||options.video?'video':'link';
+      restorePanelSize();
       if(kind==='file'){
         const video=document.createElement('video');video.src=url.href;video.controls=true;video.autoplay=true;video.playsInline=true;frame.append(video);
       }else{
