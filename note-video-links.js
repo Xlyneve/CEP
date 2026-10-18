@@ -269,6 +269,8 @@ function decorateNoteVideoLinks(root) {
     let url;try{url=new URL(rawUrl,location.href);if(!['http:','https:'].includes(url.protocol))return;}catch{return;}
     // Keep links from Home's embedded widgets in the main window's panel.
     if(window.parent!==window){try{if(window.parent.CEPNoteVideoLinks?.open){window.parent.CEPNoteVideoLinks.open(url.href,{video:options.video});return;}}catch{}}
+    // Search results carry the same opening preference as Information Links.
+    if(options.trigger?.dataset.formLinkMode==='external'){closePanel(false);openExternalTab(url.href);return;}
     // This server explicitly disallows framing its PDFs. Open during the user's
     // click so popup blockers can recognise the new tab as user initiated.
     const blockedPdf=url.hostname.replace(/^www\./,'')==='sexualwellbeing.org.nz'&&/\.pdf$/i.test(url.pathname);
