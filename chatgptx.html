@@ -1723,6 +1723,20 @@ html:root:root:root:root:root:root:root:root:root body #formatToolbar :is(#highl
   padding:0 !important; border:1px solid rgba(60,55,60,.35) !important; border-radius:50% !important;
   box-shadow:none !important; opacity:1 !important; filter:none !important;
 }
+
+/* Video badges remain compact and readable independently of card colours. */
+html:root:root:root:root:root:root:root:root:root body .chatBubble a.cep-note-video-link {
+  display:inline-flex !important; align-items:center; gap:6px;
+  padding:5px 9px !important; margin:3px 0 !important; border-radius:9px !important;
+  background:linear-gradient(var(--clinical-field,#faf9f7),var(--clinical-field,#faf9f7)),#faf9f7 !important;
+  color:var(--theme-ink,#37434a) !important; -webkit-text-fill-color:currentColor !important;
+  border:1px solid var(--clinical-edge,#d7c9ce) !important;
+  font:600 13px/1.3 Tahoma,sans-serif !important; text-decoration:none !important;
+}
+html:root:root:root:root:root:root:root:root:root body .chatBubble a.cep-note-video-link svg {
+  width:18px !important; height:18px !important; flex:0 0 18px;
+  fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
+}
 </style>
 
 
@@ -1817,6 +1831,7 @@ html:root:root:root:root:root:root:root:root:root body #formatToolbar :is(#highl
       <button id="newNoteImageBtn" type="button" title="Insert image">🖼️</button>
       <button id="newNoteEmojiBtn" type="button" title="Insert emoji">🌟</button>
       <button id="newNoteArrowBtn" type="button" title="Insert symbol">↳</button>
+      <button id="newNoteVideoBtn" type="button" title="Add video link" aria-label="Add video link">🎥</button>
       <button id="addNoteBtn" type="button" title="Save note">💾</button>
       <button id="cancelAddNoteBtn" type="button" title="Cancel">❌</button>
     </div>
@@ -1854,7 +1869,7 @@ html:root:root:root:root:root:root:root:root:root body #formatToolbar :is(#highl
 <div id="floatingEmojiBtn" title="Insert emoji">📌</div>
 <div id="floatingEmojiPanel" aria-hidden="true"></div>
 <div id="youtubePlayerOverlay" aria-hidden="true">
-  <div class="youtube-player-dialog" role="dialog" aria-modal="true" aria-label="YouTube video player">
+  <div class="youtube-player-dialog" role="dialog" aria-modal="true" aria-label="Video player">
     <div class="youtube-player-frame" id="youtubePlayerFrame"></div>
     <div class="youtube-player-actions">
       <a id="youtubeExternalLink" href="#" target="_blank" rel="noopener noreferrer">Open on YouTube</a>
@@ -3108,6 +3123,8 @@ function deLinkifyConceptAnchors(html) {
   const div = document.createElement('div');
   div.innerHTML = html || '';
 
+  div.querySelectorAll('a.cep-note-video-link[href]').forEach(link => { link.textContent = link.getAttribute('href'); });
+
   div.querySelectorAll('a.conceptLink').forEach(a => {
     let concept = (a.getAttribute('data-concept') || '').trim();
 
@@ -3633,6 +3650,82 @@ function getYouTubeVideoId(rawUrl) {
   }
 }
 
+function getNoteVideoKind(rawUrl) {
+  try {
+    const url = new URL(rawUrl, location.href);
+    if (!['https:', 'http:'].includes(url.protocol)) return '';
+    if (getYouTubeVideoId(url.href)) return 'youtube';
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (/\.(?:mp4|webm|mov|m4v|ogv)$/i.test(url.pathname)) return 'file';
+    if ((host === 'vimeo.com' || host === 'player.vimeo.com') && /\/\d+(?:\/|$)/.test(url.pathname)) return 'external';
+    if (host === 'fb.watch' || ((host === 'facebook.com' || host.endsWith('.facebook.com')) && (/\/(?:videos|reel|reels|share\/(?:r|v))\//.test(url.pathname) || ((url.pathname === '/watch' || url.pathname === '/watch/' || url.pathname === '/video.php') && url.searchParams.has('v'))))) return 'external';
+  } catch {}
+  return '';
+}
+
+function decorateNoteVideoLinks(root) {
+  root.querySelectorAll('a[href]').forEach(link => {
+    if (link.classList.contains('conceptLink')) return;
+    if (!link.classList.contains('cep-note-video-link') && !getNoteVideoKind(link.href)) return;
+    link.classList.add('cep-note-video-link');
+    link.title = 'Watch here — ' + link.href;
+    link.setAttribute('aria-label', 'Watch video');
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('aria-hidden', 'true');
+    const path = document.createElementNS(icon.namespaceURI, 'path');
+    path.setAttribute('d', 'M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm12 4 6-3v10l-6-3');
+    icon.append(path);
+    const label = document.createElement('span'); label.textContent = 'Watch here';
+    link.replaceChildren(icon, label);
+  });
+}
+
+function insertNoteVideoLink(editor) {
+  const savedRange = caretMap.get(editor)?.cloneRange();
+  const value = window.prompt('Paste your video link (for example, YouTube):');
+  if (!value?.trim()) return;
+  let url;
+  try {
+    const valueUrl = value.trim();
+    url = new URL(/^www\./i.test(valueUrl) ? 'https://' + valueUrl : valueUrl);
+    if (!['https:', 'http:'].includes(url.protocol)) throw new Error('Invalid video URL');
+  } catch { alert('Please enter a full video link starting with https://'); return; }
+  activeEditable = editor;
+  editor.focus({ preventScroll: true });
+  const range = savedRange && editor.contains(savedRange.commonAncestorContainer) ? savedRange : document.createRange();
+  if (range !== savedRange) { range.selectNodeContents(editor); range.collapse(false); }
+  const link = document.createElement('a');
+  link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+  link.className = 'cep-note-video-link'; link.textContent = url.href;
+  const spacer = document.createTextNode(' '), fragment = document.createDocumentFragment();
+  fragment.append(link, spacer); range.deleteContents(); range.insertNode(fragment);
+  range.setStartAfter(spacer); range.collapse(true);
+  const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+  saveCaret(); editor.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function makeNoteVideoButton(editor) {
+  const button = document.createElement('button'); button.type = 'button';
+  button.className = 'cep-note-video-insert'; button.textContent = '🎥';
+  button.title = 'Add video link'; button.setAttribute('aria-label', 'Add video link');
+  button.addEventListener('mousedown', event => event.preventDefault());
+  button.addEventListener('click', () => insertNoteVideoLink(editor));
+  return button;
+}
+const newNoteVideoButton = document.getElementById('newNoteVideoBtn');
+newNoteVideoButton.addEventListener('mousedown', event => event.preventDefault());
+newNoteVideoButton.addEventListener('click', () => insertNoteVideoLink(noteInput));
+
+function openNoteVideoFile(sourceUrl) {
+  const video = document.createElement('video');
+  video.src = sourceUrl; video.controls = true; video.autoplay = true; video.playsInline = true;
+  video.style.cssText = 'width:100%;height:100%;display:block;';
+  youtubePlayerFrame.replaceChildren(video);
+  youtubeExternalLink.href = sourceUrl; youtubeExternalLink.textContent = 'Open video';
+  youtubePlayerOverlay.classList.add('is-open'); youtubePlayerOverlay.setAttribute('aria-hidden','false');
+  youtubePlayerClose.focus({preventScroll:true});
+}
+
 function closeYouTubePlayer() {
   youtubePlayerOverlay.classList.remove('is-open');
   youtubePlayerOverlay.setAttribute('aria-hidden', 'true');
@@ -3648,6 +3741,7 @@ function openYouTubePlayer(videoId, sourceUrl) {
   iframe.referrerPolicy = 'strict-origin-when-cross-origin';
   youtubePlayerFrame.replaceChildren(iframe);
   youtubeExternalLink.href = sourceUrl;
+  youtubeExternalLink.textContent = 'Open on YouTube';
   youtubePlayerOverlay.classList.add('is-open');
   youtubePlayerOverlay.setAttribute('aria-hidden', 'false');
   youtubePlayerClose.focus({ preventScroll: true });
@@ -3656,6 +3750,10 @@ function openYouTubePlayer(videoId, sourceUrl) {
 document.addEventListener('click', event => {
   const link = event.target.closest?.('.chatBubble a[href]');
   if (!link || link.classList.contains('conceptLink')) return;
+  if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  if (getNoteVideoKind(link.href) === 'file') {
+    event.preventDefault(); event.stopPropagation(); openNoteVideoFile(link.href); return;
+  }
   const videoId = getYouTubeVideoId(link.href);
   if (!videoId) return;
   event.preventDefault();
@@ -5365,6 +5463,7 @@ function displayNotesInto(targetEl, notes) {
     bubble.className = 'chatBubble';
     CEPSecurity.setHTML(bubble, conceptLinkifyHTML(linkify(stripLegacyTableControls(note.content || ''))));
     if (bubble.querySelector('mark.underlineMatch')) bubble.classList.add('search-result-bubble');
+    decorateNoteVideoLinks(bubble);
     setTableCellsEditable(bubble, false);
     div.appendChild(bubble);
 
@@ -5508,7 +5607,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
       actions.style.textAlign = 'center';
       actions.style.marginTop = '6px';
 
-      actions.append(imgBtnWrap, emojiBtn, arrowBtn, saveBtn, cancelBtn);
+      actions.append(imgBtnWrap, emojiBtn, arrowBtn, makeNoteVideoButton(editable), saveBtn, cancelBtn);
 
       actions.addEventListener('mousedown', () => {
         activeEditable = editable;
@@ -5591,6 +5690,7 @@ arrowBtn.addEventListener('mousedown', (e) => {
           note.content = updated;
 
           bubble.innerHTML = conceptLinkifyHTML(stripLegacyTableControls(updated));
+          decorateNoteVideoLinks(bubble);
           setTableCellsEditable(bubble, false);
           hideEmojiPanel();
           removeSharedEditToolbar();
