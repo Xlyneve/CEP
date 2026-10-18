@@ -828,6 +828,38 @@ button:hover {
       position:sticky; bottom:0; z-index:3; padding:8px 0 2px;
       background:linear-gradient(var(--clinical-panel,#ecebeb),var(--clinical-panel,#ecebeb)),#ecebeb;
     }
+
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #formEditDialog {
+      display:none; flex-direction:column; padding:0 !important; margin:auto !important;
+      width:min(520px,calc(100vw - 24px)) !important; max-width:calc(100vw - 24px) !important;
+      max-height:calc(100dvh - 24px) !important; box-sizing:border-box; overflow:hidden !important;
+      border:1px solid var(--clinical-edge,#d8d3d4) !important; border-radius:var(--note-editor-radius,22px) !important;
+      background:linear-gradient(var(--clinical-panel,#f5f5f3),var(--clinical-panel,#f5f5f3)),#f5f5f3 !important;
+      color:var(--theme-ink,#333) !important; box-shadow:var(--note-editor-depth,0 12px 40px #0004) !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #formEditDialog[open] { display:flex !important; }
+    #formEditDialog::backdrop { background:rgba(25,25,30,.42); }
+    #formEditDialog .form-dialog-header { display:flex; align-items:center; gap:10px; flex:none; padding:16px 18px 10px; }
+    #formEditDialog h2 { flex:1; margin:0; font:600 17px/1.4 Tahoma,sans-serif; color:inherit; }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #formEditClose {
+      width:32px !important; height:32px !important; min-width:32px !important; min-height:32px !important;
+      padding:0 !important; margin:0 !important; flex:none;
+    }
+    #formEditDialog .form-dialog-body { padding:4px 18px; flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
+    #formEditDialog .edit-mode { margin:0 !important; width:100%; max-height:none; padding:0; }
+    #formEditDialog .edit-mode :is(input,select,textarea) { max-width:100% !important; }
+    #formEditDialog .edit-mode textarea { resize:vertical; max-height:50dvh; }
+    #formEditDialog .form-dialog-footer { padding:12px 18px 16px; flex:none; }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body #formEditDialog :is(input,select,textarea) {
+      background:linear-gradient(var(--clinical-field,#faf9f7),var(--clinical-field,#faf9f7)),#faf9f7 !important;
+      color:var(--theme-ink,#333) !important; -webkit-text-fill-color:currentColor !important;
+      box-shadow:var(--note-editor-inset,inset 1px 2px 3px #0002) !important;
+    }
+
+    #formEditDialog .form-edit-actions { position:static !important; display:flex; gap:8px; flex-wrap:wrap; }
+    #formEditStatus { margin:0; padding:0 18px 8px; font:12px/1.5 Tahoma,sans-serif; }
+    #formEditStatus:empty { display:none; }
   </style>
   <link rel="stylesheet" href="site-background.css">
   <script src="page-theme.js?v=1"></script>
@@ -924,6 +956,17 @@ button:hover {
   </section>
 </main>
 
+<dialog id="formEditDialog" aria-labelledby="formEditHeading">
+  <div class="form-dialog-header">
+    <h2 id="formEditHeading">Edit Information Link</h2>
+    <button type="button" id="formEditClose" aria-label="Close editor" title="Close">×</button>
+  </div>
+  <p id="formEditStatus" role="alert"></p>
+  <div class="form-dialog-body"></div>
+  <div class="form-dialog-footer"></div>
+</dialog>
+
+
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -950,6 +993,9 @@ button:hover {
     return window.CEPInformationLinks.badges(kind);
   }
 
+  let activeFormEditor = null;
+  let pendingFormRender = null;
+  const formEditDialog = document.getElementById('formEditDialog');
   let modularFirestorePromise;
 
   function getModularFirestore() {
@@ -1104,6 +1150,7 @@ button:hover {
 }
 
 function renderURLDocs(urlDocs, filter) {
+  if (activeFormEditor) { pendingFormRender = { urlDocs, filter }; return; }
   const container = document.getElementById('fileList');
   container.innerHTML = '';
 
@@ -1314,46 +1361,101 @@ function escapeHtmlText(str) {
     .replace(/>/g, '&gt;');
 }
 
-  function startInlineEdit(id) {
-  const view = document.getElementById(`view-${id}`);
-  const edit = document.getElementById(`edit-${id}`);
-  const card = view?.closest('.file-item');
-  if (card) card.classList.add('is-editing');
-  if (view) view.style.display = 'none';
-  if (edit) { edit.style.display = 'block'; edit.scrollTop = 0; }
-  card?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-}
-
-function cancelInlineEdit(id) {
-  const view = document.getElementById(`view-${id}`);
-  const edit = document.getElementById(`edit-${id}`);
-  const card = edit?.closest('.file-item');
-  if (card) card.classList.remove('is-editing');
-  if (view) view.style.display = 'flex';
-  if (edit) edit.style.display = 'none';
-}
-
-async function saveInlineEdit(id) {
-  const newTitle = document.getElementById(`edit-title-${id}`).value.trim() || 'Untitled';
-  const newUrl = document.getElementById(`edit-url-${id}`).value.trim();
-  const newNote = document.getElementById(`edit-note-${id}`).value.trim();
-
-  if (!newUrl.startsWith('http')) {
-    alert('Please enter a valid URL starting with https:// or http://');
-    return;
+  function restoreFormEditor() {
+    const state = activeFormEditor;
+    if (!state) return;
+    activeFormEditor = null;
+    state.edit.appendChild(state.actions);
+    state.edit.style.display = 'none';
+    if (state.parent.isConnected) state.parent.insertBefore(state.edit,
+      state.next?.parentNode === state.parent ? state.next : null);
+    else state.edit.remove();
+    formEditDialog.querySelector('.form-dialog-body').replaceChildren();
+    formEditDialog.querySelector('.form-dialog-footer').replaceChildren();
+    document.getElementById('formEditStatus').textContent = '';
+    if (pendingFormRender) {
+      const pending = pendingFormRender; pendingFormRender = null;
+      renderURLDocs(pending.urlDocs, pending.filter);
+    }
+    state.trigger?.isConnected && state.trigger.focus({ preventScroll: true });
   }
 
-  await db.collection('urlForms').doc(id).update({
-    title: newTitle,
-    url: newUrl,
-    note: newNote,
-    previewMode: document.getElementById(`edit-preview-mode-${id}`).value,
-    openExternally: document.getElementById(`edit-preview-mode-${id}`).value === 'external'
-  });
-  window.invalidateCepSearchCache?.('main:urlForms');
+  function closeFormEditor(force = false) {
+    if (activeFormEditor?.busy && !force) return;
+    if (formEditDialog.open) formEditDialog.close();
+    restoreFormEditor();
+  }
 
-  fetchURLs(document.getElementById('searchInput').value, true);
-}
+  function startInlineEdit(id) {
+    if (activeFormEditor?.busy) return;
+    closeFormEditor();
+    const edit = document.getElementById(`edit-${id}`);
+    const record = cachedUrlDocs?.find(doc => doc.id === id)?.data();
+    if (!edit || !record) return;
+    document.getElementById(`edit-title-${id}`).value = record.title || '';
+    document.getElementById(`edit-url-${id}`).value = record.url || '';
+    document.getElementById(`edit-note-${id}`).value = record.note || '';
+    document.getElementById(`edit-preview-mode-${id}`).value = record.previewMode ||
+      (record.openExternally ? 'external' : 'auto');
+    const actions = edit.querySelector('.form-edit-actions');
+    activeFormEditor = { id, edit, actions, parent: edit.parentNode, next: edit.nextSibling,
+      trigger: document.activeElement, busy: false };
+    edit.style.display = 'block';
+    formEditDialog.querySelector('.form-dialog-body').appendChild(edit);
+    formEditDialog.querySelector('.form-dialog-footer').appendChild(actions);
+    document.getElementById('formEditStatus').textContent = '';
+    formEditDialog.showModal();
+    formEditDialog.querySelector('.form-dialog-body').scrollTop = 0;
+    document.getElementById(`edit-title-${id}`).focus({ preventScroll: true });
+  }
+
+  function cancelInlineEdit(id) {
+    if (activeFormEditor?.id === id) closeFormEditor();
+  }
+
+  document.getElementById('formEditClose').addEventListener('click', () => closeFormEditor());
+  formEditDialog.addEventListener('close', () => { if (!formEditDialog.open) restoreFormEditor(); });
+  formEditDialog.addEventListener('cancel', event => {
+    if (activeFormEditor?.busy) event.preventDefault();
+  });
+  formEditDialog.addEventListener('click', event => {
+    if (event.target !== formEditDialog) return;
+    const r = formEditDialog.getBoundingClientRect();
+    if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom)
+      closeFormEditor();
+  });
+
+  async function saveInlineEdit(id) {
+    const state = activeFormEditor;
+    if (!state || state.id !== id || state.busy) return;
+    const newTitle = document.getElementById(`edit-title-${id}`).value.trim() || 'Untitled';
+    const newUrl = document.getElementById(`edit-url-${id}`).value.trim();
+    const newNote = document.getElementById(`edit-note-${id}`).value.trim();
+    const previewMode = document.getElementById(`edit-preview-mode-${id}`).value;
+    const status = document.getElementById('formEditStatus');
+    try {
+      if (!['http:', 'https:'].includes(new URL(newUrl).protocol)) throw new Error();
+    } catch { status.textContent = 'Please enter a valid https:// or http:// URL.'; return; }
+    state.busy = true;
+    const controls = [...formEditDialog.querySelectorAll('input,select,textarea,button')];
+    controls.forEach(control => { control.disabled = true; });
+    status.textContent = 'Saving…';
+    try {
+      await db.collection('urlForms').doc(id).update({
+        title: newTitle, url: newUrl, note: newNote, previewMode,
+        openExternally: previewMode === 'external'
+      });
+      window.invalidateCepSearchCache?.('main:urlForms');
+      closeFormEditor(true);
+      void fetchURLs(document.getElementById('searchInput').value, true)
+        .catch(() => { document.getElementById('pdfDeleteStatus').textContent = 'Saved. Refresh the page to update the list.'; });
+    } catch (error) {
+      status.textContent = error.message || 'Changes could not be saved. Please try again.';
+    } finally {
+      state.busy = false;
+      controls.forEach(control => { control.disabled = false; });
+    }
+  }
 
   const deletingEntries = new Set();
   async function deleteURL(id, button) {
