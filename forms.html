@@ -811,6 +811,22 @@ button:hover {
     .form-link-badges { display:inline-flex; align-items:center; gap:5px; margin-left:5px; vertical-align:middle; white-space:nowrap; }
     .form-link-marker { display:inline-flex; align-items:center; gap:2px; font-size:9px; font-weight:700; line-height:1; color:inherit; }
     .form-link-marker svg { width:13px; height:13px; flex:none; vertical-align:middle; }
+
+    /* Editing must scroll inside the card instead of being clipped by its shell. */
+    html:root:root:root:root:root:root body #fileList .file-item.is-editing {
+      display:block !important; flex-shrink:0 !important; min-height:0 !important;
+      height:auto !important; overflow:hidden !important;
+    }
+    html:root:root:root:root:root:root body #fileList .file-item.is-editing .edit-mode {
+      margin-top:0 !important; min-height:0 !important;
+      max-height:min(480px,max(100px,calc(100dvh - 240px))) !important;
+      overflow-y:auto !important; overflow-x:hidden !important;
+      overscroll-behavior:contain; scrollbar-width:thin; padding:2px 6px 2px 2px;
+    }
+    html:root:root:root:root:root:root body #fileList .edit-mode .form-edit-actions {
+      position:sticky; bottom:0; z-index:3; padding:8px 0 2px;
+      background:linear-gradient(var(--clinical-panel,#ecebeb),var(--clinical-panel,#ecebeb)),#ecebeb;
+    }
   </style>
   <link rel="stylesheet" href="site-background.css">
   <script src="page-theme.js?v=1"></script>
@@ -1178,7 +1194,7 @@ function renderURLDocs(urlDocs, filter) {
     style="width:100%; margin-bottom:8px;"
   >${escapeHtmlText(data.note || '')}</textarea>
 
-  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+  <div class="form-edit-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
     <button onclick="saveInlineEdit('${doc.id}')">Save</button>
     <button onclick="cancelInlineEdit('${doc.id}')">Cancel</button>
   </div>
@@ -1324,7 +1340,8 @@ function escapeHtmlText(str) {
   const card = view?.closest('.file-item');
   if (card) card.classList.add('is-editing');
   if (view) view.style.display = 'none';
-  if (edit) edit.style.display = 'block';
+  if (edit) { edit.style.display = 'block'; edit.scrollTop = 0; }
+  card?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 function cancelInlineEdit(id) {
