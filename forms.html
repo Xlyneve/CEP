@@ -930,14 +930,15 @@ button:hover {
       const external = record.openExternally === true || externalOnlyHosts.some(domain =>
         host === domain || host.endsWith('.' + domain)) ||
         (isPdf && (host === 'sexualwellbeing.org.nz' || host.endsWith('.sexualwellbeing.org.nz')));
-      return { isPdf, external };
-    } catch { return { isPdf: false, external: false }; }
+      return { isPdf, external, isWebsite: ['http:', 'https:'].includes(url.protocol) && !isPdf };
+    } catch { return { isPdf: false, external: false, isWebsite: false }; }
   }
 
   function formLinkBadges(kind) {
     const pdf = kind.isPdf ? '<span class="form-link-marker" title="PDF document"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></svg>PDF</span>' : '';
     const external = kind.external ? '<span class="form-link-marker" title="Opens in a new tab; preview unavailable" role="img" aria-label="Opens in a new tab; preview unavailable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4 10 14"/><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></span>' : '';
-    return pdf || external ? '<span class="form-link-badges">' + pdf + external + '</span>' : '';
+    const preview = kind.isWebsite && !kind.external ? '<span class="form-link-marker" title="Preview on this page" role="img" aria-label="Preview on this page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/><path d="M14 9v11"/></svg></span>' : '';
+    return pdf || external || preview ? '<span class="form-link-badges">' + pdf + external + preview + '</span>' : '';
   }
 
   let modularFirestorePromise;
