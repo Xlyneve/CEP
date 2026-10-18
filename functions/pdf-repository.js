@@ -35,15 +35,29 @@ function validateUpload(body) {
   return { bytes, hash, path, title, note, fileName, url: `${HOSTING_ORIGIN}/${path}` };
 }
 
+function githubFailure(response, stage) {
+  const code = response.status;
+  if (code === 401) return new UploadError(502,
+    'GitHub rejected the token stored in Firebase (HTTP 401). Save the working token again and redeploy.');
+  if (code === 403 && response.headers?.get('x-ratelimit-remaining') === '0')
+    return new UploadError(502, 'GitHub rate limit reached (HTTP 403). Try again after the limit resets.');
+  if (code === 403) return new UploadError(502,
+    'GitHub denied the upload service access (HTTP 403, ' + stage + '). Check the token has access to CEP and Contents read/write permission.');
+  if (code === 404) return new UploadError(502,
+    'GitHub could not access Xlyneve/CEP on main (HTTP 404, ' + stage + '). Check the saved token can access this repository.');
+  return new UploadError(502, 'GitHub returned HTTP ' + code + ' during PDF ' + stage + '. Please try again later.');
+}
+
 async function savePdfToRepository(pdf, token, request = fetch) {
   const endpoint = `https://api.github.com/repos/${REPOSITORY}/contents/${pdf.path}`;
   const headers = {
-    Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json'
+    Authorization: `Bearer ${String(token).trim()}`, Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json',
+    'User-Agent': 'CEP-PDF-Uploads'
   };
   const existing = await request(`${endpoint}?ref=main`, { headers, signal: AbortSignal.timeout(20000) });
   if (existing.ok) return { reused: true };
-  if (existing.status !== 404) throw new UploadError(502, 'GitHub could not be reached. Please try again later.');
+  if (existing.status !== 404) throw githubFailure(existing, 'repository read');
   const response = await request(endpoint, {
     method: 'PUT', headers, signal: AbortSignal.timeout(45000),
     body: JSON.stringify({ message: `Add Information Links PDF ${pdf.hash.slice(0, 12)}`,
@@ -55,7 +69,7 @@ async function savePdfToRepository(pdf, token, request = fetch) {
       const check = await request(`${endpoint}?ref=main`, { headers, signal: AbortSignal.timeout(20000) });
       if (check.ok) return { reused: true };
     }
-    throw new UploadError(502, 'GitHub could not save the PDF. Please try again later.');
+    throw githubFailure(response, 'repository write');
   }
   return { reused: false };
 }

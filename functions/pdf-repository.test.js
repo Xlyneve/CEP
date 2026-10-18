@@ -51,3 +51,21 @@ test('handles simultaneous identical uploads and hides GitHub errors', async () 
   await assert.rejects(savePdfToRepository(validateUpload({ content }), 'secret', async () =>
     ({ ok: false, status: 403 })), error => error.status === 502 && !error.message.includes('secret'));
 });
+
+test('identifies the GitHub client and trims accidental whitespace from the stored token', async () => {
+  let headers;
+  await savePdfToRepository(validateUpload({ content }), '  test-secret\n', async (url, options) => {
+    headers = options.headers; return { ok: true, status: 200 };
+  });
+  assert.equal(headers['User-Agent'], 'CEP-PDF-Uploads');
+  assert.equal(headers.Authorization, 'Bearer test-secret');
+});
+test('reports safe HTTP diagnostics without exposing credentials or provider response bodies', async () => {
+  for (const status of [401, 403, 500]) {
+    await assert.rejects(savePdfToRepository(validateUpload({ content }), 'never-print-this', async () =>
+      ({ ok: false, status })), error => error.status === 502 &&
+        error.message.includes('HTTP ' + status) && !error.message.includes('never-print-this'));
+  }
+  await assert.rejects(savePdfToRepository(validateUpload({ content }), 'secret', async () =>
+    ({ ok: false, status: 403, headers: { get: () => '0' } })), /rate limit reached/);
+});
