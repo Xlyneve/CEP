@@ -4531,9 +4531,11 @@ let defTipPinned = false;
 let defTipHideTimer = null;
 let defTipLocked = false;
 let conceptHoverTimer = null;
+let defTipAnchor = null;
 
 function showDefTip(defText, whyText, imageUrl, caption, x, y, defHtml = '', whyHtml = '', images = []) {
   if (!defText && !whyText && !imageUrl) return;
+  cancelHideDefTip();
 
   const tipHtml = renderTip(defText, whyText, imageUrl, caption, defHtml, whyHtml, images);
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(defTip, tipHtml);
@@ -4622,6 +4624,8 @@ function renderTip(defText, whyText, imageUrl = '', caption = '', defHtml = '', 
 }
 
 function hideDefTip() {
+  clearTimeout(defTipHideTimer);
+  defTipAnchor = null;
   defTipLocked = false;
   defTipPinned = false;
   clearTimeout(conceptHoverTimer);
@@ -4632,6 +4636,8 @@ function hideDefTip() {
 
 document.addEventListener('mousemove', (e) => {
   if (!tipOpen || defTipPinned || defTipLocked) return;
+  // Follow only while over the source word; freeze across the gap to the window.
+  if (!defTipAnchor?.contains(e.target)) return;
 
   const pad = 12;
   const r = defTip.getBoundingClientRect();
@@ -4663,6 +4669,7 @@ document.addEventListener('mouseover', (e) => {
   if (!def && !why && !imageUrl) return;
   conceptHoverTimer = setTimeout(() => {
     if (!a.isConnected || defTipLocked) return;
+    defTipAnchor = a;
   showDefTip(def, why, imageUrl, caption, e.clientX, e.clientY, defHtml, whyHtml, conceptImages(getConceptMedia(concept)));
   }, 250);
 }, true);
@@ -4679,7 +4686,8 @@ document.addEventListener('mouseout', (e) => {
   const intoTip = defTip.contains(e.relatedTarget);
 
   if (from.contains(e.relatedTarget)) return;
-  scheduleHideDefTip(0);
+  if (intoTip || toConcept) { cancelHideDefTip(); return; }
+  scheduleHideDefTip(300);
 }, true);
 
 defTip.addEventListener('mouseenter', () => {
@@ -4699,6 +4707,7 @@ function scheduleHideDefTip(delay = 120) {
   if (defTipLocked) return;
   clearTimeout(defTipHideTimer);
   defTipHideTimer = setTimeout(() => {
+    if (defTipPinned || defTip.matches(':hover') || defTipAnchor?.matches(':hover')) return;
     hideDefTip();
   }, delay);
 }
