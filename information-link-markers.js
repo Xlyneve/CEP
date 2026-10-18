@@ -49,5 +49,18 @@
       width:13px !important; height:13px !important; flex:none; vertical-align:middle; color:inherit !important;
     }
   `;
+
+  style.textContent += `
+    html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-search-source[data-source-file="forms.html"] .cep-source-form {
+      display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important;
+      height:100% !important; min-height:72px; padding:14px 16px !important; box-sizing:border-box;
+    }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-search-source[data-source-file="forms.html"] .cep-source-card-view {
+      width:100% !important; text-align:center !important;
+    }
+    html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-search-source[data-source-file="forms.html"] .cep-source-card-view > strong {
+      display:block !important; width:100%; text-align:center !important;
+    }
+  `;
   document.head.appendChild(style);
 })();
