@@ -320,6 +320,9 @@ function decorateNoteVideoLinks(root) {
       if(!['http:','https:'].includes(url.protocol))return;
       event.preventDefault();event.stopImmediatePropagation();openLink(url.href,{trigger:link});return;
     }
+    // Information Links has its own permanent preview. Its normal links use
+    // their native new-tab behaviour; links inside search results keep the panel.
+    if(document.body.dataset.cepLinkPanel==='off'&&!link.closest('.cep-search-source'))return;
     if(link.closest('#cepNoteLinkPanel,[contenteditable="true"]')||link.matches('[download],[role="button"],.conceptLink,.cep-xgpt-concept,.xgpt-concept-link,.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result,.cep-search-source'))return;
     const raw=link.getAttribute('href')?.trim();if(!raw||raw.startsWith('#'))return;
     let url;try{url=new URL(raw,location.href);if(!['http:','https:'].includes(url.protocol))return;}catch{return;}
