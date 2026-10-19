@@ -52,6 +52,15 @@
     }
     await adapter.save(existing?.id || normalize(concept), { concept, value, valueHtml:'', aliases:clean, disabled:false });
   }
+  const mediaFor = term => {
+    const record = find(term);
+    return mediaIndex.get(normalize(record?.concept || term)) || record || {};
+  };
+  async function uploadPhotos(term, files) {
+    if (!adapter?.uploadPhotos) throw new Error('Sign in and wait for shared definitions to finish loading, then try again.');
+    const concept = find(term)?.concept || term.trim();
+    return adapter.uploadPhotos(concept, files);
+  }
   async function remove(term) {
     if (!adapter) throw new Error('Sign in to chatgptx first.');
     const record = find(term); if (record) await adapter.remove(record.id);
@@ -114,5 +123,5 @@
   document.addEventListener('keydown',e=>{if(e.key==='Escape')tip.hidden=true;});
   tip.onmouseenter=()=>clearTimeout(hideTimer);tip.onmouseleave=e=>{if(!activeWord?.contains(e.relatedTarget))hide();};
   const observer=new MutationObserver(records=>{if(records.some(record=>!record.target.closest?.('#cep-shared-tip,#pn-definition-tip,#pn-definition-dialog')))schedule();});observer.observe(document.body,{childList:true,subtree:true});
-  window.CEPSharedDefinitions={normalize,find,update,updateMedia,renderPreview,save,remove,connect(value){adapter=value;},plain};
+  window.CEPSharedDefinitions={normalize,find,update,updateMedia,renderPreview,mediaFor,uploadPhotos,save,remove,connect(value){adapter=value;},plain};
 })();

@@ -8,7 +8,7 @@
     #pn-definition-tip[hidden] { display:none; }
     #pn-definition-tip p { margin:0 0 8px; white-space:pre-wrap; }
     #pn-definition-tip button { font:11px Tahoma,sans-serif; margin-right:6px; }
-    #pn-definition-dialog { width:min(340px,calc(100vw - 32px)); box-sizing:border-box; border:1px solid #aaa5; border-radius:14px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); font:13px/1.5 Tahoma,sans-serif; }
+    #pn-definition-dialog { max-height:calc(100dvh - 32px);overflow:auto; width:min(340px,calc(100vw - 32px)); box-sizing:border-box; border:1px solid #aaa5; border-radius:14px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); font:13px/1.5 Tahoma,sans-serif; }
     #pn-definition-dialog::backdrop { background:#0003; }
     #pn-definition-dialog textarea { box-sizing:border-box; width:100%; min-height:100px; margin:10px 0; padding:8px; font:13px/1.5 Tahoma,sans-serif; }
     #pn-definition-dialog p { font-size:11px; }
@@ -28,6 +28,45 @@
   const field = dialog.querySelector('textarea');
   const aliases = document.createElement('input'); aliases.placeholder = 'Aliases, separated by commas (e.g. T-cells)'; aliases.setAttribute('aria-label','Definition aliases'); aliases.style.cssText='box-sizing:border-box;width:100%;padding:8px;margin-bottom:10px'; field.after(aliases);
   dialog.querySelector('p').textContent = 'This definition and its aliases are shared across PN and chatgptx. Save the note to keep your edits.';
+  let photoFiles = [], photoUrls = [], saving = false;
+  const photoArea=document.createElement('div');
+  photoArea.hidden=!/\/pn\.html$/i.test(location.pathname);
+  const photoInput=document.createElement('input');photoInput.type='file';photoInput.accept='image/*';photoInput.multiple=true;photoInput.hidden=true;photoInput.id='pn-definition-photos';
+  const photoButton=document.createElement('button');photoButton.type='button';photoButton.textContent='🖼 Add photos';photoButton.setAttribute('aria-label','Add definition photos');
+  const previews=document.createElement('div');previews.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';
+  const photoHelp=document.createElement('small');photoHelp.textContent='Photos are compressed and shared with ChatGPTX. Add up to 5 at a time.';
+  const status=document.createElement('p');status.setAttribute('role','status');status.style.cssText='overflow-wrap:anywhere';status.hidden=true;
+  photoArea.append(photoButton,photoInput,previews,photoHelp);
+  aliases.after(photoArea,status);
+  function clearPhotoFiles() {
+    photoUrls.forEach(url=>URL.revokeObjectURL(url));photoUrls=[];photoFiles=[];photoInput.value='';
+  }
+  function renderPhotos(term) {
+    previews.replaceChildren();
+    const media=window.CEPSharedDefinitions?.mediaFor?.(term) || {};
+    const existing=media.images?.length ? media.images : media.imageUrl ? [{imageUrl:media.imageUrl}] : [];
+    for(const [index,photo] of existing.entries()) {
+      const img=document.createElement('img');img.src=photo.imageUrl;img.alt='Saved concept photo '+(index+1);img.style.cssText='width:64px;height:64px;object-fit:contain;border-radius:8px';previews.append(img);
+    }
+    photoFiles.forEach((file,index)=>{
+      const item=document.createElement('span');item.style.cssText='position:relative;display:inline-flex';
+      const img=document.createElement('img');img.src=photoUrls[index];img.alt='New photo: '+file.name;img.style.cssText='width:64px;height:64px;object-fit:contain;border-radius:8px';
+      const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.setAttribute('aria-label','Remove '+file.name);remove.style.cssText='align-self:start;margin:0';
+      remove.onclick=()=>{if(saving)return;URL.revokeObjectURL(photoUrls[index]);photoUrls.splice(index,1);photoFiles.splice(index,1);renderPhotos(term);};
+      item.append(img,remove);previews.append(item);
+    });
+  }
+  const currentTerm=()=>pendingWord?.textContent || pendingRange?.toString() || '';
+  photoButton.onclick=()=>photoInput.click();
+  photoInput.onchange=()=>{
+    const files=[...photoInput.files];
+    if(photoFiles.length+files.length>5){status.textContent='Add up to 5 photos at a time.';status.hidden=false;photoInput.value='';return;}
+    if(files.some(file=>!file.type.startsWith('image/') || file.size>20*1024*1024)){status.textContent='Choose image files smaller than 20 MB each.';status.hidden=false;photoInput.value='';return;}
+    photoFiles.push(...files);photoUrls.push(...files.map(file=>URL.createObjectURL(file)));
+    photoInput.value='';status.hidden=true;renderPhotos(currentTerm());
+  };
+  dialog.addEventListener('cancel',event=>{if(saving)event.preventDefault();});
+  dialog.addEventListener('close',()=>{clearPhotoFiles();status.hidden=true;});
   let selectedRange = null, selectedEditor = null, activeWord = null, pendingWord = null, pendingRange = null, pendingEditor = null, timer;
   const titleSelector = '#nurseTitle,input.edit-title';
   let selectedTitle = null;
@@ -73,7 +112,9 @@
     dialog.querySelector('label').textContent = `Definition of “${word ? word.textContent : range.toString()}”`;
     const shared = window.CEPSharedDefinitions?.find(word ? word.textContent : range.toString());
     field.value = shared?.value || (shared?.valueHtml ? window.CEPSharedDefinitions.plain(shared.valueHtml) : '') || word?.dataset.pnDefinition || '';
-    aliases.value = (shared?.aliases || []).join(', '); hide(); dialog.showModal(); field.focus();
+    aliases.value = (shared?.aliases || []).join(', ');
+    clearPhotoFiles();status.hidden=true;renderPhotos(word ? word.textContent : range.toString());
+    hide(); dialog.showModal(); field.focus();
   }
   function editableWord(word) {
     if (editorOf(word)) return word;
@@ -157,11 +198,24 @@
   document.addEventListener('keydown', event => { if (event.key === 'Escape') hide(); });
   window.addEventListener('resize', hide); document.addEventListener('scroll', event => { if (!tip.contains(event.target)) hide(); }, true);
   dialog.querySelector('form').onsubmit = async event => {
-    event.preventDefault(); const value = field.value.trim(); if (!value || !pendingEditor?.isConnected) return;
-    const submit = dialog.querySelector('button[type="submit"]'); submit.disabled = true;
-    try { await window.CEPSharedDefinitions.save(pendingWord?.textContent || pendingRange.toString(), value, aliases.value.split(',')); }
-    catch(error) { alert(error.message); submit.disabled = false; return; }
-    submit.disabled = false;
+    event.preventDefault(); const value = field.value.trim(); if (saving || !value || !pendingEditor?.isConnected) return;
+    const submit = dialog.querySelector('button[type="submit"]');
+    const controls=[...dialog.querySelectorAll('button,input,textarea')];
+    saving=true;controls.forEach(control=>control.disabled=true);submit.textContent='Saving…';status.hidden=true;
+    try {
+      const term=currentTerm();
+      await window.CEPSharedDefinitions.save(term,value,aliases.value.split(','));
+      if(photoFiles.length) {
+        status.textContent='Uploading photos…';status.hidden=false;
+        await window.CEPSharedDefinitions.uploadPhotos(term,photoFiles);
+        clearPhotoFiles();
+      }
+    } catch(error) {
+      status.textContent='Could not finish saving: '+error.message+' Your selected photos are kept so you can retry.';
+      status.hidden=false;return;
+    } finally {
+      saving=false;controls.forEach(control=>control.disabled=false);submit.textContent='Save definition';
+    }
     if (pendingEditor.matches(titleSelector)) {
       pendingEditor.dispatchEvent(new Event('input', {bubbles:true}));
       dialog.close(); pendingEditor.focus(); return;
@@ -175,7 +229,7 @@
     prepare();
     pendingEditor.dispatchEvent(new Event('input', { bubbles:true })); dialog.close(); pendingEditor.focus();
   };
-  dialog.querySelector('button[type="button"]').onclick = () => dialog.close();
+  dialog.querySelector('form > button[type="button"]').onclick = () => {if(!saving)dialog.close();};
   function prepare() {
     document.querySelectorAll(selector).forEach(word => { word.tabIndex = 0; word.setAttribute('aria-label', `${word.textContent}: ${word.dataset.pnDefinition}`); });
   }
