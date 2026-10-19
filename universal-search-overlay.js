@@ -811,8 +811,8 @@ export function getSearchCopyHtml(entry) {
   if (!html || !size) return html;
   const wrapper = document.createElement('div');
   wrapper.innerHTML = html;
-  // Fixed-size notes copy as document-sized 12pt, independent of compact card pixels.
-  const copySize = '12pt';
+  // Fixed-size notes copy as document-sized 11pt, independent of compact card pixels.
+  const copySize = '11pt';
   wrapper.style.fontSize = copySize;
   wrapper.style.fontFamily = 'Tahoma,sans-serif';
   wrapper.querySelectorAll('*').forEach(element => {
