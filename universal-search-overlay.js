@@ -811,12 +811,14 @@ export function getSearchCopyHtml(entry) {
   if (!html || !size) return html;
   const wrapper = document.createElement('div');
   wrapper.innerHTML = html;
-  wrapper.style.fontSize = size + 'px';
+  // Explain is copied as document-sized 12pt, not its compact 12px card font.
+  const copySize = file === 'explain.html' ? '12pt' : size + 'px';
+  wrapper.style.fontSize = copySize;
   wrapper.style.fontFamily = 'Tahoma,sans-serif';
   wrapper.querySelectorAll('*').forEach(element => {
     if (element.closest('table') || element.matches('h1,h2,h3,h4,h5,h6') || element.closest('h1,h2,h3,h4,h5,h6')) return;
     element.removeAttribute('size');
-    element.style.fontSize = size + 'px';
+    element.style.fontSize = copySize;
   });
   return wrapper.outerHTML;
 }

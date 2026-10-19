@@ -1344,14 +1344,15 @@ function linkifyUrlsInHTML(html = '') {
   return tmp.innerHTML;
 }
 
-// Match clipboard typography to the uniform size used to display these notes.
+// Clipboard uses document points: 12px would paste as 9pt in Word/clinical systems.
+// Keep the compact on-screen card size separate from the copied document size.
 function normalizeCopiedFont(html) {
   const wrapper = document.createElement('div');
   wrapper.innerHTML = html;
-  wrapper.style.cssText = 'font-family:Tahoma,sans-serif;font-size:12px;line-height:1.35';
+  wrapper.style.cssText = 'font-family:Tahoma,sans-serif;font-size:12pt;line-height:1.35';
   wrapper.querySelectorAll('*').forEach(element => {
     element.removeAttribute('size');
-    element.style.setProperty('font-size','12px');
+    element.style.setProperty('font-size','12pt');
     element.style.setProperty('font-family','Tahoma,sans-serif');
   });
   return wrapper.outerHTML;
