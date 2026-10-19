@@ -1198,6 +1198,19 @@ function showCopyFeedback(card, clientX, clientY) {
   }, 900);
 }
 
+// Clipboard HTML must include the typography that was visible on the card.
+function clipboardNoteHTML(source) {
+  const clone = source.cloneNode(true);
+  const originals = [source, ...source.querySelectorAll('*')];
+  const copies = [clone, ...clone.querySelectorAll('*')];
+  originals.forEach((element, index) => {
+    const computed = getComputedStyle(element);
+    for (const property of ['font-size','font-family','font-weight','font-style'])
+      copies[index].style.setProperty(property,computed.getPropertyValue(property));
+  });
+  return clone.outerHTML;
+}
+
 async function copyRichNote(htmlContent, plainContent) {
   const html = String(htmlContent || '');
   const text = String(plainContent || '');
@@ -1365,7 +1378,7 @@ function drawNotes(notesArray) {
     // --- Copy on click ---
     div.addEventListener('click', async (event) => {
       if (div.classList.contains('is-editing')) return;
-      const htmlContent = contentEl.innerHTML;
+      const htmlContent = clipboardNoteHTML(contentEl);
       const plainContent = richNoteToClinicalText(htmlContent);
 
       await copyRichNote(htmlContent, plainContent);

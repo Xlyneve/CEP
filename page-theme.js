@@ -3887,3 +3887,27 @@
   script.src = new URL('note-video-links.js?v=20261018-8', document.currentScript?.src || location.href).href;
   document.head.appendChild(script);
 })();
+
+// Fixed-size note pages use the same typography while adding, editing and viewing.
+// These pages have no font-size controls. Keep table typography and headings intact;
+// ChatGPTX and other editors with authored font sizes are deliberately outside this rule.
+(() => {
+  const page = decodeURIComponent(location.pathname.split('/').pop() || '').toLowerCase();
+  const settings = {
+    'pn.html': [12, '#nurseNote,.edit-note,.note-content'],
+    'clinicalnotes.html': [12.5, '#noteText.editable,.note-content'],
+    'info.html': [11, '#noteText.edit-note,.edit-note,.note-text'],
+    'practicen.html': [12, '#noteText.edit-note,.edit-note,.note-text'],
+    'recalls.html': [12, '#nurseNote,.edit-note,.note-content'],
+    'complete-vaccine-info.html': [12, '#notes.vaccine-notes-input,#edit-notes.edit-notes-box']
+  };
+  const entry = settings[page];
+  if (!entry) return;
+  const [size, selectors] = entry;
+  const scope = 'html:root:root body :is(' + selectors + ')';
+  const style = document.createElement('style');
+  style.id = 'cep-fixed-note-typography';
+  style.textContent = scope + '{font-size:' + size + 'px !important;}' +
+    scope + ' :not(h1,h2,h3,h4,h5,h6,table,table *){font-size:inherit !important;}';
+  document.head.append(style);
+})();
