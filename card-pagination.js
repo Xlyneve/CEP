@@ -32,7 +32,7 @@ export function createCardPager({read, listen, deliver, container, search = '#se
   const number=document.createElement('span');number.className='cep-card-page-number';number.setAttribute('aria-live','polite');
   const next=document.createElement('button');next.type='button';next.textContent='›';next.setAttribute('aria-label','Next page');
   const status=document.createElement('span');status.className='cep-card-page-status';status.setAttribute('role','status');status.hidden=true;
-  nav.append(previous,number,next,status);host.before(nav);
+  nav.append(previous,number,next,status);host.after(nav);
   let page=initialState?.page || 0, anchors=initialState?.anchors || [null], pages=new Map(), mode='browse', more=false, busy=false, stopped=false, sequence=0, unsubscribe=null, timer, latest=null;
   let committedPage=page;
   let resolveReady;const waiters=[];
@@ -81,7 +81,7 @@ export function createCardPager({read, listen, deliver, container, search = '#se
     committedPage=page;latest=snapshot(visible);controls();status.hidden=true;
     deliver(latest);
     resolveReady(latest);waiters.splice(0).forEach(waiter=>waiter.resolve(latest));
-    if(scroll) requestAnimationFrame(()=>nav.scrollIntoView({block:'start',behavior:'auto'}));
+    if(scroll) requestAnimationFrame(()=>host.scrollIntoView({block:'start',behavior:'auto'}));
   }
   function subscribe(scroll=false) {
     if(stopped)return;
