@@ -811,12 +811,12 @@ export function getSearchCopyHtml(entry) {
   if (!html || !size) return html;
   const wrapper = document.createElement('div');
   wrapper.innerHTML = html;
-  // Explain is copied as document-sized 12pt, not its compact 12px card font.
-  const copySize = file === 'explain.html' ? '12pt' : size + 'px';
+  // Fixed-size notes copy as document-sized 12pt, independent of compact card pixels.
+  const copySize = '12pt';
   wrapper.style.fontSize = copySize;
   wrapper.style.fontFamily = 'Tahoma,sans-serif';
   wrapper.querySelectorAll('*').forEach(element => {
-    if (element.closest('table') || element.matches('h1,h2,h3,h4,h5,h6') || element.closest('h1,h2,h3,h4,h5,h6')) return;
+    if (element.matches('h1,h2,h3,h4,h5,h6') || element.closest('h1,h2,h3,h4,h5,h6')) return;
     element.removeAttribute('size');
     element.style.fontSize = copySize;
   });
