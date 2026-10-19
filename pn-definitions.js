@@ -107,7 +107,33 @@
     tip.style.left = `${Math.max(12, Math.min(box.left, innerWidth - tip.offsetWidth - 12))}px`;
     tip.style.top = `${Math.max(12, Math.min(box.bottom + 6, innerHeight - tip.offsetHeight - 12))}px`;
   }
-  function openDialog(editor, range, word) {
+  const existingDialog=document.createElement('dialog');
+  existingDialog.id='pn-existing-definition-dialog';
+  existingDialog.setAttribute('aria-labelledby','pn-existing-definition-heading');
+  existingDialog.style.cssText='width:min(360px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box;border:1px solid #aaa5;border-radius:14px;padding:18px;background:linear-gradient(var(--clinical-panel,#fff),var(--clinical-panel,#fff)),#fff;color:var(--theme-ink,#39353a);font:13px/1.5 Tahoma,sans-serif;box-shadow:var(--note-editor-depth,0 8px 28px #0003)';
+  const existingHeading=document.createElement('h2');existingHeading.id='pn-existing-definition-heading';existingHeading.textContent='This word already has a definition.';existingHeading.style.cssText='font-size:15px;margin:0 0 10px';
+  const existingTerm=document.createElement('p');
+  const existingPreview=document.createElement('div');existingPreview.style.cssText='max-height:40dvh;overflow:auto;overflow-wrap:anywhere;white-space:pre-wrap;margin-bottom:14px';
+  const editExisting=document.createElement('button');editExisting.type='button';editExisting.textContent='Edit existing';
+  const cancelExisting=document.createElement('button');cancelExisting.type='button';cancelExisting.textContent='Cancel';cancelExisting.style.marginLeft='8px';
+  existingDialog.append(existingHeading,existingTerm,existingPreview,editExisting,cancelExisting);document.body.append(existingDialog);
+  let existingAction=null;
+  editExisting.onclick=()=>{const action=existingAction;existingAction=null;existingDialog.close();action?.();};
+  cancelExisting.onclick=()=>existingDialog.close();
+  existingDialog.addEventListener('close',()=>{existingAction=null;});
+  function openDialog(editor, range, word, adding = false) {
+    const term=word ? word.textContent : range.toString();
+    const record=window.CEPSharedDefinitions?.find(term);
+    if (adding && (record || word?.dataset.pnDefinition)) {
+      hide();
+      existingTerm.textContent=record?.concept && window.CEPSharedDefinitions.normalize(record.concept)!==window.CEPSharedDefinitions.normalize(term)
+        ? '“'+term+'” is an alias of “'+record.concept+'”.' : '“'+term+'”';
+      if(window.CEPSharedDefinitions?.renderPreview) window.CEPSharedDefinitions.renderPreview(existingPreview,record,word?.dataset.pnDefinition || '');
+      else existingPreview.textContent=word?.dataset.pnDefinition || '';
+      existingAction=()=>openDialog(editor,range,word);
+      existingDialog.showModal();cancelExisting.focus();
+      return;
+    }
     pendingEditor = editor; pendingRange = range; pendingWord = word;
     dialog.querySelector('label').textContent = `Definition of “${word ? word.textContent : range.toString()}”`;
     const shared = window.CEPSharedDefinitions?.find(word ? word.textContent : range.toString());
@@ -148,7 +174,7 @@
           catch(error) { alert(error.message); }
         } else if (definitionButton.matches('.pn-edit-definition') && !shared) {
           alert('Select a title word with a definition first.');
-        } else openDialog(input,{toString:() => text},null);
+        } else openDialog(input,{toString:() => text},null,definitionButton.matches('.pn-add-definition'));
         return;
       }
     }
@@ -185,9 +211,11 @@
         alert('Select a word or phrase in the note first.'); return;
       }
       const node = selectedRange.startContainer;
-      const word = (node.nodeType === 1 ? node : node.parentElement).closest(selector);
+      let word = (node.nodeType === 1 ? node : node.parentElement).closest(selector);
+      if (!word) word=[...editor.querySelectorAll(selector)].find(candidate=>
+        candidate.textContent.trim()===selectedRange.toString().trim() && selectedRange.intersectsNode(candidate));
       if (!word && selectedRange.cloneContents().querySelector(selector)) { alert('Edit existing definitions individually, or select text without a definition.'); return; }
-      openDialog(editor, selectedRange.cloneRange(), word); return;
+      openDialog(editor, selectedRange.cloneRange(), word, true); return;
     }
     const word = event.target.closest(selector); if (word) { event.preventDefault(); show(word); }
   });
