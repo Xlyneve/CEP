@@ -3894,6 +3894,14 @@
 (() => {
   const page = decodeURIComponent(location.pathname.split('/').pop() || '').toLowerCase();
   const settings = {
+    'abdo.html': [12, '#note[contenteditable],.note-text'],
+    'ecg.html': [12, '#note[contenteditable],.note-text'],
+    'hand.html': [12, '#note[contenteditable],.note-text'],
+    'lf.html': [12, '#note[contenteditable],.note-text'],
+    'sha.html': [12, '#note[contenteditable],.note-text'],
+    'spine.html': [12, '#note[contenteditable],.note-text'],
+    'urgent_care.html': [12, '#note[contenteditable],.note-text'],
+    'face.html': [12, '#note[contenteditable],.note-text'],
     'pn.html': [12, '#nurseNote,.edit-note,.note-content'],
     'clinicalnotes.html': [12.5, '#noteText.editable,.note-content'],
     'info.html': [11, '#noteText.edit-note,.edit-note,.note-text'],

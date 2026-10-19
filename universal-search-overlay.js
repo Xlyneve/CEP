@@ -797,7 +797,31 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
   return false;
 }
 
+// Both searches copy source typography, independent of compact result-card sizing.
 export function getSearchCopyHtml(entry) {
+  const html = sourceSearchCopyHtml(entry);
+  const file = String(entry?.file || '').toLowerCase();
+  const sizes = {
+    'explain.html':12, 'pn.html':12, 'clinicalnotes.html':12.5,
+    'info.html':11, 'practicen.html':12, 'recalls.html':12,
+    'abdo.html':12, 'ecg.html':12, 'hand.html':12, 'lf.html':12,
+    'sha.html':12, 'spine.html':12, 'urgent_care.html':12, 'face.html':12
+  };
+  const size = sizes[file];
+  if (!html || !size) return html;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html;
+  wrapper.style.fontSize = size + 'px';
+  wrapper.style.fontFamily = 'Tahoma,sans-serif';
+  wrapper.querySelectorAll('*').forEach(element => {
+    if (element.closest('table') || element.matches('h1,h2,h3,h4,h5,h6') || element.closest('h1,h2,h3,h4,h5,h6')) return;
+    element.removeAttribute('size');
+    element.style.fontSize = size + 'px';
+  });
+  return wrapper.outerHTML;
+}
+
+function sourceSearchCopyHtml(entry) {
   const data = entry?.record?.data;
   const type = sourceCardTypes[String(entry?.file || '').toLocaleLowerCase()];
   if (data && type === 'notes') return String(data.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
