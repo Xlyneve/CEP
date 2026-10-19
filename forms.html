@@ -1060,6 +1060,9 @@ button:hover {
         getToken: getPdfAccessToken,
         onStatus: message => { status.textContent = message; }
       });
+      const pdfEntry=db.collection('urlForms').doc(result.id);
+      const pdfRecord=await pdfEntry.get();
+      await pdfEntry.update({alphabeticKeyV1:formTitleKey(pdfRecord.data()?.title || result.title)});
       saved = true;
       window.invalidateCepSearchCache?.('main:urlForms');
       await fetchURLs(document.getElementById('searchInput').value, true);
@@ -1096,7 +1099,7 @@ button:hover {
     try {
       const { firestoreSdk, firestore } = await getModularFirestore();
       await firestoreSdk.addDoc(firestoreSdk.collection(firestore, 'urlForms'), {
-        url, title, note,
+        url, title, note, alphabeticKeyV1:formTitleKey(title),
         previewMode: document.getElementById('urlPreviewMode').value,
         openCount: 0,
         createdAt: firestoreSdk.serverTimestamp()
@@ -1121,33 +1124,57 @@ button:hover {
     }
   }
 
-  const URL_CACHE_TTL_MS = 30000;
-  let cachedUrlDocs = null;
-  let urlCacheExpiresAt = 0;
-  let urlLoadPromise = null;
-
-  async function loadUrlDocs(forceRefresh = false) {
-    if (!forceRefresh && cachedUrlDocs && Date.now() < urlCacheExpiresAt) return cachedUrlDocs;
-    if (!forceRefresh && urlLoadPromise) return urlLoadPromise;
-    urlLoadPromise = db.collection('urlForms').orderBy('createdAt', 'desc').get()
-      .then(snapshot => {
-        cachedUrlDocs = snapshot.docs;
-        urlCacheExpiresAt = Date.now() + URL_CACHE_TTL_MS;
-        return cachedUrlDocs;
-      })
-      .finally(() => { urlLoadPromise = null; });
-    return urlLoadPromise;
+  function formTitleKey(title) {
+    return String(title || '').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+      .replace(/[^\p{L}\p{N}]/gu,'')
+      .replace(/\d+/g,digits=>digits.replace(/^0+(?=\d)/,'').padStart(24,'0'));
   }
-
-  async function fetchURLs(filter = '', forceRefresh = false) {
-  if (!forceRefresh && cachedUrlDocs) {
-    renderURLDocs(cachedUrlDocs, filter);
-    if (Date.now() < urlCacheExpiresAt) return;
+  async function prepareFormTitleIndex() {
+    const key='cep-info-links-title-index-v1';
+    try {if(localStorage.getItem(key)==='ready')return;}catch{}
+    // One-time backfill. Future URL/PDF additions and edits write their key directly.
+    const snapshot=await db.collection('urlForms').get();
+    await ensureFormTitleKeys(snapshot);
+    try{localStorage.setItem(key,'ready');}catch{}
   }
-  const urlDocs = await loadUrlDocs(forceRefresh);
-  // Network responses always use the current query, never a stale keystroke.
-  renderURLDocs(urlDocs, document.getElementById('searchInput').value);
-}
+  async function ensureFormTitleKeys(snapshot) {
+    const pending=snapshot.docs.filter(doc=>doc.data().alphabeticKeyV1!==formTitleKey(doc.data().title));
+    for(let offset=0;offset<pending.length;offset+=200) {
+      const batch=db.batch();
+      pending.slice(offset,offset+200).forEach(doc=>batch.update(db.collection('urlForms').doc(doc.id),{alphabeticKeyV1:formTitleKey(doc.data().title)}));
+      await batch.commit();
+    }
+  }
+  let cachedUrlDocs=null;
+  let formsPagerPromise;
+  function getFormsPager() {
+    return formsPagerPromise ||= import('./card-pagination.js?v=20261019-1').then(async ({createCardPager})=>{
+      await prepareFormTitleIndex();
+      const pager=createCardPager({
+        container:'#fileList',search:'#searchInput',
+        read:({all,after,take})=>{
+          let query=all?db.collection('urlForms'):db.collection('urlForms').orderBy('alphabeticKeyV1','asc');
+          if(!all){if(after)query=query.startAfter(after);query=query.limit(take);}
+          return query.get().then(async snapshot=>{if(all)await ensureFormTitleKeys(snapshot);return snapshot;});
+        },
+        deliver:snapshot=>{
+          cachedUrlDocs=snapshot.docs;
+          renderURLDocs(cachedUrlDocs,document.getElementById('searchInput').value);
+        }
+      });
+      return pager;
+    }).catch(error=>{formsPagerPromise=null;throw error;});
+  }
+  async function loadUrlDocs(forceRefresh=false) {
+    const pager=await getFormsPager();
+    if(forceRefresh)await pager.refresh();else await pager.ready;
+    if(!pager.snapshot)throw new Error('Links could not be loaded. Use the retry button.');
+    return pager.snapshot.docs;
+  }
+  async function fetchURLs(filter='',forceRefresh=false) {
+    const docs=await loadUrlDocs(forceRefresh);
+    renderURLDocs(docs,document.getElementById('searchInput').value);
+  }
 
 function renderURLDocs(urlDocs, filter) {
   if (activeFormEditor) { pendingFormRender = { urlDocs, filter }; return; }
@@ -1277,7 +1304,6 @@ async function recordFormOpen(id) {
       openCount: firebase.firestore.FieldValue.increment(1),
       lastOpenedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    urlCacheExpiresAt = 0;
   } catch (error) {
     console.error('Form open count could not be updated.', error);
   }
@@ -1434,7 +1460,7 @@ function escapeHtmlText(str) {
     status.textContent = 'Saving…';
     try {
       await db.collection('urlForms').doc(id).update({
-        title: newTitle, url: newUrl, note: newNote, previewMode,
+        title: newTitle, alphabeticKeyV1:formTitleKey(newTitle), url: newUrl, note: newNote, previewMode,
         openExternally: previewMode === 'external'
       });
       window.invalidateCepSearchCache?.('main:urlForms');
@@ -1644,7 +1670,12 @@ document.addEventListener('click', (e) => {
   void getModularFirestore().catch(error => console.error('Save connection could not be prepared.', error));
   Promise.resolve(window.CEP_AUTH_READY)
     .then(authorized => authorized && fetchURLs())
-    .catch(error => console.error('URLs could not be loaded.', error));
+    .catch(error => {
+      console.error('URLs could not be loaded.',error);
+      const host=document.getElementById('fileList');host.textContent='Links could not be loaded. ';
+      const retry=document.createElement('button');retry.type='button';retry.textContent='↻';retry.setAttribute('aria-label','Retry loading links');
+      retry.onclick=()=>{host.replaceChildren();void fetchURLs().catch(()=>host.append(retry));};host.append(retry);
+    });
 </script>
     <script src="header-rays.js?v=48"></script>
 

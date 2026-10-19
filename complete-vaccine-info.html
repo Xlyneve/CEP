@@ -1013,6 +1013,7 @@ html:root.theme-vaccines .zoom-card-notes { font-size:12px; }
   </div>
 
   <script type="module">
+import { onCardSnapshot } from "./card-pagination-firestore.js?v=20261019-1";
 import { debounceSearch } from "./search-scheduler.js";
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
@@ -1309,13 +1310,14 @@ card.addEventListener("click", (e) => {
 }
 
 
-  onSnapshot(vaccineRef, snapshot => {
+  onCardSnapshot(vaccineRef, snapshot => {
     fullData = snapshot.docs.map(doc => ({
       id: doc.id,
       data: doc.data()
     }));
 
     // preserve current search
+    currentSearch=searchBox.value;
     applyFilter();
     renderCards();
   });

@@ -979,8 +979,9 @@ html:root:root body #imgModal #highlightControls .color-preset { background:var(
 <!-- Floating toggle button -->
 <button id="toggleInputBtn">+</button>
 
-<script src="note-popup.js?v=20261010-4"></script>
+<script src="note-popup.js?v=20261019-pagination"></script>
 <script type="module">
+import { onCardSnapshot } from "./card-pagination-firestore.js?v=20261019-1";
 import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { renderInBatches } from "./progressive-render.js";
@@ -1328,7 +1329,7 @@ function resetAddForm() {
 }
 
 /* ---------------- Real-time updates ---------------- */
-onSnapshot(collection(db, "informationNotes"), (snapshot) => {
+onCardSnapshot(collection(db, "informationNotes"), (snapshot) => {
   notes = [];
   snapshot.forEach(docSnap => notes.push({ id: docSnap.id, ...docSnap.data() }));
   // If snapshot renders before addDoc gives us the ID,

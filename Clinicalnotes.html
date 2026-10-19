@@ -987,6 +987,7 @@ body::after {
   <div class="notes-panel" id="notesList"></div>
 </div>
 <script type="module">
+import { onCardSnapshot } from "./card-pagination-firestore.js?v=20261019-1";
 import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -1133,13 +1134,16 @@ document.getElementById('addNoteBtn').addEventListener('click', async () => {
   }
 });
 
+let PINNED_NOTES=[];
 // --- Render Notes ---
 function renderNotes() {
-  onSnapshot(notesCol, snapshot => {
+  onCardSnapshot(notesCol, snapshot => {
+    PINNED_NOTES = (snapshot.pinnedDocs || []).map(d => ({id:d.id,...d.data()}));
     ALL_NOTES = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a,b) => new Date(b.time) - new Date(a.time));
 
-    drawNotes(ALL_NOTES);
+    const term=document.getElementById('searchInput').value.toLowerCase();
+    drawNotes(ALL_NOTES.filter(note=>(note.title || '').toLowerCase().includes(term) || (note.note || '').toLowerCase().includes(term)));
   });
 }
 
@@ -1274,7 +1278,7 @@ function renderPinnedNotes() {
   const pinnedList = document.getElementById('pinnedNotesList');
   if (!pinnedList) return;
 
-  const pinnedNotes = ALL_NOTES.filter(n => n.pinned);
+  const pinnedNotes = PINNED_NOTES;
 
   pinnedList.innerHTML = '';
 
@@ -1334,6 +1338,7 @@ function drawNotes(notesArray) {
   notesArray.forEach(data => {
     const div = document.createElement('div');
     div.className = 'note-card';
+    div.dataset.id=data.id;
 
     // --- Title ---
     const titleEl = document.createElement('div');

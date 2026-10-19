@@ -1260,8 +1260,9 @@ textarea:focus {
 <!-- Floating toggle button -->
 <button id="toggleInputBtn">+</button>
 
-<script src="note-popup.js?v=20261010-4"></script>
+<script src="note-popup.js?v=20261019-pagination"></script>
 <script type="module">
+import { onCardSnapshot } from "./card-pagination-firestore.js?v=20261019-1";
 import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { renderInBatches } from "./progressive-render.js";
@@ -1615,10 +1616,11 @@ function resetAddForm() {
 }
 
 /* ---------------- Real-time updates ---------------- */
-onSnapshot(collection(db, "practiceNNotes"), (snapshot) => {
+onCardSnapshot(collection(db, "practiceNNotes"), (snapshot) => {
   notes = [];
   snapshot.forEach(docSnap => notes.push({ id: docSnap.id, ...docSnap.data() }));
-  renderNotes(notes);
+  currentSearch=document.getElementById('searchInput').value.trim().toLowerCase();
+  renderFilteredNotes();
 });
 
 function insertTableInEditor(editor, rows = 3, cols = 3) {

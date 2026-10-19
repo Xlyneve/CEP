@@ -1083,8 +1083,9 @@ button:focus,
   <img id="modalImg" src="" alt="Zoomed Image" />
 </div>
 
-<script src="note-popup.js?v=20261010-4"></script>
+<script src="note-popup.js?v=20261019-pagination"></script>
 <script type="module">
+import { onCardSnapshot } from "./card-pagination-firestore.js?v=20261019-1";
 import { debounceSearch } from "./search-scheduler.js";
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
@@ -1543,7 +1544,8 @@ div.addEventListener('pointerleave', () => {
 function renderNotes() {
   if (unsubscribeNotes) return;
 
-  unsubscribeNotes = onSnapshot(notesCol, snapshot => {
+  unsubscribeNotes = onCardSnapshot(notesCol, snapshot => {
+    currentSearch=document.getElementById('searchInput').value.toLowerCase();
     latestNotesSnapshot = snapshot;
     buildNoteCards(snapshot);
   });

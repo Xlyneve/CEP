@@ -14,6 +14,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Electrocardiogram</title>
 <script type="module">
+import { createLiteCardPager } from "./card-pagination-lite.js?v=20261019-1";
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { renderInBatches } from "./progressive-render.js";
 import { uploadReferenceImage, deleteReferenceImage } from "./image-storage.js?v=20260826-2";
@@ -86,9 +87,8 @@ const firebaseConfig = {
     };
     const newDoc = await addDoc(ecgNotesCollection, noteData);
     window.invalidateCepSearchCache?.('main:ecgNotes');
-    cachedNoteDocs?.push(createCachedNote(newDoc.id, noteData));
     hideNoteInput();
-    loadNotes();
+    await notePager.reveal(newDoc.id);
   }
   
   function highlightMatches(html, words) {
@@ -104,7 +104,6 @@ const firebaseConfig = {
 }
 
   // ------------------ Load Notes ------------------
-  let noteLoadPromise = null;
   let noteLoadRequest = 0;
   let cachedNoteDocs = null;
   const createCachedNote = (id, data) => ({ id, data: () => data });
@@ -115,13 +114,15 @@ const firebaseConfig = {
         : noteDoc
     );
   };
+  const notePager=createLiteCardPager(ecgNotesCollection,snapshot=>{
+    cachedNoteDocs=snapshot.docs;
+    loadNotes(document.getElementById('search').value);
+  });
   async function loadNotes(filter = "", forceRefresh = false) {
     const request = ++noteLoadRequest;
     if (forceRefresh || !cachedNoteDocs) {
-      noteLoadPromise ||= getDocs(ecgNotesCollection)
-        .then(snapshot => { cachedNoteDocs = snapshot.docs; })
-        .finally(() => { noteLoadPromise = null; });
-      await noteLoadPromise;
+      await notePager.refresh();
+      return;
     }
     // A query typed during the initial download must supersede the older one.
     if (request !== noteLoadRequest) return;
@@ -200,7 +201,7 @@ card.appendChild(p);
         await deleteDoc(doc(ecgNotesCollection, docSnap.id));
         window.invalidateCepSearchCache?.('main:ecgNotes');
         cachedNoteDocs = cachedNoteDocs?.filter(noteDoc => noteDoc.id !== docSnap.id);
-        loadNotes(filter);
+        await notePager.refresh();
         deleteReferenceImage(app, data.image).catch(error => {
           console.warn("The note was deleted, but its image cleanup failed.", error);
         });
@@ -308,7 +309,7 @@ card.appendChild(p);
 };
   window.saveNote = saveNote;
   window.loadNotes = loadNotes;
-  loadNotes();
+  // Initial page is loaded by notePager.
  
 </script>
 

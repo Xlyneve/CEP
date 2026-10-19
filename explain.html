@@ -852,8 +852,9 @@ button:hover,
 <button id="toggleInput">+</button>
 
 
-<script src="note-popup.js?v=20261010-4"></script>
+<script src="note-popup.js?v=20261019-pagination"></script>
 <script type="module">
+import { onCardSnapshot } from "./card-pagination-firestore.js?v=20261019-1";
 import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
@@ -1574,7 +1575,8 @@ document.getElementById('searchInput').addEventListener('input', debounceSearch(
 }));
 
 // Firestore live sync
-onSnapshot(collection(db, 'explainNotes'), snapshot => {
+onCardSnapshot(collection(db, 'explainNotes'), snapshot => {
+    currentFilter=document.getElementById('searchInput').value.toLowerCase();
   const previousEditing = new Map(
     allNotes
       .filter(n => n.editing && n.id !== forceExitEditingId)

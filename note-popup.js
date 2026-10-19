@@ -133,7 +133,7 @@
     notice.querySelector('button').onclick = () => {
       const card = find(id);
       if (card) { card.scrollIntoView({ behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'center' }); highlight(card); }
-      else { revealId = id; reveal(); }
+      else { revealId = id; if(window.CEPCardPager) void window.CEPCardPager.reveal(id); else reveal(); }
     };
     notice.querySelectorAll('button')[1].onclick = () => notice.remove();
     document.body.append(notice);
@@ -166,7 +166,7 @@
       close();
       const card = find(id);
       if (card) { card.scrollIntoView({ behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'center' }); highlight(card); }
-      else { revealId = id; reveal(); }
+      else { revealId = id; if(window.CEPCardPager) void window.CEPCardPager.reveal(id); else reveal(); }
     };
     actions.append(closeButton,viewButton); content.append(actions);
     open(content,'Note saved',close);
