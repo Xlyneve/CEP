@@ -441,7 +441,9 @@ button:hover,
 .note-text,
 .note-text *,
 .edit-box,
-.edit-box * {
+.edit-box *,
+#noteText,
+#noteText * {
   font-family: Tahoma, sans-serif !important;
   font-size: 12px !important;
   line-height: 1.35;
@@ -1086,7 +1088,7 @@ if (e.target.closest('.btn-highlight-edit')) {
 });
 
 document.addEventListener('paste', (e) => {
-  const editBox = e.target.closest('.edit-box');
+  const editBox = e.target.closest('.edit-box,#noteText');
   if (!editBox) return;
 
   e.preventDefault();
@@ -1342,18 +1344,31 @@ function linkifyUrlsInHTML(html = '') {
   return tmp.innerHTML;
 }
 
+// Match clipboard typography to the uniform size used to display these notes.
+function normalizeCopiedFont(html) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html;
+  wrapper.style.cssText = 'font-family:Tahoma,sans-serif;font-size:12px;line-height:1.35';
+  wrapper.querySelectorAll('*').forEach(element => {
+    element.removeAttribute('size');
+    element.style.setProperty('font-size','12px');
+    element.style.setProperty('font-family','Tahoma,sans-serif');
+  });
+  return wrapper.outerHTML;
+}
+
 async function copyNoteHTML(note, cardEl, clientX, clientY){
   const textEl = cardEl.querySelector('.note-text') || document.getElementById(`editText-${note.id}`);
   const html = textEl ? textEl.innerHTML : '';
   if (!html) return;
 
-  const normalizedHTML = linkifyUrlsInHTML(
+  const normalizedHTML = normalizeCopiedFont(linkifyUrlsInHTML(
   removeDuplicateBracketLinks(
     removeLeadingIndent(
       normalizeHighlightWrappers(html)
     )
   )
-);
+));
 
   const plain = stripHTML(normalizedHTML);
 
