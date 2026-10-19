@@ -1209,9 +1209,11 @@ function clipboardNoteHTML(source) {
   const copies = [clone, ...clone.querySelectorAll('*')];
   originals.forEach((element, index) => {
     const computed = getComputedStyle(element);
-    for (const property of ['font-family','font-weight','font-style'])
+    for (const property of ['font-weight','font-style'])
       copies[index].style.setProperty(property,computed.getPropertyValue(property));
     // Card pixels are for compact display; copied clinical documents use 11pt.
+    copies[index].style.removeProperty('font-family');
+    copies[index].removeAttribute('face');
     copies[index].removeAttribute('size');
     copies[index].style.setProperty('font-size','11pt');
   });
@@ -1320,7 +1322,7 @@ function renderPinnedNotes() {
   if (PINNED_EDIT_MODE) return;
 
   const plainContent = richNoteToClinicalText(tmp.innerHTML);
-  await copyRichNote(tmp.innerHTML, plainContent);
+  await copyRichNote(clipboardNoteHTML(preview), plainContent);
     showCopyFeedback(item, event.clientX, event.clientY);
     });
 

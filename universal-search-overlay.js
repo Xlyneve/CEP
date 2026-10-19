@@ -808,14 +808,17 @@ export function getSearchCopyHtml(entry) {
     'sha.html':12, 'spine.html':12, 'urgent_care.html':12, 'face.html':12
   };
   const size = sizes[file];
-  if (!html || !size) return html;
+  if (!html) return html;
   const wrapper = document.createElement('div');
-  wrapper.innerHTML = html;
+  if(window.CEPSecurity?.setHTML)window.CEPSecurity.setHTML(wrapper,html);
+  else wrapper.innerHTML=html;
   // Fixed-size notes copy as document-sized 11pt, independent of compact card pixels.
   const copySize = '11pt';
-  wrapper.style.fontSize = copySize;
-  wrapper.style.fontFamily = 'Tahoma,sans-serif';
+  if(size)wrapper.style.fontSize=copySize;
   wrapper.querySelectorAll('*').forEach(element => {
+    element.style.removeProperty('font-family');
+    element.removeAttribute('face');
+    if(!size)return;
     if (element.matches('h1,h2,h3,h4,h5,h6') || element.closest('h1,h2,h3,h4,h5,h6')) return;
     element.removeAttribute('size');
     element.style.fontSize = copySize;
