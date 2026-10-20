@@ -4,6 +4,14 @@ import "./concept-markup.js?v=20261004-1";
 import "./shared-definitions.js?v=20261007-3";
 import "./pn-shared-definitions.js?v=20261007-3";
 import "./concept-preview.js?v=20261004-2";
+// Compact only Default results; clipboard payloads and source-note pages stay unchanged.
+const defaultCardStyle = document.createElement('style');
+defaultCardStyle.id = 'cep-default-search-card-size';
+defaultCardStyle.textContent = `
+  html:root:root body .cep-default-search-results .universal-search-result,
+  html:root:root body .cep-default-search-results .cep-global-search-result { zoom:.9; }
+`;
+document.head.append(defaultCardStyle);
 const conceptStyle = document.createElement('link');
 conceptStyle.rel = 'stylesheet';
 conceptStyle.href = new URL('./concept-links.css?v=20261004-2', import.meta.url).href;
@@ -1453,6 +1461,7 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
   }
 
   const runSearch = () => {
+    results.classList.toggle('cep-default-search-results',searchMode === 'default');
     if (searchMode === 'concepts') { void runConceptSearch(); return; }
     conceptRequestId++;
     if(searchMode==='clinical' && clinicalLoadPromise){status.textContent='Loading Clinical Notes…';return;}
