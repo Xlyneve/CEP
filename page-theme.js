@@ -3939,7 +3939,8 @@
     : [pnTables];
   const tableStyle = document.createElement('style');
   tableStyle.id = 'cep-pn-table-typography';
-  tableStyle.textContent = tableScopes.flatMap(scope => [scope,scope + ' *']).join(',') + '{font-size:12px !important;}';
+  tableStyle.textContent = tableScopes.flatMap(scope => [scope,scope + ' *']).join(',') + '{font-size:12px !important;-webkit-text-size-adjust:100% !important;text-size-adjust:100% !important;}' +
+    (page === 'pn.html' ? 'html:root:root,html:root:root body{-webkit-text-size-adjust:100% !important;text-size-adjust:100% !important;}' : '');
   document.head.append(tableStyle);
   const entry = settings[page];
   if (!entry) return;
