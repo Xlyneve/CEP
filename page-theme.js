@@ -3931,6 +3931,16 @@
     'recalls.html': [12, '#nurseNote,.edit-note,.note-content'],
     'complete-vaccine-info.html': [12, '#notes.vaccine-notes-input,#edit-notes.edit-notes-box']
   };
+  // PN has no font-size controls: pasted table text must match its fixed note size.
+  // Include PN search cards here so the displayed source size stays consistent.
+  const pnTables = 'html:root:root body .cep-search-source[data-source-file="pn.html"] table';
+  const tableScopes = page === 'pn.html'
+    ? [pnTables, 'html:root:root body :is(#nurseNote,.edit-note,.note-content) table']
+    : [pnTables];
+  const tableStyle = document.createElement('style');
+  tableStyle.id = 'cep-pn-table-typography';
+  tableStyle.textContent = tableScopes.flatMap(scope => [scope,scope + ' *']).join(',') + '{font-size:12px !important;}';
+  document.head.append(tableStyle);
   const entry = settings[page];
   if (!entry) return;
   const [size, selectors] = entry;
