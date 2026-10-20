@@ -141,20 +141,21 @@ export function invalidatePersistentSearchCache(dataset = '') {
     localStorage.setItem(key, String(Date.now()));
   } catch {}
 }
-const loadPersistentSearchValue = async (key, loader, forceRefresh = false) => {
+const loadPersistentSearchValue = async (key, loader, forceRefresh = false, waitForCacheWrite = true) => {
   if (!forceRefresh) {
     const cached = await readPersistentSearchCache(key);
     if (cached !== undefined) return cached;
   }
   const value = await loader();
-  await writePersistentSearchCache(key, value);
+  const saved=writePersistentSearchCache(key,value);
+  if(waitForCacheWrite)await saved;else void saved.catch(()=>{});
   return value;
 };
-export function loadPersistentSearchDocuments(db, collectionName, scope, { forceRefresh = false } = {}) {
+export function loadPersistentSearchDocuments(db, collectionName, scope, { forceRefresh = false, waitForCacheWrite = true } = {}) {
   return loadPersistentSearchValue(`${scope}:${collectionName}:documents:v1`, async () => {
     const snapshot = await (forceRefresh ? getDocsFromServer : getDocs)(collection(db, collectionName));
     return snapshot.docs.map(item => ({ id: item.id, data: item.data() }));
-  }, forceRefresh);
+  }, forceRefresh, waitForCacheWrite);
 }
 const searchTextCache = new WeakMap();
 function getSearchText(entry) {
@@ -177,9 +178,15 @@ export async function loadClinicalNotesEntries({ forceRefresh = false } = {}) {
     const auth = getAuth(app);
     await auth.authStateReady();
     if (!auth.currentUser) throw Object.assign(new Error('Open Clinical Notes and sign in, then return to search.'), { code:'clinical/auth-required' });
-    const docs = await loadPersistentSearchDocuments(getFirestore(app), 'clinicalNotes', `clinical:${auth.currentUser.uid}`, { forceRefresh });
+    const docs = await loadPersistentSearchDocuments(getFirestore(app), 'clinicalNotes', `clinical:${auth.currentUser.uid}`, { forceRefresh, waitForCacheWrite:false });
     const sourceOrder = new Map([...docs].sort((a,b)=>new Date(b.data.time)-new Date(a.data.time)).map((record,index)=>[record.id,index]));
-    return docs.map(record => ({ id:record.id, sourceIndex:sourceOrder.get(record.id), file:'Clinicalnotes.html', sourceTitle:'Clinical Notes', title:textFromHtml(record.data.title) || 'Untitled', text:[textFromHtml(record.data.title),textFromHtml(record.data.note)].join('\n'), displayText:textFromHtml(record.data.note), richHtml:record.data.note || '', record }));
+    return docs.map(record => {
+      const titleText=textFromHtml(record.data.title);
+      const displayText=textFromHtml(record.data.note);
+      return { id:record.id, focusId:record.id, sourceIndex:sourceOrder.get(record.id),
+        file:'Clinicalnotes.html', sourceTitle:'Clinical Notes', title:titleText || 'Untitled',
+        text:[titleText,displayText].join('\n'), displayText, richHtml:record.data.note || '', record };
+    });
   })().catch(error => { clinicalEntriesPromise = null; throw error; });
   return clinicalEntriesPromise;
 }
@@ -1346,7 +1353,7 @@ export async function mountUniversalSearch(host, closeSearch) {
   const xgptPrompt = panel.querySelector('.cep-xgpt-auth-prompt');
   const results = panel.querySelector('.cep-global-search-results');
   panel.querySelector('[aria-label="Close search"]').addEventListener('click', closeSearch);
-  let clinicalEntries = [];
+  let clinicalEntries = [], clinicalLoadPromise=null;
   let entries = [], activeSource = 'All', searchMode = 'default', timer, conceptRequestId = 0;
   const mergeXgptEntries = xgptEntries => {
     const existingIds = new Set(entries.filter(entry => entry.file === 'chatgptx.html').map(entry => entry.id));
@@ -1409,6 +1416,7 @@ export async function mountUniversalSearch(host, closeSearch) {
   const runSearch = () => {
     if (searchMode === 'concepts') { void runConceptSearch(); return; }
     conceptRequestId++;
+    if(searchMode==='clinical' && clinicalLoadPromise){status.textContent='Loading Clinical Notes…';return;}
     const query = normalizeSearchValue(input.value);
     const terms = [...new Set(query.split(/\s+/).filter(Boolean))];
     const commaGroups = query.includes(',')
@@ -1573,8 +1581,12 @@ export async function mountUniversalSearch(host, closeSearch) {
       filters.hidden = searchMode !== 'default';
       input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : searchMode === 'clinical' ? 'Search Clinical Notes titles and text…' : 'Search all notes and pages…';
       if (searchMode === 'clinical') {
-        status.textContent = 'Loading cached Clinical Notes…';
-        try { clinicalEntries = await loadClinicalNotesEntries(); } catch (error) { results.replaceChildren(); status.textContent = error.message; return; }
+        status.textContent = 'Loading Clinical Notes…';
+        const request=loadClinicalNotesEntries();
+        clinicalLoadPromise=request;
+        try { clinicalEntries = await request; }
+        catch (error) { if(searchMode!=='clinical')return;results.replaceChildren();status.textContent=error.message;return; }
+        finally { if(clinicalLoadPromise===request)clinicalLoadPromise=null; }
         if (searchMode !== 'clinical') return;
       }
       runSearch();

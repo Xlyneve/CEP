@@ -4743,8 +4743,8 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         try {
           const clinical = await window.loadClinicalNotesEntries();
           if (requestId !== searchRequestId || searchMode !== 'clinical') return;
-          candidates = clinical.map(entry => ({ ...entry, focusId:entry.id, searchable:`${entry.title} ${entry.text}`.toLocaleLowerCase() }));
-        } catch (error) { results.replaceChildren(); status.textContent = error.message; return; }
+          candidates = clinical;
+        } catch (error) { if(requestId!==searchRequestId || searchMode!=='clinical')return;results.replaceChildren(); status.textContent = error.message; return; }
       } else {
         await (indexPromise ||= buildIndex());
         candidates = searchIndex;
@@ -5029,6 +5029,8 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         mediaFilters.hidden = searchMode === 'concepts';
         filters.hidden = searchMode !== 'default';
         input.placeholder = searchMode === 'concepts' ? 'Search referenced concepts…' : searchMode === 'clinical' ? 'Search Clinical Notes titles and text…' : 'Search all notes and pages…';
+        // Start the same shared load on selection, rather than waiting for the first keystroke.
+        if(searchMode==='clinical')void window.loadClinicalNotesEntries?.().catch(()=>{});
         void runSearch();
         input.focus();
       });
@@ -5087,7 +5089,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         refresh.textContent = '↻';
       }
     });
-    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 180); });
+    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, searchMode === 'clinical' ? 140 : 180); });
     input.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeSearch();
       if (event.key === 'Enter') {
