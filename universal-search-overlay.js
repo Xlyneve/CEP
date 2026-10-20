@@ -1354,6 +1354,7 @@ export async function mountUniversalSearch(host, closeSearch) {
 .cep-search-input-wrap input { box-sizing:border-box; width:100%; padding-right:86px !important; }
 .cep-search-input-wrap .cep-search-media-filters { position:absolute; right:9px; top:50%; transform:translateY(-50%); display:flex; gap:4px; }
 .cep-search-media-filters[hidden] { display:none !important; }
+html:root:root body .cep-global-search-filters[hidden] { display:none !important; }
 .cep-search-input-wrap .cep-search-media-filters button { width:30px; height:30px; padding:0 !important; flex:none; display:grid; place-items:center; border:1px solid transparent; border-radius:9px; background:transparent; color:var(--theme-ink,#40363b); font:17px/1 sans-serif !important; cursor:pointer; }
 .cep-search-input-wrap .cep-search-media-filters button[aria-pressed="true"] { background:rgba(128,128,128,.18) !important; border:1px solid currentColor !important; }
 `; document.head.append(style);
