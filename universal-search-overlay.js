@@ -1256,6 +1256,44 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
   });
 }
 
+// Pinned shortcuts reuse the clinical search dataset; no additional database request.
+export function renderClinicalSearchPins(container, entries, { navigate } = {}) {
+  const pins = entries.filter(entry => entry.record?.data?.pinned === true);
+  if (!pins.length) return null;
+  if (!document.getElementById('cep-clinical-search-pins-style')) {
+    const style = document.createElement('style');
+    style.id = 'cep-clinical-search-pins-style';
+    style.textContent = `
+      html:root:root:root body .cep-clinical-search-pins { grid-column:1/-1; min-width:0; width:100%; margin:0 0 16px; }
+      html:root:root:root body .cep-clinical-search-pins-heading { margin:0 0 8px; font-size:12px; font-weight:600; color:var(--theme-ink,inherit); }
+      html:root:root:root body .cep-clinical-search-pins-row { display:flex; gap:12px; overflow-x:auto; padding:5px 7px 14px; align-items:stretch; }
+      html:root:root:root:root:root:root:root body .cep-clinical-search-pin { display:block !important; flex:0 0 190px; width:190px !important; min-width:0 !important; max-width:190px !important; height:110px !important; min-height:0 !important; margin:0 !important; text-decoration:none; cursor:pointer; }
+      html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-surface { box-sizing:border-box !important; height:110px !important; min-height:0 !important; padding:12px !important; overflow:hidden !important; }
+      html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:12px !important; line-height:1.3 !important; font-weight:600 !important; margin:0 0 5px !important; }
+      html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-content { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; font-size:11px !important; line-height:1.35 !important; white-space:normal !important; }
+    `;
+    document.head.append(style);
+  }
+  const section = document.createElement('section');
+  section.className = 'cep-clinical-search-pins'; section.setAttribute('aria-label','Pinned Clinical Notes');
+  const heading = document.createElement('div'); heading.className = 'cep-clinical-search-pins-heading'; heading.textContent = 'Pinned notes';
+  const row = document.createElement('div'); row.className = 'cep-clinical-search-pins-row';
+  for (const entry of pins) {
+    const card = document.createElement('a'); card.className = 'cep-global-search-result universal-search-native-card cep-clinical-search-pin';
+    const destination = new URL(entry.file,location.href);
+    destination.hash = new URLSearchParams({cepId:entry.focusId || entry.id}).toString(); card.href = destination.href;
+    const title = document.createElement('div'); title.className = 'cep-source-note-title'; title.textContent = entry.title;
+    const preview = document.createElement('div'); preview.className = 'cep-source-note-content'; preview.textContent = entry.displayText || entry.text || '';
+    card.append(title,preview); applySourceSearchSkin(card,entry);
+    installSearchCardInteractions(card, {
+      copyText:entry.displayText || entry.text || entry.title, copyHtml:getSearchCopyHtml(entry),
+      navigate:()=>navigate ? navigate(card.href) : location.assign(card.href)
+    });
+    row.append(card);
+  }
+  section.append(heading,row); container.prepend(section); return section;
+}
+
 function installXgptMediaUi() {
   if (document.querySelector('.cep-xgpt-media-tip')) return;
   const tip = document.createElement('div'); tip.className = 'cep-xgpt-media-tip'; tip.hidden = true;
@@ -1427,6 +1465,7 @@ export async function mountUniversalSearch(host, closeSearch) {
       ? [...new Set(commaGroups.flatMap(group => group.terms))]
       : terms;
     results.replaceChildren();
+    if (searchMode === 'clinical') renderClinicalSearchPins(results,clinicalEntries);
     if (!query && mediaFilter === 'all') { status.textContent = 'Type a word to search.'; return; }
     const scoredMatches = (searchMode === 'clinical' ? clinicalEntries : entries).filter(entry => matchesSearchMedia(entry, mediaFilter)).map(entry => {
       const indexed = getSearchText(entry);

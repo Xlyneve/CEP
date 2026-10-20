@@ -4695,7 +4695,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       }
       results.replaceChildren();
       previewFrames.clear();
-      if (!query && (mediaFilter === 'all' || searchMode === 'concepts')) {
+      if (!query && searchMode !== 'clinical' && (mediaFilter === 'all' || searchMode === 'concepts')) {
         status.textContent = searchMode === 'concepts' ? 'Type a word to search referenced concepts.' : 'Type a word to search.';
         return;
       }
@@ -4744,6 +4744,8 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
           const clinical = await window.loadClinicalNotesEntries();
           if (requestId !== searchRequestId || searchMode !== 'clinical') return;
           candidates = clinical;
+          window.renderClinicalSearchPins?.(results,clinical,{navigate:navigateToSearchResult});
+          if (!query && mediaFilter === 'all') { loading.remove(); status.textContent='Type a word to search.'; return; }
         } catch (error) { if(requestId!==searchRequestId || searchMode!=='clinical')return;results.replaceChildren(); status.textContent = error.message; return; }
       } else {
         await (indexPromise ||= buildIndex());
@@ -4779,7 +4781,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       status.textContent = matches.length
         ? `${showingSimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 30 ? '+' : ''} ${showingSimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}`
         : `No matching notes found · ${loadedSectionCount} saved-note section${loadedSectionCount === 1 ? '' : 's'} loaded`;
-      if (!matches.length) { results.replaceChildren(); return; }
+      if (!matches.length) { loading.remove(); return; }
       const stage = document.createElement('div');
       stage.className = 'universal-search-render-stage';
       results.appendChild(stage);
@@ -6267,7 +6269,7 @@ function closeTable() {
 </script>
 <script type="module">
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { matchesSearchMedia, createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=51';
+  import { matchesSearchMedia, createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, renderClinicalSearchPins, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=51';
   import {
     getFirestore,
     collection,
@@ -6387,6 +6389,7 @@ const firebaseConfig = {
   window.cepUniversalLazyLoaders.push(loadChatgptSearchNotes);
   if (sessionStorage.getItem('cep-xgpt-google-access-token')) void loadChatgptSearchNotes();
   window.loadClinicalNotesEntries = loadClinicalNotesEntries;
+  window.renderClinicalSearchPins = renderClinicalSearchPins;
   window.createXgptPhotoStrip = createXgptPhotoStrip;
   window.getXgptConceptImages = getXgptConceptImages;
   window.getCachedXgptConceptMedia = getSharedXgptConceptMedia;
