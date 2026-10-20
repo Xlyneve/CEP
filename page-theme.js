@@ -87,11 +87,14 @@
     { rgb: "250, 246, 229", solid: "#faf6e5", ink: "#393644" },
   ];
 
+  // Soft sage, powder blue, lavender, blush and cream from the mindful palette.
   const mintCeramicPalette = [
-    { rgb:"244, 218, 218", solid:"#f4dada", ink:"#303530" },
-    { rgb:"249, 229, 214", solid:"#f9e5d6", ink:"#303530" },
-    { rgb:"253, 249, 243", solid:"#fdf9f3", ink:"#303530" },
-    { rgb:"224, 199, 151", solid:"#e0c797", ink:"#303530" },
+    { rgb:"223, 232, 225", solid:"#dfe8e1", ink:"#353c38" },
+    { rgb:"221, 232, 241", solid:"#dde8f1", ink:"#353c38" },
+    { rgb:"230, 224, 239", solid:"#e6e0ef", ink:"#353c38" },
+    { rgb:"240, 225, 229", solid:"#f0e1e5", ink:"#353c38" },
+    { rgb:"242, 239, 217", solid:"#f2efd9", ink:"#353c38" },
+    { rgb:"250, 250, 247", solid:"#fafaf7", ink:"#353c38" },
   ];
   const softStonePalette = [
     { rgb:"225, 226, 230", solid:"#e1e2e6", ink:"#303238" },
@@ -211,7 +214,7 @@
     "quiet-stone": "#393831",
     anatomy: "#22211f",
     sculpted: "#a288b7",
-    "mint-ceramic": "#e0c797",
+    "mint-ceramic": "#dfe8e1",
     "soft-stone": "#e1e2e6",
     "lavender-glass":"#d8cdec",
     "grey-lavender":"#e8e7ef",
@@ -1904,24 +1907,24 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="mint-ceramic"] {
-      --theme-ink:#303530; --theme-muted-ink:#61675f;
-      --refresh-cocoa:#303530; --refresh-rose:#f9e5d6; --refresh-lime:#fdf9f3;
-      --refresh-stone:#fdf9f3; --refresh-blue:#f9e5d6; --refresh-terracotta:#e0c797;
-      --refresh-edge:#fafaf4; --refresh-depth:8px 10px 18px rgba(68,73,59,.24);
+      --theme-ink:#353c38; --theme-muted-ink:#626b65;
+      --refresh-cocoa:#353c38; --refresh-rose:#f0e1e5; --refresh-lime:#f2efd9;
+      --refresh-stone:#e6e0ef; --refresh-blue:#dde8f1; --refresh-terracotta:#b8c9ad;
+      --refresh-edge:#f8faf8; --refresh-depth:8px 10px 18px rgba(77,87,99,.24);
       --mint-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.055' filter='url(%23grain)'/%3E%3C/svg%3E");
-      --mint-raised:inset 2px 2px 3px rgba(255,255,251,.95),inset -3px -4px 5px rgba(98,104,89,.18),0 3px 2px rgba(78,83,70,.2),7px 10px 18px rgba(68,73,59,.23),-5px -5px 12px rgba(255,255,251,.88);
-      --mint-pressed:inset 3px 4px 7px rgba(72,81,69,.3),inset -3px -3px 6px rgba(255,255,251,.95);
-      --quick-panel:linear-gradient(145deg,#f4dada,#fdf9f3); --quick-ink:#303530;
-      --quick-accent:#f9e5d6; --quick-accent-ink:#303530; --quick-soft:#f4dada; --quick-field:#f4dada; --quick-edge:#fafaf4;
-      --clinical-panel:#fdf9f3; --clinical-field:#f4dada; --clinical-accent:#e0c797; --clinical-accent-ink:#303530; --clinical-edge:#fafaf4;
-      --copy-feedback-accent:#e0c797; --copy-feedback-soft:#f4dada;
-      --homecal-header:linear-gradient(145deg,#f9e5d6,#fdf9f3); --homecal-header-ink:#303530;
-      --homecal-control:#f4dada; --homecal-control-ink:#303530; --homecal-header-edge:#fafaf4;
-      --homecal-today:linear-gradient(145deg,#f4dada,#e0c797); --homecal-today-edge:#fafaf4; --homecal-today-shadow:rgba(68,73,59,.24);
+      --mint-raised:inset 2px 2px 3px rgba(255,255,251,.95),inset -3px -4px 5px rgba(93,105,116,.18),0 3px 2px rgba(82,94,104,.2),7px 10px 18px rgba(77,87,99,.23),-5px -5px 12px rgba(255,255,251,.88);
+      --mint-pressed:inset 3px 4px 7px rgba(83,98,108,.3),inset -3px -3px 6px rgba(255,255,251,.95);
+      --quick-panel:linear-gradient(145deg,#dfe8e1,#fafaf7); --quick-ink:#353c38;
+      --quick-accent:#dde8f1; --quick-accent-ink:#353c38; --quick-soft:#dfe8e1; --quick-field:#f5f7f4; --quick-edge:#f8faf8;
+      --clinical-panel:#fafaf7; --clinical-field:#f5f7f4; --clinical-accent:#b8c9ad; --clinical-accent-ink:#353c38; --clinical-edge:#f8faf8;
+      --copy-feedback-accent:#b8c9ad; --copy-feedback-soft:#dfe8e1;
+      --homecal-header:linear-gradient(145deg,#dde8f1,#fafaf7); --homecal-header-ink:#353c38;
+      --homecal-control:#dfe8e1; --homecal-control-ink:#353c38; --homecal-header-edge:#f8faf8;
+      --homecal-today:linear-gradient(145deg,#f2efd9,#e7e0bc); --homecal-today-edge:#f8faf8; --homecal-today-shadow:rgba(77,87,99,.24);
     }
     html[data-xlyneve-color-theme="mint-ceramic"],html[data-xlyneve-color-theme="mint-ceramic"] body {
-      color:#303530; background-color:#fdf9f3 !important;
-      background-image:var(--mint-grain),linear-gradient(135deg,#fffefa,#fdf9f3) !important;
+      color:#353c38; background-color:#fafaf7 !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,#edf3f0 0%,#eef2f6 48%,#ede8f3 100%) !important;
       background-attachment:fixed !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body::before { background:none !important;opacity:0 !important; }
@@ -1929,34 +1932,34 @@
     html[data-xlyneve-color-theme="mint-ceramic"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .main-content .card-group.section-card-group > .card,
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
-      color:var(--card-ink,#303530) !important;
-      background-color:var(--card-solid,#fdf9f3) !important;
-      background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--card-solid,#fdf9f3) 92%,white),var(--card-solid,#fdf9f3)) !important;
+      color:var(--card-ink,#353c38) !important;
+      background-color:var(--card-solid,#fafaf7) !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--card-solid,#fafaf7) 92%,white),var(--card-solid,#fafaf7)) !important;
       border:1px solid rgba(255,255,248,.82) !important;
       border-radius:22px !important; box-shadow:var(--mint-raised) !important;
       backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body > header,
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(.header,.header-bg,.topbar,.top-bar,.app-header,.page-header) {
-      color:var(--page-header-ink,#303530) !important; background-color:var(--page-header-solid,#fdf9f3) !important;
-      background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--page-header-solid,#fdf9f3) 92%,white),var(--page-header-solid,#fdf9f3)) !important;
-      border-color:#fafaf4 !important; box-shadow:var(--mint-raised) !important;
+      color:var(--page-header-ink,#353c38) !important; background-color:var(--page-header-solid,#fafaf7) !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--page-header-solid,#fafaf7) 92%,white),var(--page-header-solid,#fafaf7)) !important;
+      border-color:#f8faf8 !important; box-shadow:var(--mint-raised) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) {
-      color:#303530 !important; -webkit-text-fill-color:#303530 !important;
-      background-color:#f9e5d6 !important;
-      background-image:var(--mint-grain),linear-gradient(145deg,#f9e5d6,#f9e5d6) !important;
-      border-color:#fdf9f3 !important; box-shadow:var(--mint-raised) !important;
+      color:#353c38 !important; -webkit-text-fill-color:#353c38 !important;
+      background-color:#dde8f1 !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,#dde8f1,#dde8f1) !important;
+      border-color:#fafaf7 !important; box-shadow:var(--mint-raised) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.add-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)):active {
       box-shadow:var(--mint-pressed) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable) {
-      color:#303530; background:#f4dada !important;
-      border-color:#fdf9f3 !important; box-shadow:var(--mint-pressed) !important;
+      color:#353c38; background:#f5f7f4 !important;
+      border-color:#fafaf7 !important; box-shadow:var(--mint-pressed) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(input,select,textarea,.editableNote,#noteText.editable):focus-visible {
-      outline:2px solid #e0c797; outline-offset:3px;
+      outline:2px solid #b8c9ad; outline-offset:3px;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body .todo-item :is(textarea,input[type="text"]),
     html[data-xlyneve-color-theme="mint-ceramic"] body #notes .notepad {
@@ -1969,20 +1972,22 @@
       font-size:16px; line-height:1; flex:0 0 20px; text-align:center;
     }
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body :is(.dashboard-frequent-heading,.main-content > h2,.dashboard-section-toggle) {
-      color:#303530 !important;-webkit-text-fill-color:#303530 !important;
+      color:#353c38 !important;-webkit-text-fill-color:#353c38 !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle {
-      color:var(--mint-button-ink,#303530) !important;-webkit-text-fill-color:var(--mint-button-ink,#303530) !important;
-      background-color:var(--mint-button-surface,#f9e5d6) !important;
-      background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--mint-button-surface,#f9e5d6) 92%,white),var(--mint-button-surface,#f9e5d6)) !important;
+      color:var(--mint-button-ink,#353c38) !important;-webkit-text-fill-color:var(--mint-button-ink,#353c38) !important;
+      background-color:var(--mint-button-surface,#dde8f1) !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--mint-button-surface,#dde8f1) 92%,white),var(--mint-button-surface,#dde8f1)) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-section-toggle { border-radius:18px !important; }
-    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 1) { --mint-button-surface:#f4dada;--mint-button-ink:#303530; }
-    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 2) { --mint-button-surface:#f9e5d6;--mint-button-ink:#303530; }
-    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 3) { --mint-button-surface:#fdf9f3;--mint-button-ink:#303530; }
-    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(4n + 4) { --mint-button-surface:#e0c797;--mint-button-ink:#303530; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(6n + 1) { --mint-button-surface:#dfe8e1;--mint-button-ink:#353c38; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(6n + 2) { --mint-button-surface:#dde8f1;--mint-button-ink:#353c38; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(6n + 3) { --mint-button-surface:#e6e0ef;--mint-button-ink:#353c38; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(6n + 4) { --mint-button-surface:#f0e1e5;--mint-button-ink:#353c38; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(6n + 5) { --mint-button-surface:#f2efd9;--mint-button-ink:#353c38; }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(6n + 6) { --mint-button-surface:#fafaf7;--mint-button-ink:#353c38; }
     html[data-xlyneve-color-theme="mint-ceramic"] .xlyneve-theme-button {
-      background:linear-gradient(135deg,#f9e5d6 0 50%,#fdf9f3 50% 100%);color:#303530;
+      background:linear-gradient(135deg,#dde8f1 0 50%,#fafaf7 50% 100%);color:#353c38;
     }
     @media (prefers-reduced-motion:no-preference) {
       html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)) { transition:box-shadow .15s ease; }
@@ -1991,15 +1996,15 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
-      background:var(--mint-grain),linear-gradient(145deg,#f9e5d6,#f9e5d6) !important;
-      color:#303530 !important;box-shadow:var(--mint-raised) !important;
-      border:1px solid #fdf9f3 !important;border-radius:16px !important;
+      background:var(--mint-grain),linear-gradient(145deg,#dde8f1,#dde8f1) !important;
+      color:#353c38 !important;box-shadow:var(--mint-raised) !important;
+      border:1px solid #fafaf7 !important;border-radius:16px !important;
     }
   `;
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="mint-ceramic"] body #notes .note-card :is(.notepad,.timestamp) {
-      color:var(--card-ink,#303530) !important;-webkit-text-fill-color:var(--card-ink,#303530) !important;
+      color:var(--card-ink,#353c38) !important;-webkit-text-fill-color:var(--card-ink,#353c38) !important;
     }
   `;
 
@@ -3063,7 +3068,7 @@
     themeOptions.push({ value:"porcelain", label:"Porcelain", colors:["#e9e9e1","#9fb5d1","#e8c2c0"] });
     themeOptions.push({ value:"aurora", label:"Aurora 5D", colors:["#e9ebf6","#8154c4","#7d9aeb","#d091b0","#cee878"] });
     themeOptions.push({ value:"soft-stone", label:"Soft Stone 5D", colors:["#e1e2e6","#dfb53e","#72757c"] });
-    themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#f4dada","#f9e5d6","#fdf9f3","#e0c797"] });
+    themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#dfe8e1","#dde8f1","#e6e0ef","#f0e1e5","#f2efd9"] });
     themeOptions.push({ value:"pastel-jumper", label:"Pastel Jumper", colors:["#b9a6d2", "#e7a1a1", "#f1edcf", "#d8cbe7", "#faf6e5"] });
     const list = document.createElement("div");
     const status = document.createElement("p");
