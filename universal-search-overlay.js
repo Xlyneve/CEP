@@ -39,10 +39,15 @@ function fitDefaultSearchCard(card) {
   if (!fit) {
     const wrappers = [...card.querySelectorAll('.cep-source-title,.cep-source-content,.cep-source-text,.cep-source-display,.cep-source-view,.universal-search-native-title,.universal-search-native-snippet')];
     const nodes = new Set(wrappers);
+    // Tables retain their source typography instead of inheriting the larger note text.
+    for (const node of card.querySelectorAll('table,table *')) nodes.add(node);
     for (const wrapper of wrappers) for (const node of wrapper.querySelectorAll('*')) {
       if ([...node.childNodes].some(child=>child.nodeType===Node.TEXT_NODE && child.textContent.trim()) && !node.closest('button,input,textarea,select,svg,.cep-media-link')) nodes.add(node);
     }
-    fit = [...nodes].map(node=>({node,size:Math.max(parseFloat(getComputedStyle(node).fontSize)||14,node.matches('.cep-source-title,.universal-search-native-title')?15:14)}));
+    fit = [...nodes].map(node=>{
+      const original = parseFloat(getComputedStyle(node).fontSize)||14;
+      return {node,size:node.closest('table') ? original : Math.max(original,node.matches('.cep-source-title,.universal-search-native-title')?15:14)};
+    });
     defaultCardFits.set(card,fit);
     card.addEventListener('load',()=>scheduleDefaultCardFit(card),true);
     defaultCardResize?.observe(card);
