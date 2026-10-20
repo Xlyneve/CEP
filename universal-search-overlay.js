@@ -4,14 +4,58 @@ import "./concept-markup.js?v=20261004-1";
 import "./shared-definitions.js?v=20261007-3";
 import "./pn-shared-definitions.js?v=20261007-3";
 import "./concept-preview.js?v=20261004-2";
-// Compact only Default results; clipboard payloads and source-note pages stay unchanged.
+// Compact Default cards keep short notes readable; only crowded notes shrink.
 const defaultCardStyle = document.createElement('style');
 defaultCardStyle.id = 'cep-default-search-card-size';
 defaultCardStyle.textContent = `
-  html:root:root body .cep-default-search-results .universal-search-result,
-  html:root:root body .cep-default-search-results .cep-global-search-result { zoom:.9; }
+  html:root:root:root:root:root:root:root body .cep-default-search-results .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) { padding:10px 12px !important; }
+  html:root:root body .cep-default-search-results :is(.universal-search-native-card,.cep-global-search-result):not(.cep-search-source) { padding:10px 12px; min-height:72px; }
+  html:root:root:root:root:root:root:root body .cep-default-search-results :is(.cep-xgpt-rich-content,.xgpt-rich-snippet) { zoom:1 !important; }
 `;
 document.head.append(defaultCardStyle);
+const defaultCardFits = new WeakMap();
+const defaultCardWidths = new WeakMap();
+const pendingDefaultFits = new Set();
+let defaultFitFrame = 0;
+function scheduleDefaultCardFit(card) {
+  pendingDefaultFits.add(card);
+  if (defaultFitFrame) return;
+  defaultFitFrame = requestAnimationFrame(() => {
+    defaultFitFrame = 0;
+    for (const pending of pendingDefaultFits) fitDefaultSearchCard(pending);
+    pendingDefaultFits.clear();
+  });
+}
+const defaultCardResize = typeof ResizeObserver === 'function' ? new ResizeObserver(entries => {
+  for (const {target:card,contentRect} of entries) {
+    if (!card.isConnected) { defaultCardResize.unobserve(card); continue; }
+    if (contentRect.width <= 0 || Math.abs((defaultCardWidths.get(card) || 0)-contentRect.width)<1) continue;
+    defaultCardWidths.set(card,contentRect.width); scheduleDefaultCardFit(card);
+  }
+}) : null;
+function fitDefaultSearchCard(card) {
+  if (!card.isConnected || !card.closest('.cep-default-search-results') || !card.getBoundingClientRect().width) return;
+  let fit = defaultCardFits.get(card);
+  if (!fit) {
+    const wrappers = [...card.querySelectorAll('.cep-source-title,.cep-source-content,.cep-source-text,.cep-source-display,.cep-source-view,.universal-search-native-title,.universal-search-native-snippet')];
+    const nodes = new Set(wrappers);
+    for (const wrapper of wrappers) for (const node of wrapper.querySelectorAll('*')) {
+      if ([...node.childNodes].some(child=>child.nodeType===Node.TEXT_NODE && child.textContent.trim()) && !node.closest('button,input,textarea,select,svg,.cep-media-link')) nodes.add(node);
+    }
+    fit = [...nodes].map(node=>({node,size:Math.max(parseFloat(getComputedStyle(node).fontSize)||14,node.matches('.cep-source-title,.universal-search-native-title')?15:14)}));
+    defaultCardFits.set(card,fit);
+    card.addEventListener('load',()=>scheduleDefaultCardFit(card),true);
+    defaultCardResize?.observe(card);
+  }
+  // Measure at the readable size, then shrink only if the compact area needs it.
+  for (const {node,size} of fit) node.style.setProperty('font-size',size+'px','important');
+  const surface = card.querySelector(':scope > .cep-source-surface,:scope > .cep-source-chat,:scope > .cep-source-form') || card;
+  const height = surface.getBoundingClientRect().height;
+  const scale = Math.max(.86,Math.min(1,240/Math.max(height,1)));
+  for (const {node,size} of fit) node.style.setProperty('font-size',(size*scale).toFixed(2)+'px','important');
+  card.dataset.defaultFontFit = scale < 1 ? 'compact' : 'readable';
+  // Height remains automatic so even very long notes retain their full content.
+}
 const conceptStyle = document.createElement('link');
 conceptStyle.rel = 'stylesheet';
 conceptStyle.href = new URL('./concept-links.css?v=20261004-2', import.meta.url).href;
@@ -1177,6 +1221,7 @@ async function writeSearchClipboard(copyText, copyHtml, prepared) {
   await navigator.clipboard.writeText(plainText);
 }
 export function installSearchCardInteractions(card, { copyText, copyHtml, navigate, onNavigate } = {}) {
+  scheduleDefaultCardFit(card);
   let clickTimer, clipboardPayload, pressAnimation, glow, glowAnimation, attempt = 0, pressed = false;
   if (!document.getElementById('cep-search-copy-glow-style')) {
     const style = document.createElement('style');
