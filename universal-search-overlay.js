@@ -1266,11 +1266,11 @@ export function renderClinicalSearchPins(container, entries, { navigate } = {}) 
     style.textContent = `
       html:root:root:root body .cep-clinical-search-pins { grid-column:1/-1; min-width:0; width:100%; margin:0 0 16px; }
       html:root:root:root body .cep-clinical-search-pins-heading { margin:0 0 8px; font-size:12px; font-weight:600; color:var(--theme-ink,inherit); }
-      html:root:root:root body .cep-clinical-search-pins-row { display:flex; gap:12px; overflow-x:auto; padding:5px 7px 14px; align-items:stretch; }
-      html:root:root:root:root:root:root:root body .cep-clinical-search-pin { display:block !important; flex:0 0 190px; width:190px !important; min-width:0 !important; max-width:190px !important; height:110px !important; min-height:0 !important; margin:0 !important; text-decoration:none; cursor:pointer; }
-      html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-surface { box-sizing:border-box !important; height:110px !important; min-height:0 !important; padding:12px !important; overflow:hidden !important; }
+      html:root:root:root body .cep-clinical-search-pins-row { display:flex; gap:10px; overflow-x:auto; padding:5px 7px 12px; align-items:stretch; }
+      html:root:root:root:root:root:root:root body .cep-clinical-search-pin { display:block !important; flex:0 0 165px; width:165px !important; min-width:0 !important; max-width:165px !important; height:95px !important; min-height:0 !important; margin:0 !important; text-decoration:none; cursor:pointer; }
+      html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-surface { box-sizing:border-box !important; height:95px !important; min-height:0 !important; padding:10px !important; overflow:hidden !important; }
       html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:12px !important; line-height:1.3 !important; font-weight:600 !important; margin:0 0 5px !important; }
-      html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-content { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; font-size:11px !important; line-height:1.35 !important; white-space:normal !important; }
+      html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-content { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:11px !important; line-height:1.35 !important; white-space:normal !important; }
     `;
     document.head.append(style);
   }
