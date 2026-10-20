@@ -152,7 +152,7 @@
     selectedTheme = "original";
     try { localStorage.removeItem(themeStorageKey); } catch {}
   }
-  const palette = selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? mintCeramicPalette : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -1947,8 +1947,8 @@
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.add-btn,.header-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.xlyneve-theme-button,.dot,.pick)) {
       color:#353c38 !important; -webkit-text-fill-color:#353c38 !important;
-      background-color:#dde8f1 !important;
-      background-image:var(--mint-grain),linear-gradient(145deg,#dde8f1,#dde8f1) !important;
+      background-color:var(--mint-control-surface,#dde8f1) !important;
+      background-image:var(--mint-grain),linear-gradient(145deg,var(--mint-control-surface,#dde8f1),var(--mint-control-surface,#dde8f1)) !important;
       border-color:#fafaf7 !important; box-shadow:var(--mint-raised) !important;
     }
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(button,.glass-btn,.add-btn,.circle):not(:where(#recallBtn,.xlyneve-theme-option,.dot,.pick)):active {
@@ -1996,7 +1996,7 @@
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
-      background:var(--mint-grain),linear-gradient(145deg,#dde8f1,#dde8f1) !important;
+      background:var(--mint-grain),linear-gradient(145deg,var(--mint-control-surface,#dde8f1),var(--mint-control-surface,#dde8f1)) !important;
       color:#353c38 !important;box-shadow:var(--mint-raised) !important;
       border:1px solid #fafaf7 !important;border-radius:16px !important;
     }
@@ -2005,6 +2005,23 @@
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="mint-ceramic"] body #notes .note-card :is(.notepad,.timestamp) {
       color:var(--card-ink,#353c38) !important;-webkit-text-fill-color:var(--card-ink,#353c38) !important;
+    }
+  `;
+
+  // Home uses lavender in place of blue, alongside the sage, blush and cream palette.
+  themeStyle.textContent += `
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass {
+      --mint-control-surface:#e6e0ef; --quick-accent:#e6e0ef; --refresh-blue:#e6e0ef;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass,
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body {
+      background-image:var(--mint-grain),linear-gradient(145deg,#f5f3f8 0%,#f5f5ef 55%,#f0edf4 100%) !important;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body.dashboard-hierarchy-active .dashboard-frequent-circles .circle:nth-child(6n + 2) {
+      --mint-button-surface:#e6e0ef;
+    }
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass .xlyneve-theme-button {
+      background:linear-gradient(135deg,#e6e0ef 0 50%,#fafaf7 50% 100%);
     }
   `;
 
