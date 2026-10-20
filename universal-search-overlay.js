@@ -183,7 +183,7 @@ export async function loadClinicalNotesEntries({ forceRefresh = false } = {}) {
     return docs.map(record => {
       const titleText=textFromHtml(record.data.title);
       const displayText=textFromHtml(record.data.note);
-      return { id:record.id, focusId:record.id, sourceIndex:sourceOrder.get(record.id),
+      return { id:record.id, focusId:record.id, nativeOnly:true, sourceIndex:sourceOrder.get(record.id),
         file:'Clinicalnotes.html', sourceTitle:'Clinical Notes', title:titleText || 'Untitled',
         text:[titleText,displayText].join('\n'), displayText, richHtml:record.data.note || '', record };
     });
