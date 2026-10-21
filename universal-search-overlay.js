@@ -6,7 +6,7 @@ import "./pn-shared-definitions.js?v=20261007-3";
 import "./concept-preview.js?v=20261004-2";
 // One shared disclosure for Home and the lightbulb search; no search/data changes.
 function installSearchHelp(modes) {
-  if (!modes || modes.querySelector('.cep-search-help-button')) return;
+  if (!modes || modes.parentElement.querySelector('.cep-search-help-button')) return;
   if (!document.getElementById('cep-search-help-style')) {
     const style = document.createElement('style');
     style.id = 'cep-search-help-style';
@@ -15,8 +15,10 @@ function installSearchHelp(modes) {
         display:inline-flex!important;align-items:center!important;justify-content:center!important;
         width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;
         padding:0!important;margin:0!important;border-radius:50%!important;
+        position:absolute!important;left:10px!important;top:50%!important;transform:translateY(-50%)!important;z-index:2;
         font:600 12px/1 sans-serif!important;color:inherit!important;flex:none!important;
       }
+      html:root:root:root:root body .cep-search-has-help input{padding-left:42px!important}
       html:root:root:root:root body .cep-search-help-guide {
         margin:6px 0 10px!important;padding:10px 12px!important;border-radius:12px!important;
         background:var(--card-solid,#f7f6f2)!important;color:var(--theme-ink,#303039)!important;
@@ -35,8 +37,11 @@ function installSearchHelp(modes) {
   guide.className = 'cep-search-help-guide'; guide.hidden = true;
   guide.id = 'cep-search-help-' + (modes.classList.contains('universal-search-modes') ? 'home' : 'overlay');
   button.setAttribute('aria-controls',guide.id);
-  guide.innerHTML = '<p><strong>Spaces = all words</strong><br>tuelle bactigras soft bandage</p><p><strong>Commas = any option</strong><br>tuelle, bactigras, soft bandage</p><p>Keep words like <strong>soft bandage</strong> together.</p>';
-  modes.querySelector('[data-search-mode="default"]').after(button);
+  guide.innerHTML = '<p><strong>Add commas to find cards matching any option.</strong><br>tuelle, bactigras, soft bandage<br>Shows cards containing tuelle OR bactigras OR both words soft and bandage.</p><p><strong>Without commas, each card must contain all your words.</strong><br>tuelle bactigras soft bandage<br>Shows only cards containing all four words, anywhere in the card.</p><p>No comma is needed between words belonging to one option, such as <strong>soft bandage</strong>.</p>';
+  const inputWrap = modes.parentElement.querySelector('.cep-search-input-wrap');
+  if (!inputWrap) return;
+  inputWrap.classList.add('cep-search-has-help');
+  inputWrap.append(button);
   modes.after(guide);
   button.addEventListener('click',event=>{
     event.preventDefault(); event.stopPropagation();
