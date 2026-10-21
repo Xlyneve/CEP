@@ -163,6 +163,16 @@ export function applySourceSearchSkin(parent, entry) {
     node.style.whiteSpace = 'inherit';
     if (node.classList.contains('cep-source-title')) node.style.marginBottom = '0';
   });
+  if (file === 'clinicalnotes.html') {
+    // Normalize only the display clone: older saved HTML carries pasted sizes.
+    // Inherit from each card body so compact pinned previews retain their size.
+    surface.style.setProperty('-webkit-text-size-adjust', '100%');
+    surface.style.setProperty('text-size-adjust', '100%');
+    surface.querySelectorAll('.cep-source-content *, .cep-source-text *').forEach(node => {
+      node.removeAttribute('size');
+      node.style.setProperty('font-size', 'inherit', 'important');
+    });
+  }
 }
 window.applySourceSearchSkin = applySourceSearchSkin;
 
