@@ -4,6 +4,53 @@ import "./concept-markup.js?v=20261004-1";
 import "./shared-definitions.js?v=20261007-3";
 import "./pn-shared-definitions.js?v=20261007-3";
 import "./concept-preview.js?v=20261004-2";
+// One shared disclosure for Home and the lightbulb search; no search/data changes.
+function installSearchHelp(modes) {
+  if (!modes || modes.querySelector('.cep-search-help-button')) return;
+  if (!document.getElementById('cep-search-help-style')) {
+    const style = document.createElement('style');
+    style.id = 'cep-search-help-style';
+    style.textContent = `
+      html:root:root:root:root body .cep-search-help-button {
+        display:inline-flex!important;align-items:center!important;justify-content:center!important;
+        width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;
+        padding:0!important;margin:0!important;border-radius:50%!important;
+        font:600 12px/1 sans-serif!important;color:inherit!important;flex:none!important;
+      }
+      html:root:root:root:root body .cep-search-help-guide {
+        margin:6px 0 10px!important;padding:10px 12px!important;border-radius:12px!important;
+        background:var(--card-solid,#f7f6f2)!important;color:var(--theme-ink,#303039)!important;
+        border:1px solid currentColor;font:12px/1.5 sans-serif!important;
+      }
+      html:root:root:root:root body .cep-search-help-guide[hidden]{display:none!important}
+      .cep-search-help-guide p{margin:0 0 5px}.cep-search-help-guide p:last-child{margin-bottom:0}
+    `;
+    document.head.append(style);
+  }
+  const button = document.createElement('button');
+  button.type = 'button'; button.className = 'cep-search-help-button';
+  button.textContent = '?'; button.title = 'How to search';
+  button.setAttribute('aria-label','How to search'); button.setAttribute('aria-expanded','false');
+  const guide = document.createElement('div');
+  guide.className = 'cep-search-help-guide'; guide.hidden = true;
+  guide.id = 'cep-search-help-' + (modes.classList.contains('universal-search-modes') ? 'home' : 'overlay');
+  button.setAttribute('aria-controls',guide.id);
+  guide.innerHTML = '<p><strong>Spaces = all words</strong><br>tuelle bactigras soft bandage</p><p><strong>Commas = any option</strong><br>tuelle, bactigras, soft bandage</p><p>Keep words like <strong>soft bandage</strong> together.</p>';
+  modes.querySelector('[data-search-mode="default"]').after(button);
+  modes.after(guide);
+  button.addEventListener('click',event=>{
+    event.preventDefault(); event.stopPropagation();
+    guide.hidden = !guide.hidden; button.setAttribute('aria-expanded',String(!guide.hidden));
+  });
+  modes.parentElement.addEventListener('keydown',event=>{
+    if(event.key === 'Escape' && !guide.hidden){
+      event.preventDefault(); event.stopPropagation(); guide.hidden=true;
+      button.setAttribute('aria-expanded','false'); button.focus();
+    }
+  });
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',()=>installSearchHelp(document.querySelector('.universal-search-modes')),{once:true});
+else installSearchHelp(document.querySelector('.universal-search-modes'));
 // Compact Default cards keep short notes readable; only crowded notes shrink.
 const defaultCardStyle = document.createElement('style');
 defaultCardStyle.id = 'cep-default-search-card-size';
@@ -1442,6 +1489,7 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
   host.replaceChildren(panel);
   const input = panel.querySelector('input');
   const modes = panel.querySelector('.cep-global-search-modes');
+  installSearchHelp(modes);
   const filters = panel.querySelector('.cep-global-search-filters');
   const mediaFilters = panel.querySelector('.cep-search-media-filters');
   let mediaFilter = 'all';
