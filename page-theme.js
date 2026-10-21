@@ -807,8 +807,7 @@
       -webkit-text-fill-color: #000000 !important;
     }
 
-    html[data-xlyneve-color-theme="autumn"] table,
-    html[data-xlyneve-color-theme="autumn"] table * {
+    html[data-xlyneve-color-theme="autumn"] table {
       color: #000000 !important;
       -webkit-text-fill-color: #000000 !important;
     }
@@ -935,7 +934,7 @@
     html[data-xlyneve-color-theme="hoya"].theme-homecal .todo-item.done :is(textarea,input[type="text"]),html[data-xlyneve-color-theme="hoya"].theme-homecal .todo-item.done > div:last-child { color:#777980 !important;-webkit-text-fill-color:#777980 !important; }
     html[data-xlyneve-color-theme="hoya"].theme-homecal .todo-item.done input[type="checkbox"] { accent-color:#777980;filter:grayscale(1); }
     html[data-xlyneve-color-theme="hoya"] :is(.cep-search-match,.search-highlight) { color:#000 !important;-webkit-text-fill-color:#000 !important; }
-    html[data-xlyneve-color-theme="hoya"] table,html[data-xlyneve-color-theme="hoya"] table * { color:#000 !important;-webkit-text-fill-color:#000 !important; }
+    html[data-xlyneve-color-theme="hoya"] table { color:#000 !important;-webkit-text-fill-color:#000 !important; }
 
     html[data-xlyneve-color-theme="hoya"] body:has(.notes .notepad) { background:radial-gradient(circle at 0 100%,rgba(139,148,102,.46),transparent 44%),radial-gradient(circle at 100% 100%,rgba(218,162,62,.42),transparent 48%),linear-gradient(145deg,#f8e5dd 0%,#e8e8da 100%) !important; }
     html[data-xlyneve-color-theme="hoya"] body:has(.notes .notepad) main { background:rgba(249,247,242,.88) !important;border-color:rgba(255,255,255,.94) !important;box-shadow:0 18px 45px rgba(64,88,92,.16),0 3px 10px rgba(51,75,80,.08) !important; }
@@ -1027,7 +1026,7 @@
     html[data-xlyneve-color-theme="lake-mist"].theme-homecal .todo-item.done :is(textarea,input[type="text"]),html[data-xlyneve-color-theme="lake-mist"].theme-homecal .todo-item.done > div:last-child { color:#777980 !important;-webkit-text-fill-color:#777980 !important; }
     html[data-xlyneve-color-theme="lake-mist"].theme-homecal .todo-item.done input[type="checkbox"] { accent-color:#777980;filter:grayscale(1); }
     html[data-xlyneve-color-theme="lake-mist"] :is(.cep-search-match,.search-highlight) { color:#000 !important;-webkit-text-fill-color:#000 !important; }
-    html[data-xlyneve-color-theme="lake-mist"] table,html[data-xlyneve-color-theme="lake-mist"] table * { color:#000 !important;-webkit-text-fill-color:#000 !important; }
+    html[data-xlyneve-color-theme="lake-mist"] table { color:#000 !important;-webkit-text-fill-color:#000 !important; }
     html[data-xlyneve-color-theme="lake-mist"] body:has(.notes .notepad) { background:radial-gradient(circle at 0 100%,rgba(162,172,158,.42),transparent 44%),radial-gradient(circle at 100% 100%,rgba(219,202,208,.46),transparent 48%),linear-gradient(145deg,#f3f2ed 0%,#e4e8e6 100%) !important; }
     html[data-xlyneve-color-theme="lake-mist"] body:has(.notes .notepad) main { background:rgba(243,242,237,.9) !important;border-color:rgba(255,255,255,.94) !important;box-shadow:0 18px 45px rgba(68,61,53,.15),0 3px 10px rgba(68,61,53,.08) !important; }
     html[data-xlyneve-color-theme="lake-mist"] body:has(.notes .notepad) .note-card { background:rgba(219,202,208,.7) !important; }
@@ -1064,7 +1063,7 @@
     html[data-xlyneve-color-theme="palm-springs"] :is(.universal-search-close,.universal-search-mode,.universal-search-filter,.cep-global-search-row button,.cep-global-search-modes button,.cep-global-search-filters button) { color:#263333 !important;background:rgba(241,231,227,.84) !important;border-color:rgba(198,160,168,.56) !important; }
     html[data-xlyneve-color-theme="palm-springs"] :is(.universal-search-mode.is-active,.universal-search-filter.is-active,.cep-global-search-modes button.is-active,.cep-global-search-filters button.is-active) { color:#fff !important;background:rgba(31,44,44,.96) !important;border-color:transparent !important; }
     html[data-xlyneve-color-theme="palm-springs"] :is(.universal-search-native-card,.xgpt-header-style .universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) { color:#263333 !important;-webkit-text-fill-color:#263333 !important;background:rgba(241,231,227,.72) !important;border-color:rgba(255,255,255,.92) !important;box-shadow:0 8px 22px rgba(31,44,44,.1) !important; }
-    html[data-xlyneve-color-theme="palm-springs"] :is(.cep-search-match,.search-highlight),html[data-xlyneve-color-theme="palm-springs"] table,html[data-xlyneve-color-theme="palm-springs"] table * { color:#000 !important;-webkit-text-fill-color:#000 !important; }
+    html[data-xlyneve-color-theme="palm-springs"] :is(.cep-search-match,.search-highlight),html[data-xlyneve-color-theme="palm-springs"] table { color:#000 !important;-webkit-text-fill-color:#000 !important; }
     html[data-xlyneve-color-theme="palm-springs"] body:has(.notes .notepad) { background:#f2f3f3 !important; background-image:none !important; }
     html[data-xlyneve-color-theme="palm-springs"] body:has(.notes .notepad) main { background:rgba(251,248,245,.92) !important;border-color:rgba(255,255,255,.95) !important;box-shadow:0 18px 45px rgba(31,44,44,.16),0 3px 10px rgba(31,44,44,.08) !important; }
     html[data-xlyneve-color-theme="palm-springs"] body:has(.notes .notepad) .note-card { background:rgba(198,160,168,.62) !important; }
@@ -1097,7 +1096,7 @@
     html[data-xlyneve-color-theme="pastel-jumper"] :is(.universal-search-close,.universal-search-mode,.universal-search-filter,.cep-global-search-row button,.cep-global-search-modes button,.cep-global-search-filters button) { color:#393644 !important;background:rgba(241,237,207,.84) !important;border-color:rgba(231,161,161,.56) !important; }
     html[data-xlyneve-color-theme="pastel-jumper"] :is(.universal-search-mode.is-active,.universal-search-filter.is-active,.cep-global-search-modes button.is-active,.cep-global-search-filters button.is-active) { color:#393644 !important;background:rgba(185,166,210,.96) !important;border-color:transparent !important; }
     html[data-xlyneve-color-theme="pastel-jumper"] :is(.universal-search-native-card,.xgpt-header-style .universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) { color:#393644 !important;-webkit-text-fill-color:#393644 !important;background:rgba(241,237,207,.72) !important;border-color:rgba(255,255,255,.92) !important;box-shadow:0 8px 22px rgba(57,54,68,.1) !important; }
-    html[data-xlyneve-color-theme="pastel-jumper"] :is(.cep-search-match,.search-highlight),html[data-xlyneve-color-theme="pastel-jumper"] table,html[data-xlyneve-color-theme="pastel-jumper"] table * { color:#000 !important;-webkit-text-fill-color:#000 !important; }
+    html[data-xlyneve-color-theme="pastel-jumper"] :is(.cep-search-match,.search-highlight),html[data-xlyneve-color-theme="pastel-jumper"] table { color:#000 !important;-webkit-text-fill-color:#000 !important; }
     html[data-xlyneve-color-theme="pastel-jumper"] body:has(.notes .notepad) { background:radial-gradient(circle at 0 100%,rgba(185,166,210,.34),transparent 44%),radial-gradient(circle at 100% 100%,rgba(231,161,161,.4),transparent 48%),linear-gradient(145deg,#faf6e5 0%,#f1edcf 100%) !important; }
     html[data-xlyneve-color-theme="pastel-jumper"] body:has(.notes .notepad) main { background:rgba(250,246,229,.92) !important;border-color:rgba(255,255,255,.95) !important;box-shadow:0 18px 45px rgba(57,54,68,.16),0 3px 10px rgba(57,54,68,.08) !important; }
     html[data-xlyneve-color-theme="pastel-jumper"] body:has(.notes .notepad) .note-card { background:rgba(231,161,161,.62) !important; }
@@ -1154,7 +1153,7 @@
     html[data-xlyneve-color-theme="quiet-stone"] :is(.universal-search-close,.universal-search-mode,.universal-search-filter,.cep-global-search-row button,.cep-global-search-modes button,.cep-global-search-filters button) { color:#393831 !important;background:rgba(234,234,234,.88) !important;border-color:rgba(184,174,168,.58) !important; }
     html[data-xlyneve-color-theme="quiet-stone"] :is(.universal-search-mode.is-active,.universal-search-filter.is-active,.cep-global-search-modes button.is-active,.cep-global-search-filters button.is-active) { color:#fff !important;background:rgba(57,56,49,.96) !important;border-color:transparent !important; }
     html[data-xlyneve-color-theme="quiet-stone"] :is(.universal-search-native-card,.xgpt-header-style .universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) { color:#393831 !important;-webkit-text-fill-color:#393831 !important;background:rgba(234,234,234,.78) !important;border-color:rgba(255,255,255,.92) !important;box-shadow:0 8px 22px rgba(57,56,49,.1) !important; }
-    html[data-xlyneve-color-theme="quiet-stone"] :is(.cep-search-match,.search-highlight),html[data-xlyneve-color-theme="quiet-stone"] table,html[data-xlyneve-color-theme="quiet-stone"] table * { color:#000 !important;-webkit-text-fill-color:#000 !important; }
+    html[data-xlyneve-color-theme="quiet-stone"] :is(.cep-search-match,.search-highlight),html[data-xlyneve-color-theme="quiet-stone"] table { color:#000 !important;-webkit-text-fill-color:#000 !important; }
     html[data-xlyneve-color-theme="quiet-stone"] body:has(.notes .notepad) { background:radial-gradient(circle at 0 100%,rgba(220,207,193,.42),transparent 44%),radial-gradient(circle at 100% 100%,rgba(198,201,210,.4),transparent 48%),linear-gradient(145deg,#f0efe6 0%,#eaeaea 100%) !important; }
     html[data-xlyneve-color-theme="quiet-stone"] body:has(.notes .notepad) main { background:rgba(240,239,230,.93) !important;border-color:rgba(255,255,255,.95) !important;box-shadow:0 18px 45px rgba(57,56,49,.16),0 3px 10px rgba(57,56,49,.08) !important; }
     html[data-xlyneve-color-theme="quiet-stone"] body:has(.notes .notepad) .note-card { background:rgba(184,174,168,.62) !important; }
@@ -1229,7 +1228,7 @@
     html[data-xlyneve-color-theme="anatomy"] :is(.universal-search-mode.is-active,.universal-search-filter.is-active,.cep-global-search-modes button.is-active,.cep-global-search-filters button.is-active) { color:#22211f !important;background:#f6b63f !important;border-color:rgba(34,33,31,.3) !important; }
     html[data-xlyneve-color-theme="anatomy"] :is(.universal-search-source-title,.cep-global-search-group-title) { color:#22211f !important;-webkit-text-fill-color:#22211f !important; }
     html[data-xlyneve-color-theme="anatomy"] :is(.universal-search-native-card,.xgpt-header-style .universal-search-native-card,.cep-global-search-result,.cep-concept-search-result) { color:#22211f !important;-webkit-text-fill-color:#22211f !important;background:rgba(250,242,232,.9) !important;border-color:rgba(34,33,31,.2) !important;box-shadow:0 8px 20px rgba(34,33,31,.08) !important; }
-    html[data-xlyneve-color-theme="anatomy"] table,html[data-xlyneve-color-theme="anatomy"] table * { color:#22211f !important;-webkit-text-fill-color:#22211f !important; }
+    html[data-xlyneve-color-theme="anatomy"] table { color:#22211f !important;-webkit-text-fill-color:#22211f !important; }
     html[data-xlyneve-color-theme="anatomy"] body:has(.notes .notepad) { background:linear-gradient(145deg,#fff9f1 0%,#eee1d1 100%) !important; }
     html[data-xlyneve-color-theme="anatomy"] body:has(.notes .notepad) main { background:rgba(255,250,244,.92) !important;border-color:rgba(34,33,31,.22) !important;box-shadow:0 18px 42px rgba(34,33,31,.14) !important; }
     html[data-xlyneve-color-theme="anatomy"] body:has(.notes .notepad) .notepad { color:#22211f !important;-webkit-text-fill-color:#22211f !important;caret-color:#22211f !important;background:linear-gradient(rgba(255,250,244,.94),rgba(255,250,244,.94)) padding-box,repeating-linear-gradient(to bottom,transparent 0,transparent 26px,rgba(170,162,151,.32) 27px) !important; }
@@ -2857,10 +2856,9 @@
     }
   `;
 
-  // Keep text on the shared pale table surfaces readable in every theme.
+  // Set a readable table default without overriding authored descendant colours.
   themeStyle.textContent += `
-    html[data-xlyneve-color-theme] body table,
-    html[data-xlyneve-color-theme] body table * {
+    html[data-xlyneve-color-theme] body table {
       color:#000 !important;
       -webkit-text-fill-color:#000 !important;
     }
@@ -3989,4 +3987,11 @@
   };
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',sync,{once:true});
   else sync();
+})();
+
+// Rich text within a table follows its own authored foreground colour.
+(() => {
+  const style=document.createElement('style');style.id='cep-table-authored-colors';
+  style.textContent='html:root:root:root:root:root:root:root body table *{-webkit-text-fill-color:currentColor !important;}';
+  document.head.append(style);
 })();
