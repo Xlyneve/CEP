@@ -60,6 +60,10 @@ else installSearchHelp(document.querySelector('.universal-search-modes'));
 const defaultCardStyle = document.createElement('style');
 defaultCardStyle.id = 'cep-default-search-card-size';
 defaultCardStyle.textContent = `
+  html:root:root:root:root:root:root:root body .cep-search-table-scroll {min-width:0 !important;max-width:100% !important;overflow-x:auto !important;}
+  html:root:root:root:root:root:root:root body .cep-search-table-scroll :is(td,th),
+  html:root:root:root:root:root:root:root body .cep-search-table-scroll :is(td,th) * {white-space:normal !important;overflow-wrap:anywhere !important;word-break:normal !important;max-width:100% !important;box-sizing:border-box !important;}
+
   html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"]:not(.cep-clinical-search-pin) .cep-source-content {font-size:11.5px !important;}
   html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"]:not(.cep-clinical-search-pin) .cep-source-title {font-size:12.5px !important;}
   html:root:root:root:root:root:root:root body :is(.universal-search-results,.cep-global-search-results) .cep-concept-search-result {font-size:10.5px !important;}
@@ -698,8 +702,8 @@ function prepareScrollableSearchTable(table) {
   table.style.setProperty('max-width', 'none', 'important');
   table.style.setProperty('table-layout', 'auto', 'important');
   table.querySelectorAll('th,td').forEach(cell => {
-    cell.style.setProperty('white-space', 'nowrap', 'important');
-    cell.style.setProperty('overflow-wrap', 'normal', 'important');
+    cell.style.setProperty('white-space', 'normal', 'important');
+    cell.style.setProperty('overflow-wrap', 'anywhere', 'important');
     cell.style.setProperty('word-break', 'normal', 'important');
   });
   const scroll = document.createElement('div');
