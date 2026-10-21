@@ -97,7 +97,124 @@
     return element;
   }
 
-  window.CEPSecurity = Object.freeze({ sanitizeHTML, setHTML });
+  // Clipboard formatting is cleaned only at insertion, never on saved notes.
+  const PASTE_STYLES = new Set([
+    'font-weight', 'font-style', 'text-decoration', 'text-align', 'vertical-align',
+    'white-space', 'margin-left', 'padding-left', 'width', 'max-width', 'min-width',
+    'border', 'border-width', 'border-style', 'border-color', 'border-collapse'
+  ]);
+
+  function cleanPastedHTML(input, fontFamily = 'inherit') {
+    const source = document.createElement('template');
+    source.innerHTML = String(input || '');
+    source.content.querySelectorAll('script,style,meta,link,title,iframe,object,embed').forEach(node => node.remove());
+    const clean = document.createElement('template');
+    clean.innerHTML = sanitizeHTML(source.innerHTML);
+    for (const node of [...clean.content.querySelectorAll('*')]) {
+      // A mark has its own browser background even when its style is removed.
+      if (node.tagName === 'MARK') { node.replaceWith(...node.childNodes); continue; }
+      node.removeAttribute('class');
+      node.removeAttribute('id');
+      for (const attribute of ['face','size','color','bgcolor','background']) node.removeAttribute(attribute);
+      for (const property of Array.from(node.style)) if (!PASTE_STYLES.has(property)) node.style.removeProperty(property);
+      node.style.setProperty('font-family','inherit');
+      if (node.hasAttribute('data-pn-definition')) node.classList.add('pn-definition');
+    }
+    // Explicitly inherit the editor's font, including code/pre and plain text nodes.
+    for (const node of [...clean.content.childNodes]) {
+      if (node.nodeType === Node.ELEMENT_NODE) node.style.setProperty('font-family',fontFamily);
+      else if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+        const span = document.createElement('span');
+        span.style.fontFamily = fontFamily; span.textContent = node.textContent; node.replaceWith(span);
+      }
+    }
+    return clean.innerHTML;
+  }
+
+  function insertPastedHTML(editor, html) {
+    const selection = window.getSelection();
+    let range = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+    if (!range || !editor.contains(range.commonAncestorContainer)) {
+      range = document.createRange(); range.selectNodeContents(editor); range.collapse(false);
+    }
+    // Replace a split inline highlight in one editing command, preserving undo.
+    // Only the pasted text leaves the highlight; the surrounding text keeps it.
+    let highlight = null;
+    let ancestor = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+      ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
+    for (; ancestor && ancestor !== editor; ancestor = ancestor.parentElement) {
+      if (!['MARK','SPAN','FONT'].includes(ancestor.tagName)) continue;
+      const background = getComputedStyle(ancestor);
+      if (ancestor.tagName === 'MARK' || /(?:gradient-highlight|highlight-gradient|note-gradient-highlight|highlight-hue|cep-content-highlight)/.test(ancestor.className) ||
+          background.backgroundImage !== 'none' || !['transparent','rgba(0, 0, 0, 0)'].includes(background.backgroundColor)) highlight = ancestor;
+    }
+    let caretOffset = null;
+    if (highlight) {
+      const prefix = document.createRange(); prefix.selectNodeContents(editor); prefix.setEnd(range.startContainer,range.startOffset);
+      const pasted = document.createElement('template'); pasted.innerHTML = html;
+      caretOffset = prefix.cloneContents().textContent.length + pasted.content.textContent.length;
+      const beforeRange = document.createRange(); beforeRange.selectNodeContents(highlight); beforeRange.setEnd(range.startContainer,range.startOffset);
+      const afterRange = document.createRange(); afterRange.selectNodeContents(highlight); afterRange.setStart(range.endContainer,range.endOffset);
+      const before = highlight.cloneNode(false); before.append(beforeRange.cloneContents());
+      const after = highlight.cloneNode(false); after.append(afterRange.cloneContents());
+      html = (before.hasChildNodes() ? before.outerHTML : '') + html + (after.hasChildNodes() ? after.outerHTML : '');
+      range.selectNode(highlight);
+    }
+    editor.focus({preventScroll:true});
+    selection.removeAllRanges(); selection.addRange(range);
+    let notified = false;
+    const onInput = () => { notified = true; };
+    editor.addEventListener('input',onInput);
+    const before = editor.innerHTML;
+    let inserted = false;
+    try { inserted = document.execCommand('insertHTML',false,html); }
+    catch (_) { /* Use the selection API when the editing command is unavailable. */ }
+    if (!inserted && editor.innerHTML === before) {
+      const fragment = range.createContextualFragment(html);
+      const last = fragment.lastChild;
+      range.deleteContents(); range.insertNode(fragment);
+      if (last) range.setStartAfter(last);
+      range.collapse(true); selection.removeAllRanges(); selection.addRange(range);
+    }
+    if (caretOffset !== null) {
+      const walker = document.createTreeWalker(editor,NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        if (caretOffset <= node.length) {
+          range = document.createRange(); range.setStart(node,caretOffset); range.collapse(true);
+          selection.removeAllRanges(); selection.addRange(range); break;
+        }
+        caretOffset -= node.length;
+      }
+    }
+    editor.removeEventListener('input',onInput);
+    if (!notified) editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertFromPaste'}));
+  }
+
+  window.CEPSecurity = Object.freeze({ sanitizeHTML, setHTML, cleanPastedHTML });
+  window.addEventListener('paste', event => {
+    if (event.defaultPrevented) return;
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    if (target?.closest('input,textarea,select')) return;
+    const editor = target?.closest('[contenteditable]');
+    if (!editor?.isContentEditable || editor.getAttribute('contenteditable') === 'plaintext-only') return;
+    const clipboard = event.clipboardData;
+    if (!clipboard) return;
+    const html = clipboard.getData('text/html');
+    const text = clipboard.getData('text/plain');
+    // Image/file-only pastes and native input/textarea pastes keep their normal behaviour.
+    if (!html && !text) return;
+    const font = getComputedStyle(editor).fontFamily;
+    let content;
+    if (html) content = cleanPastedHTML(html,font);
+    if (!content) {
+      const span = document.createElement('span');
+      span.style.fontFamily = font; span.style.whiteSpace = 'pre-wrap'; span.textContent = text;
+      content = span.outerHTML;
+    }
+    event.preventDefault();
+    insertPastedHTML(editor,content);
+  },true);
 })();
 
 (() => {
