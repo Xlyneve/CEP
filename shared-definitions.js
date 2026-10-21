@@ -26,6 +26,60 @@
       try { return ['https:','http:'].includes(new URL(image.imageUrl).protocol); } catch { return false; }
     });
   }
+  let imageViewer;
+  function openDefinitionImage(source) {
+    if (!imageViewer) {
+      const style = document.createElement('style');
+      style.textContent = `
+        html:root:root body #cep-definition-image-viewer {position:fixed;inset:0;margin:auto;padding:12px;border:1px solid #bbb;border-radius:16px;width:min(940px,calc(100vw - 24px));height:min(800px,calc(100dvh - 24px));max-width:none;max-height:none;box-sizing:border-box;background:var(--card-solid,#f5f4f2);color:var(--theme-ink,#303039);overflow:hidden;}
+        #cep-definition-image-viewer::backdrop{background:rgba(20,20,25,.75)}
+        #cep-definition-image-viewer .definition-image-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;height:40px;margin-bottom:8px}
+        html:root:root body #cep-definition-image-viewer button{position:static;display:grid;place-items:center;min-width:36px;width:auto;height:36px;padding:0 10px;border:1px solid currentColor;border-radius:8px;background:transparent;color:inherit;font:600 16px/1 Tahoma,sans-serif;cursor:pointer;transform:none}
+        #cep-definition-image-viewer .definition-image-viewport{overflow:auto;height:calc(100% - 48px);overscroll-behavior:contain;touch-action:pan-x pan-y pinch-zoom}
+        #cep-definition-image-viewer .definition-image-stage{display:grid;place-items:center;min-width:100%;min-height:100%;width:max-content}
+        html:root:root body #cep-definition-image-viewer img{display:block;max-width:none!important;max-height:none!important;object-fit:contain;margin:0;border:0;border-radius:0}
+      `;
+      document.head.append(style);
+      const dialog = document.createElement('dialog');
+      dialog.id = 'cep-definition-image-viewer'; dialog.setAttribute('aria-label','Definition image zoom');
+      const controls = document.createElement('div'); controls.className='definition-image-controls';
+      const viewport = document.createElement('div'); viewport.className='definition-image-viewport';
+      const stage = document.createElement('div'); stage.className='definition-image-stage';
+      const image = document.createElement('img'); stage.append(image); viewport.append(stage);
+      dialog.append(controls,viewport); document.body.append(dialog);
+      let scale=1, baseWidth=0, baseHeight=0, origin, previousOverflow='', active=false;
+      const restore = () => {if(!active)return;active=false;document.body.style.overflow=previousOverflow;if(origin?.isConnected)origin.focus({preventScroll:true});};
+      const closeViewer = () => {dialog.close();restore();};
+      const update = () => {
+        image.style.width = baseWidth*scale+'px'; image.style.height=baseHeight*scale+'px';
+        reset.textContent=Math.round(scale*100)+'%';
+      };
+      const fit = () => {
+        const factor=Math.min(1,viewport.clientWidth/Math.max(1,image.naturalWidth),viewport.clientHeight/Math.max(1,image.naturalHeight));
+        baseWidth=image.naturalWidth*factor; baseHeight=image.naturalHeight*factor; update();
+      };
+      const button = (label,text,action) => {
+        const node=document.createElement('button');node.type='button';node.textContent=text;node.title=label;node.setAttribute('aria-label',label);
+        node.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();action();});controls.append(node);return node;
+      };
+      button('Zoom out','−',()=>{scale=Math.max(.5,scale-.25);update();});
+      const reset=button('Reset zoom','100%',()=>{scale=1;fit();});
+      button('Zoom in','+',()=>{scale=Math.min(5,scale+.25);update();});
+      button('Close image','×',()=>closeViewer());
+      image.addEventListener('load',fit);
+      dialog.addEventListener('click',event=>{event.stopPropagation();if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeViewer();}});
+      dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeViewer();}});
+      dialog.addEventListener('cancel',event=>{event.preventDefault();event.stopPropagation();closeViewer();});
+      dialog.addEventListener('close',()=>{if(!dialog.open)restore();});
+      window.addEventListener('resize',()=>{if(dialog.open)fit();});
+      imageViewer={open(source){
+        origin=source;scale=1;image.alt=source.alt||'Definition image';
+        if(!dialog.open){previousOverflow=document.body.style.overflow;active=true;dialog.showModal();document.body.style.overflow='hidden';}
+        image.src=source.currentSrc||source.src;if(image.complete)fit();
+      }};
+    }
+    imageViewer.open(source);
+  }
   function renderPreview(container, record, fallback = '') {
     container.replaceChildren();
     const value = record?.value || plain(record?.valueHtml) || fallback;
@@ -36,6 +90,10 @@
       const image = document.createElement('img');
       image.src = photo.imageUrl; image.alt = (record?.concept || 'Concept') + ' — photo ' + (index + 1);
       image.style.cssText = 'display:block;width:100%;max-height:300px;object-fit:contain;border-radius:8px;margin:8px 0';
+      image.style.cursor = 'zoom-in'; image.tabIndex=0;
+      image.setAttribute('role','button'); image.setAttribute('aria-label','Zoom '+image.alt);
+      image.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openDefinitionImage(image);});
+      image.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();openDefinitionImage(image);}});
       container.append(image);
     }
     if (images.length && media?.caption) { const caption=document.createElement('p'); caption.textContent=media.caption; container.append(caption); }
