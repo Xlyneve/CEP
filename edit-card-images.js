@@ -330,21 +330,26 @@ function notifyEditorChanged(editor, inputType = 'insertText') {
   requestAnimationFrame(() => requestAnimationFrame(fit));
 }
 
-function closestHighlight(node, editor) {
-  let element = node?.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-  while (element && element !== editor) {
-    if (element.matches?.('mark, .gradient-highlight, .highlight-gradient, .note-gradient-highlight, .highlight-hue')) return element;
-    element = element.parentElement;
-  }
-  return null;
+const noteHighlightClasses=['gradient-highlight','highlight-gradient','note-gradient-highlight','highlight-hue','cep-content-highlight','highlight','cep-chosen-highlight'];
+function isNoteHighlight(element) {
+  if(element.tagName==='MARK' && !element.matches('.cep-search-match,.underlineMatch,.search-highlight,.search-hit'))return true;
+  if(noteHighlightClasses.some(name=>element.classList.contains(name)))return true;
+  if(!element.matches('span,font'))return false;
+  const background=element.style.backgroundColor;
+  return !!((background && background!=='transparent' && !/rgba\([^)]*,\s*0\s*\)/.test(background)) ||
+    (element.style.backgroundImage && element.style.backgroundImage!=='none') || element.hasAttribute('bgcolor'));
 }
-
-function unwrapHighlight(element) {
-  if (!element?.parentNode) return;
-  const parent = element.parentNode;
-  while (element.firstChild) parent.insertBefore(element.firstChild, element);
-  element.remove();
-  parent.normalize();
+function clearNoteHighlight(element) {
+  noteHighlightClasses.forEach(name=>element.classList.remove(name));
+  for(const property of ['background','background-color','background-image','box-shadow','text-shadow','border-radius'])element.style.removeProperty(property);
+  element.removeAttribute('bgcolor');
+  if(!element.className)element.removeAttribute('class');
+  if(!element.style.cssText)element.removeAttribute('style');
+  if(element.tagName==='MARK'){
+    const span=document.createElement('span');
+    for(const attribute of element.attributes)span.setAttribute(attribute.name,attribute.value);
+    span.append(...element.childNodes);element.replaceWith(span);
+  }
 }
 
 function toggleHighlight(editor) {
@@ -353,14 +358,13 @@ function toggleHighlight(editor) {
   if (!selection?.rangeCount) return;
   const range = selection.getRangeAt(0);
   if (!editor.contains(range.commonAncestorContainer)) return;
-  const startHighlight = closestHighlight(selection.anchorNode, editor);
-  const endHighlight = closestHighlight(selection.focusNode, editor);
-  if (startHighlight || endHighlight) {
-    const highlights = [...new Set([startHighlight, endHighlight].filter(Boolean))];
-    highlights.forEach(unwrapHighlight);
-    editor.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'formatBackColor' }));
-    editor.focus();
-    return;
+  const highlights=[...editor.querySelectorAll('mark,span,font,.gradient-highlight,.highlight-gradient,.note-gradient-highlight,.highlight-hue,.cep-content-highlight')]
+    .filter(element=>isNoteHighlight(element) && (range.collapsed ? element.contains(range.startContainer) : range.intersectsNode(element)));
+  if(highlights.length){
+    // Clear nested and legacy text paint, never table/cell structure or foreground formatting.
+    highlights.reverse().forEach(clearNoteHighlight);
+    editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'formatBackColor'}));
+    editor.focus();return;
   }
   if (range.collapsed) return;
   const mark = document.createElement('mark');
