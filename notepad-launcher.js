@@ -120,7 +120,8 @@
   }
   function movePanel(x, y) {
     panel.style.left = `${Math.max(8, Math.min(x, innerWidth - panel.offsetWidth - 8))}px`;
-    panel.style.top = `${Math.max(34, Math.min(y, innerHeight - panel.offsetHeight - 8))}px`;
+    // Let the note extend below the viewport, keeping the drag bar reachable.
+    panel.style.top = `${Math.max(8, Math.min(y, Math.max(8, innerHeight - 48)))}px`;
   }
   function openOnHome() {
     rememberOpenState(true);
