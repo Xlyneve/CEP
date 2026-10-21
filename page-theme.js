@@ -3952,3 +3952,16 @@
     scope + ' :not(h1,h2,h3,h4,h5,h6,table,table *){font-size:inherit !important;}';
   document.head.append(style);
 })();
+
+// Keep newly saved cards on their normal palette; save notices provide feedback.
+(function () {
+  const style = document.createElement('style');
+  style.id = 'cep-saved-note-badge-layout';
+  style.textContent = `
+    html:root:root:root:root:root:root body .note-card.new-note-highlight::after {
+      content:none !important; display:none !important; background:none !important;
+      box-shadow:none !important; filter:none !important;
+    }
+  `;
+  document.head.append(style);
+})();
