@@ -206,6 +206,16 @@ header h1 {
 }
 
 .search-circle svg { width: 24px; height: 24px; pointer-events: none; }
+.home-search-icon svg { width:24px; height:24px; display:block; flex:none; pointer-events:none; transform-origin:center; }
+.home-search-icon { display:flex; align-items:center; justify-content:center; }
+@keyframes homeSearchLensPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
+@media (hover:hover) and (prefers-reduced-motion:no-preference) {
+  .home-search-icon:hover svg { animation:homeSearchLensPulse 420ms ease-in-out; }
+}
+@media (prefers-reduced-motion:no-preference) {
+  .home-search-icon:active svg { animation:homeSearchLensPulse 420ms ease-in-out; }
+}
+
 .universal-search {
   position: fixed; top: 130px; right: 136px;
   width: min(430px, calc(100vw - 230px)); z-index: 12000; padding: 14px;
@@ -6081,6 +6091,17 @@ function closeTable() {
       return card;
     };
 
+    const decorateSearchControl = control => {
+      control.classList.add('home-search-icon');
+      control.setAttribute('aria-label', 'Search');
+      control.title = 'Search';
+      const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      icon.setAttribute('viewBox', '0 0 24 24');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.innerHTML = '<circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+      control.replaceChildren(icon);
+    };
+
     const addActionCard = (sectionName, label, action) => {
       const card = document.createElement('button');
       card.className = 'card';
@@ -6094,7 +6115,7 @@ function closeTable() {
     addLinkCard('Home', 'Information Links', 'forms.html', true);
     addLinkCard('Home', 'Notes', 'Notes.html', true);
     addLinkCard('Home', 'Calculator', 'Calculator.html', true);
-    addActionCard('Home', 'Search', 'search');
+    decorateSearchControl(addActionCard('Home', 'Search', 'search'));
 
     addActionCard('Urgent Care', 'Vitals', 'vitals');
 
@@ -6186,7 +6207,7 @@ function closeTable() {
       const href = card.getAttribute('href') || '';
       return {
         key: action ? `action:${action}` : `link:${href}`,
-        label: card.textContent.trim(),
+        label: card.getAttribute('aria-label') || card.textContent.trim(),
         href,
         action,
         target: card.getAttribute('target') || ''
@@ -6237,6 +6258,7 @@ function closeTable() {
           control.title = 'Open calendar in a new tab · Hover briefly for more options';
         }
         control.textContent = candidate.label;
+        if (candidate.action === 'search') decorateSearchControl(control);
         if (candidate.action) {
           control.type = 'button';
           control.addEventListener('click', event => {
