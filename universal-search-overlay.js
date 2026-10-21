@@ -60,9 +60,9 @@ else installSearchHelp(document.querySelector('.universal-search-modes'));
 const defaultCardStyle = document.createElement('style');
 defaultCardStyle.id = 'cep-default-search-card-size';
 defaultCardStyle.textContent = `
-  html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"]:not(.cep-clinical-search-pin) .cep-source-content {font-size:12px !important;}
-  html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"]:not(.cep-clinical-search-pin) .cep-source-title {font-size:13px !important;}
-  html:root:root:root:root:root:root:root body :is(.universal-search-results,.cep-global-search-results) .cep-concept-search-result {font-size:11px !important;}
+  html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"]:not(.cep-clinical-search-pin) .cep-source-content {font-size:11.5px !important;}
+  html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"]:not(.cep-clinical-search-pin) .cep-source-title {font-size:12.5px !important;}
+  html:root:root:root:root:root:root:root body :is(.universal-search-results,.cep-global-search-results) .cep-concept-search-result {font-size:10.5px !important;}
 
   html:root:root:root:root:root:root:root body :is(.universal-search-results,.cep-global-search-results) .cep-search-source:not(.cep-clinical-search-pin) > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) { padding:8px 10px !important; }
   html:root:root:root:root:root:root:root body :is(.universal-search-results,.cep-global-search-results) .cep-concept-search-result { padding:10px 12px !important; gap:7px !important; }
@@ -105,7 +105,7 @@ function fitDefaultSearchCard(card) {
     }
     fit = [...nodes].map(node=>{
       const original = parseFloat(getComputedStyle(node).fontSize)||14;
-      return {node,size:.94*(node.closest('table') ? original : Math.max(original,node.matches('.cep-source-title,.universal-search-native-title')?15:14))};
+      return {node,size:.90*(node.closest('table') ? original : Math.max(original,node.matches('.cep-source-title,.universal-search-native-title')?15:14))};
     });
     defaultCardFits.set(card,fit);
     card.addEventListener('load',()=>scheduleDefaultCardFit(card),true);
