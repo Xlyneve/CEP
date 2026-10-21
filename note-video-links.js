@@ -13,6 +13,18 @@
       font:700 11px/1.3 Tahoma,sans-serif !important; text-decoration:none !important;
       cursor:pointer; white-space:nowrap; opacity:1 !important;
     }
+    html:root:root:root:root:root:root:root:root:root:root:root body a.cep-note-video-link.cep-watch-raised {
+      background:var(--cep-watch-fill,#e4dce8) !important;
+      background-image:linear-gradient(145deg,rgba(255,255,255,.26),rgba(255,255,255,0)) !important;
+      color:var(--cep-watch-ink,#34313a) !important;
+      border-color:color-mix(in srgb,var(--cep-watch-fill,#e4dce8) 65%,var(--cep-watch-ink,#34313a)) !important;
+      box-shadow:inset 1px 1px 1px rgba(255,255,255,.8),inset -1px -1px 1px rgba(0,0,0,.12),2px 3px 4px rgba(0,0,0,.22) !important;
+    }
+    html:root:root:root:root:root:root:root:root:root:root:root body a.cep-note-video-link.cep-watch-raised svg {color:inherit !important;}
+    html:root:root:root:root:root:root:root:root:root:root:root body a.cep-note-video-link.cep-watch-raised:active {
+      box-shadow:inset 1px 2px 3px rgba(0,0,0,.2),inset -1px -1px 1px rgba(255,255,255,.6) !important;
+      transform:translateY(1px);
+    }
     html:root:root:root:root:root:root:root:root:root:root:root body a.cep-note-video-link span {
       color:inherit !important; -webkit-text-fill-color:currentColor !important;
       font:inherit !important;
@@ -163,6 +175,21 @@ function decorateNoteVideoLinks(root) {
     if (link.classList.contains('conceptLink')) return;
     if (!link.classList.contains('cep-note-video-link') && !getNoteVideoKind(link.href)) return;
     link.classList.add('cep-note-video-link');
+    const card=link.closest('.chatBubble,.cep-source-chat') || (root.matches?.('.chatBubble,.cep-source-chat') ? root : null);
+    if(card){
+      link.classList.add('cep-watch-raised');
+      // Pick a different material from this theme's own palette, retaining its readable ink.
+      const solid=getComputedStyle(card).getPropertyValue('--card-solid').trim() || '#efefef';
+      const rgb=hex=>/^#[a-f0-9]{6}$/i.test(hex) ? [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)) : [239,239,239];
+      const base=rgb(solid);let chosen, distance=-1;
+      for(let i=0;i<20;i++){
+        const color=window.getCepSourceCardColour?.('chatgptx.html',i,'note-card');if(!color)break;
+        const delta=rgb(color.solid).reduce((sum,value,j)=>sum+(value-base[j])**2,0);
+        if(delta>distance){chosen=color;distance=delta;}
+      }
+      if(chosen){link.style.setProperty('--cep-watch-fill',distance<400 ? `color-mix(in srgb,${chosen.solid} 84%,${chosen.ink})` : chosen.solid);link.style.setProperty('--cep-watch-ink',chosen.ink);}
+    }
+
     link.title = 'Watch here — ' + link.href;
     link.setAttribute('aria-label', 'Watch video');
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
