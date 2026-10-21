@@ -81,7 +81,7 @@
       };
       galleryNavigation=window.CEPPhotoGallery.navigation(showPhoto);
       const navigation=galleryNavigation.bar;navigation.classList.add('definition-image-navigation');
-      navigation.style.color='#fff';dialog.append(navigation);
+      navigation.style.cssText += 'position:fixed;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1000002;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.65);color:white;';dialog.append(navigation);
       dialog.addEventListener('keydown',event=>{
         if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
           if(photos.length<2)return;event.preventDefault();event.stopPropagation();showPhoto(photoIndex+(event.key==='ArrowRight'?1:-1));
