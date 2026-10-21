@@ -80,6 +80,14 @@
     }
     imageViewer.open(source);
   }
+  function appendVideo(container, rawUrl) {
+    let url;try{url=new URL(rawUrl);}catch{return false;}
+    if(!['https:','http:'].includes(url.protocol))return false;
+    const footer=document.createElement('div');
+    const link=document.createElement('a');link.href=url.href;link.className='cep-note-video-link';
+    link.textContent='Watch here';link.setAttribute('aria-label','Watch video');link.target='_blank';link.rel='noopener noreferrer';
+    footer.append(link);container.append(footer);window.CEPNoteVideoLinks?.decorate(footer);return true;
+  }
   function renderPreview(container, record, fallback = '') {
     container.replaceChildren();
     const value = record?.value || plain(record?.valueHtml) || fallback;
@@ -97,7 +105,8 @@
       container.append(image);
     }
     if (images.length && media?.caption) { const caption=document.createElement('p'); caption.textContent=media.caption; container.append(caption); }
-    return !!(value || images.length);
+    const video=appendVideo(container,record?.videoUrl);
+    return !!(value || images.length || video);
   }
   async function save(term, value, aliases) {
     if (!adapter) throw new Error('Open chatgptx and sign in first to enable shared definitions.');
@@ -156,7 +165,7 @@
         const text=nodes.map(node=>node.nodeValue).join('');
         const point=offset=>{for(const node of nodes){if(offset<=node.nodeValue.length)return [node,offset];offset-=node.nodeValue.length;}};
         for(const match of [...text.matchAll(pattern)].reverse()){
-          const record=find(match[0]);if(!record||(!record.value&&!record.valueHtml&&!photos(record).length))continue;
+          const record=find(match[0]);if(!record||(!record.value&&!record.valueHtml&&!record.videoUrl&&!photos(record).length))continue;
           const start=point(match.index),end=point(match.index+match[0].length);if(!start||!end)continue;
           const range=document.createRange();range.setStart(...start);range.setEnd(...end);
           const word=document.createElement('span');word.className='cep-shared-definition';word.tabIndex=0;
@@ -181,5 +190,5 @@
   document.addEventListener('keydown',e=>{if(e.key==='Escape')tip.hidden=true;});
   tip.onmouseenter=()=>clearTimeout(hideTimer);tip.onmouseleave=e=>{if(!activeWord?.contains(e.relatedTarget))hide();};
   const observer=new MutationObserver(records=>{if(records.some(record=>!record.target.closest?.('#cep-shared-tip,#pn-definition-tip,#pn-definition-dialog')))schedule();});observer.observe(document.body,{childList:true,subtree:true});
-  window.CEPSharedDefinitions={normalize,find,update,updateMedia,renderPreview,mediaFor,uploadPhotos,save,remove,connect(value){adapter=value;},plain};
+  window.CEPSharedDefinitions={normalize,find,update,updateMedia,renderPreview,appendVideo,mediaFor,uploadPhotos,save,remove,connect(value){adapter=value;},plain};
 })();

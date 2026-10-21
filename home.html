@@ -4617,7 +4617,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         }
         const details = window.getCachedXgptConceptDefinition?.(concept);
         const definition = details?.definition || link.dataset.definition || '', why = details?.why || link.dataset.why || '';
-        if ((!link.dataset.image && !definition && !why) || !link.isConnected) return;
+        if ((!link.dataset.image && !definition && !why && !details?.videoUrl) || !link.isConnected) return;
         if (!isCurrent()) return;
         const parts = [];
         const photos = window.createXgptPhotoStrip(window.getCachedXgptConceptMedia?.(concept) || { imageUrl: link.dataset.image }, { alt: concept, zoom: true });
@@ -4631,7 +4631,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
           section.append(label, body); parts.push(section);
         };
         appendSection('DEFINITION', definition); appendSection('WHY IT MATTERS', why);
-        tip.replaceChildren(...parts); tip.style.display = 'block';
+        tip.replaceChildren(...parts); window.CEPSharedDefinitions.appendVideo(tip,details?.videoUrl); tip.style.display = 'block';
         const rect = link.getBoundingClientRect(), tipRect = tip.getBoundingClientRect();
         tip.style.left = `${Math.max(12, Math.min(innerWidth - tipRect.width - 12, rect.left))}px`;
         tip.style.top = `${Math.max(12, Math.min(innerHeight - tipRect.height - 12, rect.bottom + 8))}px`;

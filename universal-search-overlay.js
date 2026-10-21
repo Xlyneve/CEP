@@ -390,7 +390,7 @@ export async function loadXgptEntries({ forceRefresh = false } = {}) {
         return Object.fromEntries(definitionsSnapshot.docs.map(item => {
           const definition = item.data() || {};
           return [normalizeConcept(definition.concept || item.id), {
-            definition: definition.value || '', why: definition.why || ''
+            definition: definition.value || '', why: definition.why || '', videoUrl:definition.videoUrl || ''
           }];
         }));
       }, forceRefresh).catch(error => {
@@ -518,7 +518,7 @@ export async function searchReferencedXgptConcepts(rawQuery) {
     const labelWords = [...new Set(labelTokens)];
     const words = [...new Set(searchTokens)];
     return {
-      key, label, count, definition: details.definition || '', why: details.why || '',
+      key, label, count, definition: details.definition || '', why: details.why || '', videoUrl:details.videoUrl || '',
       imageUrl: media.imageUrl || '', images: getXgptConceptImages(media), caption: media.caption || '', searchText,
       labelWords, words, labelTokenText: labelTokens.join(' '), searchTokenText: searchTokens.join(' ')
     };
@@ -560,6 +560,7 @@ export function renderReferencedXgptConceptResults(container, concepts, terms = 
     const photos = createXgptPhotoStrip(concept, { height: 240, className: 'cep-concept-search-image', alt: concept.caption || concept.label, zoom: true });
     if (photos) card.appendChild(photos);
     appendSection('Image note', concept.caption);
+    window.CEPSharedDefinitions.appendVideo(card,concept.videoUrl);
     return card;
   });
   container.replaceChildren(...cards);
@@ -1434,7 +1435,7 @@ function installXgptMediaUi() {
     hydrateSearchConceptLink(link);
     const details = getCachedXgptConceptDefinition(concept);
     const definition = details?.definition || link.dataset.definition || '', why = details?.why || link.dataset.why || '';
-    if ((!link.dataset.image && !definition && !why) || !link.isConnected) return;
+    if ((!link.dataset.image && !definition && !why && !details?.videoUrl) || !link.isConnected) return;
     if (!isCurrent()) return;
     const parts = [];
     const photos = createXgptPhotoStrip(getCachedXgptConceptMedia(concept) || { imageUrl: link.dataset.image }, { alt: concept, zoom: true });
@@ -1448,7 +1449,7 @@ function installXgptMediaUi() {
       section.append(label, body); parts.push(section);
     };
     appendSection('DEFINITION', definition); appendSection('WHY IT MATTERS', why);
-    tip.replaceChildren(...parts); tip.hidden = false;
+    tip.replaceChildren(...parts); window.CEPSharedDefinitions.appendVideo(tip,details?.videoUrl); tip.hidden = false;
     const rect = link.getBoundingClientRect(), tipRect = tip.getBoundingClientRect();
     tip.style.left = `${Math.max(12, Math.min(innerWidth - tipRect.width - 12, rect.left))}px`;
     tip.style.top = `${Math.max(12, Math.min(innerHeight - tipRect.height - 12, rect.bottom + 8))}px`;

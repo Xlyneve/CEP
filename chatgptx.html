@@ -1902,6 +1902,8 @@ html:root:root:root:root:root:root:root:root:root body #formatToolbar :is(#highl
   <label for="sharedDefinitionAliases">Aliases (comma-separated)</label>
   <input id="sharedDefinitionAliases" placeholder="e.g. T-cells" style="box-sizing:border-box;width:100%;padding:6px;font:12px Tahoma,sans-serif" />
 
+  <label for="conceptVideoUrl">Video link (optional)</label>
+  <input id="conceptVideoUrl" type="url" placeholder="https://…" style="box-sizing:border-box;width:100%;padding:6px;font:12px Tahoma,sans-serif" />
   <div id="whyBox" contenteditable="true" data-placeholder="Why / memory hook…"></div>
 
  <div id="kbMediaSection" style="margin-top:10px;">
@@ -3221,7 +3223,7 @@ function startDefsListener() {
           const whyHtml = typeof d.whyHtml === 'string' ? d.whyHtml : '';
           const concept = typeof d.concept === 'string' ? d.concept : '';
 
-          next[doc.id] = { value, why, valueHtml, whyHtml, concept, aliases:Array.isArray(d.aliases)?d.aliases:[] };
+          next[doc.id] = { value, why, valueHtml, whyHtml, videoUrl:typeof d.videoUrl === 'string' ? d.videoUrl : '', concept, aliases:Array.isArray(d.aliases)?d.aliases:[] };
         });
 
         defsCache = next;
@@ -4275,6 +4277,8 @@ function getWhyHtml(concept) {
   return (v?.whyHtml) || '';
 }
 
+function getConceptVideoUrl(concept) { return defsCache[defKeyForConcept(concept)]?.videoUrl || ''; }
+
 async function setDefinition(concept, value, why, valueHtml = '', whyHtml = '') {
   const k = defKeyForConcept(concept);
   if (!k) return;
@@ -4285,6 +4289,8 @@ async function setDefinition(concept, value, why, valueHtml = '', whyHtml = '') 
     if (conflict && conflict.id !== k) throw new Error(`“${alias}” already belongs to “${conflict.concept}”.`);
   }
 
+  const videoUrl=document.getElementById('conceptVideoUrl').value.trim();
+  if(videoUrl){let url;try{url=new URL(videoUrl);}catch{}if(!url || !['https:','http:'].includes(url.protocol))throw new Error('Enter a valid video link starting with https://');}
   await ensureSignedIn();
 
   const safeValueHtml = window.CEPSecurity?.sanitizeHTML
@@ -4300,6 +4306,7 @@ async function setDefinition(concept, value, why, valueHtml = '', whyHtml = '') 
     why: (why || '').trim(),
     valueHtml: safeValueHtml.trim(),
     whyHtml: safeWhyHtml.trim(),
+    videoUrl: document.getElementById('conceptVideoUrl').value.trim(),
     aliases: sharedAliases,
     disabled:false,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -4514,14 +4521,15 @@ let defTipLocked = false;
 let conceptHoverTimer = null;
 let defTipAnchor = null;
 
-function showDefTip(defText, whyText, imageUrl, caption, x, y, defHtml = '', whyHtml = '', images = []) {
-  if (!defText && !whyText && !imageUrl) return;
+function showDefTip(defText, whyText, imageUrl, caption, x, y, defHtml = '', whyHtml = '', images = [], videoUrl = '') {
+  if (!defText && !whyText && !imageUrl && !videoUrl) return;
   cancelHideDefTip();
 
   const tipHtml = renderTip(defText, whyText, imageUrl, caption, defHtml, whyHtml, images);
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(defTip, tipHtml);
   else defTip.textContent = [defText, whyText].filter(Boolean).join('\n\n');
   defTip.querySelectorAll('.kbPhotoStrip').forEach(strip => CEPPhotoGallery.decorate(strip));
+  window.CEPSharedDefinitions.appendVideo(defTip,videoUrl);
   defTip.style.display = 'block';
   tipOpen = true;
 
@@ -4647,11 +4655,11 @@ document.addEventListener('mouseover', (e) => {
   const imageUrl = (a.getAttribute('data-kb-image') || '').trim();
   const caption = (a.getAttribute('data-kb-caption') || '').trim();
 
-  if (!def && !why && !imageUrl) return;
+  if (!def && !why && !imageUrl && !getConceptVideoUrl(concept)) return;
   conceptHoverTimer = setTimeout(() => {
     if (!a.isConnected || defTipLocked) return;
     defTipAnchor = a;
-  showDefTip(def, why, imageUrl, caption, e.clientX, e.clientY, defHtml, whyHtml, conceptImages(getConceptMedia(concept)));
+  showDefTip(def, why, imageUrl, caption, e.clientX, e.clientY, defHtml, whyHtml, conceptImages(getConceptMedia(concept)), getConceptVideoUrl(concept));
   }, 250);
 }, true);
 
@@ -4734,6 +4742,7 @@ function openDefPanel(concept, clientX, clientY) {
   if (defTitle) defTitle.textContent = currentDefConcept;
   document.getElementById('sharedDefinitionAliases').value = (window.CEPSharedDefinitions.find(currentDefConcept)?.aliases || []).join(', ');
 
+  document.getElementById('conceptVideoUrl').value=getConceptVideoUrl(currentDefConcept);
   setDefinitionEditorContent(defBox, getDefinitionHtml(currentDefConcept), getDefinition(currentDefConcept));
   setDefinitionEditorContent(whyBox, getWhyHtml(currentDefConcept), getWhy(currentDefConcept));
   clearPendingKbImage();
@@ -5926,10 +5935,10 @@ document.addEventListener('click', (e) => {
   const def = getDefinition(topic) || '';
   const why = getWhy(topic) || '';
   const media = getConceptMedia(topic);
-  if (def || why || media?.imageUrl) {
+  if (def || why || media?.imageUrl || getConceptVideoUrl(topic)) {
     clearTimeout(conceptHoverTimer);
     cancelHideDefTip();
-    showDefTip(def, why, media?.imageUrl || '', media?.caption || '', e.clientX, e.clientY, getDefinitionHtml(topic), getWhyHtml(topic), conceptImages(media));
+    showDefTip(def, why, media?.imageUrl || '', media?.caption || '', e.clientX, e.clientY, getDefinitionHtml(topic), getWhyHtml(topic), conceptImages(media), getConceptVideoUrl(topic));
     defTipLocked = true;
     defTipPinned = true;
     return;
