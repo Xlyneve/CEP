@@ -3965,3 +3965,28 @@
   `;
   document.head.append(style);
 })();
+
+// Native inputs do not inherit the rich note editor's font automatically.
+(() => {
+  const page = decodeURIComponent(location.pathname.split('/').pop() || '').toLowerCase();
+  const bodies = {
+    'pn.html':'#nurseNote', 'recalls.html':'#nurseNote', 'inr calc.html':'#nurseNote',
+    'clinicalnotes.html':'#noteText', 'info.html':'#noteText', 'practicen.html':'#noteText',
+    'explain.html':'#noteText', 'forms.html':'#urlNote', 'recall-notes.html':'#noteInput',
+    'complete-vaccine-info.html':'#notes.vaccine-notes-input'
+  };
+  const bodySelector = bodies[page];
+  if (!bodySelector) return;
+  const titles = 'input#nurseTitle,input#noteTitle,input#urlTitle,input#titleInput,input.edit-title,input[id^="editTitle-"],input[id^="edit-title-"]';
+  const vaccineTitles = page === 'complete-vaccine-info.html' ? ',input#name,input#edit-name' : '';
+  const style = document.createElement('style');
+  style.id = 'cep-note-title-font';
+  style.textContent = 'html:root:root:root:root body :is(' + titles + vaccineTitles + ',.note-title[contenteditable="true"]){font-family:var(--cep-note-editor-family,Tahoma,sans-serif) !important;}';
+  document.head.append(style);
+  const sync = () => {
+    const editor = document.querySelector(bodySelector);
+    if (editor) document.documentElement.style.setProperty('--cep-note-editor-family',getComputedStyle(editor).fontFamily);
+  };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',sync,{once:true});
+  else sync();
+})();
