@@ -60,8 +60,11 @@ else installSearchHelp(document.querySelector('.universal-search-modes'));
 const defaultCardStyle = document.createElement('style');
 defaultCardStyle.id = 'cep-default-search-card-size';
 defaultCardStyle.textContent = `
-  html:root:root:root:root:root:root:root body .cep-default-search-results .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) { padding:10px 12px !important; }
-  html:root:root body .cep-default-search-results :is(.universal-search-native-card,.cep-global-search-result):not(.cep-search-source) { padding:10px 12px; min-height:72px; }
+  html:root:root:root:root:root:root:root body :is(.universal-search-results,.cep-global-search-results) .cep-search-source:not(.cep-clinical-search-pin) > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) { padding:8px 10px !important; }
+  html:root:root:root:root:root:root:root body :is(.universal-search-results,.cep-global-search-results) .cep-concept-search-result { padding:10px 12px !important; gap:7px !important; }
+
+  html:root:root:root:root:root:root:root body .cep-default-search-results .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) { padding:8px 10px !important; }
+  html:root:root body .cep-default-search-results :is(.universal-search-native-card,.cep-global-search-result):not(.cep-search-source) { padding:8px 10px; min-height:64px; }
   html:root:root:root:root:root:root:root body .cep-default-search-results :is(.cep-xgpt-rich-content,.xgpt-rich-snippet) { zoom:1 !important; }
 `;
 document.head.append(defaultCardStyle);
