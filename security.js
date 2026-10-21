@@ -2,7 +2,7 @@
   "use strict";
 
   const ALLOWED_TAGS = new Set([
-    "A", "B", "BLOCKQUOTE", "BR", "CODE", "DIV", "EM", "FIGCAPTION",
+    "A", "B", "BLOCKQUOTE", "BR", "CODE", "COL", "COLGROUP", "DIV", "EM", "FIGCAPTION",
     "FIGURE", "H1", "H2", "H3", "H4", "H5", "H6", "HR", "I", "IMG",
     "LI", "MARK", "OL", "P", "PRE", "S", "SMALL", "SPAN", "STRONG",
     "SUB", "SUP", "TABLE", "TBODY", "TD", "TFOOT", "TH", "THEAD", "TR",
@@ -20,7 +20,7 @@
     "letter-spacing", "line-height", "margin", "margin-bottom", "margin-left",
     "margin-right", "margin-top", "max-height", "max-width", "min-height",
     "min-width", "padding", "padding-bottom", "padding-left", "padding-right",
-    "padding-top", "text-align", "text-decoration", "vertical-align", "white-space",
+    "padding-top", "table-layout", "text-align", "text-decoration", "vertical-align", "white-space",
     "width", "word-break"
   ]);
 
@@ -192,6 +192,11 @@
   }
 
   window.CEPSecurity = Object.freeze({ sanitizeHTML, setHTML, cleanPastedHTML });
+  // Note-table layout also works on pages with their own editor/toolbars.
+  const tableTools = document.createElement('script');
+  tableTools.type = 'module';
+  tableTools.src = new URL('note-tables.js?v=20261021-1',document.currentScript?.src || location.href).href;
+  document.head.append(tableTools);
   window.addEventListener('paste', event => {
     if (event.defaultPrevented) return;
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;

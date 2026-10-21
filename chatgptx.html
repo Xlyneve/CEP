@@ -1931,6 +1931,7 @@ html:root:root:root:root:root:root:root:root:root body #formatToolbar :is(#highl
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 
 <script type="module">
+import { normalizeNoteTable, addNoteTableColumn, removeNoteTableColumn, addNoteTableRow, removeNoteTableRow } from "./note-tables.js?v=20261021-1";
 /* =========================
    Firebase init
 ========================= */
@@ -2420,13 +2421,13 @@ document.getElementById('decreaseFontBtn')?.addEventListener('mousedown', (e) =>
 let lastTableCell = null;
 
 document.addEventListener('focusin', (e) => {
-  const cell = e.target?.closest?.('.cellBox');
-  if (cell) lastTableCell = cell;
+  const cell = e.target?.closest?.('.cellBox,td,th');
+  if (cell?.isContentEditable) lastTableCell = cell;
 }, true);
 
 document.addEventListener('mousedown', (e) => {
-  const cell = e.target?.closest?.('.cellBox');
-  if (cell) lastTableCell = cell;
+  const cell = e.target?.closest?.('.cellBox,td,th');
+  if (cell?.isContentEditable) lastTableCell = cell;
 }, true);
 
 function makeTable(rows = 2, cols = 2) {
@@ -2467,8 +2468,9 @@ function getClosestTableContext() {
     el = lastTableCell ? lastTableCell : null;
   }
 
-  const cell = el?.closest?.('.cellBox') || null;
-  const table = el?.closest?.('table.editable-table') || null;
+  if (!el || !editor.contains(el)) return null;
+  const cell = el.closest('.cellBox,td,th');
+  const table = el?.closest?.('table') || null;
 
   return { editor, table, cell };
 }
@@ -2519,74 +2521,42 @@ document.getElementById('insertTableBtn')?.addEventListener('mousedown', (e) => 
   setTimeout(() => t.querySelector('.cellBox')?.focus?.(), 0);
 }, true);
 
-document.getElementById('addRowBtn')?.addEventListener('mousedown', (e) => {
-  e.preventDefault(); e.stopPropagation();
-  const ctx = getClosestTableContext();
-  if (!ctx?.table) return alert('Click inside a table cell first.');
-
-  const colCount = ctx.table.rows?.[0]?.cells?.length || 0;
-  if (!colCount) return;
-
-  const tr = document.createElement('tr');
-  for (let c = 0; c < colCount; c++) {
-    const td = document.createElement('td');
-    const cell = document.createElement('div');
-    cell.className = 'cellBox';
-    cell.contentEditable = 'true';
-    cell.innerHTML = '&nbsp;';
-    td.appendChild(cell);
-    tr.appendChild(td);
-  }
-  ctx.table.tBodies[0].appendChild(tr);
-}, true);
-
-document.getElementById('deleteRowBtn')?.addEventListener('mousedown', (e) => {
-  e.preventDefault(); e.stopPropagation();
-  const ctx = getClosestTableContext();
-  if (!ctx?.cell || !ctx?.table) return alert('Click inside a table cell first.');
-
-  const td = ctx.cell.closest('td,th');
-  const tr = td?.parentElement;
-  if (!tr) return;
-
-  if (ctx.table.rows.length <= 1) return alert('Cannot delete the last row.');
-  tr.remove();
-}, true);
-
-document.getElementById('addColBtn')?.addEventListener('mousedown', (e) => {
-  e.preventDefault(); e.stopPropagation();
-  const ctx = getClosestTableContext();
-  if (!ctx?.table) return alert('Click inside a table cell first.');
-
-  [...ctx.table.rows].forEach((tr) => {
-    const td = document.createElement(tr.cells[0]?.tagName === 'TH' ? 'th' : 'td');
-    const cell = document.createElement('div');
-    cell.className = 'cellBox';
-    cell.contentEditable = 'true';
-    cell.innerHTML = '&nbsp;';
-    td.appendChild(cell);
-    tr.appendChild(td);
-  });
-}, true);
-
-document.getElementById('deleteColBtn')?.addEventListener('mousedown', (e) => {
-  e.preventDefault(); e.stopPropagation();
-  const ctx = getClosestTableContext();
-  if (!ctx?.cell || !ctx?.table) return alert('Click inside a table cell first.');
-
-  const td = ctx.cell.closest('td,th');
-  const tr = td?.parentElement;
-  if (!td || !tr) return;
-
-  const colIndex = [...tr.children].indexOf(td);
-  const colCount = tr.children.length;
-
-  if (colCount <= 1) return alert('Cannot delete the last column.');
-
-  [...ctx.table.rows].forEach((row) => {
-    row.children[colIndex]?.remove?.();
-  });
-}, true);
+function makeNewNoteTableCell(tag) {
+  const td=document.createElement(tag),box=document.createElement('div');
+  box.className='cellBox';box.contentEditable='true';box.innerHTML='&nbsp;';td.append(box);return td;
+}
+document.getElementById('addRowBtn')?.addEventListener('mousedown',event=>{
+  event.preventDefault();event.stopPropagation();
+  const ctx=getClosestTableContext();
+  if(!ctx?.table || !ctx.cell)return alert('Click inside a table cell first.');
+  addNoteTableRow(ctx.table,ctx.cell.closest('td,th'),makeNewNoteTableCell);
+  ctx.editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText'}));
+  saveCaret();
+},true);
+document.getElementById('deleteRowBtn')?.addEventListener('mousedown',event=>{
+  event.preventDefault();event.stopPropagation();
+  const ctx=getClosestTableContext();
+  if(!ctx?.table || !ctx.cell)return alert('Click inside a table cell first.');
+  if(!removeNoteTableRow(ctx.table,ctx.cell.closest('td,th')))alert('A table needs at least one row.');
+  ctx.editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText'}));
+  saveCaret();
+},true);
+document.getElementById('addColBtn')?.addEventListener('mousedown',event=>{
+  event.preventDefault();event.stopPropagation();
+  const ctx=getClosestTableContext();
+  if(!ctx?.table || !ctx.cell)return alert('Click inside a table cell first.');
+  addNoteTableColumn(ctx.table,ctx.cell.closest('td,th'),makeNewNoteTableCell);
+  ctx.editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText'}));
+  saveCaret();
+},true);
+document.getElementById('deleteColBtn')?.addEventListener('mousedown',event=>{
+  event.preventDefault();event.stopPropagation();
+  const ctx=getClosestTableContext();
+  if(!ctx?.table || !ctx.cell)return alert('Click inside a table cell first.');
+  if(!removeNoteTableColumn(ctx.table,ctx.cell.closest('td,th')))alert('A table needs at least one column.');
+  ctx.editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText'}));
+  saveCaret();
+},true);
 
 
 /* =========================
@@ -5325,6 +5295,14 @@ function printNoteBubble(bubble, includeDefinitions = false) {
     printable.firstChild.nodeValue = printable.firstChild.nodeValue.replace(/^🤖\s*/, '');
   }
   if (includeDefinitions) appendPrintableConceptDefinitions(printable, bubble);
+  // Editing widths may extend beyond the card; print copies fit the paper instead.
+  printable.querySelectorAll('table').forEach(table => {
+    for (const property of ['width','min-width','max-width','table-layout']) table.style.removeProperty(property);
+    table.querySelectorAll('colgroup').forEach(group => group.remove());
+    table.querySelectorAll('th,td').forEach(cell => {
+      for (const property of ['width','min-width','max-width']) cell.style.removeProperty(property);
+    });
+  });
 
   const printWindow = window.open('', '_blank', 'width=820,height=900');
   if (!printWindow) {

@@ -1278,6 +1278,7 @@ html:root body .pn-save-notice { position:fixed; bottom:24px; left:50%; transfor
 
 <script src="note-popup.js?v=20261019-pagination"></script>
 <script type="module">
+import { addNoteTableColumn, removeNoteTableColumn, addNoteTableRow, removeNoteTableRow } from "./note-tables.js?v=20261021-1";
 import { onCardSnapshot } from "./card-pagination-firestore.js?v=20261019-1";
 import { debounceSearch } from "./search-scheduler.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1615,62 +1616,25 @@ function getCurrentTableCell(editor) {
 function addTableRow(editor) {
   const cell = getCurrentTableCell(editor);
   if (!cell) return alert("Click inside a table cell first.");
-
-  const row = cell.parentElement;
-  const colCount = row.children.length;
-  const newRow = document.createElement('tr');
-
-  for (let i = 0; i < colCount; i++) {
-    const td = document.createElement('td');
-    td.innerHTML = '<br>';
-    newRow.appendChild(td);
-  }
-
-  row.after(newRow);
+  addNoteTableRow(cell.closest('table'),cell);
 }
 
 function addTableColumn(editor) {
   const cell = getCurrentTableCell(editor);
   if (!cell) return alert("Click inside a table cell first.");
-
-  const cellIndex = Array.from(cell.parentElement.children).indexOf(cell);
-  const table = cell.closest('table');
-
-  Array.from(table.rows).forEach(row => {
-    const td = document.createElement('td');
-    td.innerHTML = '<br>';
-    row.children[cellIndex].after(td);
-  });
+  addNoteTableColumn(cell.closest('table'),cell);
 }
 
 function deleteTableRow(editor) {
   const cell = getCurrentTableCell(editor);
   if (!cell) return alert("Click inside a table cell first.");
-
-  const row = cell.parentElement;
-  const table = row.closest('table');
-
-  if (table.rows.length <= 1) {
-    return alert("You need at least one row.");
-  }
-
-  row.remove();
+  if (!removeNoteTableRow(cell.closest('table'),cell)) alert('A table needs at least one row.');
 }
 
 function deleteTableColumn(editor) {
   const cell = getCurrentTableCell(editor);
   if (!cell) return alert("Click inside a table cell first.");
-
-  const cellIndex = Array.from(cell.parentElement.children).indexOf(cell);
-  const table = cell.closest('table');
-
-  if (table.rows[0].children.length <= 1) {
-    return alert("You need at least one column.");
-  }
-
-  Array.from(table.rows).forEach(row => {
-    row.children[cellIndex].remove();
-  });
+  if (!removeNoteTableColumn(cell.closest('table'),cell)) alert('A table needs at least one column.');
 }
 /* ---------------- Editing ---------------- */
 function enableEditing(card, id, title, note, url = "") {

@@ -1,3 +1,4 @@
+import { normalizeNoteTable, noteTableColumn, resizeNoteTableColumn, addNoteTableColumn, removeNoteTableColumn, addNoteTableRow, removeNoteTableRow } from "./note-tables.js?v=20261021-1";
 import { getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { uploadReferenceImage } from "./image-storage.js?v=20260826-2";
 
@@ -7,19 +8,6 @@ let columnResize = null;
 let pendingCardReveal = null;
 const cardRevealTimers = new WeakMap();
 const clinicalNotesPage = /(?:^|\/)Clinicalnotes\.html$/i.test(location.pathname);
-const textMeasureCanvas = document.createElement('canvas');
-
-function measuredCellWidth(cell) {
-  const text = (cell.innerText || cell.textContent || '').trim();
-  if (!text && !cell.querySelector('img,table')) return 38;
-  const context = textMeasureCanvas.getContext('2d');
-  const style = getComputedStyle(cell);
-  context.font = style.font || `${style.fontSize} ${style.fontFamily}`;
-  const longestLine = text.split(/\r?\n/).reduce((width, line) =>
-    Math.max(width, context.measureText(line || ' ').width), 0);
-  return Math.max(38, Math.ceil(longestLine + 18));
-}
-
 function installStyles() {
   if (document.getElementById('cepPnEditorStyles')) return;
   const style = document.createElement('style');
@@ -65,9 +53,9 @@ function installStyles() {
     .cep-pn-editor-divider { width:1px; height:20px; margin:0 2px; background:rgba(90,80,85,.16); }
     .cep-pn-editor img { max-width:min(100%,420px); height:auto; border-radius:8px; cursor:zoom-in; }
     .cep-pn-editor table, .note-card table, .note-tile table {
-      width:100% !important; margin:8px 0 !important; border-collapse:collapse !important; border-spacing:0 !important;
-      max-width:100% !important; min-width:0 !important;
-      overflow:hidden; border:1px solid #e5dfcc !important; border-radius:8px;
+      width:auto; margin:8px 0 !important; border-collapse:collapse !important; border-spacing:0 !important;
+      max-width:none !important; min-width:0;
+      overflow:visible; border:1px solid #e5dfcc !important; border-radius:8px;
       background:#ecebeb !important; color:#2f2b2d !important;
       box-shadow:0 3px 10px rgba(75,65,70,.07);
     }
@@ -256,18 +244,7 @@ function tableCellAtResizeEdge(target, clientX) {
 document.addEventListener('pointermove', event => {
   if (columnResize) {
     const delta = event.clientX - columnResize.startX;
-    const requestedWidth = Math.max(19, columnResize.leftWidth + delta);
-    const requestedTableWidth = columnResize.tableWidth + (requestedWidth - columnResize.leftWidth);
-    const adjustedTableWidth = Math.min(columnResize.maximumTableWidth, Math.max(19, requestedTableWidth));
-    const adjustedLeft = Math.max(19, columnResize.leftWidth + (adjustedTableWidth - columnResize.tableWidth));
-    [...columnResize.table.rows].forEach(row => {
-      const resizedCell = row.cells[columnResize.columnIndex];
-      resizedCell?.style.setProperty('width', `${adjustedLeft}px`, 'important');
-      if (resizedCell) resizedCell.dataset.cepColumnResized = 'true';
-    });
-    columnResize.table.dataset.cepTableResized = 'true';
-    columnResize.table.style.setProperty('width', `${adjustedTableWidth}px`, 'important');
-    columnResize.table.style.setProperty('max-width', '100%', 'important');
+    resizeNoteTableColumn(columnResize.table,columnResize.columnIndex,columnResize.leftWidth+delta);
     return;
   }
   const cell = tableCellAtResizeEdge(event.target, event.clientX);
@@ -278,20 +255,16 @@ document.addEventListener('pointerdown', event => {
   const cell = tableCellAtResizeEdge(event.target, event.clientX);
   if (!cell) return;
   const table = cell.closest('table');
-  const columnIndex = cell.cellIndex;
-  const tableWidth = table.getBoundingClientRect().width;
-  const editorWidth = table.closest('.cep-pn-editor')?.getBoundingClientRect().width || table.parentElement?.getBoundingClientRect().width || tableWidth;
+  normalizeNoteTable(table);
+  const columnIndex = noteTableColumn(cell);
   event.preventDefault(); event.stopPropagation();
-  table.style.setProperty('table-layout', 'fixed', 'important');
   columnResize = {
     table,
     cell,
     pointerId: event.pointerId,
     columnIndex,
     startX: event.clientX,
-    leftWidth: cell.getBoundingClientRect().width,
-    tableWidth,
-    maximumTableWidth: editorWidth
+    leftWidth: cell.getBoundingClientRect().width
   };
   try { cell.setPointerCapture(event.pointerId); } catch {}
   document.body.classList.add('cep-resizing-table-column');
@@ -300,7 +273,7 @@ document.addEventListener('pointerdown', event => {
 function finishColumnResize() {
   if (!columnResize) return;
   const editor = columnResize.table.closest('.cep-pn-editor');
-  columnResize.table.style.setProperty('table-layout', 'auto', 'important');
+  normalizeNoteTable(columnResize.table);
   try { columnResize.cell.releasePointerCapture(columnResize.pointerId); } catch {}
   columnResize = null;
   document.body.classList.remove('cep-resizing-table-column');
@@ -428,22 +401,11 @@ function changeTable(editor, action) {
   restoreEditorRange(editor);
   const cell = currentCell(editor);
   if (!cell) { alert('Click inside a table cell first.'); return; }
-  const row = cell.parentElement;
   const table = cell.closest('table');
-  const cellIndex = [...row.children].indexOf(cell);
-  if (action === 'add-row') {
-    const next = document.createElement('tr');
-    [...row.children].forEach(() => { const td = document.createElement('td'); td.innerHTML = '<br>'; next.appendChild(td); });
-    row.after(next);
-  } else if (action === 'add-col') {
-    [...table.rows].forEach(tableRow => { const td = document.createElement('td'); td.innerHTML = '<br>'; tableRow.children[cellIndex].after(td); });
-  } else if (action === 'del-row') {
-    if (table.rows.length <= 1) return alert('A table needs at least one row.');
-    row.remove();
-  } else if (action === 'del-col') {
-    if (table.rows[0].cells.length <= 1) return alert('A table needs at least one column.');
-    [...table.rows].forEach(tableRow => tableRow.children[cellIndex]?.remove());
-  }
+  if (action === 'add-row') addNoteTableRow(table,cell);
+  else if (action === 'add-col') addNoteTableColumn(table,cell);
+  else if (action === 'del-row' && !removeNoteTableRow(table,cell)) return alert('A table needs at least one row.');
+  else if (action === 'del-col' && !removeNoteTableColumn(table,cell)) return alert('A table needs at least one column.');
   styleTables(editor);
   notifyEditorChanged(editor);
 }
@@ -531,11 +493,6 @@ function attachEditor(editor) {
   });
   editor.addEventListener('input', () => {
     rememberRange(editor);
-    const activeCell = currentCell(editor);
-    if (activeCell && activeCell.textContent.trim()) {
-      delete activeCell.dataset.cepColumnResized;
-      activeCell.closest('table')?.removeAttribute('data-cep-table-resized');
-    }
     // Let typed characters paint before measuring and resizing table cells.
     // Coalesce native input and synthetic editor-change notifications.
     clearTimeout(tableStyleTimer);
@@ -585,17 +542,13 @@ function styleTables(root = document) {
   tables.forEach(table => {
     const gridColor = '#e5dfcc';
     table.style.setProperty('border-collapse', 'collapse', 'important');
-    table.style.setProperty('table-layout', 'auto', 'important');
+    // Column widths are stable until the user explicitly resizes them.
     table.style.setProperty('border', `1px solid ${gridColor}`, 'important');
     table.style.setProperty('background', '#ecebeb', 'important');
     table.querySelectorAll('th,td').forEach(cell => {
-      const isEmpty = !cell.textContent.trim() && !cell.querySelector('img,table');
       cell.style.setProperty('border', `1px solid ${gridColor}`, 'important');
       cell.style.setProperty('padding', '6px 7px', 'important');
-      cell.style.setProperty('min-width', '0', 'important');
-      if (!cell.dataset.cepColumnResized) {
-        if (isEmpty) cell.style.setProperty('width', '1cm', 'important');
-      }
+
       const isHeader = cell.tagName === 'TH' || cell.closest('thead');
       cell.style.setProperty(
         'background',
@@ -604,31 +557,7 @@ function styleTables(root = document) {
       );
       if (isHeader) cell.style.setProperty('color', '#40363b', 'important');
     });
-    table.style.setProperty('max-width', '100%', 'important');
-    table.style.setProperty('min-width', '0', 'important');
-    if (!table.dataset.cepTableResized) {
-      const columnCount = table.rows[0]?.cells.length || 0;
-      let widths = Array.from({ length: columnCount }, (_, columnIndex) =>
-        Math.max(...[...table.rows].map(row => {
-          const cell = row.cells[columnIndex];
-          return cell ? measuredCellWidth(cell) : 38;
-        }))
-      );
-      const availableWidth = Math.max(38, table.parentElement?.clientWidth || table.closest('.note-card,.note-tile')?.clientWidth || 320);
-      const desiredTotal = widths.reduce((sum, width) => sum + width, 0);
-      if (desiredTotal > availableWidth) {
-        const minimumTotal = widths.length * 38;
-        const scale = Math.max(0, (availableWidth - minimumTotal) / Math.max(1, desiredTotal - minimumTotal));
-        widths = widths.map(width => 38 + ((width - 38) * scale));
-      }
-      [...table.rows].forEach(row => widths.forEach((width, columnIndex) => {
-        const cell = row.cells[columnIndex];
-        if (cell && !cell.dataset.cepColumnResized) {
-          cell.style.setProperty('width', `${Math.ceil(width)}px`, 'important');
-        }
-      }));
-      table.style.setProperty('width', `${Math.ceil(Math.min(availableWidth, widths.reduce((sum, width) => sum + width, 0)))}px`, 'important');
-    }
+    normalizeNoteTable(table);
   });
 }
 
