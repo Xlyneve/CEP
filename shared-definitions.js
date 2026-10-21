@@ -31,10 +31,10 @@
     if (!imageViewer) {
       const style = document.createElement('style');
       style.textContent = `
-        html:root:root body #cep-definition-image-viewer {position:fixed;inset:0;margin:auto;padding:12px;border:1px solid #bbb;border-radius:16px;width:min(940px,calc(100vw - 24px));height:min(800px,calc(100dvh - 24px));max-width:none;max-height:none;box-sizing:border-box;background:var(--card-solid,#f5f4f2);color:var(--theme-ink,#303039);overflow:hidden;}
-        #cep-definition-image-viewer::backdrop{background:rgba(20,20,25,.75)}
+        html:root:root body #cep-definition-image-viewer {position:fixed;inset:0;margin:auto;padding:12px;border:0!important;border-radius:0!important;box-shadow:none!important;width:min(940px,calc(100vw - 24px));height:min(800px,calc(100dvh - 24px));max-width:none;max-height:none;box-sizing:border-box;background:transparent!important;color:#fff;overflow:hidden;}
+        #cep-definition-image-viewer::backdrop{background:rgba(20,20,25,.4);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
         #cep-definition-image-viewer .definition-image-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;height:40px;margin-bottom:8px}
-        html:root:root body #cep-definition-image-viewer button{position:static;display:grid;place-items:center;min-width:36px;width:auto;height:36px;padding:0 10px;border:1px solid currentColor;border-radius:8px;background:transparent;color:inherit;font:600 16px/1 Tahoma,sans-serif;cursor:pointer;transform:none}
+        html:root:root body #cep-definition-image-viewer button{position:static;display:grid;place-items:center;min-width:36px;width:auto;height:36px;padding:0 10px;border:1px solid rgba(255,255,255,.6)!important;border-radius:8px;background:rgba(20,20,25,.7)!important;color:#fff!important;font:600 16px/1 Tahoma,sans-serif;cursor:pointer;transform:none}
         #cep-definition-image-viewer .definition-image-viewport{overflow:auto;height:calc(100% - 48px);overscroll-behavior:contain;touch-action:pan-x pan-y pinch-zoom}
         #cep-definition-image-viewer .definition-image-stage{display:grid;place-items:center;min-width:100%;min-height:100%;width:max-content}
         html:root:root body #cep-definition-image-viewer img{display:block;max-width:none!important;max-height:none!important;object-fit:contain;margin:0;border:0;border-radius:0}
@@ -67,7 +67,7 @@
       button('Zoom in','+',()=>{scale=Math.min(5,scale+.25);update();});
       button('Close image','×',()=>closeViewer());
       image.addEventListener('load',fit);
-      dialog.addEventListener('click',event=>{event.stopPropagation();if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeViewer();}});
+      dialog.addEventListener('click',event=>{event.stopPropagation();if(event.target===dialog || event.target===viewport || event.target===stage)closeViewer();});
       dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeViewer();}});
       dialog.addEventListener('cancel',event=>{event.preventDefault();event.stopPropagation();closeViewer();});
       dialog.addEventListener('close',()=>{if(!dialog.open)restore();});
