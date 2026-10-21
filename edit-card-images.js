@@ -236,7 +236,7 @@ document.addEventListener('click', event => {
 
 function tableCellAtResizeEdge(target, clientX) {
   const cell = target.closest?.('.cep-pn-editor td, .cep-pn-editor th');
-  if (!cell || !cell.nextElementSibling) return null;
+  if (!cell) return null;
   const bounds = cell.getBoundingClientRect();
   return Math.abs(bounds.right - clientX) <= 16 ? cell : null;
 }
