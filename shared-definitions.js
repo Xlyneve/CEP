@@ -88,22 +88,39 @@
     link.textContent='Watch here';link.setAttribute('aria-label','Watch video');link.target='_blank';link.rel='noopener noreferrer';
     footer.append(link);container.append(footer);window.CEPNoteVideoLinks?.decorate(footer);return true;
   }
+  const gallerySource=new URL('concept-photo-gallery.js?v=20261003-1',document.currentScript?.src || location.href).href;
+  const waitingGalleries=new Set();let galleryLoader;
+  function decorateDefinitionGallery(strip) {
+    if(window.CEPPhotoGallery){window.CEPPhotoGallery.decorate(strip);return;}
+    waitingGalleries.add(strip);
+    if(galleryLoader)return;
+    galleryLoader=document.createElement('script');galleryLoader.src=gallerySource;
+    galleryLoader.onload=()=>{for(const item of waitingGalleries)window.CEPPhotoGallery?.decorate(item);waitingGalleries.clear();};
+    galleryLoader.onerror=()=>{galleryLoader=null;waitingGalleries.clear();};
+    document.head.append(galleryLoader);
+  }
   function renderPreview(container, record, fallback = '') {
     container.replaceChildren();
     const value = record?.value || plain(record?.valueHtml) || fallback;
     if (value) { const text = document.createElement('p'); text.textContent = value; container.append(text); }
     const media = mediaIndex.get(normalize(record?.concept || record?.id)) || record;
     const images = photos(record);
+    const strip=document.createElement('div');
+    strip.setAttribute('role','region');strip.setAttribute('aria-label','Definition photos');strip.tabIndex=0;
+    strip.style.cssText='display:flex;gap:8px;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;overscroll-behavior-x:contain;';
+    if(images.length)container.append(strip);
+
     for (const [index, photo] of images.entries()) {
       const image = document.createElement('img');
       image.src = photo.imageUrl; image.alt = (record?.concept || 'Concept') + ' — photo ' + (index + 1);
-      image.style.cssText = 'display:block;width:100%;max-height:300px;object-fit:contain;border-radius:8px;margin:8px 0';
+      image.style.cssText = 'display:block;width:100%;min-width:0;max-width:100%;height:240px;object-fit:contain;border-radius:8px;margin:8px 0;flex:0 0 100%;scroll-snap-align:start';
       image.style.cursor = 'zoom-in'; image.tabIndex=0;
       image.setAttribute('role','button'); image.setAttribute('aria-label','Zoom '+image.alt);
       image.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openDefinitionImage(image);});
       image.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();openDefinitionImage(image);}});
-      container.append(image);
+      strip.append(image);
     }
+    if(images.length)decorateDefinitionGallery(strip);
     if (images.length && media?.caption) { const caption=document.createElement('p'); caption.textContent=media.caption; container.append(caption); }
     const video=appendVideo(container,record?.videoUrl);
     return !!(value || images.length || video);
