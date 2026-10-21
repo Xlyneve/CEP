@@ -60,6 +60,9 @@ else installSearchHelp(document.querySelector('.universal-search-modes'));
 const defaultCardStyle = document.createElement('style');
 defaultCardStyle.id = 'cep-default-search-card-size';
 defaultCardStyle.textContent = `
+  html:root:root:root body .cep-search-table-zoom {z-index:2147483644 !important;}
+  html:root:root:root body:has(.cep-search-table-zoom:not([hidden])) :is(.cep-xgpt-media-tip,.xgpt-media-tip,#cep-shared-tip,#pn-definition-tip) {z-index:2147483646 !important;}
+
   html:root:root:root:root:root:root:root body .cep-search-table-scroll {min-width:0 !important;max-width:100% !important;overflow-x:auto !important;}
   html:root:root:root:root:root:root:root body .cep-search-table-scroll :is(td,th),
   html:root:root:root:root:root:root:root body .cep-search-table-scroll :is(td,th) * {white-space:normal !important;overflow-wrap:anywhere !important;word-break:normal !important;max-width:100% !important;box-sizing:border-box !important;}
@@ -1116,6 +1119,8 @@ function getSearchTableZoomUi() {
       cell.style.setProperty('text-align', cellStyle.textAlign, 'important');
       cell.style.setProperty('vertical-align', cellStyle.verticalAlign, 'important');
     });
+    // Cloned PN words use the shared delegated preview, including on PN itself.
+    table.querySelectorAll('.pn-definition[data-pn-definition]').forEach(word=>word.classList.add('cep-shared-definition'));
     table.classList.add('cep-search-table-zoom-content'); stage.replaceChildren(table); scale = 1;
     previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; root.hidden = false;
     requestAnimationFrame(() => {
