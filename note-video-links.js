@@ -57,8 +57,13 @@
       color:inherit !important; -webkit-text-fill-color:currentColor !important; font:22px/1 Tahoma,sans-serif;
       cursor:pointer;
     }
+    #cepNoteLinkPanel .cep-link-panel-zoom{display:flex;align-items:center;gap:2px;flex:none;}
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel .cep-link-panel-zoom button{width:24px;min-width:24px;height:26px;min-height:26px;font:400 15px/1 Tahoma,sans-serif;}
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel .cep-link-panel-zoom [data-zoom="reset"]{width:44px;min-width:44px;font-size:12px;}
+    #cepNoteLinkPanel :is(.cep-link-panel-zoom button:disabled){opacity:.4;cursor:default;}
+    #cepNoteLinkPanel:is(.is-collapsed,.is-video) .cep-link-panel-zoom{display:none!important;}
     #cepNoteLinkPanel .cep-link-panel-body { display:flex; flex:1; min-height:0; flex-direction:column; overflow:auto; }
-    #cepNoteLinkPanel .cep-link-panel-frame { flex:1; min-height:0; background:#fff; }
+    #cepNoteLinkPanel .cep-link-panel-frame { flex:1; min-height:0; background:#fff; overflow:hidden; }
     #cepNoteLinkPanel iframe,#cepNoteLinkPanel video { display:block; width:100%; height:100%; border:0; }
     #cepNoteLinkPanel .cep-link-panel-footer { display:flex; justify-content:flex-end; padding:8px 12px; flex:none; }
     html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel .cep-link-panel-new-tab {
@@ -211,6 +216,21 @@ function decorateNoteVideoLinks(root) {
 }
 
   let panel,frame,title,newTab,collapseButton,currentUrl='',lastTrigger;
+  let panelZoom=1;
+  function setPanelZoom(value){
+    panelZoom=Math.max(.5,Math.min(2,Math.round(value*10)/10));
+    const iframe=frame?.querySelector('iframe');
+    if(iframe){
+      // Scale the frame element without accessing an external site's document.
+      iframe.style.setProperty('width',(100/panelZoom)+'%','important');
+      iframe.style.setProperty('height',(100/panelZoom)+'%','important');
+      iframe.style.transformOrigin='0 0';iframe.style.transform='scale('+panelZoom+')';
+    }
+    panel.querySelector('[data-zoom="reset"]').textContent=Math.round(panelZoom*100)+'%';
+    panel.querySelector('[data-zoom="out"]').disabled=panelZoom<=.5;
+    panel.querySelector('[data-zoom="in"]').disabled=panelZoom>=2;
+  }
+
   const dialogHosts=new WeakSet();
   const preferredSizes={};
   let sizeKind='link';
@@ -243,7 +263,7 @@ function decorateNoteVideoLinks(root) {
     if(!panel){
       panel=document.createElement('aside');panel.id='cepNoteLinkPanel';panel.setAttribute('popover','manual');
       panel.setAttribute('role','complementary');panel.setAttribute('aria-label','Link panel');panel.setAttribute('aria-hidden','true');
-      panel.innerHTML='<div class="cep-link-panel-header"><span class="cep-link-panel-title"></span><button type="button" data-action="collapse" aria-label="Collapse link panel" aria-expanded="true">›</button><button type="button" data-action="close" aria-label="Close link panel">×</button></div><div class="cep-link-panel-body"><div class="cep-link-panel-frame"></div></div><div class="cep-link-panel-footer"><a class="cep-link-panel-new-tab" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a></div>';
+      panel.innerHTML='<div class="cep-link-panel-header"><span class="cep-link-panel-title"></span><div class="cep-link-panel-zoom" role="group" aria-label="Webpage zoom"><button type="button" data-zoom="out" aria-label="Zoom webpage out" title="Zoom out">−</button><button type="button" data-zoom="reset" aria-label="Reset webpage zoom" title="Reset zoom" aria-live="polite">100%</button><button type="button" data-zoom="in" aria-label="Zoom webpage in" title="Zoom in">+</button></div><button type="button" data-action="collapse" aria-label="Collapse link panel" aria-expanded="true">›</button><button type="button" data-action="close" aria-label="Close link panel">×</button></div><div class="cep-link-panel-body"><div class="cep-link-panel-frame"></div></div><div class="cep-link-panel-footer"><a class="cep-link-panel-new-tab" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a></div>';
       const help=document.createElement('span');help.className='cep-link-panel-help';
       help.textContent='Some sites block embedded viewing. If blank or refused, open in a new tab.';
       panel.querySelector('.cep-link-panel-footer').prepend(help);
@@ -266,6 +286,10 @@ function decorateNoteVideoLinks(root) {
       window.addEventListener('resize',restorePanelSize);
       frame=panel.querySelector('.cep-link-panel-frame');title=panel.querySelector('.cep-link-panel-title');newTab=panel.querySelector('a');collapseButton=panel.querySelector('[data-action="collapse"]');
       panel.querySelector('[data-action="close"]').onclick=closePanel;
+      panel.querySelector('[data-zoom="out"]').onclick=()=>setPanelZoom(panelZoom-.1);
+      panel.querySelector('[data-zoom="reset"]').onclick=()=>setPanelZoom(1);
+      panel.querySelector('[data-zoom="in"]').onclick=()=>setPanelZoom(panelZoom+.1);
+
       collapseButton.onclick=()=>{
         const collapsed=panel.classList.toggle('is-collapsed');
         collapseButton.textContent=collapsed?'‹':'›';collapseButton.setAttribute('aria-expanded',String(!collapsed));
@@ -333,6 +357,7 @@ function decorateNoteVideoLinks(root) {
         iframe.allowFullscreen=true;iframe.referrerPolicy='strict-origin-when-cross-origin';frame.append(iframe);
       }
       title.textContent=label;title.title=url.href;newTab.href=url.href;currentUrl=url.href;
+      setPanelZoom(1);
     }
     panel.classList.add('is-open');panel.setAttribute('aria-hidden','false');
     try{if(panel.showPopover&&!panel.matches(':popover-open'))panel.showPopover();}catch{}
