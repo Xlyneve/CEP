@@ -221,10 +221,12 @@ function decorateNoteVideoLinks(root) {
     panelZoom=Math.max(.5,Math.min(2,Math.round(value*10)/10));
     const iframe=frame?.querySelector('iframe');
     if(iframe){
-      // Scale the frame element without accessing an external site's document.
-      iframe.style.setProperty('width',(100/panelZoom)+'%','important');
-      iframe.style.setProperty('height',(100/panelZoom)+'%','important');
-      iframe.style.transformOrigin='0 0';iframe.style.transform='scale('+panelZoom+')';
+      // Let the browser lay out the frame at its zoom level instead of scaling a rasterized layer.
+      iframe.style.setProperty('width','100%','important');
+      iframe.style.setProperty('height','100%','important');
+      iframe.style.removeProperty('transform-origin');
+      iframe.style.removeProperty('transform');
+      iframe.style.setProperty('zoom',String(panelZoom),'important');
     }
     panel.querySelector('[data-zoom="reset"]').textContent=Math.round(panelZoom*100)+'%';
     panel.querySelector('[data-zoom="out"]').disabled=panelZoom<=.5;
