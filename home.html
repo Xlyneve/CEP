@@ -3930,7 +3930,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
   </div>
 
   <div class="qc-body">
-    <div class="qc-tabs" role="tablist" aria-label="Medication shortcuts">
+    <div class="qc-tabs" role="tablist" aria-label="Quick calculators">
       <button class="qc-tab active" type="button" data-med="para" role="tab" aria-selected="true">Paracetamol</button>
       <button class="qc-tab" type="button" data-med="ibu" role="tab" aria-selected="false">Ibuprofen</button>
       <button class="qc-tab" type="button" data-med="adren" role="tab" aria-selected="false">Adrenaline IM</button>
@@ -3938,8 +3938,15 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       <button class="qc-tab" type="button" data-med="adren-neb" role="tab" aria-selected="false">Adrenaline Neb</button>
       <button class="qc-tab" type="button" data-med="redipred" role="tab" aria-selected="false">Redipred</button>
       <button class="qc-tab" type="button" data-med="fentanyl" role="tab" aria-selected="false">Fentanyl</button>
+      <button class="qc-tab" type="button" data-med="time" role="tab" aria-selected="false">Time</button>
     </div>
 
+    <div class="qc-section" data-section="time" style="display:none;">
+      <label class="qc-label" for="qcStartTime">Start time (24-hour)</label>
+      <input id="qcStartTime" class="qc-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="1215 or 12:15" maxlength="5" />
+      <label class="qc-label" for="qcAddMinutes">Add minutes</label>
+      <input id="qcAddMinutes" class="qc-input" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 30" />
+    </div>
     <label class="qc-label" for="qcWeight">Weight (kg)</label>
     <input id="qcWeight" class="qc-input" type="number" inputmode="decimal" min="0" step="0.1" placeholder="e.g., 12.5" />
 
@@ -5488,6 +5495,7 @@ function closeTable() {
   const ibuStrengthWrap  = qc.querySelector('#qcIbuStrength');  // div container
 
   const sections = {
+    time: qc.querySelector('[data-section="time"]'),
     para: qc.querySelector('[data-section="para"]'),
     ibu: qc.querySelector('[data-section="ibu"]'),
     adren: qc.querySelector('[data-section="adren"]'),
@@ -5521,8 +5529,8 @@ function closeTable() {
 
   function syncArrestMode(){
     const fixedAdult = activeMed === 'adren-arrest' && arrestMode === 'adult';
-    weightEl.style.display = fixedAdult ? 'none' : '';
-    weightLabel.style.display = fixedAdult ? 'none' : '';
+    weightEl.style.display = fixedAdult || activeMed === 'time' ? 'none' : '';
+    weightLabel.style.display = fixedAdult || activeMed === 'time' ? 'none' : '';
     qc.querySelector('#qcArrestPaediatric').style.display = arrestMode === 'paediatric' ? '' : 'none';
     qc.querySelector('#qcArrestFrequency').textContent = arrestMode === 'adult'
       ? 'Every second CPR loop (~4 min)'
@@ -5584,7 +5592,34 @@ function closeTable() {
     resultsEl.classList.remove('has-value');
   }
 
+  const timeEl=qc.querySelector('#qcStartTime');
+  const minutesEl=qc.querySelector('#qcAddMinutes');
+  [timeEl,minutesEl].forEach(input=>{
+    input.addEventListener('input',()=>{if(activeMed==='time')calc();});
+    input.addEventListener('focus',()=>input.select());
+  });
+  function calculateClockTime(start, minutes){
+    const raw=start.trim();
+    const match=/^(\d{1,2}):(\d{2})$/.exec(raw) || /^(\d{1,2})(\d{2})$/.exec(raw);
+    if(!match)return null;
+    const hour=Number(match[1]),minute=Number(match[2]);
+    if(hour>23 || minute>59 || !Number.isSafeInteger(minutes) || minutes<0)return null;
+    const total=hour*60+minute+minutes;
+    if(!Number.isSafeInteger(total))return null;
+    const clock=total%1440,days=Math.floor(total/1440);
+    return {time:String(Math.floor(clock/60)).padStart(2,'0')+':'+String(clock%60).padStart(2,'0'),days};
+  }
   function calc(){
+    if(activeMed==='time'){
+      resetOutput();
+      if(!timeEl.value.trim() || !minutesEl.value.trim())return;
+      const result=calculateClockTime(timeEl.value,Number(minutesEl.value));
+      if(!result){subEl.textContent='Use a valid 24-hour time and whole minutes (0 or more).';return;}
+      mainEl.textContent=result.time;
+      subEl.textContent=result.days===1?'Next day':result.days>1?'+'+result.days+' days':'';
+      resultsEl.classList.add('has-value');return;
+    }
+
     // ANZCOR 11.5 and 12.2: cardiac arrest IV/IO, 0.1 mg/mL only.
     // Adult is fixed-dose and deliberately bypasses the shared weight guard.
     if (activeMed === 'adren-arrest'){
