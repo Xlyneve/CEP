@@ -1515,18 +1515,18 @@
 
     /* Keep the calculator logic and layout intact while carrying the selected
        colour palette through every Quick Calc surface. */
-    html[data-xlyneve-color-theme] body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator) {
+    html[data-xlyneve-color-theme] body :is(:is(#quickCalc,#timeCalculator), #quickInteleviewer, #tabletCalculator, #syrupCalculator) {
       color: var(--quick-ink) !important;
       background: var(--quick-panel) !important;
       border-color: var(--quick-edge) !important;
       box-shadow: 0 16px 34px color-mix(in srgb, var(--quick-accent) 18%, transparent), inset 0 1px 0 rgba(255,255,255,.72) !important;
     }
-    html[data-xlyneve-color-theme] body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator)
+    html[data-xlyneve-color-theme] body :is(:is(#quickCalc,#timeCalculator), #quickInteleviewer, #tabletCalculator, #syrupCalculator)
       :is(.qc-title, .qi-title, .qt-title, .qs-title, .qc-label, .qt-label, .qs-label, .qs-strength-word) {
       color: var(--quick-ink) !important;
       -webkit-text-fill-color: var(--quick-ink) !important;
     }
-    html[data-xlyneve-color-theme] body :is(#quickCalc, #tabletCalculator, #syrupCalculator)
+    html[data-xlyneve-color-theme] body :is(:is(#quickCalc,#timeCalculator), #tabletCalculator, #syrupCalculator)
       :is(input, select) {
       color: var(--quick-ink) !important;
       -webkit-text-fill-color: var(--quick-ink) !important;
@@ -1534,42 +1534,42 @@
       border-color: var(--quick-edge) !important;
       caret-color: var(--quick-accent) !important;
     }
-    html[data-xlyneve-color-theme] body :is(#quickCalc, #tabletCalculator, #syrupCalculator)
+    html[data-xlyneve-color-theme] body :is(:is(#quickCalc,#timeCalculator), #tabletCalculator, #syrupCalculator)
       :is(input, select):focus {
       border-color: var(--quick-accent) !important;
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--quick-accent) 20%, transparent) !important;
       outline: none !important;
     }
-    html[data-xlyneve-color-theme] body #quickCalc :is(.qc-tab, .qc-strength-btn, .qc-btn),
+    html[data-xlyneve-color-theme] body :is(#quickCalc,#timeCalculator) :is(.qc-tab, .qc-strength-btn, .qc-btn),
     html[data-xlyneve-color-theme] body #quickInteleviewer :is(.qi-row-item, .qi-copy-mini) {
       color: var(--quick-ink) !important;
       -webkit-text-fill-color: var(--quick-ink) !important;
       background: var(--quick-field) !important;
       border-color: var(--quick-edge) !important;
     }
-    html[data-xlyneve-color-theme] body #quickCalc :is(.qc-tab, .qc-strength-btn):is(.active, [aria-selected="true"]),
-    html[data-xlyneve-color-theme] body #quickCalc .qc-btn:hover,
+    html[data-xlyneve-color-theme] body :is(#quickCalc,#timeCalculator) :is(.qc-tab, .qc-strength-btn):is(.active, [aria-selected="true"]),
+    html[data-xlyneve-color-theme] body :is(#quickCalc,#timeCalculator) .qc-btn:hover,
     html[data-xlyneve-color-theme] body #quickInteleviewer :is(.qi-row-item, .qi-copy-mini):hover {
       color: var(--quick-accent-ink) !important;
       -webkit-text-fill-color: var(--quick-accent-ink) !important;
       background: var(--quick-accent) !important;
       border-color: var(--quick-accent) !important;
     }
-    html[data-xlyneve-color-theme] body :is(#quickCalc, #tabletCalculator, #syrupCalculator)
+    html[data-xlyneve-color-theme] body :is(:is(#quickCalc,#timeCalculator), #tabletCalculator, #syrupCalculator)
       :is(.qc-results, .qt-formula, .qt-result, .qs-formula, .qs-result, .qc-pill) {
       color: var(--quick-ink) !important;
       -webkit-text-fill-color: var(--quick-ink) !important;
       background: var(--quick-soft) !important;
       border-color: var(--quick-edge) !important;
     }
-    html[data-xlyneve-color-theme] body :is(#quickCalc, #quickInteleviewer, #tabletCalculator, #syrupCalculator)
+    html[data-xlyneve-color-theme] body :is(:is(#quickCalc,#timeCalculator), #quickInteleviewer, #tabletCalculator, #syrupCalculator)
       :is(.qc-toggle, .qi-toggle, .qt-toggle, .qs-toggle) {
       color: var(--quick-accent-ink) !important;
       -webkit-text-fill-color: var(--quick-accent-ink) !important;
       background: var(--quick-accent) !important;
       border-color: color-mix(in srgb, var(--quick-accent) 72%, #000) !important;
     }
-    html[data-xlyneve-color-theme] body #quickCalc .qc-tabs::-webkit-scrollbar-thumb {
+    html[data-xlyneve-color-theme] body :is(#quickCalc,#timeCalculator) .qc-tabs::-webkit-scrollbar-thumb {
       background: var(--quick-accent) !important;
     }
 
@@ -1886,7 +1886,7 @@
     html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .main-content .card-group.section-card-group > .card,
     html[data-xlyneve-color-theme="pastel-jumper"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
     html[data-xlyneve-color-theme="pastel-jumper"].theme-clinical body #pinnedNotesList > .pinned-note,
-    html[data-xlyneve-color-theme="pastel-jumper"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       box-shadow:inset 4px 4px 7px rgba(255,255,255,.9),inset -5px -6px 10px rgba(185,166,210,.32),10px 14px 24px rgba(128,108,121,.24),-5px -5px 12px rgba(255,255,255,.75) !important;
     }
     html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .main-content .card-group.section-card-group > .card:hover {
@@ -1930,7 +1930,7 @@
     html[data-xlyneve-color-theme="mint-ceramic"] body :is(.note-card,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty):not(.today),.todo-item:not(.priority)),
     html[data-xlyneve-color-theme="mint-ceramic"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
     html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .main-content .card-group.section-card-group > .card,
-    html[data-xlyneve-color-theme="mint-ceramic"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html[data-xlyneve-color-theme="mint-ceramic"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       color:var(--card-ink,#353c38) !important;
       background-color:var(--card-solid,#fafaf7) !important;
       background-image:var(--mint-grain),linear-gradient(145deg,color-mix(in srgb,var(--card-solid,#fafaf7) 92%,white),var(--card-solid,#fafaf7)) !important;
@@ -1994,7 +1994,7 @@
   `;
 
   themeStyle.textContent += `
-    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+    html[data-xlyneve-color-theme="mint-ceramic"].theme-home-glass body .dashboard-frequent-section > :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
       background:var(--mint-grain),linear-gradient(145deg,var(--mint-control-surface,#dde8f1),var(--mint-control-surface,#dde8f1)) !important;
       color:#353c38 !important;box-shadow:var(--mint-raised) !important;
       border:1px solid #fafaf7 !important;border-radius:16px !important;
@@ -2054,7 +2054,7 @@
     html[data-xlyneve-color-theme="soft-stone"] body :is(.note-card,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty):not(.today),.todo-item:not(.priority)),
     html[data-xlyneve-color-theme="soft-stone"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
     html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body .main-content .card-group.section-card-group > .card,
-    html[data-xlyneve-color-theme="soft-stone"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html[data-xlyneve-color-theme="soft-stone"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       color:#303238 !important;
       background-color:#e1e2e6 !important;
       background-image:none !important;
@@ -2116,7 +2116,7 @@
   `;
 
   themeStyle.textContent += `
-    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+    html[data-xlyneve-color-theme="soft-stone"].theme-home-glass body .dashboard-frequent-section > :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
       background:#e1e2e6 !important;
       color:#303238 !important;box-shadow:var(--stone-raised) !important;
       border:1px solid #e1e2e6 !important;border-radius:16px !important;
@@ -2200,7 +2200,7 @@
     html:root[data-xlyneve-color-theme="porcelain"] body :is(.note-card,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty):not(.today),.todo-item:not(.priority)),
     html:root[data-xlyneve-color-theme="porcelain"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
     html:root[data-xlyneve-color-theme="porcelain"].theme-home-glass body .main-content .card-group.section-card-group > .card,
-    html:root[data-xlyneve-color-theme="porcelain"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html:root[data-xlyneve-color-theme="porcelain"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       color:#353833 !important;
       background-color:#e9e9e1 !important;
       background-image:none !important;
@@ -2262,7 +2262,7 @@
   `;
 
   themeStyle.textContent += `
-    html:root[data-xlyneve-color-theme="porcelain"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+    html:root[data-xlyneve-color-theme="porcelain"].theme-home-glass body .dashboard-frequent-section > :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
       background:#e9e9e1 !important;
       color:#353833 !important;box-shadow:var(--porcelain-raised) !important;
       border:1px solid #e9e9e1 !important;border-radius:16px !important;
@@ -2345,7 +2345,7 @@
     html[data-xlyneve-color-theme="aurora"] body :is(.note-card,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty):not(.today),.todo-item:not(.priority)),
     html[data-xlyneve-color-theme="aurora"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
     html[data-xlyneve-color-theme="aurora"].theme-home-glass body .main-content .card-group.section-card-group > .card,
-    html[data-xlyneve-color-theme="aurora"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html[data-xlyneve-color-theme="aurora"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       color:#28263c !important;
       background-color:#e9ebf6 !important;
       background-image:none !important;
@@ -2407,7 +2407,7 @@
   `;
 
   themeStyle.textContent += `
-    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+    html[data-xlyneve-color-theme="aurora"].theme-home-glass body .dashboard-frequent-section > :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
       background:#e9ebf6 !important;
       color:#28263c !important;box-shadow:var(--aurora-raised) !important;
       border:1px solid #e9ebf6 !important;border-radius:16px !important;
@@ -2561,7 +2561,7 @@
     html[data-xlyneve-color-theme="pastel-jumper"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
     html[data-xlyneve-color-theme="pastel-jumper"].theme-clinical body #pinnedNotesList > .pinned-note,
     html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .main-content .card-group.section-card-group > .card,
-    html[data-xlyneve-color-theme="pastel-jumper"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       background-image:var(--pastel-grain) !important;
       box-shadow:var(--pastel-ceramic-raised) !important;
       backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
@@ -2594,14 +2594,14 @@
       box-sizing:border-box !important;min-height:40px;padding:6px 22px !important;border-radius:18px !important;
     }
     html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .dashboard-section-chevron { font-size:16px;line-height:1;flex:0 0 20px;text-align:center; }
-    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .dashboard-frequent-section > :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+    html[data-xlyneve-color-theme="pastel-jumper"].theme-home-glass body .dashboard-frequent-section > :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
       background-image:var(--pastel-grain) !important;box-shadow:var(--pastel-ceramic-raised) !important;border-radius:16px !important;
     }
   `;
 
   themeStyle.textContent += `
     html[data-xlyneve-color-theme="pastel-jumper"] body :is(.chatBubble,.form-card,.library-card,.template-card,.panel,.med-card),
-    html[data-xlyneve-color-theme="pastel-jumper"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html[data-xlyneve-color-theme="pastel-jumper"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       background-color:var(--card-glass,rgba(250,246,229,.92)) !important;
     }
     html[data-xlyneve-color-theme="pastel-jumper"].theme-homecal body .calendar-header { background-color:rgba(185,166,210,.94) !important; }
@@ -2649,10 +2649,10 @@
 
   // A raised porcelain rim surrounds the recessed face, without an overlay on text.
   themeStyle.textContent += `
-    html:root[data-xlyneve-color-theme="porcelain"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator,.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty),.todo-item,.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result,.dashboard-section-toggle),
+    html:root[data-xlyneve-color-theme="porcelain"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator,.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.chatBubble,.form-card,.library-card,.template-card,.panel,.input-panel,.pinned-note,.day:not(.empty),.todo-item,.universal-search-native-card,.cep-global-search-result,.cep-concept-search-result,.dashboard-section-toggle),
     html:root[data-xlyneve-color-theme="porcelain"].theme-clinical body #notesList > .note-card:not(.copy-feedback):not(.copied-feedback),
     html:root[data-xlyneve-color-theme="porcelain"].theme-home-glass body .main-content .card-group.section-card-group > .card,
-    html:root[data-xlyneve-color-theme="porcelain"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator),
+    html:root[data-xlyneve-color-theme="porcelain"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator),
     html:root.home-notepad-embedded[data-xlyneve-color-theme="porcelain"][data-home-notepad-ready="1"] body #notes > .note-card:not(.copy-feedback):not(.copied-feedback) {
       box-shadow:var(--porcelain-recessed) !important;
       border:1px solid transparent !important; border-radius:30px !important;
@@ -3225,7 +3225,7 @@
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.day.today,.day.current-day) { border:2px solid #bc86ce !important; }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.day.weekend,.day.saturday,.day.sunday) { border-color:rgba(70,175,186,.55) !important; }
     html:root:root:root[data-xlyneve-color-theme="frost-outline"] body .todo-item :is(input[type="text"],textarea) { background:transparent !important; box-shadow:none !important; border:0 !important; }
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.calendar-container,.todo-container,.homepage-notepad,.homepage-calendar,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(.calendar-container,.todo-container,.homepage-notepad,.homepage-calendar,.universal-search,.cep-global-search-panel,:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       background:#d5e0e8 !important; background-image:none !important; color:#34434f !important;
       border:1px solid rgba(255,255,255,.35) !important; border-radius:28px !important;
       box-shadow:var(--frost-raised) !important; backdrop-filter:none !important;
@@ -3274,13 +3274,13 @@
     html:root:root:root[data-xlyneve-color-theme="frost-outline"].theme-home-glass body .dashboard-frequent-circles .circle:active,
     html:root:root:root[data-xlyneve-color-theme="frost-outline"].theme-home-glass body :is(.qc,.qi,.qt,.qs) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle):active { box-shadow:var(--frost-inset) !important; }
 
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(button,.qc-pill,.qt-pill,.qs-pill,.qc-result,.qt-result,.qs-result) {
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(button,.qc-pill,.qt-pill,.qs-pill,.qc-result,.qt-result,.qs-result) {
       background:#d5e0e8 !important; background-image:none !important;
       color:#34434f !important; -webkit-text-fill-color:#34434f !important;
       border:1px solid var(--frost-home-outline,rgba(55,158,233,.48)) !important;
       box-shadow:var(--frost-raised) !important;
     }
-    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"],:active) {
+    html:root:root:root[data-xlyneve-color-theme="frost-outline"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"],:active) {
       border:2px solid #75bde9 !important; box-shadow:var(--frost-inset) !important;
     }
 
@@ -3322,7 +3322,7 @@
     }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.day.weekend,.day.saturday,.day.sunday) { background:#f1f2f2 !important; }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body .day.today { background:#e5ecf0 !important; border:1px solid #a4b9c7 !important; }
-    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.calendar-container,.todo-container,.homepage-notepad,.homepage-calendar,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.calendar-container,.todo-container,.homepage-notepad,.homepage-calendar,.universal-search,.cep-global-search-panel,:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       background:linear-gradient(145deg,rgba(255,255,253,.9),rgba(240,241,239,.94)) !important;
       color:#373d44 !important; border:1px solid rgba(255,255,255,.92) !important;
       border-radius:26px !important; box-shadow:var(--pearl-depth) !important;
@@ -3356,8 +3356,8 @@
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body .todo-item.todo-item:not(#cep-pearl-no-task) :is(input[type="text"],textarea) { background:transparent !important; box-shadow:none !important; border:0 !important; }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body #notes .notepad { background:var(--pearl-reflection),#fafaf7 !important; color:#373d44 !important; box-shadow:var(--pearl-card-depth) !important; }
     html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
-    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-pill,.qt-pill,.qs-pill,.qc-result,.qt-result,.qs-result) { background:#f6f6f3 !important; color:#373d44 !important; border-color:rgba(102,110,121,.25) !important; }
-    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"]) { border:2px solid #9eb9cb !important; box-shadow:var(--pearl-inset) !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-pill,.qt-pill,.qs-pill,.qc-result,.qt-result,.qs-result) { background:#f6f6f3 !important; color:#373d44 !important; border-color:rgba(102,110,121,.25) !important; }
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(:is(#quickCalc,#timeCalculator),#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"]) { border:2px solid #9eb9cb !important; box-shadow:var(--pearl-inset) !important; }
     @media (max-width:600px) {
       html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(.note-card,.card,.day,.todo-item,.note-tile) { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
     }
@@ -3377,17 +3377,17 @@
       border:1px solid rgba(90,102,114,.3) !important; box-shadow:var(--pearl-card-depth) !important;
     }
 
-    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {
       background:transparent !important; background-image:none !important;
       border:0 !important; border-radius:0 !important; box-shadow:none !important;
       backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
       width:36px !important; min-width:36px !important; height:36px !important; padding:0 !important;
     }
-    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) {
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) {
       width:36px !important; height:36px !important; padding:0 !important;
       background:transparent !important; border:0 !important; box-shadow:none !important;
     }
-    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+    html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
       width:36px !important; height:36px !important; min-width:36px !important;
       padding:0 !important; border-radius:50% !important;
       background:var(--pearl-reflection),#fafaf7 !important; color:#373d44 !important;
@@ -3395,7 +3395,7 @@
       font-size:14px !important; line-height:1 !important;
     }
     @media (max-width:768px) {
-      html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) { font-size:0 !important; }
+      html:root:root:root[data-xlyneve-color-theme="pearl-silver"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) { font-size:0 !important; }
     }
 
   `;
@@ -3435,7 +3435,7 @@
       border:1px solid rgba(255,255,255,.96) !important; border-radius:24px !important;
       box-shadow:var(--duo-depth) !important; backdrop-filter:blur(12px) saturate(135%) !important; -webkit-backdrop-filter:blur(12px) saturate(135%) !important;
     }
-    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.calendar-container,.todo-container,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.calendar-container,.todo-container,.universal-search,.cep-global-search-panel,:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       background:var(--duo-material) !important; color:#44335d !important;
       border-color:rgba(255,255,255,.85) !important; box-shadow:var(--duo-depth) !important; backdrop-filter:blur(10px) !important; -webkit-backdrop-filter:blur(10px) !important;
     }
@@ -3456,11 +3456,11 @@
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body #notes .notepad { background:var(--duo-material),var(--duo-field) !important; color:#44335d !important; box-shadow:var(--duo-depth) !important; }
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body .day.today { background:linear-gradient(145deg,rgba(234,222,249,.95),rgba(209,196,235,.85)) !important; border-color:#baa4da !important; }
     html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
-    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {
       background:transparent !important; background-image:none !important; box-shadow:none !important; border:0 !important; backdrop-filter:none !important; width:36px !important; height:36px !important; padding:0 !important;
     }
-    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) { background:transparent !important; border:0 !important; box-shadow:none !important; padding:0 !important; }
-    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) { width:36px !important; height:36px !important; padding:0 !important; border-radius:50% !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) { background:transparent !important; border:0 !important; box-shadow:none !important; padding:0 !important; }
+    html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) { width:36px !important; height:36px !important; padding:0 !important; border-radius:50% !important; }
     @media (max-width:600px) {
       html:root:root:root:root:is([data-xlyneve-color-theme="lavender-glass"],[data-xlyneve-color-theme="grey-lavender"]) body :is(.note-card,.note-tile,.day,.todo-item,.card) { backdrop-filter:blur(5px) saturate(125%) !important; -webkit-backdrop-filter:blur(5px) saturate(125%) !important; }
     }
@@ -3615,7 +3615,7 @@
       border:1px solid var(--rose-edge) !important; border-radius:24px !important;
       box-shadow:var(--rose-depth) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
-    html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.universal-search,.cep-global-search-panel,:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       background:#f0efed !important; background-image:none !important; color:#3c3037 !important;
       border-color:var(--rose-edge) !important; border-radius:24px;
       box-shadow:var(--rose-depth) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
@@ -3646,10 +3646,10 @@
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body #notes .notepad { background:#faf9f7 !important; color:#3c3037 !important; box-shadow:var(--rose-depth) !important; }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body .day.today:not(.empty) { background:var(--homecal-today) !important; border-color:var(--homecal-today-edge) !important; box-shadow:var(--rose-depth) !important; }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
-    html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {
+    html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {
       background:transparent !important; background-image:none !important; border-color:transparent !important; box-shadow:none !important;
     }
-    html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) { background:transparent !important; border:0 !important; box-shadow:none !important; }
+    html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) { background:transparent !important; border:0 !important; box-shadow:none !important; }
     html:root:root:root:root:root:is([data-xlyneve-color-theme="pastel-rose-5d"],[data-xlyneve-color-theme="pastel-rose-recessed"]) body :is(.note-card,.note-tile,.chatBubble,.notepad) :is([style*="color"],font[color]) { -webkit-text-fill-color:currentColor !important; }
     html:root:root:root:root:root[data-xlyneve-color-theme="pastel-rose-recessed"] body #notes .notepad {
       background:#f0efed !important; box-shadow:var(--rose-depth) !important;
@@ -3721,7 +3721,7 @@
       border-radius:26px !important; box-shadow:var(--opal-depth) !important;
       backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
-    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.universal-search,.cep-global-search-panel,#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.universal-search,.cep-global-search-panel,:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
       background:var(--opal-surface) !important; color:#35424d !important; border-color:rgba(255,255,255,.9) !important;
       border-radius:26px; box-shadow:var(--opal-depth) !important;
       backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
@@ -3745,8 +3745,8 @@
     html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body #notes .notepad { background:#fbfcfa !important; color:#35424d !important; box-shadow:var(--opal-depth) !important; }
     html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body .day.today:not(.empty) { background:var(--homecal-today) !important; border-color:var(--homecal-today-edge) !important; box-shadow:var(--opal-depth) !important; }
     html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) { background:transparent !important; box-shadow:none !important; }
-    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed { background:transparent !important; background-image:none !important; border-color:transparent !important; box-shadow:none !important; }
-    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(#quickCalc,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) { background:transparent !important; border:0 !important; box-shadow:none !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed { background:transparent !important; background-image:none !important; border-color:transparent !important; box-shadow:none !important; }
+    html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(:is(#quickCalc,#timeCalculator),#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) { background:transparent !important; border:0 !important; box-shadow:none !important; }
     html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(.note-card,.note-tile,.chatBubble,.notepad) :is([style*="color"],font[color]) { -webkit-text-fill-color:currentColor !important; }
     html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.top-links) a,
     html:root:root:root:root:root[data-xlyneve-color-theme="opal-pearl"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.top-links) a * { color:#35424d !important; -webkit-text-fill-color:#35424d !important; text-shadow:none !important; }
