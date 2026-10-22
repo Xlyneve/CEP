@@ -3942,9 +3942,10 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
   <div class="qc-body">
     <label class="qc-label" for="qcStartTime">Start time (24-hour)</label>
     <input id="qcStartTime" class="qc-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="1215 or 12:15" maxlength="5" />
-    <label class="qc-label" for="qcAddMinutes">Add minutes</label>
-    <input id="qcAddMinutes" class="qc-input" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 30" />
-    <div class="qc-results" aria-live="polite"><div id="timeMain" class="qc-big">—</div><div id="timeSub" class="qc-sub"></div></div>
+    <div class="qc-results" aria-live="polite">
+      <div class="qc-label">+20 minutes</div><div id="timeMain" class="qc-big">—</div><div id="timeSub" class="qc-sub"></div>
+      <div class="qc-label">+25 minutes</div><div id="time25Main" class="qc-big">—</div><div id="time25Sub" class="qc-sub"></div>
+    </div>
   </div>
 </div>
 <div id="quickCalc" class="qc collapsed">
@@ -5498,8 +5499,9 @@ function closeTable() {
 (() => {
   const panel=document.getElementById('timeCalculator');
   const toggle=panel.querySelector('.qc-toggle');
-  const timeEl=panel.querySelector('#qcStartTime'),minutesEl=panel.querySelector('#qcAddMinutes');
-  const main=panel.querySelector('#timeMain'),sub=panel.querySelector('#timeSub'),result=panel.querySelector('.qc-results');
+  const timeEl=panel.querySelector('#qcStartTime');
+  const result=panel.querySelector('.qc-results');
+  const outputs=[{minutes:20,main:panel.querySelector('#timeMain'),sub:panel.querySelector('#timeSub')},{minutes:25,main:panel.querySelector('#time25Main'),sub:panel.querySelector('#time25Sub')}];
   function calculateClockTime(start, minutes){
     const raw=start.trim();
     const match=/^(\d{1,2}):(\d{2})$/.exec(raw) || /^(\d{1,2})(\d{2})$/.exec(raw);
@@ -5513,13 +5515,17 @@ function closeTable() {
   }
 
   const calc=()=>{
-    main.textContent='—';sub.textContent='';result.classList.remove('has-value');
-    if(!timeEl.value.trim()||!minutesEl.value.trim())return;
-    const value=calculateClockTime(timeEl.value,Number(minutesEl.value));
-    if(!value){sub.textContent='Use a valid 24-hour time and whole minutes (0 or more).';return;}
-    main.textContent=value.time;sub.textContent=value.days===1?'Next day':value.days>1?'+'+value.days+' days':'';result.classList.add('has-value');
+    result.classList.remove('has-value');
+    outputs.forEach(({main,sub})=>{main.textContent='—';sub.textContent='';});
+    if(!timeEl.value.trim())return;
+    if(!calculateClockTime(timeEl.value,20)){outputs[0].sub.textContent='Enter a valid 24-hour time, e.g. 1215 or 12:15.';return;}
+    outputs.forEach(({minutes,main,sub})=>{
+      const value=calculateClockTime(timeEl.value,minutes);
+      main.textContent=value.time;sub.textContent=value.days===1?'Next day':value.days>1?'+'+value.days+' days':'';
+    });
+    result.classList.add('has-value');
   };
-  [timeEl,minutesEl].forEach(input=>{input.addEventListener('input',calc);input.addEventListener('focus',()=>input.select());});
+  timeEl.addEventListener('input',calc);timeEl.addEventListener('focus',()=>timeEl.select());
   toggle.addEventListener('click',()=>toggleQuickiesPanel(panel,toggle));
   syncQuickiesToggle(panel,toggle);
 })();
