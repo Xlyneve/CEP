@@ -3752,9 +3752,9 @@ html:root:root:root:root:root:root:root body #timeCalculator .qc-big {font:400 1
 html:root:root:root:root:root:root:root body #timeCalculator .qc-sub {font-size:11px !important;margin:0 0 3px !important;}
 #timeCalculator .qc-sub:empty {display:none !important;}
 html:root:root:root:root:root:root:root body #timeCalculator .time-result-row {
-  padding:2px 6px; margin:4px 0; border-radius:7px;
-  background:color-mix(in srgb,var(--time-glow,#d3e0df) 35%,white) !important;
-  box-shadow:0 0 7px 1px color-mix(in srgb,var(--time-glow,#d3e0df) 75%,transparent) !important;
+  padding:2px 6px; margin:7px 0; border-radius:7px; border-left:3px solid var(--time-glow,#d3e0df);
+  background:color-mix(in srgb,var(--time-glow,#d3e0df) 55%,white) !important;
+  box-shadow:0 0 9px 2px color-mix(in srgb,var(--time-glow,#d3e0df) 85%,transparent) !important;
 }
 html:root:root:root:root:root:root:root body #timeCalculator :is(.time-result-row,.time-result-row *,.qc-sub) {
   color:#000 !important;-webkit-text-fill-color:#000 !important;text-shadow:none !important;
@@ -5526,8 +5526,16 @@ function closeTable() {
     const color=window.getCepSourceCardColour?.('home.html',i,'note-card');
     if(color&&!palette.some(item=>item.solid===color.solid))palette.push(color);
   }
+  const rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+  let pair=palette.slice(0,2),best=-1;
+  for(let i=0;i<palette.length;i++)for(let j=i+1;j<palette.length;j++){
+    const first=rgb(palette[i].solid),second=rgb(palette[j].solid);
+    const distance=first.reduce((sum,value,k)=>sum+(value-second[k])**2,0);
+    if(distance>best){best=distance;pair=[palette[i],palette[j]];}
+  }
   panel.querySelectorAll('.time-result-row').forEach((row,i)=>{
-    const color=palette[i]?.solid || (i ? `color-mix(in srgb,${palette[0]?.solid || '#e5cbcc'} 75%,${palette[0]?.ink || '#39190f'})` : '#d3e0df');
+    const base=palette[0]?.solid || '#d3e0df',ink=palette[0]?.ink || '#39190f';
+    const color=pair[i]?.solid || (i ? `color-mix(in srgb,${base} 55%,${ink})` : base);
     row.style.setProperty('--time-glow',color);
   });
 
