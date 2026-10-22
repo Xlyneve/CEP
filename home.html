@@ -3745,12 +3745,21 @@ html:root:root:root:root:root:root:root body #timeCalculator:not(.collapsed) {
 }
 html:root:root:root:root:root:root:root body #timeCalculator:not(.collapsed) > .qc-head {display:none !important;}
 html:root:root:root:root:root:root:root body #timeCalculator > .qc-body {flex:0 1 auto !important;padding:10px !important;}
-html:root:root:root:root:root:root:root body #timeCalculator #qcStartTime {height:30px !important;min-height:0 !important;padding:5px 8px !important;font-size:12px !important;box-sizing:border-box;}
+html:root:root:root:root:root:root:root body #timeCalculator #qcStartTime {height:34px !important;min-height:0 !important;padding:5px 8px !important;font-size:16px !important;box-sizing:border-box;}
 html:root:root:root:root:root:root:root body #timeCalculator .qc-results {background:none !important;border:0 !important;box-shadow:none !important;padding:0 !important;margin:8px 0 0 !important;min-height:0 !important;}
-#timeCalculator .time-result-row {display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px;font:12px/1.4 Tahoma,sans-serif;}
-html:root:root:root:root:root:root:root body #timeCalculator .qc-big {font:400 14px/1.4 Tahoma,sans-serif !important;}
-html:root:root:root:root:root:root:root body #timeCalculator .qc-sub {font-size:10px !important;margin:0 0 3px !important;}
+#timeCalculator .time-result-row {display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px;font:14px/1.4 Tahoma,sans-serif;}
+html:root:root:root:root:root:root:root body #timeCalculator .qc-big {font:400 18px/1.4 Tahoma,sans-serif !important;}
+html:root:root:root:root:root:root:root body #timeCalculator .qc-sub {font-size:11px !important;margin:0 0 3px !important;}
 #timeCalculator .qc-sub:empty {display:none !important;}
+html:root:root:root:root:root:root:root body #timeCalculator .time-result-row {
+  padding:2px 6px; margin:4px 0; border-radius:7px;
+  background:color-mix(in srgb,var(--time-glow,#d3e0df) 35%,white) !important;
+  box-shadow:0 0 7px 1px color-mix(in srgb,var(--time-glow,#d3e0df) 75%,transparent) !important;
+}
+html:root:root:root:root:root:root:root body #timeCalculator :is(.time-result-row,.time-result-row *,.qc-sub) {
+  color:#000 !important;-webkit-text-fill-color:#000 !important;text-shadow:none !important;
+}
+
 </style>
 
   <link rel="stylesheet" href="site-background.css">
@@ -5512,6 +5521,16 @@ function closeTable() {
   const panel=document.getElementById('timeCalculator');
   const toggle=panel.querySelector('.qc-toggle');
   const timeEl=panel.querySelector('#qcStartTime');
+  const palette=[];
+  for(let i=0;i<30;i++){
+    const color=window.getCepSourceCardColour?.('home.html',i,'note-card');
+    if(color&&!palette.some(item=>item.solid===color.solid))palette.push(color);
+  }
+  panel.querySelectorAll('.time-result-row').forEach((row,i)=>{
+    const color=palette[i]?.solid || (i ? `color-mix(in srgb,${palette[0]?.solid || '#e5cbcc'} 75%,${palette[0]?.ink || '#39190f'})` : '#d3e0df');
+    row.style.setProperty('--time-glow',color);
+  });
+
   const result=panel.querySelector('.qc-results');
   const outputs=[{minutes:20,main:panel.querySelector('#timeMain'),sub:panel.querySelector('#timeSub')},{minutes:25,main:panel.querySelector('#time25Main'),sub:panel.querySelector('#time25Sub')}];
   function calculateClockTime(start, minutes){
