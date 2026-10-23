@@ -88,6 +88,20 @@ html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-p
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-panel,.cep-search-table-zoom-panel,.cep-search-image-viewer-viewport,.cep-search-image-viewer-stage,.cep-search-image-viewer-controls)::before,
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-panel,.cep-search-table-zoom-panel,.cep-search-image-viewer-viewport,.cep-search-image-viewer-stage,.cep-search-image-viewer-controls)::after {content:none!important;display:none!important;}
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-controls,.cep-search-table-zoom-controls) button {position:static!important;min-width:36px!important;height:36px!important;padding:0 10px!important;border:1px solid rgba(255,255,255,.6)!important;border-radius:8px!important;background:rgba(20,20,25,.7)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font:400 16px/1 Tahoma,sans-serif!important;box-shadow:none!important;transform:none!important;}
+
+html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer,.cep-search-table-zoom) :is(.cep-search-image-viewer-controls,.cep-search-table-zoom-controls,.cep-photo-navigation) button {
+  border:0!important;background:transparent!important;border-radius:0!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  font:400 20px/1 Tahoma,sans-serif!important;
+  box-shadow:none!important;text-shadow:0 1px 3px #000,0 0 1px #000!important;
+  opacity:1;
+}
+html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-controls,.cep-search-table-zoom-controls) button:nth-child(2) {font-size:14px!important;}
+html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer,.cep-search-table-zoom) button:focus-visible {outline:1px solid #fff!important;outline-offset:2px;}
+html:root:root:root:root:root:root:root:root body .cep-search-image-viewer .cep-photo-navigation {
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  font-weight:400!important;text-shadow:0 1px 3px #000,0 0 1px #000!important;
+}
 html:root:root:root:root:root:root:root:root body .cep-search-image-viewer {z-index:2147483647!important;}
 html:root:root:root:root:root:root:root:root body .cep-search-table-zoom {z-index:2147483644!important;}
 `;document.head.append(style);
