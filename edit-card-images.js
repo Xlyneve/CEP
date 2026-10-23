@@ -1,3 +1,4 @@
+import { openNoteImageZoom, openNoteTableZoom } from './note-media-viewer.js?v=1';
 import { normalizeNoteTable, noteTableColumn, resizeNoteTableColumn, addNoteTableColumn, removeNoteTableColumn, addNoteTableRow, removeNoteTableRow } from "./note-tables.js?v=20261021-1";
 import { getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { uploadReferenceImage } from "./image-storage.js?v=20260826-2";
@@ -202,37 +203,15 @@ document.addEventListener('click', event => {
   }
 }, true);
 
-function openImageZoom(source, alt = 'Note image') {
-  document.querySelector('.cep-edit-image-zoom')?.remove();
-  const overlay = document.createElement('div');
-  overlay.className = 'cep-edit-image-zoom';
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', 'Enlarged note image');
-  overlay.tabIndex = -1;
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483645;display:grid;place-items:center;padding:24px;background:rgba(27,28,32,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:zoom-out;';
-  const image = document.createElement('img');
-  image.src = source; image.alt = alt;
-  image.style.cssText = 'display:block;max-width:min(94vw,1400px);max-height:90vh;width:auto;height:auto;object-fit:contain;border-radius:12px;box-shadow:0 20px 70px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.55);';
-  overlay.appendChild(image);
-  const onKeyDown = event => { if (event.key === 'Escape') close(); };
-  const close = () => { document.removeEventListener('keydown', onKeyDown); overlay.remove(); };
-  overlay.addEventListener('click', close);
-  document.addEventListener('keydown', onKeyDown);
-  document.body.appendChild(overlay);
-  overlay.focus();
-}
-
+// Source cards and both searches share one viewer. Leave editable content alone.
 document.addEventListener('click', event => {
-  const image = event.target.closest?.('.note-card img, .note-tile img');
-  if (!image || image.closest('.cep-edit-image-zoom')) return;
-  // Some pages (for example info.html) provide a richer image viewer with
-  // zoom, pan, and highlighting tools. Let their delegated click handler run
-  // instead of replacing it with the shared basic viewer.
-  if (document.getElementById('imgModal')) return;
-  event.preventDefault(); event.stopImmediatePropagation();
-  openImageZoom(image.currentSrc || image.src, image.alt || 'Note image');
-}, true);
+  const media=event.target.closest?.(':is(.note-card,.note-tile,.chatBubble,.note-content,.note-text,.note-display,.vaccine-card-notes,.zoom-card-notes) :is(img,table)');
+  if(!media || media.closest('[contenteditable="true"],.editableNote,#noteInput,.cep-pn-editor,.editing-note,.is-editing,.editing,.cep-search-image-viewer,.cep-search-table-zoom'))return;
+  if(event.target.closest('a,button,input,textarea,.pn-definition,.cep-shared-definition'))return;
+  event.preventDefault();event.stopImmediatePropagation();
+  if(media.tagName==='IMG')openNoteImageZoom(media);
+  else openNoteTableZoom(media);
+},true);
 
 function tableCellAtResizeEdge(target, clientX) {
   const cell = target.closest?.('.cep-pn-editor td, .cep-pn-editor th');

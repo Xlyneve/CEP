@@ -26,87 +26,8 @@
       try { return ['https:','http:'].includes(new URL(image.imageUrl).protocol); } catch { return false; }
     });
   }
-  let imageViewer;
   function openDefinitionImage(source) {
-    if(!window.CEPPhotoGallery){
-      galleryLoader?.addEventListener('load',()=>openDefinitionImage(source),{once:true});
-      return;
-    }
-    if (!imageViewer) {
-      const style = document.createElement('style');
-      style.textContent = `
-        html:root:root body #cep-definition-image-viewer {position:fixed;inset:0;margin:auto;padding:12px;border:0!important;border-radius:0!important;box-shadow:none!important;width:min(940px,calc(100vw - 24px));height:min(800px,calc(100dvh - 24px));max-width:none;max-height:none;box-sizing:border-box;background:transparent!important;color:#fff;overflow:hidden;}
-        #cep-definition-image-viewer::backdrop{background:rgba(20,20,25,.4);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-        #cep-definition-image-viewer .definition-image-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;height:40px;margin-bottom:8px}
-        html:root:root body #cep-definition-image-viewer .definition-image-controls button{position:static;display:grid;place-items:center;min-width:36px;width:auto;height:36px;padding:0 10px;border:1px solid rgba(255,255,255,.6)!important;border-radius:8px;background:rgba(20,20,25,.7)!important;color:#fff!important;font:400 16px/1 Tahoma,sans-serif!important;cursor:pointer;transform:none}
-        #cep-definition-image-viewer .definition-image-navigation{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:0;font:12px Tahoma,sans-serif;color:#fff}
-        #cep-definition-image-viewer .definition-image-navigation[hidden]{display:none!important}
-        #cep-definition-image-viewer .definition-image-viewport{overflow:auto;height:calc(100% - 48px);overscroll-behavior:contain;touch-action:pan-x pan-y pinch-zoom}
-        #cep-definition-image-viewer .definition-image-stage{display:grid;place-items:center;min-width:100%;min-height:100%;width:max-content}
-        html:root:root body #cep-definition-image-viewer img{display:block;max-width:none!important;max-height:none!important;object-fit:contain;margin:0;border:0;border-radius:0}
-      `;
-      document.head.append(style);
-      const dialog = document.createElement('dialog');
-      dialog.id = 'cep-definition-image-viewer'; dialog.setAttribute('aria-label','Definition image zoom');
-      const controls = document.createElement('div'); controls.className='definition-image-controls';
-      const viewport = document.createElement('div'); viewport.className='definition-image-viewport';
-      const stage = document.createElement('div'); stage.className='definition-image-stage';
-      const image = document.createElement('img'); stage.append(image); viewport.append(stage);
-      dialog.append(controls,viewport); document.body.append(dialog);
-      let scale=1, baseWidth=0, baseHeight=0, origin, previousOverflow='', active=false, photos=[], photoIndex=0;
-      const restore = () => {if(!active)return;active=false;document.body.style.overflow=previousOverflow;if(origin?.isConnected)origin.focus({preventScroll:true});};
-      const closeViewer = () => {dialog.close();restore();};
-      const update = () => {
-        image.style.width = baseWidth*scale+'px'; image.style.height=baseHeight*scale+'px';
-        reset.textContent=Math.round(scale*100)+'%';
-      };
-      const fit = () => {
-        const factor=Math.min(1,viewport.clientWidth/Math.max(1,image.naturalWidth),viewport.clientHeight/Math.max(1,image.naturalHeight));
-        baseWidth=image.naturalWidth*factor; baseHeight=image.naturalHeight*factor; update();
-      };
-      const button = (label,text,action,parent=controls) => {
-        const node=document.createElement('button');node.type='button';node.textContent=text;node.title=label;node.setAttribute('aria-label',label);
-        node.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();action();});parent.append(node);return node;
-      };
-      button('Zoom out','−',()=>{scale=Math.max(.5,scale-.25);update();});
-      const reset=button('Reset zoom','100%',()=>{scale=1;fit();});
-      button('Zoom in','+',()=>{scale=Math.min(5,scale+.25);update();});
-      button('Close image','×',()=>closeViewer());
-      let galleryNavigation;
-      const showPhoto=next=>{
-        photoIndex=Math.max(0,Math.min(photos.length-1,next));const photo=photos[photoIndex];if(!photo)return;
-        scale=1;image.alt=photo.alt||'Definition image';image.src=photo.currentSrc||photo.src;
-        galleryNavigation.update(photoIndex,photos.length);
-        viewport.scrollTo(0,0);if(image.complete)fit();
-      };
-      galleryNavigation=window.CEPPhotoGallery.navigation(showPhoto);
-      const navigation=galleryNavigation.bar;navigation.classList.add('definition-image-navigation');
-      navigation.style.cssText += 'position:fixed;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1000002;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.65);color:white;';dialog.append(navigation);
-      dialog.addEventListener('keydown',event=>{
-        if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
-          if(photos.length<2)return;event.preventDefault();event.stopPropagation();showPhoto(photoIndex+(event.key==='ArrowRight'?1:-1));
-        }
-      });
-      let swipe;
-      viewport.addEventListener('pointerdown',event=>{if(event.pointerType==='touch'&&scale===1)swipe={x:event.clientX,y:event.clientY};});
-      viewport.addEventListener('pointerup',event=>{if(!swipe)return;const dx=event.clientX-swipe.x,dy=event.clientY-swipe.y;swipe=null;if(scale===1&&Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)showPhoto(photoIndex+(dx<0?1:-1));});
-      viewport.addEventListener('pointercancel',()=>{swipe=null;});
-      image.addEventListener('load',fit);
-      dialog.addEventListener('click',event=>{event.stopPropagation();if(event.target===dialog || event.target===viewport || event.target===stage)closeViewer();});
-      dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeViewer();}});
-      dialog.addEventListener('cancel',event=>{event.preventDefault();event.stopPropagation();closeViewer();});
-      dialog.addEventListener('close',()=>{if(!dialog.open)restore();});
-      window.addEventListener('resize',()=>{if(dialog.open)fit();});
-      imageViewer={open(source){
-        origin=source;scale=1;image.alt=source.alt||'Definition image';
-        if(!dialog.open){previousOverflow=document.body.style.overflow;active=true;dialog.showModal();document.body.style.overflow='hidden';}
-        const strip=source.closest('[data-cep-photo-strip]');
-        photos=strip ? [...strip.querySelectorAll(':scope > img')] : [source];photoIndex=Math.max(0,photos.indexOf(source));
-        navigation.hidden=photos.length<2;viewport.style.height=photos.length>1?'calc(100% - 104px)':'calc(100% - 48px)';
-        showPhoto(photoIndex);
-      }};
-    }
-    imageViewer.open(source);
+    import('./note-media-viewer.js?v=1').then(({openNoteImageZoom})=>openNoteImageZoom(source));
   }
   function appendVideo(container, rawUrl) {
     let url;try{url=new URL(rawUrl);}catch{return false;}

@@ -2057,38 +2057,13 @@ async function renderNotesOnce() {
   renderNotes();
 }
 /* ---------------- Image Zoom ---------------- */
-function openImageZoom(src) {
-  // Create overlay
-  const overlay = document.createElement('div');
-  overlay.style.position = 'fixed';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100%';
-  overlay.style.height = '100%';
-  overlay.style.background = 'rgba(0, 0, 0, 0.8)';
-  overlay.style.display = 'flex';
-  overlay.style.alignItems = 'center';
-  overlay.style.justifyContent = 'center';
-  overlay.style.zIndex = '9999';
-  overlay.style.cursor = 'zoom-out';
-  overlay.addEventListener('click', () => document.body.removeChild(overlay));
-
-  // Image
-  const zoomedImg = document.createElement('img');
-  zoomedImg.src = src;
-  zoomedImg.style.maxWidth = '90%';
-  zoomedImg.style.maxHeight = '90%';
-  zoomedImg.style.borderRadius = '10px';
-  zoomedImg.style.boxShadow = '0 0 20px rgba(255,255,255,0.2)';
-  zoomedImg.style.transition = 'transform 0.3s ease';
-  zoomedImg.addEventListener('click', e => e.stopPropagation());
-
-  overlay.appendChild(zoomedImg);
-  document.body.appendChild(overlay);
+async function openImageZoom(src) {
+  const source=[...document.querySelectorAll('.note-card img')].find(image=>image.src===src) || Object.assign(new Image(),{src});
+  const {openNoteImageZoom}=await import('./note-media-viewer.js?v=1');openNoteImageZoom(source);
 }
 
 async function openTableZoom(table) {
-  const { openNoteTableZoom } = await import('./universal-search-overlay.js?v=source-table-zoom-1');
+  const { openNoteTableZoom } = await import('./note-media-viewer.js?v=1');
   openNoteTableZoom(table);
 }
 
