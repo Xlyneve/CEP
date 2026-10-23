@@ -1140,6 +1140,10 @@ function getSearchTableZoomUi() {
   return tableZoomUi;
 }
 
+export function openNoteTableZoom(table) {
+  if (table) getSearchTableZoomUi().open(table);
+}
+
 export function enableSearchTableZoom(table) {
   if (!table || table.dataset.cepSearchTableZoom === 'true') return;
   table.dataset.cepSearchTableZoom = 'true'; table.tabIndex = 0;

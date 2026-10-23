@@ -2010,7 +2010,7 @@ if (img) {
 div.querySelectorAll('.note-content table').forEach(table => {
   table.addEventListener('click', (e) => {
     e.stopPropagation();
-    openTableZoom(table.outerHTML);
+    openTableZoom(table);
   });
 });
 
@@ -2090,70 +2090,9 @@ function openImageZoom(src) {
   document.body.appendChild(overlay);
 }
 
-function openTableZoom(tableHtml) {
-  const overlay = document.createElement('div');
-  overlay.className = 'table-zoom-overlay';
-
-  overlay.style.position = 'fixed';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100%';
-  overlay.style.height = '100%';
-  overlay.style.background = 'rgba(255, 255, 255, 0.18)';
-  overlay.style.backdropFilter = 'blur(18px)';
-  overlay.style.webkitBackdropFilter = 'blur(18px)';
-  overlay.style.display = 'flex';
-  overlay.style.alignItems = 'center';
-  overlay.style.justifyContent = 'center';
-  overlay.style.zIndex = '9999';
-  overlay.style.cursor = 'zoom-out';
-  overlay.style.padding = '24px';
-  overlay.style.boxSizing = 'border-box';
-
-  const box = document.createElement('div');
-
-  box.style.maxWidth = '92vw';
-  box.style.maxHeight = '86vh';
-  box.style.overflow = 'auto';
-  box.style.padding = '18px';
-  box.style.borderRadius = '22px';
-  box.style.background = 'rgba(255, 255, 255, 0.42)';
-  box.style.backdropFilter = 'blur(26px) saturate(180%)';
-  box.style.webkitBackdropFilter = 'blur(26px) saturate(180%)';
-  box.style.border = '1px solid rgba(255, 255, 255, 0.65)';
-  box.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.18)';
-  box.style.cursor = 'default';
-
-  box.innerHTML = tableHtml;
-
-  const table = box.querySelector('table');
-  if (table) {
-  table.style.width = 'max-content';
-  table.style.minWidth = '0';
-  table.style.borderCollapse = 'collapse';
-  table.style.fontFamily = 'Tahoma, sans-serif';
-  table.style.fontSize = '14px';
-  table.style.tableLayout = 'auto';
-}
-
-  box.querySelectorAll('td, th').forEach(cell => {
-    cell.style.border = '1px solid rgba(0, 0, 0, 0.25)';
-    cell.style.padding = '8px 10px';
-    cell.style.minWidth = '28px';
-    cell.style.whiteSpace = 'nowrap';
-    cell.style.background = 'rgba(255, 255, 255, 0.32)';
-  });
-
-  overlay.addEventListener('click', () => {
-    document.body.removeChild(overlay);
-  });
-
-  box.addEventListener('click', e => {
-    e.stopPropagation();
-  });
-
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
+async function openTableZoom(table) {
+  const { openNoteTableZoom } = await import('./universal-search-overlay.js?v=source-table-zoom-1');
+  openNoteTableZoom(table);
 }
 
 /* ---------------- Search / Filter ---------------- */
