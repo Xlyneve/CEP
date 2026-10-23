@@ -1810,7 +1810,7 @@ function showSavedNote(id) {
   document.body.appendChild(notice);
 }
 /* ---------------- Rendering ---------------- */
-const noteSearchText = new WeakMap();
+const noteSearchText = new Map();
 
 const youtubePlayerOverlay = document.getElementById('youtubePlayerOverlay');
 const youtubePlayerFrame = document.getElementById('youtubePlayerFrame');
@@ -1887,22 +1887,19 @@ function buildNoteCards(snapshot, revealId = null) {
   const list = document.getElementById('nurseNotesList');
   const finishRender = CEPNotePopup.beginRender(list);
   list.innerHTML = '';
-  // Firestore can return new document wrappers on each access to snapshot.docs.
-  // Keep the text index by snapshot and document ID instead of wrapper identity.
-  let searchIndex = noteSearchText.get(snapshot);
-  if (!searchIndex) noteSearchText.set(snapshot, searchIndex = new Map());
-
+  // Keep the index across pagination snapshots; rebuild only when searchable content changes.
   const searchTerms = currentSearchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
   const matchingDocs = snapshot.docs.filter(docSnap => {
     if (!searchTerms.length) return true;
-    let searchable = searchIndex.get(docSnap.id);
-    if (searchable === undefined) {
-      const data = docSnap.data();
+    const data = docSnap.data();
+    const cached = noteSearchText.get(docSnap.id);
+    let searchable = cached?.text;
+    if (!cached || cached.title !== data.title || cached.note !== data.note || cached.url !== data.url) {
       const noteText = new DOMParser()
         .parseFromString(String(data.note || ''), 'text/html')
         .body.textContent || '';
       searchable = `${data.title || ''} ${noteText} ${data.url || ''}`.toLowerCase();
-      searchIndex.set(docSnap.id, searchable);
+      noteSearchText.set(docSnap.id, {title:data.title,note:data.note,url:data.url,text:searchable});
     }
     return searchTerms.every(term => searchable.includes(term));
   });

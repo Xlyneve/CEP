@@ -1,5 +1,5 @@
 // Cursor pagination shared by the card pages. One extra record identifies the last page.
-export function createCardPager({read, listen, deliver, container, search = '#searchInput', pageSize = 20, onError, onStop, initialState} = {}) {
+export function createCardPager({read, listen, deliver, container, search = '#searchInput', pageSize = 20, onError, onStop, initialState, cacheSearch = false, searchDelay = 180} = {}) {
   const host = typeof container === 'string' ? document.querySelector(container) : container;
   if (!host) throw new Error('Card pagination container is missing.');
   const input = document.querySelector(search);
@@ -34,6 +34,7 @@ export function createCardPager({read, listen, deliver, container, search = '#se
   const status=document.createElement('span');status.className='cep-card-page-status';status.setAttribute('role','status');status.hidden=true;
   nav.append(previous,number,next,status);host.after(nav);
   let page=initialState?.page || 0, anchors=initialState?.anchors || [null], pages=new Map(), mode='browse', more=false, busy=false, stopped=false, sequence=0, unsubscribe=null, timer, latest=null;
+  let searchCache=null;
   let committedPage=page;
   let resolveReady;const waiters=[];
   const ready=new Promise(resolve=>resolveReady=resolve);
@@ -63,6 +64,7 @@ export function createCardPager({read, listen, deliver, container, search = '#se
   }
   function receive(raw, ticket, scroll) {
     if(stopped||ticket!==sequence)return;
+    if(cacheSearch && mode==='search')searchCache=raw;
     const docs=raw.docs || [];
     if(mode==='browse' && !docs.length && page>0){page--;anchors=anchors.slice(0,page+2);subscribe(scroll);return;}
     busy=false;
@@ -89,6 +91,10 @@ export function createCardPager({read, listen, deliver, container, search = '#se
     const ticket=++sequence;
     busy=true;status.hidden=true;controls();
     const options={all:mode==='search',after:anchors[page] || null,take:pageSize+1};
+    // Reuse this page session's full search snapshot while the normal listener refreshes it.
+    if(cacheSearch && mode==='search' && searchCache){
+      latest=snapshot(searchCache.docs || []);deliver(latest);
+    }
     const accept=raw=>receive(raw,ticket,scroll);
     const fail=error=>{if(!stopped&&ticket===sequence)report(error);};
     if(listen) unsubscribe=listen(options,accept,fail);
@@ -110,11 +116,11 @@ export function createCardPager({read, listen, deliver, container, search = '#se
       if(stopped)return;
       const desired=input?.value.trim()?'search':'browse';
       if(desired!==mode){mode=desired;subscribe();}
-    },180);
+    },searchDelay);
   }
   input?.addEventListener('input',searchChanged,true);
   function refresh() {
-    pages.clear();mode=input?.value.trim()?'search':'browse';
+    searchCache=null;pages.clear();mode=input?.value.trim()?'search':'browse';
     return new Promise((resolve,reject)=>{waiters.push({resolve,reject});subscribe();});
   }
   async function reveal(id) {
