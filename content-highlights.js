@@ -2,8 +2,7 @@
 (() => {
   'use strict';
   const scopes = '.note-text,.note-content,.edit-note,.edit-box,.edit-notes-box,.vaccine-notes-input,.note-display,#note,#noteText,#notes,#noteInput,#nurseNote,.editableNote,.chatBubble,.cep-pn-editor,.cep-source-note-text,.cep-source-note-content,.cep-source-note-display,.cep-xgpt-rich-content,.universal-search-native-snippet';
-  const explicitColours = /(?:^|\/)chatgptx\.html$/i.test(location.pathname);
-  const authored = '.gradient-highlight,.highlight-gradient,.note-gradient-highlight,mark.highlight-hue,.cep-content-highlight';
+  const authored = '.gradient-highlight,.highlight-gradient,.note-gradient-highlight,mark.highlight-hue,.cep-content-highlight,.cep-chosen-highlight';
   const search = '.cep-search-match,.underlineMatch,.search-highlight,.search-hit';
   const excluded = 'button,[role="button"],.badge,[class$="-badge"],h1,h2,h3,h4,h5,h6,.note-title,.cep-source-note-title,.editor-buttons,.format-buttons,.cep-pn-editor-toolbar';
   const runtime = document.createElement('style');
@@ -14,26 +13,11 @@
     while (element && element !== document.documentElement) {
       let index = 1;
       for (let sibling = element.previousElementSibling; sibling; sibling = sibling.previousElementSibling) index++;
-      parts.unshift(`${element.localName}:nth-child(${index})`);
+      parts.unshift(`${element.localName}${element.id ? `#${CSS.escape(element.id)}` : ""}:nth-child(${index})`);
       element = element.parentElement;
     }
-    return `html > ${parts.join(' > ')}`;
+    return `html:root:root:root:root:root:root:root:root:root:root > ${parts.join(' > ')}`;
   };
-  function luminance(color) {
-    const values = color.match(/[\d.]+/g)?.map(Number);
-    if (!values || values.length < 3) return null;
-    const rgb = values.slice(0, 3).map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
-    return .2126 * rgb[0] + .7152 * rgb[1] + .0722 * rgb[2];
-  }
-  const pale = luminance('rgb(241,243,245)'), dark = luminance('rgb(79,84,89)');
-  const contrast = (a, b) => (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
-  function needsDark(element) {
-    const computed = getComputedStyle(element);
-    const color = computed.webkitTextFillColor || computed.color;
-    const light = luminance(color);
-    // Choose dark only for light text whose contrast improves to readable levels.
-    return light !== null && light > dark && contrast(light, pale) < 4.5 && contrast(light, dark) >= 4.5;
-  }
   function hasInlineHighlight(element) {
     const background = element.style.backgroundColor;
     return (background && background !== 'transparent' && !/rgba\([^)]*,\s*0\s*\)/.test(background)) ||
@@ -59,57 +43,35 @@
     if (location.pathname.toLowerCase().endsWith('/ohcalc.html')) {
       document.querySelectorAll('span.ml-highlight').forEach(element => highlights.add(element));
     }
-    const selectors = [], darkSelectors = [], emptySelectors = [], glowSelectors = [], importantSelectors = [], importantDarkSelectors = [];
+    const selectors = [], emptySelectors = [], glowSelectors = [], importantSelectors = [];
     const importantFill = [...source.cssRules].find(rule => rule.selectorText === '.cep-content-highlight-important-fill').style.cssText;
-    const importantDarkFill = [...source.cssRules].find(rule => rule.selectorText === '.cep-content-highlight-important-dark-fill').style.cssText;
     const chosenSelectors = [];
     document.querySelectorAll(`${authored},${search}`).forEach(element => {
       if (!element.closest(excluded) && !element.textContent.trim() && !element.querySelector('img,svg,table,video,audio,iframe,input,button')) emptySelectors.push(path(element));
     });
     highlights.forEach(element => {
       if (!eligible(element)) return;
-      if (explicitColours && element.closest('.cep-removed-highlight')) return;
-      const chosen = explicitColours && element.closest('.cep-chosen-highlight');
+      if (element.closest('.cep-removed-highlight')) return;
+      const chosen = element.closest('.cep-chosen-highlight');
       if (chosen && chosen !== element) return;
       const selector = path(element);
       if (!element.textContent.trim() && !element.querySelector('img,svg,table,video,audio,iframe,input,button')) {
         emptySelectors.push(selector); return;
       }
-      // The neutral editor option follows Soft Stone's render-only theme tint.
-      // Explicit purple/yellow/green/pink/blue choices retain their saved colours.
-      const themeNeutral = chosen && document.documentElement.dataset.xlyneveColorTheme === 'soft-stone' &&
-        element.style.backgroundColor === 'rgb(241, 243, 245)';
-      if (chosen && !themeNeutral) chosenSelectors.push(selector);
+      // Saved explicit colour choices stay the same on source pages and in search.
+      if (chosen) chosenSelectors.push(selector);
       else selectors.push(selector);
       const important = ['background','background-color','background-image'].some(property => element.style.getPropertyPriority(property) === 'important');
       if (important && !chosen) importantSelectors.push(selector);
       if (element.matches('.ml-highlight')) glowSelectors.push(`${selector}::before`);
-      const textParents = new Set();
-      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-      while (walker.nextNode()) {
-        if (walker.currentNode.textContent.trim()) textParents.add(walker.currentNode.parentElement);
-      }
-      const visibleParents = [...textParents].filter(eligible);
-      if (visibleParents.length && visibleParents.every(needsDark)) {
-        darkSelectors.push(selector);
-        if (important) importantDarkSelectors.push(selector);
-      } else {
-        visibleParents.forEach(parent => {
-          if (needsDark(parent)) {
-            // Mixed colours get a dark backdrop only behind their light-text segment.
-            if (parent !== element) selectors.push(path(parent));
-            darkSelectors.push(path(parent));
-            if (important && parent === element) importantDarkSelectors.push(selector);
-          }
-        });
-      }
+
     });
     const rules = [];
     if (chosenSelectors.length) rules.push(`${chosenSelectors.join(',')} {${declaration.replace(/background:[^;]*;/, '')}}`);
     if (selectors.length) rules.push(`${[...new Set(selectors)].join(',')} {${declaration}}`);
-    if (darkSelectors.length) rules.push(`${[...new Set(darkSelectors)].join(',')} {background:var(--cep-highlight-dark-paper) !important;box-shadow:var(--cep-highlight-dark-shadow) !important;}`);
     if (importantSelectors.length) rules.push(`${importantSelectors.join(',')} {${importantFill}}`);
-    if (importantDarkSelectors.length) rules.push(`${importantDarkSelectors.join(',')} {${importantDarkFill}}`);
+    const textSelectors=[...new Set([...selectors,...chosenSelectors])].flatMap(selector=>[selector,`${selector} *`]);
+    if(textSelectors.length)rules.push(`${textSelectors.join(',')} {color:#303030 !important;-webkit-text-fill-color:#303030 !important;text-shadow:none !important;}`);
     if (emptySelectors.length) rules.push(`${[...new Set(emptySelectors)].join(',')} {background:transparent !important;padding:0 !important;box-shadow:none !important;visibility:hidden !important;}`);
     if (glowSelectors.length) rules.push(`${glowSelectors.join(',')} {content:none !important;}`);
     const css = rules.join('\n');
