@@ -1,5 +1,5 @@
 // Cursor pagination shared by the card pages. One extra record identifies the last page.
-export function createCardPager({read, listen, deliver, container, search = '#searchInput', pageSize = 20, onError, onStop, initialState, cacheSearch = false, searchDelay = 180} = {}) {
+export function createCardPager({read, listen, deliver, container, search = '#searchInput', pageSize = 20, onError, onStop, initialState, cacheSearch = true, searchDelay = 0} = {}) {
   const host = typeof container === 'string' ? document.querySelector(container) : container;
   if (!host) throw new Error('Card pagination container is missing.');
   const input = document.querySelector(search);
