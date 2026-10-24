@@ -3905,6 +3905,35 @@
     html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body:has(#chat) .chatBubble {background:#eee7dd!important;border-color:#b9ad9e!important;}
   `;
 
+  // Home's Sculpted icons use a diffuse matte face with no pressed halo.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body :is(.dashboard-frequent-circles .circle,#quickCalc .qc-toggle,#timeCalculator .qc-toggle,#quickInteleviewer .qi-toggle,#tabletCalculator .qt-toggle,#syrupCalculator .qs-toggle,.xlyneve-theme-button,.cep-sign-out-light,.header-search-trigger) {
+      background-color:var(--sculpt-home-matte,var(--quick-field,#e9dee8))!important;
+      background-image:none!important;color:#39353a!important;-webkit-text-fill-color:currentColor!important;
+      border-color:rgba(87,72,94,.20)!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 2px 5px rgba(57,53,58,.13)!important;
+      backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important;
+      animation:none!important;transition:transform 100ms ease-out!important;
+      -webkit-tap-highlight-color:transparent;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body .dashboard-frequent-circles .circle:nth-child(5n+1) {--sculpt-home-matte:#b39cc4;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body .dashboard-frequent-circles .circle:nth-child(5n+2) {--sculpt-home-matte:#82bfcc;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body .dashboard-frequent-circles .circle:nth-child(5n+3) {--sculpt-home-matte:#c8a7a3;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body .dashboard-frequent-circles .circle:nth-child(5n+4) {--sculpt-home-matte:#dac3d8;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body .dashboard-frequent-circles .circle:nth-child(5n) {--sculpt-home-matte:#c7cbc5;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body .dashboard-frequent-circles .circle.home-search-icon {--sculpt-home-matte:var(--quick-field,#f4f1eb);}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body :is(.dashboard-frequent-circles .circle,#quickCalc .qc-toggle,#timeCalculator .qc-toggle,#quickInteleviewer .qi-toggle,#tabletCalculator .qt-toggle,#syrupCalculator .qs-toggle,.xlyneve-theme-button,.cep-sign-out-light,.header-search-trigger):is(:hover,:active) {
+      box-shadow:none!important;filter:none!important;animation:none!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body :is(.dashboard-frequent-circles .circle,#quickCalc .qc-toggle,#timeCalculator .qc-toggle,#quickInteleviewer .qi-toggle,#tabletCalculator .qt-toggle,#syrupCalculator .qs-toggle,.xlyneve-theme-button,.cep-sign-out-light,.header-search-trigger):hover {transform:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body :is(.dashboard-frequent-circles .circle,#quickCalc .qc-toggle,#timeCalculator .qc-toggle,#quickInteleviewer .qi-toggle,#tabletCalculator .qt-toggle,#syrupCalculator .qs-toggle,.xlyneve-theme-button,.cep-sign-out-light,.header-search-trigger):active {transform:translateY(1px)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body .dashboard-frequent-circles .circle::after {
+      content:none!important;display:none!important;background:none!important;box-shadow:none!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body :is(.dashboard-frequent-circles .circle,#quickCalc .qc-toggle,#timeCalculator .qc-toggle,#quickInteleviewer .qi-toggle,#tabletCalculator .qt-toggle,#syrupCalculator .qs-toggle,.xlyneve-theme-button,.cep-sign-out-light,.header-search-trigger):focus-visible {outline:2px solid #746081!important;outline-offset:3px;}
+    @media(prefers-reduced-motion:reduce) {html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body :is(.dashboard-frequent-circles .circle,#quickCalc .qc-toggle,#timeCalculator .qc-toggle,#quickInteleviewer .qi-toggle,#tabletCalculator .qt-toggle,#syrupCalculator .qs-toggle,.xlyneve-theme-button,.cep-sign-out-light,.header-search-trigger) {transition:none!important;}}
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
