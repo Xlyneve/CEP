@@ -127,6 +127,14 @@
     {rgb:"248, 170, 128",solid:"#f8aa80",ink:"#3c3037"},
     {rgb:"206, 138, 159",solid:"#ce8a9f",ink:"#3c3037"}
   ];
+  // Warm matte ivory, with the reference's restrained blush, sage, ochre and plum edges.
+  const warmIvoryPalette = [
+    {rgb:"237, 229, 218",solid:"#ede5da",ink:"#37352f",outline:"#baa997"},
+    {rgb:"238, 226, 222",solid:"#eee2de",ink:"#37352f",outline:"#c4a09b"},
+    {rgb:"229, 231, 220",solid:"#e5e7dc",ink:"#37352f",outline:"#a5ae96"},
+    {rgb:"239, 232, 213",solid:"#efe8d5",ink:"#37352f",outline:"#c2aa73"},
+    {rgb:"232, 224, 224",solid:"#e8e0e0",ink:"#37352f",outline:"#af969c"}
+  ];
   const themeStorageKey = "xlyneve-color-theme";
   const removedThemes = new Set(["berry", "anatomy", "warm-medley"]);
   const deletedThemeStorageKey = "xlyneve-deleted-themes";
@@ -145,14 +153,14 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass" || removedThemes.has(storedTheme)) localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "opal-pearl" || storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "warm-ivory" || storedTheme === "opal-pearl" || storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
   if (deletedThemes.has(selectedTheme) || removedThemes.has(selectedTheme)) {
     selectedTheme = "original";
     try { localStorage.removeItem(themeStorageKey); } catch {}
   }
-  const palette = selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "warm-ivory" ? warmIvoryPalette : selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -206,6 +214,7 @@
   root.style.setProperty("--page-logo-opacity", headerUsesLightInk ? "0.96" : "0.85");
   const mastheadBarColors = {
     original: "#596b57",
+    "warm-ivory": "#ded5c8",
     berry: "#680044",
     autumn: "#255765",
     hoya: "#40585c",
@@ -3073,6 +3082,7 @@
       },
     ];
 
+    themeOptions.push({value:"warm-ivory",label:"Warm Ivory",colors:["#e6dfd4","#c4a09b","#a5ae96","#c2aa73","#af969c"]});
     themeOptions.push({value:"opal-pearl",label:"Opal Pearl 5D",colors:["#e8f1f4","#f4e8ec","#efecf6","#f7f3e5","#c9b67e"]});
     themeOptions.push({value:"pastel-rose-5d",label:"Pastel Rose 5D",colors:["#f3cdd4","#f8e1be","#dfeaf1","#f8aa80","#ce8a9f"]});
     themeOptions.push({value:"pastel-rose-recessed",label:"Pastel Rose Recessed",colors:["#f3cdd4","#f8e1be","#dfeaf1","#f8aa80","#ce8a9f"]});
@@ -3811,6 +3821,88 @@
       background:#faf9f7 !important; background-image:none !important;
       border:1.5px solid #d9a7b8 !important;
     }
+  `;
+
+
+  // Warm Ivory: matte surfaces, fine taupe rims and shallow tactile controls.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] {
+      --ivory-base:#e6dfd4; --ivory-paper:#eee7dd; --ivory-field:#f4eee5; --ivory-edge:#b9ad9e;
+      --ivory-depth:inset 0 1px 0 rgba(255,252,245,.72),0 2px 5px rgba(75,62,46,.10);
+      --ivory-well:inset 0 1px 3px rgba(75,62,46,.14),0 1px 0 rgba(255,252,245,.55);
+      --theme-ink:#37352f; --theme-muted-ink:#766d62;
+      --glass-light:#eee7dd; --glass-edge:#c7bcad; --glass-shadow:rgba(75,62,46,.12);
+      --refresh-cocoa:#37352f; --refresh-rose:#d8b9b3; --refresh-lime:#c9ceba; --refresh-stone:#e6dfd4; --refresh-blue:#b8c3b7; --refresh-terracotta:#c2aa73;
+      --quick-panel:#eee7dd; --quick-field:#f4eee5; --quick-ink:#37352f; --quick-soft:#e6d7cd;
+      --quick-accent:#c4a09b; --quick-accent-ink:#37352f; --quick-edge:#b9ad9e;
+      --clinical-panel:#eee7dd; --clinical-field:#f4eee5; --clinical-accent:#c4a09b; --clinical-accent-ink:#37352f; --clinical-edge:#b9ad9e;
+      --homecal-header:#e6dfd4; --homecal-header-ink:#37352f; --homecal-control:#eee7dd; --homecal-control-ink:#37352f; --homecal-header-edge:#b9ad9e;
+      --homecal-today:#e2cf9f; --homecal-today-edge:#b49c64; --homecal-today-shadow:rgba(75,62,46,.12);
+      --note-editor-depth:var(--ivory-depth); --note-editor-inset:var(--ivory-well); --note-editor-radius:20px;
+      --vitals-panel:#eee7dd; --vitals-field:#f4eee5; color-scheme:light;
+    }
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"], html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body {background:#e6dfd4!important;color:#37352f!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body {background-image:linear-gradient(140deg,#ece5db 0%,#e6dfd4 65%,#ded5c8 100%)!important;background-attachment:fixed;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body::before {background:none!important;opacity:0!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.todo-item,.file-item),
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"].theme-clinical body #notesList > .note-card,
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body:has(#chat) .chatBubble {
+      background:var(--card-solid,#eee7dd)!important;background-image:none!important;
+      color:#37352f!important;-webkit-text-fill-color:currentColor!important;
+      border:1px solid var(--card-outline,#b9ad9e)!important;border-radius:20px!important;
+      box-shadow:var(--ivory-depth)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(.note-card,.note-tile,.card,.chatBubble,.file-item)::before,
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(.note-card,.note-tile,.card,.chatBubble,.file-item)::after {content:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.universal-search,.cep-global-search-panel,.calendar-container,.todo-container,.homepage-notepad,.homepage-calendar,#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      background:#e6dfd4!important;background-image:none!important;color:#37352f!important;
+      border:1px solid #b9ad9e!important;box-shadow:var(--ivory-depth)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(button,.circle,.glass-btn,.header-btn,.add-btn,a.cep-media-link):not(:where(.dot,.pick,.xlyneve-theme-option,.xlyneve-theme-swatch,.highlight-color-choice,.font-color-choice,[data-color])) {
+      background:var(--ivory-button,#eee7dd)!important;background-image:none!important;
+      color:#37352f!important;-webkit-text-fill-color:currentColor!important;
+      border:1px solid #b9ad9e!important;box-shadow:var(--ivory-depth)!important;text-shadow:none!important;
+    }
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(button,.circle,a.cep-media-link):active:not(:where(.dot,.pick,.xlyneve-theme-option,[data-color])) {box-shadow:var(--ivory-well)!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .dashboard-frequent-circles .circle {border-radius:50%!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .dashboard-frequent-circles .circle:nth-child(5n+1) {--ivory-button:#d8b9b3;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .dashboard-frequent-circles .circle:nth-child(5n+2) {--ivory-button:#c9ceba;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .dashboard-frequent-circles .circle:nth-child(5n+3) {--ivory-button:#e2cf9f;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .dashboard-frequent-circles .circle:nth-child(5n+4) {--ivory-button:#c9b8bd;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .dashboard-frequent-circles .circle:nth-child(5n) {--ivory-button:#d7cbbb;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,.editableNote,#noteText.editable,.cep-pn-editor) {
+      background:#f4eee5!important;color:#37352f!important;-webkit-text-fill-color:currentColor!important;
+      border:1px solid #c7bcad!important;box-shadow:var(--ivory-well)!important;
+    }
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(.cep-note-popup,.pn-edit-popup,#inputGroup,#nurseFormWrapper,.input-panel,#formCard,#notePanel,.note-card.editing-note,.note-card.is-editing) {
+      background:#eee7dd!important;background-image:none!important;color:#37352f!important;opacity:1!important;
+      border:1px solid #b9ad9e!important;box-shadow:var(--ivory-depth)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(.cep-note-popup,.pn-edit-popup) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .day:not(.empty) {background:#eee7dd!important;color:#37352f!important;border:1px solid #c7bcad!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .day.today:not(.empty) {background:#e2cf9f!important;border-color:#b49c64!important;box-shadow:var(--ivory-depth)!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .todo-item :is(input[type="text"],textarea) {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body #notes .notepad {background:#eee7dd!important;color:#37352f!important;border:1px solid #b9ad9e!important;box-shadow:var(--ivory-depth)!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) {background:transparent!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"]) {background:#d8b9b3!important;box-shadow:var(--ivory-well)!important;border-color:#af969c!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(.universal-search-modes,.cep-global-search-modes) button.is-active {background:#c4a09b!important;color:#37352f!important;border-color:#a8837e!important;box-shadow:var(--ivory-well)!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(.xgpt-media-tip,.cep-xgpt-media-tip,#defTip,#cep-shared-tip,#pn-definition-tip) {background:#f4eee5!important;color:#37352f!important;border:1px solid #b9ad9e!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(.note-card,.note-tile,.chatBubble,.notepad) :is([style*="color"],font[color]) {-webkit-text-fill-color:currentColor!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .top-links a,html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .top-links a * {color:#37352f!important;-webkit-text-fill-color:#37352f!important;text-shadow:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .top-links a {background:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .top-links a::before,html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .top-links a::after {content:none!important;}
+  `;
+
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .dashboard-section-toggle {border-radius:14px!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .dashboard-section-heading {border-bottom:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body .dashboard-section-chevron {color:#8c7f6e!important;text-shadow:none!important;}
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+      background:#eee7dd!important;color:#37352f!important;border:1px solid #b9ad9e!important;box-shadow:var(--ivory-depth)!important;
+    }
+    html:root:root:root:root:root:root:root[data-xlyneve-color-theme="warm-ivory"] body:has(#chat) .chatBubble {background:#eee7dd!important;border-color:#b9ad9e!important;}
   `;
 
   function start() {
