@@ -135,6 +135,13 @@
     {rgb:"239, 232, 213",solid:"#efe8d5",ink:"#37352f",outline:"#c2aa73"},
     {rgb:"232, 224, 224",solid:"#e8e0e0",ink:"#37352f",outline:"#af969c"}
   ];
+  const midnightGlassPalette = [
+    {rgb:"37, 47, 59",solid:"#252f3b",ink:"#e9edf5",outline:"#56cde5"},
+    {rgb:"45, 40, 59",solid:"#2d283b",ink:"#e9edf5",outline:"#9c70e0"},
+    {rgb:"35, 47, 52",solid:"#232f34",ink:"#e9edf5",outline:"#64c9d7"},
+    {rgb:"42, 43, 57",solid:"#2a2b39",ink:"#e9edf5",outline:"#8d84d8"},
+    {rgb:"38, 44, 53",solid:"#262c35",ink:"#e9edf5",outline:"#669dcd"}
+  ];
   const themeStorageKey = "xlyneve-color-theme";
   const removedThemes = new Set(["berry", "anatomy", "warm-medley"]);
   const deletedThemeStorageKey = "xlyneve-deleted-themes";
@@ -153,14 +160,14 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass" || removedThemes.has(storedTheme)) localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "warm-ivory" || storedTheme === "opal-pearl" || storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "midnight-glass" || storedTheme === "warm-ivory" || storedTheme === "opal-pearl" || storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
   if (deletedThemes.has(selectedTheme) || removedThemes.has(selectedTheme)) {
     selectedTheme = "original";
     try { localStorage.removeItem(themeStorageKey); } catch {}
   }
-  const palette = selectedTheme === "warm-ivory" ? warmIvoryPalette : selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "midnight-glass" ? midnightGlassPalette : selectedTheme === "warm-ivory" ? warmIvoryPalette : selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -209,11 +216,12 @@
   root.style.setProperty("--page-header-solid", pageColor.solid);
   root.style.setProperty("--page-header-ink", pageColor.ink);
   // Match the monogram to the contrast already chosen for the theme's header.
-  const headerUsesLightInk = pageColor.ink.toLowerCase() === "#ffffff";
+  const headerUsesLightInk = selectedTheme === "midnight-glass" || pageColor.ink.toLowerCase() === "#ffffff";
   root.style.setProperty("--page-logo-filter", headerUsesLightInk ? "brightness(0) invert(1)" : "contrast(1.08)");
   root.style.setProperty("--page-logo-opacity", headerUsesLightInk ? "0.96" : "0.85");
   const mastheadBarColors = {
     original: "#596b57",
+    "midnight-glass":"#252b35",
     "warm-ivory": "#ded5c8",
     berry: "#680044",
     autumn: "#255765",
@@ -3082,6 +3090,7 @@
       },
     ];
 
+    themeOptions.push({value:"midnight-glass",label:"Midnight Glass",colors:["#20242c","#56cde5","#9c70e0","#e9edf5"]});
     themeOptions.push({value:"warm-ivory",label:"Warm Ivory",colors:["#e6dfd4","#c4a09b","#a5ae96","#c2aa73","#af969c"]});
     themeOptions.push({value:"opal-pearl",label:"Opal Pearl 5D",colors:["#e8f1f4","#f4e8ec","#efecf6","#f7f3e5","#c9b67e"]});
     themeOptions.push({value:"pastel-rose-5d",label:"Pastel Rose 5D",colors:["#f3cdd4","#f8e1be","#dfeaf1","#f8aa80","#ce8a9f"]});
@@ -3934,11 +3943,113 @@
     @media(prefers-reduced-motion:reduce) {html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body :is(.dashboard-frequent-circles .circle,#quickCalc .qc-toggle,#timeCalculator .qc-toggle,#quickInteleviewer .qi-toggle,#tabletCalculator .qt-toggle,#syrupCalculator .qs-toggle,.xlyneve-theme-button,.cep-sign-out-light,.header-search-trigger) {transition:none!important;}}
   `;
 
+  // Smoked glass with static cyan/violet rims. Editing surfaces remain opaque.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] {
+      color-scheme:dark; --theme-ink:#e9edf5; --theme-muted-ink:#b2bdcd;
+      --midnight-surface:linear-gradient(135deg,#2c3541,#20242d);
+      --midnight-rim:linear-gradient(125deg,rgba(86,205,229,.9),rgba(104,143,209,.35) 48%,rgba(156,112,224,.85));
+      --midnight-depth:inset 0 1px 0 rgba(224,245,255,.09),0 4px 14px rgba(0,0,0,.22),0 0 8px rgba(86,205,229,.06);
+      --midnight-well:inset 0 2px 5px rgba(0,0,0,.32);
+      --glass-light:#262d38; --glass-edge:#55768e; --glass-shadow:rgba(0,0,0,.3);
+      --refresh-cocoa:#e9edf5; --refresh-rose:#8062af; --refresh-lime:#66c5d5; --refresh-stone:#20242c; --refresh-blue:#56cde5; --refresh-terracotta:#9c70e0;
+      --quick-panel:#262d38; --quick-field:#202731; --quick-ink:#e9edf5; --quick-soft:#303c4d; --quick-accent:#56cde5; --quick-accent-ink:#16242b; --quick-edge:#567b95;
+      --clinical-panel:#262d38; --clinical-field:#202731; --clinical-accent:#66bddc; --clinical-accent-ink:#15242d; --clinical-edge:#526a85;
+      --homecal-header:#252c37; --homecal-header-ink:#e9edf5; --homecal-control:#2d3644; --homecal-control-ink:#e9edf5; --homecal-header-edge:#526a85;
+      --homecal-today:#3a5070; --homecal-today-edge:#70d4e7; --homecal-today-shadow:rgba(86,205,229,.2);
+      --note-editor-depth:var(--midnight-depth); --note-editor-inset:var(--midnight-well); --note-editor-radius:20px;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"],html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body {background:#1d2127!important;color:#e9edf5!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body {background-image:radial-gradient(ellipse at 10% 0%,rgba(63,123,147,.13),transparent 48%),radial-gradient(ellipse at 100% 80%,rgba(116,74,155,.09),transparent 48%)!important;background-attachment:fixed;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body::before {background:none!important;opacity:0!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(h1,h2,h3,.pageTitle,.title,.dashboard-frequent-title,.dashboard-section-chevron,.dashboard-section-toggle,.note-title,.note-text,.note-content,.note-display,.cep-source-title,.cep-source-text,.cep-source-content,.cep-source-note-title,.cep-source-note-text,.cep-xgpt-rich-content,.editableNote,.cep-pn-editor) {color:#e9edf5!important;-webkit-text-fill-color:currentColor!important;text-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.todo-item,.file-item),
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-clinical body #notesList > .note-card,
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body:has(#chat) .chatBubble {
+      background:linear-gradient(140deg,var(--card-solid,#262d38),#20242c) padding-box,var(--midnight-rim) border-box!important;
+      color:#e9edf5!important;-webkit-text-fill-color:currentColor!important;border:1px solid transparent!important;border-radius:18px!important;
+      box-shadow:var(--midnight-depth)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.note-card,.note-tile,.card,.chatBubble,.file-item)::before,
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.note-card,.note-tile,.card,.chatBubble,.file-item)::after {content:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.universal-search,.cep-global-search-panel,.calendar-container,.todo-container,.homepage-notepad,.homepage-calendar,#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      background:var(--midnight-surface) padding-box,var(--midnight-rim) border-box!important;color:#e9edf5!important;
+      border:1px solid transparent!important;box-shadow:var(--midnight-depth)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .dashboard-section-toggle {border-radius:16px!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .dashboard-section-heading {border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(button,.circle,.glass-btn,.header-btn,.add-btn,a.cep-media-link):not(:where(.dot,.pick,.xlyneve-theme-option,.highlight-color-choice,.font-color-choice,[data-color],.color-preset,.cep-search-image-viewer *,.cep-search-table-zoom *)) {
+      background:var(--midnight-surface) padding-box,var(--midnight-rim) border-box!important;color:#e9edf5!important;-webkit-text-fill-color:currentColor!important;
+      border:1px solid transparent!important;box-shadow:var(--midnight-depth)!important;text-shadow:none!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(button,.circle,a.cep-media-link):active:not(:where(.dot,.pick,[data-color],.cep-search-image-viewer *,.cep-search-table-zoom *)) {box-shadow:var(--midnight-well)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .dashboard-frequent-circles .circle {border-radius:50%!important;animation:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .dashboard-frequent-circles .circle::after {content:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#universalSearchButton,.home-search-icon) {background:var(--midnight-surface) padding-box,var(--midnight-rim) border-box!important;border:1px solid transparent!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .home-search-icon :is(.home-search-lens,.home-search-handle) {stroke:#d7f5ff!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,[contenteditable="true"],#nurseNote,#noteInput,#noteText,#defBox,#whyBox,.editableNote,.cep-pn-editor) {
+      background:#202731!important;color:#e9edf5!important;-webkit-text-fill-color:currentColor!important;
+      border:1px solid #58718c!important;box-shadow:var(--midnight-well)!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body input::placeholder,html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body textarea::placeholder {color:#aebbd0!important;opacity:1!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body option {background:#252c37;color:#e9edf5;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.cep-note-popup,.pn-edit-popup,#inputGroup,#nurseFormWrapper,.input-panel,#formCard,#notePanel,.note-card.editing-note,.note-card.is-editing,#xlyneveThemePanel,#formEditDialog,#defPanel,#floatingEmojiPanel) {
+      background:#262d38!important;background-image:none!important;color:#e9edf5!important;opacity:1!important;
+      border:1px solid #6375a6!important;box-shadow:var(--midnight-depth)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.cep-note-popup,.pn-edit-popup) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.universal-search-modes,.cep-global-search-modes) button.is-active,
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"]) {
+      background:linear-gradient(115deg,#226778,#61408e)!important;color:#f3f8ff!important;-webkit-text-fill-color:#f3f8ff!important;border-color:#83c4e5!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {
+      background:var(--midnight-surface) padding-box,var(--midnight-rim) border-box!important;border:1px solid transparent!important;color:#e9edf5!important;box-shadow:var(--midnight-depth)!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body #timeCalculator .time-result-row {background:#d8e4ed!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .day:not(.empty) {background:#29313e!important;color:#e9edf5!important;border:1px solid #4c6077!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .day.today:not(.empty) {background:#3a5070!important;border-color:#70d4e7!important;box-shadow:0 0 8px rgba(86,205,229,.18)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .todo-item :is(input[type="text"],textarea) {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body #notes .notepad {background:#252c37!important;color:#e9edf5!important;border:1px solid #526a85!important;box-shadow:var(--midnight-depth)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) {background:transparent!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.xgpt-media-tip,.cep-xgpt-media-tip,#defTip,#cep-shared-tip,#pn-definition-tip) {background:#262d38!important;color:#e9edf5!important;border:1px solid #6375a6!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.top-links a,.top-links a *,header a,.page-header a) {color:#e9edf5!important;-webkit-text-fill-color:#e9edf5!important;text-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .top-links a {background:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .top-links a::before,html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .top-links a::after {content:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .top-links {background:#202630!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body #xlyneveThemePanel :is(.xlyneve-theme-option,.xlyneve-theme-restore) {background:#30394a!important;color:#e9edf5!important;border-color:#6375a6!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body #xlyneveThemePanel .xlyneve-theme-option[aria-pressed="true"] {background:linear-gradient(115deg,#226778,#61408e)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.note-text,.note-content,#nurseNote,#noteInput,#noteText,#defBox,#whyBox,.editableNote,.cep-pn-editor,.chatBubble,.cep-source-text,.cep-source-content) :is(font[color="black"],font[color="#000000"],font[color="#000"],[style*="color: rgb(0, 0, 0)"],[style*="color: black"],[style*="color: #000000"],[style*="color:#000000"],[style*="color: #000;"],[style*="color:#000;"],[style*="color: #000!"],[style*="color:#000!"],[style="color: #000"],[style="color:#000"],[style*="color:black"],[style*="color:rgb(0,0,0)"],[style*="color:rgb(0, 0, 0)"]):not(table *) {color:#e9edf5!important;-webkit-text-fill-color:#e9edf5!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body table {background:#e1e6ed!important;color:#27313a!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body table :is(td,th) {color:#27313a;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .note-card :is([style*="color"],font[color]),html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .chatBubble :is([style*="color"],font[color]) {-webkit-text-fill-color:currentColor!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-vitals-table body table {background:#29313e!important;color:#e9edf5!important;border-color:#6375a6!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-vitals-table body table :is(th,td) {background:#29313e!important;color:#e9edf5!important;border-color:#526a85!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.qc-sub,.qt-sub,.qs-sub,.cep-global-search-status,.universal-search-status,.cep-global-search-source-title,.universal-search-source-title,footer) {color:#b2bdcd!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(button,a,input,textarea,select):focus-visible {outline:2px solid #83d9eb;outline-offset:3px;}
+  `;
+
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle)::before {color:#e9edf5!important;-webkit-text-fill-color:#e9edf5!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .dashboard-section-toggle > span:first-child::before {color:#83d9eb!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.note-card,.note-tile,.chatBubble,.file-item,.cep-search-source) a {color:#86daee!important;-webkit-text-fill-color:currentColor!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.todo-title,.date-number,.day-name) {color:#e9edf5!important;-webkit-text-fill-color:currentColor!important;text-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#calendar,.calendar-container) .day-note-editor {background:transparent!important;color:#e9edf5!important;-webkit-text-fill-color:currentColor!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .file-item :is(em,small),html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.preview-empty,.pdf-public-notice,.upload-status) {color:#b2bdcd!important;-webkit-text-fill-color:currentColor!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .form-preview {background:#262d38!important;border-color:#6375a6!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#formEditDialog .form-dialog-body,#formEditDialog .form-dialog-footer) {background:transparent!important;color:#e9edf5!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body label {color:#e9edf5!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.note-date,.note-time,.timestamp,.cep-source-date,.cep-source-card-date,.note-meta) {color:#b2bdcd!important;-webkit-text-fill-color:currentColor!important;}
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
       if (pageName === "home.html" && header.matches("body > header")) return;
-      if (selectedTheme === "opal-pearl") {
+      if (selectedTheme === "midnight-glass") {
+        header.style.setProperty("background", "var(--midnight-surface)", "important");
+      } else if (selectedTheme === "opal-pearl") {
         header.style.setProperty("background", "var(--opal-surface)", "important");
       } else if (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") {
         header.style.setProperty("background", "var(--rose-panel)", "important");
