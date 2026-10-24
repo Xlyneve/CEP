@@ -3962,7 +3962,7 @@
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"],html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body {background:#1d2127!important;color:#e9edf5!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body {background-image:radial-gradient(ellipse at 10% 0%,rgba(63,123,147,.13),transparent 48%),radial-gradient(ellipse at 100% 80%,rgba(116,74,155,.09),transparent 48%)!important;background-attachment:fixed;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body::before {background:none!important;opacity:0!important;}
-    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(h1,h2,h3,.pageTitle,.title,.dashboard-frequent-title,.dashboard-section-chevron,.dashboard-section-toggle,.note-title,.note-text,.note-content,.note-display,.cep-source-title,.cep-source-text,.cep-source-content,.cep-source-note-title,.cep-source-note-text,.cep-xgpt-rich-content,.editableNote,.cep-pn-editor) {color:#e9edf5!important;-webkit-text-fill-color:currentColor!important;text-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(h1,h2,h3,.pageTitle,.title,.dashboard-frequent-title,.dashboard-section-chevron,.dashboard-section-toggle,.note-title,.note-text,.note-content,.note-display,.cep-source-title,.cep-source-text,.cep-source-content,.cep-source-note-title,.cep-source-note-text,.cep-xgpt-rich-content,.universal-search-native-title,.universal-search-native-snippet,.cep-structured-rich-content,.editableNote,.cep-pn-editor) {color:#e9edf5!important;-webkit-text-fill-color:currentColor!important;text-shadow:none!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.todo-item,.file-item),
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-clinical body #notesList > .note-card,
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body:has(#chat) .chatBubble {
@@ -4041,6 +4041,17 @@
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#formEditDialog .form-dialog-body,#formEditDialog .form-dialog-footer) {background:transparent!important;color:#e9edf5!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body label {color:#e9edf5!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.note-date,.note-time,.timestamp,.cep-source-date,.cep-source-card-date,.note-meta) {color:#b2bdcd!important;-webkit-text-fill-color:currentColor!important;}
+  `;
+
+  // Search matches must not inherit the old dark-on-transparent styling.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#universalSearchPanel,.cep-global-search-panel,.cep-search-table-zoom) :is(.cep-search-match,.underlineMatch,.search-highlight,.search-hit,.cep-concept-search-result mark),
+    html:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(#universalSearchPanel,.cep-global-search-panel,.cep-search-table-zoom) :is(.cep-search-match,.underlineMatch,.search-highlight,.search-hit,.cep-concept-search-result mark) * {
+      background:#f5e69a!important;color:#303030!important;-webkit-text-fill-color:#303030!important;
+      text-shadow:none!important;box-shadow:none!important;
+      border-radius:2px!important;border-bottom:1px solid #b4a465!important;
+      padding:0 1px!important;box-decoration-break:clone;-webkit-box-decoration-break:clone;
+    }
   `;
 
   function start() {
