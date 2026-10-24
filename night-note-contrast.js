@@ -8,7 +8,8 @@
   const fixes=new Map(),pending=new Set();let queued=false,all=true;
   const active=()=>document.documentElement.dataset.xlyneveColorTheme==='midnight-glass';
   function rgb(value){
-    if(!value || value==='transparent')return [0,0,0,0];
+    if(!value)return null;
+    if(value==='transparent')return [0,0,0,0];
     const values=value.match(/[\d.]+/g)?.map(Number);
     if(!values || values.length<3)return null;
     if(value.startsWith('color(srgb'))return [values[0]*255,values[1]*255,values[2]*255,values[3]??1];
