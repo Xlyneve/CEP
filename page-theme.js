@@ -167,6 +167,11 @@
     selectedTheme = "original";
     try { localStorage.removeItem(themeStorageKey); } catch {}
   }
+  if(selectedTheme === "midnight-glass") {
+    const contrastScript=document.createElement('script');
+    contrastScript.src=new URL('./night-note-contrast.js?v=1',document.currentScript?.src || location.href).href;
+    contrastScript.defer=true;document.head.append(contrastScript);
+  }
   const palette = selectedTheme === "midnight-glass" ? midnightGlassPalette : selectedTheme === "warm-ivory" ? warmIvoryPalette : selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"

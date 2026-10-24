@@ -739,7 +739,7 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
   else content.textContent = textFromHtml(html);
   content.querySelectorAll('[style]').forEach(element => {
     const savedColor = element.style.color;
-    if (savedColor) element.style.setProperty('-webkit-text-fill-color', savedColor, 'important');
+    if (savedColor && document.documentElement.dataset.xlyneveColorTheme !== 'midnight-glass') element.style.setProperty('-webkit-text-fill-color', savedColor, 'important');
   });
   CEPConceptMarkup.linkify(content, (concept, contentFragment) => {
       const link = document.createElement('a');
