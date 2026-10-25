@@ -107,6 +107,31 @@ html:root:root:root:root:root:root:root:root body .cep-search-table-zoom {z-inde
 `;document.head.append(style);
 }
 
+// Coalesce wheel events to one zoom update per frame; leave modified and
+// horizontal scrolling available for browser zoom and viewport panning.
+function installViewerWheelZoom(viewport, isActive, zoom) {
+  let frame = 0, delta = 0, point;
+  const cancel = () => {
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0; delta = 0; point = undefined;
+  };
+  viewport.addEventListener('wheel', event => {
+    if (!isActive() || event.ctrlKey || event.metaKey || event.shiftKey || !event.deltaY || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    event.preventDefault(); event.stopPropagation();
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1;
+    delta += event.deltaY * unit;
+    point = { x: event.clientX, y: event.clientY };
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      const amount = Math.max(-150, Math.min(150, delta));
+      const anchor = point; delta = 0; point = undefined;
+      if (isActive()) zoom(Math.exp(-amount * .002), anchor);
+    });
+  }, { passive: false });
+  return cancel;
+}
+
 let imageZoomUi;
 function getSearchImageZoomUi() {
   if (imageZoomUi?.root?.isConnected) return imageZoomUi;
@@ -137,19 +162,28 @@ function getSearchImageZoomUi() {
     image.style.top = `${Math.max(0, Math.floor((stageHeight - scaledHeight) / 2))}px`;
     image.style.transform = `scale(${scale})`; reset.textContent = `${Math.round(scale * 100)}%`;
   };
-  const setScale = nextScale => {
-    const oldScale = scale; const centerX = viewport.scrollLeft + viewport.clientWidth / 2; const centerY = viewport.scrollTop + viewport.clientHeight / 2;
+  const setScale = (nextScale, point) => {
+    if (!image) return;
+    const rect = viewport.getBoundingClientRect();
+    const anchorX = point ? point.x - rect.left : viewport.clientWidth / 2;
+    const anchorY = point ? point.y - rect.top : viewport.clientHeight / 2;
+    const contentX = (viewport.scrollLeft + anchorX - (parseFloat(image.style.left) || 0)) / scale;
+    const contentY = (viewport.scrollTop + anchorY - (parseFloat(image.style.top) || 0)) / scale;
     scale = Math.min(4, Math.max(.5, nextScale)); sizeStage();
-    viewport.scrollLeft = centerX * (scale / oldScale) - viewport.clientWidth / 2;
-    viewport.scrollTop = centerY * (scale / oldScale) - viewport.clientHeight / 2;
+    viewport.scrollLeft = contentX * scale + (parseFloat(image.style.left) || 0) - anchorX;
+    viewport.scrollTop = contentY * scale + (parseFloat(image.style.top) || 0) - anchorY;
   };
+  const cancelWheelZoom = installViewerWheelZoom(viewport,
+    () => !root.hidden && !!image && !!baseWidth,
+    (factor, point) => setScale(scale * factor, point));
   const closeViewer = () => {
     if (root.hidden) return;
-    root.hidden = true; stage.replaceChildren(); image = null; baseWidth = 0; baseHeight = 0;
+    cancelWheelZoom(); root.hidden = true; stage.replaceChildren(); image = null; baseWidth = 0; baseHeight = 0;
     document.body.style.overflow = previousBodyOverflow;
     gallery = []; galleryIndex = 0;
   };
   const show = sourceImage => {
+    cancelWheelZoom(); baseWidth = 0; baseHeight = 0;
     image = sourceImage.cloneNode(true); image.removeAttribute('id'); image.className = 'cep-search-image-viewer-image';
     image.removeAttribute('loading'); image.removeAttribute('style'); stage.replaceChildren(image); scale = 1;
     galleryNav.update(galleryIndex, gallery.length);
@@ -252,17 +286,26 @@ function getSearchTableZoomUi() {
     table.style.top = `${Math.max(0, Math.floor((stageHeight - scaledHeight) / 2))}px`;
     table.style.transform = `scale(${scale})`; reset.textContent = `${Math.round(scale * 100)}%`;
   };
-  const setScale = nextScale => {
-    const oldScale = scale; const centerX = viewport.scrollLeft + viewport.clientWidth / 2; const centerY = viewport.scrollTop + viewport.clientHeight / 2;
+  const setScale = (nextScale, point) => {
+    if (!table) return;
+    const rect = viewport.getBoundingClientRect();
+    const anchorX = point ? point.x - rect.left : viewport.clientWidth / 2;
+    const anchorY = point ? point.y - rect.top : viewport.clientHeight / 2;
+    const contentX = (viewport.scrollLeft + anchorX - (parseFloat(table.style.left) || 0)) / scale;
+    const contentY = (viewport.scrollTop + anchorY - (parseFloat(table.style.top) || 0)) / scale;
     scale = Math.min(3, Math.max(.5, nextScale)); sizeStage();
-    viewport.scrollLeft = centerX * (scale / oldScale) - viewport.clientWidth / 2;
-    viewport.scrollTop = centerY * (scale / oldScale) - viewport.clientHeight / 2;
+    viewport.scrollLeft = contentX * scale + (parseFloat(table.style.left) || 0) - anchorX;
+    viewport.scrollTop = contentY * scale + (parseFloat(table.style.top) || 0) - anchorY;
   };
+  const cancelWheelZoom = installViewerWheelZoom(viewport,
+    () => !root.hidden && !!table && !!baseTableWidth,
+    (factor, point) => setScale(scale * factor, point));
   const closeZoom = () => {
     if (root.hidden) return;
-    root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow;
+    cancelWheelZoom(); root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow;
   };
   const open = sourceTable => {
+    cancelWheelZoom(); baseTableWidth = 0; baseTableHeight = 0;
     const sourceRect = sourceTable.getBoundingClientRect(); const sourceStyle = getComputedStyle(sourceTable);
     table = sourceTable.cloneNode(true); table.querySelectorAll('[id]').forEach(element => element.removeAttribute('id')); table.removeAttribute('id');
     table.style.setProperty('width', `${sourceRect.width}px`, 'important');
@@ -287,7 +330,9 @@ function getSearchTableZoomUi() {
     table.querySelectorAll('.pn-definition[data-pn-definition]').forEach(word=>word.classList.add('cep-shared-definition'));
     table.classList.add('cep-search-table-zoom-content'); stage.replaceChildren(table); scale = 1;
     previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; root.hidden = false;
+    const currentTable = table;
     requestAnimationFrame(() => {
+      if (root.hidden || table !== currentTable) return;
       baseTableWidth = sourceRect.width; baseTableHeight = table.scrollHeight || sourceRect.height;
       sizeStage(); viewport.scrollTo({ left: 0, top: 0 }); close.focus();
     });
