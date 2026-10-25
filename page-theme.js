@@ -4015,6 +4015,12 @@
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body #timeCalculator .time-result-row {background:#d8e4ed!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .day:not(.empty) {background:#29313e!important;color:#e9edf5!important;border:1px solid #4c6077!important;box-shadow:none!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .day.today:not(.empty) {background:#3a5070!important;border-color:#70d4e7!important;box-shadow:0 0 8px rgba(86,205,229,.18)!important;}
+    /* Task rows and their text stay directly on the calendar surface too. */
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-homecal body #todoPanel #todoList,
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-homecal body #todoPanel #todoList .todo-item,
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-homecal body #todoPanel #todoList .todo-item :is(textarea,input[type="text"]) {
+      background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
     /* Keep the To-Do list open on the calendar surface, without an outer box. */
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-homecal body #todoPanel.todo-container {
       background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
