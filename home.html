@@ -3836,6 +3836,8 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
   }
 }
 </style>
+<link rel="stylesheet" href="ats-triage.css?v=1">
+<script type="module" src="ats-triage.js?v=1"></script>
 </head>
 
 <body>
@@ -6234,6 +6236,7 @@ function closeTable() {
     decorateSearchControl(addActionCard('Home', 'Search', 'search'));
 
     addActionCard('Urgent Care', 'Vitals', 'vitals');
+    addActionCard('Urgent Care', 'Triage', 'triage');
 
     const sectionStateKey = matchMedia('(max-width: 760px)').matches
       ? 'homeDashboardSections.mobile'
@@ -6297,12 +6300,13 @@ function closeTable() {
         input?.focus();
       }
       if (action === 'vitals') window.showTable?.();
+      if (action === 'triage') window.openATSTriage?.();
     };
 
     main.addEventListener('click', event => {
       const actionCard = event.target.closest('[data-frequent-action]');
       if (actionCard) {
-        if (actionCard.dataset.frequentAction === 'search' || actionCard.dataset.frequentAction === 'vitals') {
+        if (actionCard.dataset.frequentAction === 'search' || actionCard.dataset.frequentAction === 'vitals' || actionCard.dataset.frequentAction === 'triage') {
           event.stopPropagation();
         }
         runAction(actionCard.dataset.frequentAction);
@@ -6378,7 +6382,7 @@ function closeTable() {
         if (candidate.action) {
           control.type = 'button';
           control.addEventListener('click', event => {
-            if (candidate.action === 'search' || candidate.action === 'vitals') {
+            if (candidate.action === 'search' || candidate.action === 'vitals' || candidate.action === 'triage') {
               event.stopPropagation();
             }
             runAction(candidate.action);
