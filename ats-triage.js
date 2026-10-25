@@ -1,4 +1,4 @@
-import {assessATS,ATS_FINDINGS,ATS_TIMES,ATS_SOURCES} from './ats-triage-rules.mjs?v=1';
+import {assessATS,ATS_FINDINGS,ATS_TIMES,ATS_SOURCES} from './ats-triage-rules.mjs?v=2';
 let dialog,opener;
 function create(){
  if(dialog)return;
@@ -8,6 +8,8 @@ function create(){
  <p class="ats-note">Prototype for review—not validated for clinical use. Confirm ATS through a trained clinician’s full assessment. The most urgent finding takes priority; reassess if the patient changes.</p>
  <div class="ats-row"><label>Patient<select name="group"><option value="">Choose…</option><option value="adult">Adult (18+)</option><option value="child">Child (under 18)</option></select></label><label data-child hidden>Age in months<input name="ageMonths" inputmode="decimal" type="number" min="0" max="215.99" step="any" placeholder="e.g. 6 or 120"></label></div>
  <label class="ats-check"><input name="pregnancy" type="checkbox">Pregnant / recently postpartum</label>
+ <label class="ats-check"><input name="vitalsNormal" type="checkbox">Vital signs assessed and normal for age</label>
+ <p class="ats-note">Tick after checking observations. Normal vital signs do not cancel urgent symptoms. Otherwise, enter abnormal observations below.</p>
  <div id="ats-result" class="ats-result" role="status" aria-live="polite"></div>
  <fieldset><legend>Symptoms / findings</legend><p class="ats-note">Select every relevant finding, including danger signs, even when the main symptom seems minor.</p><input class="ats-filter" type="search" placeholder="Find a symptom or finding…" aria-label="Filter findings"><div class="ats-findings"></div><p class="ats-note">Filtering only hides options; selected findings still count. Unchecked means not selected, not ruled out.</p></fieldset>
  <div class="ats-row"><label>Breathing<select name="breathing"><option value="">Not assessed</option><option value="none">No distress assessed</option><option value="mild">Mild distress</option><option value="moderate">Moderate distress</option><option value="severe">Severe distress</option><option value="extreme">Extreme distress / hypoventilation</option></select></label>
@@ -25,7 +27,7 @@ function create(){
  for(const [name,label,min,max] of vitals){const el=document.createElement('label');el.textContent=label;const input=document.createElement('input');Object.assign(input,{name,type:'number',min:String(min),max:String(max),step:name==='gcs'?'1':'any',inputMode:'decimal',placeholder:'—'});el.append(input);dialog.querySelector('.ats-vitals').append(el);}
  document.body.append(dialog);
  dialog.querySelector('form').addEventListener('submit',e=>e.preventDefault());
- const changed=e=>{if(e.target.name&&e.target.name!=='assessed')dialog.querySelector('[name=assessed]').checked=false;update();};
+ const changed=e=>{if(['hr','rr','sbp','spo2','temp','gcs','bgl','group','ageMonths'].includes(e.target.name))dialog.querySelector('[name=vitalsNormal]').checked=false;if(e.target.name&&e.target.name!=='assessed')dialog.querySelector('[name=assessed]').checked=false;update();};
  dialog.addEventListener('input',changed);dialog.addEventListener('change',changed);
  dialog.querySelector('[data-close]').onclick=()=>dialog.close();
  dialog.querySelector('[data-reset]').onclick=()=>{dialog.querySelector('form').reset();update();dialog.querySelector('[name=group]').focus();};
@@ -34,14 +36,14 @@ function create(){
  update();
 }
 function update(){
- const form=dialog.querySelector('form'),data=Object.fromEntries(new FormData(form));data.findings=[...form.querySelectorAll('[name=findings]:checked')].map(e=>e.value);data.assessed=form.elements.assessed.checked;data.pregnancy=form.elements.pregnancy.checked;
+ const form=dialog.querySelector('form'),data=Object.fromEntries(new FormData(form));data.findings=[...form.querySelectorAll('[name=findings]:checked')].map(e=>e.value);data.assessed=form.elements.assessed.checked;data.pregnancy=form.elements.pregnancy.checked;data.vitalsNormal=form.elements.vitalsNormal.checked;
  const child=data.group==='child';form.querySelector('#ats-breathing-help').textContent=child?'Child breathing: severe = marked recession/accessory muscle use or acute cyanosis; moderate = moderate recession/accessory use; mild = slight recession with normal perfusion. Hypoventilation or airway obstruction needs immediate response.':'Adult breathing: extreme distress or hypoventilation is an immediate threat; severe and moderate distress have different ATS descriptors. Use overall appearance and work of breathing, not the rate alone.';form.querySelectorAll('[data-child]').forEach(e=>e.hidden=!child);if(!child){data.ageMonths='';data.activity='';}
  const query=form.querySelector('.ats-filter').value.toLowerCase().trim();
  form.querySelectorAll('[data-finding]').forEach(el=>{el.hidden=(el.dataset.finding==='abuse'&&!child)||(!el.textContent.toLowerCase().includes(query));});
  const r=assessATS(data),out=form.querySelector('#ats-result');out.replaceChildren();out.dataset.category=r.category||'';
  const title=document.createElement('strong');title.textContent=r.category?(r.urgent||r.complete?`${r.complete?'Suggested':'Urgent match'} ATS ${r.category} · ${ATS_TIMES[r.category]}`:`Partial descriptor match · ATS ${r.category} (assessment incomplete)`):'Urgency not determined';out.append(title);
  if(r.urgent){const p=document.createElement('p');p.textContent=r.category===1?'Immediate emergency response. Do not wait to finish this form.':'Urgent assessment area now; do not wait for the 10-minute limit.';out.append(p);}
- const reasons=[...r.matches.map(m=>m.reason),...r.errors,...r.warnings];if(r.category&&r.needsAssessment)reasons.push('Partial guide only—complete clinical assessment; a more urgent category may be needed.');
+ const reasons=[...r.matches.map(m=>m.reason),...r.errors,...r.warnings];if(data.vitalsNormal&&!['hr','rr','sbp','gcs','bgl','spo2','temp'].some(k=>data[k]?.trim()))reasons.push('Vital signs confirmed normal for age by the assessor; urgent symptom matches still apply.');if(r.category&&r.needsAssessment)reasons.push('Partial guide only—complete clinical assessment; a more urgent category may be needed.');
  if(!r.category)reasons.push('No category assigned. Missing or unmatched information cannot establish low urgency.');
  const ul=document.createElement('ul');for(const text of reasons){const li=document.createElement('li');li.textContent=text;ul.append(li);}out.append(ul);
 }

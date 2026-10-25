@@ -9,7 +9,7 @@ export const ATS_SOURCES = {
 };
 // [id, concise clinical label, adult category, child category]
 export const ATS_FINDINGS = [
- ['arrest','Cardiac / respiratory arrest',1,1],
+ ['arrest','Cardiac / respiratory arrest (no pulse / no breathing)',1,1],
  ['airway','Obstructed / immediately threatened airway',1,1],
  ['seizure','Ongoing seizure',1,1],
  ['unresponsive','Unresponsive / pain response only',1,1],
@@ -76,13 +76,20 @@ export function assessATS(s={}) {
  }
  if(child&&age!==null&&age<12&&hr!==null&&hr<60)add(1,'Infant pulse below 60/min');
  // Other entered observations require clinician interpretation, never invented cut-offs.
+ const enteredObservations=['hr','rr','sbp','gcs','bgl','spo2','temp'].some(key=>s[key]!==undefined&&s[key]!==null&&String(s[key]).trim()!=='');
+ const normalConflict=!!s.vitalsNormal&&enteredObservations;
+ if(normalConflict)warnings.push('Normal vital signs is ticked, but values are also entered. Clear the values or untick normal; entered findings still take priority.');
+ const symptomConflict=!!s.vitalsNormal&&(s.findings||[]).some(id=>['arrest','shock','perfusion','sepsisUnstable'].includes(id));
+ if(symptomConflict)warnings.push('Normal vital signs conflicts with a selected circulatory danger sign. Recheck the findings; the urgent match is retained.');
+ const vitalsMissing=!s.vitalsNormal&&!enteredObservations;
+ if(vitalsMissing)warnings.push('Confirm vital signs assessed and normal for age, or enter abnormal observations.');
  const unclassified=(hr!==null&&!(s.group==='adult'&&(hr<50||hr>150))&&!(child&&age!==null&&age<12&&hr<60)) || (rr!==null&&rr>=10) || (sbp!==null&&!(s.group==='adult'&&sbp<80)) || spo2!==null || temp!==null || (bgl!==null&&bgl>=3) || (gcs!==null&&gcs>=13);
  if(unclassified)warnings.push('Interpret the entered observations in context'+(child?' using age-specific paediatric ranges':'')+'. These values do not have an automatic category rule here.');
  if(s.group==='adult'&&(s.findings||[]).includes('dehydrationSevere'))warnings.push('Severe dehydration: assess shock and perfusion; the adult category is not assigned from this label alone.');
  if(s.pregnancy)warnings.push('Pregnancy needs maternal and fetal assessment; this prototype does not cover obstetric triage.');
  matches.sort((a,b)=>a.category-b.category);
  const category=matches[0]?.category??null;
- const blocked=!known||(child&&age===null)||errors.length>0||s.pregnancy||unclassified||(s.group==='adult'&&(s.findings||[]).includes('dehydrationSevere'));
+ const blocked=!known||(child&&age===null)||errors.length>0||s.pregnancy||unclassified||normalConflict||symptomConflict||vitalsMissing||(s.group==='adult'&&(s.findings||[]).includes('dehydrationSevere'));
  const assessmentMissing=!s.breathing||!s.pain||(child&&!s.activity);
  if(assessmentMissing)warnings.push('Complete breathing, pain'+(child?' and interaction':'')+' assessment.');
  if(s.group==='adult'&&s.breathing==='mild')warnings.push('Mild breathing difficulty needs contextual assessment; no automatic adult category is assigned here.');
