@@ -104,6 +104,11 @@ html:root:root:root:root:root:root:root:root body .cep-search-image-viewer .cep-
 }
 html:root:root:root:root:root:root:root:root body .cep-search-image-viewer {z-index:2147483647!important;}
 html:root:root:root:root:root:root:root:root body .cep-search-table-zoom {z-index:2147483644!important;}
+
+html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-viewport,.cep-search-table-zoom-viewport) {cursor:grab;}
+html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-image,.cep-search-table-zoom-content) {touch-action:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;cursor:grab;}
+html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-viewport,.cep-search-table-zoom-viewport)[data-dragging="true"],
+html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-viewport,.cep-search-table-zoom-viewport)[data-dragging="true"] * {cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important;}
 `;document.head.append(style);
 }
 
@@ -130,6 +135,52 @@ function installViewerWheelZoom(viewport, isActive, zoom) {
     });
   }, { passive: false });
   return cancel;
+}
+
+// Keep ordinary clicks (including table definitions) intact; suppress only the
+// click generated after an actual pan. Capture on the original element so a
+// simple click still reaches that element.
+function installViewerDrag(viewport, getMedia, onSwipe) {
+  let drag, ignoreClickUntil = 0;
+  const clear = () => {
+    const previous = drag; drag = null;
+    viewport.removeAttribute('data-dragging');
+    if (previous?.target.hasPointerCapture?.(previous.id)) previous.target.releasePointerCapture(previous.id);
+  };
+  viewport.addEventListener('pointerdown', event => {
+    const media = getMedia();
+    if (!media || event.button !== 0 || event.isPrimary === false || event.target.closest('a,button,input,select,textarea,[contenteditable="true"]')) return;
+    if (event.pointerType === 'touch' && !media.contains(event.target)) return;
+    event.preventDefault(); clear(); ignoreClickUntil = 0;
+    drag = { id: event.pointerId, target: event.target, x: event.clientX, y: event.clientY,
+      left: viewport.scrollLeft, top: viewport.scrollTop, moved: false, onMedia: media.contains(event.target) };
+    drag.target.setPointerCapture?.(event.pointerId);
+  });
+  viewport.addEventListener('pointermove', event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+    drag.moved = true; viewport.dataset.dragging = 'true';
+    viewport.scrollLeft = drag.left - dx; viewport.scrollTop = drag.top - dy;
+  });
+  viewport.addEventListener('pointerup', event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const finished = drag, dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+    clear();
+    if (finished.moved) {
+      if (finished.onMedia && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) onSwipe?.(dx);
+      ignoreClickUntil = performance.now() + 350;
+    }
+  });
+  viewport.addEventListener('pointercancel', event => { if (drag?.id === event.pointerId) clear(); });
+  viewport.addEventListener('lostpointercapture', event => { if (drag?.id === event.pointerId) clear(); });
+  viewport.addEventListener('dragstart', event => event.preventDefault());
+  // Window capture runs before the document's delegated definition handlers.
+  window.addEventListener('click', event => {
+    if (performance.now() >= ignoreClickUntil || !viewport.contains(event.target) || !event.detail) return;
+    ignoreClickUntil = 0; event.preventDefault(); event.stopImmediatePropagation();
+  }, true);
+  return () => { clear(); ignoreClickUntil = 0; };
 }
 
 let imageZoomUi;
@@ -178,12 +229,12 @@ function getSearchImageZoomUi() {
     (factor, point) => setScale(scale * factor, point));
   const closeViewer = () => {
     if (root.hidden) return;
-    cancelWheelZoom(); root.hidden = true; stage.replaceChildren(); image = null; baseWidth = 0; baseHeight = 0;
+    cancelDrag(); cancelWheelZoom(); root.hidden = true; stage.replaceChildren(); image = null; baseWidth = 0; baseHeight = 0;
     document.body.style.overflow = previousBodyOverflow;
     gallery = []; galleryIndex = 0;
   };
   const show = sourceImage => {
-    cancelWheelZoom(); baseWidth = 0; baseHeight = 0;
+    cancelDrag(); cancelWheelZoom(); baseWidth = 0; baseHeight = 0;
     image = sourceImage.cloneNode(true); image.removeAttribute('id'); image.className = 'cep-search-image-viewer-image';
     image.removeAttribute('loading'); image.removeAttribute('style'); stage.replaceChildren(image); scale = 1;
     galleryNav.update(galleryIndex, gallery.length);
@@ -208,23 +259,12 @@ function getSearchImageZoomUi() {
     document.body.style.overflow = 'hidden'; root.hidden = false;
     show(sourceImage); close.focus();
   };
-  let drag;
-  viewport.addEventListener('pointerdown',event=>{
-    if(event.target!==image || event.button!==0)return;
-    event.preventDefault();drag={x:event.clientX,y:event.clientY,left:viewport.scrollLeft,top:viewport.scrollTop};
-    image.setPointerCapture(event.pointerId);
-  });
-  viewport.addEventListener('pointermove',event=>{
-    if(!drag)return;viewport.scrollLeft=drag.left+drag.x-event.clientX;viewport.scrollTop=drag.top+drag.y-event.clientY;
-  });
-  viewport.addEventListener('pointerup',event=>{
-    if(!drag)return;
-    const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag=null;
-    if(scale===1 && gallery.length>1 && Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5){
-      galleryIndex=Math.max(0,Math.min(gallery.length-1,galleryIndex+(dx<0?1:-1)));show(gallery[galleryIndex]);
+  const cancelDrag = installViewerDrag(viewport, () => image, dx => {
+    if (scale === 1 && gallery.length > 1) {
+      galleryIndex = Math.max(0, Math.min(gallery.length - 1, galleryIndex + (dx < 0 ? 1 : -1)));
+      show(gallery[galleryIndex]);
     }
   });
-  viewport.addEventListener('pointercancel',()=>{drag=null;});
   minus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale - .25); });
   plus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale + .25); });
   reset.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(1); });
@@ -302,10 +342,10 @@ function getSearchTableZoomUi() {
     (factor, point) => setScale(scale * factor, point));
   const closeZoom = () => {
     if (root.hidden) return;
-    cancelWheelZoom(); root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow;
+    cancelDrag(); cancelWheelZoom(); root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow;
   };
   const open = sourceTable => {
-    cancelWheelZoom(); baseTableWidth = 0; baseTableHeight = 0;
+    cancelDrag(); cancelWheelZoom(); baseTableWidth = 0; baseTableHeight = 0;
     const sourceRect = sourceTable.getBoundingClientRect(); const sourceStyle = getComputedStyle(sourceTable);
     table = sourceTable.cloneNode(true); table.querySelectorAll('[id]').forEach(element => element.removeAttribute('id')); table.removeAttribute('id');
     table.style.setProperty('width', `${sourceRect.width}px`, 'important');
@@ -337,6 +377,7 @@ function getSearchTableZoomUi() {
       sizeStage(); viewport.scrollTo({ left: 0, top: 0 }); close.focus();
     });
   };
+  const cancelDrag = installViewerDrag(viewport, () => table);
   minus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale - .25); });
   plus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale + .25); });
   reset.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(1); });
