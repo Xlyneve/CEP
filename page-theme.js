@@ -4015,6 +4015,12 @@
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body #timeCalculator .time-result-row {background:#d8e4ed!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .day:not(.empty) {background:#29313e!important;color:#e9edf5!important;border:1px solid #4c6077!important;box-shadow:none!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .day.today:not(.empty) {background:#3a5070!important;border-color:#70d4e7!important;box-shadow:0 0 8px rgba(86,205,229,.18)!important;}
+    /* Keep the To-Do list open on the calendar surface, without an outer box. */
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-homecal body #todoPanel.todo-container {
+      background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-homecal body #todoPanel.todo-container::before,
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"].theme-homecal body #todoPanel.todo-container::after {content:none!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body .todo-item :is(input[type="text"],textarea) {background:transparent!important;border:0!important;box-shadow:none!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body #notes .notepad {background:#252c37!important;color:#e9edf5!important;border:1px solid #526a85!important;box-shadow:var(--midnight-depth)!important;}
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) {background:transparent!important;box-shadow:none!important;}
