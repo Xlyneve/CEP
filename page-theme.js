@@ -2894,6 +2894,40 @@
     }
   `;
 
+  // Bare, theme-tinted scrollbar thumbs; no track material or end buttons.
+  // Native thin bars bypass custom thumb paint in Chromium; preserve the
+  // intentionally hidden navigation/embedded bars while enabling themed paint.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root:root {
+      --cep-scrollbar-colour:color-mix(in srgb,var(--quick-accent,var(--page-header-solid,#a793a3)) 72%,var(--theme-ink,#554c56));
+      --cep-scrollbar-glow:color-mix(in srgb,var(--quick-accent,var(--page-header-solid,#a793a3)) 42%,transparent);
+    }
+    @supports selector(::-webkit-scrollbar) {
+      html:root:root:root:root:root:root:root:root,
+      html:root:root:root:root:root:root:root:root * {scrollbar-color:auto!important;scrollbar-width:auto!important;}
+      html:root:root:root:root:root:root:root:root.cep-card-preview,
+      html:root:root:root:root:root:root:root:root :is(.universal-search-filters,.cep-global-search-filters,.top-links,.dashboard-frequent-circles,#formatToolbar,.glass-pill-tabs,.glass-pill-links,.urgent-care-nav),
+      html:root:root:root:root:root:root:root:root.home-notepad-embedded #notes,
+      html:root:root:root:root:root:root:root:root.homecal-embed-today #todoList {scrollbar-width:none!important;}
+      html:root:root:root:root:root:root:root:root::-webkit-scrollbar,
+      html:root:root:root:root:root:root:root:root *::-webkit-scrollbar {width:7px;height:7px;background:transparent!important;border:0!important;box-shadow:none!important;}
+      html:root:root:root:root:root:root:root:root::-webkit-scrollbar-track,
+      html:root:root:root:root:root:root:root:root *::-webkit-scrollbar-track,
+      html:root:root:root:root:root:root:root:root::-webkit-scrollbar-track-piece,
+      html:root:root:root:root:root:root:root:root *::-webkit-scrollbar-track-piece,
+      html:root:root:root:root:root:root:root:root::-webkit-scrollbar-corner,
+      html:root:root:root:root:root:root:root:root *::-webkit-scrollbar-corner {background:transparent!important;border:0!important;box-shadow:none!important;}
+      html:root:root:root:root:root:root:root:root::-webkit-scrollbar-thumb,
+      html:root:root:root:root:root:root:root:root *::-webkit-scrollbar-thumb {background:var(--cep-scrollbar-colour)!important;border:0!important;border-radius:999px!important;box-shadow:0 0 3px var(--cep-scrollbar-glow)!important;}
+      html:root:root:root:root:root:root:root:root::-webkit-scrollbar-button,
+      html:root:root:root:root:root:root:root:root *::-webkit-scrollbar-button {display:none!important;width:0!important;height:0!important;background:none!important;border:0!important;}
+    }
+    @supports not selector(::-webkit-scrollbar) {
+      html:root:root:root:root:root:root:root:root,
+      html:root:root:root:root:root:root:root:root * {scrollbar-color:var(--cep-scrollbar-colour) transparent!important;}
+    }
+  `;
+
   const headerSelector = [
     ".header",
     ".header-bg",
