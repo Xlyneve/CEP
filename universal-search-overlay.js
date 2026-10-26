@@ -21,8 +21,10 @@ function installSearchSourceFilter(modes, filters) {
         background:transparent!important;box-shadow:none!important;color:var(--theme-ink,var(--page-header-ink,#40363b))!important;
         -webkit-text-fill-color:currentColor!important;cursor:pointer!important;
       }
-      ${scope}.cep-source-filter-toggle svg {display:block;width:18px;height:18px;pointer-events:none;}
-      ${scope}.cep-source-filter-toggle:is(.is-filtered,[aria-expanded="true"]) {background:var(--quick-soft,rgba(128,128,128,.14))!important;}
+      ${scope}.cep-source-filter-toggle svg {display:block;width:22px;height:22px;pointer-events:none;overflow:visible;--cep-funnel-tint:var(--page-header-solid,#c9bdcc);}
+      ${scope}.cep-source-filter-toggle:is(.is-filtered,[aria-expanded="true"]) {background:transparent!important;box-shadow:none!important;}
+      ${scope}.cep-source-filter-toggle:is(.is-filtered,[aria-expanded="true"]) svg {--cep-funnel-tint:var(--quick-accent,#a58bb6);}
+      ${scope}.cep-source-filter-toggle:active svg {transform:translateY(1px);}
       ${scope}.cep-source-filter-toggle:focus-visible {outline:1px solid currentColor!important;outline-offset:2px!important;}
       ${scope}.cep-source-filter-options {flex:0 0 auto;min-height:0;margin:7px 0 0;}
       ${scope}.cep-source-filter-options :is(.universal-search-filters,.cep-global-search-filters) {
@@ -45,7 +47,19 @@ function installSearchSourceFilter(modes, filters) {
   tray.id = 'cep-source-filter-' + (modes.classList.contains('universal-search-modes') ? 'home' : 'overlay');
   filters.before(tray); tray.append(filters);
   const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'cep-source-filter-toggle';
-  toggle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v5l-4 2v-7z"/></svg>';
+  const funnelId = tray.id + '-metal';
+  toggle.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <defs><linearGradient id="${funnelId}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" style="stop-color:color-mix(in srgb,var(--cep-funnel-tint) 15%,white)"/>
+      <stop offset=".38" style="stop-color:color-mix(in srgb,var(--cep-funnel-tint) 60%,white)"/>
+      <stop offset="1" style="stop-color:color-mix(in srgb,var(--cep-funnel-tint) 70%,#454255)"/>
+    </linearGradient></defs>
+    <path d="M3.5 5h17L14 13v5l-4 2v-7z" transform="translate(.8 1.4)" fill="currentColor" opacity=".28"/>
+    <path d="M3.5 5q8.5 3 17 0L14 13v5l-4 2v-7z" fill="url(#${funnelId})" stroke="currentColor" stroke-opacity=".55" stroke-width=".8" stroke-linejoin="round"/>
+    <ellipse cx="12" cy="5" rx="8.5" ry="2" fill="url(#${funnelId})" stroke="white" stroke-opacity=".88" stroke-width=".85"/>
+    <ellipse cx="12" cy="5" rx="6.5" ry="1" fill="currentColor" opacity=".18"/>
+    <path d="M5 7.1l5.8 6.4v4.7" fill="none" stroke="white" stroke-opacity=".88" stroke-width=".9" stroke-linecap="round"/>
+  </svg>`;
   toggle.setAttribute('aria-controls',tray.id); toggle.setAttribute('aria-expanded','false');
   modes.append(toggle);
   const inDefault = () => !modes.querySelector('[data-search-mode].is-active') || modes.querySelector('[data-search-mode].is-active').dataset.searchMode === 'default';
