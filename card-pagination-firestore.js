@@ -1,5 +1,5 @@
 import { query,orderBy,documentId,startAfter,limit,onSnapshot,getDocs,where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { createCardPager } from './card-pagination.js?v=20261026-3';
+import { createCardPager } from './card-pagination.js?v=20261026-4';
 const configs={
  'pn.html':{container:'#nurseNotesList',cacheSearch:true,searchDelay:0},
  'explain.html':{container:'#notesContainer'},

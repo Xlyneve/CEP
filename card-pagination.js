@@ -50,6 +50,17 @@ export function createCardPager({read, listen, deliver, container, search = '#se
         padding:0 0 env(safe-area-inset-bottom)!important;margin:0!important;
         flex:0 0 auto!important;z-index:auto!important;
       }
+      /* These pages scroll their content separately from the document. Reserve
+         a real footer row rather than appending controls beyond that scroller. */
+      html:root:root:root:root:root:root:root:root:root:root:root:root body.cep-pager-slot-layout {
+        display:flex!important;flex-direction:column!important;align-items:stretch!important;
+        justify-content:flex-start!important;height:100dvh!important;min-height:100dvh!important;
+        max-height:100dvh!important;overflow:hidden!important;
+      }
+      html:root:root:root:root:root:root:root:root:root:root:root:root body.cep-pager-slot-layout > .cep-pager-scroll-content {
+        flex:1 1 0!important;min-height:0!important;height:auto!important;max-height:none!important;
+        overflow:auto!important;overscroll-behavior:contain;
+      }
       .cep-card-page-status { font:11px Tahoma,sans-serif; }
     `; document.head.append(style);
   }
@@ -58,7 +69,12 @@ export function createCardPager({read, listen, deliver, container, search = '#se
   const number=document.createElement('span');number.className='cep-card-page-number';number.setAttribute('aria-live','polite');
   const next=document.createElement('button');next.type='button';next.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg>';next.setAttribute('aria-label','Next page');
   const status=document.createElement('span');status.className='cep-card-page-status';status.setAttribute('role','status');status.hidden=true;
-  nav.append(previous,number,next,status);document.body.append(nav);
+  nav.append(previous,number,next,status);
+  const pageFile = location.pathname.split('/').pop().toLowerCase();
+  const scrollContent = pageFile === 'pn.html' ? host.closest('.container')
+    : pageFile === 'clinicalnotes.html' ? host.closest('.main') : null;
+  if(scrollContent){document.body.classList.add('cep-pager-slot-layout');scrollContent.classList.add('cep-pager-scroll-content');}
+  document.body.append(nav);
   let page=initialState?.page || 0, anchors=initialState?.anchors || [null], pages=new Map(), mode='browse', more=false, busy=false, stopped=false, sequence=0, unsubscribe=null, timer, latest=null;
   let searchCache=null;
   let committedPage=page;
@@ -164,7 +180,7 @@ export function createCardPager({read, listen, deliver, container, search = '#se
       mode='browse';subscribe(true);return true;
     } catch(error){if(ticket===sequence)report(error);return false;}
   }
-  function stop() {stopped=true;waiters.splice(0).forEach(waiter=>waiter.resolve(null));++sequence;unsubscribe?.();clearTimeout(timer);input?.removeEventListener('input',searchChanged,true);nav.remove();onStop?.();}
+  function stop() {stopped=true;waiters.splice(0).forEach(waiter=>waiter.resolve(null));++sequence;unsubscribe?.();clearTimeout(timer);input?.removeEventListener('input',searchChanged,true);nav.remove();if(scrollContent){scrollContent.classList.remove('cep-pager-scroll-content');document.body.classList.remove('cep-pager-slot-layout');}onStop?.();}
   const api={ready,refresh,reveal,stop,get snapshot(){return latest;},get page(){return page+1;},get state(){return {page,anchors:[...anchors]};}};
   window.CEPCardPager=api;
   const params=new URLSearchParams(location.hash.replace(/^#/,''));
