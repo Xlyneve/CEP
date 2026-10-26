@@ -7,6 +7,67 @@ import "./shared-definitions.js?v=20261007-3";
 import "./pn-shared-definitions.js?v=20261007-3";
 import "./concept-preview.js?v=20261004-2";
 // One shared disclosure for Home and the lightbulb search; no search/data changes.
+// Keep the original source chips and handlers; reveal them only on request.
+function installSearchSourceFilter(modes, filters) {
+  if (!modes || !filters || modes.querySelector('.cep-source-filter-toggle')) return;
+  if (!document.getElementById('cep-source-filter-style')) {
+    const style = document.createElement('style'); style.id = 'cep-source-filter-style';
+    const scope = 'html' + ':root'.repeat(12) + ' body ';
+    style.textContent = `
+      ${scope}.cep-source-filter-toggle {
+        display:inline-grid!important;place-items:center!important;flex:0 0 28px!important;
+        width:28px!important;min-width:28px!important;height:28px!important;min-height:28px!important;
+        margin:0 0 0 auto!important;padding:4px!important;border:0!important;border-radius:7px!important;
+        background:transparent!important;box-shadow:none!important;color:var(--theme-ink,var(--page-header-ink,#40363b))!important;
+        -webkit-text-fill-color:currentColor!important;cursor:pointer!important;
+      }
+      ${scope}.cep-source-filter-toggle svg {display:block;width:18px;height:18px;pointer-events:none;}
+      ${scope}.cep-source-filter-toggle:is(.is-filtered,[aria-expanded="true"]) {background:var(--quick-soft,rgba(128,128,128,.14))!important;}
+      ${scope}.cep-source-filter-toggle:focus-visible {outline:1px solid currentColor!important;outline-offset:2px!important;}
+      ${scope}.cep-source-filter-options {flex:0 0 auto;min-height:0;margin:7px 0 0;}
+      ${scope}.cep-source-filter-options :is(.universal-search-filters,.cep-global-search-filters) {
+        display:flex!important;flex:0 0 auto!important;flex-wrap:wrap!important;gap:6px!important;
+        width:100%!important;min-height:0!important;max-height:160px!important;overflow:auto!important;
+        padding:4px 2px!important;margin:0!important;cursor:default!important;
+      }
+      ${scope}.cep-source-filter-options button.is-active {
+        background:var(--search-mode-selected,var(--quick-accent,#786b84))!important;
+        color:var(--search-mode-selected-ink,var(--quick-accent-ink,#fff))!important;
+        -webkit-text-fill-color:currentColor!important;
+      }
+      ${scope}:is(.cep-source-filter-options,.cep-source-filter-toggle)[hidden],
+      ${scope}.cep-source-filter-options :is(.universal-search-filters,.cep-global-search-filters)[hidden] {display:none!important;}
+    `;
+    document.head.append(style);
+  }
+  const panel = modes.parentElement;
+  const tray = document.createElement('div'); tray.className = 'cep-source-filter-options'; tray.hidden = true;
+  tray.id = 'cep-source-filter-' + (modes.classList.contains('universal-search-modes') ? 'home' : 'overlay');
+  filters.before(tray); tray.append(filters);
+  const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'cep-source-filter-toggle';
+  toggle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v5l-4 2v-7z"/></svg>';
+  toggle.setAttribute('aria-controls',tray.id); toggle.setAttribute('aria-expanded','false');
+  modes.append(toggle);
+  const inDefault = () => !modes.querySelector('[data-search-mode].is-active') || modes.querySelector('[data-search-mode].is-active').dataset.searchMode === 'default';
+  const setOpen = open => {tray.hidden = !open || !inDefault();toggle.setAttribute('aria-expanded',String(!tray.hidden));};
+  const syncSelection = () => {
+    filters.querySelectorAll('button').forEach(chip=>{const pressed=String(chip.classList.contains('is-active'));if(chip.getAttribute('aria-pressed')!==pressed)chip.setAttribute('aria-pressed',pressed);});
+    const selected = filters.querySelector('button.is-active,button[aria-pressed="true"]');
+    const name = selected?.textContent.trim() || 'All';
+    toggle.classList.toggle('is-filtered',name.toLowerCase() !== 'all');
+    toggle.title = 'Filter pages: ' + name;
+    toggle.setAttribute('aria-label','Filter pages: ' + name);
+  };
+  const syncMode = () => {toggle.hidden = !inDefault();if(toggle.hidden)setOpen(false);};
+  toggle.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setOpen(tray.hidden);});
+  filters.addEventListener('click',event=>{if(event.defaultPrevented||!event.target.closest('button'))return;syncSelection();setOpen(false);toggle.focus();});
+  panel.addEventListener('click',event=>{if(!tray.hidden&&!tray.contains(event.target)&&!toggle.contains(event.target))setOpen(false);});
+  panel.addEventListener('keydown',event=>{if(event.key==='Escape'&&!tray.hidden){event.preventDefault();event.stopImmediatePropagation();setOpen(false);toggle.focus();}},true);
+  new MutationObserver(syncSelection).observe(filters,{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed']});
+  new MutationObserver(syncMode).observe(modes,{subtree:true,attributes:true,attributeFilter:['class','aria-pressed']});
+  syncSelection();syncMode();
+}
+
 function installSearchHelp(modes) {
   if (!modes || modes.parentElement.querySelector('.cep-search-help-button')) return;
   if (!document.getElementById('cep-search-help-style')) {
@@ -56,8 +117,9 @@ function installSearchHelp(modes) {
     }
   });
 }
-if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',()=>installSearchHelp(document.querySelector('.universal-search-modes')),{once:true});
-else installSearchHelp(document.querySelector('.universal-search-modes'));
+const installHomeSearchTools=()=>{const modes=document.querySelector('.universal-search-modes');installSearchHelp(modes);installSearchSourceFilter(modes,document.querySelector('.universal-search-filters'));};
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',installHomeSearchTools,{once:true});
+else installHomeSearchTools();
 // Compact Default cards keep short notes readable; only crowded notes shrink.
 const defaultCardStyle = document.createElement('style');
 defaultCardStyle.id = 'cep-default-search-card-size';
@@ -1332,6 +1394,7 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
   const modes = panel.querySelector('.cep-global-search-modes');
   installSearchHelp(modes);
   const filters = panel.querySelector('.cep-global-search-filters');
+  installSearchSourceFilter(modes, filters);
   const mediaFilters = panel.querySelector('.cep-search-media-filters');
   let mediaFilter = 'all';
   const selectedMedia = new Set();
