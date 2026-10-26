@@ -49,6 +49,7 @@
     }
     html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel.is-open { display:flex !important; }
     #cepNoteLinkPanel::backdrop { background:transparent; pointer-events:none; }
+    html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel.cep-native-video-layer {backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important;transform:none!important;}
     #cepNoteLinkPanel .cep-link-panel-header { display:flex; align-items:center; gap:8px; padding:8px 10px; flex:none; }
     #cepNoteLinkPanel .cep-link-panel-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 13px/1.4 Tahoma,sans-serif; }
     html:root:root:root:root:root:root:root:root:root #cepNoteLinkPanel .cep-link-panel-header button {
@@ -215,6 +216,7 @@ function decorateNoteVideoLinks(root) {
   if (footer?.children.length) root.appendChild(footer);
 }
 
+  const desktopSafari = /Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints < 2 && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg|OPR|FxiOS/.test(navigator.userAgent);
   let panel,frame,title,newTab,collapseButton,currentUrl='',lastTrigger;
   let panelZoom=1;
   function setPanelZoom(value){
@@ -226,7 +228,8 @@ function decorateNoteVideoLinks(root) {
       iframe.style.setProperty('height','100%','important');
       iframe.style.removeProperty('transform-origin');
       iframe.style.removeProperty('transform');
-      iframe.style.setProperty('zoom',String(panelZoom),'important');
+      if(panel.classList.contains('is-video'))iframe.style.removeProperty('zoom');
+      else iframe.style.setProperty('zoom',String(panelZoom),'important');
     }
     panel.querySelector('[data-zoom="reset"]').textContent=Math.round(panelZoom*100)+'%';
     panel.querySelector('[data-zoom="out"]').disabled=panelZoom<=.5;
@@ -328,13 +331,22 @@ function decorateNoteVideoLinks(root) {
     // click so popup blockers can recognise the new tab as user initiated.
     const blockedPdf=url.hostname.replace(/^www\./,'')==='sexualwellbeing.org.nz'&&/\.pdf$/i.test(url.pathname);
     if(blockedPdf){closePanel(false);openExternalTab(url.href);return;}
+    const kind=getNoteVideoKind(url.href);
+    const safeYouTube=desktopSafari&&kind==='youtube';
     const host=options.trigger?.closest('dialog[open]')||document.body;
     ensurePanel(host);lastTrigger=options.trigger||null;
+    // Avoid placing Mac Safari's accelerated YouTube frame in a popover layer.
+    // The ordinary fixed panel still sits above search and retains its controls.
+    if(safeYouTube){
+      try{if(panel.matches(':popover-open'))panel.hidePopover();}catch{}
+      panel.removeAttribute('popover');
+    }else panel.setAttribute('popover','manual');
+    panel.classList.toggle('cep-native-video-layer',safeYouTube);
     panel.classList.remove('is-collapsed');collapseButton.textContent='›';collapseButton.setAttribute('aria-expanded','true');collapseButton.setAttribute('aria-label','Collapse link panel');
     if(currentUrl!==url.href||!frame.children.length){
       frame.querySelector('video')?.pause();frame.replaceChildren();frame.style.background='';
-      const kind=getNoteVideoKind(url.href);let embedUrl=url.href,label=url.hostname.replace(/^www\./,'');
-      if(kind==='youtube'){embedUrl=`https://www.youtube-nocookie.com/embed/${getYouTubeVideoId(url.href)}?autoplay=1&rel=0`;label='YouTube';}
+      let embedUrl=url.href,label=url.hostname.replace(/^www\./,'');
+      if(kind==='youtube'){embedUrl=`https://www.youtube-nocookie.com/embed/${getYouTubeVideoId(url.href)}?autoplay=${safeYouTube?'0':'1'}&playsinline=1&rel=0`;label='YouTube';}
       else if(kind==='facebook'){embedUrl=`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url.href)}&show_text=false&width=900&autoplay=true`;label='Facebook video';}
       else if(kind==='vimeo'){
         const parts=url.pathname.split('/').filter(Boolean),index=parts.findIndex(part=>/^\d+$/.test(part));
@@ -362,7 +374,7 @@ function decorateNoteVideoLinks(root) {
       setPanelZoom(1);
     }
     panel.classList.add('is-open');panel.setAttribute('aria-hidden','false');
-    try{if(panel.showPopover&&!panel.matches(':popover-open'))panel.showPopover();}catch{}
+    try{if(panel.hasAttribute('popover')&&panel.showPopover&&!panel.matches(':popover-open'))panel.showPopover();}catch{}
     collapseButton.focus({preventScroll:true});
   }
   window.CEPNoteVideoLinks=Object.freeze({version:3,decorate:decorateNoteVideoLinks,kind:getNoteVideoKind,youtubeId:getYouTubeVideoId,open:openLink,close:closePanel});

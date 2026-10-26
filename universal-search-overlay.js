@@ -1125,7 +1125,9 @@ function getSearchYouTubeUi() {
   const open = (videoId, sourceUrl) => {
     const iframe = document.createElement('iframe');
     const facebookUrl = getFacebookVideoUrl(sourceUrl);
-    iframe.src = facebookUrl ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(facebookUrl)}&show_text=false&width=900&autoplay=true` : `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+    const macSafari = /Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints < 2 && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg|OPR|FxiOS/.test(navigator.userAgent);
+    root.style.setProperty('backdrop-filter',macSafari?'none':'blur(8px)');root.style.setProperty('-webkit-backdrop-filter',macSafari?'none':'blur(8px)');
+    iframe.src = facebookUrl ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(facebookUrl)}&show_text=false&width=900&autoplay=true` : `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=${macSafari?'0':'1'}&playsinline=1&rel=0`;
     iframe.title = facebookUrl ? 'Facebook video player' : 'YouTube video player';
     root.setAttribute('aria-label', iframe.title);
     external.textContent = facebookUrl ? 'Open on Facebook' : 'Open on YouTube';
@@ -1144,7 +1146,8 @@ function getSearchYouTubeUi() {
 function openSearchYouTubeUrl(rawUrl) {
   const videoId = getYouTubeVideoId(rawUrl);
   if (!videoId && !getFacebookVideoUrl(rawUrl)) return false;
-  getSearchYouTubeUi().open(videoId, rawUrl);
+  if(window.CEPNoteVideoLinks?.open)window.CEPNoteVideoLinks.open(rawUrl,{video:true});
+  else getSearchYouTubeUi().open(videoId, rawUrl);
   return true;
 }
 

@@ -4304,7 +4304,7 @@
   if (window.CEPNoteVideoLinks?.version === 3 || document.querySelector('script[data-cep-link-panel-loader]')) return;
   const script = document.createElement('script');
   script.dataset.cepLinkPanelLoader = 'true';
-  script.src = new URL('note-video-links.js?v=20261018-8', document.currentScript?.src || location.href).href;
+  script.src = new URL('note-video-links.js?v=20261026-safari-1', document.currentScript?.src || location.href).href;
   document.head.appendChild(script);
 })();
 
