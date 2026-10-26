@@ -37,15 +37,26 @@ export function createCardPager({read, listen, deliver, container, search = '#se
       .cep-card-page-number { text-align:center;min-width:20px;font-weight:700; }
       .cep-card-page-number small { display:block;font-size:9px;font-weight:400;opacity:.65; }
       .cep-card-pagination[hidden] { display:none; }
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination button svg {
+        display:block!important;width:20px!important;height:20px!important;overflow:visible!important;
+        fill:none!important;stroke:currentColor!important;stroke-width:2.4!important;
+        stroke-linecap:round;stroke-linejoin:round;pointer-events:none;
+      }
+      /* Keep controls in the viewport, including narrow/mobile layouts. */
+        html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination {
+          position:fixed!important;left:50%!important;right:auto!important;top:auto!important;
+          bottom:max(12px,env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;
+          width:auto!important;max-width:calc(100vw - 32px)!important;z-index:500!important;margin:0!important;
+        }
       .cep-card-page-status { font:11px Tahoma,sans-serif; }
     `; document.head.append(style);
   }
   const nav=document.createElement('nav'); nav.className='cep-card-pagination'; nav.setAttribute('aria-label','Card pages');
-  const previous=document.createElement('button'); previous.type='button';previous.textContent='‹';previous.setAttribute('aria-label','Previous page');
+  const previous=document.createElement('button'); previous.type='button';previous.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>';previous.setAttribute('aria-label','Previous page');
   const number=document.createElement('span');number.className='cep-card-page-number';number.setAttribute('aria-live','polite');
-  const next=document.createElement('button');next.type='button';next.textContent='›';next.setAttribute('aria-label','Next page');
+  const next=document.createElement('button');next.type='button';next.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg>';next.setAttribute('aria-label','Next page');
   const status=document.createElement('span');status.className='cep-card-page-status';status.setAttribute('role','status');status.hidden=true;
-  nav.append(previous,number,next,status);host.after(nav);
+  nav.append(previous,number,next,status);document.body.append(nav);
   let page=initialState?.page || 0, anchors=initialState?.anchors || [null], pages=new Map(), mode='browse', more=false, busy=false, stopped=false, sequence=0, unsubscribe=null, timer, latest=null;
   let searchCache=null;
   let committedPage=page;
