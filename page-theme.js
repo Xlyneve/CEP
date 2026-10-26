@@ -135,6 +135,13 @@
     {rgb:"239, 232, 213",solid:"#efe8d5",ink:"#37352f",outline:"#c2aa73"},
     {rgb:"232, 224, 224",solid:"#e8e0e0",ink:"#37352f",outline:"#af969c"}
   ];
+  const cloudGlassPalette = [
+    {rgb:"233, 237, 249",solid:"#e9edf9",ink:"#273047",outline:"#ffffff"},
+    {rgb:"234, 230, 250",solid:"#eae6fa",ink:"#273047",outline:"#ffffff"},
+    {rgb:"228, 238, 249",solid:"#e4eef9",ink:"#273047",outline:"#ffffff"},
+    {rgb:"245, 233, 237",solid:"#f5e9ed",ink:"#273047",outline:"#ffffff"},
+    {rgb:"231, 240, 241",solid:"#e7f0f1",ink:"#273047",outline:"#ffffff"}
+  ];
   const midnightGlassPalette = [
     {rgb:"37, 47, 59",solid:"#252f3b",ink:"#e9edf5",outline:"#56cde5"},
     {rgb:"45, 40, 59",solid:"#2d283b",ink:"#e9edf5",outline:"#9c70e0"},
@@ -160,7 +167,7 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass" || removedThemes.has(storedTheme)) localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "midnight-glass" || storedTheme === "warm-ivory" || storedTheme === "opal-pearl" || storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "cloud-glass" || storedTheme === "midnight-glass" || storedTheme === "warm-ivory" || storedTheme === "opal-pearl" || storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
   if (deletedThemes.has(selectedTheme) || removedThemes.has(selectedTheme)) {
@@ -172,7 +179,7 @@
     contrastScript.src=new URL('./night-note-contrast.js?v=1',document.currentScript?.src || location.href).href;
     contrastScript.defer=true;document.head.append(contrastScript);
   }
-  const palette = selectedTheme === "midnight-glass" ? midnightGlassPalette : selectedTheme === "warm-ivory" ? warmIvoryPalette : selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "cloud-glass" ? cloudGlassPalette : selectedTheme === "midnight-glass" ? midnightGlassPalette : selectedTheme === "warm-ivory" ? warmIvoryPalette : selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -226,6 +233,7 @@
   root.style.setProperty("--page-logo-opacity", headerUsesLightInk ? "0.96" : "0.85");
   const mastheadBarColors = {
     original: "#596b57",
+    "cloud-glass":"#d4dcef",
     "midnight-glass":"#252b35",
     "warm-ivory": "#ded5c8",
     berry: "#680044",
@@ -3097,6 +3105,7 @@
 
     themeOptions.push({value:"midnight-glass",label:"Midnight Glass",colors:["#20242c","#56cde5","#9c70e0","#e9edf5"]});
     themeOptions.push({value:"warm-ivory",label:"Warm Ivory",colors:["#e6dfd4","#c4a09b","#a5ae96","#c2aa73","#af969c"]});
+    themeOptions.push({value:"cloud-glass",label:"Cloud Glass",colors:["#e4eef9","#eae6fa","#f5e9ed","#e7f0f1"]});
     themeOptions.push({value:"opal-pearl",label:"Opal Pearl 5D",colors:["#e8f1f4","#f4e8ec","#efecf6","#f7f3e5","#c9b67e"]});
     themeOptions.push({value:"pastel-rose-5d",label:"Pastel Rose 5D",colors:["#f3cdd4","#f8e1be","#dfeaf1","#f8aa80","#ce8a9f"]});
     themeOptions.push({value:"pastel-rose-recessed",label:"Pastel Rose Recessed",colors:["#f3cdd4","#f8e1be","#dfeaf1","#f8aa80","#ce8a9f"]});
@@ -3948,6 +3957,91 @@
     @media(prefers-reduced-motion:reduce) {html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="sculpted"].theme-home-glass body :is(.dashboard-frequent-circles .circle,#quickCalc .qc-toggle,#timeCalculator .qc-toggle,#quickInteleviewer .qi-toggle,#tabletCalculator .qt-toggle,#syrupCalculator .qs-toggle,.xlyneve-theme-button,.cep-sign-out-light,.header-search-trigger) {transition:none!important;}}
   `;
 
+  // Cloud Glass: airy blue/lavender frosting, thin white rims and quiet depth.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] {
+      color-scheme:light;--theme-ink:#273047;--theme-muted-ink:#65718a;
+      --cloud-surface:linear-gradient(145deg,rgba(255,255,255,.68),rgba(245,248,255,.30));
+      --cloud-depth:inset 0 1px 0 rgba(255,255,255,.92),0 7px 20px rgba(91,108,155,.10);
+      --cloud-well:inset 0 1px 4px rgba(105,116,153,.12),0 1px 0 rgba(255,255,255,.70);
+      --glass-light:rgba(248,250,255,.60);--glass-edge:rgba(255,255,255,.83);--glass-shadow:rgba(91,108,155,.12);
+      --refresh-cocoa:#273047;--refresh-rose:#d9c6e7;--refresh-lime:#c4ded9;--refresh-stone:#e9edf9;--refresh-blue:#c8daf1;--refresh-terracotta:#efcfb7;
+      --quick-panel:#eef1fc;--quick-field:rgba(255,255,255,.76);--quick-ink:#273047;--quick-soft:#e6e2f6;
+      --quick-accent:#c9bcec;--quick-accent-ink:#343957;--quick-edge:rgba(255,255,255,.85);
+      --clinical-panel:#eef1fc;--clinical-field:#f6f8ff;--clinical-accent:#c9bcec;--clinical-accent-ink:#343957;--clinical-edge:#c5cce1;
+      --homecal-header:#e5eafa;--homecal-header-ink:#273047;--homecal-control:#f2f5fe;--homecal-control-ink:#273047;--homecal-header-edge:rgba(255,255,255,.85);
+      --homecal-today:#ddd5f5;--homecal-today-edge:#ada4d6;--homecal-today-shadow:rgba(108,108,164,.14);
+      --note-editor-depth:var(--cloud-depth);--note-editor-inset:var(--cloud-well);--note-editor-radius:20px;
+      --vitals-panel:#eef1fc;--vitals-field:#f6f8ff;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"],html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body {background:#e5eafa!important;color:#273047!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body {
+      background-image:radial-gradient(ellipse at 3% 4%,rgba(176,180,244,.48),transparent 47%),radial-gradient(ellipse at 95% 8%,rgba(249,220,215,.38),transparent 36%),radial-gradient(ellipse at 83% 75%,rgba(175,208,249,.52),transparent 54%),radial-gradient(ellipse at 6% 92%,rgba(221,202,242,.55),transparent 48%),linear-gradient(125deg,#edf2fd,#e4eafa 65%,#eeeafa)!important;
+      background-attachment:fixed;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body::before {background:none!important;opacity:0!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(h1,h2,h3,.pageTitle,.title,.dashboard-frequent-title,.dashboard-section-toggle,.dashboard-section-chevron,.note-title,.cep-source-title,.cep-source-note-title) {color:#273047!important;-webkit-text-fill-color:currentColor!important;text-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.note-card,.note-tile,.card,.acc-item,.med-card,.med-section,.vaccine-card,.vaccine-section,.calculator,.result,.table-mini,.private-note-editor,.editable-checklist,.form-card,.library-card,.template-card,.pinned-note,.todo-item,.file-item),
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"].theme-clinical body #notesList > .note-card,
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body:has(#chat) .chatBubble {
+      background:linear-gradient(145deg,rgba(255,255,255,.72),rgba(255,255,255,.30)),color-mix(in srgb,var(--card-solid,#e9edf9) 38%,transparent)!important;
+      border:1px solid rgba(255,255,255,.88)!important;border-radius:20px!important;
+      color:#273047!important;-webkit-text-fill-color:currentColor!important;
+      box-shadow:var(--cloud-depth)!important;backdrop-filter:blur(10px) saturate(115%)!important;-webkit-backdrop-filter:blur(10px) saturate(115%)!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.note-card,.note-tile,.card,.chatBubble,.file-item)::before,
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.note-card,.note-tile,.card,.chatBubble,.file-item)::after {content:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(header,.header,.header-bg,.topbar,.top-bar,.app-header,.page-header,.dashboard-section-toggle,.universal-search,.cep-global-search-panel,.calendar-container,.todo-container,.homepage-notepad,.homepage-calendar,#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) {
+      background:var(--cloud-surface)!important;color:#273047!important;border:1px solid rgba(255,255,255,.82)!important;
+      box-shadow:var(--cloud-depth)!important;backdrop-filter:blur(16px) saturate(115%)!important;-webkit-backdrop-filter:blur(16px) saturate(115%)!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .dashboard-section-toggle {border-radius:18px!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .dashboard-section-heading {border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(button,.circle,.glass-btn,.header-btn,.add-btn,a.cep-media-link):not(:where(.dot,.pick,.xlyneve-theme-option,.highlight-color-choice,.font-color-choice,[data-color],.color-preset,.cep-search-image-viewer *,.cep-search-table-zoom *)) {
+      background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(237,242,254,.55))!important;color:#273047!important;-webkit-text-fill-color:currentColor!important;
+      border:1px solid rgba(255,255,255,.91)!important;box-shadow:inset 0 1px 0 #fff,0 3px 10px rgba(100,113,160,.10)!important;text-shadow:none!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(button,.circle,a.cep-media-link):active:not(:where(.dot,.pick,[data-color],.cep-search-image-viewer *,.cep-search-table-zoom *)) {box-shadow:var(--cloud-well)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .dashboard-frequent-circles .circle {border-radius:50%!important;background:var(--cloud-surface)!important;animation:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .dashboard-frequent-circles .circle::after {content:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(#universalSearchButton,.home-search-icon) {background:var(--cloud-surface)!important;border:1px solid rgba(255,255,255,.92)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea,[contenteditable="true"],#nurseNote,#noteInput,#noteText,#defBox,#whyBox,.editableNote,.cep-pn-editor) {
+      background:rgba(255,255,255,.77)!important;color:#273047!important;-webkit-text-fill-color:currentColor!important;
+      border:1px solid rgba(185,196,222,.58)!important;box-shadow:var(--cloud-well)!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(input,textarea)::placeholder {color:#6e7990!important;opacity:1!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body option {background:#f3f5fc;color:#273047;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.cep-note-popup,.pn-edit-popup,#inputGroup,#nurseFormWrapper,.input-panel,#formCard,#notePanel,.note-card.editing-note,.note-card.is-editing,#xlyneveThemePanel,#formEditDialog,#defPanel,#floatingEmojiPanel) {
+      background:#f1f4fd!important;background-image:none!important;color:#273047!important;opacity:1!important;border:1px solid #d4dcee!important;
+      box-shadow:0 12px 32px rgba(78,94,143,.17),inset 0 1px 0 #fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.cep-note-popup,.pn-edit-popup) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.universal-search-modes,.cep-global-search-modes) button.is-active {background:#d3c8ef!important;color:#343957!important;border-color:#b8acd8!important;box-shadow:var(--cloud-well)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) button:is(.active,[aria-selected="true"]) {background:#e0daf5!important;color:#343957!important;border-color:#c5bade!important;box-shadow:var(--cloud-well)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed,
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-head,.qi-head,.qt-head,.qs-head) {background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {background:var(--cloud-surface)!important;color:#273047!important;border:1px solid rgba(255,255,255,.9)!important;box-shadow:var(--cloud-depth)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator) :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle)::before {color:#273047!important;-webkit-text-fill-color:currentColor!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .day:not(.empty) {background:rgba(247,249,255,.55)!important;color:#273047!important;border:1px solid rgba(255,255,255,.85)!important;box-shadow:inset 0 1px 0 #fffc!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .day.today:not(.empty) {background:#ddd5f5!important;border-color:#ada4d6!important;box-shadow:0 2px 8px rgba(108,108,164,.12)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .todo-item :is(input[type="text"],textarea),html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(#calendar,.calendar-container) .day-note-editor {background:transparent!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body #notes .notepad {background:rgba(246,249,255,.66)!important;color:#273047!important;border:1px solid #fffd!important;box-shadow:var(--cloud-depth)!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.pad-controls,.homepage-notepad-drag-bar,.universal-search-filter-row,.cep-global-search-filters,.cep-global-search-group-cards,.universal-search-result-group) {background:transparent!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.xgpt-media-tip,.cep-xgpt-media-tip,#defTip,#cep-shared-tip,#pn-definition-tip) {background:#f3f5fd!important;color:#273047!important;border:1px solid #cbd4e9!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.top-links a,.top-links a *,header a,.page-header a) {color:#273047!important;-webkit-text-fill-color:#273047!important;text-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .top-links a {background:transparent!important;background-image:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .top-links a::before,html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .top-links a::after {content:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .top-links {background:rgba(242,246,255,.42)!important;border:0!important;box-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body #xlyneveThemePanel :is(.xlyneve-theme-option,.xlyneve-theme-restore) {background:#f6f8ff!important;color:#273047!important;border-color:#cbd4e9!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body #xlyneveThemePanel .xlyneve-theme-option[aria-pressed="true"] {background:#ded5f5!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.note-card,.note-tile,.chatBubble,.notepad) :is([style*="color"],font[color]) {-webkit-text-fill-color:currentColor!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.todo-title,.date-number,.day-name,label) {color:#273047!important;-webkit-text-fill-color:currentColor!important;text-shadow:none!important;}
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(button,a,input,textarea,select):focus-visible {outline:2px solid #8f87bd;outline-offset:3px;}
+    @media(max-width:760px),(prefers-reduced-motion:reduce) {
+      html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body :is(.note-card,.note-tile,.card,.chatBubble,.file-item) {backdrop-filter:blur(5px)!important;-webkit-backdrop-filter:blur(5px)!important;}
+    }
+  `;
+
   // Smoked glass with static cyan/violet rims. Editing surfaces remain opaque.
   themeStyle.textContent += `
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] {
@@ -4077,7 +4171,9 @@
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
       if (pageName === "home.html" && header.matches("body > header")) return;
-      if (selectedTheme === "midnight-glass") {
+      if (selectedTheme === "cloud-glass") {
+        header.style.setProperty("background", "var(--cloud-surface)", "important");
+      } else if (selectedTheme === "midnight-glass") {
         header.style.setProperty("background", "var(--midnight-surface)", "important");
       } else if (selectedTheme === "opal-pearl") {
         header.style.setProperty("background", "var(--opal-surface)", "important");
