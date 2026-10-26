@@ -4042,6 +4042,14 @@
     }
   `;
 
+  // Home search floats directly over the page; use that same backdrop for
+  // Cloud Glass lightbulb search so its translucent material is not darkened.
+  themeStyle.textContent += `
+    html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="cloud-glass"] body .cep-search-overlay {
+      background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    }
+  `;
+
   // Smoked glass with static cyan/violet rims. Editing surfaces remain opaque.
   themeStyle.textContent += `
     html:root:root:root:root:root:root:root:root[data-xlyneve-color-theme="midnight-glass"] {
