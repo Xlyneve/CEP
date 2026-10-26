@@ -42,12 +42,14 @@ export function createCardPager({read, listen, deliver, container, search = '#se
         fill:none!important;stroke:currentColor!important;stroke-width:2.4!important;
         stroke-linecap:round;stroke-linejoin:round;pointer-events:none;
       }
-      /* Keep controls in the viewport, including narrow/mobile layouts. */
-        html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination {
-          position:fixed!important;left:50%!important;right:auto!important;top:auto!important;
-          bottom:max(12px,env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;
-          width:auto!important;max-width:calc(100vw - 32px)!important;z-index:500!important;margin:0!important;
-        }
+      /* A dedicated footer after the cards; never float over their content. */
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination {
+        position:static!important;inset:auto!important;transform:none!important;
+        clear:both;box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+        min-height:calc(1cm + env(safe-area-inset-bottom))!important;
+        padding:0 0 env(safe-area-inset-bottom)!important;margin:0!important;
+        flex:0 0 auto!important;z-index:auto!important;
+      }
       .cep-card-page-status { font:11px Tahoma,sans-serif; }
     `; document.head.append(style);
   }

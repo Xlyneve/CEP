@@ -1,5 +1,5 @@
 import { query,orderBy,documentId,startAfter,limit,getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-lite.js';
-import { createCardPager } from './card-pagination.js?v=20261026-2';
+import { createCardPager } from './card-pagination.js?v=20261026-3';
 export function createLiteCardPager(collection,deliver) {
   return createCardPager({
     container:'#notes',search:'#search',deliver,
