@@ -9,17 +9,30 @@ export function createCardPager({read, listen, deliver, container, search = '#se
       .cep-card-pagination { display:flex;flex:0 0 auto;align-items:center;justify-content:center;gap:12px;margin:8px auto 14px;color:var(--theme-ink,inherit);font:13px/1.3 Tahoma,sans-serif; }
       html:root:root body .cep-card-pagination button { display:grid;place-items:center;width:30px;height:30px;min-width:30px;padding:0;margin:0;border:0;border-radius:50%;font:24px/1 Tahoma,sans-serif;color:inherit;background:transparent;box-shadow:none;cursor:pointer; }
       html:root:root body .cep-card-pagination button:disabled { opacity:.25;cursor:default; }
-      html:root:root:root:root:root:root:root:root body .cep-card-pagination,
-      html:root:root:root:root:root:root:root:root body .cep-card-pagination .cep-card-page-number,
-      html:root:root:root:root:root:root:root:root body .cep-card-pagination button,
-      html:root:root:root:root:root:root:root:root body .cep-card-pagination button:is(:hover,:active,:focus,:disabled) {
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination,
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination .cep-card-page-number,
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination button,
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination button:is(:hover,:active,:focus,:disabled) {
         background:none !important;border:0 !important;border-radius:0 !important;
         box-shadow:none !important;text-shadow:none !important;filter:none !important;
         backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
         appearance:none !important;-webkit-appearance:none !important;
       }
-      html:root:root:root:root:root:root:root:root body .cep-card-pagination button::before,
-      html:root:root:root:root:root:root:root:root body .cep-card-pagination button::after { content:none !important;display:none !important; }
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination button::before,
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination button::after { content:none !important;display:none !important; }
+      /* Pagination sits outside the cards: never inherit a card's text fill. */
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination,
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination :is(button,.cep-card-page-number,.cep-card-page-status,small) {
+        color:var(--theme-ink,var(--page-header-ink,#40363b))!important;
+        -webkit-text-fill-color:currentColor!important;text-indent:0!important;
+        visibility:visible!important;
+      }
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination button {
+        font:400 26px/1 Tahoma,sans-serif!important;opacity:1!important;
+      }
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination button:disabled {opacity:.5!important;}
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination .cep-card-page-number {font:700 14px/1.3 Tahoma,sans-serif!important;opacity:1!important;}
+      html:root:root:root:root:root:root:root:root:root:root:root:root body .cep-card-pagination small {font:400 10px/1.3 Tahoma,sans-serif!important;opacity:.85!important;}
       .cep-card-pagination button:focus-visible { outline:2px solid currentColor;outline-offset:2px; }
       .cep-card-page-number { text-align:center;min-width:20px;font-weight:700; }
       .cep-card-page-number small { display:block;font-size:9px;font-weight:400;opacity:.65; }
