@@ -107,6 +107,8 @@ html:root:root:root:root:root:root:root:root body .cep-search-table-zoom {z-inde
 
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-viewport,.cep-search-table-zoom-viewport) {cursor:grab;}
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-image,.cep-search-table-zoom-content) {touch-action:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;cursor:grab;}
+html:root:root:root:root:root:root:root:root body .cep-search-table-zoom-content,
+html:root:root:root:root:root:root:root:root body .cep-search-table-zoom-content * {touch-action:auto;user-select:text!important;-webkit-user-select:text!important;cursor:text;}
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-viewport,.cep-search-table-zoom-viewport)[data-dragging="true"],
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-viewport,.cep-search-table-zoom-viewport)[data-dragging="true"] * {cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important;}
 `;document.head.append(style);
@@ -140,7 +142,7 @@ function installViewerWheelZoom(viewport, isActive, zoom) {
 // Keep ordinary clicks (including table definitions) intact; suppress only the
 // click generated after an actual pan. Capture on the original element so a
 // simple click still reaches that element.
-function installViewerDrag(viewport, getMedia, onSwipe) {
+function installViewerDrag(viewport, getMedia, onSwipe, selectText = false) {
   let drag, ignoreClickUntil = 0;
   const clear = () => {
     const previous = drag; drag = null;
@@ -150,6 +152,7 @@ function installViewerDrag(viewport, getMedia, onSwipe) {
   viewport.addEventListener('pointerdown', event => {
     const media = getMedia();
     if (!media || event.button !== 0 || event.isPrimary === false || event.target.closest('a,button,input,select,textarea,[contenteditable="true"]')) return;
+    if (selectText && media.contains(event.target)) return;
     if (event.pointerType === 'touch' && !media.contains(event.target)) return;
     event.preventDefault(); clear(); ignoreClickUntil = 0;
     drag = { id: event.pointerId, target: event.target, x: event.clientX, y: event.clientY,
@@ -377,7 +380,7 @@ function getSearchTableZoomUi() {
       sizeStage(); viewport.scrollTo({ left: 0, top: 0 }); close.focus();
     });
   };
-  const cancelDrag = installViewerDrag(viewport, () => table);
+  const cancelDrag = installViewerDrag(viewport, () => table, null, true);
   minus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale - .25); });
   plus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale + .25); });
   reset.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(1); });
