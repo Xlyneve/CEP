@@ -1,3 +1,4 @@
+import './note-copy-text.js?v=2';
 import { enableSearchImageZoom, enableSearchTableZoom } from './note-media-viewer.js?v=1';
 export { enableSearchImageZoom, enableSearchTableZoom, openNoteTableZoom, openNoteImageZoom } from './note-media-viewer.js?v=1';
 import "./information-link-markers.js?v=20261018-1";
@@ -1045,7 +1046,7 @@ function sourceSearchCopyHtml(entry) {
   return String(entry?.richHtml || '');
 }
 
-const interactiveSearchChildSelector = 'table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-shared-definition,.pn-definition,.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)';
+const interactiveSearchChildSelector = '.cep-copy-text,table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-shared-definition,.pn-definition,.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)';
 
 function getFacebookVideoUrl(rawUrl) {
   try {
@@ -1308,7 +1309,8 @@ export function renderClinicalSearchPins(container, entries, { navigate } = {}) 
     const destination = new URL(entry.file,location.href);
     destination.hash = new URLSearchParams({cepId:entry.focusId || entry.id}).toString(); card.href = destination.href;
     const title = document.createElement('div'); title.className = 'cep-source-note-title'; title.textContent = entry.title;
-    const preview = document.createElement('div'); preview.className = 'cep-source-note-content'; preview.textContent = entry.displayText || entry.text || '';
+    const preview = document.createElement('div'); preview.className = 'cep-source-note-content';
+    renderStructuredSearchContent(preview, entry.richHtml || entry.record?.data?.note || sourceLegacyHtml(entry.displayText || entry.text || ''), []);
     card.append(title,preview); applySourceSearchSkin(card,entry);
     installSearchCardInteractions(card, {
       copyText:entry.displayText || entry.text || entry.title, copyHtml:getSearchCopyHtml(entry),

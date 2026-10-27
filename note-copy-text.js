@@ -35,10 +35,10 @@
       existing.replaceWith(...existing.childNodes);
     } else {
       if (range.collapsed || !range.toString().trim()) return;
-      // Inline phrases only: keep table cells, links and block structure intact.
+      // Keep authored formatting, including paragraph selections, intact.
       const fragment = range.cloneContents();
-      if (fragment.querySelector('table,td,th,tr,p,div,li,ul,ol,h1,h2,h3,a,img') || start.closest('a')) return;
-      const span=document.createElement('span');span.className='cep-copy-text';
+      if (fragment.querySelector('table,td,th,tr,img')) return;
+      const span=document.createElement(fragment.querySelector('p,div,li,ul,ol,h1,h2,h3,h4,h5,h6,blockquote,pre') ? 'div' : 'span');span.className='cep-copy-text';
       fragment.querySelectorAll(marker).forEach(el=>el.replaceWith(...el.childNodes));
       span.append(fragment);
       document.execCommand('insertHTML',false,span.outerHTML);
@@ -60,7 +60,7 @@
     });
   }
   async function copy(phrase) {
-    const text=phrase.textContent.trim();if(!text)return;
+    const text=(phrase.innerText || phrase.textContent).trim();if(!text)return;
     let copied=false;
     const handler=event=>{if(!event.clipboardData)return;event.clipboardData.setData('text/plain',text);event.preventDefault();copied=true;};
     document.addEventListener('copy',handler,true);
@@ -76,6 +76,13 @@
     const phrase=event.target.closest?.(marker);
     if(!phrase || phrase.closest('[contenteditable="true"],.editing-note,.is-editing'))return;
     event.preventDefault();event.stopImmediatePropagation();copy(phrase);
+  },true);
+  // Double-clicking a phrase must not trigger search's navigation shortcut.
+  document.addEventListener('dblclick',event=>{
+    const phrase=event.target.closest?.(marker);
+    if(phrase && !phrase.closest('[contenteditable="true"],.editing-note,.is-editing')){
+      event.preventDefault();event.stopImmediatePropagation();
+    }
   },true);
   const observer=new MutationObserver(install);
   function start(){install();observer.observe(document.body,{subtree:true,childList:true});}
