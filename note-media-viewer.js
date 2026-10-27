@@ -350,20 +350,43 @@ function getSearchTableZoomUi() {
   const open = sourceTable => {
     cancelDrag(); cancelWheelZoom(); baseTableWidth = 0; baseTableHeight = 0;
     const sourceRect = sourceTable.getBoundingClientRect(); const sourceStyle = getComputedStyle(sourceTable);
+    // Search cards use compact fonts and may also scale their ancestors.
+    // Base the viewer's 100% on readable text, not the compact card preview.
+    const textSizes = [];
+    const walker = document.createTreeWalker(sourceTable, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      if (!walker.currentNode.textContent.trim()) continue;
+      const size = parseFloat(getComputedStyle(walker.currentNode.parentElement).fontSize);
+      if (size > 0) textSizes.push(size);
+    }
+    textSizes.sort((a,b)=>a-b);
+    const bodySize = textSizes[Math.floor(textSizes.length/2)] || parseFloat(sourceStyle.fontSize) || 16;
+    const readableFactor = Math.max(1, 16 / bodySize);
+    const previewScale = sourceTable.offsetWidth ? sourceRect.width / sourceTable.offsetWidth : 1;
+    const dimensionFactor = readableFactor / (previewScale || 1);
+    const naturalWidth = sourceRect.width * dimensionFactor;
     table = sourceTable.cloneNode(true); table.querySelectorAll('[id]').forEach(element => element.removeAttribute('id')); table.removeAttribute('id');
-    table.style.setProperty('width', `${sourceRect.width}px`, 'important');
-    table.style.setProperty('min-width', `${sourceRect.width}px`, 'important');
-    table.style.setProperty('max-width', `${sourceRect.width}px`, 'important');
+    table.style.setProperty('width', `${naturalWidth}px`, 'important');
+    table.style.setProperty('min-width', `${naturalWidth}px`, 'important');
+    table.style.setProperty('max-width', `${naturalWidth}px`, 'important');
+    table.style.setProperty('zoom', '1', 'important');
+    // Freeze computed text sizes before moving the clone out of its source CSS.
+    const sourceElements = [sourceTable, ...sourceTable.querySelectorAll('*')];
+    const clonedElements = [table, ...table.querySelectorAll('*')];
+    clonedElements.forEach((element,index)=>{
+      const computed = getComputedStyle(sourceElements[index]);
+      element.style.setProperty('font-size', `${parseFloat(computed.fontSize) * readableFactor}px`, 'important');
+      const lineHeight = parseFloat(computed.lineHeight);
+      if (Number.isFinite(lineHeight)) element.style.setProperty('line-height', `${lineHeight * readableFactor}px`, 'important');
+    });
     table.style.setProperty('font-family', sourceStyle.fontFamily, 'important');
-    table.style.setProperty('font-size', sourceStyle.fontSize, 'important');
-    table.style.setProperty('line-height', sourceStyle.lineHeight, 'important');
     const sourceCells = [...sourceTable.querySelectorAll('th,td')]; const clonedCells = [...table.querySelectorAll('th,td')];
     clonedCells.forEach((cell, index) => {
       const sourceCell = sourceCells[index]; if (!sourceCell) return;
       const cellRect = sourceCell.getBoundingClientRect(); const cellStyle = getComputedStyle(sourceCell);
-      cell.style.setProperty('width', `${cellRect.width}px`, 'important');
-      cell.style.setProperty('min-width', `${cellRect.width}px`, 'important');
-      cell.style.setProperty('max-width', `${cellRect.width}px`, 'important');
+      cell.style.setProperty('width', `${cellRect.width * dimensionFactor}px`, 'important');
+      cell.style.setProperty('min-width', `${cellRect.width * dimensionFactor}px`, 'important');
+      cell.style.setProperty('max-width', `${cellRect.width * dimensionFactor}px`, 'important');
       cell.style.setProperty('white-space', cellStyle.whiteSpace, 'important');
       cell.style.setProperty('padding', cellStyle.padding, 'important');
       cell.style.setProperty('text-align', cellStyle.textAlign, 'important');
@@ -376,7 +399,7 @@ function getSearchTableZoomUi() {
     const currentTable = table;
     requestAnimationFrame(() => {
       if (root.hidden || table !== currentTable) return;
-      baseTableWidth = sourceRect.width; baseTableHeight = table.scrollHeight || sourceRect.height;
+      baseTableWidth = table.getBoundingClientRect().width; baseTableHeight = table.scrollHeight || sourceRect.height * dimensionFactor;
       sizeStage(); viewport.scrollTo({ left: 0, top: 0 }); close.focus();
     });
   };
