@@ -249,7 +249,7 @@ const imageUrlsFromHtml = value => {
   const parsed = new DOMParser().parseFromString(String(value || ''), 'text/html');
   return [...parsed.body.querySelectorAll('img[src]')].map(image => image.getAttribute('src')).filter(Boolean);
 };
-const structuredContentSelector = 'table,thead,tbody,tfoot,tr,th,td,ul,ol,li,h1,h2,h3,h4,h5,h6,blockquote,pre,figure,figcaption,p,br,strong,b,em,i,u,mark,s,small,sub,sup,img,span[style],div[style]';
+const structuredContentSelector = '.cep-copy-text,table,thead,tbody,tfoot,tr,th,td,ul,ol,li,h1,h2,h3,h4,h5,h6,blockquote,pre,figure,figcaption,p,br,strong,b,em,i,u,mark,s,small,sub,sup,img,span[style],div[style]';
 export function hasStructuredSearchContent(html) {
   if (!html) return false;
   const parsed = new DOMParser().parseFromString(String(html), 'text/html');
@@ -325,14 +325,14 @@ export async function readPersistentSearchCache(key) {
     return reviveCachedValue(record.value);
   } catch { return undefined; }
 }
-export async function writePersistentSearchCache(key, value) {
+export async function writePersistentSearchCache(key, value, savedAt = Date.now()) {
   try {
     const db = await openPersistentSearchCache();
     if (!db) return;
     await new Promise(resolve => {
       const dataset = persistentDatasetForKey(key);
       const request = db.transaction(persistentSearchCacheStore, 'readwrite').objectStore(persistentSearchCacheStore)
-        .put({ key, dataset, savedAt: Date.now(), value: cacheSafeValue(value) });
+        .put({ key, dataset, savedAt, value: cacheSafeValue(value) });
       request.onsuccess = request.onerror = () => resolve();
     });
   } catch {}
@@ -343,19 +343,34 @@ export function invalidatePersistentSearchCache(dataset = '') {
     localStorage.setItem(key, String(Date.now()));
   } catch {}
 }
+const searchInvalidationTime = key => {
+  const dataset = persistentDatasetForKey(key);
+  return Math.max(Number(localStorage.getItem(persistentSearchInvalidationKey) || 0),
+    Number(localStorage.getItem(persistentSearchDatasetInvalidationPrefix + dataset) || 0));
+};
 const loadPersistentSearchValue = async (key, loader, forceRefresh = false, waitForCacheWrite = true) => {
   if (!forceRefresh) {
     const cached = await readPersistentSearchCache(key);
     if (cached !== undefined) return cached;
   }
-  const value = await loader();
-  const saved=writePersistentSearchCache(key,value);
-  if(waitForCacheWrite)await saved;else void saved.catch(()=>{});
-  return value;
+  // A save during a pending read must not stamp its older snapshot as fresh.
+  // Re-read once the invalidation generation changes, before returning results.
+  for (;;) {
+    const generation = searchInvalidationTime(key);
+    const startedAt = Date.now();
+    const value = await loader(forceRefresh || generation > 0);
+    if (searchInvalidationTime(key) !== generation) continue;
+    const saved = writePersistentSearchCache(key, value, startedAt);
+    if (waitForCacheWrite) await saved; else void saved.catch(()=>{});
+    if (searchInvalidationTime(key) !== generation) continue;
+    return value;
+  }
 };
 export function loadPersistentSearchDocuments(db, collectionName, scope, { forceRefresh = false, waitForCacheWrite = true } = {}) {
-  return loadPersistentSearchValue(`${scope}:${collectionName}:documents:v1`, async () => {
-    const snapshot = await (forceRefresh ? getDocsFromServer : getDocs)(collection(db, collectionName));
+  // A new key also discards PN snapshots saved by the old in-flight-read logic.
+  const version = collectionName === 'nurseNotes' ? 'v2' : 'v1';
+  return loadPersistentSearchValue(`${scope}:${collectionName}:documents:${version}`, async mustRefresh => {
+    const snapshot = await (mustRefresh ? getDocsFromServer : getDocs)(collection(db, collectionName));
     return snapshot.docs.map(item => ({ id: item.id, data: item.data() }));
   }, forceRefresh, waitForCacheWrite);
 }
