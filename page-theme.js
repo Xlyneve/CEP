@@ -4397,4 +4397,4 @@
 })();
 
 // Shared phrase-copy editing and viewing across card pages and search.
-(() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=2',document.currentScript?.src || location.href).href;document.head.append(script);})();
+(() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=3',document.currentScript?.src || location.href).href;document.head.append(script);})();

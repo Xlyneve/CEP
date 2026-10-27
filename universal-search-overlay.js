@@ -1,4 +1,4 @@
-import './note-copy-text.js?v=2';
+import './note-copy-text.js?v=3';
 import { enableSearchImageZoom, enableSearchTableZoom } from './note-media-viewer.js?v=1';
 export { enableSearchImageZoom, enableSearchTableZoom, openNoteTableZoom, openNoteImageZoom } from './note-media-viewer.js?v=1';
 import "./information-link-markers.js?v=20261018-1";
@@ -865,10 +865,37 @@ export function renderXgptSearchRichContent(parent, html, terms = []) {
   images.forEach(enableSearchImageZoom);
 }
 
-export function renderStructuredSearchContent(parent, html, terms = []) {
+// Info's email controls are rendered on demand, not stored in its note HTML.
+function enableInfoSearchEmailCopy(root) {
+  const pattern = /[A-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?)+/gi;
+  const decorate = element => {
+    element.classList.add('cep-copy-text','email-copy');
+    element.tabIndex = 0; element.setAttribute('role','button');
+    element.title = 'Copy email address';
+    element.setAttribute('aria-label','Copy email address: ' + element.textContent.trim());
+  };
+  root.querySelectorAll('.email-copy').forEach(decorate);
+  const walker = document.createTreeWalker(root,NodeFilter.SHOW_TEXT); const nodes=[];
+  while(walker.nextNode()) {
+    if(!walker.currentNode.parentElement.closest('button,script,style,.cep-copy-text,[contenteditable="true"]'))nodes.push(walker.currentNode);
+  }
+  for(const node of nodes) {
+    const matches=[...node.textContent.matchAll(pattern)]; if(!matches.length)continue;
+    const fragment=document.createDocumentFragment();let offset=0;
+    for(const match of matches) {
+      fragment.append(document.createTextNode(node.textContent.slice(offset,match.index)));
+      const email=document.createElement('span');email.textContent=match[0];decorate(email);fragment.append(email);
+      offset=match.index+match[0].length;
+    }
+    fragment.append(document.createTextNode(node.textContent.slice(offset)));node.replaceWith(fragment);
+  }
+}
+
+export function renderStructuredSearchContent(parent, html, terms = [], { copyEmails = false } = {}) {
   const content = document.createElement('div');
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(content, html);
   else content.textContent = textFromHtml(html);
+  if (copyEmails) enableInfoSearchEmailCopy(content);
   const nodes = [];
   const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) nodes.push(walker.currentNode);
@@ -901,9 +928,9 @@ const sourceLegacyHtml = value => {
   return escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/==(.+?)==/g, '<mark class="gradient-highlight">$1</mark>').replace(/\n/g, '<br>');
 };
-const appendSourceRichContent = (parent, html, terms, className) => {
+const appendSourceRichContent = (parent, html, terms, className, options) => {
   const body = document.createElement('div'); body.className = className;
-  renderStructuredSearchContent(body, html, terms); parent.appendChild(body); return body;
+  renderStructuredSearchContent(body, html, terms, options); parent.appendChild(body); return body;
 };
 const appendSourceImage = (parent, url, className = 'cep-source-card-image') => {
   if (!String(url || '').trim()) return null;
@@ -1013,7 +1040,7 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
     if (type === 'info') appendSourceImage(parent, data.image);
     const title = document.createElement('div'); title.className = 'cep-source-note-title'; title.textContent = data.title || ''; parent.appendChild(title);
     if (type !== 'explain') appendSourceLink(parent, data.url, type === 'practice' ? '🔗 Open' : 'URL Link');
-    appendSourceRichContent(parent, sourceLegacyHtml(data.text || ''), terms, 'cep-source-note-text');
+    appendSourceRichContent(parent, sourceLegacyHtml(data.text || ''), terms, 'cep-source-note-text', {copyEmails:type === 'info'});
     if (type === 'practice') appendSourceImage(parent, data.image);
     const date = sourceDateValue(data.timestamp);
     if (date && !Number.isNaN(date.valueOf())) { const line = document.createElement('div'); line.className = 'cep-source-card-date'; line.textContent = `${type === 'explain' ? 'Saved on ' : 'Added: '}${date.toLocaleString()}`; parent.appendChild(line); }

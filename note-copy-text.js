@@ -77,6 +77,12 @@
     if(!phrase || phrase.closest('[contenteditable="true"],.editing-note,.is-editing'))return;
     event.preventDefault();event.stopImmediatePropagation();copy(phrase);
   },true);
+  document.addEventListener('keydown',event=>{
+    if(event.key !== 'Enter' && event.key !== ' ')return;
+    const phrase=event.target.closest?.('.cep-copy-text[role="button"]');
+    if(!phrase || phrase.closest('[contenteditable="true"],.editing-note,.is-editing'))return;
+    event.preventDefault();event.stopImmediatePropagation();copy(phrase);
+  },true);
   // Double-clicking a phrase must not trigger search's navigation shortcut.
   document.addEventListener('dblclick',event=>{
     const phrase=event.target.closest?.(marker);
