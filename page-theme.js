@@ -4395,3 +4395,6 @@
   style.textContent='html:root:root:root:root:root:root:root body table *{-webkit-text-fill-color:currentColor !important;}';
   document.head.append(style);
 })();
+
+// Shared phrase-copy editing and viewing across card pages and search.
+(() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=1',document.currentScript?.src || location.href).href;document.head.append(script);})();
