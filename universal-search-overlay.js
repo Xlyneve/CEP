@@ -485,11 +485,11 @@ export async function loadXgptEntries({ forceRefresh = false } = {}) {
         console.warn('Xgpt concept images are unavailable in header search.', error);
         return {};
       }),
-      loadPersistentSearchValue(`${cacheScope}:definitions:v3`, async () => {
+      loadPersistentSearchValue(`${cacheScope}:definitions:v4`, async () => {
         const definitionsSnapshot = await (forceRefresh ? getDocsFromServer : getDocs)(collection(db, 'concept_defs'));
         return Object.fromEntries(definitionsSnapshot.docs.flatMap(item => {
           const definition = item.data() || {};
-          const details = { definition: definition.value || textFromHtml(definition.valueHtml),
+          const details = { concept:definition.concept || item.id, definition: definition.value || textFromHtml(definition.valueHtml),
             why: definition.why || textFromHtml(definition.whyHtml), valueHtml:definition.valueHtml || '', whyHtml:definition.whyHtml || '', videoUrl:definition.videoUrl || '' };
           return [definition.concept || item.id, ...(definition.aliases || [])]
             .map(normalizeConcept).filter(Boolean).map(key => [key, details]);
@@ -532,11 +532,12 @@ export async function loadXgptEntries({ forceRefresh = false } = {}) {
 }
 
 export async function loadXgptConceptMedia(concept) {
-  const key = normalizeConcept(concept);
-  if (!key) return null;
-  if (xgptConceptMedia[key]?.imageUrl) return xgptConceptMedia[key];
+  if (!normalizeConcept(concept)) return null;
+  const cached = getCachedXgptConceptMedia(concept);
+  if (getXgptConceptImages(cached).length) return cached;
   if (!xgptConceptMediaLoaded) await loadXgptEntries();
-  return xgptConceptMedia[key]?.imageUrl ? xgptConceptMedia[key] : null;
+  const media = getCachedXgptConceptMedia(concept);
+  return getXgptConceptImages(media).length ? media : null;
 }
 
 export function getXgptConceptImages(media) {
@@ -570,14 +571,16 @@ export function createXgptPhotoStrip(media, { height = 220, className = '', alt 
 }
 
 export function getCachedXgptConceptMedia(concept) {
-  return xgptConceptMedia[normalizeConcept(concept)] || null;
+  const canonical = getCachedXgptConceptDefinition(concept)?.concept || concept;
+  const shared = window.CEPSharedDefinitions?.mediaFor(concept);
+  return getXgptConceptImages(shared).length ? shared : xgptConceptMedia[normalizeConcept(canonical)] || xgptConceptMedia[normalizeConcept(concept)] || null;
 }
 
 export function getCachedXgptConceptDefinition(concept) {
   const cached = xgptConceptDefinitions[normalizeConcept(concept)];
   const shared = window.CEPSharedDefinitions?.find(concept);
   if (!shared) return cached || null;
-  return { definition: shared.value || textFromHtml(shared.valueHtml) || cached?.definition || '',
+  return { concept:shared.concept || concept, definition: shared.value || textFromHtml(shared.valueHtml) || cached?.definition || '',
     why: shared.why || textFromHtml(shared.whyHtml) || cached?.why || '', valueHtml:shared.valueHtml || '', whyHtml:shared.whyHtml || '', videoUrl:shared.videoUrl || cached?.videoUrl || '' };
 }
 
