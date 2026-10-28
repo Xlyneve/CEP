@@ -4590,3 +4590,18 @@
   }`;
   document.head.append(style);
 })();
+
+// Reserve five adjacent mobile grid cells for the compact Quickies controls.
+(() => {
+  if ((location.pathname.split('/').pop() || '').toLowerCase() !== 'home.html') return;
+  const scope = 'html' + ':not(#cep-mobile-quickies-row)'.repeat(8) + ' body.dashboard-hierarchy-active ';
+  const panels = ':is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed';
+  const style = document.createElement('style'); style.id = 'cep-mobile-quickies-row';
+  style.textContent = `@media(max-width:768px){
+    ${scope}.dashboard-frequent-section {grid-template-columns:repeat(5,36px) minmax(0,1fr)!important;column-gap:8px!important;}
+    ${scope}.dashboard-frequent-section > ${panels} {width:36px!important;min-width:36px!important;height:36px!important;margin:0!important;box-sizing:border-box!important;}
+    ${scope}.dashboard-frequent-section > ${panels} :is(.qc-head,.qi-head,.qt-head,.qs-head) {width:36px!important;height:36px!important;padding:0!important;}
+    ${scope}.dashboard-frequent-section > ${panels} :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {width:36px!important;min-width:36px!important;height:36px!important;padding:0!important;box-sizing:border-box!important;}
+  }`;
+  document.head.append(style);
+})();
