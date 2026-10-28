@@ -6745,7 +6745,12 @@ const firebaseConfig = {
     const signOut = document.querySelector('.cep-sign-out-light');
     if (!theme || !signOut) return;
     const material = getComputedStyle(signOut);
-    properties.forEach(property => theme.style.setProperty(property, material.getPropertyValue(property), 'important'));
+    properties.forEach(property => {
+      // Moon Clay gives these two controls their own pastel palette fills.
+      if (document.documentElement.dataset.xlyneveColorTheme === 'moon-clay' && ['background','border'].includes(property)) {
+        theme.style.removeProperty(property);
+      } else theme.style.setProperty(property, material.getPropertyValue(property), 'important');
+    });
     if (document.documentElement.dataset.xlyneveColorTheme === 'aurora') {
       ['font','letter-spacing','text-transform'].forEach(property => theme.style.setProperty(property, material.getPropertyValue(property), 'important'));
       theme.style.setProperty('box-sizing', 'border-box', 'important');
