@@ -4577,3 +4577,16 @@
   style.textContent = 'html:not(#account-shape):not(#account-radius):not(#account-size):not(#account-edge):not(#account-padding) body :is(.xlyneve-theme-button,.cep-sign-out-light){display:inline-flex !important;align-items:center !important;justify-content:center !important;box-sizing:border-box !important;width:auto !important;height:auto !important;min-width:0 !important;min-height:0 !important;padding:5px 7px !important;border-width:1px !important;border-style:solid !important;border-radius:16px !important;}';
   document.head.append(style);
 })();
+
+// Mobile Quickies keep their palette controls without visible text labels.
+(() => {
+  if ((location.pathname.split('/').pop() || '').toLowerCase() !== 'home.html') return;
+  const scope = 'html' + ':not(#cep-mobile-quickies-labels)'.repeat(8) + ' body ';
+  const buttons = ':is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle)';
+  const style = document.createElement('style'); style.id = 'cep-mobile-quickies-no-labels';
+  style.textContent = `@media(max-width:768px){
+    ${scope}${buttons} {font-size:0!important;}
+    ${scope}${buttons}::before {content:none!important;}
+  }`;
+  document.head.append(style);
+})();
