@@ -416,6 +416,8 @@ let xgptConceptMediaLoaded = false;
 let xgptConceptDefinitions = {};
 let xgptConceptCounts = new Map();
 let xgptConceptLabels = new Map();
+let xgptConceptIdeas = new Map();
+let xgptConceptSearchIndex;
 const clearInMemorySearchCache = () => {
   clinicalEntriesPromise = null;
   entriesPromise = null;
@@ -426,6 +428,8 @@ const clearInMemorySearchCache = () => {
   xgptConceptDefinitions = {};
   xgptConceptCounts = new Map();
   xgptConceptLabels = new Map();
+  xgptConceptIdeas = new Map();
+  xgptConceptSearchIndex = null;
 };
 window.addEventListener('cep-search-cache-invalidated', clearInMemorySearchCache);
 window.addEventListener('storage', event => {
@@ -499,6 +503,8 @@ export async function loadXgptEntries({ forceRefresh = false } = {}) {
     xgptConceptDefinitions = definitions;
     xgptConceptCounts = new Map();
     xgptConceptLabels = new Map();
+    xgptConceptIdeas = new Map();
+    xgptConceptSearchIndex = null;
     entries.forEach(entry => {
       const concepts = new Set([...String(entry.richHtml || '').matchAll(/\[\[([^\]\[]+?)\]\]/g)]
         .map(match => {
@@ -507,7 +513,11 @@ export async function loadXgptEntries({ forceRefresh = false } = {}) {
           if (key && !xgptConceptLabels.has(key)) xgptConceptLabels.set(key, label);
           return key;
         }).filter(Boolean));
-      concepts.forEach(concept => xgptConceptCounts.set(concept, (xgptConceptCounts.get(concept) || 0) + 1));
+      concepts.forEach(concept => {
+        xgptConceptCounts.set(concept, (xgptConceptCounts.get(concept) || 0) + 1);
+        if (!xgptConceptIdeas.has(concept)) xgptConceptIdeas.set(concept, []);
+        xgptConceptIdeas.get(concept).push({ id: entry.id, text: entry.text });
+      });
     });
     return entries;
   } catch (error) {
@@ -602,7 +612,8 @@ export async function searchReferencedXgptConcepts(rawQuery) {
     ? [...new Set(commaGroups.flatMap(group => group.terms))]
     : [...new Set(conceptSearchTokens(query))];
   if (!query || !terms.length) return { results: [], terms };
-  const concepts = [...xgptConceptCounts.entries()].map(([key, count]) => {
+  // Reuse the idea-word index while typing and between both search locations.
+  const concepts = xgptConceptSearchIndex ||= [...xgptConceptCounts.entries()].map(([key, count]) => {
     const label = xgptConceptLabels.get(key) || key;
     const details = xgptConceptDefinitions[key] || {};
     const media = xgptConceptMedia[key] || {};
@@ -613,20 +624,35 @@ export async function searchReferencedXgptConcepts(rawQuery) {
     const searchTokens = conceptSearchTokens(searchText);
     const labelWords = [...new Set(labelTokens)];
     const words = [...new Set(searchTokens)];
+    const ideas = (xgptConceptIdeas.get(key) || []).map(idea => {
+      const ideaTokens = conceptSearchTokens(searchText + ' ' + idea.text);
+      return { ...idea, labelWords, labelTokenText: labelTokens.join(' '),
+        words: [...new Set(ideaTokens)], searchTokenText: ideaTokens.join(' ') };
+    });
     return {
       key, label, count, definition: details.definition || '', why: details.why || '', videoUrl:details.videoUrl || '',
       imageUrl: media.imageUrl || '', images: getXgptConceptImages(media), caption: media.caption || '', searchText,
-      labelWords, words, labelTokenText: labelTokens.join(' '), searchTokenText: searchTokens.join(' ')
+      labelWords, words, ideas, labelTokenText: labelTokens.join(' '), searchTokenText: searchTokens.join(' ')
     };
   });
   const results = concepts.map(concept => {
-    if (commaGroups) {
-      const matchedScores = commaGroups.map(group => scoreReferencedConceptGroup(concept, group)).filter(score => score !== null);
-      if (!matchedScores.length) return null;
-      return { concept, matchedGroupCount: matchedScores.length, score: matchedScores.reduce((sum, score) => sum + score, 0) };
-    }
-    const score = scoreReferencedConceptGroup(concept, { query: terms.join(' '), terms });
-    return score === null ? null : { concept, matchedGroupCount: 1, score };
+    const matchingIdeas = new Map();
+    const groups = commaGroups || [{ query: terms.join(' '), terms }];
+    const matchedScores = groups.map(group => {
+      const scores = [scoreReferencedConceptGroup(concept, group)];
+      concept.ideas.forEach(idea => {
+        const score = scoreReferencedConceptGroup(idea, group);
+        if (score !== null) {
+          scores.push(score);
+          matchingIdeas.set(idea.id, idea);
+        }
+      });
+      const matched = scores.filter(score => score !== null);
+      return matched.length ? Math.max(...matched) : null;
+    }).filter(score => score !== null);
+    if (!matchedScores.length) return null;
+    return { concept: { ...concept, matchingIdeas: [...matchingIdeas.values()] },
+      matchedGroupCount: matchedScores.length, score: matchedScores.reduce((sum, score) => sum + score, 0) };
   }).filter(Boolean).sort((a, b) =>
     b.matchedGroupCount - a.matchedGroupCount || b.score - a.score || b.concept.count - a.concept.count ||
     a.concept.label.localeCompare(b.concept.label)
@@ -653,6 +679,12 @@ export function renderReferencedXgptConceptResults(container, concepts, terms = 
     };
     appendSection('Definition', concept.definition);
     appendSection('Why it matters', concept.why);
+    (concept.matchingIdeas || []).forEach(idea => {
+      appendSection('Idea', idea.text);
+      const link = document.createElement('a'); link.textContent = 'Open idea';
+      link.href = 'chatgptx.html#' + new URLSearchParams({ cepId: idea.id, cepSearch: terms.join(' ') });
+      card.appendChild(link);
+    });
     const photos = createXgptPhotoStrip(concept, { height: 240, className: 'cep-concept-search-image', alt: concept.caption || concept.label, zoom: true });
     if (photos) card.appendChild(photos);
     appendSection('Image note', concept.caption);
