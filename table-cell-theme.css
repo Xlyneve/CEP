@@ -1,0 +1,22 @@
+/* Cell paint only: preserve page-owned text, borders, spacing and geometry. */
+:root {
+  --cep-cell-accent: var(--clinical-accent, var(--page-header-solid, #e5cbcc));
+  --cep-cell-body: color-mix(in srgb, var(--cep-cell-accent) 6%, #fff);
+  --cep-cell-heading: color-mix(in srgb, var(--cep-cell-accent) 16%, #fff);
+}
+
+/* This table already has light text; retain its readable dark surface. */
+html[data-xlyneve-color-theme="midnight-glass"].theme-vitals-table {
+  --cep-cell-body: color-mix(in srgb, var(--cep-cell-accent) 6%, #252c37);
+  --cep-cell-heading: color-mix(in srgb, var(--cep-cell-accent) 16%, #252c37);
+}
+
+/* Scoped specificity overrides legacy per-page fills without changing markup. */
+html:root body table:not(#cep-cell-theme-scope) :is(td, th):not(#cep-cell-theme-exclusion) {
+  background-color: var(--cep-cell-body) !important;
+  background-image: none !important;
+}
+
+html:root body table:not(#cep-cell-theme-scope) :is(th, thead td):not(#cep-cell-theme-exclusion) {
+  background-color: var(--cep-cell-heading) !important;
+}

@@ -4459,3 +4459,13 @@
 
 // Shared phrase-copy editing and viewing across card pages and search.
 (() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=9',document.currentScript?.src || location.href).href;document.head.append(script);})();
+
+// Theme cell fills independently of table layout and authored foregrounds.
+(() => {
+  const page = (location.pathname.split('/').pop() || '').toLowerCase();
+  if (['rncnp.html','biosched1.html','recalltracker.html'].includes(page)) return;
+  const link = document.createElement('link');
+  link.id = 'cep-table-cell-theme'; link.rel = 'stylesheet';
+  link.href = new URL('table-cell-theme.css?v=1',document.currentScript?.src || location.href).href;
+  document.head.append(link);
+})();
