@@ -485,13 +485,14 @@ export async function loadXgptEntries({ forceRefresh = false } = {}) {
         console.warn('Xgpt concept images are unavailable in header search.', error);
         return {};
       }),
-      loadPersistentSearchValue(`${cacheScope}:definitions`, async () => {
+      loadPersistentSearchValue(`${cacheScope}:definitions:v2`, async () => {
         const definitionsSnapshot = await (forceRefresh ? getDocsFromServer : getDocs)(collection(db, 'concept_defs'));
-        return Object.fromEntries(definitionsSnapshot.docs.map(item => {
+        return Object.fromEntries(definitionsSnapshot.docs.flatMap(item => {
           const definition = item.data() || {};
-          return [normalizeConcept(definition.concept || item.id), {
-            definition: definition.value || '', why: definition.why || '', videoUrl:definition.videoUrl || ''
-          }];
+          const details = { definition: definition.value || textFromHtml(definition.valueHtml),
+            why: definition.why || textFromHtml(definition.whyHtml), videoUrl:definition.videoUrl || '' };
+          return [definition.concept || item.id, ...(definition.aliases || [])]
+            .map(normalizeConcept).filter(Boolean).map(key => [key, details]);
         }));
       }, forceRefresh).catch(error => {
         console.warn('Xgpt concept definitions are unavailable in search.', error);
@@ -573,7 +574,11 @@ export function getCachedXgptConceptMedia(concept) {
 }
 
 export function getCachedXgptConceptDefinition(concept) {
-  return xgptConceptDefinitions[normalizeConcept(concept)] || null;
+  const cached = xgptConceptDefinitions[normalizeConcept(concept)];
+  const shared = window.CEPSharedDefinitions?.find(concept);
+  if (!shared) return cached || null;
+  return { definition: shared.value || textFromHtml(shared.valueHtml) || cached?.definition || '',
+    why: shared.why || textFromHtml(shared.whyHtml) || cached?.why || '', videoUrl:shared.videoUrl || cached?.videoUrl || '' };
 }
 
 const conceptSearchTokens = value => normalizeSearchValue(value).match(/[\p{L}\p{N}]+/gu) || [];
@@ -867,10 +872,15 @@ function hydrateSearchConceptLink(link) {
   link.classList.add('cep-xgpt-concept', 'xgpt-concept-link');
   const media = getCachedXgptConceptMedia(concept);
   const details = getCachedXgptConceptDefinition(concept);
-  if (media?.imageUrl) { link.classList.add('has-image'); link.dataset.image = media.imageUrl; link.dataset.caption = media.caption || ''; }
+  const imageUrl = media?.imageUrl || getXgptConceptImages(media)[0]?.imageUrl;
+  if (imageUrl) { link.classList.add('has-image'); link.dataset.image = imageUrl; link.dataset.caption = media.caption || ''; }
   if (details?.definition) link.dataset.definition = details.definition;
   else if (link.dataset.def) link.dataset.definition = link.dataset.def;
   if (details?.why) link.dataset.why = details.why;
+  const available = Boolean(link.dataset.definition || link.dataset.why || link.dataset.image || details?.videoUrl);
+  link.classList.toggle('cep-concept-no-preview', !available);
+  if (available) { link.removeAttribute('aria-disabled'); link.removeAttribute('tabindex'); }
+  else { link.setAttribute('aria-disabled','true'); link.tabIndex = -1; }
 }
 export function renderXgptSearchRichContent(parent, html, terms = []) {
   installXgptMediaUi();
@@ -1136,7 +1146,7 @@ function sourceSearchCopyHtml(entry) {
   return String(entry?.richHtml || '');
 }
 
-const interactiveSearchChildSelector = '.cep-copy-text,table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-shared-definition,.pn-definition,.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)';
+const interactiveSearchChildSelector = '.cep-copy-text,table,img,button,input,textarea,select,summary,[contenteditable="true"],.cep-shared-definition,.pn-definition,.cep-xgpt-concept:not(.cep-concept-no-preview),.xgpt-concept-link:not(.cep-concept-no-preview),a:not(.cep-global-search-result):not(.universal-search-native-card):not(.cep-concept-no-preview)';
 
 function getFacebookVideoUrl(rawUrl) {
   try {
@@ -1413,6 +1423,9 @@ export function renderClinicalSearchPins(container, entries, { navigate } = {}) 
 
 function installXgptMediaUi() {
   if (document.querySelector('.cep-xgpt-media-tip')) return;
+  const style = document.createElement('style');
+  style.textContent = 'html:root body .cep-xgpt-concept.cep-concept-no-preview,html:root body .cep-xgpt-concept.cep-concept-no-preview * {text-decoration:none !important;cursor:var(--cep-theme-cursor,default) !important;}';
+  document.head.append(style);
   const tip = document.createElement('div'); tip.className = 'cep-xgpt-media-tip'; tip.hidden = true;
   document.body.appendChild(tip);
   const showConceptPreview = async (event, isCurrent) => {
@@ -1444,7 +1457,7 @@ function installXgptMediaUi() {
     tip.style.left = `${Math.max(12, Math.min(innerWidth - tipRect.width - 12, rect.left))}px`;
     tip.style.top = `${Math.max(12, Math.min(innerHeight - tipRect.height - 12, rect.bottom + 8))}px`;
   };
-  window.CEPConceptPreview.install({ selector: '.cep-xgpt-concept', tip, show: showConceptPreview,
+  window.CEPConceptPreview.install({ selector: '.cep-xgpt-concept:not(.cep-concept-no-preview)', tip, show: showConceptPreview,
     close: () => { tip.hidden = true; tip.replaceChildren(); } });
 }
 
