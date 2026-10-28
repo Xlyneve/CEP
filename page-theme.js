@@ -4490,3 +4490,41 @@
   script.src = new URL('table-cell-theme.js?v=1',document.currentScript?.src || location.href).href;
   document.head.append(script);
 })();
+
+// Compact raised Quickies controls in every Home palette; Moon Clay keeps its own palette rules.
+(() => {
+  if ((location.pathname.split('/').pop() || '').toLowerCase() !== 'home.html') return;
+  const scope = 'html:not([data-xlyneve-color-theme="moon-clay"]):not(#quickies-surface):not(#quickies-edge):not(#quickies-size):not(#quickies-dot):not(#quickies-shell) body ';
+  const panel = ':is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator)';
+  const toggle = ':is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle)';
+  const style = document.createElement('style'); style.id = 'cep-compact-quickies';
+  style.textContent = `
+    ${scope}${panel}.collapsed {background:transparent !important;background-image:none !important;border:0 !important;box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
+    ${scope}${panel}.collapsed ${toggle} {
+      background:var(--quick-panel,var(--glass-light,#efede8)) !important;background-image:none !important;
+      border:2px solid var(--quickies-border,var(--cep-palette-color-1,#e5cbcc)) !important;
+      box-shadow:3px 3px 6px #0003,-2px -2px 5px color-mix(in srgb,var(--quick-panel,#efede8) 75%,white) !important;
+    }
+    ${scope}#timeCalculator {--quickies-border:var(--cep-palette-color-1);}
+    ${scope}#quickCalc {--quickies-border:var(--cep-palette-color-2);}
+    ${scope}#quickInteleviewer {--quickies-border:var(--cep-palette-color-3);}
+    ${scope}#tabletCalculator {--quickies-border:var(--cep-palette-color-1);}
+    ${scope}#syrupCalculator {--quickies-border:var(--cep-palette-color-2);}
+    ${scope}${panel} ${toggle}::before,${scope}${panel} ${toggle}::after {background:none !important;box-shadow:none !important;border:0 !important;}
+    @media(min-width:769px) {
+      ${scope}${panel}.collapsed ${toggle} {width:24px !important;height:24px !important;min-width:24px !important;padding:0 !important;border-radius:8px !important;color:transparent !important;-webkit-text-fill-color:transparent !important;text-indent:-9999px !important;}
+      ${scope}${panel} ${toggle}::before,${scope}${panel} ${toggle}::after {content:none !important;}
+    }
+    @media(max-width:768px) {
+      ${scope}.dashboard-frequent-section > ${panel}.collapsed ${toggle} {width:100% !important;height:46px !important;padding:5px !important;border-radius:14px !important;font-size:0 !important;}
+      ${scope}.dashboard-frequent-section > ${panel}.collapsed ${toggle}::before {position:static !important;display:block !important;width:auto !important;height:auto !important;inset:auto !important;transform:none !important;animation:none !important;text-indent:0 !important;font-size:10px !important;line-height:1.1 !important;color:var(--quick-ink,#39190f) !important;-webkit-text-fill-color:currentColor !important;}
+      ${scope}#timeCalculator.collapsed .qc-toggle::before {content:"Time" !important;}
+      ${scope}#quickCalc.collapsed .qc-toggle::before {content:"Quick calc" !important;}
+      ${scope}#quickInteleviewer.collapsed .qi-toggle::before {content:"Viewer" !important;}
+      ${scope}#tabletCalculator.collapsed .qt-toggle::before {content:"Tablets" !important;}
+      ${scope}#syrupCalculator.collapsed .qs-toggle::before {content:"Syrups" !important;}
+      ${scope}${panel} ${toggle}::after {content:none !important;}
+    }
+  `;
+  document.head.append(style);
+})();
