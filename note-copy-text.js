@@ -4,19 +4,51 @@
   window.CEPNoteCopyText = true;
   const marker = '.cep-copy-text';
   const toolbars = '.cep-pn-editor-toolbar,#formatToolbar';
+  const cursorUrl = new URL('copy-pointer.svg?v=1', location.href).href;
   const style = document.createElement('style');
   style.textContent = `
-    html:root body .cep-copy-text {text-decoration:underline dotted;text-underline-offset:3px;cursor:copy !important;}
-    html:root body .cep-copy-text * {cursor:copy !important;}
+    html:root body .cep-copy-text {text-decoration:underline dotted;text-underline-offset:3px;cursor:url("${cursorUrl}") 13 4,pointer !important;}
+    html:root body .cep-copy-text * {cursor:url("${cursorUrl}") 13 4,pointer !important;}
     html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text,
     html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text * {cursor:text !important;}
     .cep-copy-text-button svg {width:14px;height:14px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.5;}
     .cep-copy-text:focus-visible {outline:1px solid currentColor;outline-offset:3px;}
     .cep-copy-text.cep-phrase-copied {outline:2px solid white;outline-offset:3px;filter:drop-shadow(0 0 3px white);}
+    #cep-copy-hover-tip {position:fixed;z-index:2147483647;pointer-events:none;padding:6px 10px;border:1px solid #ffb162;border-radius:8px;background:linear-gradient(135deg,#32104f,#672889);color:#fff;-webkit-text-fill-color:#fff;font:12px/1.4 Tahoma,sans-serif;box-shadow:0 3px 12px #0004;white-space:nowrap;}
+    #cep-copy-hover-tip[hidden] {display:none !important;}
   `;
   document.head.append(style);
   const viewingAttributes = new WeakMap();
   const isEditing = phrase => phrase.closest('[contenteditable="true"],.editing-note,.is-editing');
+  let tip;
+  function hideTip() { if (tip) tip.hidden = true; }
+  function showTip(phrase, x, y) {
+    if (isEditing(phrase)) { hideTip(); return; }
+    if (!tip) {
+      tip = document.createElement('div'); tip.id = 'cep-copy-hover-tip';
+      tip.setAttribute('aria-hidden','true'); document.body.append(tip);
+    }
+    tip.textContent = phrase.classList.contains('email-copy') ? 'Copy email address' : 'Copy text';
+    tip.hidden = false;
+    tip.style.left = Math.max(4, Math.min(x + 20, innerWidth - tip.offsetWidth - 4)) + 'px';
+    tip.style.top = Math.max(4, Math.min(y + 20, innerHeight - tip.offsetHeight - 4)) + 'px';
+  }
+  document.addEventListener('pointermove', event => {
+    const phrase = event.target.closest?.(marker);
+    if (phrase && event.pointerType !== 'touch') showTip(phrase,event.clientX,event.clientY);
+    else hideTip();
+  },true);
+  document.addEventListener('focusin', event => {
+    const phrase = event.target.closest?.(marker);
+    if (phrase) { const box = phrase.getBoundingClientRect(); showTip(phrase,box.left,box.bottom); }
+    else hideTip();
+  });
+  document.addEventListener('focusout',hideTip);
+  document.addEventListener('pointerdown',hideTip,true);
+  document.addEventListener('pointerleave',hideTip);
+  document.addEventListener('scroll',hideTip,true);
+  window.addEventListener('blur',hideTip);
+  document.addEventListener('keydown',event => { if (event.key === 'Escape') hideTip(); });
   function preparePhrases() {
     document.querySelectorAll(marker).forEach(phrase => {
       if (isEditing(phrase)) {
