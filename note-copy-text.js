@@ -6,13 +6,43 @@
   const toolbars = '.cep-pn-editor-toolbar,#formatToolbar';
   const style = document.createElement('style');
   style.textContent = `
-    .cep-copy-text {text-decoration:underline dotted;text-underline-offset:3px;cursor:copy;}
-    [contenteditable="true"] .cep-copy-text {cursor:text;}
+    html:root body .cep-copy-text {text-decoration:underline dotted;text-underline-offset:3px;cursor:copy !important;}
+    html:root body .cep-copy-text * {cursor:copy !important;}
+    html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text,
+    html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text * {cursor:text !important;}
     .cep-copy-text-button svg {width:14px;height:14px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.5;}
     .cep-copy-text:focus-visible {outline:1px solid currentColor;outline-offset:3px;}
     .cep-copy-text.cep-phrase-copied {outline:2px solid white;outline-offset:3px;filter:drop-shadow(0 0 3px white);}
   `;
   document.head.append(style);
+  const viewingAttributes = new WeakMap();
+  const isEditing = phrase => phrase.closest('[contenteditable="true"],.editing-note,.is-editing');
+  function preparePhrases() {
+    document.querySelectorAll(marker).forEach(phrase => {
+      if (isEditing(phrase)) {
+        const original = viewingAttributes.get(phrase);
+        if (original) {
+          for (const [name, value] of original) {
+            if (value === null) phrase.removeAttribute(name);
+            else phrase.setAttribute(name, value);
+          }
+          viewingAttributes.delete(phrase);
+        }
+        return;
+      }
+      if (!viewingAttributes.has(phrase)) {
+        viewingAttributes.set(phrase, ['role','tabindex','title','aria-label'].map(name =>
+          [name, phrase.getAttribute(name)]));
+      }
+      phrase.setAttribute('role','button');
+      phrase.tabIndex = 0;
+      // Email controls already have a more specific copy label.
+      if (!phrase.classList.contains('email-copy')) {
+        phrase.title = 'Copy text';
+        phrase.setAttribute('aria-label','Copy text: ' + phrase.textContent.trim());
+      }
+    });
+  }
   let saved;
   function remember() {
     const selection = getSelection();
@@ -46,6 +76,7 @@
     editor.dispatchEvent(new Event('input',{bubbles:true}));remember();
   }
   function install() {
+    preparePhrases();
     document.querySelectorAll(toolbars).forEach(toolbar=>{
       if(toolbar.querySelector('.cep-copy-text-button'))return;
       const button=document.createElement('button');button.type='button';
@@ -74,23 +105,23 @@
   // Capture before card-copy, table zoom and definition handlers.
   document.addEventListener('click',event=>{
     const phrase=event.target.closest?.(marker);
-    if(!phrase || phrase.closest('[contenteditable="true"],.editing-note,.is-editing'))return;
+    if(!phrase || isEditing(phrase))return;
     event.preventDefault();event.stopImmediatePropagation();copy(phrase);
   },true);
   document.addEventListener('keydown',event=>{
     if(event.key !== 'Enter' && event.key !== ' ')return;
     const phrase=event.target.closest?.('.cep-copy-text[role="button"]');
-    if(!phrase || phrase.closest('[contenteditable="true"],.editing-note,.is-editing'))return;
+    if(!phrase || isEditing(phrase))return;
     event.preventDefault();event.stopImmediatePropagation();copy(phrase);
   },true);
   // Double-clicking a phrase must not trigger search's navigation shortcut.
   document.addEventListener('dblclick',event=>{
     const phrase=event.target.closest?.(marker);
-    if(phrase && !phrase.closest('[contenteditable="true"],.editing-note,.is-editing')){
+    if(phrase && !isEditing(phrase)){
       event.preventDefault();event.stopImmediatePropagation();
     }
   },true);
   const observer=new MutationObserver(install);
-  function start(){install();observer.observe(document.body,{subtree:true,childList:true});}
+  function start(){install();observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['contenteditable','class']});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

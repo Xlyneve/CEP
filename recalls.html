@@ -1202,7 +1202,7 @@ function sanitizeNoteHtml(html) {
   const template = document.createElement('template');
   template.innerHTML = html;
 
-  const allowedTags = ['B', 'STRONG', 'I', 'EM', 'U', 'BR', 'SPAN'];
+  const allowedTags = ['B', 'STRONG', 'I', 'EM', 'U', 'BR', 'SPAN', 'DIV', 'P'];
 
   template.content.querySelectorAll('*').forEach(el => {
     if (!allowedTags.includes(el.tagName)) {
@@ -1211,14 +1211,14 @@ function sanitizeNoteHtml(html) {
     }
 
     [...el.attributes].forEach(attr => {
-      const isAllowedHighlight =
-        el.tagName === 'SPAN' &&
-        attr.name === 'class' &&
-        attr.value === 'highlight-gradient';
-
-      if (!isAllowedHighlight) {
-        el.removeAttribute(attr.name);
-      }
+      // Keep the saved phrase-copy marker in both the viewer and editor.
+      // Runtime button attributes and unrelated classes are still discarded.
+      if (attr.name === 'class' && ['SPAN', 'DIV'].includes(el.tagName)) {
+        const classes = attr.value.split(/\s+/).filter(name =>
+          name === 'highlight-gradient' || name === 'cep-copy-text');
+        if (classes.length) el.setAttribute('class', classes.join(' '));
+        else el.removeAttribute('class');
+      } else el.removeAttribute(attr.name);
     });
   });
 

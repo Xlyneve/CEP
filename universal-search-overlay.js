@@ -1,4 +1,4 @@
-import './note-copy-text.js?v=3';
+import './note-copy-text.js?v=4';
 import { enableSearchImageZoom, enableSearchTableZoom } from './note-media-viewer.js?v=1';
 export { enableSearchImageZoom, enableSearchTableZoom, openNoteTableZoom, openNoteImageZoom } from './note-media-viewer.js?v=1';
 import "./information-link-markers.js?v=20261018-1";
