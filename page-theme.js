@@ -4598,7 +4598,12 @@
   const panels = ':is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator).collapsed';
   const style = document.createElement('style'); style.id = 'cep-mobile-quickies-row';
   style.textContent = `@media(max-width:768px){
-    ${scope}.dashboard-frequent-section {grid-template-columns:repeat(5,36px) minmax(0,1fr)!important;column-gap:8px!important;}
+    ${scope}.dashboard-frequent-section {grid-template-columns:minmax(0,1fr) repeat(5,36px) minmax(0,1fr)!important;column-gap:8px!important;}
+    ${scope}.dashboard-frequent-section > #timeCalculator.collapsed {grid-column:2!important;}
+    ${scope}.dashboard-frequent-section > #quickCalc.collapsed {grid-column:3!important;}
+    ${scope}.dashboard-frequent-section > #quickInteleviewer.collapsed {grid-column:4!important;}
+    ${scope}.dashboard-frequent-section > #tabletCalculator.collapsed {grid-column:5!important;}
+    ${scope}.dashboard-frequent-section > #syrupCalculator.collapsed {grid-column:6!important;}
     ${scope}.dashboard-frequent-section > ${panels} {width:36px!important;min-width:36px!important;height:36px!important;margin:0!important;box-sizing:border-box!important;}
     ${scope}.dashboard-frequent-section > ${panels} :is(.qc-head,.qi-head,.qt-head,.qs-head) {width:36px!important;height:36px!important;padding:0!important;}
     ${scope}.dashboard-frequent-section > ${panels} :is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle) {width:36px!important;min-width:36px!important;height:36px!important;padding:0!important;box-sizing:border-box!important;}
