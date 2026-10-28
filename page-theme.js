@@ -4468,4 +4468,7 @@
   link.id = 'cep-table-cell-theme'; link.rel = 'stylesheet';
   link.href = new URL('table-cell-theme.css?v=1',document.currentScript?.src || location.href).href;
   document.head.append(link);
+  const script = document.createElement('script');
+  script.src = new URL('table-cell-theme.js?v=1',document.currentScript?.src || location.href).href;
+  document.head.append(script);
 })();
