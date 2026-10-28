@@ -270,7 +270,7 @@
   if (selectedTheme === "moon-clay") {
     const link = document.createElement("link");
     link.id = "cep-moon-clay-theme"; link.rel = "stylesheet";
-    link.href = new URL("moon-clay-theme.css?v=1",document.currentScript?.src || location.href).href;
+    link.href = new URL("moon-clay-theme.css?v=2",document.currentScript?.src || location.href).href;
     document.head.append(link);
   }
 
