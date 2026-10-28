@@ -409,6 +409,7 @@ export async function loadClinicalNotesEntries({ forceRefresh = false } = {}) {
 }
 
 let entriesPromise;
+let entriesLoadState;
 let xgptEntriesPromise;
 let xgptConceptMedia = {};
 let xgptConceptMediaLoaded = false;
@@ -418,6 +419,7 @@ let xgptConceptLabels = new Map();
 const clearInMemorySearchCache = () => {
   clinicalEntriesPromise = null;
   entriesPromise = null;
+  entriesLoadState = null;
   xgptEntriesPromise = null;
   xgptConceptMedia = {};
   xgptConceptMediaLoaded = false;
@@ -660,41 +662,55 @@ export function renderReferencedXgptConceptResults(container, concepts, terms = 
   container.replaceChildren(...cards);
 }
 
-async function loadEntries(onProgress) {
-  if (entriesPromise) return entriesPromise;
-  entriesPromise = (async () => {
-    await window.CEP_AUTH_READY;
-    const db = getFirestore(getApp());
-    const userId = getAuth(getApp()).currentUser?.uid || 'signed-in';
-    const batches = await Promise.all(sources.map(async ([collectionName,file,sourceTitle,fields,directField]) => {
-      try {
-        const documents = await loadPersistentSearchDocuments(db, collectionName, `main:${userId}`);
-        onProgress?.(sourceTitle);
-        return documents.map((note, sourceIndex) => {
-          const data = note.data;
-          const title = textFromHtml(data.title).replace(/\s+/g, ' ').trim() || sourceTitle;
-          const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
-          const displayText = textFromHtml(data.note || data.text || data.content || '') || text;
-          const richHtml = data.note || data.text || data.content || '';
-          const imageUrls = [...new Set([
-            data.image || '',
-            ...fields.flatMap(field => imageUrlsFromHtml(data[field]))
-          ].filter(Boolean))];
-          const directUrl = directField && data[directField];
-          return {
-            id: note.id, file, sourceIndex, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`,
-            text, displayText, directUrl, cardColour: file === 'Notes.html' ? (data.color || '#C0B7BB') : '',
-            imageUrl: data.image || '', imageUrls, richHtml, record: { id: note.id, data }
-          };
-        });
-      } catch (error) {
-        console.warn(`Search could not load ${collectionName}.`, error);
-        return [];
-      }
-    }));
-    return batches.flat();
-  })();
-  return entriesPromise;
+function loadEntries(onProgress, onBatch) {
+  if (!entriesPromise) {
+    const state = entriesLoadState = { batches: [], listeners: new Set() };
+    entriesPromise = (async () => {
+      await window.CEP_AUTH_READY;
+      const db = getFirestore(getApp());
+      const userId = getAuth(getApp()).currentUser?.uid || 'signed-in';
+      const batches = await Promise.all(sources.map(async ([collectionName,file,sourceTitle,fields,directField], batchIndex) => {
+        try {
+          const documents = await loadPersistentSearchDocuments(db, collectionName, `main:${userId}`, { waitForCacheWrite: false });
+          const batch = documents.map((note, sourceIndex) => {
+            const data = note.data;
+            const title = textFromHtml(data.title).replace(/\s+/g, ' ').trim() || sourceTitle;
+            const text = fields.map(field => textFromHtml(data[field])).filter(Boolean).join('\n');
+            const displayText = textFromHtml(data.note || data.text || data.content || '') || text;
+            const richHtml = data.note || data.text || data.content || '';
+            const imageUrls = [...new Set([
+              data.image || '',
+              ...fields.flatMap(field => imageUrlsFromHtml(data[field]))
+            ].filter(Boolean))];
+            const directUrl = directField && data[directField];
+            return {
+              id: note.id, file, sourceIndex, sourceTitle, title: title === sourceTitle ? title : `${sourceTitle} — ${title}`,
+              text, displayText, directUrl, cardColour: file === 'Notes.html' ? (data.color || '#C0B7BB') : '',
+              imageUrl: data.image || '', imageUrls, richHtml, record: { id: note.id, data }
+            };
+          });
+          state.batches[batchIndex] = batch;
+          if (entriesLoadState === state) {
+            const partial = state.batches.flat();
+            state.listeners.forEach(listener => {
+              listener.onProgress?.(sourceTitle);
+              listener.onBatch?.(partial);
+            });
+          }
+          return batch;
+        } catch (error) {
+          console.warn(`Search could not load ${collectionName}.`, error);
+          return [];
+        }
+      }));
+      return batches.flat();
+    })();
+  }
+  const state = entriesLoadState;
+  const listener = { onProgress, onBatch };
+  state.listeners.add(listener);
+  onBatch?.(state.batches.flat());
+  return entriesPromise.finally(() => state.listeners.delete(listener));
 }
 
 export function preloadUniversalSearch() {
@@ -1464,8 +1480,9 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
   const results = panel.querySelector('.cep-global-search-results');
   panel.querySelector('[aria-label="Close search"]').addEventListener('click', closeSearch);
   let clinicalEntries = [], clinicalLoadPromise=null;
-  let entries = [], activeSource = 'All', searchMode = 'default', timer, conceptRequestId = 0;
+  let entries = [], activeSource = 'All', searchMode = 'default', timer, conceptRequestId = 0, mainLoading = true;
   const mergeXgptEntries = xgptEntries => {
+    if (!host.isConnected) return;
     const existingIds = new Set(entries.filter(entry => entry.file === 'chatgptx.html').map(entry => entry.id));
     entries = entries.concat(xgptEntries.filter(entry => !existingIds.has(entry.id)));
     xgptPrompt.hidden = true; renderFilters(); runSearch();
@@ -1605,7 +1622,8 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
     }
     window.CEPInformationLinks.sortResults(matches, match => match.entry);
     const onlySimilar = matches.length && matches.every(match => match.fuzzy);
-    status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 30 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : 'No matching notes found.';
+    status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 30 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : mainLoading && searchMode === 'default' ? 'Loading saved-note sections…' : 'No matching notes found.';
+    if (mainLoading && searchMode === 'default' && matches.length) status.textContent += ' · loading more sections…';
     const groups = new Map();
     matches.forEach(({ entry }) => {
       const snippetText = entry.file === 'chatgptx.html' ? entry.text : makeSnippet(entry, renderTerms);
@@ -1775,7 +1793,19 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
     }
   });
   input.focus();
-  entries = await loadEntries(source => { status.textContent = `Loading ${source}…`; });
-  renderFilters(); runSearch(); input.focus();
+  // Search each section as it arrives; one slow collection must not hide the
+  // sections already available. Xgpt starts alongside the main collections.
+  let batchFrame = 0;
+  const publishMainEntries = mainEntries => {
+    if (!host.isConnected) return;
+    entries = mainEntries.concat(entries.filter(entry => entry.file === 'chatgptx.html'));
+    if (!batchFrame) batchFrame = requestAnimationFrame(() => {
+      batchFrame = 0;
+      if (host.isConnected) { renderFilters(); runSearch(); }
+    });
+  };
   void requestXgptEntries();
+  try { await loadEntries(null, publishMainEntries); }
+  finally { mainLoading = false; }
+  if (host.isConnected) { renderFilters(); runSearch(); }
 }
