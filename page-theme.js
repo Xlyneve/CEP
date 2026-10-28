@@ -4209,6 +4209,64 @@
     }
   `;
 
+
+  // Editor chrome must not inherit saved-card ink or page-local white fills.
+  // One scoped ID guard outranks legacy page rules without altering note HTML.
+  const editorScopes = [
+    '.cep-note-popup', '.pn-edit-popup', '#formEditDialog',
+    '.note-card.editing-note', '.note-card.is-editing', '.note-tile.editing',
+    '.note-card:has(>.edit-title:not([style*="display: none"]):not([style*="display:none"]))',
+    '.file-item.is-editing', '.vaccine-card:has(.edit-notes-box)',
+    '.med-card:has([contenteditable="true"])', '.acc-item:has([contenteditable="true"])',
+    '.note-card:has(.note-content[contenteditable="true"],.note-text[contenteditable="true"],.editableNote[contenteditable="true"])',
+    '#inputGroup', '#nurseFormWrapper', '.input-panel', '#formCard', '#notePanel',
+  ];
+  const editor = 'html:root body :is(' + editorScopes.join(',') + '):not(#cep-editor-style-exclusion)';
+  themeStyle.textContent += `
+    ${editor} {
+      background:linear-gradient(var(--clinical-panel,#efede8),var(--clinical-panel,#efede8)),#efede8 !important;
+      color:var(--theme-ink,#39353a) !important;
+      -webkit-text-fill-color:currentColor !important;
+      border-color:var(--clinical-edge,#b8b0ac) !important;
+      opacity:1 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    ${editor} :is([data-popup-content],.pn-edit-fields,.edit-mode,.form-dialog-body,.form-dialog-footer,.edit-main-actions,.edit-table-tools,.editor-buttons,.format-buttons,.formatting-buttons,.cep-pn-editor-toolbar) {
+      background:transparent !important; color:var(--theme-ink,#39353a) !important;
+      -webkit-text-fill-color:currentColor !important;
+    }
+    ${editor} :is(label,legend,h2,.table-tools-label,.cep-add-definition-label):not(:where([contenteditable="true"] *)) {
+      color:var(--theme-ink,#39353a) !important; -webkit-text-fill-color:currentColor !important;
+      text-shadow:none !important;
+    }
+    ${editor} :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),select,textarea,[contenteditable="true"]) {
+      background:linear-gradient(var(--clinical-field,#faf9f7),var(--clinical-field,#faf9f7)),#faf9f7 !important;
+      color:var(--theme-ink,#39353a) !important; -webkit-text-fill-color:currentColor !important;
+      caret-color:var(--theme-ink,#39353a) !important; border-color:var(--clinical-edge,#b8b0ac) !important;
+    }
+    ${editor} :is(input,textarea)::placeholder {
+      color:var(--theme-ink,#39353a) !important; -webkit-text-fill-color:currentColor !important; opacity:.7 !important;
+    }
+    ${editor} :is(button,[role="button"]):not(.color-btn):not([data-color]):not(.color-swatch) {
+      background:linear-gradient(var(--clinical-field,#faf9f7),var(--clinical-field,#faf9f7)),#faf9f7 !important;
+      color:var(--theme-ink,#39353a) !important; -webkit-text-fill-color:currentColor !important;
+      border-color:var(--clinical-edge,#b8b0ac) !important; text-shadow:none !important;
+    }
+    ${editor} :is(button,[role="button"]) :is(span,i,svg,path) {
+      color:inherit !important; -webkit-text-fill-color:currentColor !important;
+    }
+    ${editor} button svg [stroke]:not([stroke="none"]) { stroke:currentColor !important; }
+    ${editor} button svg [fill]:not([fill="none"]) { fill:currentColor !important; }
+    ${editor} :is(button,[role="button"]):is([aria-pressed="true"],.active) {
+      outline:2px solid var(--theme-ink,#39353a); outline-offset:1px;
+    }
+    ${editor} :is(button,input,select,textarea,[contenteditable="true"]):focus-visible {
+      outline:2px solid var(--theme-ink,#39353a) !important; outline-offset:2px !important;
+    }
+    html:root body :is(.cep-note-popup,.pn-edit-popup):not(#cep-editor-style-exclusion) :is(#inputGroup,#nurseFormWrapper,[data-popup-content],.pn-edit-fields) {
+      background:transparent !important; border:0 !important; box-shadow:none !important;
+    }
+  `;
+
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
