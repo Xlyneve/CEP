@@ -4681,20 +4681,22 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         }
         const details = window.getCachedXgptConceptDefinition?.(concept);
         const definition = details?.definition || link.dataset.definition || '', why = details?.why || link.dataset.why || '';
-        if ((!link.dataset.image && !definition && !why && !details?.videoUrl) || !link.isConnected) return;
+        if ((!link.dataset.image && !definition && !why && !details?.valueHtml && !details?.whyHtml && !details?.videoUrl) || !link.isConnected) return;
         if (!isCurrent()) return;
         const parts = [];
         const photos = window.createXgptPhotoStrip(window.getCachedXgptConceptMedia?.(concept) || { imageUrl: link.dataset.image }, { alt: concept, zoom: true });
         if (photos) parts.push(photos);
         if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'xgpt-media-tip-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
-        const appendSection = (labelText, bodyText) => {
-          if (!bodyText) return;
+        const appendSection = (labelText, bodyText, bodyHtml) => {
+          if (!bodyText && !bodyHtml) return;
           const section = document.createElement('div'); section.className = 'cep-xgpt-media-section';
           const label = document.createElement('div'); label.className = 'cep-xgpt-media-label'; label.textContent = labelText;
-          const body = document.createElement('div'); body.className = 'cep-xgpt-media-text'; body.textContent = bodyText;
+          const body = document.createElement('div'); body.className = 'cep-xgpt-media-text'; if (bodyHtml && window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(body, bodyHtml);
+          else body.textContent = bodyText;
+          body.querySelectorAll('img').forEach(image => { image.style.maxWidth = '100%'; image.style.height = 'auto'; });
           section.append(label, body); parts.push(section);
         };
-        appendSection('DEFINITION', definition); appendSection('WHY IT MATTERS', why);
+        appendSection('DEFINITION', definition, details?.valueHtml); appendSection('WHY IT MATTERS', why, details?.whyHtml);
         tip.replaceChildren(...parts); window.CEPSharedDefinitions.appendVideo(tip,details?.videoUrl); tip.style.display = 'block';
         const rect = link.getBoundingClientRect(), tipRect = tip.getBoundingClientRect();
         tip.style.left = `${Math.max(12, Math.min(innerWidth - tipRect.width - 12, rect.left))}px`;
