@@ -4455,4 +4455,4 @@
 })();
 
 // Shared phrase-copy editing and viewing across card pages and search.
-(() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=5',document.currentScript?.src || location.href).href;document.head.append(script);})();
+(() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=6',document.currentScript?.src || location.href).href;document.head.append(script);})();

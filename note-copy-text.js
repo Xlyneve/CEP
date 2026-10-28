@@ -4,17 +4,48 @@
   window.CEPNoteCopyText = true;
   const marker = '.cep-copy-text';
   const toolbars = '.cep-pn-editor-toolbar,#formatToolbar';
-  const cursorUrl = new URL('copy-pointer.svg?v=1', location.href).href;
+  const sharedTheme = !['rncnp.html','biosched1.html','recalltracker.html'].includes(location.pathname.split('/').pop().toLowerCase());
+  let cursorPalette = '';
+  function updateThemeCursors() {
+    const root = document.documentElement;
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none';
+    root.append(probe);
+    const resolve = expression => {
+      probe.style.color = expression;
+      const channels = getComputedStyle(probe).color.match(/[\d.]+/g).slice(0,3).map(Number);
+      return '#' + channels.map(value => Math.round(value).toString(16).padStart(2,'0')).join('');
+    };
+    const accent = resolve('var(--clinical-accent,var(--page-header-solid,#e5cbcc))');
+    const paper = resolve('var(--clinical-field,#efede8)');
+    const ink = resolve('var(--theme-ink,#39190f)');
+    probe.remove();
+    const palette = [accent,paper,ink].join();
+    if (palette === cursorPalette) return;
+    cursorPalette = palette;
+    root.style.setProperty('--cep-cursor-accent',accent);
+    root.style.setProperty('--cep-cursor-paper',paper);
+    root.style.setProperty('--cep-cursor-ink',ink);
+    const image = (shape, width, height) => {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 40 48"><defs><radialGradient id="color" cx="65%" cy="65%" r="75%"><stop stop-color="${paper}"/><stop offset=".28" stop-color="${accent}"/><stop offset=".5" stop-color="${ink}"/><stop offset=".7" stop-color="${accent}"/><stop offset="1" stop-color="${paper}"/></radialGradient></defs><path d="${shape}" fill="none" stroke="${paper}" stroke-width="4" stroke-linejoin="round"/><path d="${shape}" fill="url(#color)" stroke="${ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+      return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+    };
+    root.style.setProperty('--cep-theme-cursor',image('M5 3v37l10-9 8 14 7-4-8-14 13-3z',28,34) + ' 4 2,default');
+    root.style.setProperty('--cep-theme-pointer',image('M13 25V6a3 3 0 0 1 6 0v12a3 3 0 0 1 6 0v2a3 3 0 0 1 6 0v3a3 3 0 0 1 6 0v9c0 8-5 13-12 13h-4c-5 0-7-3-10-7L4 28c-3-4 2-8 5-4l4 5z',32,40) + ' 13 4,pointer');
+  }
   const style = document.createElement('style');
   style.textContent = `
-    html:root body .cep-copy-text {text-decoration:underline dotted;text-underline-offset:3px;cursor:url("${cursorUrl}") 13 4,pointer !important;}
-    html:root body .cep-copy-text * {cursor:url("${cursorUrl}") 13 4,pointer !important;}
+    ${sharedTheme ? `html:root body {cursor:var(--cep-theme-cursor,default);}
+    html:root body :is(a[href],button:not(:disabled),[role="button"],summary,input[type="button"],input[type="submit"],.note-card,.note-tile,.file-item,.chatBubble) {cursor:var(--cep-theme-pointer,pointer) !important;}
+    html:root body :is(textarea,[contenteditable="true"],input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"])) {cursor:text !important;}` : ''}
+    html:root body .cep-copy-text {text-decoration:underline dotted;text-underline-offset:3px;cursor:var(--cep-theme-pointer,pointer) !important;}
+    html:root body .cep-copy-text * {cursor:var(--cep-theme-pointer,pointer) !important;}
     html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text,
     html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text * {cursor:text !important;}
     .cep-copy-text-button svg {width:14px;height:14px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.5;}
     .cep-copy-text:focus-visible {outline:1px solid currentColor;outline-offset:3px;}
     .cep-copy-text.cep-phrase-copied {outline:2px solid white;outline-offset:3px;filter:drop-shadow(0 0 3px white);}
-    #cep-copy-hover-tip {position:fixed;z-index:2147483647;pointer-events:none;padding:6px 10px;border:1px solid #ffb162;border-radius:8px;background:linear-gradient(135deg,#32104f,#672889);color:#fff;-webkit-text-fill-color:#fff;font:12px/1.4 Tahoma,sans-serif;box-shadow:0 3px 12px #0004;white-space:nowrap;}
+    #cep-copy-hover-tip {position:fixed;z-index:2147483647;pointer-events:none;padding:6px 10px;border:1px solid var(--cep-cursor-accent,#39190f);border-radius:8px;background:var(--cep-cursor-paper,#efede8);color:var(--cep-cursor-ink,#39190f);-webkit-text-fill-color:currentColor;font:12px/1.4 Tahoma,sans-serif;box-shadow:0 3px 12px #0004;white-space:nowrap;}
     #cep-copy-hover-tip[hidden] {display:none !important;}
   `;
   document.head.append(style);
@@ -154,6 +185,11 @@
     }
   },true);
   const observer=new MutationObserver(install);
-  function start(){install();observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['contenteditable','class']});}
+  function start(){
+    updateThemeCursors(); install();
+    observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['contenteditable','class']});
+    new MutationObserver(updateThemeCursors).observe(document.documentElement,{attributes:true,attributeFilter:['data-xlyneve-color-theme','class','style']});
+    window.addEventListener('load',updateThemeCursors);
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
