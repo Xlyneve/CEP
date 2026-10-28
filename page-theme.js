@@ -4540,6 +4540,6 @@
     : [root + ' body #homepage-calendar', root + ' body #homepage-calendar iframe'];
   const style = document.createElement('style'); style.id = 'cep-home-calendar-no-shell';
   style.textContent = targets.join(',') + '{background:transparent !important;background-image:none !important;border:0 !important;box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}' +
-    (embedded ? root + ' body :is(.calendar-container,.todo-container)::before,' + root + ' body :is(.calendar-container,.todo-container)::after{content:none !important;}' : '');
+    (embedded ? root + ' body :is(.calendar-container,.todo-container)::before,' + root + ' body :is(.calendar-container,.todo-container)::after{content:none !important;}' : root + ' body #homepage-calendar-resize{opacity:0 !important;background:transparent !important;border:0 !important;box-shadow:none !important;}');
   document.head.append(style);
 })();
