@@ -208,6 +208,9 @@
 
   const pageColor = palette[hash(pageName) % palette.length];
   const root = document.documentElement;
+  palette.slice(0,3).forEach((color,index) => {
+    root.style.setProperty(`--cep-palette-color-${index + 1}`,color.solid);
+  });
   if (pageName === "vs.html") root.classList.add("theme-vitals-table");
   // Selected modes use the accent rather than the neutral card surface.
   const searchAccent = selectedTheme === 'original'
@@ -4455,4 +4458,4 @@
 })();
 
 // Shared phrase-copy editing and viewing across card pages and search.
-(() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=7',document.currentScript?.src || location.href).href;document.head.append(script);})();
+(() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=8',document.currentScript?.src || location.href).href;document.head.append(script);})();

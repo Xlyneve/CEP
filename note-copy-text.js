@@ -19,19 +19,22 @@
     const accent = resolve('var(--clinical-accent,var(--page-header-solid,#e5cbcc))');
     const paper = resolve('var(--clinical-field,#efede8)');
     const ink = resolve('var(--theme-ink,#39190f)');
+    const gradientStart = resolve('var(--clinical-accent,var(--cep-palette-color-1,#e5cbcc))');
+    const gradientMiddle = resolve('var(--cep-palette-color-2,var(--copy-feedback-accent,var(--cep-palette-color-1,#d3e0df)))');
+    const gradientEnd = resolve('var(--cep-palette-color-3,var(--cep-palette-color-1,#e1e2c3))');
     probe.remove();
-    const palette = [accent,paper,ink].join();
+    const palette = [accent,paper,ink,gradientStart,gradientMiddle,gradientEnd].join();
     if (palette === cursorPalette) return;
     cursorPalette = palette;
     root.style.setProperty('--cep-cursor-accent',accent);
     root.style.setProperty('--cep-cursor-paper',paper);
     root.style.setProperty('--cep-cursor-ink',ink);
     const image = (shape, width, height) => {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 40 48"><defs><radialGradient id="color" cx="65%" cy="65%" r="75%"><stop stop-color="${paper}"/><stop offset=".28" stop-color="${accent}"/><stop offset=".5" stop-color="${ink}"/><stop offset=".7" stop-color="${accent}"/><stop offset="1" stop-color="${paper}"/></radialGradient></defs><path d="${shape}" fill="none" stroke="${paper}" stroke-width="4" stroke-linejoin="round"/><path d="${shape}" fill="url(#color)" stroke="${ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 40 48"><defs><linearGradient id="color" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${gradientStart}"/><stop offset=".5" stop-color="${gradientMiddle}"/><stop offset="1" stop-color="${gradientEnd}"/></linearGradient></defs><path d="${shape}" fill="none" stroke="${paper}" stroke-width="4" stroke-linejoin="round"/><path d="${shape}" fill="url(#color)" stroke="${ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
       return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
     };
     root.style.setProperty('--cep-theme-cursor',image('M5 3v37l10-9 8 14 7-4-8-14 13-3z',18,22) + ' 2 1,default');
-    root.style.setProperty('--cep-theme-pointer',image('M13 25V6a3 3 0 0 1 6 0v12a3 3 0 0 1 6 0v2a3 3 0 0 1 6 0v3a3 3 0 0 1 6 0v9c0 8-5 13-12 13h-4c-5 0-7-3-10-7L4 28c-3-4 2-8 5-4l4 5z',32,40) + ' 13 4,pointer');
+    root.style.setProperty('--cep-theme-pointer',image('M13 25V6a3 3 0 0 1 6 0v12a3 3 0 0 1 6 0v2a3 3 0 0 1 6 0v3a3 3 0 0 1 6 0v9c0 8-5 13-12 13h-4c-5 0-7-3-10-7L4 28c-3-4 2-8 5-4l4 5z',20,24) + ' 8 3,pointer');
   }
   const style = document.createElement('style');
   style.textContent = `
