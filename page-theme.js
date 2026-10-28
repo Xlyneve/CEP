@@ -218,6 +218,16 @@
   palette.slice(0,3).forEach((color,index) => {
     root.style.setProperty(`--cep-palette-color-${index + 1}`,color.solid);
   });
+  // Pair palette surfaces of similar brightness so both controls keep readable text.
+  const controlLuminance = color => color.rgb.split(',').map(Number).map(v => {v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;}).reduce((sum,v,i) => sum + v * [.2126,.7152,.0722][i],0);
+  const controlColors = palette.filter(color => selectedTheme === 'midnight-glass' ? controlLuminance(color) < .2 : controlLuminance(color) >= .3);
+  const controlPalette = controlColors.length ? controlColors : palette;
+  ['theme','signout'].forEach((name,index) => {
+    const first = controlPalette[(index * 2) % controlPalette.length], last = controlPalette[(index * 2 + 1) % controlPalette.length];
+    root.style.setProperty('--cep-' + name + '-start',first.solid);
+    root.style.setProperty('--cep-' + name + '-end',last.solid);
+    root.style.setProperty('--cep-' + name + '-ink',selectedTheme === 'midnight-glass' ? '#e9edf5' : '#25252b');
+  });
   if (pageName === "vs.html") root.classList.add("theme-vitals-table");
   // Selected modes use the accent rather than the neutral card surface.
   const searchAccent = selectedTheme === 'original'
@@ -270,7 +280,7 @@
   if (selectedTheme === "moon-clay") {
     const link = document.createElement("link");
     link.id = "cep-moon-clay-theme"; link.rel = "stylesheet";
-    link.href = new URL("moon-clay-theme.css?v=5",document.currentScript?.src || location.href).href;
+    link.href = new URL("moon-clay-theme.css?v=6",document.currentScript?.src || location.href).href;
     document.head.append(link);
   }
 
@@ -4549,5 +4559,13 @@
   const style = document.createElement('style'); style.id = 'cep-home-calendar-no-shell';
   style.textContent = targets.join(',') + '{background:transparent !important;background-image:none !important;border:0 !important;box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}' +
     (embedded ? root + ' body :is(.calendar-container,.todo-container)::before,' + root + ' body :is(.calendar-container,.todo-container)::after{content:none !important;}' : root + ' body #homepage-calendar-resize{opacity:0 !important;background:transparent !important;border:0 !important;box-shadow:none !important;}');
+  document.head.append(style);
+})();
+
+// Theme and sign-out controls use distinct pairs from the selected palette.
+(() => {
+  const scope = 'html:not([data-xlyneve-color-theme="moon-clay"]):not(#palette-controls):not(#palette-fill):not(#palette-edge):not(#palette-ink) body ';
+  const style = document.createElement('style'); style.id = 'cep-palette-account-controls';
+  style.textContent = ['theme','signout'].map(name => scope + (name === 'theme' ? '.xlyneve-theme-button' : '.cep-sign-out-light') + '{background:linear-gradient(135deg,var(--cep-' + name + '-start),var(--cep-' + name + '-end)) !important;border-color:var(--cep-' + name + '-start) !important;color:var(--cep-' + name + '-ink) !important;-webkit-text-fill-color:currentColor !important;}').join('');
   document.head.append(style);
 })();
