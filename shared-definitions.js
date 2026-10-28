@@ -51,7 +51,19 @@
   function renderPreview(container, record, fallback = '') {
     container.replaceChildren();
     const value = record?.value || plain(record?.valueHtml) || fallback;
-    if (value) { const text = document.createElement('p'); text.textContent = value; container.append(text); }
+    function appendContent(html, fallbackText) {
+      if (!html && !fallbackText) return false;
+      const content = document.createElement('div');
+      if (html && window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(content, html);
+      else content.textContent = fallbackText || plain(html);
+      for (const image of content.querySelectorAll('img')) {
+        image.style.maxWidth = '100%'; image.style.height = 'auto';
+      }
+      container.append(content);
+      return !!(content.textContent || content.querySelector('img'));
+    }
+    const hasDefinition = appendContent(record?.valueHtml, value);
+    const hasWhy = appendContent(record?.whyHtml, record?.why);
     const media = mediaIndex.get(normalize(record?.concept || record?.id)) || record;
     const images = photos(record);
     const strip=document.createElement('div');
@@ -72,7 +84,7 @@
     if(images.length)decorateDefinitionGallery(strip);
     if (images.length && media?.caption) { const caption=document.createElement('p'); caption.textContent=media.caption; container.append(caption); }
     const video=appendVideo(container,record?.videoUrl);
-    return !!(value || images.length || video);
+    return !!(hasDefinition || hasWhy || images.length || video);
   }
   async function save(term, value, aliases) {
     if (!adapter) throw new Error('Open chatgptx and sign in first to enable shared definitions.');
