@@ -29,8 +29,8 @@
       border:0 !important; box-shadow:none !important;
       backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
-    .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; cursor:grab; touch-action:none; user-select:none; }
-    .homepage-calendar-bar:active { cursor:grabbing; }
+    .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; touch-action:none; user-select:none; }
+
     .homepage-calendar-bar { position:absolute; top:0; left:0; right:0; height:34px; box-sizing:border-box; z-index:3; opacity:0; pointer-events:none; transform:translateY(-100%); transition:opacity 140ms ease,transform 140ms ease; }
     .homepage-calendar.toolbar-visible .homepage-calendar-bar { opacity:1; pointer-events:auto; transform:translateY(0); }
     .homepage-calendar.toolbar-visible iframe { margin-top:34px; }
@@ -58,7 +58,7 @@
     .homepage-calendar-todo { background:transparent; color:#ffeb3b; font:700 16px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 0 6px rgba(255,235,59,.95),0 0 12px rgba(255,235,59,.62); }
     .homepage-calendar-close { font-size:17px; }
     .homepage-calendar iframe { display:block; flex:1 1 auto; width:100%; min-height:0; border:0; background:transparent; }
-    .homepage-calendar-resize { position:absolute; z-index:2; right:0; bottom:0; width:28px; height:28px; border:0; background:transparent; cursor:nwse-resize; touch-action:none; }
+    .homepage-calendar-resize { position:absolute; z-index:2; right:0; bottom:0; width:28px; height:28px; border:0; background:transparent; cursor:move; touch-action:none; }
     .homepage-calendar-resize::after { content:""; position:absolute; right:7px; bottom:7px; width:8px; height:8px; border-right:2px solid #aaa; border-bottom:2px solid #aaa; }
     html:root body #homepage-calendar-resize {
       background:transparent !important; background-image:none !important;
@@ -139,13 +139,13 @@
     localStorage.removeItem(openStateKey);
     activeLauncher?.focus();
   }
-  function bindPointerHandle(handle, resize) {
+  function bindPointerHandle(handle) {
     let gesture = null;
     handle.addEventListener("pointerdown", event => {
       if (event.button !== 0) return;
       gesture = {
         x:event.screenX, y:event.screenY, left:panel.offsetLeft, top:panel.offsetTop,
-        width:panel.offsetWidth, height:panel.offsetHeight
+        width:panel.offsetWidth, height:panel.offsetHeight, resize:event.shiftKey
       };
       handle.setPointerCapture(event.pointerId);
       event.preventDefault();
@@ -153,7 +153,7 @@
     handle.addEventListener("pointermove", event => {
       if (!gesture) return;
       const dx = event.screenX - gesture.x, dy = event.screenY - gesture.y;
-      if (resize) {
+      if (gesture.resize) {
         panel.style.width = `${Math.min(Math.max(240, gesture.width + dx), innerWidth - panel.offsetLeft - 8)}px`;
         panel.style.height = `${Math.min(Math.max(200, gesture.height + dy), innerHeight - panel.offsetTop - 8)}px`;
         if (panel.classList.contains("todo-open")) expandedPanelWidth = panel.offsetWidth;
@@ -163,37 +163,6 @@
     ["pointerup", "pointercancel", "lostpointercapture"].forEach(name =>
       handle.addEventListener(name, () => { if (gesture) saveLayout(); gesture = null; })
     );
-  }
-  function bindContainerDrag(doc) {
-    let gesture = null;
-    doc.addEventListener("pointerdown", event => {
-      const target = event.target;
-      if (!panel || event.button !== 0 || !event.isPrimary ||
-          !target.matches("body,.calendar-container,.calendar-scroll-glass,.calendar,.day,.day-header,.todo-container,.todo-list") ||
-          target.closest("[contenteditable],button,a,input,textarea,select,.todo-resizer")) return;
-      // Leave the scrollbar gutter available for scrolling.
-      const bounds = target.getBoundingClientRect();
-      if (target.scrollHeight > target.clientHeight && event.clientX >= bounds.left + target.clientLeft + target.clientWidth) return;
-      gesture = { target, id:event.pointerId, x:event.screenX, y:event.screenY,
-        left:panel.offsetLeft, top:panel.offsetTop, moved:false };
-      target.setPointerCapture(event.pointerId);
-    });
-    doc.addEventListener("pointermove", event => {
-      if (!gesture || event.pointerId !== gesture.id || !panel) return;
-      const dx = event.screenX - gesture.x, dy = event.screenY - gesture.y;
-      if (!gesture.moved && Math.hypot(dx, dy) < 8) return;
-      gesture.moved = true;
-      event.preventDefault();
-      movePanel(gesture.left + dx, gesture.top + dy);
-    }, { passive:false });
-    const finish = event => {
-      if (!gesture || event.pointerId !== gesture.id) return;
-      if (gesture.moved) saveLayout();
-      const { target, id } = gesture;
-      gesture = null;
-      if (target.hasPointerCapture(id)) target.releasePointerCapture(id);
-    };
-    ["pointerup", "pointercancel", "lostpointercapture"].forEach(type => doc.addEventListener(type, finish));
   }
   function setPanelTodoOpen(open) {
     if (!panel) return;
@@ -288,18 +257,19 @@
     frame.addEventListener("load", () => {
       if (frame.contentDocument) {
         bindToolbarLongPress(frame.contentDocument, toggleToolbar);
-        bindContainerDrag(frame.contentDocument);
+
       }
       const open = localStorage.getItem(todoOpenStateKey) === "true";
       frame.contentWindow?.postMessage({ type: "homecal-set-todo", open }, location.origin);
     });
     const resize = document.createElement("button"); resize.type = "button"; resize.className = "homepage-calendar-resize";
-    resize.setAttribute("aria-label", "Resize homepage calendar");
+    resize.setAttribute("aria-label", "Move homepage calendar; hold Shift to resize");
+    resize.title = "Drag to move; Shift-drag to resize";
     resize.id = "homepage-calendar-resize";
     panel.append(bar, frame, resize); document.body.appendChild(panel);
     restoreLayout();
     setPanelTodoOpen(restoreTodoOpen);
-    bindPointerHandle(bar, false); bindPointerHandle(resize, true);
+    bindPointerHandle(resize);
   }
   window.addEventListener("message", event => {
     if (!panel || event.origin !== location.origin || event.source !== panel.querySelector("iframe")?.contentWindow) return;
