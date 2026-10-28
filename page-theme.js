@@ -4497,6 +4497,7 @@
   const scope = 'html:not([data-xlyneve-color-theme="moon-clay"]):not(#quickies-surface):not(#quickies-edge):not(#quickies-size):not(#quickies-dot):not(#quickies-shell) body ';
   const panel = ':is(#quickCalc,#timeCalculator,#quickInteleviewer,#tabletCalculator,#syrupCalculator)';
   const toggle = ':is(.qc-toggle,.qi-toggle,.qt-toggle,.qs-toggle)';
+  const borderScope = 'html:not(#quickies-contrast):not(#quickies-palette):not(#quickies-outline):not(#quickies-frame):not(#quickies-visible):not(#quickies-neutral) body ';
   const style = document.createElement('style'); style.id = 'cep-compact-quickies';
   style.textContent = `
     ${scope}${panel}.collapsed {background:transparent !important;background-image:none !important;border:0 !important;box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
@@ -4524,6 +4525,9 @@
       ${scope}#tabletCalculator.collapsed .qt-toggle::before {content:"Tablets" !important;}
       ${scope}#syrupCalculator.collapsed .qs-toggle::before {content:"Syrups" !important;}
       ${scope}${panel} ${toggle}::after {content:none !important;}
+    }
+    ${borderScope}${panel}.collapsed ${toggle} {
+      border-color:color-mix(in srgb,var(--moon-frequent-edge,var(--quickies-border,var(--quick-accent,#a793a3))) 35%,var(--quick-ink,var(--theme-ink,#39190f)) 65%) !important;
     }
   `;
   document.head.append(style);
