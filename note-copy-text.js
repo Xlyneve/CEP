@@ -102,9 +102,11 @@
       }
       phrase.setAttribute('role','button');
       phrase.tabIndex = 0;
+      // The custom hover label replaces the browser tooltip. An empty title
+      // also suppresses titles inherited from a surrounding search card.
+      phrase.title = '';
       // Email controls already have a more specific copy label.
       if (!phrase.classList.contains('email-copy')) {
-        phrase.title = 'Copy text';
         phrase.setAttribute('aria-label','Copy text: ' + phrase.textContent.trim());
       }
     });
