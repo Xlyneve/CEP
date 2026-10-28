@@ -102,6 +102,13 @@
   const auroraPalette = [
     { rgb:"233, 235, 246", solid:"#e9ebf6", ink:"#28263c" },
   ];
+  const moonClayPalette = [
+    { rgb:"232, 232, 232", solid:"#e8e8e8", ink:"#48434d" },
+    { rgb:"199, 180, 214", solid:"#c7b4d6", ink:"#48434d" },
+    { rgb:"232, 183, 194", solid:"#e8b7c2", ink:"#48434d" },
+    { rgb:"237, 203, 183", solid:"#edcbb7", ink:"#48434d" },
+    { rgb:"241, 227, 189", solid:"#f1e3bd", ink:"#48434d" },
+  ];
   const porcelainPalette = [
     { rgb:"233, 233, 225", solid:"#e9e9e1", ink:"#353833" },
   ];
@@ -167,7 +174,7 @@
     try {
       const storedTheme = localStorage.getItem(themeStorageKey);
       if (storedTheme === "liquid-glass" || removedThemes.has(storedTheme)) localStorage.removeItem(themeStorageKey);
-      if (storedTheme === "cloud-glass" || storedTheme === "midnight-glass" || storedTheme === "warm-ivory" || storedTheme === "opal-pearl" || storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
+      if (storedTheme === "moon-clay" || storedTheme === "cloud-glass" || storedTheme === "midnight-glass" || storedTheme === "warm-ivory" || storedTheme === "opal-pearl" || storedTheme === "pastel-rose-5d" || storedTheme === "pastel-rose-recessed" || storedTheme === "lavender-glass" || storedTheme === "grey-lavender" || storedTheme === "pearl-silver" || storedTheme === "frost-outline" || storedTheme === "porcelain" || storedTheme === "aurora" || storedTheme === "soft-stone" || storedTheme === "mint-ceramic" || storedTheme === "berry" || storedTheme === "autumn" || storedTheme === "hoya" || storedTheme === "lake-mist" || storedTheme === "palm-springs" || storedTheme === "quiet-stone" || storedTheme === "anatomy" || storedTheme === "sculpted" || storedTheme === "pastel-jumper") selectedTheme = storedTheme;
     } catch {}
   }
   if (deletedThemes.has(selectedTheme) || removedThemes.has(selectedTheme)) {
@@ -179,7 +186,7 @@
     contrastScript.src=new URL('./night-note-contrast.js?v=1',document.currentScript?.src || location.href).href;
     contrastScript.defer=true;document.head.append(contrastScript);
   }
-  const palette = selectedTheme === "cloud-glass" ? cloudGlassPalette : selectedTheme === "midnight-glass" ? midnightGlassPalette : selectedTheme === "warm-ivory" ? warmIvoryPalette : selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
+  const palette = selectedTheme === "moon-clay" ? moonClayPalette : selectedTheme === "cloud-glass" ? cloudGlassPalette : selectedTheme === "midnight-glass" ? midnightGlassPalette : selectedTheme === "warm-ivory" ? warmIvoryPalette : selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
     ? berryPalette
     : selectedTheme === "autumn"
       ? autumnPalette
@@ -235,6 +242,7 @@
   root.style.setProperty("--page-logo-filter", headerUsesLightInk ? "brightness(0) invert(1)" : "contrast(1.08)");
   root.style.setProperty("--page-logo-opacity", headerUsesLightInk ? "0.96" : "0.85");
   const mastheadBarColors = {
+    "moon-clay": "#e8e8e8",
     original: "#596b57",
     "cloud-glass":"#d4dcef",
     "midnight-glass":"#252b35",
@@ -257,7 +265,14 @@
     aurora: "#e1e4f2"
   };
   root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
-  root.style.setProperty("--masthead-bar-ink", ["lavender-glass","grey-lavender","pearl-silver","frost-outline","mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
+  root.style.setProperty("--masthead-bar-ink", ["moon-clay","lavender-glass","grey-lavender","pearl-silver","frost-outline","mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
+
+  if (selectedTheme === "moon-clay") {
+    const link = document.createElement("link");
+    link.id = "cep-moon-clay-theme"; link.rel = "stylesheet";
+    link.href = new URL("moon-clay-theme.css?v=1",document.currentScript?.src || location.href).href;
+    document.head.append(link);
+  }
 
   const themeStyle = document.createElement("style");
   themeStyle.id = "xlyneve-color-theme-styles";
@@ -3140,6 +3155,7 @@
       },
     ];
 
+    themeOptions.push({value:"moon-clay",label:"Moon Clay",colors:["#e8e8e8","#c7b4d6","#e8b7c2","#edcbb7","#f1e3bd"]});
     themeOptions.push({value:"midnight-glass",label:"Midnight Glass",colors:["#20242c","#56cde5","#9c70e0","#e9edf5"]});
     themeOptions.push({value:"warm-ivory",label:"Warm Ivory",colors:["#e6dfd4","#c4a09b","#a5ae96","#c2aa73","#af969c"]});
     themeOptions.push({value:"cloud-glass",label:"Cloud Glass",colors:["#e4eef9","#eae6fa","#f5e9ed","#e7f0f1"]});
@@ -4274,7 +4290,9 @@
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
     document.querySelectorAll(headerSelector).forEach((header) => {
       if (pageName === "home.html" && header.matches("body > header")) return;
-      if (selectedTheme === "cloud-glass") {
+      if (selectedTheme === "moon-clay") {
+        header.style.setProperty("background", "var(--moon-base)", "important");
+      } else if (selectedTheme === "cloud-glass") {
         header.style.setProperty("background", "var(--cloud-surface)", "important");
       } else if (selectedTheme === "midnight-glass") {
         header.style.setProperty("background", "var(--midnight-surface)", "important");
