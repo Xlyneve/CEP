@@ -4569,3 +4569,11 @@
   style.textContent = ['theme','signout'].map(name => scope + (name === 'theme' ? '.xlyneve-theme-button' : '.cep-sign-out-light') + '{background:linear-gradient(135deg,var(--cep-' + name + '-start),var(--cep-' + name + '-end)) !important;border-color:var(--cep-' + name + '-start) !important;color:var(--cep-' + name + '-ink) !important;-webkit-text-fill-color:currentColor !important;}').join('');
   document.head.append(style);
 })();
+
+// Home account controls share Moon Clay's compact rounded shape in every palette.
+(() => {
+  if ((location.pathname.split("/").pop() || "").toLowerCase() !== "home.html") return;
+  const style = document.createElement("style"); style.id = "cep-home-account-shape";
+  style.textContent = 'html:not(#account-shape):not(#account-radius):not(#account-size):not(#account-edge):not(#account-padding) body :is(.xlyneve-theme-button,.cep-sign-out-light){display:inline-flex !important;align-items:center !important;justify-content:center !important;box-sizing:border-box !important;width:auto !important;height:auto !important;min-width:0 !important;min-height:0 !important;padding:5px 7px !important;border-width:1px !important;border-style:solid !important;border-radius:16px !important;}';
+  document.head.append(style);
+})();
