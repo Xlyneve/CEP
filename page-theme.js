@@ -4527,7 +4527,11 @@
       ${scope}${panel} ${toggle}::after {content:none !important;}
     }
     ${borderScope}${panel}.collapsed ${toggle} {
-      border-color:color-mix(in srgb,var(--moon-frequent-edge,var(--quickies-border,var(--quick-accent,#a793a3))) 35%,var(--quick-ink,var(--theme-ink,#39190f)) 65%) !important;
+      border-width:3px !important;
+      border-color:color-mix(in srgb,var(--moon-frequent-edge,var(--quickies-border,var(--quick-accent,#a793a3))) 80%,var(--quick-ink,var(--theme-ink,#39190f)) 20%) !important;
+    }
+    @media(min-width:769px) {
+      ${borderScope}${panel}.collapsed ${toggle} {width:22px !important;height:22px !important;min-width:22px !important;box-sizing:border-box !important;}
     }
   `;
   document.head.append(style);
