@@ -4021,7 +4021,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       </div>
       <details class="qc-note" id="qcParaTabletOptions">
         <summary>Tablet guidance</summary>
-        <div>500 mg immediate-release tablets. Dose match only: check age, safe swallowing and the prescription/product. Half doses require a product that permits equal halves.</div>
+        <div>500 mg immediate-release tablets. Shows the maximum whole-tablet amount within the calculated dose, not automatic permission to give it. Check age, safe swallowing and the prescription/product. Liquid provides the calculated dose when whole tablets do not match.</div>
         <div><a href="https://www.medsafe.govt.nz/profs/Datasheet/p/Pacimoltab.pdf" target="_blank" rel="noopener noreferrer">Product age and dose guidance</a></div>
       </details>
       <div class="qc-note" id="qcParaTabletResult" style="font-weight:600;" role="status" aria-live="polite"></div>
@@ -4044,7 +4044,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       <select id="qcIbuTabletStrength" class="qc-select"><option value="200" selected>200 mg</option><option value="400">400 mg</option></select>
       <details class="qc-note" id="qcIbuTabletOptions">
         <summary>Tablet guidance</summary>
-        <div>Immediate-release only. Dose match only: check age, safe swallowing, suitability and the prescription/product. Half doses require a product that permits equal halves; some tablets must not be split.</div>
+        <div>Immediate-release only. Shows the maximum whole-tablet amount within the calculated dose, not automatic permission to give it. Check age, safe swallowing, suitability and the prescription/product. A lower amount is a different dose, not an equivalent.</div>
         <div><a href="https://healthify.nz/medicines-a-z/i/ibuprofen-children" target="_blank" rel="noopener noreferrer">Ibuprofen guidance</a></div>
       </details>
       <div class="qc-note" id="qcIbuTabletResult" style="font-weight:600;" role="status" aria-live="polite"></div>
@@ -5623,12 +5623,14 @@ function closeTable() {
   const ibuTabletResult = qc.querySelector('#qcIbuTabletResult');
   function tabletDoseMatch(mg, strength) {
     if (![200,400,500].includes(strength)) return 'Select the tablet strength.';
-    const count = mg / strength;
-    const whole = Math.abs(count - Math.round(count)) < 1e-8;
-    const half = Math.abs(count * 2 - Math.round(count * 2)) < 1e-8;
-    if (count < 0.5 || !half) return `Use liquid for this dose — it does not fit whole or half ${strength} mg tablets.`;
-    const amount = whole ? String(Math.round(count)) : (count < 1 ? '½' : `${Math.floor(count)}½`);
-    return `Dose fits: ${amount} × ${strength} mg ${count === 1 ? 'tablet' : 'tablets'} (${Number(mg.toFixed(3))} mg)${whole ? '.' : ' — only if the product allows equal halves.'}`;
+    // Arithmetic comparison only: never round above the calculated dose or cap.
+    const count = Math.floor(mg / strength);
+    const fmt = value => String(Number(value.toFixed(3)));
+    if (count < 1) return `Whole tablets: none within the calculated ${fmt(mg)} mg dose. One ${strength} mg tablet would exceed it; use the prescribed liquid or confirm an alternative.`;
+    const tabletMg = count * strength;
+    const label = `Whole tablets: ${count} × ${strength} mg = ${tabletMg} mg.`;
+    return tabletMg === mg ? label + ' Matches the calculated dose.'
+      : label + ` Below the calculated ${fmt(mg)} mg dose — confirm the prescribed dose before rounding down.`;
   }
   function updateParaTablets(kg, mg) {
     paraTabletResult.textContent = tabletDoseMatch(mg,500);
