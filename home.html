@@ -4148,10 +4148,10 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
           <summary>Dose details &amp; cautions</summary>
     <div class="qc-note" id="qcPatientModeHint">Under 12: use the appropriate age-specific prescription. Paracetamol calculation is for age 1 month and older; younger infants need individual dosing.</div>
 <div id="qcParaTabletOptions" hidden>
-        <div>500 mg immediate-release tablets. The 12+ group shows the usual product range; lower doses/limits may be needed. The under-12 group preserves the calculated dose without rounding. Exact tablet equivalents still require age/product and swallowing checks.</div>
+        <div>500 mg immediate-release tablets. Both age groups show the same weight-based milligram calculation without rounding. Lower doses/limits may be needed. Exact tablet equivalents still require age/product and swallowing checks.</div>
         <div><a href="https://www.medsafe.govt.nz/profs/Datasheet/p/Pacimoltab.pdf" target="_blank" rel="noopener noreferrer">Product age and dose guidance</a> · <a href="https://bpac.org.nz/2018/paracetamol.aspx" target="_blank" rel="noopener noreferrer">Child dosing</a> · <a href="https://healthify.nz/medicines-a-z/p/paracetamol" target="_blank" rel="noopener noreferrer">Adult precautions</a></div>
       <div class="qc-note">Per-dose calculation only. Check the prescription/product, previous doses and other paracetamol-containing medicines.</div><div class="qc-note" id="qcParaTabletResult" hidden></div></div><div id="qcIbuTabletOptions" hidden>
-        <div>Immediate-release only. The 12+ group shows usual short-term dosing, subject to suitability and the prescription/product. The under-12 group preserves the existing 6 mg/kg formula; confirm it against the child’s prescription. No tablet rounding. Infants under 3 months need individual clinical assessment.</div>
+        <div>Immediate-release only. Both age groups preserve the existing 6 mg/kg formula, subject to suitability and the prescription/product. No tablet rounding. Infants under 3 months need individual clinical assessment.</div>
         <div><a href="https://healthify.nz/medicines-a-z/i/ibuprofen-children" target="_blank" rel="noopener noreferrer">Child guidance</a> · <a href="https://healthify.nz/medicines-a-z/i/ibuprofen" target="_blank" rel="noopener noreferrer">Adult guidance</a></div>
       <div class="qc-note">Dose conversion only, not confirmation that ibuprofen is suitable. Check the prescription/product, previous doses and other NSAIDs.</div><div class="qc-note" id="qcIbuTabletResult" hidden></div></div>
         </details>
@@ -5659,43 +5659,33 @@ function closeTable() {
   const paraGuide = qc.querySelector('#qcParaTabletOptions');
   const ibuGuide = qc.querySelector('#qcIbuTabletOptions');
   function updateDoseCaption() {
-    if (patientMode === 'adult') {
-      if (activeMed === 'para') {
-        const kg = Number(weightEl.value);
-        const calculatedMg = Math.min(kg * 15,1000);
-        doseCaption.textContent = kg < 50
-          ? `${Number(calculatedMg.toFixed(3))} mg · under 50 kg; confirm dose`
-          : calculatedMg < 1000 ? `${Number(calculatedMg.toFixed(3))} → 1000 mg · 12+ option` : '1000 mg · 12+ option';
-      } else if (Number(weightEl.value) < 40) {
-        doseCaption.textContent = `${Number((Number(weightEl.value) * 6).toFixed(3))} mg · under 40 kg; confirm dose`;
-      } else doseCaption.textContent = '12+ product guide';
-    } else {
-      const kg = Number(weightEl.value);
-      const mg = activeMed === 'para' ? Math.min(kg * 15,1000) : Math.min(kg * 6,400);
-      doseCaption.textContent = `${Number(mg.toFixed(3))} mg · ${activeMed === 'para' ? '15' : '6'} mg/kg`;
-    }
+    const kg = Number(weightEl.value);
+    const mg = activeMed === 'para' ? Math.min(kg * 15,1000) : Math.min(kg * 6,400);
+    const strength = activeMed === 'para' ? 500 : Number(ibuTabletStrength.value);
+    const whole = Math.abs(mg / strength - Math.round(mg / strength)) < 1e-8;
+    doseCaption.textContent = `${Number(mg.toFixed(3))} mg · ${activeMed === 'para' ? '15' : '6'} mg/kg${whole ? '' : ' · no whole-tablet match'}`;
   }
   const patientModeWrap = qc.querySelector('#qcPatientMode');
   const patientModeHint = qc.querySelector('#qcPatientModeHint');
   let patientMode = 'child';
-  function childTabletResult(mg, strength, output) {
+  function renderTabletEquivalent(mg, strength, output) {
     const count = mg / strength;
-    const exact = count >= 1 && Math.abs(count - Math.round(count)) < 1e-8;
-    tabletMain.textContent = exact ? `${Math.round(count)} tab${Math.round(count) === 1 ? '' : 's'} eq.` : 'Liquid dose';
-    tabletUnit.textContent = `${strength} mg tablets`;
-    output.textContent = exact
-      ? `Exact arithmetic equivalent of ${Number(mg.toFixed(3))} mg; confirm age, product instructions, swallowing and prescribed dose.`
-      : `${Number(mg.toFixed(3))} mg does not match whole ${strength} mg tablets. Use the prescribed liquid dose; do not round automatically.`;
+    const whole = Math.abs(count - Math.round(count)) < 1e-8;
+    tabletMain.textContent = `${Number(count.toFixed(4))} ${count === 1 ? 'tab' : 'tabs'} eq.`;
+    tabletUnit.textContent = `${strength} mg each · conversion only`;
+    output.textContent = whole
+      ? `Arithmetic equivalent of ${Number(mg.toFixed(3))} mg. Confirm age, product instructions, swallowing and the prescribed dose before administering.`
+      : `Arithmetic equivalent only: ${Number(mg.toFixed(3))} mg does not match whole ${strength} mg tablets. Use the prescribed liquid formulation for this dose; a different rounded dose requires prescription/product confirmation.`;
   }
   function syncPatientMode() {
     patientModeWrap.querySelectorAll('button').forEach(button=>{
       const on = button.dataset.patient === patientMode;
       button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on));
     });
-    qc.querySelector('#qcParaDoseRule').textContent = patientMode === 'adult' ? '1 g option' : '15 mg/kg';
-    qc.querySelector('#qcIbuDoseRule').textContent = patientMode === 'adult' ? '200–400 mg' : '6 mg/kg';
+    qc.querySelector('#qcParaDoseRule').textContent = '15 mg/kg';
+    qc.querySelector('#qcIbuDoseRule').textContent = '6 mg/kg';
     patientModeHint.textContent = patientMode === 'adult'
-      ? 'Age 12+: product-dose guidance only. Paracetamol under 50 kg and ibuprofen under 40 kg need individual weight-based dose review.'
+      ? 'Age 12+: both formulations use the same calculated milligram dose. This conversion does not choose a usual product dose or round it. Confirm the prescribed regimen; low body weight may require individual dose limits.'
       : 'Under 12: use the age-specific prescription. Paracetamol calculation: age 1 month or older. Ibuprofen under 3 months requires individual clinical assessment.';
   }
   patientModeWrap.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>{
@@ -5850,54 +5840,24 @@ function closeTable() {
       return;
     }
 
-    qc.querySelector('#qcParaDoseRule').textContent = patientMode === 'adult' && kg >= 50 ? '1 g option' : '15 mg/kg';
-    qc.querySelector('#qcIbuDoseRule').textContent = patientMode === 'adult' && kg >= 40 ? '200–400 mg' : '6 mg/kg';
-
     if (activeMed === 'para'){
-      if (patientMode === 'adult') {
-        if (kg < 50) {
-          const mg = kg * 15;
-          mainEl.textContent = `${r1(mg / paraStrength)} mL`;
-          subEl.textContent = `Weight-based calculation: 15 mg/kg = ${Number(mg.toFixed(3))} mg. Age 12+ under 50 kg: confirm the individual prescribed dose, frequency and daily maximum.`;
-          tabletMain.textContent = 'Review dose';tabletUnit.textContent = '500 mg tablets';
-          paraTabletResult.textContent = 'The mL figure is a weight-based calculation, not an individual prescription. The 12+ tablet guide is withheld for low body weight.';
-        } else {
-          const calculatedMg = Math.min(kg * 15,1000);
-          mainEl.textContent = `${r1(1000 / paraStrength)} mL`;
-          subEl.textContent = `Age 12+ 1 g option: 2 × 500 mg tablets. Weight-based calculation: ${Number(calculatedMg.toFixed(3))} mg. The liquid amount shown corresponds to 1000 mg, not the unrounded weight calculation.`;
-          tabletMain.textContent = '2 tabs';tabletUnit.textContent = '500 mg each';
-          paraTabletResult.textContent = 'Product range for age 12+ is 500–1000 mg; this displays the 1 g option, not an individual prescription. Every 4–6 hours if required; maximum 4 g in 24 hours. Lower doses or limits may be needed; follow the prescription.';
-        }
-      } else {
-        const mg = Math.min(kg * 15, 1000);
-        mainEl.textContent = `${r1(mg / paraStrength)} mL`;
-        subEl.textContent = `Calculated child dose: ${Number(mg.toFixed(3))} mg. Maximum 1 g per dose; 60 mg/kg per 24 hours, up to 4 g.`;
-        childTabletResult(mg,500,paraTabletResult);
-      }
+      const mg = Math.min(kg * 15,1000);
+      mainEl.textContent = `${r1(mg / paraStrength)} mL`;
+      subEl.textContent = `Calculated dose: ${Number(mg.toFixed(3))} mg at 15 mg/kg, capped at 1 g per dose. Both the liquid and tablet equivalent represent this same dose.`;
+      renderTabletEquivalent(mg,500,paraTabletResult);
+      paraTabletResult.textContent += patientMode === 'child'
+        ? ' Child dosing: maximum 60 mg/kg per 24 hours, up to 4 g; follow the age-specific prescription.'
+        : ' Follow the prescription and product instructions. Adult under 50 kg or other risk factors: confirm individual dose, frequency and daily maximum.';
       updateDoseCaption();
       resultsEl.classList.add('has-value');return;
     }
 
     if (activeMed === 'ibu'){
+      const mg = Math.min(kg * 6,400);
       const strength = Number(ibuTabletStrength.value);
-      if (patientMode === 'adult' && kg >= 40) {
-        if (strength === 400) {
-          mainEl.textContent = `${r1(400 / ibuStrength)} mL`;
-          subEl.textContent = '400 mg dose shown for the selected 400 mg tablet; usual 12+ product range is 200–400 mg.';
-          tabletMain.textContent = '1 tab';
-        } else {
-          mainEl.textContent = `${r1(200 / ibuStrength)}–${r1(400 / ibuStrength)} mL`;
-          subEl.textContent = '12+ product range: 200–400 mg per dose.';
-          tabletMain.textContent = '1–2 tabs';
-        }
-        tabletUnit.textContent = `${strength} mg each`;
-        ibuTabletResult.textContent = 'Use the lowest effective dose for the shortest time. Usual non-prescription maximum: 1200 mg in 24 hours; follow the product interval and prescription.';
-      } else {
-        const mg = Math.min(kg * 6,400);
-        mainEl.textContent = `${r1(mg / ibuStrength)} mL`;
-        subEl.textContent = patientMode === 'adult' ? `Age 12+ under 40 kg: weight-based calculation ${Number(mg.toFixed(3))} mg (6 mg/kg); confirm the individual prescribed regimen.` : `Calculated child dose: ${Number(mg.toFixed(3))} mg (6 mg/kg; maximum 400 mg per dose). Confirm the prescribed regimen.`;
-        childTabletResult(mg,strength,ibuTabletResult);
-      }
+      mainEl.textContent = `${r1(mg / ibuStrength)} mL`;
+      subEl.textContent = `Calculated dose: ${Number(mg.toFixed(3))} mg at 6 mg/kg, capped at 400 mg per dose. Both the liquid and tablet equivalent represent this same dose. Confirm the prescribed regimen.`;
+      renderTabletEquivalent(mg,strength,ibuTabletResult);
       updateDoseCaption();
       resultsEl.classList.add('has-value');return;
     }
