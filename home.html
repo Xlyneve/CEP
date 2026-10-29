@@ -4020,20 +4020,11 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         <div class="qc-pill">Max: <b>1 g</b> (single dose)</div>
       </div>
       <details class="qc-note" id="qcParaTabletOptions">
-        <summary>500 mg tablet option</summary>
-        <label class="qc-label" for="qcParaAge">Age group</label>
-        <select id="qcParaAge" class="qc-select">
-          <option value="">Select age</option>
-          <option value="under7">Under 7 years</option>
-          <option value="7to11">7–11 years</option>
-          <option value="12plus">12 years or older</option>
-        </select>
-        <label style="display:block;margin-top:8px;"><input type="checkbox" id="qcParaSwallow"> Able to swallow tablets safely</label>
-        <label style="display:block;margin-top:6px;"><input type="checkbox" id="qcParaSplit"> Product permits equal half-tablet doses</label>
-        <div class="qc-note">Immediate-release paracetamol only. This converts the calculated dose without rounding to a different dose.</div>
-        <div class="qc-note"><a href="https://www.medsafe.govt.nz/profs/Datasheet/p/Pacimoltab.pdf" target="_blank" rel="noopener noreferrer">Tablet age guide</a> · <a href="https://bpac.org.nz/2018/paracetamol.aspx" target="_blank" rel="noopener noreferrer">Weight-based dose</a></div>
+        <summary>Tablet guidance</summary>
+        <div>500 mg immediate-release tablets. Dose match only: check age, safe swallowing and the prescription/product. Half doses require a product that permits equal halves.</div>
+        <div><a href="https://www.medsafe.govt.nz/profs/Datasheet/p/Pacimoltab.pdf" target="_blank" rel="noopener noreferrer">Product age and dose guidance</a></div>
       </details>
-      <div class="qc-note" id="qcParaTabletResult" role="status" aria-live="polite"></div>
+      <div class="qc-note" id="qcParaTabletResult" style="font-weight:600;" role="status" aria-live="polite"></div>
       <div class="qc-note">Per-dose calculation only. Check the prescription/product, previous doses and other paracetamol-containing medicines.</div>
     </div>
 
@@ -4049,18 +4040,14 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         <div class="qc-pill">Dose: <b>6 mg/kg</b></div>
         <div class="qc-pill">Max: <b>400 mg</b> (single dose)</div>
       </div>
+      <label class="qc-label" for="qcIbuTabletStrength">Tablet strength</label>
+      <select id="qcIbuTabletStrength" class="qc-select"><option value="200" selected>200 mg</option><option value="400">400 mg</option></select>
       <details class="qc-note" id="qcIbuTabletOptions">
-        <summary>Tablet option</summary>
-        <label class="qc-label" for="qcIbuTabletStrength">Tablet strength — check the pack</label>
-        <select id="qcIbuTabletStrength" class="qc-select"><option value="">Select strength</option><option value="200">200 mg</option><option value="400">400 mg</option></select>
-        <label class="qc-label" for="qcIbuAge">Age group</label>
-        <select id="qcIbuAge" class="qc-select"><option value="">Select age</option><option value="under12">Under 12 years</option><option value="12plus">12 years or older</option></select>
-        <label style="display:block;margin-top:8px;"><input type="checkbox" id="qcIbuSwallow"> Able to swallow tablets safely</label>
-        <label style="display:block;margin-top:6px;"><input type="checkbox" id="qcIbuSplit"> This product permits equal half-tablet doses</label>
-        <div class="qc-note">Immediate-release ibuprofen only. Some tablets must not be halved; a score line alone is not confirmation. No dose rounding.</div>
-        <div class="qc-note"><a href="https://healthify.nz/medicines-a-z/i/ibuprofen-children" target="_blank" rel="noopener noreferrer">Ibuprofen guidance</a> · <a href="https://www.medsafe.govt.nz/DbSearch/InfoSearch" target="_blank" rel="noopener noreferrer">Check product data sheet</a></div>
+        <summary>Tablet guidance</summary>
+        <div>Immediate-release only. Dose match only: check age, safe swallowing, suitability and the prescription/product. Half doses require a product that permits equal halves; some tablets must not be split.</div>
+        <div><a href="https://healthify.nz/medicines-a-z/i/ibuprofen-children" target="_blank" rel="noopener noreferrer">Ibuprofen guidance</a></div>
       </details>
-      <div class="qc-note" id="qcIbuTabletResult" role="status" aria-live="polite"></div>
+      <div class="qc-note" id="qcIbuTabletResult" style="font-weight:600;" role="status" aria-live="polite"></div>
       <div class="qc-note">Dose conversion only, not confirmation that ibuprofen is suitable. Check the prescription/product, previous doses and other NSAIDs.</div>
     </div>
 
@@ -5631,64 +5618,23 @@ function closeTable() {
   const toggleBtn = qc.querySelector('.qc-toggle');
   const tabs = [...qc.querySelectorAll('.qc-tab')];
 
-  const paraAge = qc.querySelector('#qcParaAge');
-  const paraSwallow = qc.querySelector('#qcParaSwallow');
-  const paraSplit = qc.querySelector('#qcParaSplit');
   const paraTabletResult = qc.querySelector('#qcParaTabletResult');
-  function updateParaTablets(kg, mg) {
-    const equivalent = mg / 500;
-    const formatted = String(Number(equivalent.toFixed(3)));
-    if (!paraAge.value) {
-      paraTabletResult.textContent = `500 mg tablet equivalent: ${formatted}. Select age and confirm swallowing to check suitability.`;
-      return;
-    }
-    if (paraAge.value === 'under7') {
-      paraTabletResult.textContent = '500 mg tablet guide: not for under 7s. Use the prescribed liquid formulation.';
-      return;
-    }
-    if (!paraSwallow.checked) {
-      paraTabletResult.textContent = 'Use liquid unless safe tablet swallowing is confirmed.';
-      return;
-    }
-    if (paraAge.value === '7to11' && mg > 500) {
-      paraTabletResult.textContent = 'Calculated dose exceeds this tablet guide’s 500 mg limit for ages 7–11. Confirm the prescribed dose/formulation.';
-      return;
-    }
-    const whole = Math.abs(equivalent - Math.round(equivalent)) < 1e-8;
-    const half = Math.abs(equivalent * 2 - Math.round(equivalent * 2)) < 1e-8;
-    if (equivalent < 0.5 || (!whole && !half)) {
-      paraTabletResult.textContent = `500 mg tablet equivalent: ${formatted}. This dose cannot be measured in whole or half tablets; use liquid or confirm a prescribed alternative.`;
-      return;
-    }
-    if (!whole && !paraSplit.checked) {
-      paraTabletResult.textContent = `Equivalent: ${formatted} × 500 mg tablets. Confirm that this product permits equal halves, otherwise use liquid.`;
-      return;
-    }
-    paraTabletResult.textContent = `Tablet option: ${formatted} × 500 mg ${equivalent === 1 ? 'tablet' : 'tablets'} per dose (${Number(mg.toFixed(3))} mg). Confirm against the prescription/product.`;
-  }
-
   const ibuTabletStrength = qc.querySelector('#qcIbuTabletStrength');
-  const ibuAge = qc.querySelector('#qcIbuAge');
-  const ibuSwallow = qc.querySelector('#qcIbuSwallow');
-  const ibuSplit = qc.querySelector('#qcIbuSplit');
   const ibuTabletResult = qc.querySelector('#qcIbuTabletResult');
+  function tabletDoseMatch(mg, strength) {
+    if (![200,400,500].includes(strength)) return 'Select the tablet strength.';
+    const count = mg / strength;
+    const whole = Math.abs(count - Math.round(count)) < 1e-8;
+    const half = Math.abs(count * 2 - Math.round(count * 2)) < 1e-8;
+    if (count < 0.5 || !half) return `Use liquid for this dose — it does not fit whole or half ${strength} mg tablets.`;
+    const amount = whole ? String(Math.round(count)) : (count < 1 ? '½' : `${Math.floor(count)}½`);
+    return `Dose fits: ${amount} × ${strength} mg ${count === 1 ? 'tablet' : 'tablets'} (${Number(mg.toFixed(3))} mg)${whole ? '.' : ' — only if the product allows equal halves.'}`;
+  }
+  function updateParaTablets(kg, mg) {
+    paraTabletResult.textContent = tabletDoseMatch(mg,500);
+  }
   function updateIbuTablets(mg) {
-    const strength = Number(ibuTabletStrength.value);
-    let text;
-    if (![200,400].includes(strength)) {
-      ibuTabletResult.textContent = 'Select tablet strength to check the tablet equivalent.'; return;
-    }
-    const equivalent = mg / strength;
-    const formatted = String(Number(equivalent.toFixed(3)));
-    const whole = Math.abs(equivalent - Math.round(equivalent)) < 1e-8;
-    const half = Math.abs(equivalent * 2 - Math.round(equivalent * 2)) < 1e-8;
-    if (!ibuAge.value) text = `${strength} mg tablet equivalent: ${formatted}. Select age and confirm swallowing.`;
-    else if (ibuAge.value === 'under12') text = 'Under 12: no automatic tablet option. Confirm the prescribed dose and exact product/formulation with a pharmacist or clinician.';
-    else if (!ibuSwallow.checked) text = 'Use a suitable prescribed formulation unless safe tablet swallowing is confirmed.';
-    else if (equivalent < 0.5 || (!whole && !half)) text = `${strength} mg tablet equivalent: ${formatted}. This dose cannot be measured in whole or half tablets; use a suitable liquid or confirm a prescribed alternative.`;
-    else if (!whole && !ibuSplit.checked) text = `Equivalent: ${formatted} × ${strength} mg tablets. Only use halves if this product permits equal half-tablet doses; otherwise use a suitable liquid.`;
-    else text = `Tablet option: ${formatted} × ${strength} mg ${equivalent === 1 ? 'tablet' : 'tablets'} per dose (${Number(mg.toFixed(3))} mg). Confirm against the prescription/product.`;
-    ibuTabletResult.textContent = text;
+    ibuTabletResult.textContent = tabletDoseMatch(mg,Number(ibuTabletStrength.value));
   }
 
   const paraStrengthWrap = qc.querySelector('#qcParaStrength'); // div container
@@ -5783,7 +5729,7 @@ function closeTable() {
     calc();
   }
 
-  [paraAge, paraSwallow, paraSplit, ibuTabletStrength, ibuAge, ibuSwallow, ibuSplit].forEach(input => input.addEventListener('change', calc));
+  [ibuTabletStrength].forEach(input => input.addEventListener('change', calc));
   tabs.forEach(b => b.addEventListener('click', () => setMed(b.dataset.med)));
 
   function resetOutput(){
