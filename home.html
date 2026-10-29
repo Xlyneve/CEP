@@ -3847,6 +3847,18 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
 #quickCalc #qcTabletUnit {font-size:11px;margin-top:3px;}
 #quickCalc .qc-tablet-layout > #qcSub {margin-top:6px;}
 #quickCalc .qc-results [hidden],#quickCalc #qcPatientMode[hidden],#quickCalc #qcPatientModeHint[hidden] {display:none!important;}
+#quickCalc .qc-tablet-layout #qcMain,#quickCalc .qc-tablet-layout #qcTabletMain {
+  font-size:16px!important;font-weight:600!important;line-height:1.35!important;
+  text-shadow:none!important;white-space:normal!important;overflow-wrap:normal;
+}
+#quickCalc .qc-tablet-layout #qcDosePair {gap:10px;align-items:start;}
+#quickCalc .qc-tablet-layout #qcTabletUnit {font-size:10px!important;line-height:1.4!important;opacity:.8;}
+#quickCalc #qcDoseCaption {font-size:11px!important;line-height:1.4;margin-top:7px;opacity:.85;}
+#quickCalc #qcMedicationGuidance {font-size:11px;line-height:1.5;margin:8px 0 0;}
+#quickCalc #qcMedicationGuidance > summary {cursor:pointer;font-weight:400;}
+#quickCalc #qcMedicationGuidance[open] > summary {margin-bottom:6px;}
+#quickCalc #qcMedicationGuidance :is(.qc-note,.qc-sub) {font-size:11px!important;line-height:1.5;margin-top:6px;}
+#quickCalc #qcMedicationGuidance [hidden],#quickCalc #qcMedicationGuidance[hidden],#quickCalc #qcDoseCaption[hidden] {display:none!important;}
 </style>
 </head>
 
@@ -4018,7 +4030,6 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       <button class="qc-strength-btn active" type="button" data-patient="child" aria-pressed="true">Child / teen</button>
       <button class="qc-strength-btn" type="button" data-patient="adult" aria-pressed="false">Adult 18+</button>
     </div>
-    <div class="qc-note" id="qcPatientModeHint">Child / teen: use the appropriate age-specific prescription. Paracetamol calculation is for age 1 month and older; younger infants need individual dosing.</div>
     <label class="qc-label" for="qcWeight">Weight (kg)</label>
     <input id="qcWeight" class="qc-input" type="number" inputmode="decimal" min="0" step="0.1" placeholder="e.g., 12.5" />
 
@@ -4034,12 +4045,6 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         <div class="qc-pill">Dose: <b id="qcParaDoseRule">15 mg/kg</b></div>
         <div class="qc-pill">Max: <b>1 g</b> (single dose)</div>
       </div>
-      <details class="qc-note" id="qcParaTabletOptions">
-        <summary>Tablet guidance</summary>
-        <div>500 mg immediate-release tablets. Adult mode shows the usual product range; lower doses/limits may be needed. Child mode preserves the calculated dose without rounding. Exact tablet equivalents still require age/product and swallowing checks.</div>
-        <div><a href="https://www.medsafe.govt.nz/profs/Datasheet/p/Pacimoltab.pdf" target="_blank" rel="noopener noreferrer">Product age and dose guidance</a> · <a href="https://bpac.org.nz/2018/paracetamol.aspx" target="_blank" rel="noopener noreferrer">Child dosing</a> · <a href="https://healthify.nz/medicines-a-z/p/paracetamol" target="_blank" rel="noopener noreferrer">Adult precautions</a></div>
-      </details>
-      <div class="qc-note">Per-dose calculation only. Check the prescription/product, previous doses and other paracetamol-containing medicines.</div>
     </div>
 
     <!-- Ibuprofen -->
@@ -4056,12 +4061,6 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       </div>
       <label class="qc-label" for="qcIbuTabletStrength">Tablet strength</label>
       <select id="qcIbuTabletStrength" class="qc-select"><option value="200" selected>200 mg</option><option value="400">400 mg</option></select>
-      <details class="qc-note" id="qcIbuTabletOptions">
-        <summary>Tablet guidance</summary>
-        <div>Immediate-release only. Adult mode shows usual short-term dosing, subject to suitability and the prescription/product. Child mode preserves the existing 6 mg/kg formula; confirm it against the child’s prescription. No tablet rounding. Infants under 3 months need individual clinical assessment.</div>
-        <div><a href="https://healthify.nz/medicines-a-z/i/ibuprofen-children" target="_blank" rel="noopener noreferrer">Child guidance</a> · <a href="https://healthify.nz/medicines-a-z/i/ibuprofen" target="_blank" rel="noopener noreferrer">Adult guidance</a></div>
-      </details>
-      <div class="qc-note">Dose conversion only, not confirmation that ibuprofen is suitable. Check the prescription/product, previous doses and other NSAIDs.</div>
     </div>
 
     <!-- Adrenaline IM (Anaphylaxis) -->
@@ -4144,8 +4143,18 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
           </div>
         </div>
         <div class="qc-sub" id="qcSub"></div>
-        <div class="qc-note" id="qcParaTabletResult" role="status" hidden></div>
-        <div class="qc-note" id="qcIbuTabletResult" role="status" hidden></div>
+        <div id="qcDoseCaption" class="qc-sub" hidden></div>
+        <details id="qcMedicationGuidance" class="qc-note" hidden>
+          <summary>Dose details &amp; cautions</summary>
+    <div class="qc-note" id="qcPatientModeHint">Child / teen: use the appropriate age-specific prescription. Paracetamol calculation is for age 1 month and older; younger infants need individual dosing.</div>
+<div id="qcParaTabletOptions" hidden>
+        <div>500 mg immediate-release tablets. Adult mode shows the usual product range; lower doses/limits may be needed. Child mode preserves the calculated dose without rounding. Exact tablet equivalents still require age/product and swallowing checks.</div>
+        <div><a href="https://www.medsafe.govt.nz/profs/Datasheet/p/Pacimoltab.pdf" target="_blank" rel="noopener noreferrer">Product age and dose guidance</a> · <a href="https://bpac.org.nz/2018/paracetamol.aspx" target="_blank" rel="noopener noreferrer">Child dosing</a> · <a href="https://healthify.nz/medicines-a-z/p/paracetamol" target="_blank" rel="noopener noreferrer">Adult precautions</a></div>
+      <div class="qc-note">Per-dose calculation only. Check the prescription/product, previous doses and other paracetamol-containing medicines.</div><div class="qc-note" id="qcParaTabletResult" hidden></div></div><div id="qcIbuTabletOptions" hidden>
+        <div>Immediate-release only. Adult mode shows usual short-term dosing, subject to suitability and the prescription/product. Child mode preserves the existing 6 mg/kg formula; confirm it against the child’s prescription. No tablet rounding. Infants under 3 months need individual clinical assessment.</div>
+        <div><a href="https://healthify.nz/medicines-a-z/i/ibuprofen-children" target="_blank" rel="noopener noreferrer">Child guidance</a> · <a href="https://healthify.nz/medicines-a-z/i/ibuprofen" target="_blank" rel="noopener noreferrer">Adult guidance</a></div>
+      <div class="qc-note">Dose conversion only, not confirmation that ibuprofen is suitable. Check the prescription/product, previous doses and other NSAIDs.</div><div class="qc-note" id="qcIbuTabletResult" hidden></div></div>
+        </details>
       </div>
     </div>
 
@@ -5645,6 +5654,19 @@ function closeTable() {
   const paraTabletResult = qc.querySelector('#qcParaTabletResult');
   const ibuTabletStrength = qc.querySelector('#qcIbuTabletStrength');
   const ibuTabletResult = qc.querySelector('#qcIbuTabletResult');
+  const medicationGuidance = qc.querySelector('#qcMedicationGuidance');
+  const doseCaption = qc.querySelector('#qcDoseCaption');
+  const paraGuide = qc.querySelector('#qcParaTabletOptions');
+  const ibuGuide = qc.querySelector('#qcIbuTabletOptions');
+  function updateDoseCaption() {
+    if (patientMode === 'adult') {
+      doseCaption.textContent = activeMed === 'para' && Number(weightEl.value) < 50 ? 'Under 50 kg · individual dose review' : 'Usual adult dose';
+    } else {
+      const kg = Number(weightEl.value);
+      const mg = activeMed === 'para' ? Math.min(kg * 15,1000) : Math.min(kg * 6,400);
+      doseCaption.textContent = `${Number(mg.toFixed(3))} mg · ${activeMed === 'para' ? '15' : '6'} mg/kg`;
+    }
+  }
   const patientModeWrap = qc.querySelector('#qcPatientMode');
   const patientModeHint = qc.querySelector('#qcPatientModeHint');
   let patientMode = 'child';
@@ -5748,6 +5770,11 @@ function closeTable() {
   function setMed(med){
     activeMed = med;
     const tabletMed = med === 'para' || med === 'ibu';
+    medicationGuidance.hidden = !tabletMed;
+    doseCaption.hidden = !tabletMed;
+    paraGuide.hidden = med !== 'para';ibuGuide.hidden = med !== 'ibu';
+    if (tabletMed) medicationGuidance.prepend(subEl);
+    else medicationGuidance.before(subEl);
     patientModeWrap.hidden = !tabletMed;
     patientModeHint.hidden = !tabletMed;
     resultsEl.classList.toggle('qc-tablet-layout',tabletMed);
@@ -5778,6 +5805,7 @@ function closeTable() {
   function resetOutput(){
     mainEl.textContent = '—';
     subEl.textContent = '';
+    doseCaption.textContent = '';
     tabletMain.textContent = '—';
     tabletUnit.textContent = '';
     paraTabletResult.textContent = '';
@@ -5833,6 +5861,7 @@ function closeTable() {
         subEl.textContent = `Calculated child dose: ${Number(mg.toFixed(3))} mg. Maximum 1 g per dose; 60 mg/kg per 24 hours, up to 4 g.`;
         childTabletResult(mg,500,paraTabletResult);
       }
+      updateDoseCaption();
       resultsEl.classList.add('has-value');return;
     }
 
@@ -5856,6 +5885,7 @@ function closeTable() {
         subEl.textContent = `Calculated child dose: ${Number(mg.toFixed(3))} mg (6 mg/kg; maximum 400 mg per dose). Confirm the prescribed regimen.`;
         childTabletResult(mg,strength,ibuTabletResult);
       }
+      updateDoseCaption();
       resultsEl.classList.add('has-value');return;
     }
 
