@@ -5660,7 +5660,7 @@ function closeTable() {
   const ibuGuide = qc.querySelector('#qcIbuTabletOptions');
   function updateDoseCaption() {
     if (patientMode === 'adult') {
-      doseCaption.textContent = activeMed === 'para' && Number(weightEl.value) < 50 ? 'Under 50 kg · individual dose review' : 'Usual adult dose';
+      doseCaption.textContent = activeMed === 'para' && Number(weightEl.value) < 50 ? `${Number((Number(weightEl.value) * 15).toFixed(3))} mg · under 50 kg; confirm dose` : 'Usual adult dose';
     } else {
       const kg = Number(weightEl.value);
       const mg = activeMed === 'para' ? Math.min(kg * 15,1000) : Math.min(kg * 6,400);
@@ -5845,10 +5845,11 @@ function closeTable() {
     if (activeMed === 'para'){
       if (patientMode === 'adult') {
         if (kg < 50) {
-          mainEl.textContent = 'Review dose';
-          subEl.textContent = 'Adult under 50 kg: confirm an individual weight-based dose and daily maximum.';
+          const mg = kg * 15;
+          mainEl.textContent = `${r1(mg / paraStrength)} mL`;
+          subEl.textContent = `Weight-based calculation: 15 mg/kg = ${Number(mg.toFixed(3))} mg. Adult under 50 kg: confirm the individual prescribed dose, frequency and daily maximum.`;
           tabletMain.textContent = 'Review dose';tabletUnit.textContent = '500 mg tablets';
-          paraTabletResult.textContent = 'Usual adult tablet range is withheld for low body weight.';
+          paraTabletResult.textContent = 'The mL figure is a weight-based calculation, not an individual prescription. The usual adult tablet range is withheld for low body weight.';
         } else {
           mainEl.textContent = `${r1(500 / paraStrength)}–${r1(1000 / paraStrength)} mL`;
           subEl.textContent = 'Usual adult range: 500–1000 mg per dose.';
