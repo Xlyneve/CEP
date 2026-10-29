@@ -3838,6 +3838,16 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
 </style>
 <link rel="stylesheet" href="ats-triage.css?v=1">
 <script type="module" src="ats-triage.js?v=1"></script>
+<style>
+#quickCalc #qcDosePair {display:contents;}
+#quickCalc .qc-results.qc-tablet-layout {display:block!important;}
+#quickCalc .qc-tablet-layout #qcDosePair {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:12px;}
+#quickCalc #qcTabletColumn {text-align:right;min-width:0;}
+#quickCalc #qcTabletMain {white-space:nowrap;}
+#quickCalc #qcTabletUnit {font-size:11px;margin-top:3px;}
+#quickCalc .qc-tablet-layout > #qcSub {margin-top:6px;}
+#quickCalc .qc-results [hidden] {display:none!important;}
+</style>
 </head>
 
 <body>
@@ -4024,7 +4034,6 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         <div>500 mg immediate-release tablets. Shows the maximum whole-tablet amount within the calculated dose, not automatic permission to give it. Check age, safe swallowing and the prescription/product. Liquid provides the calculated dose when whole tablets do not match.</div>
         <div><a href="https://www.medsafe.govt.nz/profs/Datasheet/p/Pacimoltab.pdf" target="_blank" rel="noopener noreferrer">Product age and dose guidance</a></div>
       </details>
-      <div class="qc-note" id="qcParaTabletResult" style="font-weight:600;" role="status" aria-live="polite"></div>
       <div class="qc-note">Per-dose calculation only. Check the prescription/product, previous doses and other paracetamol-containing medicines.</div>
     </div>
 
@@ -4047,7 +4056,6 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         <div>Immediate-release only. Shows the maximum whole-tablet amount within the calculated dose, not automatic permission to give it. Check age, safe swallowing, suitability and the prescription/product. A lower amount is a different dose, not an equivalent.</div>
         <div><a href="https://healthify.nz/medicines-a-z/i/ibuprofen-children" target="_blank" rel="noopener noreferrer">Ibuprofen guidance</a></div>
       </details>
-      <div class="qc-note" id="qcIbuTabletResult" style="font-weight:600;" role="status" aria-live="polite"></div>
       <div class="qc-note">Dose conversion only, not confirmation that ibuprofen is suitable. Check the prescription/product, previous doses and other NSAIDs.</div>
     </div>
 
@@ -4123,8 +4131,16 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
     <!-- Automatic result -->
     <div class="qc-row qc-actions">
       <div class="qc-results" aria-live="polite">
-        <div class="qc-big" id="qcMain">—</div>
+        <div id="qcDosePair">
+          <div class="qc-big" id="qcMain">—</div>
+          <div id="qcTabletColumn" hidden>
+            <div class="qc-big" id="qcTabletMain">—</div>
+            <div class="qc-sub" id="qcTabletUnit"></div>
+          </div>
+        </div>
         <div class="qc-sub" id="qcSub"></div>
+        <div class="qc-note" id="qcParaTabletResult" role="status" hidden></div>
+        <div class="qc-note" id="qcIbuTabletResult" role="status" hidden></div>
       </div>
     </div>
 
@@ -5618,6 +5634,14 @@ function closeTable() {
   const toggleBtn = qc.querySelector('.qc-toggle');
   const tabs = [...qc.querySelectorAll('.qc-tab')];
 
+  const tabletColumn = qc.querySelector('#qcTabletColumn');
+  const tabletMain = qc.querySelector('#qcTabletMain');
+  const tabletUnit = qc.querySelector('#qcTabletUnit');
+  function setTabletSummary(mg, strength) {
+    const count = Math.floor(mg / strength);
+    tabletMain.textContent = count > 0 ? `${count} ${count === 1 ? 'tab' : 'tabs'}` : 'No whole tab';
+    tabletUnit.textContent = `${strength} mg each`;
+  }
   const paraTabletResult = qc.querySelector('#qcParaTabletResult');
   const ibuTabletStrength = qc.querySelector('#qcIbuTabletStrength');
   const ibuTabletResult = qc.querySelector('#qcIbuTabletResult');
@@ -5634,9 +5658,11 @@ function closeTable() {
   }
   function updateParaTablets(kg, mg) {
     paraTabletResult.textContent = tabletDoseMatch(mg,500);
+    setTabletSummary(mg,500);
   }
   function updateIbuTablets(mg) {
     ibuTabletResult.textContent = tabletDoseMatch(mg,Number(ibuTabletStrength.value));
+    setTabletSummary(mg,Number(ibuTabletStrength.value));
   }
 
   const paraStrengthWrap = qc.querySelector('#qcParaStrength'); // div container
@@ -5713,6 +5739,11 @@ function closeTable() {
 
   function setMed(med){
     activeMed = med;
+    const tabletMed = med === 'para' || med === 'ibu';
+    resultsEl.classList.toggle('qc-tablet-layout',tabletMed);
+    tabletColumn.hidden = !tabletMed;
+    paraTabletResult.hidden = med !== 'para';
+    ibuTabletResult.hidden = med !== 'ibu';
 
     tabs.forEach(b => {
       const on = b.dataset.med === med;
@@ -5737,6 +5768,8 @@ function closeTable() {
   function resetOutput(){
     mainEl.textContent = '—';
     subEl.textContent = '';
+    tabletMain.textContent = '—';
+    tabletUnit.textContent = '';
     paraTabletResult.textContent = '';
     ibuTabletResult.textContent = '';
     resultsEl.classList.remove('has-value');
