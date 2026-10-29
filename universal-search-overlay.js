@@ -146,6 +146,10 @@ defaultCardStyle.textContent = `
   html:root:root:root:root:root:root:root body .cep-search-table-scroll :is(td,th),
   html:root:root:root:root:root:root:root body .cep-search-table-scroll :is(td,th) * {white-space:normal !important;overflow-wrap:anywhere !important;word-break:normal !important;max-width:100% !important;box-sizing:border-box !important;}
 
+  /* Clinical notes retain authored newlines/indentation in both search locations,
+     including compact pinned previews. Table cells keep their own wrapping rules. */
+  html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"] .cep-source-content,
+  html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"] .cep-source-content :not(.cep-search-table-scroll):not(.cep-search-table-scroll *) {white-space:pre-wrap !important;}
   html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"]:not(.cep-clinical-search-pin) .cep-source-content {font-size:11.5px !important;}
   html:root:root:root:root:root:root:root body .cep-search-source[data-source-file="clinicalnotes.html"]:not(.cep-clinical-search-pin) .cep-source-title {font-size:12.5px !important;}
   html:root:root:root:root:root:root:root body :is(.universal-search-results,.cep-global-search-results) .cep-concept-search-result {font-size:10.5px !important;}
@@ -1399,7 +1403,7 @@ export function renderClinicalSearchPins(container, entries, { navigate } = {}) 
       html:root:root:root:root:root:root:root body .cep-clinical-search-pin { display:block !important; flex:0 0 165px; width:165px !important; min-width:0 !important; max-width:165px !important; height:95px !important; min-height:0 !important; margin:0 !important; text-decoration:none; cursor:pointer; }
       html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-surface { box-sizing:border-box !important; height:95px !important; min-height:0 !important; padding:10px !important; overflow:hidden !important; }
       html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:12px !important; line-height:1.3 !important; font-weight:600 !important; margin:0 0 5px !important; }
-      html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-content { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:11px !important; line-height:1.35 !important; white-space:normal !important; }
+      html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-content { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:11px !important; line-height:1.35 !important; white-space:pre-wrap !important; }
     `;
     document.head.append(style);
   }
