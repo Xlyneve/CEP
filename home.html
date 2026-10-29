@@ -4019,6 +4019,22 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         <div class="qc-pill">Dose: <b>15 mg/kg</b></div>
         <div class="qc-pill">Max: <b>1 g</b> (single dose)</div>
       </div>
+      <details class="qc-note" id="qcParaTabletOptions">
+        <summary>500 mg tablet option</summary>
+        <label class="qc-label" for="qcParaAge">Age group</label>
+        <select id="qcParaAge" class="qc-select">
+          <option value="">Select age</option>
+          <option value="under7">Under 7 years</option>
+          <option value="7to11">7–11 years</option>
+          <option value="12plus">12 years or older</option>
+        </select>
+        <label style="display:block;margin-top:8px;"><input type="checkbox" id="qcParaSwallow"> Able to swallow tablets safely</label>
+        <label style="display:block;margin-top:6px;"><input type="checkbox" id="qcParaSplit"> Product permits equal half-tablet doses</label>
+        <div class="qc-note">Immediate-release paracetamol only. This converts the calculated dose without rounding to a different dose.</div>
+        <div class="qc-note"><a href="https://www.medsafe.govt.nz/profs/Datasheet/p/Pacimoltab.pdf" target="_blank" rel="noopener noreferrer">Tablet age guide</a> · <a href="https://bpac.org.nz/2018/paracetamol.aspx" target="_blank" rel="noopener noreferrer">Weight-based dose</a></div>
+      </details>
+      <div class="qc-note" id="qcParaTabletResult" role="status" aria-live="polite"></div>
+      <div class="qc-note">Per-dose calculation only. Check the prescription/product, previous doses and other paracetamol-containing medicines.</div>
     </div>
 
     <!-- Ibuprofen -->
@@ -5602,6 +5618,42 @@ function closeTable() {
   const toggleBtn = qc.querySelector('.qc-toggle');
   const tabs = [...qc.querySelectorAll('.qc-tab')];
 
+  const paraAge = qc.querySelector('#qcParaAge');
+  const paraSwallow = qc.querySelector('#qcParaSwallow');
+  const paraSplit = qc.querySelector('#qcParaSplit');
+  const paraTabletResult = qc.querySelector('#qcParaTabletResult');
+  function updateParaTablets(kg, mg) {
+    const equivalent = mg / 500;
+    const formatted = String(Number(equivalent.toFixed(3)));
+    if (!paraAge.value) {
+      paraTabletResult.textContent = `500 mg tablet equivalent: ${formatted}. Select age and confirm swallowing to check suitability.`;
+      return;
+    }
+    if (paraAge.value === 'under7') {
+      paraTabletResult.textContent = '500 mg tablet guide: not for under 7s. Use the prescribed liquid formulation.';
+      return;
+    }
+    if (!paraSwallow.checked) {
+      paraTabletResult.textContent = 'Use liquid unless safe tablet swallowing is confirmed.';
+      return;
+    }
+    if (paraAge.value === '7to11' && mg > 500) {
+      paraTabletResult.textContent = 'Calculated dose exceeds this tablet guide’s 500 mg limit for ages 7–11. Confirm the prescribed dose/formulation.';
+      return;
+    }
+    const whole = Math.abs(equivalent - Math.round(equivalent)) < 1e-8;
+    const half = Math.abs(equivalent * 2 - Math.round(equivalent * 2)) < 1e-8;
+    if (equivalent < 0.5 || (!whole && !half)) {
+      paraTabletResult.textContent = `500 mg tablet equivalent: ${formatted}. This dose cannot be measured in whole or half tablets; use liquid or confirm a prescribed alternative.`;
+      return;
+    }
+    if (!whole && !paraSplit.checked) {
+      paraTabletResult.textContent = `Equivalent: ${formatted} × 500 mg tablets. Confirm that this product permits equal halves, otherwise use liquid.`;
+      return;
+    }
+    paraTabletResult.textContent = `Tablet option: ${formatted} × 500 mg ${equivalent === 1 ? 'tablet' : 'tablets'} per dose (${Number(mg.toFixed(3))} mg). Confirm against the prescription/product.`;
+  }
+
   const paraStrengthWrap = qc.querySelector('#qcParaStrength'); // div container
   const ibuStrengthWrap  = qc.querySelector('#qcIbuStrength');  // div container
 
@@ -5694,11 +5746,13 @@ function closeTable() {
     calc();
   }
 
+  [paraAge, paraSwallow, paraSplit].forEach(input => input.addEventListener('change', calc));
   tabs.forEach(b => b.addEventListener('click', () => setMed(b.dataset.med)));
 
   function resetOutput(){
     mainEl.textContent = '—';
     subEl.textContent = '';
+    paraTabletResult.textContent = '';
     resultsEl.classList.remove('has-value');
   }
 
@@ -5726,17 +5780,18 @@ function closeTable() {
 
     const kg = Number(weightEl.value);
 
-    if (!kg || kg <= 0){
+    if (!Number.isFinite(kg) || kg <= 0){
       resetOutput();
       return;
     }
 
-    // Paracetamol
+    // Keep the liquid and tablet equivalents on the same capped 15 mg/kg dose.
     if (activeMed === 'para'){
-      // 15 mg/kg; strength is mg/mL (24 = 120/5, 50 = 250/5)
-      const ml = (kg * 15) / paraStrength;
+      const mg = Math.min(kg * 15, 1000);
+      const ml = mg / paraStrength;
       mainEl.textContent = `${r1(ml)} mL`;
-      subEl.textContent = '';
+      subEl.textContent = `Calculated dose: ${Number(mg.toFixed(3))} mg${kg * 15 >= 1000 ? ' • Maximum 1 g per dose' : ''}`;
+      updateParaTablets(kg, mg);
       resultsEl.classList.add('has-value');
       return;
     }
