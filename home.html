@@ -5660,7 +5660,13 @@ function closeTable() {
   const ibuGuide = qc.querySelector('#qcIbuTabletOptions');
   function updateDoseCaption() {
     if (patientMode === 'adult') {
-      doseCaption.textContent = activeMed === 'para' && Number(weightEl.value) < 50 ? `${Number((Number(weightEl.value) * 15).toFixed(3))} mg · under 50 kg; confirm dose` : 'Usual adult dose';
+      if (activeMed === 'para') {
+        const kg = Number(weightEl.value);
+        const calculatedMg = Math.min(kg * 15,1000);
+        doseCaption.textContent = kg < 50
+          ? `${Number(calculatedMg.toFixed(3))} mg · under 50 kg; confirm dose`
+          : calculatedMg < 1000 ? `${Number(calculatedMg.toFixed(3))} → 1000 mg · adult option` : '1000 mg · adult option';
+      } else doseCaption.textContent = 'Usual adult dose';
     } else {
       const kg = Number(weightEl.value);
       const mg = activeMed === 'para' ? Math.min(kg * 15,1000) : Math.min(kg * 6,400);
@@ -5684,7 +5690,7 @@ function closeTable() {
       const on = button.dataset.patient === patientMode;
       button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on));
     });
-    qc.querySelector('#qcParaDoseRule').textContent = patientMode === 'adult' ? '500–1000 mg' : '15 mg/kg';
+    qc.querySelector('#qcParaDoseRule').textContent = patientMode === 'adult' ? '1 g option' : '15 mg/kg';
     qc.querySelector('#qcIbuDoseRule').textContent = patientMode === 'adult' ? '200–400 mg' : '6 mg/kg';
     patientModeHint.textContent = patientMode === 'adult'
       ? 'Adult 18+: usual short-term product doses, not an individual prescription. Lower doses or limits may apply.'
@@ -5851,10 +5857,11 @@ function closeTable() {
           tabletMain.textContent = 'Review dose';tabletUnit.textContent = '500 mg tablets';
           paraTabletResult.textContent = 'The mL figure is a weight-based calculation, not an individual prescription. The usual adult tablet range is withheld for low body weight.';
         } else {
-          mainEl.textContent = `${r1(500 / paraStrength)}–${r1(1000 / paraStrength)} mL`;
-          subEl.textContent = 'Usual adult range: 500–1000 mg per dose.';
-          tabletMain.textContent = '1–2 tabs';tabletUnit.textContent = '500 mg each';
-          paraTabletResult.textContent = 'Product guide: every 4–6 hours if required; maximum 4 g in 24 hours. Follow the prescription; lower limits may apply.';
+          const calculatedMg = Math.min(kg * 15,1000);
+          mainEl.textContent = `${r1(1000 / paraStrength)} mL`;
+          subEl.textContent = `Adult 1 g option: 2 × 500 mg tablets. Weight-based calculation: ${Number(calculatedMg.toFixed(3))} mg. The liquid amount shown corresponds to 1000 mg, not the unrounded weight calculation.`;
+          tabletMain.textContent = '2 tabs';tabletUnit.textContent = '500 mg each';
+          paraTabletResult.textContent = 'Usual adult product range is 500–1000 mg; this displays the 1 g option, not an individual prescription. Every 4–6 hours if required; maximum 4 g in 24 hours. Lower doses or limits may be needed; follow the prescription.';
         }
       } else {
         const mg = Math.min(kg * 15, 1000);
