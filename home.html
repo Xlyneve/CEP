@@ -4049,6 +4049,19 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         <div class="qc-pill">Dose: <b>6 mg/kg</b></div>
         <div class="qc-pill">Max: <b>400 mg</b> (single dose)</div>
       </div>
+      <details class="qc-note" id="qcIbuTabletOptions">
+        <summary>Tablet option</summary>
+        <label class="qc-label" for="qcIbuTabletStrength">Tablet strength — check the pack</label>
+        <select id="qcIbuTabletStrength" class="qc-select"><option value="">Select strength</option><option value="200">200 mg</option><option value="400">400 mg</option></select>
+        <label class="qc-label" for="qcIbuAge">Age group</label>
+        <select id="qcIbuAge" class="qc-select"><option value="">Select age</option><option value="under12">Under 12 years</option><option value="12plus">12 years or older</option></select>
+        <label style="display:block;margin-top:8px;"><input type="checkbox" id="qcIbuSwallow"> Able to swallow tablets safely</label>
+        <label style="display:block;margin-top:6px;"><input type="checkbox" id="qcIbuSplit"> This product permits equal half-tablet doses</label>
+        <div class="qc-note">Immediate-release ibuprofen only. Some tablets must not be halved; a score line alone is not confirmation. No dose rounding.</div>
+        <div class="qc-note"><a href="https://healthify.nz/medicines-a-z/i/ibuprofen-children" target="_blank" rel="noopener noreferrer">Ibuprofen guidance</a> · <a href="https://www.medsafe.govt.nz/DbSearch/InfoSearch" target="_blank" rel="noopener noreferrer">Check product data sheet</a></div>
+      </details>
+      <div class="qc-note" id="qcIbuTabletResult" role="status" aria-live="polite"></div>
+      <div class="qc-note">Dose conversion only, not confirmation that ibuprofen is suitable. Check the prescription/product, previous doses and other NSAIDs.</div>
     </div>
 
     <!-- Adrenaline IM (Anaphylaxis) -->
@@ -5654,6 +5667,30 @@ function closeTable() {
     paraTabletResult.textContent = `Tablet option: ${formatted} × 500 mg ${equivalent === 1 ? 'tablet' : 'tablets'} per dose (${Number(mg.toFixed(3))} mg). Confirm against the prescription/product.`;
   }
 
+  const ibuTabletStrength = qc.querySelector('#qcIbuTabletStrength');
+  const ibuAge = qc.querySelector('#qcIbuAge');
+  const ibuSwallow = qc.querySelector('#qcIbuSwallow');
+  const ibuSplit = qc.querySelector('#qcIbuSplit');
+  const ibuTabletResult = qc.querySelector('#qcIbuTabletResult');
+  function updateIbuTablets(mg) {
+    const strength = Number(ibuTabletStrength.value);
+    let text;
+    if (![200,400].includes(strength)) {
+      ibuTabletResult.textContent = 'Select tablet strength to check the tablet equivalent.'; return;
+    }
+    const equivalent = mg / strength;
+    const formatted = String(Number(equivalent.toFixed(3)));
+    const whole = Math.abs(equivalent - Math.round(equivalent)) < 1e-8;
+    const half = Math.abs(equivalent * 2 - Math.round(equivalent * 2)) < 1e-8;
+    if (!ibuAge.value) text = `${strength} mg tablet equivalent: ${formatted}. Select age and confirm swallowing.`;
+    else if (ibuAge.value === 'under12') text = 'Under 12: no automatic tablet option. Confirm the prescribed dose and exact product/formulation with a pharmacist or clinician.';
+    else if (!ibuSwallow.checked) text = 'Use a suitable prescribed formulation unless safe tablet swallowing is confirmed.';
+    else if (equivalent < 0.5 || (!whole && !half)) text = `${strength} mg tablet equivalent: ${formatted}. This dose cannot be measured in whole or half tablets; use a suitable liquid or confirm a prescribed alternative.`;
+    else if (!whole && !ibuSplit.checked) text = `Equivalent: ${formatted} × ${strength} mg tablets. Only use halves if this product permits equal half-tablet doses; otherwise use a suitable liquid.`;
+    else text = `Tablet option: ${formatted} × ${strength} mg ${equivalent === 1 ? 'tablet' : 'tablets'} per dose (${Number(mg.toFixed(3))} mg). Confirm against the prescription/product.`;
+    ibuTabletResult.textContent = text;
+  }
+
   const paraStrengthWrap = qc.querySelector('#qcParaStrength'); // div container
   const ibuStrengthWrap  = qc.querySelector('#qcIbuStrength');  // div container
 
@@ -5746,13 +5783,14 @@ function closeTable() {
     calc();
   }
 
-  [paraAge, paraSwallow, paraSplit].forEach(input => input.addEventListener('change', calc));
+  [paraAge, paraSwallow, paraSplit, ibuTabletStrength, ibuAge, ibuSwallow, ibuSplit].forEach(input => input.addEventListener('change', calc));
   tabs.forEach(b => b.addEventListener('click', () => setMed(b.dataset.med)));
 
   function resetOutput(){
     mainEl.textContent = '—';
     subEl.textContent = '';
     paraTabletResult.textContent = '';
+    ibuTabletResult.textContent = '';
     resultsEl.classList.remove('has-value');
   }
 
@@ -5805,7 +5843,8 @@ function closeTable() {
 
       const ml = mg / ibuStrength;
       mainEl.textContent = `${r1(ml)} mL`;
-      subEl.textContent = capped ? 'Max 400 mg reached' : '';
+      subEl.textContent = `Calculated dose: ${Number(mg.toFixed(3))} mg${capped ? ' • Maximum 400 mg per dose' : ''}`;
+      updateIbuTablets(mg);
       resultsEl.classList.add('has-value');
       return;
     }
