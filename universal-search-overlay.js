@@ -1127,6 +1127,7 @@ export function getSearchCopyHtml(entry) {
   const size = sizes[file];
   if (!html) return html;
   const wrapper = document.createElement('div');
+  if(file === 'clinicalnotes.html') wrapper.dataset.cepClinicalClipboard = 'true';
   if(window.CEPSecurity?.setHTML)window.CEPSecurity.setHTML(wrapper,html);
   else wrapper.innerHTML=html;
   // Fixed-size notes copy as document-sized 11pt, independent of compact card pixels.
@@ -1259,9 +1260,49 @@ function openSearchYouTubeUrl(rawUrl) {
   return true;
 }
 
+// Match Clinicalnotes.html's plain-text copy, preserving rows, blocks and spacing.
+function richNoteToClinicalText(htmlContent) {
+  const documentCopy = new DOMParser().parseFromString(String(htmlContent || ''), 'text/html');
+  const blockTags = new Set(['P','DIV','LI','H1','H2','H3','H4','H5','H6','BLOCKQUOTE']);
+  const trimEdges = text => text.replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, '');
+  function readChildren(parent) {
+    let text = '';
+    for (const node of parent.childNodes) {
+      if (node.nodeType === 3) { text += node.nodeValue.replace(/\u00a0/g, ' '); continue; }
+      if (node.nodeType !== 1 || ['SCRIPT','STYLE'].includes(node.tagName)) continue;
+      if (node.tagName === 'BR') { text += '\n'; continue; }
+      if (node.tagName === 'TABLE') {
+        const rows = [...node.rows].map(row => [...row.cells]
+          .map(cell => trimEdges(readChildren(cell)))
+          .filter(Boolean).join(' ')).filter(Boolean);
+        if (rows.length) {
+          if (text && !text.endsWith('\n')) text += '\n';
+          text += rows.join('\n') + '\n';
+        }
+        continue;
+      }
+      const value = readChildren(node);
+      if (blockTags.has(node.tagName)) {
+        // A block boundary needs one newline, not an extra one for each nested wrapper.
+        if (text && !text.endsWith('\n')) text += '\n';
+        text += value;
+        if (!value || !text.endsWith('\n')) text += '\n';
+      } else text += value;
+    }
+    return text;
+  }
+  return readChildren(documentCopy.body)
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^[\r\n]+|[\r\n]+$/g, '');
+}
+
 function prepareSearchClipboard(copyText, copyHtml) {
+  const clinical = copyHtml && new DOMParser().parseFromString(String(copyHtml), 'text/html')
+    .querySelector('[data-cep-clinical-clipboard="true"]');
   return {
-    plainText: String(copyText || '').trim(),
+    plainText: clinical ? richNoteToClinicalText(copyHtml) : String(copyText || '').trim(),
     safeHtml: copyHtml && window.CEPSecurity?.sanitizeHTML ? window.CEPSecurity.sanitizeHTML(String(copyHtml)) : ''
   };
 }
