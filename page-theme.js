@@ -4610,3 +4610,55 @@
   }`;
   document.head.append(style);
 })();
+
+// Fill missing icon press feedback without replacing a theme's own active effect.
+(() => {
+  const page = (location.pathname.split('/').pop() || '').toLowerCase();
+  if (['rncnp.html','biosched1.html','recalltracker.html'].includes(page)) return;
+  const controls = 'button,[role="button"],.circle,.glass-btn,.header-btn,.add-btn,.xlyneve-theme-button,.cep-sign-out-light,a.cep-media-link';
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  let activeRules = null;
+  const observer = new MutationObserver(() => { activeRules = null; });
+  observer.observe(document.head, {childList:true,subtree:true,characterData:true});
+  function collectActiveRules() {
+    const rules = [];
+    const read = sheet => {
+      let entries; try { entries = sheet.cssRules; } catch { return; }
+      for (const rule of entries || []) {
+        if (rule.media && !matchMedia(rule.conditionText || rule.media.mediaText).matches) continue;
+        if (rule.selectorText?.includes(':active') && rule.style &&
+            ['transform','scale','translate','rotate','box-shadow','filter','animation','animation-name','opacity']
+              .some(property => rule.style.getPropertyValue(property))) {
+          rules.push(rule.selectorText.replace(/:active\b/g, ':not(#cep-press-unmatched)'));
+        }
+        if (rule.cssRules) read(rule);
+        if (rule.styleSheet) read(rule.styleSheet);
+      }
+    };
+    [...document.styleSheets].forEach(read);
+    return rules;
+  }
+  function hasOwnPress(control) {
+    activeRules ||= collectActiveRules();
+    // Include glyphs: some themes animate only the SVG inside the button.
+    const targets = [control, ...control.querySelectorAll('svg,.icon,[class*="icon"],span')];
+    return activeRules.some(selector => targets.some(target => {
+      try { return target.matches(selector); } catch { return false; }
+    }));
+  }
+  function press(event) {
+    if (motion.matches || (event.type === 'pointerdown' && event.button !== 0)) return;
+    if (event.type === 'keydown' && (event.repeat || !['Enter',' '].includes(event.key))) return;
+    const control = event.target.closest?.(controls);
+    if (!control || control.matches(':disabled,[aria-disabled="true"],.cep-copy-text') ||
+        control.closest('[contenteditable="true"]') || hasOwnPress(control)) return;
+    if (!control.animate || control.getAnimations().some(animation => animation.playState === 'running')) return;
+    // Individual scale composes with positioning/hover transforms; no extra halo.
+    const scale = getComputedStyle(control).scale;
+    control.animate([{scale:scale === 'none' ? '1' : scale},{scale:'.96',offset:.4},
+      {scale:scale === 'none' ? '1' : scale}], {duration:210,easing:'ease-out'});
+  }
+  document.addEventListener('pointerdown',press,{capture:true,passive:true});
+  document.addEventListener('keydown',press,true);
+  window.addEventListener('resize',()=>{activeRules=null;},{passive:true});
+})();
