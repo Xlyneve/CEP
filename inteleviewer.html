@@ -13,7 +13,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="header-rays.css?v=51">
-  <link rel="stylesheet" href="table-theme.css?v=2">
   <title>Inteleviewer Access</title>
   <style>
     @font-face {
@@ -520,6 +519,53 @@ body.edit-mode td:nth-child(4) {
 }
  
   </style>
+
+  <style id="inteleviewer-shared-theme">
+    /* One themed row surface; the table and its cells are layout only. */
+    html body .table-shell, html body .table-shell > table,
+    html body .table-shell tbody {
+      background:transparent !important; border:0 !important; box-shadow:none !important;
+      backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    }
+    html body .table-shell > table {display:block;width:100%;}
+    html body .table-shell tbody {display:grid;gap:14px;}
+    html body .table-shell tbody tr {
+      display:grid;grid-template-columns:minmax(0,36fr) minmax(0,27fr) minmax(0,37fr);
+      filter:none !important;margin:0;overflow:hidden;
+    }
+    html body.edit-mode .table-shell tbody tr {
+      grid-template-columns:minmax(0,1.1fr) minmax(0,.8fr) minmax(0,1fr) 108px;
+    }
+    html body .table-shell tbody tr td {
+      display:block;width:auto;min-width:0;padding:17px 18px;
+      background:transparent !important;background-image:none !important;
+      border:0 !important;border-radius:0 !important;box-shadow:none !important;
+      backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+      color:var(--card-ink,var(--theme-ink,#39190f)) !important;
+    }
+    html body .table-shell tbody tr td::before {content:none !important;}
+    html body .table-shell tbody tr td:nth-child(4) {display:none;padding:12px 6px;}
+    html body.edit-mode .table-shell tbody tr td:nth-child(4) {display:flex;align-items:center;}
+    html:not(#cep-inteleviewer-field-exclusion):not(#cep-inteleviewer-field-exclusion):not(#cep-inteleviewer-field-exclusion):not(#cep-inteleviewer-field-exclusion):not(#cep-inteleviewer-field-exclusion):not(#cep-inteleviewer-field-exclusion):not(#cep-inteleviewer-field-exclusion):not(#cep-inteleviewer-field-exclusion) body .table-shell :is(input:disabled,input[readonly],.radiology-link) {
+      background:transparent !important;background-image:none !important;
+      box-shadow:none !important;border:0 !important;
+      color:var(--card-ink,var(--theme-ink,#39190f)) !important;
+      -webkit-text-fill-color:currentColor !important;opacity:1;
+    }
+    html body :is(h1,.add-section h3) {color:var(--theme-ink,#39190f);}
+    html body .top-right {background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;}
+    html body .toast {background:var(--clinical-panel,#efede8);color:var(--theme-ink,#39190f);border-color:var(--clinical-edge,#b8b0ac);}
+    @media(max-width:720px){
+      html body .table-shell tbody tr,html body.edit-mode .table-shell tbody tr {grid-template-columns:minmax(0,1fr);}
+      html body .table-shell tbody tr td {padding:12px 18px;}
+      html body.edit-mode .table-shell tbody tr td:nth-child(4) {justify-content:flex-end;padding:8px 18px;}
+    }
+    @media print {
+      html body .table-shell tbody tr {break-inside:avoid;}
+      html body .table-shell tbody tr td:nth-child(4) {display:none !important;}
+      html body .table-shell :is(input:disabled,input[readonly],.radiology-link) {color:#000 !important;-webkit-text-fill-color:#000 !important;}
+    }
+  </style>
   <link rel="stylesheet" href="site-background.css">
   <script src="page-theme.js?v=20261028-editor-contrast"></script>
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
@@ -560,7 +606,7 @@ body.edit-mode td:nth-child(4) {
   <button class="add-toggle" onclick="toggleAddSection()">＋ Add access</button>
 </div>
 
-  <div class="add-section">
+  <div class="add-section note-card">
     <h3>Add New Access</h3>
     <input type="text" id="newRadiology" placeholder="Radiology">
     <input type="text" id="newUrl" placeholder="Website URL (optional)">
@@ -604,6 +650,7 @@ const firebaseConfig = {
         : '';
 
       const tr = document.createElement('tr');
+      tr.className = 'note-card';
 
       tr.innerHTML = `
   <td>
