@@ -354,6 +354,14 @@ function decorateNoteVideoLinks(root) {
         const hash=url.searchParams.get('h')||parts[index+1];if(hash&&/^[a-z0-9]+$/i.test(hash))embed.searchParams.set('h',hash);
         embedUrl=embed.href;label='Vimeo';
       }
+      // Mobile native PDF iframes can expose only the first page.
+      // The local viewer supplies scrolling and page navigation for hosted PDFs.
+      if (!kind && url.origin === location.origin && /\.pdf$/i.test(url.pathname) &&
+          (matchMedia('(pointer:coarse)').matches || matchMedia('(max-width:768px)').matches)) {
+        const viewer = new URL('vendor/pdfjs-6.4.299/web/viewer.html', location.href);
+        viewer.searchParams.set('file', url.href); viewer.hash = 'zoom=page-width';
+        embedUrl = viewer.href; label = 'PDF';
+      }
       panel.classList.toggle('is-video',Boolean(kind||options.video));
       sizeKind=kind||options.video?'video':'link';
       restorePanelSize();
