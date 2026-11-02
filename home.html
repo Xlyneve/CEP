@@ -4602,7 +4602,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         else {
           const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
           const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
-          const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+          const similar = tolerance && words.some(word => window.CEPSearchWork.similarSearchWord(term, word, tolerance));
           if (!similar) return null;
           fuzzy = true; score += 8;
         }
@@ -4629,7 +4629,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
           else {
             const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
             const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
-            const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+            const similar = tolerance && words.some(word => window.CEPSearchWork.similarSearchWord(term, word, tolerance));
             if (!similar) { matched = false; break; }
             fuzzy = true; groupScore += 8;
           }
@@ -4839,7 +4839,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
           status.textContent = conceptResults.length
             ? `${conceptResults.length}${conceptResults.length === 30 ? '+' : ''} referenced concept${conceptResults.length === 1 ? '' : 's'}`
             : 'No matching referenced concepts found.';
-          conceptRenderer(results, conceptResults, terms);
+          await conceptRenderer(results, conceptResults, terms, () => requestId === searchRequestId && searchMode === 'concepts' && !panel.hidden);
         } catch (error) {
           if (requestId !== searchRequestId) return;
           if (error?.code === 'xgpt/auth-required') {
@@ -4881,12 +4881,14 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       // already available from the primary project.
       if (searchMode !== 'clinical') window.cepUniversalLazyLoaders.forEach(loader => void loader(query));
       if (requestId !== searchRequestId || normalizeSearchValue(input.value) !== query) return;
-      const scoredMatches = candidates
-        .filter(page => window.matchesSearchMedia?.(page, mediaFilter) ?? mediaFilter === 'all')
-        .filter(page => searchMode === 'clinical' || activeSource === 'all' || page.sourceTitle === activeSource)
-        .map(page => commaGroups ? scoreCommaPage(page, commaGroups) : scorePage(page, query, terms))
-        .filter(Boolean)
-        .sort((a, b) => commaGroups
+      const current = () => requestId === searchRequestId && normalizeSearchValue(input.value) === query && !panel.hidden;
+      const scoredMatches = await window.CEPSearchWork.mapSearchBatches(candidates, page => {
+        if (searchMode !== 'clinical' && activeSource !== 'all' && page.sourceTitle !== activeSource) return null;
+        if (!(window.matchesSearchMedia?.(page, mediaFilter) ?? mediaFilter === 'all')) return null;
+        return commaGroups ? scoreCommaPage(page, commaGroups) : scorePage(page, query, terms);
+      }, current);
+      if (!scoredMatches || !current()) return;
+      scoredMatches.sort((a, b) => commaGroups
           ? b.matchedGroupCount - a.matchedGroupCount || b.score - a.score
           : b.score - a.score);
       const sourceResultCounts = new Map();
@@ -5126,14 +5128,24 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         });
         result.appendChild(frame);
       };
-      const renderNextBatch = () => {
+      const renderNextBatch = async () => {
+        if (!current() || renderBatch.rendering) return;
+        renderBatch.rendering = true;
         sentinel.hidden = true;
         renderBatch.observer.disconnect();
         const end = Math.min(matches.length, nextIndex + 8);
         renderBatch.chunkPending += end - nextIndex;
         while (nextIndex < end) {
+          if (!current()) { renderBatch.rendering = false; return; }
           const resultIndex = nextIndex++;
           renderResult(matches[resultIndex], resultIndex);
+          if (nextIndex < end && nextIndex % 2 === 0) await window.CEPSearchWork.yieldSearchWork();
+        }
+        renderBatch.rendering = false;
+        if (!current()) return;
+        if (nextIndex < matches.length && renderBatch.chunkPending === 0) {
+          if (renderBatch.anyReady) { sentinel.hidden = false; renderBatch.observer.disconnect(); renderBatch.observer.observe(sentinel); }
+          else { void renderNextBatch(); }
         }
         if (nextIndex >= matches.length) {
           sentinel.hidden = true;
@@ -5217,7 +5229,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
         refresh.textContent = '↻';
       }
     });
-    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, searchMode === 'clinical' ? 140 : 180); });
+    input.addEventListener('input', () => { ++searchRequestId; clearTimeout(timer); timer = setTimeout(runSearch, searchMode === 'clinical' ? 140 : 180); });
     input.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeSearch();
       if (event.key === 'Enter') {
@@ -6532,6 +6544,8 @@ function closeTable() {
   })();
 </script>
 <script type="module">
+  import * as searchWork from './search-scheduler.js?v=20261102-1';
+  window.CEPSearchWork = searchWork;
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { matchesSearchMedia, createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, renderClinicalSearchPins, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=54';
   import {

@@ -1,3 +1,4 @@
+import * as searchWork from './search-scheduler.js?v=20261102-1';
 import './note-copy-text.js?v=9';
 import { enableSearchImageZoom, enableSearchTableZoom } from './note-media-viewer.js?v=1';
 export { enableSearchImageZoom, enableSearchTableZoom, openNoteTableZoom, openNoteImageZoom } from './note-media-viewer.js?v=1';
@@ -169,10 +170,13 @@ let defaultFitFrame = 0;
 function scheduleDefaultCardFit(card) {
   pendingDefaultFits.add(card);
   if (defaultFitFrame) return;
-  defaultFitFrame = requestAnimationFrame(() => {
+  defaultFitFrame = requestAnimationFrame(async () => {
+    while (pendingDefaultFits.size) {
+      const batch = [...pendingDefaultFits].slice(0,2);
+      batch.forEach(pending => { pendingDefaultFits.delete(pending); fitDefaultSearchCard(pending); });
+      if (pendingDefaultFits.size) await searchWork.yieldSearchWork();
+    }
     defaultFitFrame = 0;
-    for (const pending of pendingDefaultFits) fitDefaultSearchCard(pending);
-    pendingDefaultFits.clear();
   });
 }
 const defaultCardResize = typeof ResizeObserver === 'function' ? new ResizeObserver(entries => {
@@ -601,7 +605,7 @@ const scoreReferencedConceptGroup = (concept, group) => {
     else {
       const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
       const similar = tolerance && concept.words.some(word =>
-        Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance
+        searchWork.similarSearchWord(term, word, tolerance)
       );
       if (!similar) return null;
       score += 8;
@@ -672,8 +676,9 @@ export async function searchReferencedXgptConcepts(rawQuery) {
   return { results, terms };
 }
 
-export function renderReferencedXgptConceptResults(container, concepts, terms = []) {
-  const cards = concepts.map(concept => {
+export async function renderReferencedXgptConceptResults(container, concepts, terms = [], isCurrent = () => true) {
+  container.replaceChildren();
+  await searchWork.mapSearchBatches(concepts, concept => {
     const card = document.createElement('article');
     card.className = 'cep-concept-search-result';
     const heading = document.createElement('div'); heading.className = 'cep-concept-search-heading';
@@ -701,9 +706,9 @@ export function renderReferencedXgptConceptResults(container, concepts, terms = 
     if (photos) card.appendChild(photos);
     appendSection('Image note', concept.caption);
     window.CEPSharedDefinitions.appendVideo(card,concept.videoUrl);
+    container.appendChild(card);
     return card;
-  });
-  container.replaceChildren(...cards);
+  }, isCurrent, { maxItems:2, budget:6 });
 }
 
 function loadEntries(onProgress, onBatch) {
@@ -1573,7 +1578,7 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
   const status = panel.querySelector('.cep-global-search-status');
   const xgptPrompt = panel.querySelector('.cep-xgpt-auth-prompt');
   const results = panel.querySelector('.cep-global-search-results');
-  panel.querySelector('[aria-label="Close search"]').addEventListener('click', closeSearch);
+  panel.querySelector('[aria-label="Close search"]').addEventListener('click', () => { ++renderRequestId; ++conceptRequestId; clearTimeout(timer); closeSearch(); });
   let clinicalEntries = [], clinicalLoadPromise=null;
   let entries = [], activeSource = 'All', searchMode = 'default', timer, conceptRequestId = 0, mainLoading = true;
   const mergeXgptEntries = xgptEntries => {
@@ -1622,7 +1627,7 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
       status.textContent = conceptResults.length
         ? `${conceptResults.length}${conceptResults.length === 30 ? '+' : ''} referenced concept${conceptResults.length === 1 ? '' : 's'}`
         : 'No matching referenced concepts found.';
-      renderReferencedXgptConceptResults(results, conceptResults, terms);
+      await renderReferencedXgptConceptResults(results, conceptResults, terms, () => requestId === conceptRequestId && searchMode === 'concepts' && panel.isConnected);
     } catch (error) {
       if (requestId !== conceptRequestId) return;
       if (error?.code === 'xgpt/auth-required') {
@@ -1635,7 +1640,10 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
     }
   }
 
-  const runSearch = () => {
+  let renderRequestId = 0;
+  const runSearch = async () => {
+    const requestId = ++renderRequestId;
+    const current = () => requestId === renderRequestId && panel.isConnected;
     results.classList.toggle('cep-default-search-results',searchMode === 'default');
     if (searchMode === 'concepts') { void runConceptSearch(); return; }
     conceptRequestId++;
@@ -1652,7 +1660,9 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
     results.replaceChildren();
     if (searchMode === 'clinical') renderClinicalSearchPins(results,clinicalEntries);
     if (!query && mediaFilter === 'all') { status.textContent = 'Type a word to search.'; return; }
-    const scoredMatches = (searchMode === 'clinical' ? clinicalEntries : entries).filter(entry => matchesSearchMedia(entry, mediaFilter)).map(entry => {
+    const scoredMatches = await searchWork.mapSearchBatches(searchMode === 'clinical' ? clinicalEntries : entries, entry => {
+      if (searchMode !== 'clinical' && activeSource !== 'All' && entry.sourceTitle !== activeSource) return null;
+      if (!matchesSearchMedia(entry, mediaFilter)) return null;
       const indexed = getSearchText(entry);
       const { title, text } = indexed;
       if (commaGroups) {
@@ -1669,7 +1679,7 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
             else {
               const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
               const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
-              const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+              const similar = tolerance && words.some(word => searchWork.similarSearchWord(term, word, tolerance));
               if (!similar) { matched = false; break; }
               fuzzy = true; groupScore += 8;
             }
@@ -1695,14 +1705,15 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
         else {
           const tolerance = term.length >= 7 ? 2 : term.length >= 4 ? 1 : 0;
           const words = tolerance ? (indexed.words ||= [...new Set(`${title} ${text}`.match(/[\p{L}\p{N}]+/gu) || [])]) : [];
-          const similar = tolerance && words.some(word => Math.abs(word.length - term.length) <= tolerance && editDistance(term, word) <= tolerance);
+          const similar = tolerance && words.some(word => searchWork.similarSearchWord(term, word, tolerance));
           if (!similar) return null;
           fuzzy = true; score += 8;
         }
       }
       return { entry, score, fuzzy };
-    }).filter(Boolean).filter(match => searchMode === 'clinical' || activeSource === 'All' || match.entry.sourceTitle === activeSource)
-      .sort((a,b) => commaGroups
+    }, current);
+    if (!scoredMatches || !current()) return;
+    scoredMatches.sort((a,b) => commaGroups
         ? b.matchedGroupCount - a.matchedGroupCount || b.score - a.score
         : b.score - a.score);
     const sourceResultCounts = new Map();
@@ -1720,7 +1731,7 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
     status.textContent = matches.length ? `${onlySimilar ? 'No exact matches · showing ' : ''}${matches.length}${matches.length === 30 ? '+' : ''} ${onlySimilar ? 'similar ' : ''}result${matches.length === 1 ? '' : 's'}` : mainLoading && searchMode === 'default' ? 'Loading saved-note sections…' : 'No matching notes found.';
     if (mainLoading && searchMode === 'default' && matches.length) status.textContent += ' · loading more sections…';
     const groups = new Map();
-    matches.forEach(({ entry }) => {
+    await searchWork.mapSearchBatches(matches, ({ entry }) => {
       const snippetText = entry.file === 'chatgptx.html' ? entry.text : makeSnippet(entry, renderTerms);
       const navigationHint = entry.file === 'chatgptx.html' ? entry.text : makeNavigationHint(entry, renderTerms);
       let group = groups.get(entry.sourceTitle);
@@ -1792,10 +1803,11 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
         }
       });
       group.querySelector('.cep-global-search-group-cards').appendChild(link);
-    });
+    }, current, { maxItems:2, budget:6 });
   };
   modes.querySelectorAll('[data-search-mode]').forEach(modeButton => {
     modeButton.addEventListener('click', async () => {
+      ++renderRequestId; ++conceptRequestId;
       searchMode = modeButton.dataset.searchMode;
       modes.querySelectorAll('[data-search-mode]').forEach(button => {
         const active = button === modeButton;
@@ -1879,9 +1891,9 @@ html:root:root body .cep-global-search-filters[hidden] { display:none !important
     mountedSearchObserver.disconnect();
   });
   mountedSearchObserver.observe(document.body, { childList: true, subtree: true });
-  input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(runSearch, 140); });
+  input.addEventListener('input', () => { ++renderRequestId; ++conceptRequestId; clearTimeout(timer); timer = setTimeout(runSearch, 140); });
   input.addEventListener('keydown', event => {
-    if (event.key === 'Escape') closeSearch();
+    if (event.key === 'Escape') { ++renderRequestId; ++conceptRequestId; clearTimeout(timer); closeSearch(); }
     if (event.key === 'Enter') {
       const firstResult = results.querySelector('.cep-global-search-result');
       if (firstResult?.href) location.assign(firstResult.href);
