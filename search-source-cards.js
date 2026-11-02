@@ -12,6 +12,8 @@ let installed = false;
 function installThemeStyles() {
   const themeStyle = document.getElementById('xlyneve-color-theme-styles');
   if (installed || !themeStyle) return;
+  const selectedSheet = document.getElementById('cep-selected-theme-css');
+  if (selectedSheet?.tagName === 'LINK' && !selectedSheet.sheet) return;
   const output = [];
   function compile(rules) {
     let css = '';
@@ -45,7 +47,10 @@ function installThemeStyles() {
     }
     return css;
   }
-  output.push(compile(readStyleRules(themeStyle.textContent)));
+  // Separate theme bundles already contain static search-card aliases.
+  // Retain compatibility with the previous inline theme loader during rollout.
+  const inlineCss = themeStyle.textContent;
+  output.push(compile(readStyleRules(inlineCss)));
   output.push(`
     html:root:root body .cep-search-source::before,html:root:root body .cep-search-source::after { content:none !important; }
     .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) { display:block; position:relative; width:100%; min-width:0; height:auto; margin:0 !important; box-sizing:border-box; overflow-wrap:anywhere; }
@@ -89,6 +94,11 @@ function installThemeStyles() {
   const style = document.createElement('style'); style.id = 'cep-search-source-theme-styles';
   style.textContent = output.join('\n'); document.head.append(style); installed = true;
 }
+window.addEventListener('cep-theme-css-ready', () => {
+  installed = false;
+  document.getElementById('cep-search-source-theme-styles')?.remove();
+  installThemeStyles();
+});
 function openChatSearchPreview(card, surface) {
   const dialog = document.createElement('dialog');
   dialog.className = 'cep-chat-search-preview';
