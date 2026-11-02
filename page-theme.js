@@ -280,6 +280,7 @@
   if (selectedTheme === "moon-clay") {
     const link = document.createElement("link");
     link.id = "cep-moon-clay-theme"; link.rel = "stylesheet";
+    link.setAttribute("blocking", "render");
     link.href = new URL("moon-clay-theme.css?v=8",document.currentScript?.src || location.href).href;
     document.head.append(link);
   }
@@ -4295,6 +4296,68 @@
       background:transparent !important; border:0 !important; box-shadow:none !important;
     }
   `;
+
+  // Preserve rule order while keeping only shared CSS and the selected theme.
+  // This avoids parsing every other palette/material in the browser and search skins.
+  function selectedThemeCss(text, theme) {
+    text = text.replace(/\/\*[\s\S]*?\*\//g, '');
+    function select(source) {
+      let output = '', cursor = 0;
+      while (cursor < source.length) {
+        let open = -1, quote = '', depth = 0;
+        for (let i = cursor; i < source.length; i++) {
+          const c = source[i];
+          if (quote) { if (c === quote && source[i - 1] !== '\\') quote = ''; continue; }
+          if (c === '"' || c === "'") { quote = c; continue; }
+          if (c === '(' || c === '[') depth++;
+          else if (c === ')' || c === ']') depth--;
+          if (c === '{' && depth === 0) { open = i; break; }
+        }
+        if (open < 0) break;
+        let close = open + 1, braces = 1; quote = '';
+        for (; close < source.length; close++) {
+          const c = source[close];
+          if (quote) { if (c === quote && source[close - 1] !== '\\') quote = ''; continue; }
+          if (c === '"' || c === "'") { quote = c; continue; }
+          if (c === '{') braces++;
+          else if (c === '}' && --braces === 0) break;
+        }
+        const header = source.slice(cursor, open).trim();
+        const body = source.slice(open + 1, close);
+        cursor = close + 1;
+        if (/^@(media|supports|layer|container)\b/.test(header)) {
+          const inner = select(body);
+          if (inner) output += `${header}{${inner}}\n`;
+        } else if (header.startsWith('@')) {
+          output += `${header}{${body}}\n`;
+        } else {
+          // A comma outside parentheses/brackets separates independent selectors.
+          const selectors = []; let start = 0; depth = 0; quote = '';
+          for (let i = 0; i < header.length; i++) {
+            const c = header[i];
+            if (quote) { if (c === quote && header[i - 1] !== '\\') quote = ''; continue; }
+            if (c === '"' || c === "'") { quote = c; continue; }
+            if (c === '(' || c === '[') depth++;
+            else if (c === ')' || c === ']') depth--;
+            if (c === ',' && depth === 0) { selectors.push(header.slice(start, i)); start = i + 1; }
+          }
+          selectors.push(header.slice(start));
+          const applies = selectors.some(selector => {
+            if (/:not\([^)]*\[data-xlyneve-color-theme/.test(selector)) return true;
+            const themes = [...selector.matchAll(/\[data-xlyneve-color-theme\s*=\s*["']([^"']+)["']\]/g)];
+            return !themes.length || themes.some(match => match[1] === theme);
+          });
+          if (applies) output += `${header}{${body}}\n`;
+        }
+      }
+      return output;
+    }
+    return select(text);
+  }
+  themeStyle.textContent = selectedThemeCss(themeStyle.textContent, selectedTheme);
+  // page-theme.js runs in the head: install before body parsing/first paint,
+  // rather than waiting for DOMContentLoaded in start().
+  document.head.appendChild(themeStyle);
 
   function start() {
     if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
