@@ -94,7 +94,20 @@ function installThemeStyles() {
   const style = document.createElement('style'); style.id = 'cep-search-source-theme-styles';
   style.textContent = output.join('\n'); document.head.append(style); installed = true;
 }
+function refreshSourcePalette(surface) {
+  const rawIndex=surface.dataset.cepPaletteIndex;
+  const index=rawIndex === '' ? undefined : Number(rawIndex);
+  const colour=window.getCepSourceCardColour?.(surface.dataset.cepPaletteFile,index,surface.dataset.cepPaletteClass);
+  if (!colour) return;
+  surface.style.setProperty('--card-glass',`rgba(${colour.rgb}, .74)`);
+  surface.style.setProperty('--card-solid',colour.solid);
+  surface.style.setProperty('--card-ink',colour.ink);
+  if (colour.outline) surface.style.setProperty('--card-outline',colour.outline);
+  else surface.style.removeProperty('--card-outline');
+  surface.dataset.sharedPaletteColor='true';
+}
 window.addEventListener('cep-theme-css-ready', () => {
+  document.querySelectorAll('[data-cep-palette-file]').forEach(refreshSourcePalette);
   installed = false;
   document.getElementById('cep-search-source-theme-styles')?.remove();
   installThemeStyles();
@@ -147,14 +160,10 @@ export function applySourceSearchSkin(parent, entry) {
   parent.classList.add('cep-search-source'); parent.dataset.sourceFile = file;
   const cardClass = file === 'notes.html' ? 'note-tile note-card' : 'note-card';
   if (surface.classList.contains('cep-source-surface')) {
-    const colour = window.getCepSourceCardColour?.(file,entry.sourceIndex ?? entry.cardIndex,cardClass);
-    if (colour) {
-      surface.style.setProperty('--card-glass',`rgba(${colour.rgb}, .74)`);
-      surface.style.setProperty('--card-solid',colour.solid);
-      surface.style.setProperty('--card-ink',colour.ink);
-      if (colour.outline) surface.style.setProperty('--card-outline',colour.outline);
-      surface.dataset.sharedPaletteColor = 'true';
-    }
+    surface.dataset.cepPaletteFile = file;
+    surface.dataset.cepPaletteIndex = String(entry.sourceIndex ?? entry.cardIndex ?? '');
+    surface.dataset.cepPaletteClass = cardClass;
+    refreshSourcePalette(surface);
   }
   if (entry.cardColour) surface.style.background = entry.cardColour;
   const addClass = (selector,name) => surface.querySelectorAll(selector).forEach(node=>node.classList.add(name));

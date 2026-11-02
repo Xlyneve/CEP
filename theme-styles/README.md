@@ -10,4 +10,4 @@ node theme-styles/build.mjs
 
 The build updates all 23 bundles and the generated early-colour block/version in `page-theme.js`. It also uses the compiler in `search-source-cards.js` to include matching search-card styles without reading CSSOM shorthands. Rebuild after changing that compiler or its class/context maps. Keep the generated files and script in the same deployment.
 
-Palette assignment, theme selection and shared interactions remain in `page-theme.js`. The dynamic editor rules remain inline. Moon Clay also retains its existing theme-specific stylesheet.
+The picker applies a chosen theme in place without reloading the page, updates existing card/search palettes, and preserves current input. Palette assignment, theme selection and shared interactions remain in `page-theme.js`. The dynamic editor rules remain inline. Moon Clay also retains its existing theme-specific stylesheet.

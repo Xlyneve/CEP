@@ -184,26 +184,30 @@
   }
   if(selectedTheme === "midnight-glass") {
     const contrastScript=document.createElement('script');
+    contrastScript.id="cep-night-note-contrast-script";
     contrastScript.src=new URL('./night-note-contrast.js?v=1',document.currentScript?.src || location.href).href;
     contrastScript.defer=true;document.head.append(contrastScript);
   }
-  const palette = selectedTheme === "moon-clay" ? moonClayPalette : selectedTheme === "cloud-glass" ? cloudGlassPalette : selectedTheme === "midnight-glass" ? midnightGlassPalette : selectedTheme === "warm-ivory" ? warmIvoryPalette : selectedTheme === "opal-pearl" ? opalPearlPalette : (selectedTheme === "pastel-rose-5d" || selectedTheme === "pastel-rose-recessed") ? pastelRosePalette : selectedTheme === "lavender-glass" ? lavenderGlassPalette : selectedTheme === "grey-lavender" ? greyLavenderPalette : selectedTheme === "pearl-silver" ? pearlSilverPalette : selectedTheme === "frost-outline" ? frostOutlinePalette : selectedTheme === "porcelain" ? porcelainPalette : selectedTheme === "aurora" ? auroraPalette : selectedTheme === "soft-stone" ? softStonePalette : selectedTheme === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : selectedTheme === "pastel-jumper" ? pastelJumperPalette : selectedTheme === "berry"
+  function paletteForTheme(name) {
+    return name === "moon-clay" ? moonClayPalette : name === "cloud-glass" ? cloudGlassPalette : name === "midnight-glass" ? midnightGlassPalette : name === "warm-ivory" ? warmIvoryPalette : name === "opal-pearl" ? opalPearlPalette : (name === "pastel-rose-5d" || name === "pastel-rose-recessed") ? pastelRosePalette : name === "lavender-glass" ? lavenderGlassPalette : name === "grey-lavender" ? greyLavenderPalette : name === "pearl-silver" ? pearlSilverPalette : name === "frost-outline" ? frostOutlinePalette : name === "porcelain" ? porcelainPalette : name === "aurora" ? auroraPalette : name === "soft-stone" ? softStonePalette : name === "mint-ceramic" ? (pageName === "home.html" ? mintCeramicPalette.map(color => color.solid === "#dde8f1" ? { rgb:"230, 224, 239", solid:"#e6e0ef", ink:color.ink } : color) : mintCeramicPalette) : name === "pastel-jumper" ? pastelJumperPalette : name === "berry"
     ? berryPalette
-    : selectedTheme === "autumn"
+    : name === "autumn"
       ? autumnPalette
-      : selectedTheme === "hoya"
+      : name === "hoya"
         ? hoyaPalette
-        : selectedTheme === "lake-mist"
+        : name === "lake-mist"
           ? lakeMistPalette
-          : selectedTheme === "palm-springs"
+          : name === "palm-springs"
             ? palmSpringsPalette
-            : selectedTheme === "quiet-stone"
+            : name === "quiet-stone"
               ? quietStonePalette
-              : selectedTheme === "anatomy"
+              : name === "anatomy"
                 ? anatomyPalette
-                : selectedTheme === "sculpted"
+                : name === "sculpted"
                   ? sculptedPalette
       : originalPalette;
+  }
+  let palette = paletteForTheme(selectedTheme);
 
   function hash(text) {
     let value = 2166136261;
@@ -214,69 +218,75 @@
     return value >>> 0;
   }
 
-  const pageColor = palette[hash(pageName) % palette.length];
   const root = document.documentElement;
-  palette.slice(0,3).forEach((color,index) => {
-    root.style.setProperty(`--cep-palette-color-${index + 1}`,color.solid);
-  });
-  // Pair palette surfaces of similar brightness so both controls keep readable text.
-  const controlLuminance = color => color.rgb.split(',').map(Number).map(v => {v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;}).reduce((sum,v,i) => sum + v * [.2126,.7152,.0722][i],0);
-  const controlColors = palette.filter(color => selectedTheme === 'midnight-glass' ? controlLuminance(color) < .2 : controlLuminance(color) >= .3);
-  const controlPalette = controlColors.length ? controlColors : palette;
-  ['theme','signout'].forEach((name,index) => {
-    const first = controlPalette[(index * 2) % controlPalette.length], last = controlPalette[(index * 2 + 1) % controlPalette.length];
-    root.style.setProperty('--cep-' + name + '-start',first.solid);
-    root.style.setProperty('--cep-' + name + '-end',last.solid);
-    root.style.setProperty('--cep-' + name + '-ink',selectedTheme === 'midnight-glass' ? '#e9edf5' : '#25252b');
-  });
-  if (pageName === "vs.html") root.classList.add("theme-vitals-table");
-  // Selected modes use the accent rather than the neutral card surface.
-  const searchAccent = selectedTheme === 'original'
-    ? [originalPalette[0].solid, originalPalette[0].ink]
-    : selectedTheme === 'soft-stone' || selectedTheme === 'porcelain'
-      ? [palette[0].ink, '#ffffff']
-      : selectedTheme === 'aurora'
-        ? ['#c5b0e3', palette[0].ink]
-        : [`var(--quick-accent,${palette[0].solid})`, `var(--quick-accent-ink,${palette[0].ink})`];
-  root.style.setProperty('--search-mode-selected', searchAccent[0]);
-  root.style.setProperty('--search-mode-selected-ink', searchAccent[1]);
+  let pageColor;
+  function applyThemeTokens() {
+    pageColor = palette[hash(pageName) % palette.length];
+    for (let i=1;i<=3;i++) root.style.removeProperty(`--cep-palette-color-${i}`);
+    palette.slice(0,3).forEach((color,index) => {
+      root.style.setProperty(`--cep-palette-color-${index + 1}`,color.solid);
+    });
+    // Pair palette surfaces of similar brightness so both controls keep readable text.
+    const controlLuminance = color => color.rgb.split(',').map(Number).map(v => {v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;}).reduce((sum,v,i) => sum + v * [.2126,.7152,.0722][i],0);
+    const controlColors = palette.filter(color => selectedTheme === 'midnight-glass' ? controlLuminance(color) < .2 : controlLuminance(color) >= .3);
+    const controlPalette = controlColors.length ? controlColors : palette;
+    ['theme','signout'].forEach((name,index) => {
+      const first = controlPalette[(index * 2) % controlPalette.length], last = controlPalette[(index * 2 + 1) % controlPalette.length];
+      root.style.setProperty('--cep-' + name + '-start',first.solid);
+      root.style.setProperty('--cep-' + name + '-end',last.solid);
+      root.style.setProperty('--cep-' + name + '-ink',selectedTheme === 'midnight-glass' ? '#e9edf5' : '#25252b');
+    });
+    if (pageName === "vs.html") root.classList.add("theme-vitals-table");
+    // Selected modes use the accent rather than the neutral card surface.
+    const searchAccent = selectedTheme === 'original'
+      ? [originalPalette[0].solid, originalPalette[0].ink]
+      : selectedTheme === 'soft-stone' || selectedTheme === 'porcelain'
+        ? [palette[0].ink, '#ffffff']
+        : selectedTheme === 'aurora'
+          ? ['#c5b0e3', palette[0].ink]
+          : [`var(--quick-accent,${palette[0].solid})`, `var(--quick-accent-ink,${palette[0].ink})`];
+    root.style.setProperty('--search-mode-selected', searchAccent[0]);
+    root.style.setProperty('--search-mode-selected-ink', searchAccent[1]);
 
 
-  const urgentCarePages = new Set(["anatomicald.html", "face.html", "hand.html", "sha.html", "abdo.html", "spine.html", "lf.html", "urgent_care.html"]);
-  if (urgentCarePages.has(pageName)) root.classList.add("theme-urgent-care");
-  if (selectedTheme !== "original") root.dataset.xlyneveColorTheme = selectedTheme;
-  root.style.setProperty("--page-header-glass", `rgba(${pageColor.rgb}, 0.78)`);
-  root.style.setProperty("--page-header-solid", pageColor.solid);
-  root.style.setProperty("--page-header-ink", pageColor.ink);
-  // Match the monogram to the contrast already chosen for the theme's header.
-  const headerUsesLightInk = selectedTheme === "midnight-glass" || pageColor.ink.toLowerCase() === "#ffffff";
-  root.style.setProperty("--page-logo-filter", headerUsesLightInk ? "brightness(0) invert(1)" : "contrast(1.08)");
-  root.style.setProperty("--page-logo-opacity", headerUsesLightInk ? "0.96" : "0.85");
-  const mastheadBarColors = {
-    "moon-clay": "#e8e8e8",
-    original: "#596b57",
-    "cloud-glass":"#d4dcef",
-    "midnight-glass":"#252b35",
-    "warm-ivory": "#ded5c8",
-    berry: "#680044",
-    autumn: "#255765",
-    hoya: "#40585c",
-    "lake-mist": "#443d35",
-    "palm-springs": "#1f2c2c",
-    "quiet-stone": "#393831",
-    anatomy: "#22211f",
-    sculpted: "#a288b7",
-    "mint-ceramic": "#dfe8e1",
-    "soft-stone": "#e1e2e6",
-    "lavender-glass":"#d8cdec",
-    "grey-lavender":"#e8e7ef",
-    "pearl-silver":"#e6e8e9",
-    "frost-outline":"#d5e0e8",
-    porcelain: "#e9e9e1",
-    aurora: "#e1e4f2"
-  };
-  root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
-  root.style.setProperty("--masthead-bar-ink", ["moon-clay","lavender-glass","grey-lavender","pearl-silver","frost-outline","mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
+    const urgentCarePages = new Set(["anatomicald.html", "face.html", "hand.html", "sha.html", "abdo.html", "spine.html", "lf.html", "urgent_care.html"]);
+    if (urgentCarePages.has(pageName)) root.classList.add("theme-urgent-care");
+    if (selectedTheme !== "original") root.dataset.xlyneveColorTheme = selectedTheme;
+    else delete root.dataset.xlyneveColorTheme;
+    root.style.setProperty("--page-header-glass", `rgba(${pageColor.rgb}, 0.78)`);
+    root.style.setProperty("--page-header-solid", pageColor.solid);
+    root.style.setProperty("--page-header-ink", pageColor.ink);
+    // Match the monogram to the contrast already chosen for the theme's header.
+    const headerUsesLightInk = selectedTheme === "midnight-glass" || pageColor.ink.toLowerCase() === "#ffffff";
+    root.style.setProperty("--page-logo-filter", headerUsesLightInk ? "brightness(0) invert(1)" : "contrast(1.08)");
+    root.style.setProperty("--page-logo-opacity", headerUsesLightInk ? "0.96" : "0.85");
+    const mastheadBarColors = {
+      "moon-clay": "#e8e8e8",
+      original: "#596b57",
+      "cloud-glass":"#d4dcef",
+      "midnight-glass":"#252b35",
+      "warm-ivory": "#ded5c8",
+      berry: "#680044",
+      autumn: "#255765",
+      hoya: "#40585c",
+      "lake-mist": "#443d35",
+      "palm-springs": "#1f2c2c",
+      "quiet-stone": "#393831",
+      anatomy: "#22211f",
+      sculpted: "#a288b7",
+      "mint-ceramic": "#dfe8e1",
+      "soft-stone": "#e1e2e6",
+      "lavender-glass":"#d8cdec",
+      "grey-lavender":"#e8e7ef",
+      "pearl-silver":"#e6e8e9",
+      "frost-outline":"#d5e0e8",
+      porcelain: "#e9e9e1",
+      aurora: "#e1e4f2"
+    };
+    root.style.setProperty("--masthead-bar", mastheadBarColors[selectedTheme]);
+    root.style.setProperty("--masthead-bar-ink", ["moon-clay","lavender-glass","grey-lavender","pearl-silver","frost-outline","mint-ceramic","soft-stone","aurora","porcelain"].includes(selectedTheme) ? "#414342" : "#ffffff");
+  }
+  applyThemeTokens();
 
   if (selectedTheme === "moon-clay") {
     const link = document.createElement("link");
@@ -309,18 +319,20 @@
     } catch { /* Styles still work when session storage is unavailable. */ }
   }
   async function prepareThemeCss(name) {
-    if (cachedThemeCss(name)) return;
+    const cached = cachedThemeCss(name);
+    if (cached) return cached;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 1800);
     try {
       const response = await fetch(themeCssUrl(name), {signal:controller.signal});
       const css = await response.text();
-      if (response.ok && css.startsWith('/* CEP theme bundle:')) cacheThemeCss(name, css);
+      if (response.ok && css.startsWith('/* CEP theme bundle:')) { cacheThemeCss(name, css); return css; }
     } catch { /* The selected stylesheet can retry through the normal loader. */ }
     finally { clearTimeout(timeout); }
+    return '';
   }
   const cachedCss = cachedThemeCss(selectedTheme);
-  const selectedThemeSheet = document.createElement(cachedCss ? 'style' : 'link');
+  let selectedThemeSheet = document.createElement(cachedCss ? 'style' : 'link');
   selectedThemeSheet.id = 'cep-selected-theme-css';
   selectedThemeSheet.dataset.theme = selectedTheme;
   if (cachedCss) selectedThemeSheet.textContent = cachedCss;
@@ -529,11 +541,47 @@
       card.style.setProperty("--card-ink", color.ink);
       card.style.setProperty("--card-solid", color.solid);
       if (color.outline) card.style.setProperty("--card-outline",color.outline);
+      else card.style.removeProperty("--card-outline");
       card.dataset.sharedPaletteColor = "true";
     });
   }
 
 
+
+  function waitForThemeAsset(element, create) {
+    if (element?.sheet || (element?.tagName === 'SCRIPT' && document.getElementById('cep-night-note-contrast'))) return Promise.resolve();
+    return new Promise((resolve,reject) => {
+      const target = element || create();
+      const timeout = setTimeout(() => { cleanup(); reject(new Error('Theme asset timed out')); }, 3000);
+      const cleanup = () => { clearTimeout(timeout); target.removeEventListener('load',loaded); target.removeEventListener('error',failed); };
+      const loaded = () => { cleanup(); resolve(); };
+      const failed = () => { cleanup(); target.remove(); reject(new Error('Theme asset unavailable')); };
+      target.addEventListener('load',loaded,{once:true}); target.addEventListener('error',failed,{once:true});
+      if (!element) document.head.appendChild(target);
+    });
+  }
+  function prepareThemeExtras(name) {
+    if (name === 'moon-clay') return waitForThemeAsset(document.getElementById('cep-moon-clay-theme'), () => {
+      const link=document.createElement('link'); link.id='cep-moon-clay-theme'; link.rel='stylesheet';
+      link.href=new URL('moon-clay-theme.css?v=8',themeAssetBase).href; return link;
+    });
+    if (name === 'midnight-glass') return waitForThemeAsset(document.getElementById('cep-night-note-contrast-script'), () => {
+      const script=document.createElement('script'); script.id='cep-night-note-contrast-script';
+      script.src=new URL('night-note-contrast.js?v=1',themeAssetBase).href; return script;
+    });
+    return Promise.resolve();
+  }
+  function applyLiveTheme(name, css) {
+    const sheet=document.createElement('style');
+    sheet.id='cep-selected-theme-css'; sheet.dataset.theme=name; sheet.textContent=css;
+    selectedThemeSheet.replaceWith(sheet); selectedThemeSheet=sheet;
+    document.getElementById('cep-theme-boot')?.remove();
+    if (name !== 'moon-clay') document.getElementById('cep-moon-clay-theme')?.remove();
+    selectedTheme=name; palette=paletteForTheme(name); applyThemeTokens(); paintHeaders();
+    document.querySelectorAll(cardSelector).forEach(card => { delete card.dataset.sharedPaletteColor; });
+    colorCards(document);
+    window.dispatchEvent(new Event('cep-theme-css-ready'));
+  }
 
   function createThemePicker() {
     if (pageName !== "home.html" || !themeIsAllowed || document.getElementById("xlyneveThemeControl")) return;
@@ -678,13 +726,25 @@
       button.append(swatches, label);
       button.addEventListener("click", async () => {
         const selection = ++themeSelectionRequest;
-        await prepareThemeCss(option.value);
-        if (selection !== themeSelectionRequest) return;
+        if (option.value === selectedTheme) { closePicker(); return; }
+        button.setAttribute('aria-busy','true');
+        status.textContent = '';
         try {
-          if (option.value === "original") localStorage.removeItem(themeStorageKey);
-          else localStorage.setItem(themeStorageKey, option.value);
-        } catch {}
-        location.reload();
+          const [css] = await Promise.all([prepareThemeCss(option.value), prepareThemeExtras(option.value)]);
+          if (selection !== themeSelectionRequest) return;
+          if (!css) throw new Error('Theme stylesheet unavailable');
+          applyLiveTheme(option.value, css);
+          try {
+            if (option.value === "original") localStorage.removeItem(themeStorageKey);
+            else localStorage.setItem(themeStorageKey, option.value);
+          } catch {}
+          list.querySelectorAll('.xlyneve-theme-option').forEach(optionButton => {
+            optionButton.setAttribute('aria-pressed',String(optionButton.dataset.theme === option.value));
+          });
+          closePicker();
+        } catch {
+          if (selection === themeSelectionRequest) status.textContent = 'Theme could not load. Please try again.';
+        } finally { button.removeAttribute('aria-busy'); }
       });
       row.appendChild(button);
       if (option.value !== "original") {
@@ -894,8 +954,7 @@
   // rather than waiting for DOMContentLoaded in start().
   document.head.appendChild(themeStyle);
 
-  function start() {
-    if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
+  function paintHeaders() {
     document.querySelectorAll(headerSelector).forEach((header) => {
       if (pageName === "home.html" && header.matches("body > header")) return;
       if (selectedTheme === "moon-clay") {
@@ -918,6 +977,11 @@
       }
       header.style.setProperty("color", pageColor.ink, "important");
     });
+  }
+
+  function start() {
+    if (!themeStyle.isConnected) document.head.appendChild(themeStyle);
+    paintHeaders();
     colorCards(document);
     removeEmptyHighlights(document);
     document.addEventListener("input", (event) => {
