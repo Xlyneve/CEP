@@ -3,7 +3,7 @@ import './concept-photo-gallery.js?v=20261003-1';
 function installViewerStyles(){
  if (!document.getElementById('cep-search-table-ui')) {
   const link = document.createElement('link'); link.id = 'cep-search-table-ui'; link.rel = 'stylesheet';
-  link.href = new URL('./search-table-ui.css?v=20261104-2', import.meta.url).href; document.head.append(link);
+  link.href = new URL('./search-table-ui.css?v=20261104-3', import.meta.url).href; document.head.append(link);
  }
  if(document.getElementById('cep-shared-media-viewer-style'))return;
  const style=document.createElement('style');style.id='cep-shared-media-viewer-style';style.textContent=`.cep-search-image-viewer[hidden] { display:none !important; }
@@ -490,9 +490,7 @@ export function enableSearchTableZoom(table) {
   if (!table.parentElement?.nextElementSibling?.classList.contains('cep-table-preview-footer')) {
     const footer = document.createElement('div'); footer.className = 'cep-table-preview-footer';
     const count = document.createElement('span'); count.textContent = Math.max(0,visible-headerRows) + ' of ' + Math.max(0,rows.length-headerRows) + ' rows';
-    const expand = document.createElement('button'); expand.type = 'button'; expand.textContent = 'Expand table ↗';
-    expand.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); getSearchTableZoomUi().open(table); });
-    footer.append(count, expand); table.parentElement?.after(footer);
+    footer.append(count); table.parentElement?.after(footer);
   }
   table.setAttribute('aria-label', 'Open enlarged table');
   const open = event => { event.preventDefault(); event.stopPropagation(); getSearchTableZoomUi().open(table); };
