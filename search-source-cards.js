@@ -123,6 +123,7 @@ function openChatSearchPreview(card, surface) {
   content.className = 'cep-search-source'; content.dataset.sourceFile = 'chatgptx.html';
   const fullNote = surface.cloneNode(true);
   // cloneNode copies the initialized marker, but not the event listeners.
+  fullNote.querySelectorAll('.cep-table-preview-footer').forEach(footer => footer.remove());
   fullNote.querySelectorAll('table').forEach(table => {
     delete table.dataset.cepSearchTableZoom;
     enableSearchTableZoom(table);
