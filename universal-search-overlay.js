@@ -140,7 +140,7 @@ else installHomeSearchTools();
 const defaultCardStyle = document.createElement('style');
 defaultCardStyle.id = 'cep-default-search-card-size';
 defaultCardStyle.textContent = `
-  html:root:root:root body .cep-search-table-zoom {z-index:2147483644 !important;}
+  html:root:root:root body .cep-search-table-zoom {z-index:2147483645 !important;}
   html:root:root:root body:has(.cep-search-table-zoom:not([hidden])) :is(.cep-xgpt-media-tip,.xgpt-media-tip,#cep-shared-tip,#pn-definition-tip) {z-index:2147483646 !important;}
 
   html:root:root:root:root:root:root:root body .cep-search-table-scroll {min-width:0 !important;max-width:100% !important;overflow-x:auto !important;}

@@ -103,7 +103,7 @@ html:root:root:root:root:root:root:root:root body .cep-search-image-viewer .cep-
   font-weight:400!important;text-shadow:0 1px 3px #000,0 0 1px #000!important;
 }
 html:root:root:root:root:root:root:root:root body .cep-search-image-viewer {z-index:2147483647!important;}
-html:root:root:root:root:root:root:root:root body .cep-search-table-zoom {z-index:2147483644!important;}
+html:root:root:root:root:root:root:root:root body .cep-search-table-zoom {z-index:2147483645!important;}
 
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-viewport,.cep-search-table-zoom-viewport) {cursor:grab;}
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-image,.cep-search-table-zoom-content) {touch-action:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;cursor:grab;}
