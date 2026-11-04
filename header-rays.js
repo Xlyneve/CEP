@@ -159,7 +159,7 @@ toggleIcon.title = 'Menu';
         { text: "Inteleviewer", link: "inteleviewer.html" },
         { text: "Notes", link: "Notes.html" },
         { text: "OH CME", link: "https://onehealthgpuc.github.io/cases-site/" },
-        { text: "Roster", link: "https://xlyneve.github.io/OHNRoster/" },
+        { text: "Roster", link: "https://ohnurse-43369.web.app/" },
         { text: "Timesheet", link: "timesheet.html" }
       ]
     }
