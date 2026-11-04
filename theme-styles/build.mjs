@@ -77,7 +77,7 @@ function bootRules(rules){
   return css;
 }
 // Compile source-card aliases at build time using the shared search compiler.
-const searchSource=fs.readFileSync(path.join(folder,'../search-source-cards.js'),'utf8');
+const searchSource=fs.readFileSync(path.join(folder,'../search-source-cards.js'),'utf8').replace(/\r\n/g,'\n');
 const compileStart=searchSource.indexOf('  function compile(rules) {');
 const compileSource=searchSource.slice(compileStart,searchSource.indexOf('\n  }\n',compileStart)+5);
 const classes=Function('return '+searchSource.match(/const classes = (.*);/)[1])();
