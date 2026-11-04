@@ -360,9 +360,8 @@ function getSearchTableZoomUi() {
     baseTableHeight = table.scrollHeight;
     sizeStage(); viewport.scrollTo({left:0,top:0});
   };
-  const cancelWheelZoom = installViewerWheelZoom(viewport,
-    () => !root.hidden && !!table && !!baseTableWidth,
-    (factor, point) => setScale(scale * factor, point));
+  // Tables scroll with the wheel; explicit toolbar buttons control zoom.
+  const cancelWheelZoom = () => {};
   const closeZoom = () => {
     if (root.hidden) return;
     cancelDrag(); cancelWheelZoom(); root.close(); root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow; previousFocus?.focus?.({preventScroll:true});
