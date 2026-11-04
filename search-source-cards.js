@@ -1,4 +1,5 @@
 import './note-video-links.js?v=20261018-8';
+import { enableSearchTableZoom } from './note-media-viewer.js?v=1';
 import { readStyleRules, splitStyleText } from './search-style-parser.js?v=20261012-1';
 // Presentation only: no Firebase imports, reads, source-page scripts, or iframe loads.
 const stylesheet = document.createElement('link');
@@ -121,6 +122,11 @@ function openChatSearchPreview(card, surface) {
   const content = document.createElement('div');
   content.className = 'cep-search-source'; content.dataset.sourceFile = 'chatgptx.html';
   const fullNote = surface.cloneNode(true);
+  // cloneNode copies the initialized marker, but not the event listeners.
+  fullNote.querySelectorAll('table').forEach(table => {
+    delete table.dataset.cepSearchTableZoom;
+    enableSearchTableZoom(table);
+  });
   // Remove only search matches; retain saved highlighting and formatting.
   fullNote.querySelectorAll('mark.cep-search-match').forEach(mark => mark.replaceWith(...mark.childNodes));
   fullNote.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));

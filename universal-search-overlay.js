@@ -831,29 +831,12 @@ function appendSearchResultContent(card, title, body, images, file) {
   if (images.length && !imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
 }
 
-const legacySearchTableColours = new Set([
-  '#ccd1d1', '#e2d5d9', 'rgb(204,209,209)', 'rgb(226,213,217)'
-]);
-const compactCssColour = value => String(value || '').toLocaleLowerCase().replace(/\s+/g, '');
-const replaceLegacySearchTableColour = (element, nextColour) => {
-  const background = element.style.getPropertyValue('background');
-  const backgroundColour = element.style.getPropertyValue('background-color');
-  if (![background, backgroundColour].some(value => legacySearchTableColours.has(compactCssColour(value)))) return;
-  const priority = element.style.getPropertyPriority('background')
-    || element.style.getPropertyPriority('background-color') || 'important';
-  element.style.removeProperty('background-color');
-  element.style.setProperty('background', nextColour, priority);
-};
 function replaceLegacySearchTableTheme(table) {
-  replaceLegacySearchTableColour(table, '#ecebeb');
+  // Search renders a display clone: use one theme for pasted and plain cells.
+  table.style.setProperty('background', 'var(--cep-cell-body, #ecebeb)', 'important');
   table.querySelectorAll('th,td').forEach(cell => {
-    const row = cell.closest('tr');
-    const section = row?.parentElement;
-    const rows = section ? [...section.children].filter(child => child.tagName === 'TR') : [];
-    const rowIndex = Math.max(0, rows.indexOf(row));
-    const isHeader = cell.tagName === 'TH' || section?.tagName === 'THEAD';
-    const nextColour = isHeader ? '#d5d0d3' : rowIndex % 2 ? '#f2edf4' : '#ecebeb';
-    replaceLegacySearchTableColour(cell, nextColour);
+    const fill = cell.matches('th,thead td') ? '--cep-cell-heading' : '--cep-cell-body';
+    cell.style.setProperty('background', `var(${fill}, #ecebeb)`, 'important');
   });
 }
 

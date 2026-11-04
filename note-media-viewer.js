@@ -348,6 +348,10 @@ function getSearchTableZoomUi() {
     cancelDrag(); cancelWheelZoom(); root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow;
   };
   const open = sourceTable => {
+    // A modal dialog is in the browser top layer, above any body z-index.
+    // Keep its table viewer in that same layer.
+    const host = sourceTable.closest('dialog[open]') || document.body;
+    if (root.parentElement !== host) host.appendChild(root);
     cancelDrag(); cancelWheelZoom(); baseTableWidth = 0; baseTableHeight = 0;
     const sourceRect = sourceTable.getBoundingClientRect(); const sourceStyle = getComputedStyle(sourceTable);
     // Search cards use compact fonts and may also scale their ancestors.
