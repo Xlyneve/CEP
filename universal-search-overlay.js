@@ -1,3 +1,4 @@
+import './note-timestamps.js?v=20261104-1';
 import * as searchWork from './search-scheduler.js?v=20261102-1';
 import './note-copy-text.js?v=9';
 import { enableSearchImageZoom, enableSearchTableZoom } from './note-media-viewer.js?v=1';
@@ -972,7 +973,7 @@ const sourceCardTypes = {
   'spine.html':'urgent', 'lf.html':'urgent', 'practicen.html':'practice', 'info.html':'info',
   'explain.html':'explain', 'recalls.html':'pn', 'forms.html':'forms'
 };
-const sourceDateValue = value => value?.toDate ? value.toDate() : value ? new Date(value) : null;
+const sourceDateValue = value => CEPNoteDates.toDate(value);
 const sourceLegacyHtml = value => {
   const raw = String(value || '');
   if (raw.includes('<')) return raw;
@@ -1064,7 +1065,7 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
     const date = sourceDateValue(data.date);
     if (date && !Number.isNaN(date.valueOf())) {
       const dateLine = document.createElement('div'); dateLine.className = 'cep-source-card-date';
-      dateLine.textContent = date.toLocaleString('en-GB', { timeZone:'Pacific/Auckland', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+      dateLine.textContent = CEPNoteDates.format(date);
       parent.appendChild(dateLine);
     }
     return true;
@@ -1074,7 +1075,7 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
       const date = sourceDateValue(data.createdAt);
       if (date && !Number.isNaN(date.valueOf())) {
         const dateLine = document.createElement('div'); dateLine.className = 'cep-source-card-date';
-        dateLine.textContent = date.toLocaleDateString('en-NZ', { day:'2-digit', month:'short', year:'numeric' }); parent.appendChild(dateLine);
+        dateLine.textContent = CEPNoteDates.format(date, { dateOnly: true }); parent.appendChild(dateLine);
       }
     }
     appendSourceImage(parent, data.image);
@@ -1086,7 +1087,7 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
     appendSourceRichContent(parent, data.note || '', terms, 'cep-source-note-content');
     appendSourceImage(parent, data.image, 'cep-source-card-image cep-source-card-image--pn');
     const date = sourceDateValue(data.time);
-    if (date && !Number.isNaN(date.valueOf())) { const line = document.createElement('div'); line.className = 'cep-source-card-date'; line.textContent = date.toLocaleString(); parent.appendChild(line); }
+    if (date && !Number.isNaN(date.valueOf())) { const line = document.createElement('div'); line.className = 'cep-source-card-date'; line.textContent = CEPNoteDates.format(date); parent.appendChild(line); }
     appendSourceLink(parent, data.url, '🔗 Open URL'); return true;
   }
   if (type === 'practice' || type === 'info' || type === 'explain') {
@@ -1096,7 +1097,7 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
     appendSourceRichContent(parent, sourceLegacyHtml(data.text || ''), terms, 'cep-source-note-text', {copyEmails:type === 'info'});
     if (type === 'practice') appendSourceImage(parent, data.image);
     const date = sourceDateValue(data.timestamp);
-    if (date && !Number.isNaN(date.valueOf())) { const line = document.createElement('div'); line.className = 'cep-source-card-date'; line.textContent = `${type === 'explain' ? 'Saved on ' : 'Added: '}${date.toLocaleString()}`; parent.appendChild(line); }
+    if (date && !Number.isNaN(date.valueOf())) { const line = document.createElement('div'); line.className = 'cep-source-card-date'; line.textContent = `${type === 'explain' ? 'Saved on ' : 'Added: '}${CEPNoteDates.format(date)}`; parent.appendChild(line); }
     return true;
   }
   return false;

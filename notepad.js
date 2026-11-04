@@ -70,17 +70,7 @@
   }
 
   function formatStamp(value) {
-    const date = new Date(value);
-    if (!value || Number.isNaN(date.getTime())) return "Date unavailable";
-    return date.toLocaleString("en-GB", {
-      timeZone: "Pacific/Auckland",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false
-    });
+    return CEPNoteDates.format(value);
   }
 
   function resizeNote(textarea) {
