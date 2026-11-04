@@ -71,12 +71,15 @@
 
   function formatStamp(value) {
     const date = new Date(value);
-    return date.toLocaleString(undefined, {
-      day: "numeric",
-      month: "short",
+    if (!value || Number.isNaN(date.getTime())) return "Date unavailable";
+    return date.toLocaleString("en-GB", {
+      timeZone: "Pacific/Auckland",
+      day: "2-digit",
+      month: "2-digit",
       year: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
     });
   }
 

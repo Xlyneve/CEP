@@ -1081,7 +1081,7 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
     const date = sourceDateValue(data.date);
     if (date && !Number.isNaN(date.valueOf())) {
       const dateLine = document.createElement('div'); dateLine.className = 'cep-source-card-date';
-      dateLine.textContent = date.toLocaleString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+      dateLine.textContent = date.toLocaleString('en-GB', { timeZone:'Pacific/Auckland', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
       parent.appendChild(dateLine);
     }
     return true;
