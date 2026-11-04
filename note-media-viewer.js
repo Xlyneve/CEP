@@ -3,7 +3,7 @@ import './concept-photo-gallery.js?v=20261003-1';
 function installViewerStyles(){
  if (!document.getElementById('cep-search-table-ui')) {
   const link = document.createElement('link'); link.id = 'cep-search-table-ui'; link.rel = 'stylesheet';
-  link.href = new URL('./search-table-ui.css?v=20261104-1', import.meta.url).href; document.head.append(link);
+  link.href = new URL('./search-table-ui.css?v=20261104-2', import.meta.url).href; document.head.append(link);
  }
  if(document.getElementById('cep-shared-media-viewer-style'))return;
  const style=document.createElement('style');style.id='cep-shared-media-viewer-style';style.textContent=`.cep-search-image-viewer[hidden] { display:none !important; }
@@ -319,7 +319,10 @@ function getSearchTableZoomUi() {
   const heading = document.createElement('div'); heading.className = 'cep-table-heading';
   const title = document.createElement('h2'); const details = document.createElement('p'); heading.append(title, details);
   const fit = document.createElement('button'); fit.type = 'button'; fit.textContent = 'Fit width'; fit.setAttribute('aria-label','Fit table to width');
-  controls.append(fit, minus, reset, plus);
+  const highlightRows = document.createElement('button'); highlightRows.type = 'button';
+  highlightRows.textContent = 'Highlight rows'; highlightRows.setAttribute('aria-pressed', 'true');
+  highlightRows.title = 'Click a row to highlight it; click again to clear';
+  controls.append(highlightRows, fit, minus, reset, plus);
   const header = document.createElement('div'); header.className = 'cep-table-viewer-header'; header.append(heading, close);
   const hint = document.createElement('div'); hint.className = 'cep-table-viewer-hint'; hint.textContent = 'Scroll to view more rows';
   const viewport = document.createElement('div'); viewport.className = 'cep-search-table-zoom-viewport';
@@ -416,6 +419,12 @@ function getSearchTableZoomUi() {
     });
     // Cloned PN words use the shared delegated preview, including on PN itself.
     table.querySelectorAll('.pn-definition[data-pn-definition]').forEach(word=>word.classList.add('cep-shared-definition'));
+    [...table.rows].forEach((row, index) => {
+      row.classList.remove('cep-table-row-selected'); row.removeAttribute('aria-current');
+      if (index < (table.tHead?.rows.length || 1) || row.parentElement.tagName === 'TFOOT') return;
+      row.dataset.cepHighlightRow = 'true'; row.tabIndex = 0;
+      row.title = 'Click to highlight this row; click again to clear';
+    });
     table.classList.add('cep-search-table-zoom-content'); stage.replaceChildren(table); scale = 1;
     previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; root.hidden = false; root.showModal();
     const currentTable = table;
@@ -425,6 +434,30 @@ function getSearchTableZoomUi() {
       fitToWidth(); close.focus();
     });
   };
+  const clearRowHighlight = () => {
+    table?.querySelectorAll('.cep-table-row-selected').forEach(row => { row.classList.remove('cep-table-row-selected'); row.removeAttribute('aria-current'); });
+  };
+  const selectRow = row => {
+    if (!row || highlightRows.getAttribute('aria-pressed') !== 'true') return;
+    const wasSelected = row.classList.contains('cep-table-row-selected');
+    clearRowHighlight();
+    if (!wasSelected) { row.classList.add('cep-table-row-selected'); row.setAttribute('aria-current','true'); }
+  };
+  highlightRows.addEventListener('click', () => {
+    const enabled = highlightRows.getAttribute('aria-pressed') !== 'true';
+    highlightRows.setAttribute('aria-pressed', String(enabled));
+    if (!enabled) clearRowHighlight();
+  });
+  viewport.addEventListener('click', event => {
+    if (event.target.closest('a,button,input,select,textarea,.pn-definition,.cep-shared-definition,.cep-xgpt-concept,.xgpt-concept-link')) return;
+    if (window.getSelection()?.toString()) return;
+    selectRow(event.target.closest('tr[data-cep-highlight-row]'));
+  });
+  viewport.addEventListener('keydown', event => {
+    if (event.target.matches('tr[data-cep-highlight-row]') && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault(); event.stopPropagation(); selectRow(event.target);
+    }
+  });
   const cancelDrag = installViewerDrag(viewport, () => table, null, true);
   minus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale - .25); });
   plus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale + .25); });
