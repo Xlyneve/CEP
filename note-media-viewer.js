@@ -3,7 +3,7 @@ import './concept-photo-gallery.js?v=20261003-1';
 function installViewerStyles(){
  if (!document.getElementById('cep-search-table-ui')) {
   const link = document.createElement('link'); link.id = 'cep-search-table-ui'; link.rel = 'stylesheet';
-  link.href = new URL('./search-table-ui.css?v=20261104-5', import.meta.url).href; document.head.append(link);
+  link.href = new URL('./search-table-ui.css?v=20261104-6', import.meta.url).href; document.head.append(link);
  }
  if(document.getElementById('cep-shared-media-viewer-style'))return;
  const style=document.createElement('style');style.id='cep-shared-media-viewer-style';style.textContent=`.cep-search-image-viewer[hidden] { display:none !important; }
