@@ -155,12 +155,30 @@
     }
   }
   function schedule(){if(scheduled)return;scheduled=true;setTimeout(()=>{observer.disconnect();refresh();observer.observe(document.body,{childList:true,subtree:true});},0);}
-  function plain(html){const node=document.createElement('div');window.CEPSecurity?.setHTML(node,html||'');return node.textContent||'';}
+  function plain(html) {
+    const node=document.createElement('div');
+    window.CEPSecurity?.setHTML(node,html||'');
+    const blocks=new Set(['P','DIV','LI','H1','H2','H3','H4','H5','H6','BLOCKQUOTE','PRE','TR','SECTION']);
+    function read(parent) {
+      let text='';
+      for (const child of parent.childNodes) {
+        if (child.nodeType===Node.TEXT_NODE) { text+=child.nodeValue; continue; }
+        if (child.nodeType!==Node.ELEMENT_NODE || child.matches('script,style')) continue;
+        if (child.tagName==='BR') { text+='\n'; continue; }
+        const block=blocks.has(child.tagName);
+        if (block && text && !text.endsWith('\n')) text+='\n';
+        const value=read(child); text+=value;
+        if (block && (!value || !text.endsWith('\n'))) text+='\n';
+      }
+      return text;
+    }
+    return read(node).replace(/\r\n?/g,'\n').replace(/^\n+|\n+$/g,'');
+  }
   const style=document.createElement('style');style.textContent='.cep-shared-definition { text-decoration:underline dotted; text-underline-offset:3px; cursor:pointer; } #cep-shared-tip { position:fixed;z-index:2147483646;max-width:min(320px,calc(100vw - 24px));padding:12px;border-radius:12px;background:var(--clinical-panel,#fff);color:var(--theme-ink,#39353a);box-shadow:0 6px 22px #0002;font:12px/1.5 Tahoma,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;max-height:calc(100dvh - 24px);overflow:auto;box-sizing:border-box;overscroll-behavior:contain; } #cep-shared-tip[hidden]{display:none}';document.head.append(style);
   // Use one reading size for aliases and canonical concepts, retaining other rich formatting.
   const typography = document.createElement('style');
-  const previewText = 'html:root:root:root body :is(#cep-shared-tip .cep-definition-preview-content,#defTip .defText,#defTip .whyText,.xgpt-media-tip .cep-xgpt-media-text,.cep-xgpt-media-tip .cep-xgpt-media-text)';
-  typography.textContent = previewText + '{font-size:12px !important;line-height:1.4;}' + previewText + ' *{font-size:inherit !important;}';
+  const previewText = 'html:root:root:root body :is(#cep-shared-tip .cep-definition-preview-content,#pn-definition-tip .cep-definition-preview-content,#defTip .defText,#defTip .whyText,.xgpt-media-tip .cep-xgpt-media-text,.cep-xgpt-media-tip .cep-xgpt-media-text)';
+  typography.textContent = previewText + '{font-size:12px !important;line-height:1.4;white-space:pre-wrap !important;}' + previewText + ' *{font-size:inherit !important;}' + previewText + ' :is(p,div,span,li){white-space:inherit !important;}';
   document.head.append(typography);
   const tip=document.createElement('div');tip.id='cep-shared-tip';tip.hidden=true;tip.setAttribute('role','tooltip');document.body.append(tip);
   let hideTimer, activeWord;
