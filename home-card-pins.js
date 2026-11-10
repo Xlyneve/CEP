@@ -265,6 +265,7 @@
   function applyPinZoom(widget){
     const card=widget.querySelector('.cep-home-pin-card');if(!card)return;
     const scale=innerWidth<=760?1:(widget._zoom||1);
+    card.style.setProperty('--cep-pin-title-inset',innerWidth<=760?'0px':(24/scale)+'px');
     card.style.zoom='1';card.style.transformOrigin='top left';card.style.transform='scale('+scale+')';card.style.width=(100/scale)+'%';card.style.height=(100/scale)+'%';
     for(const button of widget.querySelectorAll('.cep-pin-zoom-corner'))button.title=button.getAttribute('aria-label')+' ('+Math.round((widget._zoom||1)*100)+'%)';
     updatePinOverflow(widget);

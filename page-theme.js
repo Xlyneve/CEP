@@ -1352,6 +1352,6 @@
   const pages=new Set(['home.html','pn.html','clinicalnotes.html','chatgptx.html','info.html','explain.html','practicen.html','notes.html','recalls.html','ecg.html','urgent_care.html','face.html','hand.html','sha.html','abdo.html','spine.html','lf.html','forms.html']);
   if(!pages.has(path))return;
   const base=document.currentScript?.src||location.href;
-  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('home-card-pins.css?v=4',base).href;document.head.append(css);
-  const script=document.createElement('script');script.src=new URL('home-card-pins.js?v=5',base).href;document.head.append(script);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('home-card-pins.css?v=5',base).href;document.head.append(css);
+  const script=document.createElement('script');script.src=new URL('home-card-pins.js?v=6',base).href;document.head.append(script);
 })();
