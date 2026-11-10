@@ -275,7 +275,10 @@
     if(bareTable){
       const scroll=document.createElement('div');scroll.className='cep-home-pin-table-scroll';scroll.tabIndex=0;scroll.setAttribute('role','region');scroll.setAttribute('aria-label',entry.title+' — scroll to view all rows and columns');
       const stage=document.createElement('div');stage.className='cep-home-pin-table-stage';
-      const tables=[...card.querySelectorAll('table')].filter(table=>!table.parentElement.closest('table'));
+      // Use the complete saved body, never the shortened search preview.
+      const original=document.createElement('div');const data=entry.record?.data||{};
+      window.CEPSecurity.setHTML(original,String(data.content??data.note??data.text??entry.richHtml??''));
+      const tables=[...original.querySelectorAll('table')].filter(table=>!table.parentElement.closest('table'));
       for(const table of tables){
         // Cloning removes table-click zoom handlers so text stays selectable here.
         const clone=table.cloneNode(true);clone.querySelectorAll('.cep-table-preview-footer').forEach(node=>node.remove());
@@ -284,7 +287,14 @@
       }
       scroll.append(stage);content.append(scroll);widget.style.setProperty('--cep-pin-ink','var(--theme-ink,#39353a)');
       stage.addEventListener('load',()=>{if(viewState(widget).expanded)fitFullTable(widget,pin.key);},true);
-      if(viewState(widget).expanded&&!viewState(widget).minimized)fitFullTable(widget,pin.key,false);
+      const view=viewState(widget);
+      if(!view.fullTableDefault){
+        view.fullTableDefault=true;view.expanded=true;
+        if(view.beforeMinimize)view.beforeMinimize.expanded=true;
+        updateViewControls(widget);
+      }
+      if(view.expanded&&!view.minimized)fitFullTable(widget,pin.key,false);
+      saveLayout(pin.key,widget);
       return;
     }
     window.applySourceSearchSkin(card,entry);
