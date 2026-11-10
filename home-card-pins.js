@@ -156,25 +156,15 @@
   const device=()=>innerWidth<=760?'mobile':'desktop';
   function saveLayout(key,widget) {
     if(!widget.isConnected)return;
-    const all=layout();all[device()+':'+key]={left:widget.offsetLeft,top:widget.offsetTop,width:widget.offsetWidth,height:widget.offsetHeight,contentFit:widget._heightFitted?3:0};
+    const all=layout();all[device()+':'+key]={left:widget.offsetLeft,top:widget.offsetTop,width:widget.offsetWidth,height:widget.offsetHeight,contentFit:widget._heightFitted?4:0};
     try{localStorage.setItem(layoutKey,JSON.stringify(all));}catch{}
   }
   function place(widget, saved, index) {
-    widget._heightFitted=saved?.contentFit===3;
+    widget._heightFitted=saved?.contentFit===4;
     const width=Math.min(Math.max(saved?.width||310,220),innerWidth-8),height=Math.min(Math.max(saved?.height||230,110),innerHeight-8);
     const left=Math.max(0,Math.min(saved?.left??(innerWidth-width-16-index*18),innerWidth-width));
     const top=Math.max(0,Math.min(saved?.top??(Math.min(380,innerHeight*.48)+index*24),innerHeight-height));
     Object.assign(widget.style,{width:width+'px',height:height+'px',left:left+'px',top:top+'px'});
-  }
-  function drag(widget,handle,key) {
-    handle.addEventListener('pointerdown',event=>{
-      if(event.button!==0 || event.target.closest('button,a'))return;
-      event.preventDefault();widget.style.zIndex=String(++layer);
-      const start={x:event.clientX,y:event.clientY,left:widget.offsetLeft,top:widget.offsetTop};handle.setPointerCapture(event.pointerId);
-      const move=e=>{widget.style.left=Math.max(0,Math.min(start.left+e.clientX-start.x,innerWidth-widget.offsetWidth))+'px';widget.style.top=Math.max(0,Math.min(start.top+e.clientY-start.y,innerHeight-widget.offsetHeight))+'px';};
-      const stop=()=>{handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',stop);handle.removeEventListener('pointercancel',stop);saveLayout(key,widget);};
-      handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);
-    });
   }
   function canRender(){return window.renderSourceSearchCard && window.applySourceSearchSkin && window.installSearchCardInteractions;}
   function plainHtml(html) {
@@ -249,34 +239,27 @@
       let widget=widgets.get(pin.key);
       if(!widget){
         widget=document.createElement('section');widget.className='cep-home-pin';widget.dataset.pinKey=pin.key;widget.style.zIndex=String(++layer);
-        const handle=document.createElement('div');handle.className='cep-home-pin-handle';handle.title='Drag to move this card';handle.tabIndex=0;handle.setAttribute('aria-label','Move pinned note. Use arrow keys to move.');
-        const grip=document.createElement('span');grip.textContent='⠿';grip.setAttribute('aria-hidden','true');handle.append(grip);
-        const open=document.createElement('a');open.textContent='↗';open.title='Open original note';open.setAttribute('aria-label','Open original note');
-        const url=new URL(pin.file,location.href);url.hash=new URLSearchParams({cepId:pin.sourceId}).toString();open.href=url.href;handle.append(open);
-        const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.title='Unpin from Home';remove.setAttribute('aria-label','Unpin from Home');
-        remove.onclick=async()=>{remove.disabled=true;try{await unpin(pin.key);}catch(error){message(error.message);remove.disabled=false;}};handle.append(remove);
-        const content=document.createElement('div');content.className='cep-home-pin-content';widget.append(content,handle);
-        const resize=document.createElement('button');resize.type='button';resize.className='cep-home-pin-resize';resize.setAttribute('aria-label','Resize pinned note');resize.title='Drag to resize';resize.textContent='◢';widget.append(resize);
+        const content=document.createElement('div');content.className='cep-home-pin-content';widget.append(content);
+        const resize=document.createElement('button');resize.type='button';resize.className='cep-home-pin-resize';resize.setAttribute('aria-label','Move pinned note; hold Shift to resize');resize.title='Drag to move; Shift-drag to resize';widget.append(resize);
         resize.addEventListener('pointerdown',event=>{
           if(event.button!==0)return;event.preventDefault();event.stopPropagation();resize.setPointerCapture(event.pointerId);
-          const start={x:event.clientX,y:event.clientY,width:widget.offsetWidth,height:widget.offsetHeight,contentFit:widget._heightFitted?3:0};
-          const move=e=>{widget.style.width=Math.min(innerWidth-widget.offsetLeft,Math.max(220,start.width+e.clientX-start.x))+'px';widget.style.height=Math.min(innerHeight-widget.offsetTop,Math.max(110,start.height+e.clientY-start.y))+'px';};
+          const start={x:event.clientX,y:event.clientY,width:widget.offsetWidth,height:widget.offsetHeight,left:widget.offsetLeft,top:widget.offsetTop,resize:event.shiftKey};
+          const move=e=>{
+            if(start.resize){widget.style.width=Math.min(innerWidth-widget.offsetLeft,Math.max(220,start.width+e.clientX-start.x))+'px';widget.style.height=Math.min(innerHeight-widget.offsetTop,Math.max(110,start.height+e.clientY-start.y))+'px';}
+            else{widget.style.left=Math.max(0,Math.min(start.left+e.clientX-start.x,innerWidth-widget.offsetWidth))+'px';widget.style.top=Math.max(0,Math.min(start.top+e.clientY-start.y,innerHeight-widget.offsetHeight))+'px';}
+            updatePinOverflow(widget);
+          };
           const stop=()=>{resize.removeEventListener('pointermove',move);resize.removeEventListener('pointerup',stop);resize.removeEventListener('pointercancel',stop);saveLayout(pin.key,widget);};
           resize.addEventListener('pointermove',move);resize.addEventListener('pointerup',stop);resize.addEventListener('pointercancel',stop);
         });
-        handle.addEventListener('keydown',event=>{
-          if(event.target!==handle||!event.key.startsWith('Arrow'))return;event.preventDefault();
-          const step=event.shiftKey?30:10;
-          widget.style.left=Math.max(0,Math.min(widget.offsetLeft+(event.key==='ArrowRight'?step:event.key==='ArrowLeft'?-step:0),innerWidth-widget.offsetWidth))+'px';
-          widget.style.top=Math.max(0,Math.min(widget.offsetTop+(event.key==='ArrowDown'?step:event.key==='ArrowUp'?-step:0),innerHeight-widget.offsetHeight))+'px';saveLayout(pin.key,widget);
-        });
         resize.addEventListener('keydown',event=>{
           if(!event.key.startsWith('Arrow'))return;event.preventDefault();
+          if(!event.shiftKey){widget.style.left=Math.max(0,Math.min(widget.offsetLeft+(event.key==='ArrowRight'?10:event.key==='ArrowLeft'?-10:0),innerWidth-widget.offsetWidth))+'px';widget.style.top=Math.max(0,Math.min(widget.offsetTop+(event.key==='ArrowDown'?10:event.key==='ArrowUp'?-10:0),innerHeight-widget.offsetHeight))+'px';saveLayout(pin.key,widget);return;}
           widget.style.width=Math.min(innerWidth-widget.offsetLeft,Math.max(220,widget.offsetWidth+(event.key==='ArrowRight'?10:event.key==='ArrowLeft'?-10:0)))+'px';
           widget.style.height=Math.min(innerHeight-widget.offsetTop,Math.max(110,widget.offsetHeight+(event.key==='ArrowDown'?10:event.key==='ArrowUp'?-10:0)))+'px';saveLayout(pin.key,widget);
         });
         document.body.append(widget);
-        place(widget,layout()[device()+':'+pin.key],index);drag(widget,handle,pin.key);widgets.set(pin.key,widget);
+        place(widget,layout()[device()+':'+pin.key],index);widgets.set(pin.key,widget);
         let timer;widget._resize=new ResizeObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{updatePinOverflow(widget);saveLayout(pin.key,widget);},180);});widget._resize.observe(widget);
         widget.addEventListener('pointerdown',()=>widget.style.zIndex=String(++layer),{passive:true});
       }
