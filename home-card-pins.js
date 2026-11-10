@@ -324,6 +324,46 @@
     }
     positionMobilePins();
   }
+  let pinShiftHeld=false;
+  window.addEventListener('keydown',event=>{if(event.key==='Shift')pinShiftHeld=true;},true);
+  window.addEventListener('keyup',event=>{if(event.key==='Shift')pinShiftHeld=false;},true);
+  window.addEventListener('blur',()=>{pinShiftHeld=false;});
+  function installPinCornerDrag(widget,handle,key){
+    let active=false;
+    const begin=event=>{
+      if(active||event.button!==0||innerWidth<=760)return;
+      event.preventDefault();event.stopPropagation();active=true;
+      const start={x:event.clientX,y:event.clientY,width:widget.offsetWidth,height:widget.offsetHeight,left:widget.offsetLeft,top:widget.offsetTop,resize:event.shiftKey||pinShiftHeld,pointerId:event.pointerId};
+      // Safari can fail pointer capture; document listeners keep the drag alive.
+      try{if(event.pointerId!=null)handle.setPointerCapture?.(event.pointerId);}catch{}
+      const move=e=>{
+        if(e.pointerId!=null&&start.pointerId!=null&&e.pointerId!==start.pointerId)return;
+        if(e.cancelable)e.preventDefault();
+        if(start.resize||e.shiftKey||pinShiftHeld){
+          widget.style.width=Math.min(innerWidth-widget.offsetLeft,Math.max(64,start.width+e.clientX-start.x))+'px';
+          widget.style.height=Math.min(innerHeight-widget.offsetTop,Math.max(40,start.height+e.clientY-start.y))+'px';
+        }else{
+          widget.style.left=Math.max(0,Math.min(start.left+e.clientX-start.x,innerWidth-widget.offsetWidth))+'px';
+          widget.style.top=Math.max(0,Math.min(start.top+e.clientY-start.y,innerHeight-widget.offsetHeight))+'px';
+        }
+        updatePinOverflow(widget);
+      };
+      const stop=()=>{
+        if(!active)return;active=false;
+        for(const name of ['pointermove','mousemove'])document.removeEventListener(name,move,true);
+        for(const name of ['pointerup','pointercancel','mouseup'])document.removeEventListener(name,stop,true);
+        window.removeEventListener('blur',stop);
+        try{if(start.pointerId!=null&&handle.hasPointerCapture?.(start.pointerId))handle.releasePointerCapture(start.pointerId);}catch{}
+        saveLayout(key,widget);
+      };
+      for(const name of ['pointermove','mousemove'])document.addEventListener(name,move,{capture:true,passive:false});
+      for(const name of ['pointerup','pointercancel','mouseup'])document.addEventListener(name,stop,true);
+      window.addEventListener('blur',stop);
+    };
+    handle.addEventListener('pointerdown',begin);
+    handle.addEventListener('mousedown',begin);
+    handle.addEventListener('dragstart',event=>event.preventDefault());
+  }
   function render() {
     renderQueued=false;if(!home||!canRender())return;
     for(const [key,widget]of widgets)if(!pins.has(key)){widget._resize?.disconnect();widget.remove();widgets.delete(key);}
@@ -334,17 +374,7 @@
         widget=document.createElement('section');widget.className='cep-home-pin';widget.dataset.pinKey=pin.key;widget.style.zIndex=String(++layer);
         const content=document.createElement('div');content.className='cep-home-pin-content';widget.append(content);installPinZoom(widget,pin.key);
         const resize=document.createElement('button');resize.type='button';resize.className='cep-home-pin-resize';resize.setAttribute('aria-label','Move pinned note; hold Shift to resize');resize.title='Drag to move; Shift-drag to resize';widget.append(resize);
-        resize.addEventListener('pointerdown',event=>{
-          if(event.button!==0)return;event.preventDefault();event.stopPropagation();resize.setPointerCapture(event.pointerId);
-          const start={x:event.clientX,y:event.clientY,width:widget.offsetWidth,height:widget.offsetHeight,left:widget.offsetLeft,top:widget.offsetTop,resize:event.shiftKey};
-          const move=e=>{
-            if(start.resize){widget.style.width=Math.min(innerWidth-widget.offsetLeft,Math.max(64,start.width+e.clientX-start.x))+'px';widget.style.height=Math.min(innerHeight-widget.offsetTop,Math.max(40,start.height+e.clientY-start.y))+'px';}
-            else{widget.style.left=Math.max(0,Math.min(start.left+e.clientX-start.x,innerWidth-widget.offsetWidth))+'px';widget.style.top=Math.max(0,Math.min(start.top+e.clientY-start.y,innerHeight-widget.offsetHeight))+'px';}
-            updatePinOverflow(widget);
-          };
-          const stop=()=>{resize.removeEventListener('pointermove',move);resize.removeEventListener('pointerup',stop);resize.removeEventListener('pointercancel',stop);saveLayout(pin.key,widget);};
-          resize.addEventListener('pointermove',move);resize.addEventListener('pointerup',stop);resize.addEventListener('pointercancel',stop);
-        });
+        installPinCornerDrag(widget,resize,pin.key);
         resize.addEventListener('keydown',event=>{
           if(!event.key.startsWith('Arrow'))return;event.preventDefault();
           if(!event.shiftKey){widget.style.left=Math.max(0,Math.min(widget.offsetLeft+(event.key==='ArrowRight'?10:event.key==='ArrowLeft'?-10:0),innerWidth-widget.offsetWidth))+'px';widget.style.top=Math.max(0,Math.min(widget.offsetTop+(event.key==='ArrowDown'?10:event.key==='ArrowUp'?-10:0),innerHeight-widget.offsetHeight))+'px';saveLayout(pin.key,widget);return;}
