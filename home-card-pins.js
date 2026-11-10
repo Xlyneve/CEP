@@ -215,6 +215,12 @@
     window.applySourceSearchSkin(card,entry);
     window.installSearchCardInteractions(card,{copyText:entry.displayText||entry.text,copyHtml:window.getSearchCopyHtml?.(entry)||entry.richHtml});
     // Home pins show the full saved table, not the six-row search preview.
+    // Saved editor widths must not force short cells to stay wide on Home.
+    card.querySelectorAll('table,colgroup,col,td,th').forEach(node=>{
+      node.removeAttribute('width');
+      for(const property of ['width','min-width','max-width'])node.style.removeProperty(property);
+      if(node.tagName==='TABLE')node.style.removeProperty('table-layout');
+    });
     card.querySelectorAll('.cep-table-preview-hidden').forEach(row=>row.classList.remove('cep-table-preview-hidden'));
     card.querySelectorAll('.cep-table-preview-footer,.cep-source-card-date,.timestamp').forEach(node=>node.remove());
     content.append(card);widget.setAttribute('aria-label','Pinned note: '+entry.title);
