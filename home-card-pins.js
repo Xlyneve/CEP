@@ -21,6 +21,7 @@
   const page=(location.pathname.split('/').pop()||'').toLowerCase(), home=page==='home.html';
   if (!home && !sources[page]) return;
   const cacheKey='cep-home-card-pins:v1', layoutKey='cep-home-card-pin-layout:v1';
+  const appearanceKey='cep-home-card-appearance:v1';
   const selector='.cep-search-source,.note-card[data-id],.note-tile[data-id],.chatBubble[data-home-pin-id],.file-item[data-id]';
   const widgets=new Map(), sourceWatches=new Map(), authWatches=new Map();
   let pins=new Map(), readyStore, layer=9000, renderQueued=false, homeUnsubscribe, homeActive=false, lifecycle=0;
@@ -68,6 +69,53 @@
     }
     return id ? {file:source[0],id,key:keyFor(source[0],id),source} : null;
   }
+  function activeTheme() {
+    return document.documentElement.dataset.xlyneveColorTheme || 'original';
+  }
+  function readAppearances() {
+    try { return JSON.parse(localStorage.getItem(appearanceKey) || '{}') || {}; }
+    catch { return {}; }
+  }
+  function isSafeBackgroundImage(value) {
+    return typeof value === 'string' &&
+      /^(?:(?:repeating-)?(?:linear|radial|conic)-gradient\(|none$)/i.test(value) &&
+      !/\b(?:url|image-set|image|paint)\s*\(/i.test(value);
+  }
+  function readCardAppearance(card) {
+    const surface = card.querySelector(':scope > :is(.cep-source-surface,.cep-source-chat,.cep-source-form)') || card;
+    const style = getComputedStyle(surface);
+    const image = style.backgroundImage;
+    return {
+      theme: activeTheme(),
+      backgroundColor: style.backgroundColor,
+      backgroundImage: isSafeBackgroundImage(image) ? image : 'none',
+      color: style.color
+    };
+  }
+  function rememberSourceAppearance(card, key) {
+    const appearances = readAppearances();
+    const appearance = readCardAppearance(card);
+    const byTheme = appearances[key] || {};
+    if (JSON.stringify(byTheme[appearance.theme]) === JSON.stringify(appearance)) return;
+    appearances[key] = {...byTheme, [appearance.theme]: appearance};
+    try { localStorage.setItem(appearanceKey, JSON.stringify(appearances)); } catch {}
+  }
+  function applyCardAppearance(surface, pin) {
+    const theme = activeTheme();
+    const appearance = readAppearances()[pin.key]?.[theme] || pin.entry.appearance;
+    if (appearance?.theme !== theme) return;
+    for (const [property, value] of [['background-color', appearance.backgroundColor], ['color', appearance.color]]) {
+      if (typeof value === 'string' && CSS.supports(property, value)) surface.style.setProperty(property, value, 'important');
+    }
+    const image = appearance.backgroundImage;
+    if (isSafeBackgroundImage(image)) {
+      surface.style.setProperty('background-image', image, 'important');
+    }
+    if (typeof appearance.color === 'string' && CSS.supports('color', appearance.color)) {
+      surface.style.setProperty('--card-ink', appearance.color);
+      surface.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
+    }
+  }
   function snapshot(card, identity) {
     // Search cards retain their original record, avoiding compact preview sizes
     // and temporary search-match highlights in the pinned note.
@@ -98,7 +146,7 @@
     return {file:identity.file,id:identity.id,sourceTitle:identity.source[1],title:label,text,displayText:text,richHtml:html,record:{id:identity.id,data}};
   }
   async function pin(card,identity) {
-    const entry=snapshot(card,identity), previous=pins.get(identity.key);
+    const entry={...snapshot(card,identity),appearance:readCardAppearance(card)}, previous=pins.get(identity.key);
     const value={key:identity.key,file:identity.file,sourceId:identity.id,collection:identity.source[2],project:identity.source[3]||mainProject,
       pinnedAt:previous?.pinnedAt||Date.now(),entry};
     const {db,fs}=await store();
@@ -115,8 +163,14 @@
   }
   function updateButtons(){document.querySelectorAll('.cep-home-pin-button').forEach(updateButton);}
   function attach(card) {
-    if(card.querySelector('.cep-home-pin-button') || card.matches('.editing-note,.is-editing') || card.closest('[contenteditable="true"]'))return;
+    if(card.matches('.editing-note,.is-editing') || card.closest('[contenteditable="true"]'))return;
     const identity=identify(card);if(!identity)return;
+    if (!home && !card.matches('.cep-search-source') && pins.has(identity.key)) {
+      requestAnimationFrame(() => {
+        if (card.isConnected && pins.has(identity.key)) rememberSourceAppearance(card, identity.key);
+      });
+    }
+    if(card.querySelector('.cep-home-pin-button'))return;
     const button=document.createElement('button');button.type='button';button.className='cep-home-pin-button';
     button.dataset.pinKey=identity.key;button.innerHTML=icon;
     const actions=card.querySelector('.note-actions,.btn-group,.card-actions,.card-buttons,.card-controls')
@@ -271,6 +325,7 @@
     freezePinTableLayout(card);
     applyPinZoom(widget);
     const surface=card.querySelector('.cep-source-surface,.cep-source-chat,.cep-source-form')||card;
+    applyCardAppearance(surface, pin);
     if(!widget._heightFitted){
       // Measure natural content height once, keeping later manual resizing intact.
       const nodes=[content,card,surface],styles=nodes.map(node=>node.getAttribute('style'));
@@ -452,7 +507,13 @@
   }
   window.addEventListener('storage',event=>{if(event.key===cacheKey){try{pins=new Map(JSON.parse(event.newValue||'[]').map(pin=>[pin.key,pin]));updateButtons();if(home)queueRender();}catch{}}});
   window.addEventListener('cep-search-helpers-ready',()=>{if(home){queueRender();void watchSources();}});
-  window.addEventListener('cep-theme-css-ready',()=>{if(home){for(const widget of widgets.values())widget._entry=null;queueRender();}});
+  window.addEventListener('storage', event => {
+    if (home && event.key === appearanceKey) {
+      for (const widget of widgets.values()) widget._entry = null;
+      queueRender();
+    }
+  });
+  window.addEventListener('cep-theme-css-ready',()=>{if(home){for(const widget of widgets.values())widget._entry=null;queueRender();}else scan(document);});
   window.addEventListener('cep-search-cache-invalidated',()=>{if(home)void watchSources();});
   window.addEventListener('resize',()=>{syncMobilePins();let i=0;for(const [key,widget]of widgets){place(widget,layout()[device()+':'+key],i++);applyPinZoom(widget);}},{passive:true});
   window.addEventListener('pagehide',()=>{homeActive=false;++lifecycle;homeUnsubscribe?.();homeUnsubscribe=null;for(const watch of sourceWatches.values())watch.stop();for(const stop of authWatches.values())stop();sourceWatches.clear();authWatches.clear();});
