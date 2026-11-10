@@ -155,7 +155,9 @@ function scan(root) {
   const tables=new Set(root.querySelectorAll?.(tableSelector) || []);
   if(root.matches?.(tableSelector))tables.add(root);
   const owner=root.closest?.(tableSelector);if(owner)tables.add(owner);
-  tables.forEach(table=>normalizeNoteTable(table));
+  // Home pins use a stable display layout; editor normalization would bake
+  // their scaled screen dimensions back into the column widths.
+  tables.forEach(table=>{if(!table.closest('.cep-home-pin'))normalizeNoteTable(table);});
 }
 function start(){scan(document);new MutationObserver(records=>{
  const roots=new Set();for(const record of records){if(record.target instanceof Element && record.target.closest('table'))roots.add(record.target);for(const node of record.addedNodes)if(node.nodeType===1)roots.add(node);}

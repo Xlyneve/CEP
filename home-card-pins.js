@@ -194,6 +194,20 @@
     clone.querySelectorAll('table').forEach(table=>delete table.dataset.cepSearchTableZoom);
     return clone.innerHTML;
   }
+  function freezePinTableLayout(card){
+    // Measure once at natural size. Changing viewport width while zooming must
+    // never redistribute the table's columns or wrap each cell differently.
+    for(const table of card.querySelectorAll('table')){
+      table.style.setProperty('table-layout','auto','important');
+      table.style.setProperty('width','max-content','important');
+      table.style.setProperty('min-width','0','important');
+      table.style.setProperty('max-width','none','important');
+    }
+    for(const table of card.querySelectorAll('table')){
+      const width=Math.ceil(table.getBoundingClientRect().width);
+      if(width)table.style.setProperty('width',width+'px','important');
+    }
+  }
   function applyPinZoom(widget){
     const card=widget.querySelector('.cep-home-pin-card');if(!card)return;
     const scale=innerWidth<=760?1:(widget._zoom||1);
@@ -254,6 +268,7 @@
     card.querySelectorAll('.cep-table-preview-hidden').forEach(row=>row.classList.remove('cep-table-preview-hidden'));
     card.querySelectorAll('.cep-table-preview-footer,.cep-source-card-date,.timestamp').forEach(node=>node.remove());
     content.append(card);widget.setAttribute('aria-label','Pinned note: '+entry.title);
+    freezePinTableLayout(card);
     applyPinZoom(widget);
     const surface=card.querySelector('.cep-source-surface,.cep-source-chat,.cep-source-form')||card;
     if(!widget._heightFitted){
