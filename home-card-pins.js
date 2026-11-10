@@ -156,10 +156,11 @@
   const device=()=>innerWidth<=760?'mobile':'desktop';
   function saveLayout(key,widget) {
     if(!widget.isConnected)return;
-    const all=layout();all[device()+':'+key]={left:widget.offsetLeft,top:widget.offsetTop,width:widget.offsetWidth,height:widget.offsetHeight};
+    const all=layout();all[device()+':'+key]={left:widget.offsetLeft,top:widget.offsetTop,width:widget.offsetWidth,height:widget.offsetHeight,contentFit:widget._heightFitted?1:0};
     try{localStorage.setItem(layoutKey,JSON.stringify(all));}catch{}
   }
   function place(widget, saved, index) {
+    widget._heightFitted=saved?.contentFit===1;
     const width=Math.min(Math.max(saved?.width||310,220),innerWidth-8),height=Math.min(Math.max(saved?.height||230,110),innerHeight-8);
     const left=Math.max(0,Math.min(saved?.left??(innerWidth-width-16-index*18),innerWidth-width));
     const top=Math.max(0,Math.min(saved?.top??(Math.min(380,innerHeight*.48)+index*24),innerHeight-height));
@@ -218,6 +219,15 @@
     window.installSearchCardInteractions(card,{copyText:entry.displayText||entry.text,copyHtml:window.getSearchCopyHtml?.(entry)||entry.richHtml});
     content.append(card);widget.setAttribute('aria-label','Pinned note: '+entry.title);
     const surface=card.querySelector('.cep-source-surface,.cep-source-chat,.cep-source-form')||card;
+    if(!widget._heightFitted){
+      // Measure natural content height once, keeping later manual resizing intact.
+      const nodes=[content,card,surface],styles=nodes.map(node=>node.getAttribute('style'));
+      for(const node of nodes){node.style.setProperty('height','auto','important');node.style.setProperty('min-height','0','important');}
+      const natural=Math.ceil(card.getBoundingClientRect().height);
+      nodes.forEach((node,i)=>{if(styles[i]===null)node.removeAttribute('style');else node.setAttribute('style',styles[i]);});
+      widget.style.height=Math.max(110,Math.min(widget.offsetHeight,natural))+'px';
+      widget._heightFitted=true;saveLayout(pin.key,widget);
+    }
     widget.style.setProperty('--cep-pin-ink',getComputedStyle(surface).color);
   }
   function render() {
@@ -238,7 +248,7 @@
         const resize=document.createElement('button');resize.type='button';resize.className='cep-home-pin-resize';resize.setAttribute('aria-label','Resize pinned note');resize.title='Drag to resize';resize.textContent='◢';widget.append(resize);
         resize.addEventListener('pointerdown',event=>{
           if(event.button!==0)return;event.preventDefault();event.stopPropagation();resize.setPointerCapture(event.pointerId);
-          const start={x:event.clientX,y:event.clientY,width:widget.offsetWidth,height:widget.offsetHeight};
+          const start={x:event.clientX,y:event.clientY,width:widget.offsetWidth,height:widget.offsetHeight,contentFit:widget._heightFitted?1:0};
           const move=e=>{widget.style.width=Math.min(innerWidth-widget.offsetLeft,Math.max(220,start.width+e.clientX-start.x))+'px';widget.style.height=Math.min(innerHeight-widget.offsetTop,Math.max(110,start.height+e.clientY-start.y))+'px';};
           const stop=()=>{resize.removeEventListener('pointermove',move);resize.removeEventListener('pointerup',stop);resize.removeEventListener('pointercancel',stop);saveLayout(pin.key,widget);};
           resize.addEventListener('pointermove',move);resize.addEventListener('pointerup',stop);resize.addEventListener('pointercancel',stop);
