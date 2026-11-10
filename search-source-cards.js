@@ -165,6 +165,9 @@ export function applySourceSearchSkin(parent, entry) {
     });
   }
   parent.classList.add('cep-search-source'); parent.dataset.sourceFile = file;
+  parent.dataset.homePinId=entry.focusId||entry.id||'';
+  parent.__cepSourceEntry=entry;
+  if(file==='forms.html')parent.dataset.homePinUrl=entry.record?.data?.url||entry.directUrl||'';
   const cardClass = file === 'notes.html' ? 'note-tile note-card' : 'note-card';
   if (surface.classList.contains('cep-source-surface')) {
     surface.dataset.cepPaletteFile = file;

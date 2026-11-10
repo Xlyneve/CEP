@@ -1345,3 +1345,13 @@
   window.addEventListener('resize',()=>{activeRules=null;},{passive:true});
   window.addEventListener('cep-theme-css-ready',()=>{activeRules=null;});
 })();
+
+// Saved note cards can be pinned as movable widgets on Home.
+(() => {
+  const path=(location.pathname.split('/').pop()||'').toLowerCase();
+  const pages=new Set(['home.html','pn.html','clinicalnotes.html','chatgptx.html','info.html','explain.html','practicen.html','notes.html','recalls.html','ecg.html','urgent_care.html','face.html','hand.html','sha.html','abdo.html','spine.html','lf.html','forms.html']);
+  if(!pages.has(path))return;
+  const base=document.currentScript?.src||location.href;
+  const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('home-card-pins.css?v=1',base).href;document.head.append(css);
+  const script=document.createElement('script');script.src=new URL('home-card-pins.js?v=1',base).href;document.head.append(script);
+})();
