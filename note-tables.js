@@ -1,5 +1,5 @@
 // Layout and structure only. No database reads or writes.
-const MIN_WIDTH = 72;
+const MIN_WIDTH = 24;
 const NEW_WIDTH = 120;
 const states = new WeakMap();
 const tableSelector = ':is(.cep-pn-editor,[contenteditable="true"],.note-card,.note-tile,.chatBubble,.cep-source-surface,.cep-source-chat,.cep-source-text,.note-content,.note-text,.vaccine-card-notes,.zoom-card-notes) table';
