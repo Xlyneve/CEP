@@ -198,7 +198,7 @@
     const card=widget.querySelector('.cep-home-pin-card');if(!card)return;
     const scale=innerWidth<=760?1:(widget._zoom||1);
     card.style.zoom=String(scale);card.style.width=(100/scale)+'%';card.style.height=(100/scale)+'%';
-    const label=widget.querySelector('.cep-pin-zoom-reset');if(label)label.textContent=Math.round((widget._zoom||1)*100)+'%';
+    for(const button of widget.querySelectorAll('.cep-pin-zoom-corner'))button.title=button.getAttribute('aria-label')+' ('+Math.round((widget._zoom||1)*100)+'%)';
     updatePinOverflow(widget);
   }
   function setPinZoom(widget,key,value){
@@ -206,8 +206,9 @@
   }
   function installPinZoom(widget,key){
     const controls=document.createElement('div');controls.className='cep-pin-zoom-controls';controls.setAttribute('role','group');controls.setAttribute('aria-label','Pinned note zoom');
-    for(const [label,aria,action,cls]of [['−','Zoom out pinned note',()=>setPinZoom(widget,key,(widget._zoom||1)-.1),''],['100%','Reset pinned note zoom',()=>setPinZoom(widget,key,1),'cep-pin-zoom-reset'],['+','Zoom in pinned note',()=>setPinZoom(widget,key,(widget._zoom||1)+.1),'']]){
-      const button=document.createElement('button');button.type='button';button.textContent=label;button.className=cls;button.setAttribute('aria-label',aria);button.onclick=event=>{event.stopPropagation();action();};controls.append(button);
+    for(const [direction,step]of [['out',-.1],['in',.1]]){
+      const button=document.createElement('button');button.type='button';button.className='cep-pin-zoom-corner cep-pin-zoom-'+direction;button.setAttribute('aria-label','Zoom '+direction+' pinned note');
+      button.onclick=event=>{event.preventDefault();event.stopPropagation();setPinZoom(widget,key,(widget._zoom||1)+step);};controls.append(button);
     }
     widget.append(controls);
     widget.addEventListener('wheel',event=>{if(innerWidth<=760||!event.ctrlKey)return;event.preventDefault();event.stopPropagation();setPinZoom(widget,key,(widget._zoom||1)+(event.deltaY>0?-.1:.1));},{passive:false});
