@@ -221,6 +221,15 @@
       for(const property of ['width','min-width','max-width'])node.style.removeProperty(property);
       if(node.tagName==='TABLE')node.style.removeProperty('table-layout');
     });
+    // Search preparation sets inline !important wrapping, which beats CSS rules.
+    card.querySelectorAll('td,th').forEach(cell=>{
+      const numeric=/^[+−-]?\d+(?:[.,]\d+)*(?:%|\s*°[CF]?)?$/.test(cell.textContent.trim());
+      for(const node of [cell,...cell.querySelectorAll('*')]){
+        node.style.setProperty('overflow-wrap','normal','important');
+        node.style.setProperty('word-break','normal','important');
+        if(numeric)node.style.setProperty('white-space','nowrap','important');
+      }
+    });
     card.querySelectorAll('.cep-table-preview-hidden').forEach(row=>row.classList.remove('cep-table-preview-hidden'));
     card.querySelectorAll('.cep-table-preview-footer,.cep-source-card-date,.timestamp').forEach(node=>node.remove());
     content.append(card);widget.setAttribute('aria-label','Pinned note: '+entry.title);
