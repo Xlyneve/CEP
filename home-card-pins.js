@@ -165,8 +165,8 @@
     if(!stage||viewState(widget).minimized)return;
     stage.style.zoom='1';
     if(viewState(widget).expanded)return;
-    const scale=Math.min(1,scroll.clientWidth/Math.max(1,stage.scrollWidth),scroll.clientHeight/Math.max(1,stage.scrollHeight));
-    stage.style.zoom=String(scale);
+    // Keep the original text and column sizes; only grow the height.
+    widget.style.height=Math.max(110,Math.ceil(stage.scrollHeight)+52)+'px';
   }
   function fitFullTable(widget,key,persist=true){
     if(!widget.isConnected||viewState(widget).minimized)return;
@@ -271,6 +271,7 @@
     for(const field of ['note','content','text'])if(!(field==='text'&&entry.file.toLowerCase()==='notes.html'))entry.record.data[field]=withoutPreviewTools(entry.record.data[field]);
     widget.setAttribute('aria-label','Pinned note: '+entry.title);widget._pinTitle=entry.title;
     const bareTable=!pin.missing&&tableOnly(entry);widget.classList.toggle('cep-home-pin-table-only',bareTable);
+    widget.style.position=bareTable?'absolute':'';widget.style.maxHeight=bareTable?'none':'';
     if(!bareTable&&viewState(widget).beforeMinimize)viewState(widget).beforeMinimize.expanded=false;
     if(!bareTable&&viewState(widget).expanded){viewState(widget).expanded=false;if(!viewState(widget).minimized)setBounds(widget,viewState(widget).compact||bounds(widget));}
     updateViewControls(widget);
@@ -297,8 +298,8 @@
       scroll.append(stage);content.append(scroll);widget.style.setProperty('--cep-pin-ink','var(--theme-ink,#39353a)');
       stage.addEventListener('load',()=>{if(viewState(widget).expanded)fitFullTable(widget,pin.key);else fitCompactTable(widget);},true);
       const view=viewState(widget);
-      if(!view.compactTableFit){
-        view.compactTableFit=true;view.expanded=false;
+      if(!view.naturalTableRows){
+        view.naturalTableRows=true;view.expanded=false;
         if(view.beforeMinimize)view.beforeMinimize.expanded=false;
         updateViewControls(widget);
         if(!view.minimized)setBounds(widget,view.compact||{...bounds(widget),width:310,height:230});
