@@ -160,9 +160,18 @@
     const width=Math.min(Math.max(value.width||310,220),innerWidth-8),height=Math.min(Math.max(value.height||230,minHeight),innerHeight-8);
     Object.assign(widget.style,{width:width+'px',height:height+'px',left:Math.max(0,Math.min(value.left||0,innerWidth-width))+'px',top:Math.max(0,Math.min(value.top||0,innerHeight-height))+'px'});
   }
+  function fitCompactTable(widget){
+    const stage=widget.querySelector('.cep-home-pin-table-stage'),scroll=stage?.parentElement;
+    if(!stage||viewState(widget).minimized)return;
+    stage.style.zoom='1';
+    if(viewState(widget).expanded)return;
+    const scale=Math.min(1,scroll.clientWidth/Math.max(1,stage.scrollWidth),scroll.clientHeight/Math.max(1,stage.scrollHeight));
+    stage.style.zoom=String(scale);
+  }
   function fitFullTable(widget,key,persist=true){
     if(!widget.isConnected||viewState(widget).minimized)return;
     const stage=widget.querySelector('.cep-home-pin-table-stage');if(!stage)return;
+    stage.style.zoom='1';
     const width=Math.min(innerWidth-16,Math.max(220,Math.ceil(stage.scrollWidth)+2));
     const height=Math.min(innerHeight-16,Math.max(110,Math.ceil(stage.scrollHeight)+52));
     setBounds(widget,{...bounds(widget),width,height});
@@ -175,7 +184,7 @@
       if(!view.expanded&&!wasMinimized)view.compact=bounds(widget);
       view.minimized=false;view.expanded=true;updateViewControls(widget);fitFullTable(widget,key,false);
     }
-    updateViewControls(widget);saveLayout(key,widget);
+    updateViewControls(widget);fitCompactTable(widget);saveLayout(key,widget);
   }
   function toggleMinimized(widget,key){
     const view=viewState(widget);
@@ -187,7 +196,7 @@
       view.beforeMinimize={...bounds(widget),expanded:view.expanded};if(!view.expanded)view.compact=bounds(widget);
       view.minimized=true;updateViewControls(widget);setBounds(widget,{...bounds(widget),width:view.compact?.width||310,height:32});
     }
-    updateViewControls(widget);saveLayout(key,widget);
+    updateViewControls(widget);fitCompactTable(widget);saveLayout(key,widget);
   }
   function startManualResize(widget){
     const view=viewState(widget);if(view.minimized)return false;
@@ -286,14 +295,16 @@
         clone.querySelectorAll('img').forEach(image=>window.enableSearchImageZoom?.(image));stage.append(clone);
       }
       scroll.append(stage);content.append(scroll);widget.style.setProperty('--cep-pin-ink','var(--theme-ink,#39353a)');
-      stage.addEventListener('load',()=>{if(viewState(widget).expanded)fitFullTable(widget,pin.key);},true);
+      stage.addEventListener('load',()=>{if(viewState(widget).expanded)fitFullTable(widget,pin.key);else fitCompactTable(widget);},true);
       const view=viewState(widget);
-      if(!view.fullTableDefault){
-        view.fullTableDefault=true;view.expanded=true;
-        if(view.beforeMinimize)view.beforeMinimize.expanded=true;
+      if(!view.compactTableFit){
+        view.compactTableFit=true;view.expanded=false;
+        if(view.beforeMinimize)view.beforeMinimize.expanded=false;
         updateViewControls(widget);
+        if(!view.minimized)setBounds(widget,view.compact||{...bounds(widget),width:310,height:230});
       }
       if(view.expanded&&!view.minimized)fitFullTable(widget,pin.key,false);
+      else fitCompactTable(widget);
       saveLayout(pin.key,widget);
       return;
     }
@@ -341,7 +352,7 @@
         });
         document.body.append(widget);
         place(widget,layout()[device()+':'+pin.key],index);drag(widget,handle,pin.key);widgets.set(pin.key,widget);
-        let timer;widget._resize=new ResizeObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>saveLayout(pin.key,widget),180);});widget._resize.observe(widget);
+        let timer;widget._resize=new ResizeObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{fitCompactTable(widget);saveLayout(pin.key,widget);},180);});widget._resize.observe(widget);
         widget.addEventListener('pointerdown',()=>widget.style.zIndex=String(++layer),{passive:true});
       }
       if(widget._entry!==pin.entry){paint(widget,pin);widget._entry=pin.entry;}
@@ -396,7 +407,7 @@
   window.addEventListener('cep-search-helpers-ready',()=>{if(home){queueRender();void watchSources();}});
   window.addEventListener('cep-theme-css-ready',()=>{if(home){for(const widget of widgets.values())widget._entry=null;queueRender();}});
   window.addEventListener('cep-search-cache-invalidated',()=>{if(home)void watchSources();});
-  window.addEventListener('resize',()=>{let i=0;for(const [key,widget]of widgets){place(widget,layout()[device()+':'+key],i++);if(viewState(widget).expanded&&!viewState(widget).minimized)fitFullTable(widget,key,false);}},{passive:true});
+  window.addEventListener('resize',()=>{let i=0;for(const [key,widget]of widgets){place(widget,layout()[device()+':'+key],i++);if(viewState(widget).expanded&&!viewState(widget).minimized)fitFullTable(widget,key,false);else fitCompactTable(widget);}},{passive:true});
   window.addEventListener('pagehide',()=>{homeActive=false;++lifecycle;homeUnsubscribe?.();homeUnsubscribe=null;for(const watch of sourceWatches.values())watch.stop();for(const stop of authWatches.values())stop();sourceWatches.clear();authWatches.clear();});
   window.addEventListener('pageshow',event=>{if(home&&event.persisted)void startHome();});
   window.CEPHomeCardPins={pin,unpin,has:key=>pins.has(key)};
