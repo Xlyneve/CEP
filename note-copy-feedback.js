@@ -6,17 +6,29 @@
   let status, announcement, dismiss;
 
   window.showCEPNoteCopyFeedback = card => {
-    if (card?.isConnected && card.animate && !reducedMotion.matches) {
-      presses.get(card)?.cancel();
-      const press = card.animate([
-        { scale: '1', translate: '0 0' },
-        { scale: '.99', translate: '0 2px', boxShadow: '0 1px 3px #0002', offset: .34 },
-        { scale: '1', translate: '0 0' }
-      ], { duration: 200, easing: 'ease-out' });
-      presses.set(card, press);
-      press.onfinish = () => {
-        if (presses.get(card) === press) presses.delete(card);
+    if (card?.isConnected) {
+      const surface = card.querySelector('.cep-source-surface,.cep-source-notebook,.cep-source-form,.cep-source-chat') || card;
+      presses.get(surface)?.();
+      const properties = ['box-shadow', 'scale', 'translate'];
+      const original = properties.map(name => [name, surface.style.getPropertyValue(name), surface.style.getPropertyPriority(name)]);
+      const themeInset = getComputedStyle(surface).getPropertyValue('--note-editor-inset').trim();
+      const inset = themeInset && themeInset !== 'none' ? themeInset
+        : 'inset 3px 4px 7px rgba(83,98,108,.3), inset -3px -3px 6px rgba(255,255,251,.95)';
+      surface.style.setProperty('box-shadow', inset, 'important');
+      if (!reducedMotion.matches) {
+        surface.style.setProperty('scale', '.96', 'important');
+        surface.style.setProperty('translate', '0 2px', 'important');
+      }
+      const release = () => {
+        clearTimeout(releaseTimer);
+        for (const [name, value, priority] of original) {
+          if (value) surface.style.setProperty(name, value, priority);
+          else surface.style.removeProperty(name);
+        }
+        presses.delete(surface);
       };
+      const releaseTimer = setTimeout(release, 220);
+      presses.set(surface, release);
     }
 
     if (!status) {
