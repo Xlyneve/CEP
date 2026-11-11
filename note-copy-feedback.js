@@ -3,11 +3,15 @@
 
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const presses = new WeakMap();
+  document.addEventListener('cep-before-surface-press',event => {
+    if (event.detail) presses.get(event.detail)?.();
+  });
   let status, announcement, dismiss;
 
   window.showCEPNoteCopyFeedback = card => {
     if (card?.isConnected) {
       const surface = card.querySelector('.cep-source-surface,.cep-source-notebook,.cep-source-form,.cep-source-chat') || card;
+      document.dispatchEvent(new CustomEvent('cep-before-surface-press',{detail:surface}));
       presses.get(surface)?.();
       const properties = ['box-shadow', 'scale', 'translate'];
       const original = properties.map(name => [name, surface.style.getPropertyValue(name), surface.style.getPropertyPriority(name)]);

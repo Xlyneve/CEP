@@ -1293,57 +1293,64 @@
   document.head.append(style);
 })();
 
-// Fill missing icon press feedback without replacing a theme's own active effect.
+// Keep quick taps visibly pressed across themed cards and controls.
 (() => {
   const page = (location.pathname.split('/').pop() || '').toLowerCase();
   if (['rncnp.html','biosched1.html','recalltracker.html'].includes(page)) return;
-  const controls = 'button,[role="button"],.circle,.glass-btn,.header-btn,.add-btn,.xlyneve-theme-button,.cep-sign-out-light,a.cep-media-link';
+  const controls = 'button,[role="button"],a[href],summary,input[type="button"],input[type="submit"],.circle,.glass-btn,.header-btn,.add-btn,.card,.note-card,.note-tile,.file-item,.chatBubble,.cep-source-surface,.cep-source-chat,.cep-source-form,.universal-search-native-card,.cep-global-search-result';
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  let activeRules = null;
-  const observer = new MutationObserver(() => { activeRules = null; });
-  observer.observe(document.head, {childList:true,subtree:true,characterData:true});
-  function collectActiveRules() {
-    const rules = [];
-    const read = sheet => {
-      let entries; try { entries = sheet.cssRules; } catch { return; }
-      for (const rule of entries || []) {
-        if (rule.media && !matchMedia(rule.conditionText || rule.media.mediaText).matches) continue;
-        if (rule.selectorText?.includes(':active') && rule.style &&
-            ['transform','scale','translate','rotate','box-shadow','filter','animation','animation-name','opacity']
-              .some(property => rule.style.getPropertyValue(property))) {
-          rules.push(rule.selectorText.replace(/:active\b/g, ':not(#cep-press-unmatched)'));
-        }
-        if (rule.cssRules) read(rule);
-        if (rule.styleSheet) read(rule.styleSheet);
-      }
-    };
-    [...document.styleSheets].forEach(read);
-    return rules;
-  }
-  function hasOwnPress(control) {
-    activeRules ||= collectActiveRules();
-    // Include glyphs: some themes animate only the SVG inside the button.
-    const targets = [control, ...control.querySelectorAll('svg,.icon,[class*="icon"],span')];
-    return activeRules.some(selector => targets.some(target => {
-      try { return target.matches(selector); } catch { return false; }
-    }));
-  }
+  const active = new Map();
+  const properties = ['box-shadow','scale','translate'];
   function press(event) {
-    if (motion.matches || (event.type === 'pointerdown' && event.button !== 0)) return;
+    if (event.type === 'pointerdown' && event.button !== 0) return;
     if (event.type === 'keydown' && (event.repeat || !['Enter',' '].includes(event.key))) return;
     const control = event.target.closest?.(controls);
-    if (!control || control.matches(':disabled,[aria-disabled="true"],.cep-copy-text') ||
-        control.closest('[contenteditable="true"]') || hasOwnPress(control)) return;
-    if (!control.animate || control.getAnimations().some(animation => animation.playState === 'running')) return;
-    // Individual scale composes with positioning/hover transforms; no extra halo.
-    const scale = getComputedStyle(control).scale;
-    control.animate([{scale:scale === 'none' ? '1' : scale},{scale:'.96',offset:.4},
-      {scale:scale === 'none' ? '1' : scale}], {duration:210,easing:'ease-out'});
+    if (!control || control.matches(':disabled,[aria-disabled="true"],.cep-copy-text,.cep-pin-zoom-corner,.cep-home-pin-resize,.cep-home-pin-button') ||
+        control.closest('[contenteditable="true"],.editing-note,.is-editing') ||
+        event.target.closest?.('textarea,select,input:not([type="button"]):not([type="submit"]),[contenteditable="true"]')) return;
+    const surface = control.querySelector('.cep-source-surface,.cep-source-notebook,.cep-source-form,.cep-source-chat') || control;
+    document.dispatchEvent(new CustomEvent('cep-before-surface-press',{detail:surface}));
+    const key = event.type === 'pointerdown' ? 'pointer-' + event.pointerId : 'key-' + event.key;
+    active.get(key)?.restore();
+    for (const state of active.values()) if (state.surface === surface) state.restore();
+    const original = properties.map(name => [name,surface.style.getPropertyValue(name),surface.style.getPropertyPriority(name)]);
+    const computed = getComputedStyle(surface);
+    const inset = computed.getPropertyValue('--note-editor-inset').trim();
+    // Text links in the header press without gaining a surrounding surface.
+    if (!control.closest('.top-links')) surface.style.setProperty('box-shadow',
+      inset && inset !== 'none' ? inset : 'inset 3px 4px 7px rgba(83,98,108,.3),inset -3px -3px 6px rgba(255,255,251,.95)', 'important');
+    if (!motion.matches) {
+      const scale = computed.scale === 'none' ? ['1'] : computed.scale.split(' ');
+      surface.style.setProperty('scale',scale.map(value => String(Number(value) * .96)).join(' '),'important');
+      surface.style.setProperty('translate','0 2px','important');
+    }
+    let timer;
+    const state = { surface, started:performance.now(), restore() {
+      clearTimeout(timer);
+      for (const [name,value,priority] of original) {
+        if (value) surface.style.setProperty(name,value,priority);
+        else surface.style.removeProperty(name);
+      }
+      if (active.get(key) === state) active.delete(key);
+    }, release(immediate = false) {
+      clearTimeout(timer);
+      timer = setTimeout(() => state.restore(),immediate ? 0 : Math.max(0,160 - (performance.now() - state.started)));
+    }};
+    active.set(key,state);
+  }
+  function release(event) {
+    const key = event.type === 'keyup' ? 'key-' + event.key : 'pointer-' + event.pointerId;
+    active.get(key)?.release(event.type === 'pointercancel');
   }
   document.addEventListener('pointerdown',press,{capture:true,passive:true});
   document.addEventListener('keydown',press,true);
-  window.addEventListener('resize',()=>{activeRules=null;},{passive:true});
-  window.addEventListener('cep-theme-css-ready',()=>{activeRules=null;});
+  document.addEventListener('pointerup',release,true);
+  document.addEventListener('pointercancel',release,true);
+  document.addEventListener('keyup',release,true);
+  document.addEventListener('cep-before-surface-press',event => {
+    for (const state of active.values()) if (state.surface === event.detail) state.restore();
+  });
+  window.addEventListener('blur',() => { for (const state of active.values()) state.restore(); });
 })();
 
 // Saved note cards can be pinned as movable widgets on Home.
