@@ -300,7 +300,7 @@
           backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
         }
         html:root.home-notepad-embedded[data-xlyneve-color-theme="soft-stone"] body #homepage-notepad-surface #notes .note-card {
-          background:var(--stone-card,#f8e9e9) !important; background-image:none !important;
+          background:var(--stone-surface,#e1e2e6) !important; background-image:none !important;
           border:1px solid var(--stone-card-rim,#bb727e) !important;
           border-radius:24px !important; box-shadow:var(--stone-raised) !important;
           margin-bottom:16px !important;
