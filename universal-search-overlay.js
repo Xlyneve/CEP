@@ -1,6 +1,7 @@
 import './note-timestamps.js?v=20261104-1';
 import * as searchWork from './search-scheduler.js?v=20261102-1';
 import './note-copy-text.js?v=9';
+import './note-copy-feedback.js?v=1';
 import { enableSearchImageZoom, enableSearchTableZoom } from './note-media-viewer.js?v=1';
 export { enableSearchImageZoom, enableSearchTableZoom, openNoteTableZoom, openNoteImageZoom } from './note-media-viewer.js?v=1';
 import "./information-link-markers.js?v=20261018-1";
@@ -1332,61 +1333,8 @@ async function writeSearchClipboard(copyText, copyHtml, prepared) {
 }
 export function installSearchCardInteractions(card, { copyText, copyHtml, navigate, onNavigate } = {}) {
   scheduleDefaultCardFit(card);
-  let clickTimer, clipboardPayload, pressAnimation, glow, glowAnimation, attempt = 0, pressed = false;
-  if (!document.getElementById('cep-search-copy-glow-style')) {
-    const style = document.createElement('style');
-    style.id = 'cep-search-copy-glow-style';
-    style.textContent = `
-      html:root:root body :is(.universal-search-native-card,.cep-global-search-result) { position:relative; }
-      html:root:root body .cep-search-copy-glow {
-        position:absolute !important; inset:0 !important; pointer-events:none !important;
-        margin:0 !important; padding:0 !important; background:none !important;
-        box-sizing:border-box !important; border:4px solid rgba(255,255,255,.98) !important;
-        box-shadow:0 0 8px 4px rgba(255,255,255,.95),0 0 22px 8px rgba(255,255,255,.7),inset 0 0 12px 4px rgba(255,255,255,.8) !important;
-        z-index:3; opacity:0;
-      }
-    `;
-    document.head.append(style);
-  }
-  const clearGlow = () => { glowAnimation?.cancel(); glow?.remove(); glow = null; };
-  const showCopyGlow = () => {
-    clearGlow();
-    glow = document.createElement('span');
-    glow.className = 'cep-search-copy-glow'; glow.setAttribute('aria-hidden','true');
-    const surface = card.querySelector('.cep-source-surface,.cep-source-notebook,.cep-source-form,.cep-source-chat') || card;
-    glow.style.borderRadius = getComputedStyle(surface).borderRadius;
-    card.append(glow);
-    const currentGlow = glow;
-    if (typeof glow.animate !== 'function' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      glow.style.opacity = '1'; setTimeout(() => currentGlow.remove(), 650); return;
-    }
-    glowAnimation = glow.animate([{opacity:0},{opacity:1,offset:.16},{opacity:1,offset:.4},{opacity:0}],
-      {duration:700,easing:'ease-out'});
-    glowAnimation.onfinish = () => currentGlow.remove();
-  };
+  let clickTimer, clipboardPayload, attempt = 0;
   const isInteractiveChild = target => target instanceof Element && Boolean(target.closest(interactiveSearchChildSelector));
-  const animatePress = down => {
-    pressAnimation?.cancel();
-    if (typeof card.animate !== 'function' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    pressAnimation = card.animate(
-      down ? [{ scale:'1', translate:'0 0' }, { scale:'0.99', translate:'0 2px' }]
-           : [{ scale:'0.99', translate:'0 2px' }, { scale:'1', translate:'0 0' }],
-      { duration:down ? 80 : 120, easing:'ease-out', fill:down ? 'forwards' : 'none' }
-    );
-  };
-  const releasePress = () => {
-    if (!pressed) return;
-    pressed = false; animatePress(false);
-  };
-  card.addEventListener('pointerdown', event => {
-    if (event.button !== 0 || isInteractiveChild(event.target)) return;
-    pressed = true; animatePress(true);
-  });
-  card.addEventListener('pointerup', releasePress);
-  card.addEventListener('pointercancel', releasePress);
-  card.addEventListener('pointerleave', releasePress);
-  card.addEventListener('lostpointercapture', releasePress);
-
   card.addEventListener('click', event => {
     if (isInteractiveChild(event.target)) {
       const nestedLink = event.target.closest?.('a:not(.cep-global-search-result):not(.universal-search-native-card):not(.cep-xgpt-concept):not(.xgpt-concept-link)');
@@ -1398,14 +1346,13 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
       return;
     }
     event.preventDefault();
-    clearTimeout(clickTimer); clearGlow();
+    clearTimeout(clickTimer);
     const currentAttempt = ++attempt;
     clickTimer = setTimeout(async () => {
       try {
         clipboardPayload ||= prepareSearchClipboard(copyText, copyHtml);
         await writeSearchClipboard(copyText, copyHtml, clipboardPayload);
-        if (currentAttempt === attempt) showCopyGlow();
-
+        if (currentAttempt === attempt) window.showCEPNoteCopyFeedback(card);
       } catch (error) {
         console.warn('Search result could not be copied.', error);
       }
@@ -1413,7 +1360,7 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
   });
   card.addEventListener('dblclick', event => {
     if (isInteractiveChild(event.target)) { event.preventDefault(); event.stopPropagation(); return; }
-    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer); ++attempt; clearGlow(); releasePress();
+    event.preventDefault(); event.stopPropagation(); clearTimeout(clickTimer); ++attempt;
     if (openSearchYouTubeUrl(card.href)) return;
     onNavigate?.(); navigate?.();
   });
