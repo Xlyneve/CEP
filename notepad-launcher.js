@@ -301,7 +301,7 @@
         }
         html:root.home-notepad-embedded[data-xlyneve-color-theme="soft-stone"] body #homepage-notepad-surface #notes .note-card {
           background:var(--stone-surface,#e1e2e6) !important; background-image:none !important;
-          border:var(--stone-rim-width,2px) solid var(--stone-card-rim,#bb727e) !important;
+          border:var(--stone-rim-width,2px) solid var(--stone-card-rim,#e4c1c1) !important;
           border-radius:24px !important; box-shadow:var(--stone-raised) !important;
           margin-bottom:16px !important;
         }
