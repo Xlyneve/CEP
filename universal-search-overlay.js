@@ -1364,6 +1364,90 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
     if (openSearchYouTubeUrl(card.href)) return;
     onNavigate?.(); navigate?.();
   });
+  return {cancelPendingCopy:()=>{clearTimeout(clickTimer);++attempt;}};
+}
+
+// Full pinned-note reading uses the already loaded record; no Firebase request.
+let clinicalPinPreview;
+function openClinicalPinPreview(entry, sourceCard) {
+  clinicalPinPreview?.close();
+  if (!document.getElementById('cep-clinical-pin-preview-style')) {
+    const style = document.createElement('style'); style.id = 'cep-clinical-pin-preview-style';
+    style.textContent = `
+      html:not(#cep-pin-full-note) body .cep-clinical-pin-preview { width:min(680px,calc(100vw - 24px)); max-height:calc(100dvh - 32px); box-sizing:border-box; padding:20px; overflow:auto; overscroll-behavior:contain; border:1px solid var(--clinical-edge,#c8c3cf); border-radius:20px; background:var(--clinical-panel,#fff); color:var(--theme-ink,#39353a); box-shadow:0 12px 48px #0003; font:14px/1.5 Tahoma,sans-serif; }
+      .cep-clinical-pin-preview-overlay { position:fixed; inset:0; z-index:2147483643; display:flex; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; background:#0004; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); overscroll-behavior:contain; }
+      .cep-clinical-pin-preview-header { position:sticky; top:0; z-index:1; background:var(--clinical-panel,#fff); display:flex; align-items:start; gap:14px; margin:0 0 14px; }
+      .cep-clinical-pin-preview-header h2 { flex:1; margin:0; font:600 17px/1.35 Tahoma,sans-serif; overflow-wrap:anywhere; }
+      html:not(#cep-pin-full-close) body .cep-clinical-pin-preview-close { flex:none; width:28px!important; height:28px!important; min-width:0!important; margin:0!important; padding:0!important; border:0!important; background:transparent!important; box-shadow:none!important; color:var(--theme-ink,#39353a)!important; font:400 24px/1 sans-serif!important; }
+      .cep-clinical-pin-preview-content { min-width:0; white-space:pre-wrap; overflow-wrap:anywhere; user-select:text; -webkit-user-select:text; }
+      .cep-clinical-pin-preview-content img { max-width:100%; height:auto; }
+      .cep-clinical-search-pin { -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
+    `; document.head.append(style);
+  }
+  const overlay=document.createElement('div');overlay.className='cep-clinical-pin-preview-overlay';
+  const dialog = document.createElement('section'); dialog.className = 'cep-clinical-pin-preview';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+  dialog.setAttribute('aria-label', 'Full pinned Clinical Note');
+  const header = document.createElement('div'); header.className = 'cep-clinical-pin-preview-header';
+  const title = document.createElement('h2'); title.textContent = entry.title || entry.record?.data?.title || 'Pinned note';
+  const close = document.createElement('button'); close.type = 'button'; close.className = 'cep-clinical-pin-preview-close'; close.textContent = '×'; close.setAttribute('aria-label', 'Close full note'); close.onclick = () => dialog.close();
+  header.append(title, close);
+  const body = document.createElement('div'); body.className = 'cep-clinical-pin-preview-content';
+  renderStructuredSearchContent(body, entry.record?.data?.note || entry.richHtml || sourceLegacyHtml(entry.displayText || entry.text || ''), []);
+  body.querySelectorAll('.cep-table-preview-hidden').forEach(row => row.classList.remove('cep-table-preview-hidden'));
+  body.querySelectorAll('.cep-table-preview-footer').forEach(footer => footer.remove());
+  dialog.append(header, body); overlay.append(dialog); document.body.append(overlay); clinicalPinPreview = dialog;
+  // Stay below the shared image/table viewers and definition tips.
+  dialog.close=()=>{if(clinicalPinPreview===dialog)clinicalPinPreview=null;overlay.remove();if(sourceCard.isConnected)sourceCard.focus({preventScroll:true});};
+  let backdropPress=false;
+  overlay.addEventListener('pointerdown',event=>{backdropPress=event.target===overlay;});
+  overlay.addEventListener('click',event=>{if(event.target===overlay&&backdropPress)dialog.close();backdropPress=false;});
+  dialog.addEventListener('keydown',event=>{
+    if(document.querySelector('.cep-search-image-viewer:not([hidden]),.cep-search-table-zoom:not([hidden])'))return;
+    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();dialog.close();}
+    if(event.key==='Tab'){
+      const targets=[...dialog.querySelectorAll('button,a[href],input,textarea,select,[tabindex="0"]')].filter(node=>!node.disabled&&node.getClientRects().length);
+      const first=targets[0],last=targets[targets.length-1];
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
+    }
+  });
+  close.focus({preventScroll:true});
+}
+function installClinicalPinHold(card, entry, cancelCopy) {
+  let timer, start, suppressUntil = 0;
+  const interactive = target => target instanceof Element && target.closest('button,input,textarea,select,[contenteditable="true"],.cep-copy-text,.pn-definition,.cep-shared-definition,.cep-xgpt-concept,.xgpt-concept-link,a:not(.cep-global-search-result):not(.universal-search-native-card)');
+  const clear = () => {
+    clearTimeout(timer); start = null;
+    for (const name of ['pointermove','touchmove']) document.removeEventListener(name, move, true);
+    for (const name of ['pointerup','pointercancel','touchend','touchcancel','scroll']) document.removeEventListener(name, clear, true);
+    window.removeEventListener('blur', clear);
+  };
+  const reveal = () => { clear(); if (!card.isConnected) return; cancelCopy(); suppressUntil = performance.now() + 700; openClinicalPinPreview(entry,card); };
+  const move = event => {
+    const point = event.touches?.[0] || event;
+    if (start && (event.pointerId == null || start.id === event.pointerId) && Math.hypot(point.clientX-start.x,point.clientY-start.y)>10) { cancelCopy(); suppressUntil=performance.now()+700; clear(); }
+  };
+  const begin = event => {
+    if(event.isPrimary===false||event.touches?.length>1){clear();return;}
+    if (interactive(event.target) || (event.button != null && event.button !== 0)) return;
+    clear(); suppressUntil = 0;
+    const point = event.touches?.[0] || event; start = {x:point.clientX,y:point.clientY,id:event.pointerId};
+    timer = setTimeout(reveal, 500);
+    for (const name of ['pointermove','touchmove']) document.addEventListener(name,move,{capture:true,passive:true});
+    for (const name of ['pointerup','pointercancel','touchend','touchcancel','scroll']) document.addEventListener(name,clear,{capture:true,passive:true});
+    window.addEventListener('blur', clear);
+  };
+  card.setAttribute('aria-description','Click to copy. Press and hold, or press Space, to read the full note.'); card.setAttribute('aria-keyshortcuts','Space');
+  card.addEventListener(window.PointerEvent ? 'pointerdown' : 'touchstart',begin,{passive:true});
+  for (const name of ['click','dblclick']) card.addEventListener(name,event => { if (performance.now()<suppressUntil) { event.preventDefault(); event.stopImmediatePropagation(); } },true);
+  card.addEventListener('contextmenu',event => { if (!interactive(event.target)) { event.preventDefault(); event.stopPropagation(); if (!clinicalPinPreview) reveal(); } });
+  card.addEventListener('dragstart',event => event.preventDefault());
+  card.addEventListener('keydown',event => {
+    if (interactive(event.target)) return;
+    if (event.key === 'Enter') suppressUntil = 0;
+    if (event.key === ' ' && !event.repeat) { event.preventDefault(); event.stopPropagation(); reveal(); }
+    if (event.key === 'Escape') clear();
+  });
 }
 
 // Pinned shortcuts reuse the clinical search dataset; no additional database request.
@@ -1377,7 +1461,7 @@ export function renderClinicalSearchPins(container, entries, { navigate } = {}) 
       html:root:root:root body .cep-clinical-search-pins { grid-column:1/-1; min-width:0; width:100%; margin:0 0 16px; }
       html:root:root:root body .cep-clinical-search-pins-heading { margin:0 0 8px; font-size:12px; font-weight:600; color:var(--theme-ink,inherit); }
       html:root:root:root body .cep-clinical-search-pins-row { display:flex; gap:10px; overflow-x:auto; padding:5px 7px 12px; align-items:stretch; }
-      html:root:root:root:root:root:root:root body .cep-clinical-search-pin { display:block !important; flex:0 0 165px; width:165px !important; min-width:0 !important; max-width:165px !important; height:95px !important; min-height:0 !important; margin:0 !important; text-decoration:none; cursor:pointer; }
+      html:root:root:root:root:root:root:root body .cep-clinical-search-pin { display:block !important; flex:0 0 165px; width:165px !important; min-width:0 !important; max-width:165px !important; height:95px !important; min-height:0 !important; margin:0 !important; text-decoration:none; cursor:pointer; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
       html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-surface { box-sizing:border-box !important; height:95px !important; min-height:0 !important; padding:10px !important; overflow:hidden !important; }
       html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:12px !important; line-height:1.3 !important; font-weight:600 !important; margin:0 0 5px !important; }
       html:root:root:root:root:root:root:root body .cep-clinical-search-pin .cep-source-note-content { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:11px !important; line-height:1.35 !important; white-space:pre-wrap !important; }
@@ -1396,10 +1480,11 @@ export function renderClinicalSearchPins(container, entries, { navigate } = {}) 
     const preview = document.createElement('div'); preview.className = 'cep-source-note-content';
     renderStructuredSearchContent(preview, entry.richHtml || entry.record?.data?.note || sourceLegacyHtml(entry.displayText || entry.text || ''), []);
     card.append(title,preview); applySourceSearchSkin(card,entry);
-    installSearchCardInteractions(card, {
+    const interactions = installSearchCardInteractions(card, {
       copyText:entry.displayText || entry.text || entry.title, copyHtml:getSearchCopyHtml(entry),
       navigate:()=>navigate ? navigate(card.href) : location.assign(card.href)
     });
+    installClinicalPinHold(card,entry,interactions.cancelPendingCopy);
     row.append(card);
   }
   section.append(heading,row); container.prepend(section); return section;
