@@ -1059,6 +1059,11 @@ let PINNED_NOTES=[];
 // --- Render Notes ---
 function renderNotes() {
   onCardSnapshot(notesCol, snapshot => {
+    // Source snapshots include saved copy-phrase markup. Expire search's older
+    // record in this tab and other tabs before it can render a stale popup.
+    try { localStorage.setItem('cep-search-cache-invalidated:clinical:clinicalNotes', String(Date.now())); } catch {}
+    window.dispatchEvent(new CustomEvent('cep-search-cache-invalidated', { detail: { dataset: 'clinical:clinicalNotes' } }));
+
     PINNED_NOTES = (snapshot.pinnedDocs || []).map(d => ({id:d.id,...d.data()}));
     ALL_NOTES = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a,b) => new Date(b.time) - new Date(a.time));

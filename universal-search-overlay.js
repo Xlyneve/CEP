@@ -378,7 +378,7 @@ const loadPersistentSearchValue = async (key, loader, forceRefresh = false, wait
 };
 export function loadPersistentSearchDocuments(db, collectionName, scope, { forceRefresh = false, waitForCacheWrite = true } = {}) {
   // A new key also discards PN snapshots saved by the old in-flight-read logic.
-  const version = collectionName === 'nurseNotes' ? 'v2' : 'v1';
+  const version = ['nurseNotes','clinicalNotes'].includes(collectionName) ? 'v2' : 'v1';
   return loadPersistentSearchValue(`${scope}:${collectionName}:documents:${version}`, async mustRefresh => {
     const snapshot = await (mustRefresh ? getDocsFromServer : getDocs)(collection(db, collectionName));
     return snapshot.docs.map(item => ({ id: item.id, data: item.data() }));
