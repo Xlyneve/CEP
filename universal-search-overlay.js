@@ -1369,7 +1369,7 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
 
 // Full pinned-note reading uses the already loaded record; no Firebase request.
 let clinicalPinPreview;
-function openClinicalPinPreview(entry, sourceCard) {
+function openClinicalPinPreview(entry, sourceCard, guardRelease = false) {
   clinicalPinPreview?.close();
   if (!document.getElementById('cep-clinical-pin-preview-style')) {
     const style = document.createElement('style'); style.id = 'cep-clinical-pin-preview-style';
@@ -1385,6 +1385,28 @@ function openClinicalPinPreview(entry, sourceCard) {
     `; document.head.append(style);
   }
   const overlay=document.createElement('div');overlay.className='cep-clinical-pin-preview-overlay';
+  // A long press inserts a new layer between pointer-down and pointer-up.
+  // Browsers may retarget its release click to body, outside the search panel.
+  // Consume only that gesture; a fresh pointer-down starts normal interaction.
+  let releaseTimer;
+  const finishReleaseGuard=()=>{
+    clearTimeout(releaseTimer);
+    window.removeEventListener('click',consumeRelease,true);
+    window.removeEventListener('pointerdown',finishReleaseGuard,true);
+    window.removeEventListener('touchstart',finishReleaseGuard,true);
+    window.removeEventListener('pointerup',released,true);
+    window.removeEventListener('touchend',released,true);
+  };
+  const consumeRelease=event=>{event.preventDefault();event.stopImmediatePropagation();finishReleaseGuard();};
+  const released=()=>{clearTimeout(releaseTimer);releaseTimer=setTimeout(finishReleaseGuard,400);};
+  if (guardRelease) {
+    window.addEventListener('click',consumeRelease,true);
+    window.addEventListener('pointerdown',finishReleaseGuard,true);
+    window.addEventListener('touchstart',finishReleaseGuard,true);
+    window.addEventListener('pointerup',released,true);
+    window.addEventListener('touchend',released,true);
+    releaseTimer=setTimeout(finishReleaseGuard,10000);
+  }
   const dialog = document.createElement('section'); dialog.className = 'cep-clinical-pin-preview';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
   dialog.setAttribute('aria-label', 'Full pinned Clinical Note');
   const header = document.createElement('div'); header.className = 'cep-clinical-pin-preview-header';
@@ -1404,10 +1426,10 @@ function openClinicalPinPreview(entry, sourceCard) {
   body.querySelectorAll('.cep-table-preview-footer').forEach(footer => footer.remove());
   dialog.append(header, body); overlay.append(dialog); document.body.append(overlay); clinicalPinPreview = dialog;
   // Stay below the shared image/table viewers and definition tips.
-  dialog.close=()=>{if(clinicalPinPreview===dialog)clinicalPinPreview=null;overlay.remove();if(sourceCard.isConnected)sourceCard.focus({preventScroll:true});};
+  dialog.close=()=>{finishReleaseGuard();if(clinicalPinPreview===dialog)clinicalPinPreview=null;overlay.remove();if(sourceCard.isConnected)sourceCard.focus({preventScroll:true});};
   let backdropPress=false;
   overlay.addEventListener('pointerdown',event=>{backdropPress=event.target===overlay;});
-  overlay.addEventListener('click',event=>{if(event.target===overlay&&backdropPress)dialog.close();backdropPress=false;});
+  overlay.addEventListener('click',event=>{event.stopPropagation();if(event.target===overlay&&backdropPress)dialog.close();backdropPress=false;});
   dialog.addEventListener('keydown',event=>{
     if(document.querySelector('.cep-search-image-viewer:not([hidden]),.cep-search-table-zoom:not([hidden])'))return;
     if(event.key==='Escape'){event.preventDefault();event.stopPropagation();dialog.close();}
@@ -1429,7 +1451,7 @@ function installClinicalPinHold(card, entry, cancelCopy) {
     for (const name of ['pointerup','pointercancel','touchend','touchcancel','scroll']) document.removeEventListener(name, clear, true);
     window.removeEventListener('blur', clear);
   };
-  const reveal = () => { clear(); if (!card.isConnected) return; cancelCopy(); suppressUntil = performance.now() + 700; openClinicalPinPreview(entry,card); };
+  const reveal = (guardRelease = true) => { clear(); if (!card.isConnected) return; cancelCopy(); suppressUntil = performance.now() + 700; openClinicalPinPreview(entry,card,guardRelease); };
   const move = event => {
     const point = event.touches?.[0] || event;
     if (start && (event.pointerId == null || start.id === event.pointerId) && Math.hypot(point.clientX-start.x,point.clientY-start.y)>10) { cancelCopy(); suppressUntil=performance.now()+700; clear(); }
@@ -1452,7 +1474,7 @@ function installClinicalPinHold(card, entry, cancelCopy) {
   card.addEventListener('keydown',event => {
     if (interactive(event.target)) return;
     if (event.key === 'Enter') suppressUntil = 0;
-    if (event.key === ' ' && !event.repeat) { event.preventDefault(); event.stopPropagation(); reveal(); }
+    if (event.key === ' ' && !event.repeat) { event.preventDefault(); event.stopPropagation(); reveal(false); }
     if (event.key === 'Escape') clear();
   });
 }
