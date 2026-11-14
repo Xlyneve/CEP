@@ -1393,6 +1393,13 @@ function openClinicalPinPreview(entry, sourceCard) {
   header.append(title, close);
   const body = document.createElement('div'); body.className = 'cep-clinical-pin-preview-content';
   renderStructuredSearchContent(body, entry.record?.data?.note || entry.richHtml || sourceLegacyHtml(entry.displayText || entry.text || ''), []);
+  // Keep authored copy phrases actionable in the expanded, read-only note.
+  // The shared phrase handler copies nested formatting and stops table/card clicks.
+  body.querySelectorAll('.cep-copy-text').forEach(phrase => {
+    phrase.setAttribute('role', 'button');
+    phrase.tabIndex = 0;
+    phrase.setAttribute('title', 'Copy this text');
+  });
   body.querySelectorAll('.cep-table-preview-hidden').forEach(row => row.classList.remove('cep-table-preview-hidden'));
   body.querySelectorAll('.cep-table-preview-footer').forEach(footer => footer.remove());
   dialog.append(header, body); overlay.append(dialog); document.body.append(overlay); clinicalPinPreview = dialog;
