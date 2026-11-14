@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import {readStyleRules, splitStyleText} from '../search-style-parser.js';
 const folder=path.dirname(fileURLToPath(import.meta.url));
 const source=fs.readFileSync(path.join(folder,'source.css'),'utf8');
-const themes=['colour-pop','oyster-mist','blush-marble','clay-relief','original','moon-clay','cloud-glass','midnight-glass','warm-ivory','opal-pearl','pastel-rose-5d','pastel-rose-recessed','lavender-glass','grey-lavender','pearl-silver','frost-outline','porcelain','aurora','soft-stone','mint-ceramic','autumn','hoya','lake-mist','palm-springs','quiet-stone','sculpted','pastel-jumper'];
+const themes=['vintage-pastel','mist-sculpture','colour-pop','oyster-mist','blush-marble','clay-relief','original','moon-clay','cloud-glass','midnight-glass','warm-ivory','opal-pearl','pastel-rose-5d','pastel-rose-recessed','lavender-glass','grey-lavender','pearl-silver','frost-outline','porcelain','aurora','soft-stone','mint-ceramic','autumn','hoya','lake-mist','palm-springs','quiet-stone','sculpted','pastel-jumper'];
   function selectedThemeCss(text, theme) {
     text = text.replace(/\/\*[\s\S]*?\*\//g, '');
     function select(source) {
