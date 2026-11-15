@@ -339,6 +339,11 @@
       close.className = "dot dot-purple";
       close.setAttribute("aria-label", "Close homepage notepad");
       close.title = "Close notepad";
+      const closeSymbol = doc.createElement("span");
+      closeSymbol.className = "pad-control-symbol";
+      closeSymbol.setAttribute("aria-hidden", "true");
+      closeSymbol.textContent = "×";
+      close.append(closeSymbol);
       close.addEventListener("click", () => {
         saveLayout();
         panel.hidden = true;
