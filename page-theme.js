@@ -571,6 +571,7 @@
   }
 
   // Search uses the existing palette and source order, without loading source records again.
+  window.getCepThemePalette = () => palette.map(colour => ({...colour}));
   window.getCepSourceCardColour = (file, index, className = "note-card") => {
     const seed = `${String(file).toLowerCase()}:${Number.isInteger(index) ? index : 0}::${className}`;
     return palette[["vintage-pastel","oyster-mist","colour-pop"].includes(selectedTheme) ? Math.abs(Number.isInteger(index) ? index : 0) % palette.length : hash(seed) % palette.length];

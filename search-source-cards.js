@@ -98,7 +98,10 @@ function installThemeStyles() {
 function refreshSourcePalette(surface) {
   const rawIndex=surface.dataset.cepPaletteIndex;
   const index=rawIndex === '' ? undefined : Number(rawIndex);
-  const colour=window.getCepSourceCardColour?.(surface.dataset.cepPaletteFile,index,surface.dataset.cepPaletteClass);
+  const palette=window.getCepThemePalette?.() || [];
+  const savedIndex=Number(surface.dataset.cepThemeColorIndex);
+  const hasSavedColour=surface.dataset.cepThemeColorIndex !== undefined && Number.isInteger(savedIndex) && savedIndex >= 0 && palette.length;
+  const colour=hasSavedColour ? palette[savedIndex % palette.length] : window.getCepSourceCardColour?.(surface.dataset.cepPaletteFile,index,surface.dataset.cepPaletteClass);
   if (!colour) return;
   surface.style.setProperty('--card-glass',`rgba(${colour.rgb}, .74)`);
   surface.style.setProperty('--card-solid',colour.solid);
@@ -106,6 +109,10 @@ function refreshSourcePalette(surface) {
   if (colour.outline) surface.style.setProperty('--card-outline',colour.outline);
   else surface.style.removeProperty('--card-outline');
   surface.dataset.sharedPaletteColor='true';
+  if (hasSavedColour) {
+    surface.style.setProperty('background',colour.solid,'important');
+    surface.style.setProperty('color',colour.ink,'important');
+  }
 }
 window.addEventListener('cep-theme-css-ready', () => {
   document.querySelectorAll('[data-cep-palette-file]').forEach(refreshSourcePalette);
@@ -173,9 +180,11 @@ export function applySourceSearchSkin(parent, entry) {
     surface.dataset.cepPaletteFile = file;
     surface.dataset.cepPaletteIndex = String(entry.sourceIndex ?? entry.cardIndex ?? '');
     surface.dataset.cepPaletteClass = cardClass;
+    const savedIndex=entry.record?.data?.paletteIndex;
+    if (file === 'notes.html' && Number.isInteger(savedIndex) && savedIndex >= 0) surface.dataset.cepThemeColorIndex=String(savedIndex);
     refreshSourcePalette(surface);
   }
-  if (entry.cardColour) surface.style.background = entry.cardColour;
+  if (entry.cardColour && surface.dataset.cepThemeColorIndex === undefined) surface.style.background = entry.cardColour;
   const addClass = (selector,name) => surface.querySelectorAll(selector).forEach(node=>node.classList.add(name));
   addClass('.cep-source-note-title,.universal-search-native-title','cep-source-title');
   addClass('.cep-source-note-content', 'cep-source-content');

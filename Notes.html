@@ -385,6 +385,11 @@ html[data-xlyneve-color-theme] .note-display {
   background:transparent;
   backdrop-filter:none;
 }
+html:not(#cep-notebook-editor):not(#cep-notebook-colour):not(#cep-notebook-field):not(#cep-notebook-ink) .note-tile.editing textarea {
+  background:var(--card-solid,var(--clinical-field,#efede8))!important;
+  color:var(--card-ink,var(--theme-ink,#303039))!important;
+  -webkit-text-fill-color:currentColor!important;
+}
 html[data-xlyneve-color-theme] .header-container {
   background:transparent !important;
   background-image:none !important;
@@ -680,45 +685,60 @@ controls.appendChild(actionRow);
 const editBar = document.createElement("div");
 editBar.className = "edit-bar";
 
-["color1", "color2", "color3", "color4"].forEach(cls => {
-
-  const btn = document.createElement("button");
-
-  btn.className = `color-btn ${cls}`;
-
-  btn.onclick = async e => {
-  e.stopPropagation();
-
-  const bg = window.getComputedStyle(btn).backgroundColor;
-
-  // If currently editing, preserve whatever has been typed
-  const currentText = tile.classList.contains("editing")
-    ? textarea.value
-    : note.text || "";
-
-  tile.style.background = bg;
-
-  try {
-    await updateDoc(
-      doc(notesRef, note.id),
-      {
-        color: bg,
-        text: currentText
+let updatingColour = false;
+function applySelectedColour() {
+  const palette = window.getCepThemePalette?.() || [];
+  if (!Number.isInteger(note.paletteIndex) || note.paletteIndex < 0 || !palette.length) return;
+  const colour = palette[note.paletteIndex % palette.length];
+  tile.dataset.sharedPaletteColor = "true";
+  tile.style.setProperty("background", colour.solid, "important");
+  tile.style.setProperty("color", colour.ink, "important");
+  tile.style.setProperty("--card-solid", colour.solid);
+  tile.style.setProperty("--card-glass", colour.solid);
+  tile.style.setProperty("--card-ink", colour.ink);
+  tile.style.setProperty("--card-outline", colour.outline || colour.solid);
+}
+function renderColourOptions() {
+  const palette = window.getCepThemePalette?.() || [];
+  editBar.replaceChildren();
+  applySelectedColour();
+  palette.forEach((colour, paletteIndex) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "color-btn";
+    btn.title = "Note background " + (paletteIndex + 1);
+    btn.setAttribute("aria-label", btn.title);
+    btn.setAttribute("aria-pressed", String(Number.isInteger(note.paletteIndex) && note.paletteIndex % palette.length === paletteIndex));
+    btn.style.setProperty("background", colour.solid, "important");
+    btn.style.setProperty("border-color", colour.outline || colour.solid, "important");
+    btn.onclick = async e => {
+      e.stopPropagation();
+      if (updatingColour) return;
+      updatingColour = true;
+      const currentText = tile.classList.contains("editing") ? textarea.value : note.text || "";
+      try {
+        await updateDoc(doc(notesRef, note.id), {
+          color: colour.solid,
+          paletteIndex,
+          text: currentText
+        });
+        note.color = colour.solid;
+        note.paletteIndex = paletteIndex;
+        note.text = currentText;
+        applySelectedColour();
+        renderColourOptions();
+        window.invalidateCepSearchCache?.('main:notebookNotes');
+      } catch (err) {
+        console.error("Failed to update note:", err);
+      } finally {
+        updatingColour = false;
       }
-    );
-    window.invalidateCepSearchCache?.('main:notebookNotes');
-
-    // Keep local copy in sync
-    note.color = bg;
-    note.text = currentText;
-
-  } catch (err) {
-    console.error("Failed to update note:", err);
-  }
-};
-
-  editBar.appendChild(btn);
-});
+    };
+    editBar.appendChild(btn);
+  });
+}
+editBar.refreshPalette = renderColourOptions;
+renderColourOptions();
 
 controls.appendChild(editBar);
 
