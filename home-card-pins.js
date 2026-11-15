@@ -170,11 +170,17 @@
         if (card.isConnected && pins.has(identity.key)) rememberSourceAppearance(card, identity.key);
       });
     }
-    if(card.querySelector('.cep-home-pin-button'))return;
-    const button=document.createElement('button');button.type='button';button.className='cep-home-pin-button';
-    button.dataset.pinKey=identity.key;button.innerHTML=icon;
     const actions=card.querySelector('.note-actions,.btn-group,.card-actions,.card-buttons,.card-controls')
       || (card.matches('.chatBubble')?card.parentElement.querySelector('.note-icon-actions'):null);
+    const existing=[...new Set([...card.querySelectorAll('.cep-home-pin-button'),...(actions?.querySelectorAll('.cep-home-pin-button')||[])])]
+      .filter(button=>button.dataset.pinKey===identity.key);
+    if(existing.length){
+      existing.slice(1).forEach(button=>button.remove());
+      updateButton(existing[0]);
+      return;
+    }
+    const button=document.createElement('button');button.type='button';button.className='cep-home-pin-button';
+    button.dataset.pinKey=identity.key;button.innerHTML=icon;
     if(actions){button.classList.add('cep-home-pin-in-menu');const label=document.createElement('span');label.className='cep-home-pin-label';button.append(label);actions.append(button);}
     else {const surface=card.querySelector(':scope > .cep-source-surface,:scope > .cep-source-chat,:scope > .cep-source-form')||card;surface.dataset.homePinAvailable='true';surface.append(button);}
     button.addEventListener('cep-pin-click',async event=>{

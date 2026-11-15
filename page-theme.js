@@ -1403,5 +1403,5 @@
   if(!pages.has(path))return;
   const base=document.currentScript?.src||location.href;
   const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('home-card-pins.css?v=5',base).href;document.head.append(css);
-  const script=document.createElement('script');script.src=new URL('home-card-pins.js?v=6',base).href;document.head.append(script);
+  const script=document.createElement('script');script.src=new URL('home-card-pins.js?v=7',base).href;document.head.append(script);
 })();
