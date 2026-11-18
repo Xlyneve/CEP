@@ -1244,6 +1244,8 @@ function normalizeUrl(url) {
 // Render old plain-text notes that used **bold** / ==highlight==
 // If text already contains HTML tags, leave it as-is.
 function maybeParseLegacy(text) {
+  // Decode saved space entities without turning encoded tags into HTML.
+  text = String(text || '').replace(/&(?:amp;)?(?:nbsp|#0*160|#x0*a0);/gi, '\u00a0');
   if (text.indexOf('<') === -1) {
     let s = escapeHtml(text);
     s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -1890,7 +1892,7 @@ function toggleEdit(card, editing) {
     if (savedNote) {
       titleInput.value = savedNote.title || '';
       urlInput.value = savedNote.url || '';
-      CEPSecurity.setHTML(textEditor, savedNote.text || '');
+      CEPSecurity.setHTML(textEditor, maybeParseLegacy(savedNote.text || ''));
     }
     CEPNotePopup.open(card, "Edit note", () => toggleEdit(card, false));
     card.classList.add('is-editing', 'actions-visible');

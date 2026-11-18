@@ -422,7 +422,11 @@ function hideLegacyFormatting(editor) {
   ].join(','));
   if (!host) return;
   host.querySelectorAll('.edit-table-tools, .main-editor-buttons, .formatting-buttons, .format-buttons')
-    .forEach(element => { element.hidden = true; });
+    .forEach(element => { element.hidden = true; element.style.setProperty('display','none','important'); });
+  // Practice Nurse mixes its old B/H controls with Save/Cancel in one row.
+  // Hide only the duplicate formatting controls, preserving those actions.
+  host.querySelectorAll('.edit-main-actions > .bold-mini, .edit-main-actions > .highlight-mini')
+    .forEach(element => { element.hidden = true; element.style.setProperty('display','none','important'); });
   host.querySelectorAll('.btn-bold, .btn-highlight').forEach(element => { element.hidden = true; });
   host.querySelectorAll('input[type="file"]:not(.cep-pn-image-input)').forEach(fileInput => {
     fileInput.hidden = true;

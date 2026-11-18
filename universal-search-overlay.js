@@ -976,7 +976,7 @@ const sourceCardTypes = {
 };
 const sourceDateValue = value => CEPNoteDates.toDate(value);
 const sourceLegacyHtml = value => {
-  const raw = String(value || '');
+  const raw = String(value || '').replace(/&(?:amp;)?(?:nbsp|#0*160|#x0*a0);/gi, '\u00a0');
   if (raw.includes('<')) return raw;
   const escaped = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
