@@ -6354,6 +6354,28 @@ function closeTable() {
     };
     if (searchTrigger) decorateSearchControl(searchTrigger);
 
+    // Search belongs to Frequently Used: follow its peers, not the compact header orb.
+    let frequentSearchFrame;
+    function matchFrequentSearchShape() {
+      const peer=frequentCircles.querySelector('.circle:not(.home-search-icon)');
+      if(!peer)return;
+      const material=getComputedStyle(peer);
+      frequentCircles.querySelectorAll('.home-search-icon').forEach(control=>{
+        for(const name of ['width','height','min-width','min-height','max-width','max-height','aspect-ratio','box-sizing','flex','padding','border','border-radius','box-shadow']) {
+          control.style.setProperty(name,material.getPropertyValue(name),'important');
+        }
+      });
+    }
+    function scheduleFrequentSearchShape(){
+      cancelAnimationFrame(frequentSearchFrame);
+      frequentSearchFrame=requestAnimationFrame(matchFrequentSearchShape);
+    }
+    new ResizeObserver(scheduleFrequentSearchShape).observe(frequentCircles);
+    new MutationObserver(scheduleFrequentSearchShape).observe(document.documentElement,{attributes:true,attributeFilter:['data-xlyneve-color-theme','style','class']});
+    window.addEventListener('cep-theme-css-ready',scheduleFrequentSearchShape);
+    window.addEventListener('resize',scheduleFrequentSearchShape,{passive:true});
+
+
     const addActionCard = (sectionName, label, action) => {
       const card = document.createElement('button');
       card.className = 'card';
@@ -6531,6 +6553,7 @@ function closeTable() {
         control.addEventListener('click', () => recordUse(candidate.key));
         frequentCircles.appendChild(control);
       });
+      scheduleFrequentSearchShape();
     };
 
     main.addEventListener('click', event => {
