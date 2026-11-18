@@ -1,6 +1,6 @@
 import './note-timestamps.js?v=20261104-1';
 import * as searchWork from './search-scheduler.js?v=20261102-1';
-import './note-copy-text.js?v=11';
+import './note-copy-text.js?v=12';
 import './note-copy-feedback.js?v=1';
 import { enableSearchImageZoom, enableSearchTableZoom } from './note-media-viewer.js?v=1';
 export { enableSearchImageZoom, enableSearchTableZoom, openNoteTableZoom, openNoteImageZoom } from './note-media-viewer.js?v=1';
@@ -377,8 +377,8 @@ const loadPersistentSearchValue = async (key, loader, forceRefresh = false, wait
   }
 };
 export function loadPersistentSearchDocuments(db, collectionName, scope, { forceRefresh = false, waitForCacheWrite = true } = {}) {
-  // A new key also discards PN snapshots saved by the old in-flight-read logic.
-  const version = ['nurseNotes','clinicalNotes'].includes(collectionName) ? 'v2' : 'v1';
+  // Version repaired datasets so older snapshots do not hide updated copy markup.
+  const version = ['nurseNotes','clinicalNotes','practiceNNotes'].includes(collectionName) ? 'v2' : 'v1';
   return loadPersistentSearchValue(`${scope}:${collectionName}:documents:${version}`, async mustRefresh => {
     const snapshot = await (mustRefresh ? getDocsFromServer : getDocs)(collection(db, collectionName));
     return snapshot.docs.map(item => ({ id: item.id, data: item.data() }));

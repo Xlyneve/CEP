@@ -141,9 +141,14 @@
       const fragment = range.cloneContents();
       if (fragment.querySelector('table,td,th,tr,img')) return;
       const span=document.createElement(fragment.querySelector('p,div,li,ul,ol,h1,h2,h3,h4,h5,h6,blockquote,pre') ? 'div' : 'span');span.className='cep-copy-text';
-      fragment.querySelectorAll(marker).forEach(el=>el.replaceWith(...el.childNodes));
-      span.append(fragment);
-      document.execCommand('insertHTML',false,span.outerHTML);
+      // Wrap the live selection directly: rich-text insertion can rewrite
+      // pasted email/link markup and discard its formatting or copy marker.
+      const contents=range.extractContents();
+      contents.querySelectorAll(marker).forEach(el=>el.replaceWith(...el.childNodes));
+      span.append(contents);
+      range.insertNode(span);
+      const marked=document.createRange();marked.selectNodeContents(span);
+      selection.removeAllRanges();selection.addRange(marked);
     }
     editor.dispatchEvent(new Event('input',{bubbles:true}));remember();
   }
