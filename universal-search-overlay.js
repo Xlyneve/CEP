@@ -1,6 +1,6 @@
 import './note-timestamps.js?v=20261104-1';
 import * as searchWork from './search-scheduler.js?v=20261102-1';
-import './note-copy-text.js?v=9';
+import './note-copy-text.js?v=10';
 import './note-copy-feedback.js?v=1';
 import { enableSearchImageZoom, enableSearchTableZoom } from './note-media-viewer.js?v=1';
 export { enableSearchImageZoom, enableSearchTableZoom, openNoteTableZoom, openNoteImageZoom } from './note-media-viewer.js?v=1';

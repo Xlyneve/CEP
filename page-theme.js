@@ -1272,7 +1272,7 @@
 })();
 
 // Shared phrase-copy editing and viewing across card pages and search.
-(() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=9',document.currentScript?.src || location.href).href;document.head.append(script);})();
+(() => {const script=document.createElement('script');script.src=new URL('note-copy-text.js?v=10',document.currentScript?.src || location.href).href;document.head.append(script);})();
 
 // Theme cell fills independently of table layout and authored foregrounds.
 (() => {
