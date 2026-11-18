@@ -654,7 +654,7 @@
     const control = document.createElement("div");
     control.className = "xlyneve-theme-control";
     control.id = "xlyneveThemeControl";
-    // Isolate appearance from page palettes, broad button rules, and press effects.
+    // Isolate only the dropdown; the trigger stays in the page’s themed DOM.
     const pickerRoot=control.attachShadow({mode:'open'});
     for(const [name,value] of Object.entries({position:'fixed',top:'max(14px, env(safe-area-inset-top))',left:'max(14px, env(safe-area-inset-left))',right:'auto',bottom:'auto',width:'max-content','max-width':'calc(100vw - 28px)','z-index':'11990'}))control.style.setProperty(name,value,'important');
     const pickerStyle=document.createElement('style');
@@ -665,9 +665,6 @@
       button{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;color:#29313d;font:13px/1.4 Arial,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;}
       button:focus-visible{outline:2px solid #76619e;outline-offset:3px;}
       button:disabled{opacity:.55;cursor:wait;}
-      .xlyneve-theme-button{gap:7px;min-height:32px;padding:6px 11px;border:1px solid #d9dde5;border-radius:999px;background:#fff;box-shadow:0 2px 6px #17203312;font-weight:600;white-space:nowrap;}
-      .xlyneve-theme-button svg{display:block;width:16px;height:16px;flex:none;}
-      .xlyneve-theme-button:hover{background:#f7f7fa;}
       .xlyneve-theme-panel{position:absolute;top:42px;left:0;width:min(340px,calc(100vw - 28px));max-height:calc(100dvh - 78px);overflow:auto;overscroll-behavior:contain;padding:16px;background:#fff;color:#29313d;border:1px solid #dde0e7;border-radius:18px;box-shadow:0 12px 36px #17203324,0 2px 6px #1720330d;scrollbar-width:thin;scrollbar-color:#c2c6d1 transparent;}
       .xlyneve-theme-panel::-webkit-scrollbar{width:6px;background:transparent;}
       .xlyneve-theme-panel::-webkit-scrollbar-thumb{background:#c2c6d1;border-radius:6px;}
@@ -702,7 +699,6 @@
     toggle.setAttribute("aria-expanded", "false");
     toggle.setAttribute("aria-controls", "xlyneveThemePanel");
     toggle.title = "Choose colour theme";
-    toggle.innerHTML='<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="6" r="3" fill="#b9a5d7"/><circle cx="14" cy="6" r="3" fill="#a8d2cc"/><circle cx="6" cy="14" r="3" fill="#e7b5b7"/><circle cx="14" cy="14" r="3" fill="#e8d397"/></svg><span>Theme</span>';
 
     const panel = document.createElement("div");
     panel.className = "xlyneve-theme-panel";
@@ -905,12 +901,19 @@
       toggle.setAttribute("aria-expanded", "false");
     };
 
+    const fitPickerPanel=()=>{
+      const triggerBox=toggle.getBoundingClientRect();
+      const hostBox=control.getBoundingClientRect();
+      panel.style.top=(triggerBox.bottom-hostBox.top+10)+'px';
+      panel.style.maxHeight=Math.max(100,innerHeight-triggerBox.bottom-24)+'px';
+    };
+    window.addEventListener('resize',()=>{if(!panel.hidden)fitPickerPanel();},{passive:true});
     toggle.addEventListener("click", () => {
       const open = panel.hidden;
       setDeleteMode(false);
       panel.hidden = !open;
       toggle.setAttribute("aria-expanded", String(open));
-      if (open) panel.querySelector("button")?.focus();
+      if (open) { fitPickerPanel(); panel.querySelector("button")?.focus(); }
     });
     document.addEventListener("pointerdown", (event) => {
       if (!control.contains(event.target)) closePicker();
@@ -921,7 +924,10 @@
       toggle.focus();
     });
 
-    pickerRoot.append(pickerStyle, toggle, panel);
+    const triggerSlot=document.createElement('slot');triggerSlot.name='theme-trigger';
+    toggle.slot='theme-trigger';
+    control.append(toggle);
+    pickerRoot.append(pickerStyle, triggerSlot, panel);
     document.body.appendChild(control);
   }
 
