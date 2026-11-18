@@ -646,11 +646,54 @@
   }
 
   function createThemePicker() {
-    if (pageName !== "home.html" || !themeIsAllowed || document.getElementById("xlyneveThemeControl")) return;
+    const pickerParams=new URLSearchParams(location.search);
+    const pickerHash=new URLSearchParams(location.hash.replace(/^#/,''));
+    if (!themeIsAllowed || document.getElementById("xlyneveThemeControl") ||
+        pickerParams.has('homeEmbed') || pickerParams.get('cepSearchEmbed')==='1' || pickerHash.get('cepPreview')==='card') return;
 
     const control = document.createElement("div");
     control.className = "xlyneve-theme-control";
     control.id = "xlyneveThemeControl";
+    // Isolate appearance from page palettes, broad button rules, and press effects.
+    const pickerRoot=control.attachShadow({mode:'open'});
+    for(const [name,value] of Object.entries({position:'fixed',top:'max(14px, env(safe-area-inset-top))',left:'max(14px, env(safe-area-inset-left))',right:'auto',bottom:'auto',width:'max-content','max-width':'calc(100vw - 28px)','z-index':'11990'}))control.style.setProperty(name,value,'important');
+    const pickerStyle=document.createElement('style');
+    pickerStyle.textContent=`
+      :host{color-scheme:light;color:#29313d;font:13px/1.4 Arial,sans-serif;text-align:left;direction:ltr;}
+      *,*::before,*::after{box-sizing:border-box;-webkit-text-fill-color:currentColor;text-shadow:none;letter-spacing:normal;}
+      [hidden]{display:none!important;}
+      button{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;color:#29313d;font:13px/1.4 Arial,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+      button:focus-visible{outline:2px solid #76619e;outline-offset:3px;}
+      button:disabled{opacity:.55;cursor:wait;}
+      .xlyneve-theme-button{gap:7px;min-height:32px;padding:6px 11px;border:1px solid #d9dde5;border-radius:999px;background:#fff;box-shadow:0 2px 6px #17203312;font-weight:600;white-space:nowrap;}
+      .xlyneve-theme-button svg{display:block;width:16px;height:16px;flex:none;}
+      .xlyneve-theme-button:hover{background:#f7f7fa;}
+      .xlyneve-theme-panel{position:absolute;top:42px;left:0;width:min(340px,calc(100vw - 28px));max-height:calc(100dvh - 78px);overflow:auto;overscroll-behavior:contain;padding:16px;background:#fff;color:#29313d;border:1px solid #dde0e7;border-radius:18px;box-shadow:0 12px 36px #17203324,0 2px 6px #1720330d;scrollbar-width:thin;scrollbar-color:#c2c6d1 transparent;}
+      .xlyneve-theme-panel::-webkit-scrollbar{width:6px;background:transparent;}
+      .xlyneve-theme-panel::-webkit-scrollbar-thumb{background:#c2c6d1;border-radius:6px;}
+      .xlyneve-theme-panel::-webkit-scrollbar-button{display:none;width:0;height:0;}
+      .xlyneve-theme-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+      .xlyneve-theme-title{margin:0;font:600 15px/1.4 Arial,sans-serif;color:#29313d;}
+      .xlyneve-theme-manage{width:28px;height:28px;border:1px solid #e2e4eb;border-radius:8px;background:#f7f8fa;}
+      .xlyneve-theme-manage::before{content:'⋯';font-size:20px;line-height:1;}
+      .xlyneve-theme-manage[aria-pressed="true"]{background:#eee9f7;border-color:#cfc2e6;}
+      .xlyneve-theme-list{display:grid;gap:5px;}
+      .xlyneve-theme-row{display:flex;align-items:center;gap:6px;min-width:0;}
+      .xlyneve-theme-option{flex:1;min-width:0;justify-content:flex-start;gap:10px;padding:10px 9px;border:1px solid transparent;border-radius:10px;background:#fff;text-align:left;}
+      .xlyneve-theme-option:hover{background:#f5f5f9;}
+      .xlyneve-theme-option[aria-pressed="true"]{background:#f0ecf8;border-color:#d8ccec;}
+      .xlyneve-theme-option[aria-pressed="true"]::after{content:'✓';margin-left:auto;color:#6b548d;font-weight:700;}
+      .xlyneve-theme-option[aria-busy="true"]{opacity:.6;cursor:wait;}
+      .xlyneve-theme-swatches{display:flex;flex:none;gap:3px;max-width:110px;flex-wrap:wrap;}
+      .xlyneve-theme-swatch{width:11px;height:17px;display:block;flex:none;border:1px solid #17203318;border-radius:4px;}
+      .xlyneve-theme-delete{display:none;flex:none;padding:7px;border:1px solid #eedde1;border-radius:8px;background:#fff6f7;color:#9b3d50;font-size:11px;}
+      .is-managing-themes .xlyneve-theme-delete{display:inline-flex;}
+      .xlyneve-theme-restore{width:100%;margin-top:12px;padding:8px;border:1px solid #dde0e7;border-radius:9px;background:#f7f8fa;font-size:12px;}
+      .xlyneve-theme-status{margin:10px 0 0;color:#677082;font:12px/1.4 Arial,sans-serif;}
+      .xlyneve-theme-status:empty{display:none;}
+      @media(prefers-reduced-motion:no-preference){button{transition:background-color 120ms ease,transform 120ms ease;}button:active{transform:translateY(1px);}}
+    `;
+
 
     const toggle = document.createElement("button");
     toggle.className = "xlyneve-theme-button";
@@ -659,6 +702,7 @@
     toggle.setAttribute("aria-expanded", "false");
     toggle.setAttribute("aria-controls", "xlyneveThemePanel");
     toggle.title = "Choose colour theme";
+    toggle.innerHTML='<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="6" r="3" fill="#b9a5d7"/><circle cx="14" cy="6" r="3" fill="#a8d2cc"/><circle cx="6" cy="14" r="3" fill="#e7b5b7"/><circle cx="14" cy="14" r="3" fill="#e8d397"/></svg><span>Theme</span>';
 
     const panel = document.createElement("div");
     panel.className = "xlyneve-theme-panel";
@@ -758,6 +802,7 @@
     themeOptions.push({ value:"mint-ceramic", label:"Mint Ceramic 5D", colors:["#dfe8e1","#dde8f1","#e6e0ef","#f0e1e5","#f2efd9"] });
     themeOptions.push({ value:"pastel-jumper", label:"Pastel Jumper", colors:["#b9a6d2", "#e7a1a1", "#f1edcf", "#d8cbe7", "#faf6e5"] });
     const list = document.createElement("div");
+    list.className = "xlyneve-theme-list";
     const status = document.createElement("p");
     status.className = "xlyneve-theme-status";
     status.setAttribute("role", "status");
@@ -876,7 +921,7 @@
       toggle.focus();
     });
 
-    control.append(toggle, panel);
+    pickerRoot.append(pickerStyle, toggle, panel);
     document.body.appendChild(control);
   }
 
