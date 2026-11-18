@@ -41,14 +41,18 @@
     ${sharedTheme ? `html:root body {cursor:var(--cep-theme-cursor,default);}
     html:root body :is(a[href],button:not(:disabled),[role="button"],summary,input[type="button"],input[type="submit"],.note-card,.note-tile,.file-item,.chatBubble) {cursor:var(--cep-theme-pointer,pointer) !important;}
     html:root body :is(textarea,[contenteditable="true"],input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"])) {cursor:text !important;}` : ''}
-    html:root body .cep-copy-text {text-decoration:underline dotted;text-underline-offset:3px;cursor:var(--cep-theme-pointer,pointer) !important;}
+    html:root body .cep-copy-text {cursor:var(--cep-theme-pointer,pointer) !important;}
     html:root body .cep-copy-text * {cursor:var(--cep-theme-pointer,pointer) !important;}
     html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text,
     html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text * {cursor:text !important;}
     .cep-copy-text-button svg {width:14px;height:14px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.5;}
-    html:root body .cep-copy-text[role="button"] {
+    /* Decorations do not cross inline-block formatting boundaries. Paint the
+       underline on pasted/formatted text itself as well as its copy wrapper. */
+    html:root body .cep-copy-text,
+    html:root body .cep-copy-text :is(span,a,b,strong,i,em,mark,font,p,div,li):not([style*="line-through"]):not(s *):not(del *):not(strike *) {
       text-decoration:underline dotted currentColor!important;
-      text-decoration-thickness:2px!important;text-underline-offset:3px;
+      text-decoration-thickness:2px!important;text-underline-offset:2px!important;
+      text-decoration-skip-ink:none!important;
     }
     html:root body .cep-copy-text[role="button"]:focus-visible {outline:2px solid currentColor;outline-offset:3px;}
     html:root body .cep-copy-text[role="button"].cep-phrase-copied {text-decoration-thickness:3px!important;}
