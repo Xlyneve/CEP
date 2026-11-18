@@ -90,6 +90,24 @@ toggleIcon.title = 'Menu';
     headerSearchButton.title = 'Search all notes and pages (Ctrl/⌘ K)';
     centerToggle.appendChild(headerSearchButton);
   }
+  // Universal Search matches the menu/rays control, with a visible search glyph.
+  const searchIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  searchIcon.setAttribute('viewBox','0 0 24 24');searchIcon.setAttribute('aria-hidden','true');
+  searchIcon.innerHTML='<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>';
+  for(const [name,value] of Object.entries({display:'block',width:'72%',height:'72%',fill:'none',stroke:'currentColor','stroke-width':'1.9','stroke-linecap':'round','pointer-events':'none'}))searchIcon.style.setProperty(name,value,'important');
+  headerSearchButton.replaceChildren(searchIcon);
+  function matchSearchToMenu(){
+    const menuStyle=getComputedStyle(toggleIcon);
+    for(const name of ['background','border','border-radius','box-shadow','width','height','animation'])headerSearchButton.style.setProperty(name,menuStyle.getPropertyValue(name),'important');
+    for(const [name,value] of Object.entries({display:'grid','place-items':'center',padding:'0','box-sizing':'border-box',color:'var(--theme-ink,var(--page-header-ink,#303632))','-webkit-text-fill-color':'currentColor','min-width':'0','min-height':'0',filter:'none'}))headerSearchButton.style.setProperty(name,value,'important');
+  }
+  let searchStyleFrame;
+  const scheduleSearchStyle=()=>{cancelAnimationFrame(searchStyleFrame);searchStyleFrame=requestAnimationFrame(matchSearchToMenu);};
+  matchSearchToMenu();scheduleSearchStyle();
+  new MutationObserver(scheduleSearchStyle).observe(document.documentElement,{attributes:true,attributeFilter:['data-xlyneve-color-theme','style','class']});
+  window.addEventListener('cep-theme-css-ready',scheduleSearchStyle);
+  window.addEventListener('load',scheduleSearchStyle,{once:true});
+  window.addEventListener('resize',scheduleSearchStyle,{passive:true});
   headerSearchButton.addEventListener('click', event => {
     event.stopPropagation();
     hideMenu();

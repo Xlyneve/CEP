@@ -208,17 +208,9 @@ header h1 {
 .search-circle svg { width: 24px; height: 24px; pointer-events: none; }
 .home-search-icon svg { width:32px; height:32px; display:block; flex:none; pointer-events:none; transform-origin:center; }
 .home-search-icon { display:flex; align-items:center; justify-content:center; }
-html:root:root:root:root:root:root:root:root:root:root body .home-search-icon {
-  background:var(--quick-field,#f4f1eb)!important;
-  border-color:var(--quick-edge,rgba(111,96,79,.28))!important;
-}
-.home-search-icon .home-search-lens {
-  fill:#e6d0ca;
-  fill:color-mix(in srgb,var(--quick-accent,var(--page-header-solid,#d8b9b3)) 40%,#fff9f0);
-  stroke:#37352f;stroke-width:1.65;
-}
-.home-search-icon .home-search-handle {stroke:#37352f;stroke-width:2.4;}
-.home-search-icon .home-search-glint {stroke:#fffefa;stroke-width:1.4;opacity:.9;}
+.home-search-icon .home-search-lens {fill:none;stroke:currentColor;stroke-width:1.8;}
+.home-search-icon .home-search-handle {stroke:currentColor;stroke-width:1.8;}
+.home-search-icon .home-search-glint {display:none;}
 @media (prefers-reduced-motion:no-preference) {
   .home-search-icon svg {transition:transform 120ms ease-out;}
   .home-search-icon:active svg {transform:translateY(1px) scale(.96);}
@@ -6345,12 +6337,22 @@ function closeTable() {
       control.classList.add('home-search-icon');
       control.setAttribute('aria-label', 'Search');
       control.title = 'Search';
+      // Keep Home's search recognisable even when a shared theme hides icon SVGs.
+      for (const [name,value] of Object.entries({
+        background:'var(--quick-field,#fbfbfb)',color:'var(--theme-ink,#303632)',
+        '-webkit-text-fill-color':'currentColor',
+        'border-color':'var(--quick-edge,#ccd1cc)',
+        'box-shadow':'0 0 6px color-mix(in srgb,var(--quick-accent,#b1dfe4) 28%,transparent),inset 0 1px 0 #ffffff80'
+      })) control.style.setProperty(name,value,'important');
+
       const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       icon.setAttribute('viewBox', '0 0 24 24');
       icon.setAttribute('aria-hidden', 'true');
+      icon.style.setProperty('display','block','important');
       icon.innerHTML = '<path class="home-search-handle" d="m15.5 15.5 5 5" fill="none" stroke-linecap="round"/><circle class="home-search-lens" cx="10.5" cy="10.5" r="6.5"/><path class="home-search-glint" d="M6.8 9.5a3.9 3.9 0 0 1 3.7-2.9" fill="none" stroke-linecap="round"/>';
       control.replaceChildren(icon);
     };
+    if (searchTrigger) decorateSearchControl(searchTrigger);
 
     const addActionCard = (sectionName, label, action) => {
       const card = document.createElement('button');
