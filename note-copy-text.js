@@ -47,30 +47,11 @@
     html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text * {cursor:text !important;}
     .cep-copy-text-button svg {width:14px;height:14px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.5;}
     html:root body .cep-copy-text[role="button"] {
-      outline:1px solid color-mix(in srgb,currentColor 38%,transparent);outline-offset:1px;
-      position:relative;
-      border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone;
       text-decoration:underline dotted currentColor!important;
       text-decoration-thickness:2px!important;text-underline-offset:3px;
     }
-    html:root body .cep-copy-text[role="button"]:not([style*="background"]):not(.cep-content-highlight) {
-      background-color:rgba(103,82,150,.16);
-      background-color:color-mix(in srgb,currentColor 16%,transparent)!important;
-    }
-    html:root body .cep-copy-text[role="button"]:not([style*="background"]):not(.cep-content-highlight):hover {
-      background-color:color-mix(in srgb,currentColor 23%,transparent)!important;
-    }
-    html:root body .cep-copy-text[role="button"]::after {
-      content:"";display:inline-block;width:.9em;height:1em;margin-inline-start:.3em;
-      vertical-align:-.1em;opacity:1;background-color:currentColor;pointer-events:none;
-      -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='12' height='13' rx='2'/%3E%3Cpath d='M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;
-      mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='12' height='13' rx='2'/%3E%3Cpath d='M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;
-    }
-    html:root body :is(div,p,section,li).cep-copy-text[role="button"] {padding-inline-end:1.3em;}
-    html:root body :is(div,p,section,li).cep-copy-text[role="button"]::after {position:absolute;top:.15em;right:.15em;margin:0;}
-    html:root body :is([contenteditable="true"],.editing-note,.is-editing) .cep-copy-text::after {display:none!important;}
     html:root body .cep-copy-text[role="button"]:focus-visible {outline:2px solid currentColor;outline-offset:3px;}
-    html:root body .cep-copy-text[role="button"].cep-phrase-copied {outline:2px solid currentColor;outline-offset:2px;filter:none;}
+    html:root body .cep-copy-text[role="button"].cep-phrase-copied {text-decoration-thickness:3px!important;}
     #cep-copy-hover-tip {position:fixed;z-index:2147483647;pointer-events:none;padding:6px 10px;border:1px solid var(--cep-cursor-accent,#39190f);border-radius:8px;background:var(--cep-cursor-paper,#efede8);color:var(--cep-cursor-ink,#39190f);-webkit-text-fill-color:currentColor;font:12px/1.4 Tahoma,sans-serif;box-shadow:0 3px 12px #0004;white-space:nowrap;}
     #cep-copy-hover-tip[hidden] {display:none !important;}
   `;
