@@ -287,10 +287,17 @@
   function setPinZoom(widget,key,value){
     widget._zoom=Math.max(.1,Math.min(2,Math.round(value*100)/100));applyPinZoom(widget);saveLayout(key,widget);
   }
+  function sizeCornerControl(button){
+    for(const property of ['width','height','min-width','min-height','max-width','max-height'])button.style.setProperty(property,'28px','important');
+    button.style.setProperty('box-sizing','border-box','important');
+    button.style.setProperty('padding','0','important');
+    button.style.setProperty('flex','0 0 28px','important');
+  }
   function installPinZoom(widget,key){
     const controls=document.createElement('div');controls.className='cep-pin-zoom-controls';controls.setAttribute('role','group');controls.setAttribute('aria-label','Pinned note zoom');
     for(const [direction,step]of [['out',-.1],['in',.1]]){
       const button=document.createElement('button');button.type='button';button.className='cep-pin-zoom-corner cep-pin-zoom-'+direction;button.setAttribute('aria-label','Zoom '+direction+' pinned note');
+      sizeCornerControl(button);
       button.onclick=event=>{event.preventDefault();event.stopPropagation();setPinZoom(widget,key,(widget._zoom||1)+step);};controls.append(button);
     }
     widget.append(controls);
@@ -466,7 +473,7 @@
       if(!widget){
         widget=document.createElement('section');widget.className='cep-home-pin';widget.dataset.pinKey=pin.key;widget.style.zIndex=String(++layer);
         const content=document.createElement('div');content.className='cep-home-pin-content';widget.append(content);installPinZoom(widget,pin.key);
-        const resize=document.createElement('button');resize.type='button';resize.className='cep-home-pin-resize';resize.setAttribute('aria-label','Move pinned note; hold Shift to resize');resize.title='Drag to move; Shift-drag to resize';widget.append(resize);
+        const resize=document.createElement('button');resize.type='button';resize.className='cep-home-pin-resize';resize.setAttribute('aria-label','Move pinned note; hold Shift to resize');resize.title='Drag to move; Shift-drag to resize';sizeCornerControl(resize);widget.append(resize);
         installPinCornerDrag(widget,resize,pin.key);
         resize.addEventListener('keydown',event=>{
           if(!event.key.startsWith('Arrow'))return;event.preventDefault();
