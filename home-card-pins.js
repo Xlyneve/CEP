@@ -318,6 +318,14 @@
     } else if(!window.renderSourceSearchCard(card,entry,[]))window.CEPSecurity.setHTML(card,entry.richHtml);
     window.applySourceSearchSkin(card,entry);
     applySourceAppearance(card,entry);
+    const pinnedTitle=card.querySelector('.cep-source-title,.cep-source-note-title,.universal-search-native-title,.note-title,.cep-source-view > strong');
+    if(pinnedTitle){
+      pinnedTitle.style.setProperty('text-align','center','important');
+      pinnedTitle.style.setProperty('display','block','important');
+      pinnedTitle.style.setProperty('width','100%','important');
+      pinnedTitle.style.setProperty('box-sizing','border-box','important');
+      for(const side of ['left','right'])pinnedTitle.style.setProperty('padding-'+side,'0','important');
+    }
     window.installSearchCardInteractions(card,{copyText:entry.displayText||entry.text,copyHtml:window.getSearchCopyHtml?.(entry)||entry.richHtml});
     // Home pins show the full saved table, not the six-row search preview.
     // Saved editor widths must not force short cells to stay wide on Home.
