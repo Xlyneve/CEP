@@ -20,78 +20,26 @@ toggleIcon.setAttribute('tabindex', '0');
 toggleIcon.setAttribute('aria-label', 'Open navigation menu');
 toggleIcon.title = 'Menu';
 
-  let searchOverlay = null, cachedSearchOverlay = null;
-  // Prefetch only the HTML shell; this does not start its Firebase loaders.
-  if(!new URLSearchParams(location.search).has('cepSearchEmbed')){
-    const prefetch=document.createElement('link');prefetch.rel='prefetch';prefetch.as='document';
-    prefetch.href=new URL('home-search-window.html?cepSearchEmbed=1',location.href).href;document.head.append(prefetch);
+  let headerHomeButton = centerToggle.querySelector('.header-search-trigger');
+  if (!headerHomeButton) {
+    headerHomeButton = document.createElement('button');
+    headerHomeButton.type = 'button';
+    headerHomeButton.className = 'header-search-trigger header-home-trigger';
+    headerHomeButton.innerHTML = '';
+    headerHomeButton.setAttribute('aria-label', 'Go to Home');
+    headerHomeButton.title = 'Home';
+    centerToggle.appendChild(headerHomeButton);
   }
-
-  function closeEmbeddedSearch() {
-    if (!searchOverlay) return;
-    const closing=searchOverlay;searchOverlay=null;
-    closing.classList.remove('is-open');document.body.classList.remove('cep-search-overlay-open');
-    setTimeout(()=>{if(searchOverlay!==closing)closing.style.display='none';},180);
-    centerToggle.querySelector('.header-search-trigger')?.focus();
-  }
-  async function openEmbeddedSearch() {
-    if(typeof window.openCepUniversalSearch==='function'){window.openCepUniversalSearch();return;}
-    if(searchOverlay)return;
-    if(cachedSearchOverlay?.isConnected){
-      searchOverlay=cachedSearchOverlay;searchOverlay.style.display='grid';
-      document.body.classList.add('cep-search-overlay-open');requestAnimationFrame(()=>searchOverlay?.classList.add('is-open'));
-      searchOverlay.querySelector('iframe')?.contentWindow.postMessage({type:'cep-universal-search-open'},location.origin);return;
-    }
-    const overlay=document.createElement('div');overlay.className='cep-search-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Search all Xlyneve notes and pages');
-    const loading=document.createElement('span');loading.className='cep-search-overlay-loading';loading.textContent='Opening Search…';loading.style.cssText='color:var(--theme-ink,#39353a);z-index:1;pointer-events:none;text-shadow:none';
-    const frame=document.createElement('iframe');frame.className='cep-search-overlay-frame';frame.title='Home search — all notes and pages';
-    frame.style.setProperty('opacity','1','important');
-    frame.style.setProperty('background','var(--clinical-panel,#fff)','important');
-    frame.addEventListener('load',()=>{
-      try{
-        const doc=frame.contentDocument,panel=doc?.getElementById('universalSearchPanel');
-        if(!panel)return;
-        doc.documentElement.dataset.cepSearchOnly='true';
-        doc.body.classList.add('cep-search-embed');
-        // Keep the search above Home layout wrappers and never show its dashboard.
-        if(panel.parentElement!==doc.body)doc.body.append(panel);
-        frame.contentWindow.openCepUniversalSearch?.();
-      }catch{}
-    });
-    frame.src=new URL('home-search-window.html?cepSearchEmbed=1',location.href).href;
-    overlay.append(loading,frame);overlay.addEventListener('click',event=>{if(event.target===overlay)closeEmbeddedSearch();});
-    window.addEventListener('message',event=>{
-      if(event.origin!==location.origin||event.source!==frame.contentWindow)return;
-      if(event.data?.type==='cep-universal-search-ready')overlay.classList.add('search-is-ready');
-      if(event.data?.type==='cep-universal-search-close')closeEmbeddedSearch();
-      if(event.data?.type==='cep-universal-search-navigate'){
-        try{const url=new URL(event.data.url,location.href);if(['http:','https:'].includes(url.protocol)){closeEmbeddedSearch();location.assign(url.href);}}catch{}
-      }
-    });
-    searchOverlay=cachedSearchOverlay=overlay;document.body.append(overlay);document.body.classList.add('cep-search-overlay-open');
-    requestAnimationFrame(()=>overlay.classList.add('is-open'));
-  }
-
-  let headerSearchButton = centerToggle.querySelector('.header-search-trigger');
-  if (!headerSearchButton) {
-    headerSearchButton = document.createElement('button');
-    headerSearchButton.type = 'button';
-    headerSearchButton.className = 'header-search-trigger';
-    headerSearchButton.innerHTML = '';
-    headerSearchButton.setAttribute('aria-label', 'Search all notes and pages');
-    headerSearchButton.title = 'Search all notes and pages (Ctrl/⌘ K)';
-    centerToggle.appendChild(headerSearchButton);
-  }
-  // Universal Search matches the menu/rays control, with a visible search glyph.
+  // The Home shortcut matches the menu/rays control.
   const searchIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');
   searchIcon.setAttribute('viewBox','0 0 24 24');searchIcon.setAttribute('aria-hidden','true');
-  searchIcon.innerHTML='<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>';
+  searchIcon.innerHTML='<path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/>';
   for(const [name,value] of Object.entries({display:'block',width:'72%',height:'72%',fill:'none',stroke:'currentColor','stroke-width':'1.9','stroke-linecap':'round','pointer-events':'none'}))searchIcon.style.setProperty(name,value,'important');
-  headerSearchButton.replaceChildren(searchIcon);
+  headerHomeButton.replaceChildren(searchIcon);
   function matchSearchToMenu(){
     const menuStyle=getComputedStyle(toggleIcon);
-    for(const name of ['background','border','border-radius','box-shadow','width','height','animation'])headerSearchButton.style.setProperty(name,menuStyle.getPropertyValue(name),'important');
-    for(const [name,value] of Object.entries({display:'grid','place-items':'center',padding:'0','box-sizing':'border-box',color:'var(--theme-ink,var(--page-header-ink,#303632))','-webkit-text-fill-color':'currentColor','min-width':'0','min-height':'0',filter:'none'}))headerSearchButton.style.setProperty(name,value,'important');
+    for(const name of ['background','border','border-radius','box-shadow','width','height','animation'])headerHomeButton.style.setProperty(name,menuStyle.getPropertyValue(name),'important');
+    for(const [name,value] of Object.entries({display:'grid','place-items':'center',padding:'0','box-sizing':'border-box',color:'var(--theme-ink,var(--page-header-ink,#303632))','-webkit-text-fill-color':'currentColor','min-width':'0','min-height':'0',filter:'none'}))headerHomeButton.style.setProperty(name,value,'important');
   }
   let searchStyleFrame;
   const scheduleSearchStyle=()=>{cancelAnimationFrame(searchStyleFrame);searchStyleFrame=requestAnimationFrame(matchSearchToMenu);};
@@ -100,10 +48,10 @@ toggleIcon.title = 'Menu';
   window.addEventListener('cep-theme-css-ready',scheduleSearchStyle);
   window.addEventListener('load',scheduleSearchStyle,{once:true});
   window.addEventListener('resize',scheduleSearchStyle,{passive:true});
-  headerSearchButton.addEventListener('click', event => {
+  headerHomeButton.addEventListener('click', event => {
     event.stopPropagation();
     hideMenu();
-    openEmbeddedSearch();
+    location.assign(new URL('home.html',location.href).href);
   });
 
   const pageSearchInput = document.querySelector('#searchInput');
@@ -291,16 +239,8 @@ toggleIcon.title = 'Menu';
     }
   });
 
-  document.addEventListener("keydown", (event) => {
-    if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "k") return;
-    event.preventDefault();
-    hideMenu();
-    openEmbeddedSearch();
-  });
-
   document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && searchOverlay) closeEmbeddedSearch();
-    else if (event.key === 'Escape' && centerToggle.classList.contains('active')) hideMenu();
+    if (event.key === 'Escape' && centerToggle.classList.contains('active')) hideMenu();
     if (!centerToggle.classList.contains('active') || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
     const links = [...menuContainer.querySelectorAll('.glass-pill-link')];
     if (!links.length) return;
