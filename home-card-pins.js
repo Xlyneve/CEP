@@ -137,7 +137,16 @@
       view.onclick=async event=>{event.stopPropagation();closePinMenu();try{const entry=snapshot(card,identity);const helpers=await import('./universal-search-overlay.js?v=55');helpers.openClinicalPinPreview(entry,card);}catch(error){message('Could not open note: '+error.message);}};
       const action=document.createElement('button');action.type='button';action.textContent=button.title;
       action.onclick=event=>{event.stopPropagation();closePinMenu();button.dispatchEvent(new CustomEvent('cep-pin-click'));};
-      menu.append(view,action);document.body.append(menu);
+      // Isolate menu rows from theme rules that turn all buttons into raised tiles.
+      const root=menu.attachShadow({mode:'open'}),style=document.createElement('style');
+      style.textContent=`
+        :host{display:block!important;width:max-content!important;max-width:calc(100vw - 16px)!important;background:#fff!important;color:#333!important;border:1px solid #e6e6e6!important;border-radius:10px!important;padding:4px!important;box-shadow:0 4px 18px #00000018!important;}
+        button{display:block;box-sizing:border-box;width:100%;min-height:36px;margin:0;padding:8px 12px;border:0;border-radius:6px;background:transparent;color:#333;font:400 13px/1.4 system-ui,sans-serif;text-align:left;cursor:pointer;white-space:nowrap;}
+        button:hover,button:focus-visible{background:#f3f3f3;outline:none;}
+        button:active{background:#eaeaea;}
+        @media(pointer:coarse){button{min-height:44px;}}
+      `;
+      root.append(style,view,action);document.body.append(menu);
       const rect=card.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(rect.left+16,innerWidth-menu.offsetWidth-8))+'px';menu.style.top=Math.max(8,Math.min(rect.top+32,innerHeight-menu.offsetHeight-8))+'px';view.focus();
     };
     let holdTimer,start,suppressUntil=0;
