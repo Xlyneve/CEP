@@ -98,8 +98,28 @@
     if(identity.file.toLowerCase()==='forms.html'){data.note=card.querySelector('.view-mode em')?.textContent||'';data.openExternally=card.dataset.formExternal==='true';}
     return {file:identity.file,id:identity.id,sourceTitle:identity.source[1],title:label,text,displayText:text,richHtml:html,record:{id:identity.id,data}};
   }
+  function sourceAppearance(card){
+    const surface=card.querySelector(':scope > .cep-source-surface,:scope > .cep-source-chat,:scope > .cep-source-form')||card;
+    const style=getComputedStyle(surface),solid=style.getPropertyValue('--card-solid').trim();
+    const palette=window.getCepThemePalette?.()||[];
+    return {theme:document.documentElement.dataset.xlyneveColorTheme||'original',
+      paletteIndex:palette.findIndex(colour=>colour.solid.toLowerCase()===solid.toLowerCase()),
+      background:style.background,color:style.color,
+      solid,glass:style.getPropertyValue('--card-glass').trim(),ink:style.getPropertyValue('--card-ink').trim(),outline:style.getPropertyValue('--card-outline').trim()};
+  }
+  function applySourceAppearance(card,entry){
+    const saved=entry.sourceCardAppearance;if(!saved)return;
+    const surface=card.querySelector('.cep-source-surface,.cep-source-chat,.cep-source-form')||card;
+    const palette=window.getCepThemePalette?.()||[],colour=saved.paletteIndex>=0?palette[saved.paletteIndex%palette.length]:null;
+    if(saved.paletteIndex>=0)surface.dataset.cepThemeColorIndex=String(saved.paletteIndex);
+    const sameTheme=saved.theme===(document.documentElement.dataset.xlyneveColorTheme||'original');
+    const tokens=sameTheme?saved:colour?{solid:colour.solid,glass:`rgba(${colour.rgb}, .74)`,ink:colour.ink,outline:colour.outline||''}:null;
+    if(tokens)for(const key of ['solid','glass','ink','outline'])if(tokens[key])surface.style.setProperty('--card-'+key,tokens[key]);
+    if(sameTheme){surface.style.setProperty('background',saved.background,'important');surface.style.setProperty('color',saved.color,'important');}
+    surface.dataset.sharedPaletteColor='true';
+  }
   async function pin(card,identity) {
-    const entry=snapshot(card,identity), previous=pins.get(identity.key);
+    const entry={...snapshot(card,identity),sourceCardAppearance:sourceAppearance(card)}, previous=pins.get(identity.key);
     const value={key:identity.key,file:identity.file,sourceId:identity.id,collection:identity.source[2],project:identity.source[3]||mainProject,
       pinnedAt:previous?.pinnedAt||Date.now(),entry};
     const {db,fs}=await store();
@@ -297,6 +317,7 @@
       card.append(body);
     } else if(!window.renderSourceSearchCard(card,entry,[]))window.CEPSecurity.setHTML(card,entry.richHtml);
     window.applySourceSearchSkin(card,entry);
+    applySourceAppearance(card,entry);
     window.installSearchCardInteractions(card,{copyText:entry.displayText||entry.text,copyHtml:window.getSearchCopyHtml?.(entry)||entry.richHtml});
     // Home pins show the full saved table, not the six-row search preview.
     // Saved editor widths must not force short cells to stay wide on Home.
