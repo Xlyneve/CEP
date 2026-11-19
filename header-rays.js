@@ -40,6 +40,17 @@ toggleIcon.title = 'Menu';
     const overlay=document.createElement('div');overlay.className='cep-search-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Search all Xlyneve notes and pages');
     const loading=document.createElement('span');loading.className='cep-search-overlay-loading';loading.textContent='Opening Search…';
     const frame=document.createElement('iframe');frame.className='cep-search-overlay-frame';frame.title='Home search — all notes and pages';
+    frame.addEventListener('load',()=>{
+      try{
+        const doc=frame.contentDocument,panel=doc?.getElementById('universalSearchPanel');
+        if(!panel)return;
+        doc.documentElement.dataset.cepSearchOnly='true';
+        doc.body.classList.add('cep-search-embed');
+        // Keep the search above Home layout wrappers and never show its dashboard.
+        if(panel.parentElement!==doc.body)doc.body.append(panel);
+        frame.contentWindow.openCepUniversalSearch?.();
+      }catch{}
+    });
     frame.src=new URL('home.html?cepSearchEmbed=1',location.href).href;
     overlay.append(loading,frame);overlay.addEventListener('click',event=>{if(event.target===overlay)closeEmbeddedSearch();});
     window.addEventListener('message',event=>{
