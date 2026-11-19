@@ -4,8 +4,23 @@ import { readStyleRules, splitStyleText } from './search-style-parser.js?v=20261
 // Presentation only: no Firebase imports, reads, source-page scripts, or iframe loads.
 const stylesheet = document.createElement('link');
 stylesheet.rel = 'stylesheet';
-stylesheet.href = new URL('./search-source-cards.css?v=20261012-1', import.meta.url).href;
+stylesheet.href = new URL('./search-source-cards.css?v=20261119-1', import.meta.url).href;
+const sourceStylesReady=new Promise(resolve=>{
+  stylesheet.addEventListener('load',resolve,{once:true});
+  stylesheet.addEventListener('error',resolve,{once:true});
+});
 document.head.append(stylesheet);
+// Reveal results only after their final typography is ready.
+window.waitForCepSearchPresentation=async()=>{
+  await sourceStylesReady;
+  const theme=document.getElementById('cep-selected-theme-css');
+  if(theme?.tagName==='LINK'&&!theme.sheet)await new Promise(resolve=>{
+    theme.addEventListener('load',resolve,{once:true});
+    theme.addEventListener('error',resolve,{once:true});
+  });
+  installThemeStyles();
+  if(document.fonts)await document.fonts.ready;
+};
 const classes = {'note-card':'cep-source-surface','note-tile':'cep-source-notebook','chatBubble':'cep-source-chat','file-item':'cep-source-form','note-title':'cep-source-title','note-text':'cep-source-text','note-content':'cep-source-content'};
 const supported = new Set(['pn.html','info.html','explain.html','practicen.html','recalls.html','clinicalnotes.html','notes.html','ecg.html','urgent_care.html','face.html','hand.html','sha.html','abdo.html','spine.html','lf.html','forms.html','chatgptx.html']);
 const pageContexts = {'theme-pn':['pn.html'],'theme-info':['info.html'],'theme-explain':['explain.html'],'theme-practice':['practicen.html'],'theme-recalls':['recalls.html'],'theme-clinical':['clinicalnotes.html'],'theme-urgent-care':['urgent_care.html','face.html','hand.html','sha.html','abdo.html','spine.html','lf.html']};

@@ -21,6 +21,7 @@ html[data-cep-search-only="true"] body #universalSearchPanel{visibility:visible!
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <link rel="stylesheet" href="table-theme.css?v=2" />
+  <link rel="preload" as="style" href="search-source-cards.css?v=20261119-1">
   <title>Xlyn</title>
 
 <style>
@@ -4802,13 +4803,15 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       if (images.length && !imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
     }
     async function runSearch() {
-      if(!window.CEPSearchWork){
+      if(!window.CEPSearchWork || !window.renderSourceSearchCard || !window.applySourceSearchSkin){
         status.textContent='Loading search…';
         window.addEventListener('cep-search-helpers-ready',()=>{if(input.value.trim())void runSearch();},{once:true});
         return;
       }
       results.classList.toggle('cep-default-search-results',searchMode === 'default');
       const requestId = ++searchRequestId;
+      await window.waitForCepSearchPresentation?.();
+      if(requestId!==searchRequestId)return;
       const query = normalizeSearchValue(input.value);
       previewFrames.forEach(preview => {
         if (!preview.ready || preview.failed) return;
@@ -6590,7 +6593,7 @@ function closeTable() {
   import * as searchWork from './search-scheduler.js?v=20261102-1';
   window.CEPSearchWork = searchWork;
   import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { matchesSearchMedia, createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, renderClinicalSearchPins, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=55';
+  import { matchesSearchMedia, createXgptPhotoStrip, getXgptConceptImages, loadClinicalNotesEntries, renderClinicalSearchPins, enableSearchImageZoom as enableSharedSearchImageZoom, enableSearchTableZoom as enableSharedSearchTableZoom, getCachedXgptConceptDefinition as getSharedXgptConceptDefinition, getCachedXgptConceptMedia as getSharedXgptConceptMedia, getSearchCopyHtml as getSharedSearchCopyHtml, hasStructuredSearchContent as hasSharedStructuredSearchContent, installSearchCardInteractions as installSharedSearchCardInteractions, loadPersistentSearchDocuments, loadXgptEntries as loadSharedXgptEntries, loadXgptConceptMedia as loadSharedXgptConceptMedia, renderReferencedXgptConceptResults as renderSharedReferencedXgptConceptResults, renderSourceSearchCard as renderSharedSourceSearchCard, renderStructuredSearchContent as renderSharedStructuredSearchContent, renderXgptSearchRichContent as renderSharedXgptSearchRichContent, searchReferencedXgptConcepts as searchSharedReferencedXgptConcepts } from './universal-search-overlay.js?v=56';
   import {
     getFirestore,
     collection,
