@@ -288,13 +288,20 @@
     widget._zoom=Math.max(.1,Math.min(2,Math.round(value*100)/100));applyPinZoom(widget);saveLayout(key,widget);
   }
   function sizeCornerControl(button){
-    for(const property of ['width','height','min-width','min-height','max-width','max-height'])button.style.setProperty(property,'22px','important');
+    for(const property of ['width','height','min-width','min-height','max-width','max-height'])button.style.setProperty(property,'2mm','important');
     button.style.setProperty('box-sizing','border-box','important');
     button.style.setProperty('padding','0','important');
     const bottom=button.classList.contains('cep-home-pin-resize');
     button.style.setProperty(bottom?'bottom':'top','8px','important');
     button.style.setProperty(button.classList.contains('cep-pin-zoom-out')?'left':'right','8px','important');
-    button.style.setProperty('flex','0 0 22px','important');
+    button.style.setProperty('flex','0 0 2mm','important');
+    for(const [property,value] of Object.entries({
+      'border-radius':'50%','background':'var(--clinical-panel,#fff)',
+      'color':'var(--cep-pin-ink,var(--theme-ink,#39353a))',
+      'border':'1px solid color-mix(in srgb,currentColor 35%,transparent)',
+      'box-shadow':'none','appearance':'none','opacity':'.8',
+      'clip-path':'circle(50%)'
+    }))button.style.setProperty(property,value,'important');
   }
   function installPinZoom(widget,key){
     const controls=document.createElement('div');controls.className='cep-pin-zoom-controls';controls.setAttribute('role','group');controls.setAttribute('aria-label','Pinned note zoom');
