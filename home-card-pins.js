@@ -22,7 +22,7 @@
   if (!home && !sources[page]) return;
   const cacheKey='cep-home-card-pins:v1', layoutKey='cep-home-card-pin-layout:v1';
   const selector='.cep-search-source,.note-card[data-id],.note-tile[data-id],.chatBubble[data-home-pin-id],.file-item[data-id]';
-  const cardMenus=new WeakMap();
+  const cardPinActions=new WeakMap();
   const widgets=new Map(), sourceWatches=new Map(), authWatches=new Map();
   let pins=new Map(), readyStore, layer=9000, renderQueued=false, homeUnsubscribe, homeActive=false, lifecycle=0;
   try { pins=new Map(JSON.parse(localStorage.getItem(cacheKey)||'[]').map(pin=>[pin.key,pin])); } catch {}
@@ -30,7 +30,7 @@
   function message(text) {
     let status=document.getElementById('cep-home-pin-status');
     if(!status){status=document.createElement('div');status.id='cep-home-pin-status';status.setAttribute('role','status');document.body.append(status);}
-    status.textContent=text;clearTimeout(message.timer);message.timer=setTimeout(()=>status.remove(),3000);
+    status.textContent=text;clearTimeout(message.timer);message.timer=setTimeout(()=>status.remove(),2200);
   }
   let cacheTimer;
   function changed(immediate=false) {
@@ -151,12 +151,12 @@
       root.append(style,view,action);document.body.append(menu);
       const rect=card.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(rect.left+(rect.width-menu.offsetWidth)/2,innerWidth-menu.offsetWidth-8))+'px';menu.style.top=Math.max(8,Math.min(rect.bottom-menu.offsetHeight-8,innerHeight-menu.offsetHeight-8))+'px';view.focus();
     };
-    cardMenus.set(card,showMenu);
+    cardPinActions.set(card,()=>{closePinMenu();if(!button.disabled)button.dispatchEvent(new CustomEvent('cep-pin-click'));});
     more.addEventListener('cep-pin-menu',showMenu);
     more.addEventListener('pointerdown',event=>event.stopPropagation());
     card.addEventListener('keydown',event=>{if(event.target===card&&event.shiftKey&&event.key==='F10'){event.preventDefault();event.stopImmediatePropagation();showMenu();}},true);
     if(!card.hasAttribute('tabindex'))card.tabIndex=0;
-    card.setAttribute('aria-description','Shift-click for View full card and Pin to Home. On touch screens use Note options. Keyboard: Shift+F10.');
+    card.setAttribute('aria-description','Shift-click to pin or unpin from Home. On touch screens use Note options. Keyboard: Shift+F10.');
     card.setAttribute('aria-keyshortcuts','Shift+F10');
     // Disable the older clinical-only hold preview for cards using this menu.
     card.dataset.cepHoldMenu='true';
@@ -174,8 +174,8 @@
   window.addEventListener('click',event=>{
     if(!event.shiftKey||event.button!==0||!(event.target instanceof Element))return;
     if(event.target.closest('button,input,textarea,select,[contenteditable="true"],.editing-note,.is-editing,#cep-home-pin-menu'))return;
-    const card=event.target.closest(selector),show=card&&cardMenus.get(card);
-    if(!show)return;event.preventDefault();event.stopImmediatePropagation();show();
+    const card=event.target.closest(selector),toggle=card&&cardPinActions.get(card);
+    if(!toggle)return;event.preventDefault();event.stopImmediatePropagation();toggle();
   },true);
   function closePinMenu(){document.getElementById('cep-home-pin-menu')?.remove();document.querySelectorAll('.cep-home-pin-more[aria-expanded="true"]').forEach(el=>el.setAttribute('aria-expanded','false'));}
   document.addEventListener('keydown',event=>{if(event.key==='Escape'){const trigger=document.querySelector('.cep-home-pin-more[aria-expanded="true"]');closePinMenu();trigger?.focus();}});
