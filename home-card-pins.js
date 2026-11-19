@@ -288,10 +288,13 @@
     widget._zoom=Math.max(.1,Math.min(2,Math.round(value*100)/100));applyPinZoom(widget);saveLayout(key,widget);
   }
   function sizeCornerControl(button){
-    for(const property of ['width','height','min-width','min-height','max-width','max-height'])button.style.setProperty(property,'28px','important');
+    for(const property of ['width','height','min-width','min-height','max-width','max-height'])button.style.setProperty(property,'22px','important');
     button.style.setProperty('box-sizing','border-box','important');
     button.style.setProperty('padding','0','important');
-    button.style.setProperty('flex','0 0 28px','important');
+    const bottom=button.classList.contains('cep-home-pin-resize');
+    button.style.setProperty(bottom?'bottom':'top','8px','important');
+    button.style.setProperty(button.classList.contains('cep-pin-zoom-out')?'left':'right','8px','important');
+    button.style.setProperty('flex','0 0 22px','important');
   }
   function installPinZoom(widget,key){
     const controls=document.createElement('div');controls.className='cep-pin-zoom-controls';controls.setAttribute('role','group');controls.setAttribute('aria-label','Pinned note zoom');
