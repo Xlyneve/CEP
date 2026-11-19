@@ -648,7 +648,7 @@
   function createThemePicker() {
     const pickerParams=new URLSearchParams(location.search);
     const pickerHash=new URLSearchParams(location.hash.replace(/^#/,''));
-    if (!themeIsAllowed || document.getElementById("xlyneveThemeControl") ||
+    if (pageName !== "home.html" || !themeIsAllowed || document.getElementById("xlyneveThemeControl") ||
         pickerParams.has('homeEmbed') || pickerParams.get('cepSearchEmbed')==='1' || pickerHash.get('cepPreview')==='card') return;
 
     const control = document.createElement("div");
