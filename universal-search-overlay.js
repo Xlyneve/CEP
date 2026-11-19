@@ -1369,7 +1369,7 @@ export function installSearchCardInteractions(card, { copyText, copyHtml, naviga
 
 // Full pinned-note reading uses the already loaded record; no Firebase request.
 let clinicalPinPreview;
-function openClinicalPinPreview(entry, sourceCard, guardRelease = false) {
+export function openClinicalPinPreview(entry, sourceCard, guardRelease = false) {
   clinicalPinPreview?.close();
   if (!document.getElementById('cep-clinical-pin-preview-style')) {
     const style = document.createElement('style'); style.id = 'cep-clinical-pin-preview-style';
@@ -1414,7 +1414,7 @@ function openClinicalPinPreview(entry, sourceCard, guardRelease = false) {
   const close = document.createElement('button'); close.type = 'button'; close.className = 'cep-clinical-pin-preview-close'; close.textContent = '×'; close.setAttribute('aria-label', 'Close full note'); close.onclick = () => dialog.close();
   header.append(title, close);
   const body = document.createElement('div'); body.className = 'cep-clinical-pin-preview-content';
-  renderStructuredSearchContent(body, entry.record?.data?.note || entry.richHtml || sourceLegacyHtml(entry.displayText || entry.text || ''), []);
+  renderStructuredSearchContent(body, entry.record?.data?.note || entry.record?.data?.text || entry.record?.data?.content || entry.richHtml || sourceLegacyHtml(entry.displayText || entry.text || ''), []);
   // Keep authored copy phrases actionable in the expanded, read-only note.
   // The shared phrase handler copies nested formatting and stops table/card clicks.
   body.querySelectorAll('.cep-copy-text').forEach(phrase => {
@@ -1458,7 +1458,7 @@ function installClinicalPinHold(card, entry, cancelCopy) {
   };
   const begin = event => {
     if(event.isPrimary===false||event.touches?.length>1){clear();return;}
-    if (interactive(event.target) || (event.button != null && event.button !== 0)) return;
+    if (card.dataset.cepHoldMenu==='true' || interactive(event.target) || (event.button != null && event.button !== 0)) return;
     clear(); suppressUntil = 0;
     const point = event.touches?.[0] || event; start = {x:point.clientX,y:point.clientY,id:event.pointerId};
     timer = setTimeout(reveal, 500);
@@ -1469,10 +1469,10 @@ function installClinicalPinHold(card, entry, cancelCopy) {
   card.setAttribute('aria-description','Click to copy. Press and hold, or press Space, to read the full note.'); card.setAttribute('aria-keyshortcuts','Space');
   card.addEventListener(window.PointerEvent ? 'pointerdown' : 'touchstart',begin,{passive:true});
   for (const name of ['click','dblclick']) card.addEventListener(name,event => { if (performance.now()<suppressUntil) { event.preventDefault(); event.stopImmediatePropagation(); } },true);
-  card.addEventListener('contextmenu',event => { if (!interactive(event.target)) { event.preventDefault(); event.stopPropagation(); if (!clinicalPinPreview) reveal(); } });
+  card.addEventListener('contextmenu',event => { if (card.dataset.cepHoldMenu!=='true' && !interactive(event.target)) { event.preventDefault(); event.stopPropagation(); if (!clinicalPinPreview) reveal(); } });
   card.addEventListener('dragstart',event => event.preventDefault());
   card.addEventListener('keydown',event => {
-    if (interactive(event.target)) return;
+    if (card.dataset.cepHoldMenu==='true' || interactive(event.target)) return;
     if (event.key === 'Enter') suppressUntil = 0;
     if (event.key === ' ' && !event.repeat) { event.preventDefault(); event.stopPropagation(); reveal(false); }
     if (event.key === 'Escape') clear();
