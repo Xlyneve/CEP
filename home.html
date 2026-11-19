@@ -4802,6 +4802,11 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       if (images.length && !imageFirstSources.has(String(file).toLowerCase())) card.append(...images);
     }
     async function runSearch() {
+      if(!window.CEPSearchWork){
+        status.textContent='Loading search…';
+        window.addEventListener('cep-search-helpers-ready',()=>{if(input.value.trim())void runSearch();},{once:true});
+        return;
+      }
       results.classList.toggle('cep-default-search-results',searchMode === 'default');
       const requestId = ++searchRequestId;
       const query = normalizeSearchValue(input.value);
@@ -6841,6 +6846,11 @@ const firebaseConfig = {
     return sources.every(Boolean);
   };
 
+
+  // Search-only windows may open before authenticated loaders finish registering.
+  if(new URLSearchParams(location.search).get('cepSearchEmbed')==='1' && !document.getElementById('universalSearchPanel')?.hidden){
+    window.cepUniversalLazyLoaders.forEach(loader=>void loader());
+  }
 
   const qiList = document.getElementById('qiList');
   const q = query(collection(db, 'inteleviewerData'), orderBy('radiology'));

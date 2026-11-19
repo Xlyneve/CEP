@@ -21,6 +21,11 @@ toggleIcon.setAttribute('aria-label', 'Open navigation menu');
 toggleIcon.title = 'Menu';
 
   let searchOverlay = null, cachedSearchOverlay = null;
+  // Prefetch only the HTML shell; this does not start its Firebase loaders.
+  if(!new URLSearchParams(location.search).has('cepSearchEmbed')){
+    const prefetch=document.createElement('link');prefetch.rel='prefetch';prefetch.as='document';
+    prefetch.href=new URL('home-search-window.html?cepSearchEmbed=1',location.href).href;document.head.append(prefetch);
+  }
 
   function closeEmbeddedSearch() {
     if (!searchOverlay) return;
@@ -38,8 +43,10 @@ toggleIcon.title = 'Menu';
       searchOverlay.querySelector('iframe')?.contentWindow.postMessage({type:'cep-universal-search-open'},location.origin);return;
     }
     const overlay=document.createElement('div');overlay.className='cep-search-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Search all Xlyneve notes and pages');
-    const loading=document.createElement('span');loading.className='cep-search-overlay-loading';loading.textContent='Opening Search…';
+    const loading=document.createElement('span');loading.className='cep-search-overlay-loading';loading.textContent='Opening Search…';loading.style.cssText='color:var(--theme-ink,#39353a);z-index:1;pointer-events:none;text-shadow:none';
     const frame=document.createElement('iframe');frame.className='cep-search-overlay-frame';frame.title='Home search — all notes and pages';
+    frame.style.setProperty('opacity','1','important');
+    frame.style.setProperty('background','var(--clinical-panel,#fff)','important');
     frame.addEventListener('load',()=>{
       try{
         const doc=frame.contentDocument,panel=doc?.getElementById('universalSearchPanel');
@@ -51,7 +58,7 @@ toggleIcon.title = 'Menu';
         frame.contentWindow.openCepUniversalSearch?.();
       }catch{}
     });
-    frame.src=new URL('home.html?cepSearchEmbed=1',location.href).href;
+    frame.src=new URL('home-search-window.html?cepSearchEmbed=1',location.href).href;
     overlay.append(loading,frame);overlay.addEventListener('click',event=>{if(event.target===overlay)closeEmbeddedSearch();});
     window.addEventListener('message',event=>{
       if(event.origin!==location.origin||event.source!==frame.contentWindow)return;
