@@ -5190,6 +5190,12 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
       }
     }
     window.openCepUniversalSearch = openSearch;
+    if(embeddedSearch){
+      requestAnimationFrame(openSearch);
+      window.addEventListener('message',event=>{
+        if(event.origin===location.origin&&event.source===window.parent&&event.data?.type==='cep-universal-search-open')openSearch();
+      });
+    }
     function closeSearch() {
       panel.hidden = true; button.setAttribute('aria-expanded', 'false'); button.focus();
       if (embeddedSearch && window.parent !== window) {

@@ -20,64 +20,38 @@ toggleIcon.setAttribute('tabindex', '0');
 toggleIcon.setAttribute('aria-label', 'Open navigation menu');
 toggleIcon.title = 'Menu';
 
-  const warmSearch = () => {
-    const searchParams = new URLSearchParams(location.search);
-    const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
-    const homeHasNativeSearch = /(?:^|\/)home\.html$/i.test(location.pathname);
-    const embeddedHomeSearch = searchParams.get('cepSearchEmbed') === '1';
-    const cardPreview = hashParams.get('cepPreview') === 'card';
-    // Home owns its search index, while embedded/card-preview documents cannot
-    // expose the header search. Avoid downloading every search collection a
-    // second time in those contexts.
-    if (homeHasNativeSearch || embeddedHomeSearch || cardPreview) return;
-    // Warm only the UI module. Collection reads start when search opens.
-    import("./universal-search-overlay.js?v=55")
-      .catch(error => console.warn("Search UI preload was skipped.", error));
-  };
-  if ('requestIdleCallback' in window) requestIdleCallback(warmSearch, { timeout: 1400 });
-  else setTimeout(warmSearch, 250);
-
-  let searchOverlay = null;
+  let searchOverlay = null, cachedSearchOverlay = null;
 
   function closeEmbeddedSearch() {
     if (!searchOverlay) return;
-    const closingOverlay = searchOverlay;
-    searchOverlay = null;
-    closingOverlay.classList.remove("is-open");
-    document.body.classList.remove("cep-search-overlay-open");
-    setTimeout(() => closingOverlay.remove(), 180);
+    const closing=searchOverlay;searchOverlay=null;
+    closing.classList.remove('is-open');document.body.classList.remove('cep-search-overlay-open');
+    setTimeout(()=>{if(searchOverlay!==closing)closing.style.display='none';},180);
+    centerToggle.querySelector('.header-search-trigger')?.focus();
   }
-
   async function openEmbeddedSearch() {
-    if (typeof window.openCepUniversalSearch === "function") {
-      window.openCepUniversalSearch();
-      return;
+    if(typeof window.openCepUniversalSearch==='function'){window.openCepUniversalSearch();return;}
+    if(searchOverlay)return;
+    if(cachedSearchOverlay?.isConnected){
+      searchOverlay=cachedSearchOverlay;searchOverlay.style.display='grid';
+      document.body.classList.add('cep-search-overlay-open');requestAnimationFrame(()=>searchOverlay?.classList.add('is-open'));
+      searchOverlay.querySelector('iframe')?.contentWindow.postMessage({type:'cep-universal-search-open'},location.origin);return;
     }
-    if (searchOverlay) return searchOverlay.querySelector("input")?.focus();
-    const overlay = document.createElement("div");
-    overlay.className = "cep-search-overlay";
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-modal", "true");
-    overlay.setAttribute("aria-label", "Search all Xlyneve notes and pages");
-    const host = document.createElement("div");
-    host.className = "cep-search-overlay-host";
-    host.textContent = "Opening Search…";
-    overlay.addEventListener("click", event => {
-      if (event.target === overlay) closeEmbeddedSearch();
+    const overlay=document.createElement('div');overlay.className='cep-search-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Search all Xlyneve notes and pages');
+    const loading=document.createElement('span');loading.className='cep-search-overlay-loading';loading.textContent='Opening Search…';
+    const frame=document.createElement('iframe');frame.className='cep-search-overlay-frame';frame.title='Home search — all notes and pages';
+    frame.src=new URL('home.html?cepSearchEmbed=1',location.href).href;
+    overlay.append(loading,frame);overlay.addEventListener('click',event=>{if(event.target===overlay)closeEmbeddedSearch();});
+    window.addEventListener('message',event=>{
+      if(event.origin!==location.origin||event.source!==frame.contentWindow)return;
+      if(event.data?.type==='cep-universal-search-ready')overlay.classList.add('search-is-ready');
+      if(event.data?.type==='cep-universal-search-close')closeEmbeddedSearch();
+      if(event.data?.type==='cep-universal-search-navigate'){
+        try{const url=new URL(event.data.url,location.href);if(['http:','https:'].includes(url.protocol)){closeEmbeddedSearch();location.assign(url.href);}}catch{}
+      }
     });
-    overlay.append(host);
-    document.body.appendChild(overlay);
-    document.body.classList.add("cep-search-overlay-open");
-    searchOverlay = overlay;
-    requestAnimationFrame(() => overlay.classList.add("is-open"));
-    try {
-      const { mountUniversalSearch } = await import("./universal-search-overlay.js?v=55");
-      if (searchOverlay !== overlay) return;
-      await mountUniversalSearch(host, closeEmbeddedSearch);
-    } catch (error) {
-      console.error("Universal Search could not open.", error);
-      host.textContent = "Search could not be opened. Please try again.";
-    }
+    searchOverlay=cachedSearchOverlay=overlay;document.body.append(overlay);document.body.classList.add('cep-search-overlay-open');
+    requestAnimationFrame(()=>overlay.classList.add('is-open'));
   }
 
   let headerSearchButton = centerToggle.querySelector('.header-search-trigger');

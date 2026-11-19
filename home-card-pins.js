@@ -18,8 +18,8 @@
     'notes-bcba6':{name:'clinical-notes',config:{apiKey:'AIzaSyDcM4E3wFhjUwZBYbnZoi1AAQtMe7TzNL8',authDomain:'notes-bcba6.firebaseapp.com',projectId:'notes-bcba6',appId:'1:101524739050:web:7e5fe1c8fa224d69909893'}},
     'notes-chat-c5ff3':{name:'notes-chat',config:{apiKey:'AIzaSyDtv3x9PAMzZUW6yVuUSLgLzA0ejcDidF4',authDomain:'notes-chat-c5ff3.firebaseapp.com',projectId:'notes-chat-c5ff3',appId:'1:597780727252:web:8407eb4096dbe301d74241'}}
   };
-  const page=(location.pathname.split('/').pop()||'').toLowerCase(), home=page==='home.html';
-  if (!home && !sources[page]) return;
+  const page=(location.pathname.split('/').pop()||'').toLowerCase(), home=page==='home.html'&&new URLSearchParams(location.search).get('cepSearchEmbed')!=='1';
+  if (!home && page!=='home.html' && !sources[page]) return;
   const cacheKey='cep-home-card-pins:v1', layoutKey='cep-home-card-pin-layout:v1';
   const selector='.cep-search-source,.note-card[data-id],.note-tile[data-id],.chatBubble[data-home-pin-id],.file-item[data-id]';
   const cardPinActions=new WeakMap();
