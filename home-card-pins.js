@@ -22,6 +22,7 @@
   if (!home && !sources[page]) return;
   const cacheKey='cep-home-card-pins:v1', layoutKey='cep-home-card-pin-layout:v1';
   const selector='.cep-search-source,.note-card[data-id],.note-tile[data-id],.chatBubble[data-home-pin-id],.file-item[data-id]';
+  const cardMenus=new WeakMap();
   const widgets=new Map(), sourceWatches=new Map(), authWatches=new Map();
   let pins=new Map(), readyStore, layer=9000, renderQueued=false, homeUnsubscribe, homeActive=false, lifecycle=0;
   try { pins=new Map(JSON.parse(localStorage.getItem(cacheKey)||'[]').map(pin=>[pin.key,pin])); } catch {}
@@ -125,7 +126,7 @@
     const tools=document.createElement('div');tools.className='cep-home-pin-tools';
     const more=document.createElement('button');more.type='button';more.className='cep-home-pin-more';more.textContent='⋯';more.setAttribute('aria-label','Note options');more.setAttribute('aria-expanded','false');
     const label=document.createElement('span');label.className='cep-home-pin-label';button.append(label);
-    tools.append(button);surface.append(tools);
+    tools.append(more,button);surface.append(tools);
     const title=card.querySelector('.note-title,.cep-source-title,.cep-source-note-title,.universal-search-native-title,strong');
     const indicator=document.createElement('span');indicator.className='cep-home-pin-indicator';indicator.innerHTML=icon;indicator.title='Pinned to Home';indicator.setAttribute('aria-label','Pinned to Home');
     if(title)title.append(indicator);else tools.append(indicator);
@@ -150,24 +151,14 @@
       root.append(style,view,action);document.body.append(menu);
       const rect=card.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(rect.left+(rect.width-menu.offsetWidth)/2,innerWidth-menu.offsetWidth-8))+'px';menu.style.top=Math.max(8,Math.min(rect.bottom-menu.offsetHeight-8,innerHeight-menu.offsetHeight-8))+'px';view.focus();
     };
-    let holdTimer,start,suppressUntil=0;
-    const interactive=target=>target.closest('button,input,textarea,select,[contenteditable="true"],.cep-copy-text,.pn-definition,.cep-shared-definition,a:not(.cep-search-source):not(.cep-global-search-result):not(.universal-search-native-card)');
-    const clear=()=>{clearTimeout(holdTimer);start=null;};
-    const reveal=()=>{clear();suppressUntil=performance.now()+1000;showMenu();};
-    card.addEventListener('pointerdown',event=>{
-      if(event.button!==0||event.isPrimary===false||interactive(event.target)||card.matches('.editing-note,.is-editing'))return;
-      clear();start={x:event.clientX,y:event.clientY};holdTimer=setTimeout(reveal,500);
-    });
-    document.addEventListener('pointermove',event=>{if(start&&Math.hypot(event.clientX-start.x,event.clientY-start.y)>10)clear();},{passive:true});
-    for(const name of ['pointerup','pointercancel','scroll'])document.addEventListener(name,clear,{capture:true,passive:true});
-    window.addEventListener('blur',clear);
-    window.addEventListener('pointerdown',()=>{suppressUntil=0;},true);
-    // Consume the release before search-backdrop and whole-card copy handlers.
-    window.addEventListener('click',event=>{if(performance.now()<suppressUntil){suppressUntil=0;event.preventDefault();event.stopImmediatePropagation();}},true);
-    card.addEventListener('contextmenu',event=>{if(!interactive(event.target)){event.preventDefault();event.stopPropagation();reveal();}});
-    card.addEventListener('keydown',event=>{if(event.target===card&&((event.key===' '&&!event.repeat)||(event.shiftKey&&event.key==='F10'))){event.preventDefault();event.stopImmediatePropagation();showMenu();}},true);
+    cardMenus.set(card,showMenu);
+    more.addEventListener('cep-pin-menu',showMenu);
+    more.addEventListener('pointerdown',event=>event.stopPropagation());
+    card.addEventListener('keydown',event=>{if(event.target===card&&event.shiftKey&&event.key==='F10'){event.preventDefault();event.stopImmediatePropagation();showMenu();}},true);
     if(!card.hasAttribute('tabindex'))card.tabIndex=0;
-    card.setAttribute('aria-description','Press and hold for View full card and Pin to Home. Keyboard: Space or Shift+F10.');
+    card.setAttribute('aria-description','Shift-click for View full card and Pin to Home. On touch screens use Note options. Keyboard: Shift+F10.');
+    card.setAttribute('aria-keyshortcuts','Shift+F10');
+    // Disable the older clinical-only hold preview for cards using this menu.
     card.dataset.cepHoldMenu='true';
     button.addEventListener('cep-pin-click',async event=>{
       event.preventDefault();event.stopPropagation();button.disabled=true;
@@ -179,6 +170,13 @@
     button.addEventListener('pointerdown',event=>event.stopPropagation());
     updateButton(button);
   }
+  // Window capture runs before card-copy handlers and the search backdrop.
+  window.addEventListener('click',event=>{
+    if(!event.shiftKey||event.button!==0||!(event.target instanceof Element))return;
+    if(event.target.closest('button,input,textarea,select,[contenteditable="true"],.editing-note,.is-editing,#cep-home-pin-menu'))return;
+    const card=event.target.closest(selector),show=card&&cardMenus.get(card);
+    if(!show)return;event.preventDefault();event.stopImmediatePropagation();show();
+  },true);
   function closePinMenu(){document.getElementById('cep-home-pin-menu')?.remove();document.querySelectorAll('.cep-home-pin-more[aria-expanded="true"]').forEach(el=>el.setAttribute('aria-expanded','false'));}
   document.addEventListener('keydown',event=>{if(event.key==='Escape'){const trigger=document.querySelector('.cep-home-pin-more[aria-expanded="true"]');closePinMenu();trigger?.focus();}});
   document.addEventListener('click',event=>{
