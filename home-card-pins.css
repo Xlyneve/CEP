@@ -15,13 +15,6 @@ html:not(#cep-pin-control):not(#cep-pin-edge) body button.cep-home-pin-button {
   border:0;background:transparent;box-shadow:none;resize:none;overflow:visible;isolation:isolate;
 }
 .cep-home-pin-content,.cep-home-pin-card{height:100%;width:100%;min-width:0;min-height:0;}
-html:not(#cep-pin-centered-title) body .cep-home-pin .cep-home-pin-card :is(.note-title,.cep-source-title,.cep-source-note-title,.universal-search-native-title,.cep-source-view>strong:first-child) {
-  display:block;
-  box-sizing:border-box;
-  padding-inline:min(33%,var(--cep-pin-title-inset,24px))!important;
-  text-align:center!important;
-  overflow-wrap:anywhere;
-}
 html:not(#cep-home-pin-surface) body .cep-home-pin .cep-home-pin-card>:is(.cep-source-surface,.cep-source-chat,.cep-source-form) {
   height:100%!important;overflow:auto!important;box-sizing:border-box!important;padding-top:8px!important;padding-bottom:6px!important;margin-bottom:0!important;min-height:0!important;
 }
@@ -82,7 +75,7 @@ html:not(#cep-pin-panel-solid) body #cep-home-pin-panel{background:#efede8!impor
 
 /* Invisible desktop corners keep note zoom free of visible controls. */
 .cep-pin-zoom-controls{display:block;position:absolute;inset:0;z-index:6;pointer-events:none;}
-html:not(#cep-pin-zoom-corner) body .cep-home-pin .cep-pin-zoom-corner{position:absolute!important;top:0!important;z-index:5;width:24px!important;height:24px!important;display:block!important;pointer-events:auto!important;transform:none!important;opacity:1!important;appearance:none!important;-webkit-appearance:none!important;min-width:0!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;}
+html:not(#cep-pin-zoom-corner) body .cep-pin-zoom-corner{position:absolute!important;top:0!important;z-index:5;width:28px!important;height:28px!important;display:block!important;pointer-events:auto!important;transform:none!important;opacity:1!important;appearance:none!important;-webkit-appearance:none!important;min-width:0!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;}
 .cep-pin-zoom-out{left:0!important;cursor:zoom-out!important;}
 .cep-pin-zoom-in{right:0!important;cursor:zoom-in!important;}
 .cep-pin-zoom-corner:focus-visible{outline:1px solid var(--cep-pin-ink,var(--theme-ink,#39353a));outline-offset:-3px;}
@@ -94,3 +87,22 @@ html:not(#cep-pin-corner-hit):not(#cep-pin-corner-size) body .cep-home-pin .cep-
 
 /* Let the outer note viewport scroll; never crop each table wrapper separately. */
 html:not(#cep-pin-table-viewport) body .cep-home-pin :is(.cep-search-table-scroll,.cep-source-content,.cep-source-note-content,.cep-source-text,.cep-source-note-text){overflow:visible!important;max-width:none!important;}
+
+/* Quiet card actions; touch devices use a single options menu. */
+.cep-home-pin-tools{position:absolute;right:6px;top:6px;z-index:5;display:flex;align-items:center;}
+html:root body .cep-home-pin-tools>.cep-home-pin-button{opacity:0!important;pointer-events:none;transition:opacity .15s ease;}
+[data-home-pin-available]:hover>.cep-home-pin-tools>.cep-home-pin-button,
+[data-home-pin-available]:focus-within>.cep-home-pin-tools>.cep-home-pin-button{opacity:1!important;pointer-events:auto;}
+html:root body .cep-home-pin-tools>.cep-home-pin-button:focus-visible{opacity:1!important;pointer-events:auto;outline:2px solid currentColor!important;outline-offset:2px;}
+html:root body .cep-home-pin-tools .cep-home-pin-label{display:none!important;}
+html:root body button.cep-home-pin-more{display:none!important;}
+.cep-home-pin-indicator{display:inline-flex!important;vertical-align:middle;margin-left:6px;line-height:1;pointer-events:none;}
+.cep-home-pin-indicator svg{width:12px!important;height:12px!important;display:block!important;}
+html:root body .cep-home-pin-indicator[hidden]{display:none!important;}
+html:root body #cep-home-pin-menu{position:fixed;z-index:2147483647;background:var(--clinical-panel,#fff)!important;color:var(--theme-ink,#39353a)!important;border:1px solid currentColor;border-radius:10px;padding:4px;box-shadow:0 4px 16px #0002;}
+html:root body #cep-home-pin-menu>button{display:block!important;width:auto!important;height:auto!important;min-height:44px!important;margin:0!important;padding:10px 16px!important;border:0!important;border-radius:6px!important;background:transparent!important;box-shadow:none!important;color:inherit!important;font:14px/1.4 sans-serif!important;cursor:pointer;}
+@media (hover:none),(pointer:coarse),(max-width:760px){
+ html:root body .cep-home-pin-tools>.cep-home-pin-button{display:none!important;}
+ html:root body button.cep-home-pin-more{display:inline-flex!important;align-items:center;justify-content:center;width:36px!important;height:36px!important;min-width:0!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--card-ink,var(--theme-ink,#39353a))!important;font:24px/1 sans-serif!important;cursor:pointer;}
+}
+@media print{.cep-home-pin-tools,.cep-home-pin-indicator,#cep-home-pin-menu{display:none!important;}}

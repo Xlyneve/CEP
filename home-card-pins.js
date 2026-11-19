@@ -21,7 +21,6 @@
   const page=(location.pathname.split('/').pop()||'').toLowerCase(), home=page==='home.html';
   if (!home && !sources[page]) return;
   const cacheKey='cep-home-card-pins:v1', layoutKey='cep-home-card-pin-layout:v1';
-  const appearanceKey='cep-home-card-appearance:v1';
   const selector='.cep-search-source,.note-card[data-id],.note-tile[data-id],.chatBubble[data-home-pin-id],.file-item[data-id]';
   const widgets=new Map(), sourceWatches=new Map(), authWatches=new Map();
   let pins=new Map(), readyStore, layer=9000, renderQueued=false, homeUnsubscribe, homeActive=false, lifecycle=0;
@@ -69,53 +68,6 @@
     }
     return id ? {file:source[0],id,key:keyFor(source[0],id),source} : null;
   }
-  function activeTheme() {
-    return document.documentElement.dataset.xlyneveColorTheme || 'original';
-  }
-  function readAppearances() {
-    try { return JSON.parse(localStorage.getItem(appearanceKey) || '{}') || {}; }
-    catch { return {}; }
-  }
-  function isSafeBackgroundImage(value) {
-    return typeof value === 'string' &&
-      /^(?:(?:repeating-)?(?:linear|radial|conic)-gradient\(|none$)/i.test(value) &&
-      !/\b(?:url|image-set|image|paint)\s*\(/i.test(value);
-  }
-  function readCardAppearance(card) {
-    const surface = card.querySelector(':scope > :is(.cep-source-surface,.cep-source-chat,.cep-source-form)') || card;
-    const style = getComputedStyle(surface);
-    const image = style.backgroundImage;
-    return {
-      theme: activeTheme(),
-      backgroundColor: style.backgroundColor,
-      backgroundImage: isSafeBackgroundImage(image) ? image : 'none',
-      color: style.color
-    };
-  }
-  function rememberSourceAppearance(card, key) {
-    const appearances = readAppearances();
-    const appearance = readCardAppearance(card);
-    const byTheme = appearances[key] || {};
-    if (JSON.stringify(byTheme[appearance.theme]) === JSON.stringify(appearance)) return;
-    appearances[key] = {...byTheme, [appearance.theme]: appearance};
-    try { localStorage.setItem(appearanceKey, JSON.stringify(appearances)); } catch {}
-  }
-  function applyCardAppearance(surface, pin) {
-    const theme = activeTheme();
-    const appearance = readAppearances()[pin.key]?.[theme] || pin.entry.appearance;
-    if (appearance?.theme !== theme) return;
-    for (const [property, value] of [['background-color', appearance.backgroundColor], ['color', appearance.color]]) {
-      if (typeof value === 'string' && CSS.supports(property, value)) surface.style.setProperty(property, value, 'important');
-    }
-    const image = appearance.backgroundImage;
-    if (isSafeBackgroundImage(image)) {
-      surface.style.setProperty('background-image', image, 'important');
-    }
-    if (typeof appearance.color === 'string' && CSS.supports('color', appearance.color)) {
-      surface.style.setProperty('--card-ink', appearance.color);
-      surface.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
-    }
-  }
   function snapshot(card, identity) {
     // Search cards retain their original record, avoiding compact preview sizes
     // and temporary search-match highlights in the pinned note.
@@ -130,7 +82,7 @@
     const title=card.querySelector('.note-title,.cep-source-title,.cep-source-note-title,.universal-search-native-title,strong');
     const body=card.querySelector('.note-content,.note-text,.note-display,.cep-source-content,.cep-source-text,.cep-source-note-content,.cep-source-note-text,.cep-xgpt-rich-content,.xgpt-rich-snippet')||card;
     const clone=body.cloneNode(true);
-    clone.querySelectorAll('.cep-home-pin-button,.note-actions,.note-card-controls,.card-controls,.btn-group,.note-icon-actions,.timestamp,button,input,textarea,select,script,style').forEach(node=>node.remove());
+    clone.querySelectorAll('.cep-home-pin-indicator,.cep-home-pin-tools,.note-actions,.note-card-controls,.card-controls,.btn-group,.note-icon-actions,.timestamp,button,input,textarea,select,script,style').forEach(node=>node.remove());
     clone.querySelectorAll('mark.cep-search-match,mark.underlineMatch').forEach(mark=>mark.replaceWith(...mark.childNodes));
     clone.querySelectorAll('[contenteditable]').forEach(node=>node.removeAttribute('contenteditable'));
     const html=cleanHtml(clone.innerHTML), text=body.innerText||clone.textContent||'';
@@ -146,7 +98,7 @@
     return {file:identity.file,id:identity.id,sourceTitle:identity.source[1],title:label,text,displayText:text,richHtml:html,record:{id:identity.id,data}};
   }
   async function pin(card,identity) {
-    const entry={...snapshot(card,identity),appearance:readCardAppearance(card)}, previous=pins.get(identity.key);
+    const entry=snapshot(card,identity), previous=pins.get(identity.key);
     const value={key:identity.key,file:identity.file,sourceId:identity.id,collection:identity.source[2],project:identity.source[3]||mainProject,
       pinnedAt:previous?.pinnedAt||Date.now(),entry};
     const {db,fs}=await store();
@@ -159,30 +111,34 @@
   function updateButton(button) {
       const active=pins.has(button.dataset.pinKey);button.classList.toggle('is-pinned',active);
       button.title=active?'Unpin from Home':'Pin to Home';button.setAttribute('aria-label',button.title);button.setAttribute('aria-pressed',String(active));
-      const label=button.querySelector('.cep-home-pin-label');if(label)label.textContent=button.title;
+      const label=button.querySelector('.cep-home-pin-label');if(label&&label.textContent!==button.title)label.textContent=button.title;
+      const indicator=button.closest('.cep-home-pin-tools')?._indicator;if(indicator)indicator.hidden=!active;
   }
   function updateButtons(){document.querySelectorAll('.cep-home-pin-button').forEach(updateButton);}
   function attach(card) {
-    if(card.matches('.editing-note,.is-editing') || card.closest('[contenteditable="true"]'))return;
+    if(card.querySelector('.cep-home-pin-button') || card.matches('.editing-note,.is-editing') || card.closest('[contenteditable="true"]'))return;
     const identity=identify(card);if(!identity)return;
-    if (!home && !card.matches('.cep-search-source') && pins.has(identity.key)) {
-      requestAnimationFrame(() => {
-        if (card.isConnected && pins.has(identity.key)) rememberSourceAppearance(card, identity.key);
-      });
-    }
-    const actions=card.querySelector('.note-actions,.btn-group,.card-actions,.card-buttons,.card-controls')
-      || (card.matches('.chatBubble')?card.parentElement.querySelector('.note-icon-actions'):null);
-    const existing=[...new Set([...card.querySelectorAll('.cep-home-pin-button'),...(actions?.querySelectorAll('.cep-home-pin-button')||[])])]
-      .filter(button=>button.dataset.pinKey===identity.key);
-    if(existing.length){
-      existing.slice(1).forEach(button=>button.remove());
-      updateButton(existing[0]);
-      return;
-    }
     const button=document.createElement('button');button.type='button';button.className='cep-home-pin-button';
     button.dataset.pinKey=identity.key;button.innerHTML=icon;
-    if(actions){button.classList.add('cep-home-pin-in-menu');const label=document.createElement('span');label.className='cep-home-pin-label';button.append(label);actions.append(button);}
-    else {const surface=card.querySelector(':scope > .cep-source-surface,:scope > .cep-source-chat,:scope > .cep-source-form')||card;surface.dataset.homePinAvailable='true';surface.append(button);}
+    const surface=card.querySelector(':scope > .cep-source-surface,:scope > .cep-source-chat,:scope > .cep-source-form')||card;
+    surface.dataset.homePinAvailable='true';
+    const tools=document.createElement('div');tools.className='cep-home-pin-tools';
+    const more=document.createElement('button');more.type='button';more.className='cep-home-pin-more';more.textContent='⋯';more.setAttribute('aria-label','Note options');more.setAttribute('aria-expanded','false');
+    const label=document.createElement('span');label.className='cep-home-pin-label';button.append(label);
+    tools.append(more,button);surface.append(tools);
+    const title=card.querySelector('.note-title,.cep-source-title,.cep-source-note-title,.universal-search-native-title,strong');
+    const indicator=document.createElement('span');indicator.className='cep-home-pin-indicator';indicator.innerHTML=icon;indicator.title='Pinned to Home';indicator.setAttribute('aria-label','Pinned to Home');
+    if(title)title.append(indicator);else tools.append(indicator);
+    tools._indicator=indicator;
+    more.addEventListener('pointerdown',event=>event.stopPropagation());
+    more.addEventListener('cep-pin-menu',()=>{
+      const open=more.getAttribute('aria-expanded')==='true';closePinMenu();if(open)return;
+      const menu=document.createElement('div');menu.id='cep-home-pin-menu';menu.setAttribute('role','group');menu.setAttribute('aria-label','Note options');
+      const action=document.createElement('button');action.type='button';action.textContent=button.title;
+      action.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();closePinMenu();button.dispatchEvent(new CustomEvent('cep-pin-click'));});
+      menu.append(action);document.body.append(menu);more.setAttribute('aria-expanded','true');
+      const rect=more.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(rect.right-menu.offsetWidth,innerWidth-menu.offsetWidth-8))+'px';menu.style.top=Math.max(8,Math.min(rect.bottom+4,innerHeight-menu.offsetHeight-8))+'px';action.focus();
+    });
     button.addEventListener('cep-pin-click',async event=>{
       event.preventDefault();event.stopPropagation();button.disabled=true;
       try {if(pins.has(identity.key))await unpin(identity.key);else await pin(card,identity);}
@@ -193,7 +149,12 @@
     button.addEventListener('pointerdown',event=>event.stopPropagation());
     updateButton(button);
   }
+  function closePinMenu(){document.getElementById('cep-home-pin-menu')?.remove();document.querySelectorAll('.cep-home-pin-more[aria-expanded="true"]').forEach(el=>el.setAttribute('aria-expanded','false'));}
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'){const trigger=document.querySelector('.cep-home-pin-more[aria-expanded="true"]');closePinMenu();trigger?.focus();}});
   document.addEventListener('click',event=>{
+    const more=event.target.closest('.cep-home-pin-more');
+    if(more){event.preventDefault();event.stopImmediatePropagation();more.dispatchEvent(new CustomEvent('cep-pin-menu'));return;}
+    if(!event.target.closest('#cep-home-pin-menu'))closePinMenu();
     const button=event.target.closest('.cep-home-pin-button');
     if(!button)return;event.preventDefault();event.stopImmediatePropagation();
     // Invoke the button handler after stopping ancestor capture-copy listeners.
@@ -271,7 +232,6 @@
   function applyPinZoom(widget){
     const card=widget.querySelector('.cep-home-pin-card');if(!card)return;
     const scale=innerWidth<=760?1:(widget._zoom||1);
-    card.style.setProperty('--cep-pin-title-inset',innerWidth<=760?'0px':(24/scale)+'px');
     card.style.zoom='1';card.style.transformOrigin='top left';card.style.transform='scale('+scale+')';card.style.width=(100/scale)+'%';card.style.height=(100/scale)+'%';
     for(const button of widget.querySelectorAll('.cep-pin-zoom-corner'))button.title=button.getAttribute('aria-label')+' ('+Math.round((widget._zoom||1)*100)+'%)';
     updatePinOverflow(widget);
@@ -332,7 +292,6 @@
     freezePinTableLayout(card);
     applyPinZoom(widget);
     const surface=card.querySelector('.cep-source-surface,.cep-source-chat,.cep-source-form')||card;
-    applyCardAppearance(surface, pin);
     if(!widget._heightFitted){
       // Measure natural content height once, keeping later manual resizing intact.
       const nodes=[content,card,surface],styles=nodes.map(node=>node.getAttribute('style'));
@@ -514,13 +473,7 @@
   }
   window.addEventListener('storage',event=>{if(event.key===cacheKey){try{pins=new Map(JSON.parse(event.newValue||'[]').map(pin=>[pin.key,pin]));updateButtons();if(home)queueRender();}catch{}}});
   window.addEventListener('cep-search-helpers-ready',()=>{if(home){queueRender();void watchSources();}});
-  window.addEventListener('storage', event => {
-    if (home && event.key === appearanceKey) {
-      for (const widget of widgets.values()) widget._entry = null;
-      queueRender();
-    }
-  });
-  window.addEventListener('cep-theme-css-ready',()=>{if(home){for(const widget of widgets.values())widget._entry=null;queueRender();}else scan(document);});
+  window.addEventListener('cep-theme-css-ready',()=>{if(home){for(const widget of widgets.values())widget._entry=null;queueRender();}});
   window.addEventListener('cep-search-cache-invalidated',()=>{if(home)void watchSources();});
   window.addEventListener('resize',()=>{syncMobilePins();let i=0;for(const [key,widget]of widgets){place(widget,layout()[device()+':'+key],i++);applyPinZoom(widget);}},{passive:true});
   window.addEventListener('pagehide',()=>{homeActive=false;++lifecycle;homeUnsubscribe?.();homeUnsubscribe=null;for(const watch of sourceWatches.values())watch.stop();for(const stop of authWatches.values())stop();sourceWatches.clear();authWatches.clear();});
