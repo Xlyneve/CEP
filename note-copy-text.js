@@ -171,6 +171,19 @@
       toolbar.append(button);
     });
   }
+  let copiedNotice, copiedNoticeTimer;
+  function showCopiedNotice(){
+    clearTimeout(copiedNoticeTimer);
+    if(!copiedNotice?.isConnected){
+      copiedNotice=document.createElement('div');copiedNotice.id='cep-phrase-copy-status';
+      copiedNotice.setAttribute('role','status');copiedNotice.setAttribute('aria-live','polite');copiedNotice.setAttribute('aria-atomic','true');
+      for(const [property,value] of Object.entries({position:'fixed',left:'50%',bottom:'max(22px,env(safe-area-inset-bottom))',transform:'translateX(-50%)','z-index':'2147483647','pointer-events':'none',display:'block',visibility:'visible',opacity:'1',width:'max-content','max-width':'calc(100vw - 32px)'}))copiedNotice.style.setProperty(property,value,'important');
+      const root=copiedNotice.attachShadow({mode:'open'}),style=document.createElement('style'),label=document.createElement('span');
+      style.textContent='span{display:block;padding:9px 16px;border-radius:999px;background:#29292e;color:#fff;box-shadow:0 3px 14px #0002;font:500 13px/1.3 system-ui,sans-serif;letter-spacing:.01em;text-align:center;}';
+      label.textContent='Copied';root.append(style,label);document.body.append(copiedNotice);
+    }
+    copiedNoticeTimer=setTimeout(()=>copiedNotice?.remove(),1600);
+  }
   async function copy(phrase) {
     const text=(phrase.innerText || phrase.textContent).trim();if(!text)return;
     let copied=false;
@@ -181,7 +194,7 @@
     if(!copied) {
       try {await navigator.clipboard.writeText(text);copied=true;}catch(_){}
     }
-    if(copied){phrase.classList.add('cep-phrase-copied');setTimeout(()=>phrase.classList.remove('cep-phrase-copied'),600);}
+    if(copied){hideTip();showCopiedNotice();phrase.classList.add('cep-phrase-copied');setTimeout(()=>phrase.classList.remove('cep-phrase-copied'),600);}
   }
   // Capture before card-copy, table zoom and definition handlers.
   document.addEventListener('click',event=>{
