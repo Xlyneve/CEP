@@ -155,7 +155,7 @@
       closePinMenu();
       const menu=document.createElement('div');menu.id='cep-home-pin-menu';menu.setAttribute('role','group');menu.setAttribute('aria-label','Note options');
       const view=document.createElement('button');view.type='button';view.textContent='View full card';
-      view.onclick=async event=>{event.stopPropagation();closePinMenu();try{const entry=snapshot(card,identity);const helpers=await import('./universal-search-overlay.js?v=55');helpers.openClinicalPinPreview(entry,card);}catch(error){message('Could not open note: '+error.message);}};
+      view.onclick=async event=>{event.stopPropagation();closePinMenu();try{const entry=snapshot(card,identity);const helpers=await import('./universal-search-overlay.js?v=57');helpers.openClinicalPinPreview(entry,card);}catch(error){message('Could not open note: '+error.message);}};
       const action=document.createElement('button');action.type='button';action.textContent=button.title;
       action.onclick=event=>{event.stopPropagation();closePinMenu();button.dispatchEvent(new CustomEvent('cep-pin-click'));};
       // Isolate compact menu actions from theme rules that turn all buttons into raised tiles.
@@ -178,8 +178,10 @@
     if(!card.hasAttribute('tabindex'))card.tabIndex=0;
     card.setAttribute('aria-description','Shift-click to pin or unpin from Home. On touch screens use Note options. Keyboard: Shift+F10.');
     card.setAttribute('aria-keyshortcuts','Shift+F10');
-    // Disable the older clinical-only hold preview for cards using this menu.
-    card.dataset.cepHoldMenu='true';
+    if(card.classList.contains('cep-clinical-search-pin')){
+      card.setAttribute('aria-description','Click to copy. Press and hold, or press Space, to view the full note. Shift-click to pin or unpin from Home.');
+      card.setAttribute('aria-keyshortcuts','Space Shift+F10');
+    }
     button.addEventListener('cep-pin-click',async event=>{
       event.preventDefault();event.stopPropagation();button.disabled=true;
       try {if(pins.has(identity.key))await unpin(identity.key);else await pin(card,identity);}

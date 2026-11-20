@@ -1458,7 +1458,7 @@ function installClinicalPinHold(card, entry, cancelCopy) {
   };
   const begin = event => {
     if(event.isPrimary===false||event.touches?.length>1){clear();return;}
-    if (card.dataset.cepHoldMenu==='true' || interactive(event.target) || (event.button != null && event.button !== 0)) return;
+    if (event.shiftKey || interactive(event.target) || (event.button != null && event.button !== 0)) return;
     clear(); suppressUntil = 0;
     const point = event.touches?.[0] || event; start = {x:point.clientX,y:point.clientY,id:event.pointerId};
     timer = setTimeout(reveal, 500);
@@ -1469,10 +1469,10 @@ function installClinicalPinHold(card, entry, cancelCopy) {
   card.setAttribute('aria-description','Click to copy. Press and hold, or press Space, to read the full note.'); card.setAttribute('aria-keyshortcuts','Space');
   card.addEventListener(window.PointerEvent ? 'pointerdown' : 'touchstart',begin,{passive:true});
   for (const name of ['click','dblclick']) card.addEventListener(name,event => { if (performance.now()<suppressUntil) { event.preventDefault(); event.stopImmediatePropagation(); } },true);
-  card.addEventListener('contextmenu',event => { if (card.dataset.cepHoldMenu!=='true' && !interactive(event.target)) { event.preventDefault(); event.stopPropagation(); if (!clinicalPinPreview) reveal(); } });
+  card.addEventListener('contextmenu',event => { if (!interactive(event.target)) { event.preventDefault(); event.stopPropagation(); if (!clinicalPinPreview) reveal(); } });
   card.addEventListener('dragstart',event => event.preventDefault());
   card.addEventListener('keydown',event => {
-    if (card.dataset.cepHoldMenu==='true' || interactive(event.target)) return;
+    if (interactive(event.target)) return;
     if (event.key === 'Enter') suppressUntil = 0;
     if (event.key === ' ' && !event.repeat) { event.preventDefault(); event.stopPropagation(); reveal(false); }
     if (event.key === 'Escape') clear();
