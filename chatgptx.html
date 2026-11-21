@@ -4377,6 +4377,11 @@ function showDefTip(defText, whyText, imageUrl, caption, x, y, defHtml = '', why
   const tipHtml = renderTip(defText, whyText, imageUrl, caption, defHtml, whyHtml, images);
   if (window.CEPSecurity?.setHTML) window.CEPSecurity.setHTML(defTip, tipHtml);
   else defTip.textContent = [defText, whyText].filter(Boolean).join('\n\n');
+  // Sanitization deliberately strips data attributes; restore captions from the media record.
+  const hoverPhotos=images.length?images:conceptImages({imageUrl,caption});
+  defTip.querySelectorAll('.kbPhotoStrip > img').forEach((image,index)=>{
+    image.dataset.caption=hoverPhotos[index]?.caption??(index===0?caption:'');
+  });
   defTip.querySelectorAll('.kbPhotoStrip').forEach(strip => CEPPhotoGallery.decorate(strip));
   window.CEPSharedDefinitions.appendVideo(defTip,videoUrl);
   defTip.style.display = 'block';
