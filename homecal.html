@@ -1515,14 +1515,12 @@ html:root:not(.homecal-embed-today) body.todo-actions-visible #todoPanel :is(.to
   display:inline-flex!important;align-items:center;justify-content:center;position:static;flex:0 0 26px;width:26px;height:26px;padding:3px!important;margin:0;
   border:0!important;border-radius:50%!important;background:transparent!important;background-image:none!important;box-shadow:none!important;filter:none!important;transform:none!important;color:inherit;cursor:pointer;opacity:.65;box-sizing:border-box;
 }
-html:root body #todoPanel .todo-home-select[aria-pressed="true"] {opacity:1;background:color-mix(in srgb,var(--clinical-accent,#b8a5c9) 30%,transparent)!important;}
+html:root:not(.homecal-embed-today) body.todo-actions-visible #todoPanel .todo-home-select[aria-pressed="true"] {opacity:1!important;background:#2f7d63!important;color:#fff!important;-webkit-text-fill-color:#fff!important;}
 html:root body #todoPanel :is(.todo-home-select,.delete-tag) svg {width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
 html:root body #todoPanel :is(.todo-home-select,.delete-tag):focus-visible,html:root body #todoActionsToggle:focus-visible {outline:2px solid currentColor;outline-offset:2px;}
 html:root body .todo-summary {font:inherit;color:inherit;background:transparent;box-shadow:none;border:0;cursor:pointer;}
 html:root body .todo-summary {text-align:left;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px;}
 html:root body .todo-item[hidden],html:root body .todo-item textarea[hidden],html:root body .todo-summary[hidden],html:root body .todo-home-select[hidden] {display:none!important;}
-html.homecal-embed-today .todo-item {flex-wrap:wrap;}
-html:root.homecal-embed-today body .todo-item textarea {flex:1 0 100%!important;order:5;}
 .home-todo-empty {font-size:12px;padding:12px;}
 .home-todo-empty[hidden] {display:none!important;}
 </style>
@@ -2573,7 +2571,6 @@ function todoActionIcon(button, paths) {
   for (const d of paths) { const path = document.createElementNS(ns,'path'); path.setAttribute('d',d); svg.append(path); }
   button.append(svg);
 }
-const expandedHomeTodos = new Set();
 const todoEmpty = document.createElement('p');
 todoEmpty.className = 'home-todo-empty';
 todoEmpty.textContent = 'No notes selected. Choose what appears here on the Calendar page.';
@@ -2587,11 +2584,8 @@ function syncHomeTodoView(item, todo) {
   pick.setAttribute('aria-pressed', String(selected));
   const summary = item.querySelector('.todo-summary');
   const input = item.querySelector('textarea');
-  summary.textContent = todo.text.split(/\r?\n/).find(line => line.trim()) || 'Untitled note';
-  const expanded = expandedHomeTodos.has(todo.id);
-  summary.hidden = !homeEmbedToday;
-  summary.setAttribute('aria-expanded', String(expanded));
-  input.hidden = homeEmbedToday && !expanded;
+  summary.hidden = true;
+  input.hidden = false;
 }
 const pendingTextareaResizes = new Set();
 let textareaResizeFrame = 0;
@@ -2845,10 +2839,6 @@ function renderTodoItem(id, text, done, priority = false, createdAt = 0) {
 
   const summary = document.createElement('button');
   summary.type = 'button'; summary.className = 'todo-summary';
-  summary.addEventListener('click', () => {
-    if (expandedHomeTodos.has(id)) expandedHomeTodos.delete(id); else expandedHomeTodos.add(id);
-    syncHomeTodoView(item, todoRecords.get(id)); scheduleTextareaResize(input);
-  });
   const homeSelect = document.createElement('button');
   homeSelect.type = 'button'; homeSelect.className = 'todo-home-select';
   todoActionIcon(homeSelect, ['M3 11l9-8 9 8M5 9v12h5v-7h4v7h5V9']);
