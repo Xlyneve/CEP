@@ -567,6 +567,7 @@
   ].join(",");
 
   const cardSelector = [
+    ".message.bot .chatBubble",
     ".note-card",
     ".card",
     ".acc-item",
@@ -631,6 +632,10 @@
       card.style.setProperty("--card-solid", color.solid);
       if (color.outline) card.style.setProperty("--card-outline",color.outline);
       else card.style.removeProperty("--card-outline");
+      if(card.matches('.message.bot .chatBubble')){
+        card.style.setProperty('background','var(--card-solid)','important');
+        card.style.setProperty('color','var(--card-ink)','important');
+      }
       card.dataset.sharedPaletteColor = "true";
     });
   }
