@@ -200,7 +200,7 @@ body.todo-collapsed .todo-container > * {
 }
 
 .todo-title {
-  font-size: clamp(24px, calc(var(--todo-width, 350px) * .14), 48px);
+  font-size: 60px;
   text-align: center;
   margin-bottom: 10px;
   font-family: 'hellohon', cursive;
@@ -1107,7 +1107,7 @@ select option {
 </style>
 
   <link rel="stylesheet" href="site-background.css?v=20260722-4">
-  <script src="page-theme.js?v=20261028-editor-contrast"></script>
+  <script src="page-theme.js?v=20261005-7"></script>
   <link rel="stylesheet" href="homecal-theme.css?v=9">
   <link rel="stylesheet" href="affected-pages-theme.css?v=20260826-3">
   <style>
@@ -1394,13 +1394,13 @@ select option {
       border-radius:14px !important;
     }
     html:root.homecal-embed-today[data-xlyneve-color-theme="soft-stone"] body#homecal-surface #todoPanel #todoList .todo-item {
-      background:var(--stone-surface,#e1e2e6) !important; background-image:none !important;
-      border:1px solid var(--stone-todo-rim,#a9adb4) !important;
+      background:#e1e2e6 !important; background-image:none !important;
+      border:1px solid rgba(255,255,248,.82) !important;
       border-radius:24px !important; box-shadow:var(--stone-raised) !important;
     }
     html:root.homecal-embed-today[data-xlyneve-color-theme="soft-stone"] body#homecal-surface #todoPanel #todoList { padding:10px 12px 32px; gap:14px; }
     html:root.homecal-embed-today[data-xlyneve-color-theme="soft-stone"] body#homecal-surface .day.embedded-selected-day {
-      border:1px solid var(--stone-control-rim,#d8bfd8) !important;
+      border:1px solid rgba(255,255,248,.82) !important;
       border-radius:24px !important; box-shadow:var(--stone-raised) !important;
     }
     html:root.homecal-embed-today[data-xlyneve-color-theme="soft-stone"] body#homecal-surface .calendar-scroll-glass { padding:12px; }
@@ -1505,6 +1505,21 @@ select option {
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
   <script src="content-highlights.js?v=20261001-1" defer></script>
 <script src="typing-spellcheck.js?v=20261002-1" defer></script>
+
+<style>
+.home-todo-tools {display:none;}
+html.homecal-embed-today .home-todo-tools {display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px;flex:none;}
+html:root body .home-todo-tools button,html:root body .todo-home-select,html:root body .todo-summary {font:inherit;color:inherit;background:transparent;box-shadow:none;border:0;cursor:pointer;}
+html:root body .home-todo-tools button {font-size:11px;text-decoration:underline;text-underline-offset:3px;}
+html:root body .todo-home-select {flex:none;font-size:10px;padding:3px 5px;border:1px solid currentColor;border-radius:5px;opacity:.65;}
+html:root body .todo-home-select[aria-pressed="true"] {opacity:1;background:var(--clinical-accent,#e5d9ed);}
+html:root body .todo-summary {text-align:left;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px;}
+html:root body .todo-item[hidden],html:root body .todo-item textarea[hidden],html:root body .todo-summary[hidden],html:root body .todo-home-select[hidden] {display:none!important;}
+html.homecal-embed-today .todo-item {flex-wrap:wrap;}
+html:root.homecal-embed-today body .todo-item textarea {flex:1 0 100%!important;order:5;}
+.home-todo-empty {font-size:12px;padding:12px;}
+.home-todo-empty[hidden] {display:none!important;}
+</style>
 </head>
 
 <body id="homecal-surface">
@@ -1616,6 +1631,7 @@ select option {
  <div class="todo-container" id="todoPanel">
   <div class="todo-title">To-Do List</div>
 
+  <div class="home-todo-tools"><button id="chooseHomeTodos" type="button" aria-pressed="false">Choose notes</button><button id="hideHomeTodos" type="button">Hide to-do</button></div>
   <div class="todo-list" id="todoList"></div>
 
   <button id="embeddedAddToggle" class="embedded-add-toggle" type="button" aria-label="Show add task" aria-expanded="false" aria-controls="todoComposer">+</button>
@@ -2540,6 +2556,34 @@ autoResizeTextarea(newTodo);
 
 const todoRecords = new Map();
 const todoElements = new Map();
+let choosingHomeTodos = false;
+const expandedHomeTodos = new Set();
+const todoEmpty = document.createElement('p');
+todoEmpty.className = 'home-todo-empty';
+todoEmpty.textContent = 'No notes selected. Use Choose notes to show tasks here.';
+function syncHomeTodoView(item, todo) {
+  const selected = !!todo.showOnHome;
+  item.hidden = homeEmbedToday && !choosingHomeTodos && !selected;
+  const pick = item.querySelector('.todo-home-select');
+  pick.hidden = homeEmbedToday && !choosingHomeTodos;
+  pick.textContent = selected ? 'On Home' : 'Show on Home';
+  pick.setAttribute('aria-pressed', String(selected));
+  const summary = item.querySelector('.todo-summary');
+  const input = item.querySelector('textarea');
+  summary.textContent = todo.text.split(/\r?\n/).find(line => line.trim()) || 'Untitled note';
+  const expanded = expandedHomeTodos.has(todo.id);
+  summary.hidden = !homeEmbedToday;
+  summary.setAttribute('aria-expanded', String(expanded));
+  input.hidden = homeEmbedToday && (!expanded || choosingHomeTodos);
+}
+document.getElementById('chooseHomeTodos').addEventListener('click', event => {
+  choosingHomeTodos = !choosingHomeTodos;
+  event.currentTarget.textContent = choosingHomeTodos ? 'Done choosing' : 'Choose notes';
+  event.currentTarget.setAttribute('aria-pressed', String(choosingHomeTodos));
+  for (const [id, item] of todoElements) syncHomeTodoView(item, todoRecords.get(id));
+  refreshTodoOrder();
+});
+document.getElementById('hideHomeTodos').addEventListener('click', () => document.getElementById('embeddedTodoToggle').click());
 const pendingTextareaResizes = new Set();
 let textareaResizeFrame = 0;
 
@@ -2564,6 +2608,10 @@ function sortTodos(a, b) {
 }
 
 function refreshTodoOrder() {
+  if (homeEmbedToday) {
+    todoEmpty.hidden = choosingHomeTodos || [...todoRecords.values()].some(todo => todo.showOnHome);
+    todoListEl.before(todoEmpty);
+  }
   const orderedElements = [...todoRecords.values()]
     .sort(sortTodos)
     .map(todo => todoElements.get(todo.id))
@@ -2587,6 +2635,7 @@ async function addTodo() {
       text: value,
       done: false,
       priority: false,
+      showOnHome: false,
       createdAt: Date.now()
     };
 
@@ -2599,6 +2648,7 @@ async function addTodo() {
 
     try {
       await setDoc(ref, {
+        showOnHome: !!optimisticTodo.showOnHome,
         text: optimisticTodo.text,
         done: false,
         priority: false,
@@ -2687,6 +2737,7 @@ function syncTodoElement(item, todo) {
   if (document.activeElement !== input || input.value === todo.text) {
     input.dataset.lastSavedText = todo.text;
   }
+  syncHomeTodoView(item, todo);
   scheduleTextareaResize(input);
 }
 
@@ -2786,7 +2837,26 @@ function renderTodoItem(id, text, done, priority = false, createdAt = 0) {
     }
   };
 
-  item.append(checkbox, input, deleteTag);
+  const summary = document.createElement('button');
+  summary.type = 'button'; summary.className = 'todo-summary';
+  summary.addEventListener('click', () => {
+    if (choosingHomeTodos) return;
+    if (expandedHomeTodos.has(id)) expandedHomeTodos.delete(id); else expandedHomeTodos.add(id);
+    syncHomeTodoView(item, todoRecords.get(id)); scheduleTextareaResize(input);
+  });
+  const homeSelect = document.createElement('button');
+  homeSelect.type = 'button'; homeSelect.className = 'todo-home-select';
+  homeSelect.title = 'Show this note on the Home calendar';
+  homeSelect.addEventListener('click', async () => {
+    const current = todoRecords.get(id); if (!current) return;
+    const previous = !!current.showOnHome;
+    current.showOnHome = !previous;
+    homeSelect.disabled = true; syncHomeTodoView(item, current); refreshTodoOrder();
+    try { await updateDoc(doc(db, 'todos', id), {showOnHome: current.showOnHome}); }
+    catch (error) { current.showOnHome = previous; syncHomeTodoView(item, current); refreshTodoOrder(); alert('Unable to save the Home selection. Please try again.'); }
+    finally { homeSelect.disabled = false; }
+  });
+  item.append(checkbox, summary, input, homeSelect, deleteTag);
   enableTodoHoldPriority(item, id);
   todoElements.set(id, item);
   syncTodoElement(item, todo);
@@ -2818,6 +2888,7 @@ function loadTodos() {
         text: data.text || '',
         done: !!data.done,
         priority: !!data.priority,
+        showOnHome: !!data.showOnHome,
         createdAt: data.createdAt || 0
       };
       todoRecords.set(id, todo);
@@ -2975,7 +3046,7 @@ if (homeEmbedToday && embeddedTodoToggle) {
     embeddedTodoToggle.textContent = open ? '<<' : '>>';
     embeddedTodoToggle.setAttribute('aria-expanded', String(open));
     embeddedTodoToggle.setAttribute('aria-label', open ? 'Hide to-do list' : 'Show to-do list');
-    if (open) loadTodos();
+    if (open) { loadTodos(); refreshTodoOrder(); }
     window.parent.postMessage({ type:'homecal-embedded-todo', open }, location.origin);
   };
   embeddedTodoToggle.addEventListener('click', () => {

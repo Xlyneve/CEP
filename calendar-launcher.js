@@ -4,7 +4,7 @@
   if (!launchers.length) return;
 
   const fullUrl = "homecal.html";
-  const embeddedUrl = "homecal.html?homeEmbed=today&v=10";
+  const embeddedUrl = "homecal.html?homeEmbed=today&v=11";
   const layoutKey = "xlyneve-calendar-home-layout";
   const openStateKey = "xlyneve-calendar-home-open";
   const todoOpenStateKey = "xlyneve-calendar-home-todo-open";
@@ -29,11 +29,11 @@
       border:0 !important; box-shadow:none !important;
       backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     }
-    .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; touch-action:none; user-select:none; }
-
+    .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; cursor:grab; touch-action:none; user-select:none; }
+    .homepage-calendar-bar:active { cursor:grabbing; }
     .homepage-calendar-bar { position:absolute; top:0; left:0; right:0; height:34px; box-sizing:border-box; z-index:3; opacity:0; pointer-events:none; transform:translateY(-100%); transition:opacity 140ms ease,transform 140ms ease; }
-    .homepage-calendar.toolbar-visible .homepage-calendar-bar { opacity:1; pointer-events:auto; transform:translateY(0); }
-    .homepage-calendar.toolbar-visible iframe { margin-top:34px; }
+    .homepage-calendar:is(.toolbar-visible,.todo-open,.is-minimized) .homepage-calendar-bar { opacity:1; pointer-events:auto; transform:translateY(0); }
+    .homepage-calendar:is(.toolbar-visible,.todo-open) iframe { margin-top:34px; }
     @media (prefers-reduced-motion:reduce) {
       .homepage-calendar-bar { transition:none; }
     }
@@ -50,6 +50,8 @@
     }
     html[data-xlyneve-color-theme] .homepage-calendar-todo { -webkit-text-fill-color:currentColor; }
 
+    .homepage-calendar.is-minimized { height:34px !important; background:var(--clinical-panel,#fff)!important; }
+    .homepage-calendar.is-minimized :is(iframe,.homepage-calendar-resize) { display:none!important; }
     .homepage-calendar-actions { display:flex; align-items:center; gap:4px; }
     .homepage-calendar-day-nav,.homepage-calendar-todo,.homepage-calendar-close { width:25px; height:25px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.58); color:#655b60; cursor:pointer; line-height:1; }
     .homepage-calendar-day-nav { width:20px; background:transparent; color:#fff; font:700 15px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 1px 3px rgba(55,43,50,.38); transition:text-shadow .18s ease; touch-action:manipulation; }
@@ -58,7 +60,7 @@
     .homepage-calendar-todo { background:transparent; color:#ffeb3b; font:700 16px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 0 6px rgba(255,235,59,.95),0 0 12px rgba(255,235,59,.62); }
     .homepage-calendar-close { font-size:17px; }
     .homepage-calendar iframe { display:block; flex:1 1 auto; width:100%; min-height:0; border:0; background:transparent; }
-    .homepage-calendar-resize { position:absolute; z-index:2; right:0; bottom:0; width:28px; height:28px; border:0; background:transparent; cursor:move; touch-action:none; }
+    .homepage-calendar-resize { position:absolute; z-index:2; right:0; bottom:0; width:28px; height:28px; border:0; background:transparent; cursor:nwse-resize; touch-action:none; }
     .homepage-calendar-resize::after { content:""; position:absolute; right:7px; bottom:7px; width:8px; height:8px; border-right:2px solid #aaa; border-bottom:2px solid #aaa; }
     html:root body #homepage-calendar-resize {
       background:transparent !important; background-image:none !important;
@@ -99,7 +101,7 @@
     return null;
   }
   function saveLayout() {
-    if (!panel) return;
+    if (!panel || panel.classList.contains("is-minimized")) return;
     const todoOpen = panel.classList.contains("todo-open");
     if (todoOpen) expandedPanelWidth = panel.offsetWidth;
     const width = todoOpen ? collapsedWidth : panel.offsetWidth;
@@ -139,13 +141,13 @@
     localStorage.removeItem(openStateKey);
     activeLauncher?.focus();
   }
-  function bindPointerHandle(handle) {
+  function bindPointerHandle(handle, resize) {
     let gesture = null;
     handle.addEventListener("pointerdown", event => {
       if (event.button !== 0) return;
       gesture = {
         x:event.screenX, y:event.screenY, left:panel.offsetLeft, top:panel.offsetTop,
-        width:panel.offsetWidth, height:panel.offsetHeight, resize:event.shiftKey
+        width:panel.offsetWidth, height:panel.offsetHeight
       };
       handle.setPointerCapture(event.pointerId);
       event.preventDefault();
@@ -153,7 +155,7 @@
     handle.addEventListener("pointermove", event => {
       if (!gesture) return;
       const dx = event.screenX - gesture.x, dy = event.screenY - gesture.y;
-      if (gesture.resize) {
+      if (resize) {
         panel.style.width = `${Math.min(Math.max(240, gesture.width + dx), innerWidth - panel.offsetLeft - 8)}px`;
         panel.style.height = `${Math.min(Math.max(200, gesture.height + dy), innerHeight - panel.offsetTop - 8)}px`;
         if (panel.classList.contains("todo-open")) expandedPanelWidth = panel.offsetWidth;
@@ -163,6 +165,37 @@
     ["pointerup", "pointercancel", "lostpointercapture"].forEach(name =>
       handle.addEventListener(name, () => { if (gesture) saveLayout(); gesture = null; })
     );
+  }
+  function bindContainerDrag(doc) {
+    let gesture = null;
+    doc.addEventListener("pointerdown", event => {
+      const target = event.target;
+      if (!panel || event.button !== 0 || !event.isPrimary ||
+          !target.matches("body,.calendar-container,.calendar-scroll-glass,.calendar,.day,.day-header,.todo-container,.todo-list") ||
+          target.closest("[contenteditable],button,a,input,textarea,select,.todo-resizer")) return;
+      // Leave the scrollbar gutter available for scrolling.
+      const bounds = target.getBoundingClientRect();
+      if (target.scrollHeight > target.clientHeight && event.clientX >= bounds.left + target.clientLeft + target.clientWidth) return;
+      gesture = { target, id:event.pointerId, x:event.screenX, y:event.screenY,
+        left:panel.offsetLeft, top:panel.offsetTop, moved:false };
+      target.setPointerCapture(event.pointerId);
+    });
+    doc.addEventListener("pointermove", event => {
+      if (!gesture || event.pointerId !== gesture.id || !panel) return;
+      const dx = event.screenX - gesture.x, dy = event.screenY - gesture.y;
+      if (!gesture.moved && Math.hypot(dx, dy) < 8) return;
+      gesture.moved = true;
+      event.preventDefault();
+      movePanel(gesture.left + dx, gesture.top + dy);
+    }, { passive:false });
+    const finish = event => {
+      if (!gesture || event.pointerId !== gesture.id) return;
+      if (gesture.moved) saveLayout();
+      const { target, id } = gesture;
+      gesture = null;
+      if (target.hasPointerCapture(id)) target.releasePointerCapture(id);
+    };
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(type => doc.addEventListener(type, finish));
   }
   function setPanelTodoOpen(open) {
     if (!panel) return;
@@ -248,7 +281,15 @@
       calendarFrame?.postMessage({ type:"homecal-set-todo", open:true }, location.origin);
       calendarFrame?.postMessage({ type:"homecal-add-task" }, location.origin);
     });
-    actions.append(previousDay, nextDay, todo, addTask, close); bar.append(label, actions);
+    const minimise = document.createElement("button"); minimise.type = "button"; minimise.className = "homepage-calendar-close";
+    minimise.textContent = "−"; minimise.setAttribute("aria-label", "Minimise calendar");
+    minimise.addEventListener("pointerdown", event => event.stopPropagation());
+    minimise.addEventListener("click", () => {
+      const minimized = panel.classList.toggle("is-minimized");
+      minimise.textContent = minimized ? "□" : "−";
+      minimise.setAttribute("aria-label", minimized ? "Restore calendar" : "Minimise calendar");
+    });
+    actions.append(previousDay, nextDay, todo, addTask, minimise, close); bar.append(label, actions);
     const restoreTodoOpen = localStorage.getItem(todoOpenStateKey) === "true";
     const frame = document.createElement("iframe"); frame.title = "Today calendar and to-do";
     frame.src = `${embeddedUrl}&todoOpen=${restoreTodoOpen ? "1" : "0"}`;
@@ -257,19 +298,18 @@
     frame.addEventListener("load", () => {
       if (frame.contentDocument) {
         bindToolbarLongPress(frame.contentDocument, toggleToolbar);
-
+        bindContainerDrag(frame.contentDocument);
       }
       const open = localStorage.getItem(todoOpenStateKey) === "true";
       frame.contentWindow?.postMessage({ type: "homecal-set-todo", open }, location.origin);
     });
     const resize = document.createElement("button"); resize.type = "button"; resize.className = "homepage-calendar-resize";
-    resize.setAttribute("aria-label", "Move homepage calendar; hold Shift to resize");
-    resize.title = "Drag to move; Shift-drag to resize";
+    resize.setAttribute("aria-label", "Resize homepage calendar");
     resize.id = "homepage-calendar-resize";
     panel.append(bar, frame, resize); document.body.appendChild(panel);
     restoreLayout();
     setPanelTodoOpen(restoreTodoOpen);
-    bindPointerHandle(resize);
+    bindPointerHandle(bar, false); bindPointerHandle(resize, true);
   }
   window.addEventListener("message", event => {
     if (!panel || event.origin !== location.origin || event.source !== panel.querySelector("iframe")?.contentWindow) return;
