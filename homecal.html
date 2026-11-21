@@ -1528,6 +1528,12 @@ html:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:
   border-radius:12px!important;box-shadow:3px 3px 0 #33322f!important;
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
 }
+
+/* Keep one cursor while the moving divider passes beneath the pointer. */
+html:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.todo-resizing,
+html:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.todo-resizing *,
+html:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.todo-resizing *::before,
+html:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.todo-resizing *::after {cursor:col-resize!important;user-select:none!important;-webkit-user-select:none!important;}
 .home-todo-empty {font-size:12px;padding:12px;}
 .home-todo-empty[hidden] {display:none!important;}
 </style>
@@ -2521,7 +2527,12 @@ if (homeEmbedToday) new ResizeObserver(() => {
   setTodoWidth(todoWidth);
 }).observe(todoPanel);
 
+let todoResizePointer = null;
 todoResizer.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || todoResizePointer !== null) return;
+  event.preventDefault();
+  event.stopPropagation();
+  todoResizePointer = event.pointerId;
   resizeStartX = event.clientX;
   resizeStartWidth = todoWidth;
   draggedTodoDivider = false;
@@ -2529,24 +2540,30 @@ todoResizer.addEventListener('pointerdown', event => {
   document.body.classList.add('todo-resizing');
 });
 
-todoResizer.addEventListener('pointermove', event => {
-  if (!todoResizer.hasPointerCapture(event.pointerId)) return;
+document.addEventListener('pointermove', event => {
+  if (event.pointerId !== todoResizePointer) return;
+  event.preventDefault();
   const movement = resizeStartX - event.clientX;
   if (Math.abs(movement) > 3) draggedTodoDivider = true;
   if (draggedTodoDivider) {
     if (document.body.classList.contains('todo-collapsed')) setTodoCollapsed(false);
     setTodoWidth(resizeStartWidth + movement);
   }
-});
+}, {capture:true, passive:false});
 
-todoResizer.addEventListener('pointerup', event => {
-  if (todoResizer.hasPointerCapture(event.pointerId)) {
-    todoResizer.releasePointerCapture(event.pointerId);
-  }
+function finishTodoResize(event) {
+  if (todoResizePointer === null || (event.pointerId !== undefined && event.pointerId !== todoResizePointer)) return;
+  const pointer = todoResizePointer;
+  todoResizePointer = null;
   document.body.classList.remove('todo-resizing');
+  if (todoResizer.hasPointerCapture(pointer)) todoResizer.releasePointerCapture(pointer);
   if (draggedTodoDivider) setTodoWidth(todoWidth, true);
-  else if (!homeEmbedToday) setTodoCollapsed(!document.body.classList.contains('todo-collapsed'));
-});
+  else if (event.type === 'pointerup' && !homeEmbedToday) setTodoCollapsed(!document.body.classList.contains('todo-collapsed'));
+}
+document.addEventListener('pointerup', finishTodoResize, true);
+document.addEventListener('pointercancel', finishTodoResize, true);
+todoResizer.addEventListener('lostpointercapture', finishTodoResize);
+window.addEventListener('blur', finishTodoResize);
 
 todoResizer.addEventListener('keydown', event => {
   if (!homeEmbedToday && (event.key === 'Enter' || event.key === ' ')) {
