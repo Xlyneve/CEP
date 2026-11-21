@@ -1742,7 +1742,7 @@ html:root:root:root:root:root:root:root:root:root body #formatToolbar :is(#highl
 
 
   <link rel="stylesheet" href="site-background.css">
-  <script src="concept-photo-gallery.js?v=20261003-1"></script>
+  <script src="concept-photo-gallery.js?v=20261121-captions"></script>
   <script src="note-video-links.js?v=20261018-8"></script>
   <script src="page-theme.js?v=20261121-flat-retro-chat"></script>
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
@@ -1913,7 +1913,7 @@ html:root:root:root:root:root:root:root:root:root body #formatToolbar :is(#highl
     <img id="kbPreviewImg" alt="" style="display:block; width:100%; max-height:180px; object-fit:contain; border-radius:12px; border:1px solid rgba(255,255,255,0.5);" />
   </div>
 
-  <input id="kbCaptionInput" type="text" placeholder="Image caption…" style="
+  <input id="kbCaptionInput" type="text" placeholder="Caption for this photo…" aria-label="Caption for photo 1" style="
     width:100%;
     box-sizing:border-box;
     margin-bottom:10px;
@@ -3957,33 +3957,31 @@ function safeStorageName(s) {
 
 // Legacy single-photo records remain readable without migrating saved content.
 function conceptImages(media) {
-  const images = Array.isArray(media?.images) ? media.images.filter(image =>
-    typeof image?.imageUrl === 'string' && image.imageUrl) : [];
-  return images.length ? images : media?.imageUrl
-    ? [{ imageUrl: media.imageUrl, storagePath: media.storagePath || '' }] : [];
+  const images=Array.isArray(media?.images)?media.images.filter(image=>typeof image?.imageUrl==='string'&&image.imageUrl):[];
+  const photos=images.length?images:media?.imageUrl?[{imageUrl:media.imageUrl,storagePath:media.storagePath||''}]:[];
+  return photos.map((image,index)=>({...image,caption:typeof image.caption==='string'?image.caption:(index===0?media?.caption||'':'')}));
 }
-
+let kbPreviewImages=[];
+function applyPhotoCaptions(images,captions){
+  return images.map(image=>Object.prototype.hasOwnProperty.call(captions,image.imageUrl)?{...image,caption:String(captions[image.imageUrl]||'').trim()}:image);
+}
 function setKbPreview(images = [], caption = '') {
-  if (!Array.isArray(images)) images = images ? [{ imageUrl: images }] : [];
-  kbPreviewImg.style.display = 'none';
-  let gallery = document.getElementById('kbPreviewGallery');
-  if (!gallery) {
-    gallery = document.createElement('div');
-    gallery.id = 'kbPreviewGallery';
-    gallery.setAttribute('aria-label', 'Concept photo previews');
-    gallery.style.cssText = 'display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;';
-    kbPreviewImg.after(gallery);
-  }
-  gallery.replaceChildren(...images.map(({ imageUrl }, index) => {
-    const image = document.createElement('img');
-    image.src = imageUrl;
-    image.alt = `Concept photo ${index + 1}`;
-    image.style.cssText = 'width:100%;min-width:0;max-width:100%;height:180px;object-fit:contain;border-radius:12px;flex:0 0 100%;scroll-snap-align:start;';
-    return image;
+  if(!Array.isArray(images))images=images?[{imageUrl:images}]:[];
+  const drafts=new Map(kbPreviewImages.map(image=>[image.imageUrl,image.caption]));
+  kbPreviewImages=images.map((image,index)=>({...image,caption:drafts.has(image.imageUrl)?drafts.get(image.imageUrl):(image.caption??(index===0?caption:''))}));
+  kbPreviewImg.style.display='none';
+  let gallery=document.getElementById('kbPreviewGallery');
+  if(!gallery){gallery=document.createElement('div');gallery.id='kbPreviewGallery';gallery.setAttribute('aria-label','Concept photo previews');gallery.style.cssText='display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;';kbPreviewImg.after(gallery);}
+  gallery.replaceChildren(...kbPreviewImages.map(({imageUrl,caption},index)=>{
+    const image=document.createElement('img');image.src=imageUrl;image.alt=`Concept photo ${index+1}`;image.dataset.caption=caption||'';
+    image.style.cssText='width:100%;min-width:0;max-width:100%;height:180px;object-fit:contain;border-radius:12px;flex:0 0 100%;scroll-snap-align:start;';return image;
   }));
-  CEPPhotoGallery.decorate(gallery, { onOpen: (image, photos) => openZoom(image.src, photos) });
-  kbPreviewWrap.style.display = images.length ? 'block' : 'none';
-  kbCaptionInput.value = caption || '';
+  CEPPhotoGallery.decorate(gallery,{onOpen:(image,photos)=>openZoom(image.src,photos),onChange:index=>{
+    kbCaptionInput.dataset.photoIndex=String(index);kbCaptionInput.value=kbPreviewImages[index]?.caption||'';
+    kbCaptionInput.setAttribute('aria-label',`Caption for photo ${index+1}`);
+    kbCaptionInput.placeholder=`Caption for photo ${index+1}…`;
+  }});
+  kbPreviewWrap.style.display=images.length?'block':'none';kbCaptionInput.disabled=!images.length;
 }
 
 function clearPendingKbImage() {
@@ -4033,7 +4031,7 @@ async function compressImageFile(file, {
   return blob;
 }
 
-async function uploadConceptMedia(concept, files, caption = '') {
+async function uploadConceptMedia(concept, files, captions = {}) {
   const key = mediaKeyForConcept(concept);
   if (!key) throw new Error('Missing concept key');
   await ensureSignedIn();
@@ -4044,16 +4042,16 @@ async function uploadConceptMedia(concept, files, caption = '') {
       paths.push(storagePath);
       const ref = storage.ref().child(storagePath);
       await ref.put(file.blob, { contentType: 'image/jpeg' });
-      uploaded.push({ imageUrl: await ref.getDownloadURL(), storagePath });
+      uploaded.push({ imageUrl: await ref.getDownloadURL(), storagePath, caption:String(file.caption||'').trim() });
     }
     // Append atomically so uploads from another device are not overwritten.
     const doc = db.collection('concept_media').doc(key);
     const record = await db.runTransaction(async transaction => {
       const snapshot = await transaction.get(doc);
-      const images = [...conceptImages(snapshot.data()), ...uploaded];
+      const images = [...applyPhotoCaptions(conceptImages(snapshot.data()),captions), ...uploaded];
       const value = {
         concept: concept.trim(), images, imageUrl: images[0].imageUrl,
-        storagePath: images[0].storagePath || '', caption: caption.trim(),
+        storagePath: images[0].storagePath || '', caption: images[0].caption || '',
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
       transaction.set(doc, value, { merge: true });
@@ -4067,6 +4065,18 @@ async function uploadConceptMedia(concept, files, caption = '') {
     await Promise.allSettled(paths.map(path => storage.ref().child(path).delete()));
     throw error;
   }
+}
+
+async function saveConceptPhotoCaptions(concept,captions){
+  await ensureSignedIn();
+  const doc=db.collection('concept_media').doc(mediaKeyForConcept(concept));
+  const record=await db.runTransaction(async transaction=>{
+    const snapshot=await transaction.get(doc),images=applyPhotoCaptions(conceptImages(snapshot.data()),captions);
+    const value={concept:concept.trim(),images,imageUrl:images[0]?.imageUrl||'',storagePath:images[0]?.storagePath||'',caption:images[0]?.caption||'',updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    transaction.set(doc,value,{merge:true});return value;
+  });
+  conceptMediaCache[mediaKeyForConcept(concept)]=record;
+  window.invalidateCepSearchCache?.('xgpt:media');return record;
 }
 
 async function removeConceptMedia(concept) {
@@ -4232,6 +4242,11 @@ const kbUploadBtn = document.getElementById('kbUploadBtn');
 const kbRemoveBtn = document.getElementById('kbRemoveBtn');
 const kbUploadInput = document.getElementById('kbUploadInput');
 const kbCaptionInput = document.getElementById('kbCaptionInput');
+kbCaptionInput?.addEventListener('input',()=>{
+  const index=Number(kbCaptionInput.dataset.photoIndex||0),photo=kbPreviewImages[index];if(!photo)return;
+  photo.caption=kbCaptionInput.value;
+  const image=document.getElementById('kbPreviewGallery')?.querySelectorAll('img')[index];if(image){image.dataset.caption=photo.caption;const label=image.closest('.cep-photo-gallery')?.querySelector('.cep-photo-caption');if(label){label.textContent=photo.caption;label.hidden=!photo.caption;}}
+});
 const kbPreviewWrap = document.getElementById('kbPreviewWrap');
 const kbPreviewImg = document.getElementById('kbPreviewImg');
 
@@ -4430,8 +4445,8 @@ function renderTip(defText, whyText, imageUrl = '', caption = '', defHtml = '', 
 
   return `
     ${photos.length ? `
-      <div class="kbPhotoStrip" tabindex="0" role="region" aria-label="Concept photos — scroll horizontally">${photos.map((image, index) => `<img class="kbHoverImage" src="${escapeHtml(image.imageUrl)}" alt="Concept photo ${index + 1}">`).join('')}</div>
-      ${capSafe ? `<div class="defLabel tipCaption" style="margin-bottom:8px;">${capSafe}</div>` : ''}
+      <div class="kbPhotoStrip" tabindex="0" role="region" aria-label="Concept photos — scroll horizontally">${photos.map((image, index) => `<img class="kbHoverImage" src="${escapeHtml(image.imageUrl)}" alt="Concept photo ${index + 1}" data-caption="${escapeHtml(image.caption || '')}">`).join('')}</div>
+      ${capSafe && !photos.some(image=>image.caption) ? `<div class="defLabel tipCaption" style="margin-bottom:8px;">${capSafe}</div>` : ''}
     ` : ''}
 
     <div class="defLabel">DEFINITION</div>
@@ -4581,6 +4596,7 @@ function openDefPanel(concept, clientX, clientY) {
   setDefinitionEditorContent(whyBox, getWhyHtml(currentDefConcept), getWhy(currentDefConcept));
   clearPendingKbImage();
 
+  kbPreviewImages=[];
   const existingMedia = getConceptMedia(currentDefConcept);
   setKbPreview(conceptImages(existingMedia), existingMedia?.caption || '');
 
@@ -4643,10 +4659,10 @@ defSaveBtn?.addEventListener('click', async (e) => {
 
   if (!currentDefConcept || preparingKbImages) return;
   const concept = currentDefConcept;
-  const files = [...pendingKbImages];
-  const caption = kbCaptionInput?.value || '';
+  const captions=Object.fromEntries(kbPreviewImages.map(image=>[image.imageUrl,String(image.caption||'').trim()]));
+  const files=pendingKbImages.map(image=>({...image,caption:captions[image.imageUrl]||''}));
   const session = conceptMediaPanelSession;
-  const controls = [kbUploadBtn, kbRemoveBtn, defCloseBtn, defDeleteBtn].filter(Boolean);
+  const controls = [kbUploadBtn, kbRemoveBtn, kbCaptionInput, defCloseBtn, defDeleteBtn].filter(Boolean);
   controls.forEach(control => { control.disabled = true; });
 
   const prev = defSaveBtn.textContent;
@@ -4666,22 +4682,17 @@ defSaveBtn?.addEventListener('click', async (e) => {
     console.log('definition saved');
 
     if (files.length) {
-      const result = await uploadConceptMedia(concept, files, caption);
+      const result = await uploadConceptMedia(concept, files, captions);
       if (session === conceptMediaPanelSession) {
         clearPendingKbImage();
-        setKbPreview(result.images, caption);
+        setKbPreview(result.images);
       }
     } else {
       const existing = getConceptMedia(concept);
       if (existing?.imageUrl) {
         console.log('updating caption only');
 
-        await db.collection('concept_media').doc(mediaKeyForConcept(concept)).set({
-          concept: concept.trim(),
-          caption: caption.trim(),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-        window.invalidateCepSearchCache?.('xgpt:media');
+        await saveConceptPhotoCaptions(concept,captions);
 
         console.log('caption updated');
       }
@@ -4703,6 +4714,7 @@ defSaveBtn?.addEventListener('click', async (e) => {
   } finally {
     defSaveBtn.disabled = false;
     controls.forEach(control => { control.disabled = false; });
+    kbCaptionInput.disabled=!kbPreviewImages.length;
   }
 });
 

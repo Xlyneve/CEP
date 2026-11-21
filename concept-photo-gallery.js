@@ -43,7 +43,7 @@
     const gallery = image.closest('.cep-photo-gallery');
     return gallery ? [...gallery.querySelector('[data-cep-photo-strip]').querySelectorAll(':scope > img')] : [image];
   }
-  function decorate(strip, { onOpen } = {}) {
+  function decorate(strip, { onOpen, onChange } = {}) {
     let state = decorated.get(strip);
     if (!state) {
       const root = document.createElement('div');
@@ -51,13 +51,14 @@
       root.style.cssText = 'min-width:0;max-width:100%;';
       strip.dataset.cepPhotoStrip = 'true';
       strip.before(root); root.appendChild(strip);
+      const caption=document.createElement('div');caption.className='cep-photo-caption';caption.style.cssText='font:inherit;line-height:1.4;white-space:pre-wrap;padding:5px 2px;overflow-wrap:anywhere';root.append(caption);
       let index = 0;
       const photos = () => [...strip.querySelectorAll(':scope > img')];
       const go = next => {
         const images = photos(); if (!images.length) return;
         index = Math.max(0, Math.min(images.length - 1, next));
         strip.scrollTo({ left: images[index].offsetLeft - images[0].offsetLeft, behavior: 'auto' });
-        controls.update(index, images.length);
+        controls.update(index, images.length);caption.textContent=images[index]?.dataset.caption||'';caption.hidden=!caption.textContent;state?.onChange?.(index);
       };
       const controls = navigation(go); root.appendChild(controls.bar);
       strip.addEventListener('scroll', () => {
@@ -67,7 +68,7 @@
           const delta = Math.abs(image.offsetLeft - images[0].offsetLeft - strip.scrollLeft);
           if (delta < distance) { closest = i; distance = delta; }
         });
-        index = closest; controls.update(index, images.length);
+        index = closest; controls.update(index, images.length);caption.textContent=images[index]?.dataset.caption||'';caption.hidden=!caption.textContent;state?.onChange?.(index);
       }, { passive: true });
       root.addEventListener('keydown', event => {
         if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
@@ -79,12 +80,12 @@
         if (!image || !strip.contains(image) || !state.onOpen) return;
         event.preventDefault(); event.stopPropagation(); state.onOpen(image, photos());
       });
-      state = { root, onOpen, refresh: () => {
-        const images = photos(); index = 0; strip.scrollLeft = 0; controls.update(0, images.length);
+      state = { root, onOpen, onChange, refresh: () => {
+        const images = photos(); index = 0; strip.scrollLeft = 0; controls.update(0, images.length);caption.textContent=images[0]?.dataset.caption||'';caption.hidden=!caption.textContent;state?.onChange?.(0);
       } };
       decorated.set(strip, state);
     }
-    state.onOpen = onOpen;
+    state.onOpen = onOpen;state.onChange=onChange;
     state.refresh();
     return state.root;
   }

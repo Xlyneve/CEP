@@ -37,7 +37,7 @@
     link.textContent='Watch here';link.setAttribute('aria-label','Watch video');link.target='_blank';link.rel='noopener noreferrer';
     footer.append(link);container.append(footer);window.CEPNoteVideoLinks?.decorate(footer);return true;
   }
-  const gallerySource=new URL('concept-photo-gallery.js?v=20261003-1',document.currentScript?.src || location.href).href;
+  const gallerySource=new URL('concept-photo-gallery.js?v=20261121-captions',document.currentScript?.src || location.href).href;
   const waitingGalleries=new Set();let galleryLoader;
   function decorateDefinitionGallery(strip) {
     if(window.CEPPhotoGallery){window.CEPPhotoGallery.decorate(strip);return;}
@@ -74,7 +74,7 @@
 
     for (const [index, photo] of images.entries()) {
       const image = document.createElement('img');
-      image.src = photo.imageUrl; image.alt = (record?.concept || 'Concept') + ' — photo ' + (index + 1);
+      image.src = photo.imageUrl; image.dataset.caption=photo.caption??(index===0?media?.caption||'':''); image.alt = (record?.concept || 'Concept') + ' — photo ' + (index + 1);
       image.style.cssText = 'display:block;width:100%;min-width:0;max-width:100%;height:240px;object-fit:contain;border-radius:8px;margin:8px 0;flex:0 0 100%;scroll-snap-align:start';
       image.style.cursor = 'zoom-in'; image.tabIndex=0;
       image.setAttribute('role','button'); image.setAttribute('aria-label','Zoom '+image.alt);
@@ -83,7 +83,7 @@
       strip.append(image);
     }
     if(images.length)decorateDefinitionGallery(strip);
-    if (images.length && media?.caption) { const caption=document.createElement('p'); caption.textContent=media.caption; container.append(caption); }
+
     const video=appendVideo(container,record?.videoUrl);
     return !!(hasDefinition || hasWhy || images.length || video);
   }

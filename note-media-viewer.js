@@ -1,10 +1,6 @@
-import './concept-photo-gallery.js?v=20261003-1';
+import './concept-photo-gallery.js?v=20261121-captions';
 
 function installViewerStyles(){
- if (!document.getElementById('cep-search-table-ui')) {
-  const link = document.createElement('link'); link.id = 'cep-search-table-ui'; link.rel = 'stylesheet';
-  link.href = new URL('./search-table-ui.css?v=20261104-6', import.meta.url).href; document.head.append(link);
- }
  if(document.getElementById('cep-shared-media-viewer-style'))return;
  const style=document.createElement('style');style.id='cep-shared-media-viewer-style';style.textContent=`.cep-search-image-viewer[hidden] { display:none !important; }
 .cep-search-image-viewer {
@@ -107,7 +103,7 @@ html:root:root:root:root:root:root:root:root body .cep-search-image-viewer .cep-
   font-weight:400!important;text-shadow:0 1px 3px #000,0 0 1px #000!important;
 }
 html:root:root:root:root:root:root:root:root body .cep-search-image-viewer {z-index:2147483647!important;}
-html:root:root:root:root:root:root:root:root body .cep-search-table-zoom {z-index:2147483645!important;}
+html:root:root:root:root:root:root:root:root body .cep-search-table-zoom {z-index:2147483644!important;}
 
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-viewport,.cep-search-table-zoom-viewport) {cursor:grab;}
 html:root:root:root:root:root:root:root:root body :is(.cep-search-image-viewer-image,.cep-search-table-zoom-content) {touch-action:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;cursor:grab;}
@@ -211,6 +207,9 @@ function getSearchImageZoomUi() {
   const galleryNav = window.CEPPhotoGallery.navigation(index => { galleryIndex = index; show(gallery[index]); });
   galleryNav.bar.style.cssText += 'position:fixed;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:2147483646;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.65);color:white;';
   panel.appendChild(galleryNav.bar);
+  const galleryCaption=document.createElement('div');galleryCaption.className='cep-image-photo-caption';galleryCaption.hidden=true;
+  galleryCaption.style.cssText='position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:2147483646;max-width:calc(100vw - 40px);padding:7px 12px;border-radius:8px;background:rgba(0,0,0,.75);color:white;font:13px/1.4 system-ui,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none';
+  panel.appendChild(galleryCaption);
   const sizeStage = () => {
     if (!image || !baseWidth || !baseHeight) return;
     const scaledWidth = Math.ceil(baseWidth * scale); const scaledHeight = Math.ceil(baseHeight * scale);
@@ -244,7 +243,7 @@ function getSearchImageZoomUi() {
     cancelDrag(); cancelWheelZoom(); baseWidth = 0; baseHeight = 0;
     image = sourceImage.cloneNode(true); image.removeAttribute('id'); image.className = 'cep-search-image-viewer-image';
     image.removeAttribute('loading'); image.removeAttribute('style'); stage.replaceChildren(image); scale = 1;
-    galleryNav.update(galleryIndex, gallery.length);
+    galleryNav.update(galleryIndex, gallery.length);galleryCaption.textContent=sourceImage.dataset.caption||'';galleryCaption.hidden=!galleryCaption.textContent;
     const currentImage = image;
     const prepare = () => requestAnimationFrame(() => {
       if (root.hidden || image !== currentImage) return;
@@ -308,7 +307,7 @@ let tableZoomUi;
 function getSearchTableZoomUi() {
   if (tableZoomUi?.root?.isConnected) return tableZoomUi;
   installViewerStyles();
-  const root = document.createElement('dialog'); root.className = 'cep-search-table-zoom'; root.hidden = true;
+  const root = document.createElement('div'); root.className = 'cep-search-table-zoom'; root.hidden = true;
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Expanded table');
   const panel = document.createElement('div'); panel.className = 'cep-search-table-zoom-panel';
   const controls = document.createElement('div'); controls.className = 'cep-search-table-zoom-controls';
@@ -316,19 +315,11 @@ function getSearchTableZoomUi() {
   const reset = document.createElement('button'); reset.type = 'button'; reset.textContent = '100%'; reset.title = 'Reset zoom';
   const plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '+'; plus.title = 'Zoom in'; plus.setAttribute('aria-label', 'Zoom in');
   const close = document.createElement('button'); close.type = 'button'; close.className = 'cep-search-table-zoom-close'; close.textContent = '×'; close.title = 'Close'; close.setAttribute('aria-label', 'Close expanded table');
-  const heading = document.createElement('div'); heading.className = 'cep-table-heading';
-  const title = document.createElement('h2'); const details = document.createElement('p'); heading.append(title, details);
-  const fit = document.createElement('button'); fit.type = 'button'; fit.textContent = 'Fit width'; fit.setAttribute('aria-label','Fit table to width');
-  const highlightRows = document.createElement('button'); highlightRows.type = 'button';
-  highlightRows.textContent = 'Highlight rows'; highlightRows.setAttribute('aria-pressed', 'true');
-  highlightRows.title = 'Click a row to highlight it; click again to clear';
-  controls.append(highlightRows, fit, minus, reset, plus);
-  const header = document.createElement('div'); header.className = 'cep-table-viewer-header'; header.append(heading, close);
-  const hint = document.createElement('div'); hint.className = 'cep-table-viewer-hint'; hint.textContent = 'Scroll to view more rows';
+  controls.append(minus, reset, plus, close);
   const viewport = document.createElement('div'); viewport.className = 'cep-search-table-zoom-viewport';
   const stage = document.createElement('div'); stage.className = 'cep-search-table-zoom-stage'; viewport.appendChild(stage);
-  panel.append(header, controls, viewport, hint); root.appendChild(panel); document.body.appendChild(root);
-  let scale = 1; let table; let baseTableWidth = 0; let baseTableHeight = 0; let previousBodyOverflow = ''; let previousFocus;
+  panel.append(controls, viewport); root.appendChild(panel); document.body.appendChild(root);
+  let scale = 1; let table; let baseTableWidth = 0; let baseTableHeight = 0; let previousBodyOverflow = '';
   const sizeStage = () => {
     if (!table) return;
     const width = baseTableWidth || table.scrollWidth || table.getBoundingClientRect().width;
@@ -348,33 +339,18 @@ function getSearchTableZoomUi() {
     const anchorY = point ? point.y - rect.top : viewport.clientHeight / 2;
     const contentX = (viewport.scrollLeft + anchorX - (parseFloat(table.style.left) || 0)) / scale;
     const contentY = (viewport.scrollTop + anchorY - (parseFloat(table.style.top) || 0)) / scale;
-    scale = Math.min(3, Math.max(.2, nextScale)); sizeStage();
+    scale = Math.min(3, Math.max(.5, nextScale)); sizeStage();
     viewport.scrollLeft = contentX * scale + (parseFloat(table.style.left) || 0) - anchorX;
     viewport.scrollTop = contentY * scale + (parseFloat(table.style.top) || 0) - anchorY;
   };
-  const fitToWidth = () => {
-    if (!table) return;
-    const width = Math.max(1, viewport.clientWidth - 2);
-    table.style.setProperty('width', width + 'px', 'important');
-    table.style.setProperty('min-width', width + 'px', 'important');
-    table.style.setProperty('max-width', 'none', 'important');
-    table.style.transform = 'none'; scale = 1;
-    baseTableWidth = table.getBoundingClientRect().width;
-    baseTableHeight = table.scrollHeight;
-    sizeStage(); viewport.scrollTo({left:0,top:0});
-  };
-  // Tables scroll with the wheel; explicit toolbar buttons control zoom.
-  const cancelWheelZoom = () => {};
+  const cancelWheelZoom = installViewerWheelZoom(viewport,
+    () => !root.hidden && !!table && !!baseTableWidth,
+    (factor, point) => setScale(scale * factor, point));
   const closeZoom = () => {
     if (root.hidden) return;
-    cancelDrag(); cancelWheelZoom(); root.close(); root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow; previousFocus?.focus?.({preventScroll:true});
+    cancelDrag(); cancelWheelZoom(); root.hidden = true; stage.replaceChildren(); table = null; document.body.style.overflow = previousBodyOverflow;
   };
   const open = sourceTable => {
-    previousFocus = document.activeElement;
-    const card = sourceTable.closest('.cep-search-source,.universal-search-native-card,.cep-global-search-result');
-    title.textContent = card?.querySelector('.cep-source-title,.cep-source-note-title,.universal-search-native-title,strong')?.textContent.trim() || 'Expanded table';
-    const rowCount = Math.max(0, sourceTable.rows.length - (sourceTable.tHead?.rows.length || 1));
-    details.textContent = rowCount + (rowCount === 1 ? ' row' : ' rows');
     cancelDrag(); cancelWheelZoom(); baseTableWidth = 0; baseTableHeight = 0;
     const sourceRect = sourceTable.getBoundingClientRect(); const sourceStyle = getComputedStyle(sourceTable);
     // Search cards use compact fonts and may also scale their ancestors.
@@ -391,78 +367,48 @@ function getSearchTableZoomUi() {
     const readableFactor = Math.max(1, 16 / bodySize);
     const previewScale = sourceTable.offsetWidth ? sourceRect.width / sourceTable.offsetWidth : 1;
     const dimensionFactor = readableFactor / (previewScale || 1);
-    const naturalWidth = Math.max(880, Math.min(1100, sourceRect.width * dimensionFactor));
+    const naturalWidth = sourceRect.width * dimensionFactor;
     table = sourceTable.cloneNode(true); table.querySelectorAll('[id]').forEach(element => element.removeAttribute('id')); table.removeAttribute('id');
     table.style.setProperty('width', `${naturalWidth}px`, 'important');
     table.style.setProperty('min-width', `${naturalWidth}px`, 'important');
     table.style.setProperty('max-width', `${naturalWidth}px`, 'important');
     table.style.setProperty('zoom', '1', 'important');
-    table.classList.remove('cep-table-compact'); table.removeAttribute('aria-label'); table.removeAttribute('tabindex');
-    table.querySelectorAll('.cep-table-preview-hidden').forEach(row => row.classList.remove('cep-table-preview-hidden'));
-    table.querySelectorAll('colgroup').forEach(group => group.remove());
-    table.style.setProperty('table-layout','auto','important');
-    // Give the expanded display clone a readable, consistent type size.
-    for (const element of [table, ...table.querySelectorAll('*')]) {
-      element.style.setProperty('font-size', '15px', 'important');
-      element.style.setProperty('line-height', '22px', 'important');
-    }
+    // Freeze computed text sizes before moving the clone out of its source CSS.
+    const sourceElements = [sourceTable, ...sourceTable.querySelectorAll('*')];
+    const clonedElements = [table, ...table.querySelectorAll('*')];
+    clonedElements.forEach((element,index)=>{
+      const computed = getComputedStyle(sourceElements[index]);
+      element.style.setProperty('font-size', `${parseFloat(computed.fontSize) * readableFactor}px`, 'important');
+      const lineHeight = parseFloat(computed.lineHeight);
+      if (Number.isFinite(lineHeight)) element.style.setProperty('line-height', `${lineHeight * readableFactor}px`, 'important');
+    });
     table.style.setProperty('font-family', sourceStyle.fontFamily, 'important');
     const sourceCells = [...sourceTable.querySelectorAll('th,td')]; const clonedCells = [...table.querySelectorAll('th,td')];
     clonedCells.forEach((cell, index) => {
       const sourceCell = sourceCells[index]; if (!sourceCell) return;
-      const cellStyle = getComputedStyle(sourceCell);
-      for (const property of ['width','min-width','max-width','height']) cell.style.removeProperty(property);
-      cell.style.setProperty('white-space', 'normal', 'important');
-      cell.style.setProperty('padding', '10px 14px', 'important');
+      const cellRect = sourceCell.getBoundingClientRect(); const cellStyle = getComputedStyle(sourceCell);
+      cell.style.setProperty('width', `${cellRect.width * dimensionFactor}px`, 'important');
+      cell.style.setProperty('min-width', `${cellRect.width * dimensionFactor}px`, 'important');
+      cell.style.setProperty('max-width', `${cellRect.width * dimensionFactor}px`, 'important');
+      cell.style.setProperty('white-space', cellStyle.whiteSpace, 'important');
+      cell.style.setProperty('padding', cellStyle.padding, 'important');
       cell.style.setProperty('text-align', cellStyle.textAlign, 'important');
-      cell.style.setProperty('vertical-align', 'top', 'important');
+      cell.style.setProperty('vertical-align', cellStyle.verticalAlign, 'important');
     });
     // Cloned PN words use the shared delegated preview, including on PN itself.
     table.querySelectorAll('.pn-definition[data-pn-definition]').forEach(word=>word.classList.add('cep-shared-definition'));
-    [...table.rows].forEach((row, index) => {
-      row.classList.remove('cep-table-row-selected'); row.removeAttribute('aria-current');
-      if (index < (table.tHead?.rows.length || 1) || row.parentElement.tagName === 'TFOOT') return;
-      row.dataset.cepHighlightRow = 'true'; row.tabIndex = 0;
-      row.title = 'Click to highlight this row; click again to clear';
-    });
     table.classList.add('cep-search-table-zoom-content'); stage.replaceChildren(table); scale = 1;
-    previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; root.hidden = false; root.showModal();
+    previousBodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; root.hidden = false;
     const currentTable = table;
     requestAnimationFrame(() => {
       if (root.hidden || table !== currentTable) return;
       baseTableWidth = table.getBoundingClientRect().width; baseTableHeight = table.scrollHeight || sourceRect.height * dimensionFactor;
-      fitToWidth(); close.focus();
+      sizeStage(); viewport.scrollTo({ left: 0, top: 0 }); close.focus();
     });
   };
-  const clearRowHighlight = () => {
-    table?.querySelectorAll('.cep-table-row-selected').forEach(row => { row.classList.remove('cep-table-row-selected'); row.removeAttribute('aria-current'); });
-  };
-  const selectRow = row => {
-    if (!row || highlightRows.getAttribute('aria-pressed') !== 'true') return;
-    const wasSelected = row.classList.contains('cep-table-row-selected');
-    clearRowHighlight();
-    if (!wasSelected) { row.classList.add('cep-table-row-selected'); row.setAttribute('aria-current','true'); }
-  };
-  highlightRows.addEventListener('click', () => {
-    const enabled = highlightRows.getAttribute('aria-pressed') !== 'true';
-    highlightRows.setAttribute('aria-pressed', String(enabled));
-    if (!enabled) clearRowHighlight();
-  });
-  viewport.addEventListener('click', event => {
-    if (event.target.closest('a,button,input,select,textarea,.pn-definition,.cep-shared-definition,.cep-xgpt-concept,.xgpt-concept-link')) return;
-    if (window.getSelection()?.toString()) return;
-    selectRow(event.target.closest('tr[data-cep-highlight-row]'));
-  });
-  viewport.addEventListener('keydown', event => {
-    if (event.target.matches('tr[data-cep-highlight-row]') && (event.key === 'Enter' || event.key === ' ')) {
-      event.preventDefault(); event.stopPropagation(); selectRow(event.target);
-    }
-  });
   const cancelDrag = installViewerDrag(viewport, () => table, null, true);
   minus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale - .25); });
   plus.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(scale + .25); });
-  fit.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); fitToWidth(); });
-  root.addEventListener('cancel', event => { event.preventDefault(); closeZoom(); });
   reset.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); setScale(1); });
   close.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); closeZoom(); });
   panel.addEventListener('click', event => event.stopPropagation());
@@ -478,20 +424,7 @@ export function openNoteTableZoom(table) {
 
 export function enableSearchTableZoom(table) {
   if (!table || table.dataset.cepSearchTableZoom === 'true') return;
-  installViewerStyles();
   table.dataset.cepSearchTableZoom = 'true'; table.tabIndex = 0;
-  table.classList.add('cep-table-compact');
-  for (const element of [table, ...table.querySelectorAll('*')]) element.style.setProperty('font-size','12px','important');
-  const rows = [...table.rows]; const headerRows = table.tHead?.rows.length || 1;
-  // Keep merged rows together at the preview boundary.
-  let visible = Math.min(rows.length, headerRows + 6);
-  for (let i = 0; i < visible; i++) for (const cell of rows[i].cells) visible = Math.min(rows.length, Math.max(visible, cell.rowSpan === 0 ? rows.length : i + cell.rowSpan));
-  rows.forEach((row, index) => row.classList.toggle('cep-table-preview-hidden', index >= visible));
-  if (!table.parentElement?.nextElementSibling?.classList.contains('cep-table-preview-footer')) {
-    const footer = document.createElement('div'); footer.className = 'cep-table-preview-footer';
-    const count = document.createElement('span'); count.textContent = Math.max(0,visible-headerRows) + ' of ' + Math.max(0,rows.length-headerRows) + ' rows';
-    footer.append(count); table.parentElement?.after(footer);
-  }
   table.setAttribute('aria-label', 'Open enlarged table');
   const open = event => { event.preventDefault(); event.stopPropagation(); getSearchTableZoomUi().open(table); };
   table.addEventListener('click', open);

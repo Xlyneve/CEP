@@ -220,7 +220,7 @@ const conceptStyle = document.createElement('link');
 conceptStyle.rel = 'stylesheet';
 conceptStyle.href = new URL('./concept-links.css?v=20261004-2', import.meta.url).href;
 document.head.appendChild(conceptStyle);
-import "./concept-photo-gallery.js?v=20261003-1";
+import "./concept-photo-gallery.js?v=20261121-captions";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, getDocs, getDocsFromServer, getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithRedirect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -553,7 +553,7 @@ export async function loadXgptConceptMedia(concept) {
 export function getXgptConceptImages(media) {
   const images = Array.isArray(media?.images) ? media.images.filter(image =>
     typeof image?.imageUrl === 'string' && image.imageUrl) : [];
-  return images.length ? images : media?.imageUrl ? [{ imageUrl: media.imageUrl }] : [];
+  return (images.length?images:media?.imageUrl?[{imageUrl:media.imageUrl}]:[]).map((image,index)=>({...image,caption:typeof image.caption==='string'?image.caption:(index===0?media?.caption||'':'')}));
 }
 
 // Shared by home search, universal search and their concept tooltips.
@@ -566,10 +566,10 @@ export function createXgptPhotoStrip(media, { height = 220, className = '', alt 
   strip.setAttribute('role', 'region');
   strip.setAttribute('aria-label', 'Concept photos — scroll horizontally');
   strip.style.cssText = 'display:flex;gap:8px;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;';
-  images.forEach(({ imageUrl }, index) => {
+  images.forEach(({ imageUrl, caption }, index) => {
     const image = document.createElement('img');
     image.className = className;
-    image.src = imageUrl;
+    image.src = imageUrl;image.dataset.caption=caption||'';
     image.alt = `${alt} ${index + 1}`;
     image.loading = 'lazy';
     image.decoding = 'async';
@@ -636,7 +636,7 @@ export async function searchReferencedXgptConcepts(rawQuery) {
     const details = xgptConceptDefinitions[key] || {};
     const media = xgptConceptMedia[key] || {};
     const searchText = normalizeSearchValue([
-      label, details.definition, details.why, media.caption
+      label, details.definition, details.why, media.caption, ...getXgptConceptImages(media).map(image=>image.caption)
     ].filter(Boolean).join(' '));
     const labelTokens = conceptSearchTokens(label);
     const searchTokens = conceptSearchTokens(searchText);
@@ -706,7 +706,7 @@ export async function renderReferencedXgptConceptResults(container, concepts, te
     });
     const photos = createXgptPhotoStrip(concept, { height: 240, className: 'cep-concept-search-image', alt: concept.caption || concept.label, zoom: true });
     if (photos) card.appendChild(photos);
-    appendSection('Image note', concept.caption);
+    if(!getXgptConceptImages(concept).some(image=>image.caption))appendSection('Image note', concept.caption);
     window.CEPSharedDefinitions.appendVideo(card,concept.videoUrl);
     container.appendChild(card);
     return card;
@@ -1541,7 +1541,7 @@ function installXgptMediaUi() {
     const parts = [];
     const photos = createXgptPhotoStrip(getCachedXgptConceptMedia(concept) || { imageUrl: link.dataset.image }, { alt: concept, zoom: true });
     if (photos) parts.push(photos);
-    if (link.dataset.caption) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
+    if (link.dataset.caption && !getXgptConceptImages(getCachedXgptConceptMedia(concept)).some(image=>image.caption)) { const caption = document.createElement('div'); caption.className = 'cep-xgpt-media-caption'; caption.textContent = link.dataset.caption; parts.push(caption); }
     const appendSection = (labelText, bodyText, bodyHtml) => {
       if (!bodyText && !bodyHtml) return;
       const section = document.createElement('div'); section.className = 'cep-xgpt-media-section';
