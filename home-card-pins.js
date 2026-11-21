@@ -176,10 +176,10 @@
     more.addEventListener('pointerdown',event=>event.stopPropagation());
     card.addEventListener('keydown',event=>{if(event.target===card&&event.shiftKey&&event.key==='F10'){event.preventDefault();event.stopImmediatePropagation();showMenu();}},true);
     if(!card.hasAttribute('tabindex'))card.tabIndex=0;
-    card.setAttribute('aria-description','Shift-click to pin or unpin from Home. On touch screens use Note options. Keyboard: Shift+F10.');
+    card.setAttribute('aria-description','Shift-click outside concept links to pin or unpin from Home. On touch screens use Note options. Keyboard: Shift+F10.');
     card.setAttribute('aria-keyshortcuts','Shift+F10');
     if(card.classList.contains('cep-clinical-search-pin')){
-      card.setAttribute('aria-description','Click to copy. Press and hold, or press Space, to view the full note. Shift-click to pin or unpin from Home.');
+      card.setAttribute('aria-description','Click to copy. Press and hold, or press Space, to view the full note. Shift-click outside concept links to pin or unpin from Home.');
       card.setAttribute('aria-keyshortcuts','Space Shift+F10');
     }
     button.addEventListener('cep-pin-click',async event=>{
@@ -195,6 +195,8 @@
   // Window capture runs before card-copy handlers and the search backdrop.
   window.addEventListener('click',event=>{
     if(!event.shiftKey||event.button!==0||!(event.target instanceof Element))return;
+    // Authored [[concept]] links keep their own Shift-click action, including nested labels.
+    if(event.target.closest('a.conceptLink,.cep-xgpt-concept,.xgpt-concept-link,[data-concept]'))return;
     if(event.target.closest('button,input,textarea,select,[contenteditable="true"],.editing-note,.is-editing,#cep-home-pin-menu'))return;
     const card=event.target.closest(selector),toggle=card&&cardPinActions.get(card);
     if(!toggle)return;event.preventDefault();event.stopImmediatePropagation();toggle();
