@@ -1507,12 +1507,18 @@ select option {
 <script src="typing-spellcheck.js?v=20261002-1" defer></script>
 
 <style>
-.home-todo-tools {display:none;}
-html.homecal-embed-today .home-todo-tools {display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px;flex:none;}
-html:root body .home-todo-tools button,html:root body .todo-home-select,html:root body .todo-summary {font:inherit;color:inherit;background:transparent;box-shadow:none;border:0;cursor:pointer;}
-html:root body .home-todo-tools button {font-size:11px;text-decoration:underline;text-underline-offset:3px;}
-html:root body .todo-home-select {flex:none;font-size:10px;padding:3px 5px;border:1px solid currentColor;border-radius:5px;opacity:.65;}
-html:root body .todo-home-select[aria-pressed="true"] {opacity:1;background:var(--clinical-accent,#e5d9ed);}
+html:root body #todoActionsToggle {appearance:none;background:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;color:inherit;padding:0;cursor:pointer;align-self:center;}
+html:root body #todoActionsToggle span {font:16px system-ui;opacity:.55;margin-left:5px;}
+html:root body .todo-home-select,html:root body .todo-summary {font:inherit;color:inherit;background:transparent;box-shadow:none;border:0;cursor:pointer;}
+html:root body #todoPanel .todo-home-select,html:root body #todoPanel .delete-tag {display:none!important;}
+html:root:not(.homecal-embed-today) body.todo-actions-visible #todoPanel :is(.todo-home-select,.delete-tag) {
+  display:inline-flex!important;align-items:center;justify-content:center;position:static;flex:0 0 26px;width:26px;height:26px;padding:3px!important;margin:0;
+  border:0!important;border-radius:50%!important;background:transparent!important;background-image:none!important;box-shadow:none!important;filter:none!important;transform:none!important;color:inherit;cursor:pointer;opacity:.65;box-sizing:border-box;
+}
+html:root body #todoPanel .todo-home-select[aria-pressed="true"] {opacity:1;background:color-mix(in srgb,var(--clinical-accent,#b8a5c9) 30%,transparent)!important;}
+html:root body #todoPanel :is(.todo-home-select,.delete-tag) svg {width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+html:root body #todoPanel :is(.todo-home-select,.delete-tag):focus-visible,html:root body #todoActionsToggle:focus-visible {outline:2px solid currentColor;outline-offset:2px;}
+html:root body .todo-summary {font:inherit;color:inherit;background:transparent;box-shadow:none;border:0;cursor:pointer;}
 html:root body .todo-summary {text-align:left;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px;}
 html:root body .todo-item[hidden],html:root body .todo-item textarea[hidden],html:root body .todo-summary[hidden],html:root body .todo-home-select[hidden] {display:none!important;}
 html.homecal-embed-today .todo-item {flex-wrap:wrap;}
@@ -1629,9 +1635,8 @@ html:root.homecal-embed-today body .todo-item textarea {flex:1 0 100%!important;
 <div class="todo-resizer" id="todoResizer" role="separator" aria-label="Resize or collapse to-do list" aria-orientation="vertical" aria-controls="todoPanel" tabindex="0" title="Drag to resize; click to minimize"></div>
 
  <div class="todo-container" id="todoPanel">
-  <div class="todo-title">To-Do List</div>
+  <button class="todo-title" id="todoActionsToggle" type="button" aria-label="Show to-do actions" aria-expanded="false">To-Do List <span aria-hidden="true">⋯</span></button>
 
-  <div class="home-todo-tools"><button id="chooseHomeTodos" type="button" aria-pressed="false">Choose notes</button><button id="hideHomeTodos" type="button">Hide to-do</button></div>
   <div class="todo-list" id="todoList"></div>
 
   <button id="embeddedAddToggle" class="embedded-add-toggle" type="button" aria-label="Show add task" aria-expanded="false" aria-controls="todoComposer">+</button>
@@ -2556,17 +2561,29 @@ autoResizeTextarea(newTodo);
 
 const todoRecords = new Map();
 const todoElements = new Map();
-let choosingHomeTodos = false;
+const todoActionsToggle = document.getElementById('todoActionsToggle');
+todoActionsToggle.addEventListener('click', () => {
+  const open = document.body.classList.toggle('todo-actions-visible');
+  todoActionsToggle.setAttribute('aria-expanded', String(open));
+  todoActionsToggle.setAttribute('aria-label', open ? 'Hide to-do actions' : 'Show to-do actions');
+});
+function todoActionIcon(button, paths) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('aria-hidden','true');
+  for (const d of paths) { const path = document.createElementNS(ns,'path'); path.setAttribute('d',d); svg.append(path); }
+  button.append(svg);
+}
 const expandedHomeTodos = new Set();
 const todoEmpty = document.createElement('p');
 todoEmpty.className = 'home-todo-empty';
-todoEmpty.textContent = 'No notes selected. Use Choose notes to show tasks here.';
+todoEmpty.textContent = 'No notes selected. Choose what appears here on the Calendar page.';
 function syncHomeTodoView(item, todo) {
   const selected = !!todo.showOnHome;
-  item.hidden = homeEmbedToday && !choosingHomeTodos && !selected;
+  item.hidden = homeEmbedToday && !selected;
   const pick = item.querySelector('.todo-home-select');
-  pick.hidden = homeEmbedToday && !choosingHomeTodos;
-  pick.textContent = selected ? 'On Home' : 'Show on Home';
+  pick.hidden = homeEmbedToday;
+  pick.title = selected ? 'Remove from Home' : 'Show on Home';
+  pick.setAttribute('aria-label', pick.title);
   pick.setAttribute('aria-pressed', String(selected));
   const summary = item.querySelector('.todo-summary');
   const input = item.querySelector('textarea');
@@ -2574,16 +2591,8 @@ function syncHomeTodoView(item, todo) {
   const expanded = expandedHomeTodos.has(todo.id);
   summary.hidden = !homeEmbedToday;
   summary.setAttribute('aria-expanded', String(expanded));
-  input.hidden = homeEmbedToday && (!expanded || choosingHomeTodos);
+  input.hidden = homeEmbedToday && !expanded;
 }
-document.getElementById('chooseHomeTodos').addEventListener('click', event => {
-  choosingHomeTodos = !choosingHomeTodos;
-  event.currentTarget.textContent = choosingHomeTodos ? 'Done choosing' : 'Choose notes';
-  event.currentTarget.setAttribute('aria-pressed', String(choosingHomeTodos));
-  for (const [id, item] of todoElements) syncHomeTodoView(item, todoRecords.get(id));
-  refreshTodoOrder();
-});
-document.getElementById('hideHomeTodos').addEventListener('click', () => document.getElementById('embeddedTodoToggle').click());
 const pendingTextareaResizes = new Set();
 let textareaResizeFrame = 0;
 
@@ -2609,7 +2618,7 @@ function sortTodos(a, b) {
 
 function refreshTodoOrder() {
   if (homeEmbedToday) {
-    todoEmpty.hidden = choosingHomeTodos || [...todoRecords.values()].some(todo => todo.showOnHome);
+    todoEmpty.hidden = [...todoRecords.values()].some(todo => todo.showOnHome);
     todoListEl.before(todoEmpty);
   }
   const orderedElements = [...todoRecords.values()]
@@ -2685,10 +2694,7 @@ function enableTodoHoldPriority(item, id) {
     cancelHold();
     holdTimer = setTimeout(async () => {
       holdTimer = null;
-      if (done) {
-        item.classList.toggle('delete-confirming');
-        return;
-      }
+      if (done) return;
 
       const previousPriority = !!currentTodo?.priority;
       const priority = !previousPriority;
@@ -2816,9 +2822,9 @@ function renderTodoItem(id, text, done, priority = false, createdAt = 0) {
   const deleteTag = document.createElement('button');
   deleteTag.type = 'button';
   deleteTag.className = 'delete-tag';
-  deleteTag.textContent = '🗑️';
-  deleteTag.title = 'Delete completed task';
-  deleteTag.setAttribute('aria-label', 'Delete completed task');
+  todoActionIcon(deleteTag, ['M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7']);
+  deleteTag.title = 'Delete note';
+  deleteTag.setAttribute('aria-label', 'Delete note');
   deleteTag.onclick = async () => {
     const deletedTodo = todoRecords.get(id);
     if (!deletedTodo) return;
@@ -2840,13 +2846,12 @@ function renderTodoItem(id, text, done, priority = false, createdAt = 0) {
   const summary = document.createElement('button');
   summary.type = 'button'; summary.className = 'todo-summary';
   summary.addEventListener('click', () => {
-    if (choosingHomeTodos) return;
     if (expandedHomeTodos.has(id)) expandedHomeTodos.delete(id); else expandedHomeTodos.add(id);
     syncHomeTodoView(item, todoRecords.get(id)); scheduleTextareaResize(input);
   });
   const homeSelect = document.createElement('button');
   homeSelect.type = 'button'; homeSelect.className = 'todo-home-select';
-  homeSelect.title = 'Show this note on the Home calendar';
+  todoActionIcon(homeSelect, ['M3 11l9-8 9 8M5 9v12h5v-7h4v7h5V9']);
   homeSelect.addEventListener('click', async () => {
     const current = todoRecords.get(id); if (!current) return;
     const previous = !!current.showOnHome;
