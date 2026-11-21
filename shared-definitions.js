@@ -33,9 +33,14 @@
     let url;try{url=new URL(rawUrl);}catch{return false;}
     if(!['https:','http:'].includes(url.protocol))return false;
     const footer=document.createElement('div');
-    const link=document.createElement('a');link.href=url.href;link.className='cep-note-video-link';
-    link.textContent='Watch here';link.setAttribute('aria-label','Watch video');link.target='_blank';link.rel='noopener noreferrer';
-    footer.append(link);container.append(footer);window.CEPNoteVideoLinks?.decorate(footer);return true;
+    const video=window.CEPNoteVideoLinks?.kind(url.href) || (!window.CEPNoteVideoLinks && (/\.(?:mp4|webm|mov|m4v|ogv)$/i.test(url.pathname) || /^(?:www\.)?(?:youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com|fb\.watch)$/.test(url.hostname)));
+    const link=document.createElement('a');link.href=url.href;
+    link.className=video?'cep-note-video-link':'cep-concept-website-link';
+    link.textContent=video?'Watch here':'Open website — '+url.hostname.replace(/^www\./,'');
+    link.setAttribute('aria-label',video?'Watch video':'Open website: '+url.hostname);
+    link.title=url.href;link.target='_blank';link.rel='noopener noreferrer';
+    if(!video)link.style.cssText='display:inline-block;margin:8px 0;color:inherit;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;';
+    footer.append(link);container.append(footer);if(video)window.CEPNoteVideoLinks?.decorate(footer);return true;
   }
   const gallerySource=new URL('concept-photo-gallery.js?v=20261121-captions',document.currentScript?.src || location.href).href;
   const waitingGalleries=new Set();let galleryLoader;
