@@ -208,7 +208,7 @@ function getSearchImageZoomUi() {
   galleryNav.bar.style.cssText += 'position:fixed;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:2147483646;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.65);color:white;';
   panel.appendChild(galleryNav.bar);
   const galleryCaption=document.createElement('div');galleryCaption.className='cep-image-photo-caption';galleryCaption.hidden=true;
-  galleryCaption.style.cssText='position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:2147483646;max-width:calc(100vw - 40px);padding:7px 12px;border-radius:8px;background:rgba(0,0,0,.75);color:white;font:13px/1.4 system-ui,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none';
+  galleryCaption.style.cssText='position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:2147483646;max-width:calc(100vw - 40px);padding:9px 14px;border-radius:8px;background:rgba(0,0,0,.75);color:white;font:500 14px/1.5 system-ui,sans-serif;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none';
   panel.appendChild(galleryCaption);
   const sizeStage = () => {
     if (!image || !baseWidth || !baseHeight) return;

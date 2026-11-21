@@ -51,7 +51,7 @@
       root.style.cssText = 'min-width:0;max-width:100%;';
       strip.dataset.cepPhotoStrip = 'true';
       strip.before(root); root.appendChild(strip);
-      const caption=document.createElement('div');caption.className='cep-photo-caption';caption.style.cssText='font:inherit;line-height:1.4;white-space:pre-wrap;padding:5px 2px;overflow-wrap:anywhere';root.append(caption);
+      const caption=document.createElement('div');caption.className='cep-photo-caption';caption.style.cssText='font:500 14px/1.5 system-ui,sans-serif!important;white-space:pre-wrap;padding:8px 12px;margin:6px 0;border-radius:8px;text-align:center;color:var(--theme-ink,#333)!important;background:color-mix(in srgb,var(--clinical-accent,#c2acd0) 14%,transparent);overflow-wrap:anywhere';root.append(caption);
       let index = 0;
       const photos = () => [...strip.querySelectorAll(':scope > img')];
       const go = next => {
