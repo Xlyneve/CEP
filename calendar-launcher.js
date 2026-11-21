@@ -16,6 +16,7 @@
   let expandedPanelWidth = 0;
   let hoverTimer = null;
   let closeTimer = null;
+  let toolbarTimer = null;
 
   const style = document.createElement("style");
   style.textContent = `
@@ -32,8 +33,8 @@
     .homepage-calendar-bar { display:flex; flex:0 0 34px; align-items:center; justify-content:space-between; padding:0 7px 0 12px; color:#554951; font:700 11px/1 system-ui; cursor:grab; touch-action:none; user-select:none; }
     .homepage-calendar-bar:active { cursor:grabbing; }
     .homepage-calendar-bar { position:absolute; top:0; left:0; right:0; height:34px; box-sizing:border-box; z-index:3; opacity:0; pointer-events:none; transform:translateY(-100%); transition:opacity 140ms ease,transform 140ms ease; }
-    .homepage-calendar:is(.toolbar-visible,.todo-open,.is-minimized) .homepage-calendar-bar { opacity:1; pointer-events:auto; transform:translateY(0); }
-    .homepage-calendar:is(.toolbar-visible,.todo-open) iframe { margin-top:34px; }
+    .homepage-calendar:is(.toolbar-visible,.is-minimized) .homepage-calendar-bar { opacity:1; pointer-events:auto; transform:translateY(0); }
+    .homepage-calendar.toolbar-visible iframe { margin-top:34px; }
     @media (prefers-reduced-motion:reduce) {
       .homepage-calendar-bar { transition:none; }
     }
@@ -73,6 +74,16 @@
   `;
   document.head.appendChild(style);
 
+  function showToolbar() {
+    if (!panel) return;
+    clearTimeout(toolbarTimer);
+    panel.classList.add("toolbar-visible");
+    toolbarTimer = setTimeout(() => {
+      if (!panel || panel.classList.contains("is-minimized")) return;
+      if (panel.querySelector(".homepage-calendar-bar:active")) { showToolbar(); return; }
+      panel.classList.remove("toolbar-visible");
+    }, 5000);
+  }
   function bindToolbarLongPress(doc, toggle) {
     let timer = null, start = null, activated = false;
     const cancel = () => { clearTimeout(timer); timer = null; start = null; };
@@ -135,6 +146,7 @@
     movePanel(layout.x, layout.y);
   }
   function closePanel() {
+    clearTimeout(toolbarTimer);
     saveLayout();
     panel?.remove();
     panel = null;
@@ -201,6 +213,7 @@
     if (!panel) return;
     const isOpen = panel.classList.contains("todo-open");
     if (open !== isOpen) {
+      showToolbar();
       const rightEdge = panel.offsetLeft + panel.offsetWidth;
       if (open) {
         collapsedWidth = panel.offsetWidth;
@@ -286,6 +299,7 @@
     minimise.addEventListener("pointerdown", event => event.stopPropagation());
     minimise.addEventListener("click", () => {
       const minimized = panel.classList.toggle("is-minimized");
+      showToolbar();
       minimise.textContent = minimized ? "□" : "−";
       minimise.setAttribute("aria-label", minimized ? "Restore calendar" : "Minimise calendar");
     });
@@ -293,7 +307,10 @@
     const restoreTodoOpen = localStorage.getItem(todoOpenStateKey) === "true";
     const frame = document.createElement("iframe"); frame.title = "Today calendar and to-do";
     frame.src = `${embeddedUrl}&todoOpen=${restoreTodoOpen ? "1" : "0"}`;
-    const toggleToolbar = () => panel?.classList.toggle("toolbar-visible");
+    const toggleToolbar = showToolbar;
+    bar.addEventListener("pointerdown", showToolbar, true);
+    bar.addEventListener("focusin", showToolbar);
+    bar.addEventListener("click", showToolbar);
     bindToolbarLongPress(panel, toggleToolbar);
     frame.addEventListener("load", () => {
       if (frame.contentDocument) {
@@ -308,6 +325,7 @@
     resize.id = "homepage-calendar-resize";
     panel.append(bar, frame, resize); document.body.appendChild(panel);
     restoreLayout();
+    showToolbar();
     setPanelTodoOpen(restoreTodoOpen);
     bindPointerHandle(bar, false); bindPointerHandle(resize, true);
   }
