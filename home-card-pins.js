@@ -382,66 +382,33 @@
     updatePinOverflow(widget);
     widget.style.setProperty('--cep-pin-ink',getComputedStyle(surface).color);
   }
-  let mobileControl,mobilePanel,mobileList,mobileBody,mobileOpen=false,mobileSelected=null,mobileDragged=false;
+  let mobilePanel,mobileBody;
   const mobilePins=()=>innerWidth<=760;
-  function positionMobilePins(){
-    if(!mobileControl)return;
-    let saved;try{saved=JSON.parse(localStorage.getItem('cep-home-pin-control:v1')||'null');}catch{}
-    const left=Math.max(8,Math.min(saved?.left??innerWidth-66,innerWidth-60));
-    const top=Math.max(8,Math.min(saved?.top??innerHeight-150,innerHeight-60));
-    Object.assign(mobileControl.style,{left:left+'px',top:top+'px'});
-    if(mobilePanel){const height=mobilePanel.offsetHeight;Object.assign(mobilePanel.style,{left:Math.max(8,Math.min(left,innerWidth-Math.min(360,innerWidth-16)-8))+'px',top:Math.max(8,Math.min(top+60,innerHeight-height-8))+'px'});}
-  }
-  function setMobilePinsOpen(open){
-    mobileOpen=!!open;mobilePanel.hidden=!mobileOpen;
-    mobileControl.setAttribute('aria-expanded',String(mobileOpen));
-    mobileControl.setAttribute('aria-label',mobileOpen?'Close pinned notes':'Open pinned notes');
-    positionMobilePins();
-  }
   function syncMobilePins(){
     if(!home||!document.body)return;
     const mobile=mobilePins();
-    if(!mobileControl){
-      mobileControl=document.createElement('button');mobileControl.id='cep-home-pin-control';mobileControl.type='button';mobileControl.innerHTML=icon;mobileControl.setAttribute('aria-label','Open pinned notes');mobileControl.setAttribute('aria-expanded','false');mobileControl.setAttribute('aria-controls','cep-home-pin-panel');mobileControl.title='Pinned notes — drag to move';
-      mobilePanel=document.createElement('section');mobilePanel.id='cep-home-pin-panel';mobilePanel.hidden=true;mobilePanel.setAttribute('aria-label','Pinned notes');
-      const header=document.createElement('div');header.className='cep-pin-panel-header';const title=document.createElement('span');title.textContent='Pinned notes';
-      const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label','Close pinned notes');close.onclick=()=>{setMobilePinsOpen(false);mobileControl.focus();};header.append(title,close);
-      mobileList=document.createElement('div');mobileList.className='cep-pin-panel-list';mobileBody=document.createElement('div');mobileBody.className='cep-pin-panel-body';mobilePanel.append(header,mobileList,mobileBody);document.body.append(mobileControl,mobilePanel);
-      mobileControl.onclick=()=>{if(mobileDragged){mobileDragged=false;return;}setMobilePinsOpen(!mobileOpen);};
-      mobileControl.addEventListener('pointerdown',event=>{
-        if(event.button!==0)return;mobileDragged=false;mobileControl.setPointerCapture(event.pointerId);
-        const start={x:event.clientX,y:event.clientY,left:mobileControl.offsetLeft,top:mobileControl.offsetTop};
-        const move=e=>{if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>6)mobileDragged=true;if(!mobileDragged)return;
-          Object.assign(mobileControl.style,{left:Math.max(8,Math.min(start.left+e.clientX-start.x,innerWidth-60))+'px',top:Math.max(8,Math.min(start.top+e.clientY-start.y,innerHeight-60))+'px'});
-        };
-        const stop=()=>{mobileControl.removeEventListener('pointermove',move);mobileControl.removeEventListener('pointerup',stop);mobileControl.removeEventListener('pointercancel',stop);if(mobileDragged){try{localStorage.setItem('cep-home-pin-control:v1',JSON.stringify({left:mobileControl.offsetLeft,top:mobileControl.offsetTop}));}catch{}positionMobilePins();}};
-        mobileControl.addEventListener('pointermove',move);mobileControl.addEventListener('pointerup',stop);mobileControl.addEventListener('pointercancel',stop);
-      });
-      mobileControl.addEventListener('keydown',event=>{if(!event.key.startsWith('Arrow'))return;event.preventDefault();const step=event.shiftKey?25:10;const left=Math.max(8,Math.min(mobileControl.offsetLeft+(event.key==='ArrowRight'?step:event.key==='ArrowLeft'?-step:0),innerWidth-60)),top=Math.max(8,Math.min(mobileControl.offsetTop+(event.key==='ArrowDown'?step:event.key==='ArrowUp'?-step:0),innerHeight-60));try{localStorage.setItem('cep-home-pin-control:v1',JSON.stringify({left,top}));}catch{}positionMobilePins();});
-      document.addEventListener('pointerdown',event=>{if(mobileOpen&&!mobilePanel.contains(event.target)&&!mobileControl.contains(event.target))setMobilePinsOpen(false);});
-      document.addEventListener('keydown',event=>{if(event.key==='Escape'&&mobileOpen){setMobilePinsOpen(false);mobileControl.focus();}});
+    if(!mobilePanel){
+      mobilePanel=document.createElement('section');mobilePanel.id='cep-home-pin-panel';mobilePanel.className='cep-pins-bottom';mobilePanel.setAttribute('aria-labelledby','cep-pins-bottom-title');
+      const title=document.createElement('h2');title.id='cep-pins-bottom-title';title.textContent='Pinned notes';
+      mobileBody=document.createElement('div');mobileBody.className='cep-pin-panel-body';mobilePanel.append(title,mobileBody);
     }
-    mobileControl.hidden=!mobile||!pins.size;
-    if(!mobile||!pins.size){mobileOpen=false;mobilePanel.hidden=true;mobileControl.setAttribute('aria-expanded','false');}
-    if(mobileSelected&&!pins.has(mobileSelected))mobileSelected=null;
-    mobileList.replaceChildren();
-    for(const pin of [...pins.values()].sort((a,b)=>a.pinnedAt-b.pinnedAt)){
-      const button=document.createElement('button');button.type='button';button.className='cep-pin-panel-item';button.innerHTML=icon;
-      const label=document.createElement('span');label.textContent=pin.entry.title||'Pinned note';button.append(label);button.title=label.textContent;button.setAttribute('aria-pressed',String(mobileSelected===pin.key));
-      button.onclick=()=>{mobileSelected=mobileSelected===pin.key?null:pin.key;syncMobilePins();};mobileList.append(button);
-    }
+    const footer=document.querySelector('footer');
+    if(footer){if(mobilePanel.nextElementSibling!==footer)footer.before(mobilePanel);}
+    else if(!mobilePanel.isConnected)(document.querySelector('main')||document.body).append(mobilePanel);
+    mobilePanel.hidden=!mobile||!pins.size;
     for(const [key,widget]of widgets){
       widget._mobileMounted=mobile;
+      if(mobile){
+        if(widget.parentElement!==mobileBody)mobileBody.append(widget);
+        widget.classList.add('cep-pin-mobile-selected');
+      }else{
+        widget.classList.remove('cep-pin-mobile-selected');
+        if(widget.parentElement!==document.body)document.body.append(widget);
+      }
       applyPinZoom(widget);
-      if(mobile){if(widget.parentElement!==mobileBody)mobileBody.append(widget);widget.classList.toggle('cep-pin-mobile-selected',key===mobileSelected);}
-      else{widget.classList.remove('cep-pin-mobile-selected');if(widget.parentElement!==document.body)document.body.append(widget);}
     }
-    positionMobilePins();
   }
-  let pinShiftHeld=false;
-  window.addEventListener('keydown',event=>{if(event.key==='Shift')pinShiftHeld=true;},true);
-  window.addEventListener('keyup',event=>{if(event.key==='Shift')pinShiftHeld=false;},true);
-  window.addEventListener('blur',()=>{pinShiftHeld=false;});
+
   function installPinCornerDrag(widget,handle,key){
     let active=false;
     const begin=event=>{
