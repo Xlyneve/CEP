@@ -180,6 +180,10 @@ export function applySourceSearchSkin(parent, entry) {
   surface.dataset.sourceMod5 = String(index % 5); surface.dataset.sourceMod6 = String(index % 6);
   surface.append(...parent.childNodes); parent.append(surface);
   if (file === 'chatgptx.html') {
+    surface.classList.add('cep-source-surface');
+    const content=surface.querySelector('.cep-xgpt-rich-content,.universal-search-native-snippet')||surface;
+    const first=content.firstElementChild,bold=first?.querySelector('strong,b');
+    if(first && (first.matches('h1,h2,h3,h4,h5,h6') || (first.matches('p,div') && bold && first.textContent.trim()===bold.textContent.trim() && first.textContent.trim().length<=180)))first.classList.add('cep-chat-note-title');
     window.CEPNoteVideoLinks.decorate(surface);
     parent.addEventListener('contextmenu', event => {
       if (event.target.closest('a:not(.universal-search-native-card):not(.cep-global-search-result),button,input,textarea,select,[contenteditable="true"]')) return;
