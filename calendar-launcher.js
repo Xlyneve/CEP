@@ -89,7 +89,7 @@
     clearTimeout(toolbarTimer);
     panel.classList.add("toolbar-visible");
     toolbarTimer = setTimeout(() => {
-      if (!panel || mobileCalendar() || panel.classList.contains("is-minimized")) return;
+      if (!panel || panel.classList.contains("is-minimized")) return;
       if (panel.querySelector(".homepage-calendar-bar:active")) { showToolbar(); return; }
       panel.classList.remove("toolbar-visible");
     }, 5000);
@@ -139,7 +139,7 @@
     return null;
   }
   function saveLayout() {
-    if (!panel || panel.classList.contains("is-minimized")) return;
+    if (!panel || mobileCalendar() || panel.classList.contains("is-minimized")) return;
     const todoOpen = panel.classList.contains("todo-open");
     if (todoOpen) expandedPanelWidth = panel.offsetWidth;
     const width = todoOpen ? collapsedWidth : panel.offsetWidth;
