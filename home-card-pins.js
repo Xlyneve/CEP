@@ -24,7 +24,7 @@
   const selector='.cep-search-source,.note-card[data-id],.note-tile[data-id],.chatBubble[data-home-pin-id],.file-item[data-id]';
   const cardPinActions=new WeakMap();
   const widgets=new Map(), sourceWatches=new Map(), authWatches=new Map();
-  let pins=new Map(), readyStore, layer=9000, renderQueued=false, homeUnsubscribe, homeActive=false, lifecycle=0;
+  let pins=new Map(), readyStore, layer=12030, renderQueued=false, homeUnsubscribe, homeActive=false, lifecycle=0;
   try { pins=new Map(JSON.parse(localStorage.getItem(cacheKey)||'[]').map(pin=>[pin.key,pin])); } catch {}
   const icon='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 3 6 6-4 1-3 5-2 1-4-4 1-2 5-3Z"/><path d="m9 15-6 6"/></svg>';
   function message(text) {

@@ -20,11 +20,11 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    .calendar-launch-choices { display:grid; grid-template-columns:1fr; gap:4px; position:fixed; z-index:10021; padding:8px; border:1px solid #cabec8; border-radius:14px; background:#fff9fc; box-shadow:0 8px 30px #39263730; }
+    .calendar-launch-choices { display:grid; grid-template-columns:1fr; gap:4px; position:fixed; z-index:12040; padding:8px; border:1px solid #cabec8; border-radius:14px; background:#fff9fc; box-shadow:0 8px 30px #39263730; }
     .calendar-launch-choices[hidden] { display:none; }
     .calendar-launch-choices button { display:block; width:100%; padding:10px 14px; border:0; border-radius:8px; background:transparent; color:#493d49; font:14px system-ui; text-align:left; cursor:pointer; }
     .calendar-launch-choices button:hover,.calendar-launch-choices button:focus-visible { background:#eee5ef; }
-    .homepage-calendar { position:fixed; z-index:10020; display:flex; flex-direction:column; width:min(380px,calc(100vw - 16px)); height:min(460px,calc(100dvh - 42px)); overflow:hidden; border:1px solid rgba(255,255,255,.72); border-radius:16px; background:#e8e8e8; box-shadow:0 12px 36px #39263730; }
+    .homepage-calendar { position:fixed; z-index:12020; display:flex; flex-direction:column; width:min(380px,calc(100vw - 16px)); height:min(460px,calc(100dvh - 42px)); overflow:hidden; border:1px solid rgba(255,255,255,.72); border-radius:16px; background:#e8e8e8; box-shadow:0 12px 36px #39263730; }
     html:root body #homepage-calendar {
       background:transparent !important; background-image:none !important;
       border:0 !important; box-shadow:none !important;
@@ -153,7 +153,7 @@
   }
   function movePanel(x, y) {
     if (!panel || mobileCalendar()) return;
-    panel.style.left = `${Math.max(8, Math.min(x, innerWidth - panel.offsetWidth - 8))}px`;
+    panel.style.left = `${Math.max(0, Math.min(x, innerWidth - panel.offsetWidth - 8))}px`;
     panel.style.top = `${Math.max(0, Math.min(y, innerHeight - panel.offsetHeight - 8))}px`;
   }
   function restoreLayout() {
@@ -185,7 +185,7 @@
     handle.addEventListener("pointerdown", event => {
       if (event.button !== 0 || mobileCalendar()) return;
       gesture = {
-        x:event.screenX, y:event.screenY, left:panel.offsetLeft, top:panel.offsetTop,
+        x:event.clientX, y:event.clientY, left:panel.offsetLeft, top:panel.offsetTop,
         width:panel.offsetWidth, height:panel.offsetHeight
       };
       handle.setPointerCapture(event.pointerId);
@@ -193,7 +193,7 @@
     });
     handle.addEventListener("pointermove", event => {
       if (!gesture) return;
-      const dx = event.screenX - gesture.x, dy = event.screenY - gesture.y;
+      const dx = event.clientX - gesture.x, dy = event.clientY - gesture.y;
       if (resize) {
         panel.style.width = `${Math.min(Math.max(240, gesture.width + dx), innerWidth - panel.offsetLeft - 8)}px`;
         panel.style.height = `${Math.min(Math.max(200, gesture.height + dy), innerHeight - panel.offsetTop - 8)}px`;
@@ -207,6 +207,10 @@
   }
   function bindContainerDrag(doc) {
     let gesture = null;
+    const point = event => {
+      const frame = doc.defaultView?.frameElement?.getBoundingClientRect();
+      return {x:event.clientX+(frame?.left||0), y:event.clientY+(frame?.top||0)};
+    };
     doc.addEventListener("pointerdown", event => {
       const target = event.target;
       if (!panel || mobileCalendar() || event.button !== 0 || !event.isPrimary ||
@@ -215,13 +219,15 @@
       // Leave the scrollbar gutter available for scrolling.
       const bounds = target.getBoundingClientRect();
       if (target.scrollHeight > target.clientHeight && event.clientX >= bounds.left + target.clientLeft + target.clientWidth) return;
-      gesture = { target, id:event.pointerId, x:event.screenX, y:event.screenY,
+      const start = point(event);
+      gesture = { target, id:event.pointerId, x:start.x, y:start.y,
         left:panel.offsetLeft, top:panel.offsetTop, moved:false };
       target.setPointerCapture(event.pointerId);
     });
     doc.addEventListener("pointermove", event => {
       if (!gesture || event.pointerId !== gesture.id || !panel) return;
-      const dx = event.screenX - gesture.x, dy = event.screenY - gesture.y;
+      const current = point(event);
+      const dx = current.x - gesture.x, dy = current.y - gesture.y;
       if (!gesture.moved && Math.hypot(dx, dy) < 8) return;
       gesture.moved = true;
       event.preventDefault();
