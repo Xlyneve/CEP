@@ -124,6 +124,7 @@ function refreshSourcePalette(surface) {
   if (colour.outline) surface.style.setProperty('--card-outline',colour.outline);
   else surface.style.removeProperty('--card-outline');
   surface.dataset.sharedPaletteColor='true';
+  if(surface.classList.contains('cep-source-chat'))window.refreshCepChatTitlePalette?.(surface);
   if (hasSavedColour) {
     surface.style.setProperty('background',colour.solid,'important');
     surface.style.setProperty('color',colour.ink,'important');
