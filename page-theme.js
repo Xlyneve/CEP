@@ -637,7 +637,8 @@ window.decorateCepChatNoteTitle = function(root) {
 
   // Search uses the existing palette and source order, without loading source records again.
   window.getCepThemePalette = () => palette.map(colour => ({...colour}));
-  window.getCepSourceCardColour = (file, index, className = "note-card") => {
+  window.getCepSourceCardColour = (file, index, className = "note-card", recordId = "") => {
+    if(String(file).toLowerCase()==='chatgptx.html' && recordId)return palette[hash('chatgptx:'+recordId)%palette.length];
     const seed = `${String(file).toLowerCase()}:${Number.isInteger(index) ? index : 0}::${className}`;
     return palette[["pastel-windows","mint-desktop","lavender-ink","soft-spectrum","lilac-task","lavender-mint","outline-pop","vintage-pastel","oyster-mist","colour-pop"].includes(selectedTheme) ? Math.abs(Number.isInteger(index) ? index : 0) % palette.length : hash(seed) % palette.length];
   };
@@ -656,7 +657,8 @@ window.decorateCepChatNoteTitle = function(root) {
       if (card.dataset.sharedPaletteColor === "true") return;
       const pageIndex = pageOrder.get(card) ?? -1;
       const seed = `${pageName}:${pageIndex >= 0 ? pageIndex : index}:${card.id}:${card.className}`;
-      const color = palette[["pastel-windows","mint-desktop","lavender-ink","soft-spectrum","lilac-task","lavender-mint","outline-pop","vintage-pastel","oyster-mist","colour-pop"].includes(selectedTheme) ? (pageIndex >= 0 ? pageIndex : index) % palette.length : hash(seed) % palette.length];
+      const chatId=card.matches('.message.bot .chatBubble')?card.dataset.homePinId:'';
+      const color = chatId ? window.getCepSourceCardColour('chatgptx.html',0,'note-card',chatId) : palette[["pastel-windows","mint-desktop","lavender-ink","soft-spectrum","lilac-task","lavender-mint","outline-pop","vintage-pastel","oyster-mist","colour-pop"].includes(selectedTheme) ? (pageIndex >= 0 ? pageIndex : index) % palette.length : hash(seed) % palette.length];
       card.style.setProperty("--card-glass", `rgba(${color.rgb}, 0.74)`);
       card.style.setProperty("--card-ink", color.ink);
       card.style.setProperty("--card-solid", color.solid);

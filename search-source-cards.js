@@ -72,7 +72,7 @@ function installThemeStyles() {
     .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) { display:block; position:relative; width:100%; min-width:0; height:auto; margin:0 !important; box-sizing:border-box; overflow-wrap:anywhere; }
     .cep-search-source > :is(.cep-source-surface,.cep-source-chat,.cep-source-form) > * { position:relative; z-index:1; }
     html:root:root body .cep-search-source[data-source-file="chatgptx.html"] > .cep-source-chat {
-      max-height:none; overflow:visible; font-size:14px !important;
+      max-height:none; overflow:visible; font-size:12px !important;
     }
     html:root:root body .cep-search-source[data-source-file="chatgptx.html"] .cep-source-chat > :is(.cep-xgpt-rich-content,.universal-search-native-snippet) {
       min-width:0; max-width:100%; overflow-wrap:anywhere; word-break:normal;
@@ -82,7 +82,7 @@ function installThemeStyles() {
       grid-column:1 / -1; min-width:0; align-self:start;
     }
     @media (max-width:600px) {
-      html:root:root body .cep-search-source[data-source-file="chatgptx.html"] > .cep-source-chat { font-size:13px !important; }
+      html:root:root body .cep-search-source[data-source-file="chatgptx.html"] > .cep-source-chat { font-size:14px !important;line-height:1.55!important; }
     }
     html:root:root body dialog.cep-chat-search-preview {
       width:min(900px,92vw); max-height:85vh; box-sizing:border-box;
@@ -116,7 +116,7 @@ function refreshSourcePalette(surface) {
   const palette=window.getCepThemePalette?.() || [];
   const savedIndex=Number(surface.dataset.cepThemeColorIndex);
   const hasSavedColour=surface.dataset.cepThemeColorIndex !== undefined && Number.isInteger(savedIndex) && savedIndex >= 0 && palette.length;
-  const colour=hasSavedColour ? palette[savedIndex % palette.length] : window.getCepSourceCardColour?.(surface.dataset.cepPaletteFile,index,surface.dataset.cepPaletteClass);
+  const colour=hasSavedColour ? palette[savedIndex % palette.length] : window.getCepSourceCardColour?.(surface.dataset.cepPaletteFile,index,surface.dataset.cepPaletteClass,surface.dataset.cepPaletteId);
   if (!colour) return;
   surface.style.setProperty('--card-glass',`rgba(${colour.rgb}, .74)`);
   surface.style.setProperty('--card-solid',colour.solid);
@@ -181,6 +181,7 @@ export function applySourceSearchSkin(parent, entry) {
   surface.append(...parent.childNodes); parent.append(surface);
   if (file === 'chatgptx.html') {
     surface.classList.add('cep-source-surface');
+    surface.style.lineHeight='1.6';surface.style.whiteSpace='pre-wrap';
     const content=surface.querySelector('.cep-xgpt-rich-content,.universal-search-native-snippet')||surface;
     window.decorateCepChatNoteTitle?.(content);
     window.CEPNoteVideoLinks.decorate(surface);
@@ -196,6 +197,7 @@ export function applySourceSearchSkin(parent, entry) {
   const cardClass = file === 'notes.html' ? 'note-tile note-card' : 'note-card';
   if (surface.classList.contains('cep-source-surface')) {
     surface.dataset.cepPaletteFile = file;
+    if(file==='chatgptx.html')surface.dataset.cepPaletteId=entry.focusId||entry.id||'';
     surface.dataset.cepPaletteIndex = String(entry.sourceIndex ?? entry.cardIndex ?? '');
     surface.dataset.cepPaletteClass = cardClass;
     const savedIndex=entry.record?.data?.paletteIndex;
