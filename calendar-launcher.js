@@ -53,6 +53,16 @@
 
     .homepage-calendar.is-minimized { height:34px !important; background:var(--clinical-panel,#fff)!important; }
     .homepage-calendar.is-minimized :is(iframe,.homepage-calendar-resize) { display:none!important; }
+    @media(max-width:600px) {
+      html:root body #homepage-calendar.mobile-inline {
+        position:relative!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;
+        width:100%!important;max-width:100%!important;height:430px;margin:0 0 18px!important;
+        box-sizing:border-box;z-index:1;
+      }
+      html:root body #homepage-calendar.mobile-inline.is-minimized {height:34px!important;}
+      #homepage-calendar.mobile-inline .homepage-calendar-resize {display:none!important;}
+      #homepage-calendar.mobile-inline .homepage-calendar-bar {cursor:default;touch-action:auto;}
+    }
     .homepage-calendar-actions { display:flex; align-items:center; gap:4px; }
     .homepage-calendar-day-nav,.homepage-calendar-todo,.homepage-calendar-close { width:25px; height:25px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.58); color:#655b60; cursor:pointer; line-height:1; }
     .homepage-calendar-day-nav { width:20px; background:transparent; color:#fff; font:700 15px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 1px 3px rgba(55,43,50,.38); transition:text-shadow .18s ease; touch-action:manipulation; }
@@ -79,7 +89,7 @@
     clearTimeout(toolbarTimer);
     panel.classList.add("toolbar-visible");
     toolbarTimer = setTimeout(() => {
-      if (!panel || panel.classList.contains("is-minimized")) return;
+      if (!panel || mobileCalendar() || panel.classList.contains("is-minimized")) return;
       if (panel.querySelector(".homepage-calendar-bar:active")) { showToolbar(); return; }
       panel.classList.remove("toolbar-visible");
     }, 5000);
@@ -104,6 +114,23 @@
     doc.addEventListener("scroll",cancel,true);
     doc.defaultView?.addEventListener("blur",cancel);
   }
+  const mobileCalendar = () => matchMedia("(max-width:600px)").matches;
+  function placeCalendar() {
+    if (!panel) return;
+    const inline = mobileCalendar();
+    const wasInline = panel.classList.contains("mobile-inline");
+    panel.classList.toggle("mobile-inline", inline);
+    if (inline) {
+      const frequent = document.querySelector(".dashboard-frequent-section,.dashboard-frequent-heading,.top-circles");
+      if (frequent && panel.nextElementSibling !== frequent) frequent.before(panel);
+    } else if (wasInline) {
+      document.body.append(panel);
+      const todoOpen = panel.classList.contains("todo-open");
+      panel.classList.remove("todo-open");
+      restoreLayout();
+      setPanelTodoOpen(todoOpen);
+    }
+  }
   function savedLayout() {
     try {
       const value = JSON.parse(localStorage.getItem(layoutKey));
@@ -125,7 +152,7 @@
     } catch {}
   }
   function movePanel(x, y) {
-    if (!panel) return;
+    if (!panel || mobileCalendar()) return;
     panel.style.left = `${Math.max(8, Math.min(x, innerWidth - panel.offsetWidth - 8))}px`;
     panel.style.top = `${Math.max(0, Math.min(y, innerHeight - panel.offsetHeight - 8))}px`;
   }
@@ -156,7 +183,7 @@
   function bindPointerHandle(handle, resize) {
     let gesture = null;
     handle.addEventListener("pointerdown", event => {
-      if (event.button !== 0) return;
+      if (event.button !== 0 || mobileCalendar()) return;
       gesture = {
         x:event.screenX, y:event.screenY, left:panel.offsetLeft, top:panel.offsetTop,
         width:panel.offsetWidth, height:panel.offsetHeight
@@ -182,7 +209,7 @@
     let gesture = null;
     doc.addEventListener("pointerdown", event => {
       const target = event.target;
-      if (!panel || event.button !== 0 || !event.isPrimary ||
+      if (!panel || mobileCalendar() || event.button !== 0 || !event.isPrimary ||
           !target.matches("body,.calendar-container,.calendar-scroll-glass,.calendar,.day,.day-header,.todo-container,.todo-list") ||
           target.closest("[contenteditable],button,a,input,textarea,select,.todo-resizer")) return;
       // Leave the scrollbar gutter available for scrolling.
@@ -215,7 +242,9 @@
     if (open !== isOpen) {
       showToolbar();
       const rightEdge = panel.offsetLeft + panel.offsetWidth;
-      if (open) {
+      if (mobileCalendar()) {
+        panel.classList.toggle("todo-open", open);
+      } else if (open) {
         collapsedWidth = panel.offsetWidth;
         panel.classList.add("todo-open");
         const nextExpandedWidth = expandedPanelWidth || Math.max(collapsedWidth + 240, 540);
@@ -325,6 +354,7 @@
     resize.id = "homepage-calendar-resize";
     panel.append(bar, frame, resize); document.body.appendChild(panel);
     restoreLayout();
+    placeCalendar();
     showToolbar();
     setPanelTodoOpen(restoreTodoOpen);
     bindPointerHandle(bar, false); bindPointerHandle(resize, true);
@@ -416,7 +446,7 @@
     if (!choices.contains(event.target) && !launcherFromEvent(event)) closeChoices();
   });
   document.addEventListener("keydown", event => { if (event.key === "Escape" && !choices.hidden) closeChoices(); });
-  window.addEventListener("resize", () => { clearTimeout(hoverTimer); closeChoices(); if (panel) movePanel(panel.offsetLeft, panel.offsetTop); });
+  window.addEventListener("resize", () => { clearTimeout(hoverTimer); closeChoices(); if (panel) { placeCalendar(); movePanel(panel.offsetLeft, panel.offsetTop); } });
   window.addEventListener("pagehide", saveLayout);
   if (localStorage.getItem(openStateKey) === "true") requestAnimationFrame(openOnHome);
 })();
