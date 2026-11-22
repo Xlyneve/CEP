@@ -409,6 +409,11 @@
     }
   }
 
+  let pinShiftHeld=false;
+  document.addEventListener('keydown',event=>{if(event.key==='Shift')pinShiftHeld=true;},true);
+  document.addEventListener('keyup',event=>{if(event.key==='Shift')pinShiftHeld=false;},true);
+  window.addEventListener('blur',()=>{pinShiftHeld=false;});
+
   function installPinCornerDrag(widget,handle,key){
     let active=false;
     const begin=event=>{
