@@ -17,6 +17,8 @@
   let hoverTimer = null;
   let closeTimer = null;
   let toolbarTimer = null;
+  const fontScaleKey="xlyneve-calendar-home-font-scale";
+  let fontScale=Math.max(.6,Math.min(1.4,Number(localStorage.getItem(fontScaleKey))||1));
 
   const style = document.createElement("style");
   style.textContent = `
@@ -63,6 +65,8 @@
       #homepage-calendar.mobile-inline .homepage-calendar-resize {display:none!important;}
       #homepage-calendar.mobile-inline .homepage-calendar-bar {cursor:default;touch-action:auto;}
     }
+    .homepage-calendar-bar>span {flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .homepage-calendar-font:disabled {opacity:.4;cursor:default;}
     .homepage-calendar-actions { display:flex; align-items:center; gap:4px; }
     .homepage-calendar-day-nav,.homepage-calendar-todo,.homepage-calendar-close { width:25px; height:25px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.58); color:#655b60; cursor:pointer; line-height:1; }
     .homepage-calendar-day-nav { width:20px; background:transparent; color:#fff; font:700 15px/1 "Segoe UI Symbol",Arial,sans-serif; text-shadow:0 1px 3px rgba(55,43,50,.38); transition:text-shadow .18s ease; touch-action:manipulation; }
@@ -338,7 +342,20 @@
       minimise.textContent = minimized ? "□" : "−";
       minimise.setAttribute("aria-label", minimized ? "Restore calendar" : "Minimise calendar");
     });
-    actions.append(previousDay, nextDay, todo, addTask, minimise, close); bar.append(label, actions);
+    const sendFontScale=()=>frame.contentWindow?.postMessage({type:"homecal-set-font-scale",scale:fontScale},location.origin);
+    const fontButton=(text,step,label)=>{
+      const button=document.createElement("button");button.type="button";button.className="homepage-calendar-close homepage-calendar-font";button.textContent=text;button.setAttribute("aria-label",label);
+      button.style.fontSize="11px";button.style.width="28px";
+      button.addEventListener("pointerdown",event=>event.stopPropagation());
+      button.addEventListener("click",()=>{
+        fontScale=Math.max(.6,Math.min(1.4,Math.round((fontScale+step)*10)/10));
+        localStorage.setItem(fontScaleKey,String(fontScale));sendFontScale();updateFontButtons();showToolbar();
+      });return button;
+    };
+    const smaller=fontButton("A−",-.1,"Smaller calendar text"),larger=fontButton("A+",.1,"Larger calendar text");
+    const updateFontButtons=()=>{smaller.disabled=fontScale<=.6;larger.disabled=fontScale>=1.4;for(const button of [smaller,larger])button.title=button.getAttribute("aria-label")+" ("+Math.round(fontScale*100)+"%)";};
+    updateFontButtons();
+    actions.append(previousDay, nextDay, todo, addTask, smaller, larger, minimise, close); bar.append(label, actions);
     const restoreTodoOpen = localStorage.getItem(todoOpenStateKey) === "true";
     const frame = document.createElement("iframe"); frame.title = "Today calendar and to-do";
     frame.src = `${embeddedUrl}&todoOpen=${restoreTodoOpen ? "1" : "0"}`;
@@ -352,6 +369,7 @@
         bindToolbarLongPress(frame.contentDocument, toggleToolbar);
         bindContainerDrag(frame.contentDocument);
       }
+      sendFontScale();
       const open = localStorage.getItem(todoOpenStateKey) === "true";
       frame.contentWindow?.postMessage({ type: "homecal-set-todo", open }, location.origin);
     });
