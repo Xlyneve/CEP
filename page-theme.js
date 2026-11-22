@@ -1505,3 +1505,12 @@
   const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('home-card-pins.css?v=8',base).href;document.head.append(css);
   const script=document.createElement('script');script.src=new URL('home-card-pins.js?v=23',base).href;document.head.append(script);
 })();
+
+// Keep mobile writing fields above Safari's focus-zoom threshold.
+(() => {
+  const style=document.createElement('style');style.id='cep-mobile-writing-size';
+  const root='html'+':root'.repeat(24)+':not(#cep-writing-size-a):not(#cep-writing-size-b):not(#cep-writing-size-c):not(#cep-writing-size-d) body ';
+  const fields=':is(input:not([type]),input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="url"],input[type="tel"],input[type="number"],input[type="date"],input[type="time"],input[type="datetime-local"],textarea,select,[contenteditable="true"],[contenteditable="plaintext-only"])';
+  style.textContent='@media(max-width:760px),(hover:none) and (pointer:coarse){'+root+fields+'{font-size: max(16px, 1em)!important;}}';
+  document.head.append(style);
+})();
