@@ -36,10 +36,20 @@
     const video=window.CEPNoteVideoLinks?.kind(url.href) || (!window.CEPNoteVideoLinks && (/\.(?:mp4|webm|mov|m4v|ogv)$/i.test(url.pathname) || /^(?:www\.)?(?:youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com|fb\.watch)$/.test(url.hostname)));
     const link=document.createElement('a');link.href=url.href;
     link.className=video?'cep-note-video-link':'cep-concept-website-link';
-    link.textContent=video?'Watch here':'Open website — '+url.hostname.replace(/^www\./,'');
+    link.textContent=video?'Watch here':'Open website';
     link.setAttribute('aria-label',video?'Watch video':'Open website: '+url.hostname);
     link.title=url.href;link.target='_blank';link.rel='noopener noreferrer';
-    if(!video)link.style.cssText='display:inline-block;margin:8px 0;color:inherit;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;';
+    if(!video){
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
+      svg.style.cssText='width:15px!important;height:15px!important;flex:0 0 15px;color:inherit!important;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;';
+      const path=document.createElementNS(svg.namespaceURI,'path');
+      path.setAttribute('d','M10 13a5 5 0 0 0 7 .1l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7M14 11a5 5 0 0 0-7-.1l-3 3a5 5 0 0 0 7.1 7.1l1.7-1.7');svg.append(path);
+      const label=document.createElement('span');label.textContent='Open website';
+      label.style.cssText='font:inherit;color:inherit;-webkit-text-fill-color:currentColor;';
+      link.replaceChildren(svg,label);
+      link.style.cssText='display:inline-flex!important;align-items:center;gap:5px;padding:5px 8px!important;margin:8px 0!important;border:1px solid var(--clinical-edge,#c2acd0)!important;border-radius:7px!important;background:var(--clinical-accent,#c2acd0)!important;color:var(--clinical-accent-ink,var(--theme-ink,#30322a))!important;-webkit-text-fill-color:currentColor!important;font:600 12px/1.3 Tahoma,sans-serif!important;text-decoration:none!important;box-shadow:none!important;white-space:nowrap;';
+    }
     footer.append(link);container.append(footer);if(video)window.CEPNoteVideoLinks?.decorate(footer);return true;
   }
   const gallerySource=new URL('concept-photo-gallery.js?v=20261121-captions',document.currentScript?.src || location.href).href;
