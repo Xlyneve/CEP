@@ -17,6 +17,7 @@
   let hoverTimer = null;
   let closeTimer = null;
   let toolbarTimer = null;
+  let inlineContentHeight=0;
   const fontScaleKey="xlyneve-calendar-home-font-scale";
   let fontScale=Math.max(.6,Math.min(1.4,Number(localStorage.getItem(fontScaleKey))||1));
 
@@ -88,14 +89,19 @@
   `;
   document.head.appendChild(style);
 
+  function fitInlineCalendar(){
+    if(panel&&mobileCalendar()&&inlineContentHeight)panel.style.height=(inlineContentHeight+(panel.classList.contains("toolbar-visible")?34:0))+"px";
+  }
   function showToolbar() {
     if (!panel) return;
     clearTimeout(toolbarTimer);
     panel.classList.add("toolbar-visible");
+    fitInlineCalendar();
     toolbarTimer = setTimeout(() => {
       if (!panel || panel.classList.contains("is-minimized")) return;
       if (panel.querySelector(".homepage-calendar-bar:active")) { showToolbar(); return; }
       panel.classList.remove("toolbar-visible");
+      fitInlineCalendar();
     }, 5000);
   }
   function bindToolbarLongPress(doc, toggle) {
@@ -124,6 +130,8 @@
     const inline = mobileCalendar();
     const wasInline = panel.classList.contains("mobile-inline");
     panel.classList.toggle("mobile-inline", inline);
+    panel.querySelector("iframe")?.contentWindow?.postMessage({type:"homecal-set-mobile-flow",enabled:inline},location.origin);
+    if(inline)fitInlineCalendar();
     if (inline) {
       const frequent = document.querySelector(".dashboard-frequent-section,.dashboard-frequent-heading,.top-circles");
       if (frequent && panel.nextElementSibling !== frequent) frequent.before(panel);
@@ -180,7 +188,7 @@
     clearTimeout(toolbarTimer);
     saveLayout();
     panel?.remove();
-    panel = null;
+    panel = null;inlineContentHeight=0;
     localStorage.removeItem(openStateKey);
     activeLauncher?.focus();
   }
@@ -370,6 +378,7 @@
         bindContainerDrag(frame.contentDocument);
       }
       sendFontScale();
+      frame.contentWindow?.postMessage({type:"homecal-set-mobile-flow",enabled:mobileCalendar()},location.origin);
       const open = localStorage.getItem(todoOpenStateKey) === "true";
       frame.contentWindow?.postMessage({ type: "homecal-set-todo", open }, location.origin);
     });
@@ -385,6 +394,11 @@
   }
   window.addEventListener("message", event => {
     if (!panel || event.origin !== location.origin || event.source !== panel.querySelector("iframe")?.contentWindow) return;
+    if(event.data?.type==="homecal-content-height"){
+      const height=event.data.height;
+      if(Number.isFinite(height)&&height>0){inlineContentHeight=height;fitInlineCalendar();}
+      return;
+    }
     if (event.data?.type === "homecal-embedded-day") {
       panel.querySelector(".homepage-calendar-bar > span").textContent = String(event.data.label || "Today");
       return;
