@@ -1062,7 +1062,7 @@ export function renderSourceSearchCard(parent, entry, terms = []) {
   }
   if (type === 'notes') {
     const display = document.createElement('div'); display.className = 'cep-source-note-display';
-    addHighlightedText(display, String(data.text || ''), terms); parent.appendChild(display);
+    if(data.textHtml)renderStructuredSearchContent(display,data.textHtml,terms);else addHighlightedText(display, String(data.text || ''), terms); parent.appendChild(display);
     const date = sourceDateValue(data.date);
     if (date && !Number.isNaN(date.valueOf())) {
       const dateLine = document.createElement('div'); dateLine.className = 'cep-source-card-date';
@@ -1137,6 +1137,7 @@ export function getSearchCopyHtml(entry) {
 function sourceSearchCopyHtml(entry) {
   const data = entry?.record?.data;
   const type = sourceCardTypes[String(entry?.file || '').toLocaleLowerCase()];
+  if (data && type === 'notes' && data.textHtml) return window.CEPSecurity.sanitizeHTML(data.textHtml);
   if (data && type === 'notes') return String(data.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
   if (data && type === 'forms') return String(data.note || '');
   if (data && (type === 'pn' || type === 'ecg' || type === 'urgent')) return String(data.note || '');

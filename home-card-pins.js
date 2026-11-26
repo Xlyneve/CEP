@@ -76,15 +76,15 @@
     if(original?.record?.data){
       const data={...original.record.data};
       for(const key of ['time','timestamp','createdAt','updatedAt'])if(typeof data[key]?.toDate==='function')data[key]=data[key].toDate().toISOString();
-      const html=String(data.content??data.note??data.text??original.richHtml??'');
-      const text=identity.file.toLowerCase()==='notes.html'?html:plainHtml(html);
+      const html=String(data.content??data.note??data.textHtml??data.text??original.richHtml??'');
+      const text=identity.file.toLowerCase()==='notes.html'?String(data.text||''):plainHtml(html);
       return {...original,file:identity.file,id:identity.id,sourceTitle:identity.source[1],text,displayText:text,richHtml:html,record:{id:identity.id,data}};
     }
     const title=card.querySelector('.note-title,.cep-source-title,.cep-source-note-title,.universal-search-native-title,strong');
     const body=card.querySelector('.note-content,.note-text,.note-display,.cep-source-content,.cep-source-text,.cep-source-note-content,.cep-source-note-text,.cep-xgpt-rich-content,.xgpt-rich-snippet')||card;
     const clone=body.cloneNode(true);
     clone.querySelectorAll('.cep-home-pin-indicator,.cep-home-pin-tools,.note-actions,.note-card-controls,.card-controls,.btn-group,.note-icon-actions,.timestamp,button,input,textarea,select,script,style').forEach(node=>node.remove());
-    clone.querySelectorAll('mark.cep-search-match,mark.underlineMatch').forEach(mark=>mark.replaceWith(...mark.childNodes));
+    clone.querySelectorAll('mark.cep-search-match,mark.underlineMatch,.search-highlight').forEach(mark=>mark.replaceWith(...mark.childNodes));
     clone.querySelectorAll('[contenteditable]').forEach(node=>node.removeAttribute('contenteditable'));
     const html=cleanHtml(clone.innerHTML), text=body.innerText||clone.textContent||'';
     const image=[...card.querySelectorAll('img')].find(img=>!img.closest('.note-actions,.note-icon-actions'))?.src||'';
@@ -93,7 +93,7 @@
     const kind=identity.file.toLowerCase();
     const data={title:label,image:html.includes(image)&&image?'':image,url};
     if(kind==='chatgptx.html')data.content=html;
-    else if(['notes.html','info.html','explain.html','practicen.html'].includes(kind))data.text=kind==='notes.html'?text:html;
+    else if(['notes.html','info.html','explain.html','practicen.html'].includes(kind)){data.text=kind==='notes.html'?text:html;if(kind==='notes.html')data.textHtml=html;}
     else data.note=html;
     if(identity.file.toLowerCase()==='forms.html'){data.note=card.querySelector('.view-mode em')?.textContent||'';data.openExternally=card.dataset.formExternal==='true';}
     return {file:identity.file,id:identity.id,sourceTitle:identity.source[1],title:label,text,displayText:text,richHtml:html,record:{id:identity.id,data}};
@@ -254,8 +254,8 @@
     }return text;}return read(root).replace(/^\n+|\n+$/g,'');
   }
   function entryFromData(pin,data) {
-    const html=String(data.content??data.note??data.text??'');const title=String(data.title||pin.entry.title||'Pinned note');
-    const text=pin.file.toLowerCase()==='notes.html'?html:plainHtml(html);
+    const html=String(data.content??data.note??data.textHtml??data.text??'');const title=String(data.title||pin.entry.title||'Pinned note');
+    const text=pin.file.toLowerCase()==='notes.html'?String(data.text||''):plainHtml(html);
     return {...pin.entry,title,richHtml:html,text,displayText:text,
       record:{id:pin.sourceId,data}};
   }

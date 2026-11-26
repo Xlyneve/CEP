@@ -145,7 +145,8 @@ h1 {
 }
 
 
-.note-tile textarea {
+.notes-rich-editor{white-space:pre-wrap;outline:none;}
+.note-tile :is(textarea,.notes-rich-editor) {
   display: none;
 
   width: 100%;
@@ -377,18 +378,13 @@ h1 {
   margin-top: 4px;
 }
 /* Follow the selected theme while keeping the original note colours intact. */
-html[data-xlyneve-color-theme] .note-tile :is(.note-display,textarea,.note-date) {
+html[data-xlyneve-color-theme] .note-tile :is(.note-display,textarea,.notes-rich-editor,.note-date) {
   color:inherit !important;
   -webkit-text-fill-color:currentColor !important;
 }
 html[data-xlyneve-color-theme] .note-display {
   background:transparent;
   backdrop-filter:none;
-}
-html:not(#cep-notebook-editor):not(#cep-notebook-colour):not(#cep-notebook-field):not(#cep-notebook-ink) .note-tile.editing textarea {
-  background:var(--card-solid,var(--clinical-field,#efede8))!important;
-  color:var(--card-ink,var(--theme-ink,#303039))!important;
-  -webkit-text-fill-color:currentColor!important;
 }
 html[data-xlyneve-color-theme] .header-container {
   background:transparent !important;
@@ -406,11 +402,10 @@ html[data-xlyneve-color-theme] .header-container h1 {
 </style>
 
   <link rel="stylesheet" href="site-background.css?v=20260730">
-  <script src="page-theme.js?v=20261028-editor-contrast"></script>
+  <script src="page-theme.js?v=20261005-5"></script>
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
   <script src="content-highlights.js?v=20261001-1" defer></script>
 <script src="typing-spellcheck.js?v=20261002-1" defer></script>
-  <script src="note-timestamps.js?v=20261104-1"></script>
 </head>
 <body>
   <div class="header-container">
@@ -425,6 +420,8 @@ html[data-xlyneve-color-theme] .header-container h1 {
 </div>
 
 <div class="note-grid" id="noteGrid"></div>
+<script src="notebook-format.js?v=1"></script>
+<script src="emoji-picker.js?v=1" defer></script>
 <script type="module">
 import { onCardSnapshot } from "./card-pagination-firestore.js?v=20261019-1";
 import { debounceSearch } from "./search-scheduler.js";
@@ -508,12 +505,14 @@ function displayNotes(notesArray, filter = "") {
     // DISPLAY TEXT WITH SEARCH HIGHLIGHT
 const displayText = document.createElement("div");
 displayText.className = "note-display";
-displayText.innerHTML = highlightSearchText(note.text || "", filter);
+CEPNotebookFormat.render(displayText,note,filter);
 
 // TEXTAREA FOR EDITING
-const textarea = document.createElement("textarea");
-textarea.value = note.text || "";
-textarea.setAttribute("readonly", true);
+const textarea = document.createElement("div");
+textarea.className="notes-rich-editor";
+textarea.setAttribute("role","textbox");textarea.setAttribute("aria-label","Edit note");textarea.setAttribute("aria-multiline","true");
+CEPNotebookFormat.load(textarea,note);
+textarea.contentEditable="false";
 textarea.style.pointerEvents = "none";
 textarea.style.overflow = "hidden";
 textarea.style.resize = "none";
@@ -523,8 +522,11 @@ textarea.style.display = "none";
     // DATE
     const dateElem = document.createElement("div");
     dateElem.className = "note-date";
-    dateElem.innerText = note.date == null ? 'Saving…' : CEPNoteDates.format(note.date);
-    dateElem.title = 'Created (New Zealand time)';
+    const noteDate = note.date?.toDate ? note.date.toDate() : new Date(note.date);
+    dateElem.innerText = noteDate.toLocaleString('en-GB', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: false
+    });
 
    // -------------------------
 // CARD CONTROLS
@@ -570,9 +572,9 @@ editButton.onclick = e => {
   displayText.style.display = "none";
   textarea.style.display = "block";
 
-  textarea.value = note.text || "";
+  CEPNotebookFormat.load(textarea,note);
 
-  textarea.removeAttribute("readonly");
+  textarea.contentEditable="true";
   textarea.style.pointerEvents = "auto";
 
   editButton.style.display = "none";
@@ -593,24 +595,23 @@ saveButton.onclick = async e => {
   e.stopPropagation();
 
   try {
-    const newText = textarea.value;
+    const rich=CEPNotebookFormat.save(textarea);
+    const newText = rich.text;
 
     await updateDoc(
       doc(notesRef, note.id),
-      { text: newText }
+      { text: newText, textHtml:rich.textHtml }
     );
     window.invalidateCepSearchCache?.('main:notebookNotes');
 
     note.text = newText;
+    note.textHtml=rich.textHtml;
 
-    textarea.setAttribute("readonly", true);
+    textarea.contentEditable="false";
     textarea.style.pointerEvents = "none";
     textarea.style.display = "none";
 
-    displayText.innerHTML = highlightSearchText(
-      newText,
-      document.getElementById("searchInput").value
-    );
+    CEPNotebookFormat.render(displayText,note,document.getElementById("searchInput").value);
 
     displayText.style.display = "block";
 
@@ -636,9 +637,9 @@ saveButton.onclick = async e => {
 cancelButton.onclick = e => {
   e.stopPropagation();
 
-  textarea.value = note.text || "";
+  CEPNotebookFormat.load(textarea,note);
 
-  textarea.setAttribute("readonly", true);
+  textarea.contentEditable="false";
   textarea.style.pointerEvents = "none";
   textarea.style.display = "none";
 
@@ -685,60 +686,47 @@ controls.appendChild(actionRow);
 const editBar = document.createElement("div");
 editBar.className = "edit-bar";
 
-let updatingColour = false;
-function applySelectedColour() {
-  const palette = window.getCepThemePalette?.() || [];
-  if (!Number.isInteger(note.paletteIndex) || note.paletteIndex < 0 || !palette.length) return;
-  const colour = palette[note.paletteIndex % palette.length];
-  tile.dataset.sharedPaletteColor = "true";
-  tile.style.setProperty("background", colour.solid, "important");
-  tile.style.setProperty("color", colour.ink, "important");
-  tile.style.setProperty("--card-solid", colour.solid);
-  tile.style.setProperty("--card-glass", colour.solid);
-  tile.style.setProperty("--card-ink", colour.ink);
-  tile.style.setProperty("--card-outline", colour.outline || colour.solid);
-}
-function renderColourOptions() {
-  const palette = window.getCepThemePalette?.() || [];
-  editBar.replaceChildren();
-  applySelectedColour();
-  palette.forEach((colour, paletteIndex) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "color-btn";
-    btn.title = "Note background " + (paletteIndex + 1);
-    btn.setAttribute("aria-label", btn.title);
-    btn.setAttribute("aria-pressed", String(Number.isInteger(note.paletteIndex) && note.paletteIndex % palette.length === paletteIndex));
-    btn.style.setProperty("background", colour.solid, "important");
-    btn.style.setProperty("border-color", colour.outline || colour.solid, "important");
-    btn.onclick = async e => {
-      e.stopPropagation();
-      if (updatingColour) return;
-      updatingColour = true;
-      const currentText = tile.classList.contains("editing") ? textarea.value : note.text || "";
-      try {
-        await updateDoc(doc(notesRef, note.id), {
-          color: colour.solid,
-          paletteIndex,
-          text: currentText
-        });
-        note.color = colour.solid;
-        note.paletteIndex = paletteIndex;
-        note.text = currentText;
-        applySelectedColour();
-        renderColourOptions();
-        window.invalidateCepSearchCache?.('main:notebookNotes');
-      } catch (err) {
-        console.error("Failed to update note:", err);
-      } finally {
-        updatingColour = false;
+["color1", "color2", "color3", "color4"].forEach(cls => {
+
+  const btn = document.createElement("button");
+
+  btn.className = `color-btn ${cls}`;
+
+  btn.onclick = async e => {
+  e.stopPropagation();
+
+  const bg = window.getComputedStyle(btn).backgroundColor;
+
+  // If currently editing, preserve whatever has been typed
+  const currentText = tile.classList.contains("editing")
+    ? CEPNotebookFormat.plain(textarea)
+    : note.text || "";
+
+  tile.style.background = bg;
+
+  try {
+    await updateDoc(
+      doc(notesRef, note.id),
+      {
+        color: bg,
+        text: currentText,
+        textHtml:tile.classList.contains("editing")?CEPSecurity.sanitizeHTML(textarea.innerHTML):(note.textHtml||CEPNotebookFormat.html(note))
       }
-    };
-    editBar.appendChild(btn);
-  });
-}
-editBar.refreshPalette = renderColourOptions;
-renderColourOptions();
+    );
+    window.invalidateCepSearchCache?.('main:notebookNotes');
+
+    // Keep local copy in sync
+    note.color = bg;
+    note.text = currentText;
+    if(tile.classList.contains("editing"))note.textHtml=CEPSecurity.sanitizeHTML(textarea.innerHTML);
+
+  } catch (err) {
+    console.error("Failed to update note:", err);
+  }
+};
+
+  editBar.appendChild(btn);
+});
 
 controls.appendChild(editBar);
 
@@ -818,7 +806,7 @@ function enableTileClickZoom() {
 
       if (
         e.target.closest("button") ||
-        e.target.closest("textarea") ||
+        e.target.closest('textarea,[contenteditable="true"]') ||
         e.target.closest(".note-controls")
       ) {
         return;
@@ -847,6 +835,7 @@ function enableTileClickZoom() {
 document.getElementById("addNoteBtn").addEventListener("click", async () => {
   const newNote = {
     text: "",
+    textHtml:"",
     color: "#C0B7BB",
     date: serverTimestamp()
   };
@@ -864,7 +853,7 @@ function resizeTiles(onlyTile = null) {
   const tiles = onlyTile ? [onlyTile] : [...grid.querySelectorAll('.note-tile')];
   const spans = tiles.map(tile => {
     const display = tile.querySelector('.note-display');
-const textarea = tile.querySelector('textarea');
+const textarea = tile.querySelector('.notes-rich-editor,textarea');
 
 const mainHeight =
   textarea.style.display === "block"
@@ -890,7 +879,7 @@ const contentHeight =
 
 // Recalculate on window resize
 window.addEventListener('resize', () => {
-  document.querySelectorAll('.note-tile textarea').forEach(t => autoResize(t));
+  document.querySelectorAll('.note-tile .notes-rich-editor,.note-tile textarea').forEach(t => autoResize(t));
   resizeTiles();
 });
 
