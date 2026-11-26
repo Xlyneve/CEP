@@ -4004,6 +4004,7 @@ body:not(.cep-search-embed) #universalSearchPanel > .universal-search-results {
   <div class="qc-body">
     <input id="qcStartTime" aria-label="Start time (24-hour)" class="qc-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Time" maxlength="5" />
     <div class="qc-results" aria-live="polite">
+      <div class="time-result-row"><span>+15 min</span><span id="time15Main" class="qc-big">—</span></div><div id="time15Sub" class="qc-sub"></div>
       <div class="time-result-row"><span>+20 min</span><span id="timeMain" class="qc-big">—</span></div><div id="timeSub" class="qc-sub"></div>
       <div class="time-result-row"><span>+25 min</span><span id="time25Main" class="qc-big">—</span></div><div id="time25Sub" class="qc-sub"></div>
     </div>
@@ -5626,12 +5627,13 @@ function closeTable() {
   }
   panel.querySelectorAll('.time-result-row').forEach((row,i)=>{
     const base=palette[0]?.solid || '#d3e0df',ink=palette[0]?.ink || '#39190f';
-    const color=pair[i]?.solid || (i ? `color-mix(in srgb,${base} 55%,${ink})` : base);
+    const previousIndex=i-1;
+    const color=i===0 ? (palette[2]?.solid || base) : pair[previousIndex]?.solid || (previousIndex ? `color-mix(in srgb,${base} 55%,${ink})` : base);
     row.style.setProperty('--time-glow',color);
   });
 
   const result=panel.querySelector('.qc-results');
-  const outputs=[{minutes:20,main:panel.querySelector('#timeMain'),sub:panel.querySelector('#timeSub')},{minutes:25,main:panel.querySelector('#time25Main'),sub:panel.querySelector('#time25Sub')}];
+  const outputs=[{minutes:15,main:panel.querySelector('#time15Main'),sub:panel.querySelector('#time15Sub')},{minutes:20,main:panel.querySelector('#timeMain'),sub:panel.querySelector('#timeSub')},{minutes:25,main:panel.querySelector('#time25Main'),sub:panel.querySelector('#time25Sub')}];
   function calculateClockTime(start, minutes){
     const raw=start.trim();
     const match=/^(\d{1,2}):(\d{2})$/.exec(raw) || /^(\d{1,2})(\d{2})$/.exec(raw);
