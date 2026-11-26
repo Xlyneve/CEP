@@ -386,6 +386,11 @@ html[data-xlyneve-color-theme] .note-display {
   background:transparent;
   backdrop-filter:none;
 }
+html:not(#cep-notebook-editor):not(#cep-notebook-colour):not(#cep-notebook-field):not(#cep-notebook-ink) .note-tile.editing textarea {
+  background:var(--card-solid,var(--clinical-field,#efede8))!important;
+  color:var(--card-ink,var(--theme-ink,#303039))!important;
+  -webkit-text-fill-color:currentColor!important;
+}
 html[data-xlyneve-color-theme] .header-container {
   background:transparent !important;
   background-image:none !important;
@@ -402,10 +407,11 @@ html[data-xlyneve-color-theme] .header-container h1 {
 </style>
 
   <link rel="stylesheet" href="site-background.css?v=20260730">
-  <script src="page-theme.js?v=20261005-5"></script>
+  <script src="page-theme.js?v=20261028-editor-contrast"></script>
   <link rel="stylesheet" href="content-highlights.css?v=20261001-1">
   <script src="content-highlights.js?v=20261001-1" defer></script>
 <script src="typing-spellcheck.js?v=20261002-1" defer></script>
+  <script src="note-timestamps.js?v=20261104-1"></script>
 </head>
 <body>
   <div class="header-container">
@@ -420,6 +426,7 @@ html[data-xlyneve-color-theme] .header-container h1 {
 </div>
 
 <div class="note-grid" id="noteGrid"></div>
+<script src="note-timestamps.js?v=1"></script>
 <script src="notebook-format.js?v=1"></script>
 <script src="emoji-picker.js?v=1" defer></script>
 <script type="module">
@@ -522,11 +529,8 @@ textarea.style.display = "none";
     // DATE
     const dateElem = document.createElement("div");
     dateElem.className = "note-date";
-    const noteDate = note.date?.toDate ? note.date.toDate() : new Date(note.date);
-    dateElem.innerText = noteDate.toLocaleString('en-GB', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: false
-    });
+    dateElem.innerText = note.date == null ? 'Saving…' : CEPNoteDates.format(note.date);
+    dateElem.title = 'Created (New Zealand time)';
 
    // -------------------------
 // CARD CONTROLS
@@ -686,47 +690,62 @@ controls.appendChild(actionRow);
 const editBar = document.createElement("div");
 editBar.className = "edit-bar";
 
-["color1", "color2", "color3", "color4"].forEach(cls => {
-
-  const btn = document.createElement("button");
-
-  btn.className = `color-btn ${cls}`;
-
-  btn.onclick = async e => {
-  e.stopPropagation();
-
-  const bg = window.getComputedStyle(btn).backgroundColor;
-
-  // If currently editing, preserve whatever has been typed
-  const currentText = tile.classList.contains("editing")
-    ? CEPNotebookFormat.plain(textarea)
-    : note.text || "";
-
-  tile.style.background = bg;
-
-  try {
-    await updateDoc(
-      doc(notesRef, note.id),
-      {
-        color: bg,
-        text: currentText,
-        textHtml:tile.classList.contains("editing")?CEPSecurity.sanitizeHTML(textarea.innerHTML):(note.textHtml||CEPNotebookFormat.html(note))
+let updatingColour = false;
+function applySelectedColour() {
+  const palette = window.getCepThemePalette?.() || [];
+  if (!Number.isInteger(note.paletteIndex) || note.paletteIndex < 0 || !palette.length) return;
+  const colour = palette[note.paletteIndex % palette.length];
+  tile.dataset.sharedPaletteColor = "true";
+  tile.style.setProperty("background", colour.solid, "important");
+  tile.style.setProperty("color", colour.ink, "important");
+  tile.style.setProperty("--card-solid", colour.solid);
+  tile.style.setProperty("--card-glass", colour.solid);
+  tile.style.setProperty("--card-ink", colour.ink);
+  tile.style.setProperty("--card-outline", colour.outline || colour.solid);
+}
+function renderColourOptions() {
+  const palette = window.getCepThemePalette?.() || [];
+  editBar.replaceChildren();
+  applySelectedColour();
+  palette.forEach((colour, paletteIndex) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "color-btn";
+    btn.title = "Note background " + (paletteIndex + 1);
+    btn.setAttribute("aria-label", btn.title);
+    btn.setAttribute("aria-pressed", String(Number.isInteger(note.paletteIndex) && note.paletteIndex % palette.length === paletteIndex));
+    btn.style.setProperty("background", colour.solid, "important");
+    btn.style.setProperty("border-color", colour.outline || colour.solid, "important");
+    btn.onclick = async e => {
+      e.stopPropagation();
+      if (updatingColour) return;
+      updatingColour = true;
+      const currentText = tile.classList.contains("editing") ? CEPNotebookFormat.plain(textarea) : note.text || "";
+      try {
+        await updateDoc(doc(notesRef, note.id), {
+          color: colour.solid,
+          paletteIndex,
+          text: currentText,
+          textHtml:tile.classList.contains("editing")?CEPSecurity.sanitizeHTML(textarea.innerHTML):(note.textHtml||CEPNotebookFormat.html(note))
+        });
+        note.color = colour.solid;
+        note.paletteIndex = paletteIndex;
+        note.text = currentText;
+        if(tile.classList.contains("editing"))note.textHtml=CEPSecurity.sanitizeHTML(textarea.innerHTML);
+        applySelectedColour();
+        renderColourOptions();
+        window.invalidateCepSearchCache?.('main:notebookNotes');
+      } catch (err) {
+        console.error("Failed to update note:", err);
+      } finally {
+        updatingColour = false;
       }
-    );
-    window.invalidateCepSearchCache?.('main:notebookNotes');
-
-    // Keep local copy in sync
-    note.color = bg;
-    note.text = currentText;
-    if(tile.classList.contains("editing"))note.textHtml=CEPSecurity.sanitizeHTML(textarea.innerHTML);
-
-  } catch (err) {
-    console.error("Failed to update note:", err);
-  }
-};
-
-  editBar.appendChild(btn);
-});
+    };
+    editBar.appendChild(btn);
+  });
+}
+editBar.refreshPalette = renderColourOptions;
+renderColourOptions();
 
 controls.appendChild(editBar);
 
@@ -889,3 +908,4 @@ renderNotes();
     <script src="header-rays.js?v=48"></script>
 </body>
 </html>
+
