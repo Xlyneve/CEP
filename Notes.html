@@ -146,6 +146,7 @@ h1 {
 
 
 .notes-rich-editor{white-space:pre-wrap;outline:none;text-align:left;}
+.note-tile.editing .notes-rich-editor{overflow-y:auto!important;overscroll-behavior-y:contain;max-height:min(60dvh,520px);min-height:0;flex-shrink:0;-webkit-overflow-scrolling:touch;}
 .note-tile :is(textarea,.notes-rich-editor) {
   display: none;
 
@@ -458,7 +459,7 @@ const notesRef = collection(db, "notebookNotes");
 // Auto-resize textarea
 function autoResize(textarea) {
   textarea.style.height = "auto";
-  textarea.style.height = textarea.scrollHeight + "px";
+  textarea.style.height = Math.min(textarea.scrollHeight, Math.min(window.innerHeight * .6, 520)) + "px";
 }
 
 // Render all notes
@@ -876,7 +877,7 @@ const textarea = tile.querySelector('.notes-rich-editor,textarea');
 
 const mainHeight =
   textarea.style.display === "block"
-    ? textarea.scrollHeight
+    ? textarea.offsetHeight
     : display.scrollHeight;
 
 const extraSpace =
