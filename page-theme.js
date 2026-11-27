@@ -1570,7 +1570,7 @@ window.addEventListener('cep-theme-css-ready',()=>{
   if(!pages.has(path))return;
   const base=document.currentScript?.src||location.href;
   const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('home-card-pins.css?v=8',base).href;document.head.append(css);
-  const script=document.createElement('script');script.src=new URL('home-card-pins.js?v=23',base).href;document.head.append(script);
+  const script=document.createElement('script');script.src=new URL('home-card-pins.js?v=24-notebook-rich',base).href;document.head.append(script);
 })();
 
 // Keep mobile writing fields above Safari's focus-zoom threshold.
